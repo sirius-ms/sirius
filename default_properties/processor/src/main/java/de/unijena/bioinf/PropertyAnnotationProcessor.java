@@ -291,6 +291,7 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
 
     static Pattern wordSplit = Pattern.compile("\\s");
     protected static String splitLongComment(String comment) {
+        boolean useLinebreaks=false;
         StringBuilder buffer = new StringBuilder();
         for (String line : comment.split("\n")) {
             line = line.trim()+"\n";
@@ -299,6 +300,7 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
             buffer.append("# ");
             while (m.find(offset)) {
                 l += m.start()-offset;
+                if(useLinebreaks){
                 if (l > 80 ) {
                     buffer.append("\n# ");
                     l=m.start()-offset+2;
@@ -306,6 +308,10 @@ public class PropertyAnnotationProcessor extends AbstractProcessor {
                     buffer.append(line, m.start(), m.end());
                     offset = m.end();
                 } else {
+                    buffer.append(line, offset, m.start());
+                    buffer.append(line, m.start(), m.end());
+                    offset = m.end();
+                }}else {
                     buffer.append(line, offset, m.start());
                     buffer.append(line, m.start(), m.end());
                     offset = m.end();

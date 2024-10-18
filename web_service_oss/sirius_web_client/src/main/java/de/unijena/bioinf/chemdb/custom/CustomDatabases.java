@@ -22,7 +22,6 @@ package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
@@ -41,7 +40,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.chemdb.custom.CustomDataSources.PROP_KEY;
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getCustomDatabaseDirectory;
 import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
 
@@ -146,30 +144,23 @@ public class CustomDatabases {
     @NotNull
     public static List<CustomDatabase> openAll(boolean up2date, CdkFingerprintVersion version) {
         final List<CustomDatabase> databases = new ArrayList<>();
-        final Path custom = getCustomDatabaseDirectory();
 
-        String customDBs = PropertyManager.getProperty(PROP_KEY);
-        if (customDBs != null && !customDBs.isBlank()) {
-            for (String bucketLocation : customDBs.split("\\s*,\\s*")) {
-                if (!bucketLocation.contains("/"))
-                    bucketLocation = custom.resolve(bucketLocation).toAbsolutePath().toString();
+        for (Path location : CustomDataSources.getAllCustomDatabaseLocations()) {
+            if (!Files.exists(location)) {
+                log.warn(
+                        "Database location '{}' does not exist. Database will not be available in SIRIUS.",
+                        location);
+                continue;
+            }
 
-                if (!Files.exists(Path.of(bucketLocation))) {
-                    LoggerFactory.getLogger(CustomDatabase.class).warn(
-                            "Database location '{}' does not exist. Database will not be available in SIRIUS.",
-                            bucketLocation);
-                    continue;
-                }
+            try {
+                final CustomDatabase db = open(location.toString(), version);
+                if (up2date && db.needsUpgrade())
+                    throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
-                try {
-                    final CustomDatabase db = open(bucketLocation, version);
-                    if (up2date && db.needsUpgrade())
-                        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
-
-                    databases.add(db);
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(CustomDatabase.class).error(e.getMessage(), e);
-                }
+                databases.add(db);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
         return databases.stream().distinct().collect(Collectors.toList());

@@ -56,18 +56,22 @@ public class SearchableDatabaseController {
     }
 
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<SearchableDatabase> getDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
-        return chemDbService.findAll(includeStats);
+    public List<SearchableDatabase> getDatabases(
+            @RequestParam(defaultValue = "false") boolean includeStats,
+            @RequestParam(defaultValue = "false") boolean includeWithErrors) {
+        return chemDbService.findAll(includeStats, includeWithErrors);
     }
 
     @GetMapping(value = "/custom", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<SearchableDatabase> getCustomDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
-        return getDatabases(includeStats).stream().filter(SearchableDatabase::isCustomDb).toList();
+    public List<SearchableDatabase> getCustomDatabases(
+            @RequestParam(defaultValue = "false") boolean includeStats,
+            @RequestParam(defaultValue = "false") boolean includeWithErrors) {
+        return getDatabases(includeStats, includeWithErrors).stream().filter(SearchableDatabase::isCustomDb).toList();
     }
 
     @GetMapping(value = "/included", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getIncludedDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
-        return getDatabases(includeStats).stream().filter(not(SearchableDatabase::isCustomDb)).toList();
+        return getDatabases(includeStats, false).stream().filter(not(SearchableDatabase::isCustomDb)).toList();
     }
 
 
