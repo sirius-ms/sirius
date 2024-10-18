@@ -167,13 +167,13 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         this.addEnableChangeListener((c, enabled) -> {
             if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
                 upstreamTool.activationButton.doClick(0);
-                showAutoEnableInfoDialog(upstreamTool.toolName + " is activated because " + this.toolName + " needs its results.");
+                showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
             }
         });
         upstreamTool.addEnableChangeListener((c, enabled) -> {
             if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
                 this.activationButton.doClick(0);
-                showAutoEnableInfoDialog(this.toolName + " is deactivated because it cannot run without the input from " + upstreamTool.toolName + ".");
+                showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
             }
         });
     }
