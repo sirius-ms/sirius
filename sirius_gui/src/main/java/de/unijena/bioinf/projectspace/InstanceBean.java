@@ -183,13 +183,15 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
+    private static final List<AlignedFeatureOptField> MANDATORY_OPT_FIELDS = List.of(AlignedFeatureOptField.TOPANNOTATIONS, AlignedFeatureOptField.COMPUTEDTOOLS);
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         synchronized (this) {
+
             //we always load top annotations because it contains mandatory information for the SIRIUS GUI
             List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                    ? Stream.concat(optFields.stream(), Stream.of(AlignedFeatureOptField.TOPANNOTATIONS)).distinct().toList()
-                    : List.of(AlignedFeatureOptField.TOPANNOTATIONS));
+                    ? Stream.concat(optFields.stream(), MANDATORY_OPT_FIELDS.stream()).distinct().toList()
+                    : MANDATORY_OPT_FIELDS);
 
             // we update every time here since we do not know which optional fields are already loaded.
             if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
@@ -308,6 +310,10 @@ public class InstanceBean implements SiriusPCS {
 
     public Optional<StructureCandidateScored> getStructureAnnotation() {
         return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
+    }
+
+    public Optional<CompoundClasses> getCompoundClassesAnnotation() {
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
@@ -468,6 +474,10 @@ public class InstanceBean implements SiriusPCS {
 
     public List<SpectralMatchBean> getSpectralMatchGroup(long refSpecUUID) {
         return withSpectralMatchingCache(cache -> cache.getGroup(refSpecUUID));
+    }
+
+    public ComputedSubtools getComputedTools() {
+        return getSourceFeature().getComputedTools();
     }
 
     public MutableMs2Experiment asMs2Experiment() {
