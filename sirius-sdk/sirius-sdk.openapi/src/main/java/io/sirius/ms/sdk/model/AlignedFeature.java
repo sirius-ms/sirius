@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.sirius.ms.sdk.model.ComputedSubtools;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.FeatureAnnotations;
 import io.sirius.ms.sdk.model.MsData;
@@ -49,7 +50,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_MS_DATA,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
-  AlignedFeature.JSON_PROPERTY_COMPUTING
+  AlignedFeature.JSON_PROPERTY_COMPUTING,
+  AlignedFeature.JSON_PROPERTY_COMPUTED_TOOLS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AlignedFeature {
@@ -103,6 +105,9 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_COMPUTING = "computing";
   private Boolean computing;
+
+  public static final String JSON_PROPERTY_COMPUTED_TOOLS = "computedTools";
+  private ComputedSubtools computedTools;
 
   public AlignedFeature() {
   }
@@ -541,6 +546,31 @@ public class AlignedFeature {
     this.computing = computing;
   }
 
+  public AlignedFeature computedTools(ComputedSubtools computedTools) {
+    
+    this.computedTools = computedTools;
+    return this;
+  }
+
+   /**
+   * Get computedTools
+   * @return computedTools
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMPUTED_TOOLS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ComputedSubtools getComputedTools() {
+    return computedTools;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMPUTED_TOOLS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setComputedTools(ComputedSubtools computedTools) {
+    this.computedTools = computedTools;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -566,12 +596,13 @@ public class AlignedFeature {
         Objects.equals(this.msData, alignedFeature.msData) &&
         Objects.equals(this.topAnnotations, alignedFeature.topAnnotations) &&
         Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
-        Objects.equals(this.computing, alignedFeature.computing);
+        Objects.equals(this.computing, alignedFeature.computing) &&
+        Objects.equals(this.computedTools, alignedFeature.computedTools);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing, computedTools);
   }
 
   @Override
@@ -595,6 +626,7 @@ public class AlignedFeature {
     sb.append("    topAnnotations: ").append(toIndentedString(topAnnotations)).append("\n");
     sb.append("    topAnnotationsDeNovo: ").append(toIndentedString(topAnnotationsDeNovo)).append("\n");
     sb.append("    computing: ").append(toIndentedString(computing)).append("\n");
+    sb.append("    computedTools: ").append(toIndentedString(computedTools)).append("\n");
     sb.append("}");
     return sb.toString();
   }
