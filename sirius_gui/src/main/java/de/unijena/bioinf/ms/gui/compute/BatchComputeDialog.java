@@ -110,7 +110,7 @@ public class BatchComputeDialog extends JDialog {
                 // make subtool config panels
                 formulaIDConfigPanel = tmp;
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
-                final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getFormulaAnnotation().isPresent());
+                final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
                 zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
                 fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
@@ -144,7 +144,7 @@ public class BatchComputeDialog extends JDialog {
                 }
 
                 if (ms2) {
-                    final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getCompoundClassesAnnotation().isPresent());
+                    final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
 
                     addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
                     fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
