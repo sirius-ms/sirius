@@ -107,6 +107,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
         private final int born;
 
+        private boolean hasPointOfInterest;
+
         @Setter
         private int died = Integer.MIN_VALUE;
 
@@ -130,7 +132,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
      */
     private static class TraceIntensityArray {
         private final Trace trace;
-
+        private final BitSet pointsOfInterest;
         private final Filter filter;
 
         private final float[] intensities;
@@ -139,7 +141,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         @Getter
         private float apexIntensity;
 
-        public TraceIntensityArray(Trace trace, Filter filter) {
+        public TraceIntensityArray(Trace trace, int[] pointsOfInterest, Filter filter) {
             this.trace = trace;
             this.offset = trace.startId();
             this.filter = filter;
@@ -152,6 +154,13 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             } else {
                 this.apexIntensity = trace.apexIntensity();
             }
+            this.pointsOfInterest = new BitSet(trace.length());
+            for (int poi : pointsOfInterest) {
+                int poic = poi-this.offset;
+                if (poic>=0 && poic<trace.length()) {
+                    this.pointsOfInterest.set(poi-this.offset);
+                }
+            }
         }
 
         private float[] filter() {
@@ -159,6 +168,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             final double[] ints = new double[size()];
             for (int k=0; k < size(); ++k) ints[k] = trace.intensity(k+offset);
             return MatrixUtils.double2float(filter.apply(ints));
+        }
+
+        public boolean isOfInterest(int index) {
+            return pointsOfInterest.get(index);
         }
 
         public float get(int index) {
@@ -201,13 +214,13 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             double mean = getAverageRt(peak);
             double std = getStdRT(peak,mean);
             for (int i = 0; i < size(); i++) {
-                if (trace.retentionTime(i+offset) < mean - x * std)
+                if (trace.retentionTime(i+offset) < mean - x * std && !pointsOfInterest.get(i))
                     continue;
                 peak.setLeft(Math.max(peak.getLeft(), i));
                 break;
             }
             for (int i = size() - 1; i >= 0 ; i--) {
-                if (trace.retentionTime(i+offset) > mean + x * std)
+                if (trace.retentionTime(i+offset) > mean + x * std  && !pointsOfInterest.get(i))
                     continue;
                 peak.setRight(Math.min(peak.getRight(), i));
                 break;
@@ -218,12 +231,51 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         public int size() {
             return trace.length();
         }
+
+        public double stdInt() {
+
+            final int windowLen = Math.max(3, trace.length()/30);
+            final int stepSize = windowLen/3;
+            double varmean=0d;
+            int c=0;
+            for (int i=0; i < trace.length()-windowLen; i+=stepSize) {
+                double mean=0d, var=0d;
+                for (int j=i; j < i+windowLen; ++j) {
+                    mean += get(j);
+                }
+                mean /= windowLen;
+                for (int j=i; j < i+windowLen; ++j) {
+                    var += Math.pow(get(j)-mean,2);
+                }
+                var /= windowLen;
+                varmean += Math.sqrt(var);
+                ++c;
+            }
+            varmean /= c;
+            return varmean;
+        }
+
+        public double sizeOf(int a, int b) {
+            final double rtA = trace.retentionTime(a);
+            final double rtB = trace.retentionTime(b);
+            return Math.abs(rtA-rtB);
+        }
     }
 
-    private List<Segment> computePersistentHomology(Trace trace, Filter filter, double noiseLevel) {
-        if (trace.apexIntensity() < noiseCoefficient * noiseLevel) return Collections.emptyList();
+    private List<Segment> computePersistentHomology(Trace trace, Filter filter, double _noiseLevel, double expectedPeakWidth, int[] pointsOfInterestArray) {
+        if (trace.apexIntensity() < noiseCoefficient * _noiseLevel) return Collections.emptyList();
 
-        final TraceIntensityArray seq = new TraceIntensityArray(trace, filter);
+        final TraceIntensityArray seq = new TraceIntensityArray(trace, pointsOfInterestArray, filter);
+
+        // noise level has to be always larger than variance of data
+        if (trace.length()>=256) {
+            _noiseLevel = Math.max(seq.stdInt() * 3, _noiseLevel);
+        } else if (trace.length()>=32) {
+            _noiseLevel = Math.max(seq.stdInt() * 2, _noiseLevel);
+        } else {
+            _noiseLevel = Math.max(seq.stdInt(), _noiseLevel);
+        }
+        final double noiseLevel = _noiseLevel;
 
         List<Segment> peaks = new ArrayList<>();
         int[] idx2Peak = new int[seq.size()];
@@ -240,7 +292,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
             // new peak born
             if (!leftDone && !rightDone) {
-                peaks.add(new Segment(idx));
+                Segment s = new Segment(idx);
+                peaks.add(s);
                 idx2Peak[idx] = peaks.size() - 1;
             }
 
@@ -295,19 +348,27 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             Segment last = merged.get(merged.size() - 1);
             // do not merge two consecutive peaks if:
             // 1. there is a gap between both peaks
+            final int gapLength = last.getRight() - current.getLeft();
             // 2. the valley intensity is low (either below the int threshold or mergeCoeff * max int)
-            if (last.getRight() < current.getLeft() ||
-                    seq.get(current.getLeft()) < noiseCoefficient * noiseLevel ||
-                    seq.get(current.getLeft()) < mergeCoefficient * seq.get(current.getBorn())
-            ) {
-                merged.add(current);
+            final double valleyIntensity = Math.min(seq.get(last.born), seq.get(current.getBorn())) - seq.get(current.getLeft());
+            final double relativeValleyIntensity = seq.get(current.getLeft()) / Math.min(seq.get(last.born), seq.get(current.getBorn()));
+            boolean properValley;
+            if (expectedPeakWidth>0) {
+                final double valleySize = ((seq.sizeOf(current.left, current.born)) / expectedPeakWidth);
+                properValley = ((mergeCoefficient - relativeValleyIntensity) + valleySize) > 0.33;
             } else {
+                properValley = relativeValleyIntensity < mergeCoefficient;
+            }
 
+
+            if (gapLength > 0 || (valleyIntensity > noiseLevel && properValley)) {
+                merged.add(current); // don't merge
+            } else {
                 // merge last with current
                 if (seq.get(last.born) >= seq.get(current.born)) {
                     last.setRight(current.getRight());
                 } else {
-                    merged.remove(merged.size()-1);
+                    merged.remove(merged.size() - 1);
                     current.setLeft(last.getLeft());
                     merged.add(current);
                 }
@@ -315,10 +376,34 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
         // sort peaks by persistence
         merged.sort((a, b) -> Double.compare(getPersistence(b, seq), getPersistence(a, seq)));
+
+        // remember which peaks contain my point of interests - these peaks cannot be deleted!
+        int[] assigned = new int[pointsOfInterestArray.length];
+        Arrays.fill(assigned,-1);
+        for (int i=0; i  < merged.size(); ++i) {
+            final Segment s = merged.get(i);
+            for (int j=0; j < pointsOfInterestArray.length; ++j) {
+                if (pointsOfInterestArray[j] >= (s.left+seq.offset) && pointsOfInterestArray[j] <= (s.right+seq.offset)) {
+                    if (assigned[j]>=0) {
+                        if (seq.get(merged.get(assigned[j]).getBorn()) < seq.get(s.getBorn())) {
+                            assigned[j] = i;
+                        }
+                    } else {
+                        assigned[j] = i;
+                    }
+                }
+            }
+        }
+        for (int assignment : assigned) {
+            if (assignment >= 0) {
+                merged.get(assignment).hasPointOfInterest = true;
+            }
+        }
+
         // delete all peaks which have a persistence lower the persistence threshold
-        if (merged.size()>1) merged.removeIf(x -> getPersistence(x, seq) < persistenceCoefficient * seq.get(indices.getInt(0)));
+        if (merged.size()>1) merged.removeIf(x -> !x.hasPointOfInterest && getPersistence(x, seq) < persistenceCoefficient * seq.get(indices.getInt(0)));
         // delete all peaks below the intensity threshold
-        merged.removeIf(x -> IntStream.range(x.getLeft(), x.getRight() + 1).mapToDouble(seq::unfiltered).max().orElse(0) < noiseCoefficient * noiseLevel);
+        merged.removeIf(x -> !x.hasPointOfInterest &&  IntStream.range(x.getLeft(), x.getRight() + 1).mapToDouble(seq::unfiltered).max().orElse(0) < noiseCoefficient * noiseLevel);
 
         return merged;
     }
@@ -332,16 +417,12 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     @Override
-    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel) {
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest) {
         final int offset=trace.startId();
-        return computePersistentHomology(trace, filter, noiseLevel).stream().map(seg->
+        return computePersistentHomology(trace, filter, noiseLevel, expectedPeakWidth, pointsOfInterest).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
     }
 
-    @Override
-    public int[] detectMaxima(SampleStats stats, Trace trace) {
-        return TraceSegmentationStrategy.super.detectMaxima(stats, trace);
-    }
 
 }

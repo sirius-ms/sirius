@@ -55,6 +55,8 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.SneakyThrows;
@@ -363,11 +365,11 @@ public class NoSQLInstance implements Instance {
         List<DetectedAdduct> adductsToAdd = new ArrayList<>();
         for (Map.Entry<DetectedAdducts.Source, Iterable<PrecursorIonType>> e : adductsBySource.entrySet()) {
             //add placeholder adduct for empty source
-            if (e.getValue() == null || !e.getValue().iterator().hasNext()){
+            if (e.getValue() == null || !e.getValue().iterator().hasNext()) {
                 DetectedAdduct adductToAdd = DetectedAdduct.empty(e.getKey());
                 if (overrideExisting || !adducts.contains(adductToAdd))
                     adductsToAdd.add(adductToAdd);
-            }else { //add adducts for non-empty source
+            } else { //add adducts for non-empty source
                 for (PrecursorIonType pi : e.getValue()) {
                     DetectedAdduct adductToAdd = DetectedAdduct.builder().adduct(pi).source(e.getKey()).build();
                     if (overrideExisting || !adducts.contains(adductToAdd))
@@ -466,11 +468,7 @@ public class NoSQLInstance implements Instance {
     @Override
     public void saveSiriusResult(List<FTree> treesSortedByScore) {
         try {
-            Comparator<Pair<FormulaCandidate, FTreeResult>> comp =
-                    Comparator.<Pair<FormulaCandidate, FTreeResult>>comparingDouble(p -> p.first().getSiriusScore()).reversed() //sort descending by siriusScore
-                            .thenComparing(p -> p.first().getAdduct());
             final AtomicInteger rank = new AtomicInteger(1);
-
             final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream()
                     .map(tree -> {
                         PrecursorIonType adduct = tree.getAnnotationOrThrow(PrecursorIonType.class);
@@ -487,10 +485,9 @@ public class NoSQLInstance implements Instance {
                         FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
                         return Pair.of(fc, treeResult);
                     })
-                    .sorted(comp)
+                    .sorted(Comparator.comparing(Pair::key))
                     .peek(m -> m.first().setFormulaRank(rank.getAndIncrement())) //add rank to sorted candidates
                     .toList();
-
 
             //store candidates and create formula ids
             project().getStorage().insertAll(formulaResults.stream()
@@ -530,35 +527,28 @@ public class NoSQLInstance implements Instance {
     @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
-        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore, Comparator.reverseOrder())
-                .thenComparing(FormulaCandidate::getSiriusScore, Comparator.reverseOrder())
-                .thenComparing(FormulaCandidate::getAdduct);
+        // mak zodiac score accessible via index
+        Long2ObjectMap<NoSqlFCandidate> zodiacCandidates = new Long2ObjectOpenHashMap<>(zodiacScores.size());
+        zodiacScores.stream().map(fc -> ((NoSqlFCandidate) fc))
+                .forEach(c -> zodiacCandidates.put(c.getId().longValue(), c));
 
+        // add zodiac score and recompute rank for all candidates.
         final AtomicInteger rank = new AtomicInteger(1);
-
-        List<FormulaCandidate> candidates = zodiacScores.stream().
-                filter(fc -> fc.hasAnnotation(ZodiacScore.class))
-                .map(fc -> {
-                    FormulaCandidate c = ((NoSqlFCandidate) fc).getFormulaCandidate();
-                    c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
-                    return c;
-                })
-                .sorted(comp)
-                .peek(fc -> fc.setFormulaRank(rank.getAndIncrement()))
-                .toList();
-
+        List<FormulaCandidate> candidates = project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> {
+            if (zodiacCandidates.containsKey(fc.getFormulaId()))
+                zodiacCandidates.get(fc.getFormulaId()).getAnnotation(ZodiacScore.class).map(ZodiacScore::score)
+                        .ifPresent(fc::setZodiacScore);
+        }).sorted().peek(fc -> fc.setFormulaRank(rank.getAndIncrement())).toList();
 
         project().getStorage().write(() -> {
             project().getStorage().upsertAll(candidates);
             upsertComputedSubtools(cs -> cs.setZodiac(true));
         });
-
     }
 
     @Override
     public boolean hasZodiacResult() {
         return getComputedSubtools().isZodiac();
-//        return getTopFormulaCandidate().map(FCandidate::getZodiacScore).isPresent();
     }
 
     @SneakyThrows
@@ -822,7 +812,7 @@ public class NoSQLInstance implements Instance {
         public int add(String name, double abundance) {
             sampleNames.add(name);
             abundances.add(abundance);
-            namesToIndex.put(name, namesToIndex.size() - 1);
+            namesToIndex.put(name, namesToIndex.size());
             return namesToIndex.getInt(name);
         }
 
