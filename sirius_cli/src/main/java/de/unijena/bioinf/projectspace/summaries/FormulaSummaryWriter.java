@@ -176,19 +176,19 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
 
             if (globalResults != null) {
                 final List<ResultEntry> r = globalResults.stream()
-                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR)).toList();
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST)).toList();
                 writer.textFile(SummaryLocations.FORMULA_SUMMARY, w -> writeCSV(w, globalTypes, r, true));
             }
 
             if (globalResultsWithAdducts != null) {
                 final List<ResultEntry> rAdducts = globalResultsWithAdducts.stream()
-                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR)).toList();
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST)).toList();
                 writer.textFile(SummaryLocations.FORMULA_SUMMARY_ADDUCTS, w -> writeCSV(w, globalTypes, rAdducts, true));
             }
 
             if (globalResultsAll != null) {
                 List<ResultEntry> all = globalResultsAll.keySet().stream()
-                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR))
+                        .sorted(Comparator.comparing(s -> s.dirName, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST))
                         .flatMap(s -> globalResultsAll.get(s).stream()).toList();
                 writer.textFile(SummaryLocations.FORMULA_SUMMARY_ALL, w -> writeCSV(w, globalTypes, all, true));
             }

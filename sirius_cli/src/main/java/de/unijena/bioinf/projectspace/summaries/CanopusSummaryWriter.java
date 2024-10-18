@@ -210,18 +210,18 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
         lock.readLock().lock();
         try {
             if (rowsBySiriusScore != null && (writeTopHitGlobal || writeTopHitWithAdductsGlobal)) {
-                rowsBySiriusScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
+                rowsBySiriusScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST));
                 if (writeTopHitGlobal)
                     writer.table(SummaryLocations.CANOPUS_FORMULA_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsBySiriusScore)));
                 if (writeTopHitWithAdductsGlobal)
                     writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ADDUCTS, HEADER, Iterators.capture(new IterateOverAdducts(rowsBySiriusScore)));
             }
             if (writeTopHitGlobal && rowsByCSIScore != null && numStructureResults.get() > 0) {
-                rowsByCSIScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
+                rowsByCSIScore.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST));
                 writer.table(SummaryLocations.CANOPUS_COMPOUND_SUMMARY, HEADER, Iterators.capture(new IterateOverFormulas(rowsByCSIScore)));
             }
             if (writeFullGlobal && rowsBySiriusScoreAll != null) {
-                rowsBySiriusScoreAll.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR));
+                rowsBySiriusScoreAll.sort(Comparator.comparing(c -> c.id, Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST));
                 writer.table(SummaryLocations.CANOPUS_FOMRULA_SUMMARY_ALL, HEADER, Iterators.capture(new IterateOverAdducts(rowsBySiriusScoreAll)));
             }
         } finally {
