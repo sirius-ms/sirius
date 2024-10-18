@@ -1,6 +1,6 @@
+MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
 MS1MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation
 MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
-MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
 Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
 AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
 CandidateFormulas=de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas
