@@ -149,7 +149,7 @@ No authorization required
 
 ## getCustomDatabases
 
-> List&lt;SearchableDatabase&gt; getCustomDatabases(includeStats)
+> List&lt;SearchableDatabase&gt; getCustomDatabases(includeStats, includeWithErrors)
 
 
 
@@ -170,8 +170,9 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         Boolean includeStats = false; // Boolean | 
+        Boolean includeWithErrors = false; // Boolean | 
         try {
-            List<SearchableDatabase> result = apiInstance.getCustomDatabases(includeStats);
+            List<SearchableDatabase> result = apiInstance.getCustomDatabases(includeStats, includeWithErrors);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#getCustomDatabases");
@@ -190,6 +191,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **includeStats** | **Boolean**|  | [optional] [default to false] |
+| **includeWithErrors** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 
@@ -279,7 +281,7 @@ No authorization required
 
 ## getDatabases
 
-> List&lt;SearchableDatabase&gt; getDatabases(includeStats)
+> List&lt;SearchableDatabase&gt; getDatabases(includeStats, includeWithErrors)
 
 
 
@@ -300,8 +302,9 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         Boolean includeStats = false; // Boolean | 
+        Boolean includeWithErrors = false; // Boolean | 
         try {
-            List<SearchableDatabase> result = apiInstance.getDatabases(includeStats);
+            List<SearchableDatabase> result = apiInstance.getDatabases(includeStats, includeWithErrors);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#getDatabases");
@@ -320,6 +323,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **includeStats** | **Boolean**|  | [optional] [default to false] |
+| **includeWithErrors** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 
