@@ -58,7 +58,7 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
     }
 
     public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, SiriusClient client, Collection<SearchableDatabase> exclude){
-        List<SearchableDatabase> dbLsit = (includeCustom ? client.databases().getDatabases(false) : client.databases().getIncludedDatabases(false))
+        List<SearchableDatabase> dbLsit = (includeCustom ? client.databases().getDatabases(false, false) : client.databases().getIncludedDatabases(false))
                 .stream()
                 .filter(SearchableDatabase::isSearchable)
                 .filter(s -> !exclude.contains(s))
