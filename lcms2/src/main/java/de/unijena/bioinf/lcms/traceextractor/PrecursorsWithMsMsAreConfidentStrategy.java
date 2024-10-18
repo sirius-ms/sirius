@@ -8,7 +8,7 @@ public class PrecursorsWithMsMsAreConfidentStrategy implements MassOfInterestCon
     @Override
     public float estimateConfidence(ProcessedSample sample, ContiguousTrace trace, MoI moi, ConnectRelatedMoIs connector) {
         if (sample.getStorage().getTraceStorage().getMs2ForTrace(trace.getUid()).length>0) {
-            return 50f;
+            return 500f;
         } else return 0f;
     }
 }
