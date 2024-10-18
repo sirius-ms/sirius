@@ -159,7 +159,7 @@ public class CustomDatabases {
                     throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
                 databases.add(db);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
