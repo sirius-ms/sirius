@@ -187,20 +187,18 @@ public class InstanceBean implements SiriusPCS {
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         synchronized (this) {
-
             //we always load top annotations because it contains mandatory information for the SIRIUS GUI
             List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
                     ? Stream.concat(optFields.stream(), MANDATORY_OPT_FIELDS.stream()).distinct().toList()
                     : MANDATORY_OPT_FIELDS);
 
             // we update every time here since we do not know which optional fields are already loaded.
-            if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
+            if (sourceFeature == null || !of.equals(MANDATORY_OPT_FIELDS))
                 sourceFeature = withIds((pid, fid) ->
                         getClient().features().getAlignedFeature(pid, fid, of));
 
             return sourceFeature;
         }
-
     }
 
     public String getFeatureId() {
