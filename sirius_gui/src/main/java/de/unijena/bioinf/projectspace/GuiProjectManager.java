@@ -78,7 +78,7 @@ public class GuiProjectManager implements Closeable {
         this.siriusGui = siriusGui;
 
         List<InstanceBean> tmp = siriusClient.features()
-                .getAlignedFeatures(projectId, List.of(AlignedFeatureOptField.TOPANNOTATIONS))
+                .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                 .stream().map(f -> new InstanceBean(f, this)).toList();
 
 
@@ -185,7 +185,7 @@ public class GuiProjectManager implements Closeable {
         Map<String, InstanceBean> instances = INSTANCE_LIST.stream().collect(Collectors.toMap(InstanceBean::getFeatureId, Function.identity()));
         //collect created
         toProcess.stream().filter(evt -> evt.getEventType() == FEATURE_CREATED).map(ProjectChangeEvent::getFeaturedId).filter(Objects::nonNull)
-                .forEach(fid -> instances.put(fid, new InstanceBean(getFeature(fid, List.of(AlignedFeatureOptField.TOPANNOTATIONS)), GuiProjectManager.this)));
+                .forEach(fid -> instances.put(fid, new InstanceBean(getFeature(fid, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS), GuiProjectManager.this)));
         //todo getting features in bulk could improve speed
         //map deletion by keeping event order
         return toProcess.stream()
