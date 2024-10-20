@@ -98,12 +98,14 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     protected void reset(InstanceBean parent) {
-        Set<String> specifiedDBs = Optional.ofNullable(parent.getSourceFeature().getTopAnnotations())
+        Set<String> specifiedDBs = Optional.ofNullable(parent)
+                .map(p -> p.getSourceFeature().getTopAnnotations())
                 .map(FeatureAnnotations::getSpecifiedDatabases)
                 .map(HashSet::new)
                 .orElse(new HashSet<>());
 
-        Set<String> fallbackDBs = Optional.ofNullable(parent.getSourceFeature().getTopAnnotations())
+        Set<String> fallbackDBs = Optional.ofNullable(parent)
+                .map(p -> p.getSourceFeature().getTopAnnotations())
                 .map(FeatureAnnotations::getExpandedDatabases)
                 .map(HashSet::new)
                 .orElse(new HashSet<>());
@@ -115,10 +117,10 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                 checkbox.setSelected(false);
                 if (specifiedDBs.contains(checkbox.getName())) {
                     checkbox.setBackground(specifiedDbBgColor);
-                    checkbox.setToolTipText("Was used for searching");
+                    checkbox.setToolTipText("Was selected for searching");
                 } else if (fallbackDBs.contains(checkbox.getName())) {
                     checkbox.setBackground(fallbackDbBgColor);
-                    checkbox.setToolTipText("Fallback for searching");
+                    checkbox.setToolTipText("Was used as fallback for searching");
                 } else {
                     checkbox.setBackground(null);
                     checkbox.setToolTipText(null);
