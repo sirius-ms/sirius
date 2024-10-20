@@ -71,6 +71,10 @@ public class GuiProjectManager implements Closeable {
     private final PropertyChangeListener computeListener;
     private final PropertyChangeListenerEDT confidenceModeListender;
 
+    private final BlockingQueue<ProjectChangeEvent> debouncedEvents = new LinkedBlockingDeque<>();
+    private final JJob<Boolean> debounceExec;
+
+
     public GuiProjectManager(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull GuiProperties properties, SiriusGui siriusGui) {
         this.properties = properties;
         this.projectId = projectId;
@@ -98,9 +102,9 @@ public class GuiProjectManager implements Closeable {
                 .ifPresent(pce -> {
                     if (pce.getEventType() != null) {
                         switch (pce.getEventType()) {
-                            case FEATURE_CREATED, FEATURE_DELETED -> addRemoveDebounced(pce);
+                            case FEATURE_UPDATED, FEATURE_CREATED, FEATURE_DELETED -> addRemoveDebounced(pce);
 
-                            case FEATURE_UPDATED, RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
+                            case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
                                     pcs.firePropertyChange("project.updateInstance" + pce.getFeaturedId(), null, pce);
                         }
                     }
@@ -129,6 +133,34 @@ public class GuiProjectManager implements Closeable {
                             });
                         });
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
+
+        debounceExec = DebouncedExecutionJJob.start((ExFunctions.Runnable) () -> {
+            if (!debouncedEvents.isEmpty()) {
+                try {
+                    siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true);
+                    while (!debouncedEvents.isEmpty()) {
+                        List<ProjectChangeEvent> toProcess = new ArrayList<>();
+
+                        ProjectChangeEvent evt = debouncedEvents.take();
+                        do {
+                            toProcess.add(evt);
+                            //just to not keep too many events in queue
+                            if (toProcess.size() >= 1000)
+                                break;
+                        } while ((evt = debouncedEvents.poll()) != null);
+                        List<Pair<InstanceBean, Boolean>> pairs = processEvents(toProcess.stream().filter(e -> e.getEventType() != FEATURE_UPDATED).toList());
+                        pairs.stream().filter(p -> !p.value()).map(Pair::key)
+                                .forEach(InstanceBean::unregisterProjectSpaceListener);
+
+                        SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, pairs);
+                        toProcess.stream().filter(e -> e.getEventType() == FEATURE_UPDATED).forEach(pce -> pcs.firePropertyChange("project.updateInstance" + pce.getFeaturedId(), null, pce));
+                        siriusGui.getMainFrame().getCompoundList().fireFilterChanged();
+                    }
+                } finally {
+                    siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false);
+                }
+            }
+        });
     }
 
     public void disableProjectListener() {
@@ -143,41 +175,11 @@ public class GuiProjectManager implements Closeable {
         }
     }
 
-    private final BlockingQueue<ProjectChangeEvent> events = new LinkedBlockingDeque<>();
-    private JJob<Boolean> debounceExec;
-
     private void addRemoveDebounced(ProjectChangeEvent event) {
-        if (event.getEventType() != FEATURE_CREATED && event.getEventType() != FEATURE_DELETED)
-            throw new IllegalArgumentException("Only FEATURE_CREATED and FEATURE_DELETED events can be debounced!");
+        if (event.getEventType() != FEATURE_UPDATED && event.getEventType() != FEATURE_CREATED && event.getEventType() != FEATURE_DELETED)
+            throw new IllegalArgumentException("Only FEATURE_UPDATED, FEATURE_CREATED and FEATURE_DELETED events can be debounced!");
 
-        if (debounceExec == null)
-            debounceExec = DebouncedExecutionJJob.start((ExFunctions.Runnable) () -> {
-                if (!events.isEmpty()) {
-                    try {
-                        siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true);
-                        while (!events.isEmpty()) {
-                            List<ProjectChangeEvent> toProcess = new ArrayList<>();
-
-                            ProjectChangeEvent evt = events.take();
-                            do {
-                                toProcess.add(evt);
-                                //just to not keep too many events in queue
-                                if (toProcess.size() >= 1000)
-                                    break;
-                            } while ((evt = events.poll()) != null);
-                            List<Pair<InstanceBean, Boolean>> pairs = processEvents(toProcess);
-                            pairs.stream().filter(p -> !p.value()).map(Pair::key)
-                                    .forEach(InstanceBean::unregisterProjectSpaceListener);
-
-                            SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, pairs);
-                            siriusGui.getMainFrame().getCompoundList().fireFilterChanged();
-                        }
-                    } finally {
-                        siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false);
-                    }
-                }
-            });
-        events.add(event);
+        debouncedEvents.add(event);
     }
 
     private List<Pair<InstanceBean, Boolean>> processEvents(List<ProjectChangeEvent> toProcess) {

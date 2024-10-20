@@ -63,11 +63,10 @@ public class CompoundList {
     final ObservableElementList<InstanceBean> observableScource;
     @Getter
     final SortedList<InstanceBean> sortedSource;
-    @Getter
     final FilterList<InstanceBean> filterList;
-
     @Getter
-    final EventList<InstanceBean> compoundList;
+    final EventList<InstanceBean> compoundList; // wrapper for filteredList that executes events in swing edt
+
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
@@ -113,7 +112,7 @@ public class CompoundList {
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
         filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
-               compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
+        compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
@@ -225,6 +224,7 @@ public class CompoundList {
     }
 
     public void fireFilterChanged() {
+        compoundFilterModel.updateAdducts(sortedSource);
         compoundFilterModel.fireUpdateCompleted();
     }
 
