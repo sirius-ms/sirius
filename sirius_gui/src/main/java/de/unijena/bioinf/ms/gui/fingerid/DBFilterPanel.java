@@ -26,7 +26,8 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import org.slf4j.LoggerFactory;
+import io.sirius.ms.sdk.model.FeatureAnnotations;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,10 +37,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, CustomDataSources.DataSourceChangeListener {
     public final static Set<String> NON_FILTERABLE = Set.of(
             DataSource.ALL.name(), DataSource.TRAIN.name()
     );
+
+    public final static Color specifiedDbBgColor = Color.CYAN;
+    public final static Color fallbackDbBgColor = Color.LIGHT_GRAY;
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -92,12 +97,32 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         }
     }
 
-    protected void reset() {
+    protected void reset(InstanceBean parent) {
+        Set<String> specifiedDBs = Optional.ofNullable(parent.getSourceFeature().getTopAnnotations())
+                .map(FeatureAnnotations::getSpecifiedDatabases)
+                .map(HashSet::new)
+                .orElse(new HashSet<>());
+
+        Set<String> fallbackDBs = Optional.ofNullable(parent.getSourceFeature().getTopAnnotations())
+                .map(FeatureAnnotations::getExpandedDatabases)
+                .map(HashSet::new)
+                .orElse(new HashSet<>());
+
         isRefreshing.set(true);
         bitSet = 0;
         try {
             for (JCheckBox checkbox : checkboxes) {
                 checkbox.setSelected(false);
+                if (specifiedDBs.contains(checkbox.getName())) {
+                    checkbox.setBackground(specifiedDbBgColor);
+                    checkbox.setToolTipText("Was used for searching");
+                } else if (fallbackDBs.contains(checkbox.getName())) {
+                    checkbox.setBackground(fallbackDbBgColor);
+                    checkbox.setToolTipText("Fallback for searching");
+                } else {
+                    checkbox.setBackground(null);
+                    checkbox.setToolTipText(null);
+                }
             }
         } finally {
             fireFilterChangeEvent();
@@ -112,7 +137,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
 
     @Override
     public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
-        reset();
+        reset(elementsParent);
     }
 
     @Override
@@ -130,7 +155,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                     checkboxes.add(b);
                     c = true;
                 } else {
-                    LoggerFactory.getLogger(getClass()).warn("Got change request to add DataSource '" + change.name() + "', but it already exists? Ignoring!");
+                    log.warn("Got change request to add DataSource '{}', but it already exists? Ignoring!", change.name());
                 }
 
             if (c) {
