@@ -892,7 +892,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             cSum.setConfidenceExactMatch(it.getConfidenceExact());
                             cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
                             cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                            //todo add searched database and expanded databases
+                            cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
+                            cSum.setExpandedDatabases(it.getExpandedDatabases());
                         });
         } else {
             Pair<String[], Database.SortOrder[]> formSort = sortFormulaCandidate(null); //null == default

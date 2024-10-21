@@ -78,7 +78,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 //        tb.addSeparator();
 
 
-        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "show filter");
+        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "Show database filters");
         filter.addActionListener(e -> {
             if (dbFilterPanel.toggle()) {
                 filter.setIcon(Icons.FILTER_UP_24);

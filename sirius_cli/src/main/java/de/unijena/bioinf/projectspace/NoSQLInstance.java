@@ -32,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
@@ -611,8 +612,10 @@ public class NoSQLInstance implements Instance {
                                                 .alignedFeatureId(id)
                                                 .confidenceApprox(searchResult.getConfidencScoreApproximate())
                                                 .confidenceExact(searchResult.getConfidenceScore())
-//                                        .expandedDatabases() //todo add databases to algo result
-//                                        .specifiedDatabases() //todo add databases to algo result
+                                                .specifiedDatabases(searchResult.getSpecifiedSearchDatabases().stream()
+                                                        .map(CustomDataSources.Source::name).distinct().toList())
+                                                .expandedDatabases(searchResult.getExpandedSearchDatabases().stream()
+                                                        .map(CustomDataSources.Source::name).distinct().toList())
                                                 .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
                                                 .build()
                         ).stream();
