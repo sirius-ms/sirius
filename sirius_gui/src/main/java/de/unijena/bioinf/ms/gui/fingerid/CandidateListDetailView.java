@@ -65,7 +65,6 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
@@ -86,13 +85,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private PlaceholderTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    private ResultPanel resultPanel;
+    private final ResultPanel resultPanel;
 
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(sourceList);
 
-        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null /*|| experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent())*/)//todo nightsky:  how to check if fingerprint was computed but no results found?
+        getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            if (instanceBean == null || !instanceBean.getComputedTools().isStructureSearch())
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
@@ -303,7 +302,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                     sorted = Arrays.stream(label.values).sorted(Comparator.comparing(Long::parseLong)).toArray(String[]::new);
                 } catch (NumberFormatException e) {
                     //use Alphanumeric ordering as fallback to have consistent results
-                    sorted = Arrays.stream(label.values).sorted(Utils.ALPHANUMERIC_COMPARATOR).toArray(String[]::new);
+                    sorted = Arrays.stream(label.values).sorted(Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST).toArray(String[]::new);
                 }
 
                 for (int i = 0; i < Math.min(5, sorted.length); i++) {

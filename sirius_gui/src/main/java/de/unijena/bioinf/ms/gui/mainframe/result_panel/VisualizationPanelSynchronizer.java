@@ -12,7 +12,7 @@ public class VisualizationPanelSynchronizer {
     TreeVisualizationPanel tvp;
     SpectraVisualizationPanel svp;
 
-    public VisualizationPanelSynchronizer(TreeVisualizationPanel tvp, SpectraVisualizationPanel svp) {
+    private VisualizationPanelSynchronizer(TreeVisualizationPanel tvp, SpectraVisualizationPanel svp) {
         this.tvp = tvp;
         this.svp = svp;
         this.tvc = tvp.getConnector();
@@ -27,6 +27,10 @@ public class VisualizationPanelSynchronizer {
 
     public void peakChanged(float new_mz) {
         tvp.browser.executeJS("setSelection(" + new_mz + ")");
+    }
+
+    public static VisualizationPanelSynchronizer synchronize(TreeVisualizationPanel tvp, SpectraVisualizationPanel svp){
+        return new VisualizationPanelSynchronizer(tvp, svp);
     }
 
 }

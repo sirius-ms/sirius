@@ -82,12 +82,17 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     private Color activatedForeground;
 
     private final DecimalFormat numberFormat;
+    private final DecimalFormat numberFormatMass;
+    private final DecimalFormat numberFormatMassLong;
 
     public CompoundCellRenderer(@NotNull SiriusGui gui) {
         this.gui = gui;
         this.setPreferredSize(new Dimension(210, 86));
         initColorsAndFonts();
         this.numberFormat = new DecimalFormat("#0.00");
+        this.numberFormatMass = new DecimalFormat("#0.000");
+        this.numberFormatMassLong = new DecimalFormat("#0.00000");
+
     }
 
     public void initColorsAndFonts() {
@@ -122,7 +127,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 ec.getGUIName(),
                 ec.getQuality() != null ? ec.getQuality().name() : "",
                 ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or ")),
-                ec.getIonMass() > 0 ? numberFormat.format(ec.getIonMass()) + " Da" : "",
+                ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " Da" : "",
                 ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
                 gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? "Confidence Approximate" : "Confidence Exact",
                 ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).map(confScore -> confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString()).orElse(""))
@@ -195,7 +200,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or "));
         double focD = ec.getIonMass();
-        String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "";
+        String focMass = focD > 0 ? numberFormatMass.format(focD) + " Da" : "";
         String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("");
 

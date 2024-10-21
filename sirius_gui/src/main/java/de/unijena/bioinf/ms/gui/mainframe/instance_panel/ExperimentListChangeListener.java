@@ -23,11 +23,13 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
+import java.util.List;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public interface ExperimentListChangeListener{
     void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize);
     default void fullListChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int filteredSize) {}
-    void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize);
+    void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize);
 }

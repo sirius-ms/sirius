@@ -17,9 +17,8 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
     private final IsolationWindow defaultWindow = new IsolationWindow(0, 0.5);
 
     @Override
-    public int getTraceFor(ProcessedSample sample, Ms2SpectrumHeader ms2) {
+    public Optional<MsMsTraceReference> getTraceFor(ProcessedSample sample, Ms2SpectrumHeader ms2) {
         int parentId = ms2.getParentId();
-
         /*
         for some reason the MSMS scan has no reference to its parent spectrum
         in this case we search the closest MS1 spectrum
@@ -28,7 +27,7 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
             parentId = sample.getMapping().idForRetentionTime(ms2.getRetentionTime());
             for (int k=parentId; k >= parentId-10 && k >= 0; --k) {
                 SimpleSpectrum ms1Spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(k);
-                int peakIdx = Spectrums.mostIntensivePeakWithin(ms1Spectrum, ms2.getPrecursorMz(), new Deviation(10));
+                int peakIdx = Spectrums.mostIntensivePeakWithin(ms1Spectrum, ms2.getPrecursorMz(), new Deviation(20));
                 if ((peakIdx >= 0) && (ms1Spectrum.getIntensityAt(peakIdx)>sample.getStorage().getStatistics().noiseLevel(k))) {
                     parentId = k;
                     break;
@@ -38,14 +37,14 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
         }
 
         final SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(parentId);
-        if (spectrum==null) return -1;
+        if (spectrum==null) return Optional.empty();
         final IsolationWindow window = ms2.getIsolationWindow().orElse(defaultWindow);
         final double pmz = ms2.getPrecursorMz();
         List<ContiguousTrace> contigousTraces = sample.getStorage().getTraceStorage().getContigousTraces(pmz - window.getWindowWidth() / 2d, pmz + window.getWindowWidth() / 2d,parentId, parentId);
         // for simplicity we assume gaussian shape of the isolation window with 2*sigma = window radius
         final double sigma = window.getWindowWidth()/4d;
         Optional<ContiguousTrace> tr = contigousTraces.stream().max(Comparator.comparingDouble(x -> x.apexIntensity() * Math.exp(-Math.pow(x.averagedMz() - pmz, 2) / (2 * sigma * sigma))));
-        return tr.isPresent() ? tr.get().getUid() : -1;
+        return tr.isPresent() ? Optional.of(new MsMsTraceReference(ms2.getUid(), tr.get().getUid(), parentId)) : Optional.empty();
 
     }
 }

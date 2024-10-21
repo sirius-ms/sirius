@@ -21,27 +21,24 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Markus Fleischauer
  */
 public class FilterableCompoundListPanel extends JPanel implements Loadable {
     final JLabel elementCounter = new JLabel("Empty");
+    final LoadablePanel center;
 
-    final CardLayout centerCards = new CardLayout();
-    final JPanel center = new JPanel(centerCards);
+    @Getter
+    final CompoundListView compoundListView;
 
     private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
@@ -55,25 +52,16 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         }
 
         @Override
-        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-            int selectedSize = selection.getSelected().size();
-            int filteredSize = (selection.getDeselected().size() + selectedSize);
+        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
+            int selectedSize = selected.size();
+            int filteredSize = (deselected.size() + selectedSize);
             decorateElementCounter(selectedSize, filteredSize, fullSize);
         }
     };
 
-
-    public void setLoading(boolean loading, ProgressJJob<?> ignored) {
-        try {
-            Jobs.runEDTAndWait(() -> centerCards.show(center, loading ? "load" : "content"));
-        } catch (InvocationTargetException | InterruptedException e) {
-            LoggerFactory.getLogger("Setting loading state was interrupted unexpectedly");
-            try {
-                Jobs.runEDTAndWait(() -> centerCards.show(center, loading ? "load" : "content"));
-            } catch (InvocationTargetException | InterruptedException e2) {
-                LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly. Giving up!");
-            }
-        }
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return center.setLoading(loading, absolute);
     }
 
     private void decorateElementCounter(int selectedSize, int filteredSize, int fullSize) {
@@ -86,12 +74,10 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     public FilterableCompoundListPanel(CompoundListView view) {
         super(new BorderLayout());
-        center.add("content", view);
-        JPanel lp = loadingPanel();
-        lp.setPreferredSize(view.getPreferredSize());
-        center.add("load", lp);
+        center = new LoadablePanel(view);
         view.sourceList.addChangeListener(sizeListener);
-        view.sourceList.backgroundFilterMatcher.setLoadable(this);
+        view.sourceList.backgroundFilterMatcher.setLoadable(center);
+        compoundListView = view;
 
         Box includeBox = Box.createHorizontalBox();
         includeBox.add(new JLabel("Include"));
@@ -138,18 +124,5 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         j.add(elementCounter);
         add(j, BorderLayout.SOUTH);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    }
-
-    //todo make generic loader panel
-    private JPanel loadingPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Colors.BACKGROUND);
-        panel.setOpaque(true);
-        JLabel iconLabel = new JLabel(Icons.FILTER_LOADER_120, SwingUtilities.CENTER);
-        Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
-        JLabel label = new JLabel("Loading...");
-        panel.add(iconLabel, BorderLayout.CENTER);
-        panel.add(label, BorderLayout.SOUTH);
-        return panel;
     }
 }

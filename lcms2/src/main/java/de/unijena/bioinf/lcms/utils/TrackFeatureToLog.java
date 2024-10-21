@@ -4,15 +4,19 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.align.AlignedMoI;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Rect;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.apache.commons.lang3.Range;
 import org.apache.log4j.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Locale;
 
 public class TrackFeatureToLog implements Tracker{
 
@@ -41,6 +45,9 @@ public class TrackFeatureToLog implements Tracker{
         return (mz >= fromMz && mz <= toMz && retentionTimeToTrack.contains(rt));
     }
 
+    private boolean tracked(double mz, double minrt, double maxrt) {
+        return (mz >= fromMz && mz <= toMz && retentionTimeToTrack.isOverlappedBy(Range.of(minrt, maxrt)));
+    }
     @Override
     public void moiAccepted(double mz, double retentionTime, ProcessedSample sample, ContiguousTrace trace, MoI moi) {
         if (tracked(mz, retentionTime)) {
@@ -82,6 +89,14 @@ public class TrackFeatureToLog implements Tracker{
     }
 
     @Override
+    public void createRect(ProcessedSample sample, Rect r) {
+        if (tracked(r.avgMz, (r.maxRt-r.minRt)/2d)) {
+            logger.debug("create rect mz=%f..%f, rt=%f..%f in sample %s",
+                    r.minMz,r.maxMz,r.minRt,r.maxRt,sample.getRun().getName());
+        }
+    }
+
+    @Override
     public void emptyRect(ProcessedSample sample, Rect r) {
         if (tracked(r.avgMz, (r.maxRt-r.minRt)/2d)) {
             logger.debug("do not find any traces in rect mz=%f..%f, rt=%f..%f in sample %s",
@@ -98,6 +113,15 @@ public class TrackFeatureToLog implements Tracker{
     }
 
     @Override
+    public void assignMs2ToMergedTrace(ProcessedSample sample, ContiguousTrace[] sourceTraces, ProcessedSample merged, ProjectedTrace projectedTrace, MsMsTraceReference[] ids) {
+        double rtA = merged.getMapping().getRetentionTimeAt(projectedTrace.getProjectedStartId());
+        double rtB = merged.getMapping().getRetentionTimeAt(projectedTrace.getProjectedEndId());
+        if (tracked(projectedTrace.getAveragedMz(), rtA, rtB)) {
+            logger.debug(String.format(Locale.US,"merge trace m/z = %f, rt = %f..%f in sample %s, ASSIGN MS/MS: %s", projectedTrace.getAveragedMz(), rtA, rtB, sample.getRun().getName(), ids.toString()));
+        }
+    }
+
+    @Override
     public void rejectedForFeatureExtraction(Rect r, MergedTrace merged) {
 
     }
@@ -109,6 +133,11 @@ public class TrackFeatureToLog implements Tracker{
 
     @Override
     public void importFeatures(MergedTrace mergedTrace, AlignedFeatures[] features) {
+
+    }
+
+    @Override
+    public void startExtractingCompounds(ProcessedSample mergedSample, MergedTrace mergedTrace) {
 
     }
 }
