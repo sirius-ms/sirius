@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.tree_viewer.*;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -59,17 +60,21 @@ import java.util.concurrent.locks.ReentrantLock;
 //todo post-nightsky: switch to nightsky api data structures
 
 public class TreeVisualizationPanel extends JPanel implements
-        ActiveElementChangedListener<FormulaResultBean, InstanceBean>,
-        PanelDescription {
+        ActiveElementChangedListener<FormulaResultBean, InstanceBean>, Loadable, PanelDescription {
     public enum FileFormat {
         dot, json, jpg, png, gif, svg, pdf, none
     }
 
     @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return center.setLoading(loading, absolute);
+    }
+
+    @Override
     public String getDescription() {
         return "<html>"
-                +"<b>Fragmentation Tree Viewer</b>"
-                +"<br>"
+                + "<b>Fragmentation Tree Viewer</b>"
+                + "<br>"
                 + "Interactive visualization of the Fragmentation tree for the selected molecular formula."
                 + "</html>";
     }
@@ -212,7 +217,7 @@ public class TreeVisualizationPanel extends JPanel implements
         }
     }
 
-    private JJob<Boolean> backgroundLoader = null;
+    private JJob<Void> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
@@ -220,29 +225,34 @@ public class TreeVisualizationPanel extends JPanel implements
                                FormulaResultBean selectedElement,
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
+        center.setLoading(true);
+        try {
+            backgroundLoaderLock.lock();
             try {
-                backgroundLoaderLock.lock();
-                final JJob<Boolean> old = backgroundLoader;
+                final JJob<Void> old = backgroundLoader;
                 backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
 
                     @Override
-                    protected Boolean compute() throws Exception {
+                    protected Void compute() throws Exception {
                         boolean loading = false;
                         try {
                             //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                             if (old != null && !old.isFinished()) {
-                                loading = center.setLoading(true);
+                                loading = center.increaseLoading();
                                 old.cancel(false);
                                 old.getResult(); //await cancellation so that nothing strange can happen.
                             }
-                            if (selectedElement != null && Objects.equals(selectedElement.getFTreeJson().orElse(null), ftreeJson))
-                                return false; //already correct tree ->  already done
+                            if (selectedElement != null && Objects.equals(selectedElement.getFTreeJson().orElse(null), ftreeJson)) {
+                                center.disableLoading();
+                                return null; //already correct tree ->  already done
+                            }
+
 
                             browser.clear();
                             checkForInterruption();
                             if (selectedElement != null) {
                                 if (!loading)
-                                    loading = center.setLoading(false);
+                                    loading = center.increaseLoading();
                                 // At som stage we can think about directly load the json representation vom the project space
                                 TreeVisualizationPanel.this.ftreeJson = selectedElement.getFTreeJson().orElse(null);
                                 checkForInterruption();
@@ -272,21 +282,24 @@ public class TreeVisualizationPanel extends JPanel implements
                                         checkForInterruption();
                                         if (settings == null)
                                             Jobs.runEDTAndWait(() -> settings = new TreeViewerSettings(TreeVisualizationPanel.this));
-                                        return true;
-                                    }else {
+
+                                        center.disableLoading();
+                                        return null;
+                                    } else {
                                         Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                     }
-                                }else {
+                                } else {
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                 }
                             }
                             ftreeJson = null;
                             browser.clear(); //todo maybe not needed
                             Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
-                            return false;
+                            center.disableLoading();
+                            return null;
                         } finally {
                             if (loading)
-                                center.setLoading(false);
+                                center.decreaseLoading();
                         }
                     }
 
@@ -299,6 +312,9 @@ public class TreeVisualizationPanel extends JPanel implements
             } finally {
                 backgroundLoaderLock.unlock();
             }
+        } finally {
+            center.decreaseLoading();
+        }
     }
 
 

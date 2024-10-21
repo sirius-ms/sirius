@@ -42,7 +42,7 @@ public class CandidateListTableView extends CandidateListView {
             try {
                 filteredSelectionModel.setValueIsAdjusting(true);
                 filteredSelectionModel.clearSelection();
-                if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
+                if (instanceBean == null || !instanceBean.getComputedTools().isStructureSearch()) //todo add denovo results
                     showCenterCard(ActionList.ViewState.NOT_COMPUTED);
                 else if (resultElements.isEmpty())
                     showCenterCard(ActionList.ViewState.EMPTY);

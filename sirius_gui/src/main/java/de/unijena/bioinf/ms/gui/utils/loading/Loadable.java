@@ -22,5 +22,21 @@ package de.unijena.bioinf.ms.gui.utils.loading;
 
 @FunctionalInterface
 public interface Loadable {
-    boolean setLoading(boolean loading);
+    boolean setLoading(boolean loading, boolean absolute);
+
+    default boolean setLoading(boolean loading){
+        return setLoading(loading, false);
+    }
+
+    default boolean increaseLoading() {
+        return setLoading(true);
+    }
+
+    default boolean decreaseLoading() {
+        return setLoading(false);
+    }
+
+    default boolean disableLoading() {
+        return setLoading(false, true);
+    }
 }

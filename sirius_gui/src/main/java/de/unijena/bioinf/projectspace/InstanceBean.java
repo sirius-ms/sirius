@@ -39,6 +39,7 @@ import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
@@ -61,11 +62,12 @@ import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptF
  * to care about Synchronization.
  */
 public class InstanceBean implements SiriusPCS {
+    private static final Logger log = LoggerFactory.getLogger(InstanceBean.class);
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     private final String featureId;
-    private AlignedFeature sourceFeature;
-    private MsData msData;
-    private SpectralMatchingCache spectralMatchingCache;
+    private volatile AlignedFeature sourceFeature;
+    private volatile MsData msData;
+    private volatile SpectralMatchingCache spectralMatchingCache;
 
     @NotNull
     private final GuiProjectManager projectManager;
@@ -116,10 +118,6 @@ public class InstanceBean implements SiriusPCS {
             }
         };
         registerProjectSpaceListener();
-    }
-
-    void clearCache() {
-        clearCache(null);
     }
 
     void clearCache(@Nullable ProjectChangeEvent pce) {
@@ -186,19 +184,23 @@ public class InstanceBean implements SiriusPCS {
     public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.TOPANNOTATIONS, AlignedFeatureOptField.COMPUTEDTOOLS);
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
-        synchronized (this) {
-            //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-            List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                    ? Stream.concat(optFields.stream(), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
-                    : DEFAULT_OPT_FEATURE_FIELDS);
+        //we always load top annotations because it contains mandatory information for the SIRIUS GUI
+        List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
+                ? Stream.concat(optFields.stream(), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
+                : DEFAULT_OPT_FEATURE_FIELDS);
 
-            // we update every time here since we do not know which optional fields are already loaded.
-            if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
-                sourceFeature = withIds((pid, fid) ->
-                        getClient().features().getAlignedFeature(pid, fid, of));
-
-            return sourceFeature;
+        //double checked locking source feature must be volatile
+        if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS)) {
+            synchronized (this) {
+                // we update every time here since we do not know which optional fields are already loaded.
+                if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
+                    sourceFeature = withIds((pid, fid) ->
+                            getClient().features().getAlignedFeature(pid, fid, of));
+                return sourceFeature;
+            }
         }
+        return sourceFeature;
+
     }
 
     public String getFeatureId() {
@@ -442,12 +444,17 @@ public class InstanceBean implements SiriusPCS {
         return withSpectralMatchingCache(cache -> cache.getPageFiltered(0));
     }
 
-    public synchronized MsData getMsData() {
+    public MsData getMsData() {
+        //double-checked locking, msData must be volatile
         if (msData == null) {
-            msData = sourceFeature().map(AlignedFeature::getMsData)
-                    .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId())));
+            synchronized (this) {
+                if (msData == null) {
+                    msData = sourceFeature().map(AlignedFeature::getMsData)
+                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId())));
+                }
+                return msData;
+            }
         }
-
         return msData;
     }
 
@@ -474,8 +481,14 @@ public class InstanceBean implements SiriusPCS {
         return withSpectralMatchingCache(cache -> cache.getGroup(refSpecUUID));
     }
 
+    @NotNull
     public ComputedSubtools getComputedTools() {
-        return getSourceFeature().getComputedTools();
+        ComputedSubtools tools = getSourceFeature().getComputedTools();
+        if (tools == null) { //should not happen
+            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
+            return new ComputedSubtools();
+        }
+        return tools;
     }
 
     public MutableMs2Experiment asMs2Experiment() {
@@ -496,7 +509,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
 
-    //todo nightsky reenable setter
+//todo nightsky reenable setter
 
     public synchronized <R> R withIds(BiFunction<String, String, R> doWithClient) {
         return doWithClient.apply(projectManager.getProjectId(), getFeatureId());

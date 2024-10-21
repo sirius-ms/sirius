@@ -66,17 +66,26 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+                if (!selection.isSelectionEmpty()) {
+                    while (event.next()) {
+                        if (selection.isSelectedIndex(event.getIndex())) {
+                            instanceBean = selection.getSelected().getFirst();
+                            fingerprintCandidateBean = null;
+                            reloadData();
+                            return;
+                        }
+                    }
+                }
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-                if (!selection.isSelectionEmpty()) {
-                    instanceBean = selection.getSelected().get(0);
-                    fingerprintCandidateBean = null;
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+                if (!selected.isEmpty()) {
+                    instanceBean = selected.getFirst();
                 } else {
                     instanceBean = null;
-                    fingerprintCandidateBean = null;
                 }
+                fingerprintCandidateBean = null;
                 reloadData();
             }
         });

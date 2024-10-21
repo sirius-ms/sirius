@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.VisualizationPanelSynchronizer;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListDetailView;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class FormulaOverviewPanel extends JPanel implements PanelDescription {
+public class FormulaOverviewPanel extends JPanel implements PanelDescription, Loadable {
     @Override
     public String getDescription() {
         return "<html>"
@@ -40,15 +41,18 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
                 + "</html>";
     }
 
-    public FormulaOverviewPanel(FormulaList suriusResultElements) {
+    private final TreeVisualizationPanel overviewTVP;
+    private final SpectraVisualizationPanel overviewSVP;
+    private final FormulaListDetailView formulaListDetailView;
+
+    public FormulaOverviewPanel(FormulaList siriusResultElements) {
         super(new BorderLayout());
 
-        final FormulaListDetailView north = new FormulaListDetailView(suriusResultElements);
-
-        TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener(overviewTVP);
-        SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener(overviewSVP);
+        formulaListDetailView = new FormulaListDetailView(siriusResultElements);
+        overviewTVP = new TreeVisualizationPanel();
+        siriusResultElements.addActiveResultChangedListener(overviewTVP);
+        overviewSVP = new SpectraVisualizationPanel();
+        siriusResultElements.addActiveResultChangedListener(overviewSVP);
 
         // Class to synchronize selected peak/node
         VisualizationPanelSynchronizer.synchronize(overviewTVP, overviewSVP);
@@ -56,8 +60,16 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
         JSplitPane east = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
         east.setDividerLocation(.5d);
         east.setResizeWeight(.5d);
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, north, east);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, formulaListDetailView, east);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
+    }
+
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return formulaListDetailView.setLoading(loading, absolute)
+                & overviewTVP.setLoading(loading, absolute)
+                & overviewSVP.setLoading(loading, absolute);
+
     }
 }

@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.utils.DebouncedExecutionJJob;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
+import de.unijena.bioinf.jjobs.FastPropertyChangeSupport;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -39,7 +40,6 @@ import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.Closeable;
 import java.io.StringReader;
 import java.util.*;
@@ -57,8 +57,7 @@ public class GuiProjectManager implements Closeable {
     public final String projectId;
     private final SiriusClient siriusClient;
     private final GuiProperties properties;
-    protected final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private final SiriusGui siriusGui;
+    protected final FastPropertyChangeSupport pcs = new FastPropertyChangeSupport(this);
 
     private FingerIdData fingerIdDataPos;
     private FingerIdData fingerIdDataNeg;
@@ -79,7 +78,6 @@ public class GuiProjectManager implements Closeable {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
-        this.siriusGui = siriusGui;
 
         List<InstanceBean> tmp = siriusClient.features()
                 .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)

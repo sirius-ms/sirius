@@ -1,28 +1,23 @@
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
-import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToggableSidePanel;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
-import io.sirius.ms.sdk.model.TraceSet;
-import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.TraceSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>, Loadable {
 
     private InstanceBean currentInstance;
 
@@ -49,6 +44,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
     private Order order = Order.ALPHABETICALLY;
     private ViewType viewType = ViewType.ALIGNMENT;
+    private final LoadablePanel loadable;
 
     public LCMSViewerPanel(FormulaList siriusResultElements) {
         // set content
@@ -56,7 +52,8 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         setLayout(new BorderLayout());
         add(toolbar, BorderLayout.NORTH);
         this.lcmsWebview = new LCMSWebview();
-        this.add(lcmsWebview, BorderLayout.CENTER);
+        this.loadable = new LoadablePanel(lcmsWebview);
+        this.add(loadable, BorderLayout.CENTER);
 
         summaryPanel = new LCMSCompoundSummaryPanel();
         JScrollPane scrollpanel = new JScrollPane(summaryPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -89,6 +86,11 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
         // add listeners
         siriusResultElements.addActiveResultChangedListener(this);
+    }
+
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return loadable.setLoading(loading, absolute);
     }
 
     private class SetOrder extends AbstractAction {
@@ -146,11 +148,16 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
     @Override
     public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        // we are only interested in changes of the experiment
-        if (currentInstance!= elementsParent) {
-            currentInstance = elementsParent;
-            activeIndex = 0;
-            updateContent();
+        increaseLoading();
+        try {
+            // we are only interested in changes of the experiment
+            if (currentInstance!= elementsParent) {
+                currentInstance = elementsParent;
+                activeIndex = 0;
+                updateContent();
+            }
+        } finally {
+            disableLoading();
         }
     }
 
