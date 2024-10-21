@@ -167,6 +167,17 @@ public abstract class Icons {
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
 
+
+
+    public static BufferedImage NO_RESULT_IMAGE_160() {
+        try {
+            return ImageIO.read(Icons.class.getResource("/icons/no-results-icon-160.png"));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Icons.class).error("Could not read image!", e);
+            return null;
+        }
+    }
+
     public static BufferedImage DRAG_N_DROP_IMAGE_160() {
         try {
             return ImageIO.read(Icons.class.getResource("/icons/circular-icons/c-dragNdrop-160px.png"));
