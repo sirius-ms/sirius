@@ -354,7 +354,7 @@ public class GuiUtils {
     }
 
     public static JPanel newLoadingPanel(@Nullable String loadingMessage) {
-        return newLoadingPanel(Icons.ATOM_LOADER_200, loadingMessage);
+        return newLoadingPanel(Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
     }
 
     public static JPanel newLoadingPanel(@NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {

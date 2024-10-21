@@ -22,7 +22,7 @@ public class LoadablePanel extends JPanel implements Loadable {
     }
 
     public LoadablePanel(@NotNull JComponent content, @Nullable String loadingMessage) {
-        this(content, Icons.ATOM_LOADER_200, loadingMessage);
+        this(content, Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
     }
 
     //todo maybe add some error state card?
