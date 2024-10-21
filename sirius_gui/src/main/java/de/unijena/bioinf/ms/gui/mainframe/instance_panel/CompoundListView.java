@@ -43,7 +43,7 @@ public class CompoundListView extends JScrollPane {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.sourceList = sourceList;
         //todo move texfield and filter funktion here
-        compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));
+        compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList), sourceList.sortedSource::isEmpty, sourceList.compoundList::isEmpty);
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer(gui));

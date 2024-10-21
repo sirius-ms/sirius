@@ -138,9 +138,10 @@ public class ElGordoPlugin extends SiriusPlugin  {
 
     @Override
     protected void beforeDecomposing(ProcessedInput input) {
+        final Deviation MASSDEV = new Deviation(10);
         if (input.getAnnotationOrThrow(Whiteset.class).isFinalized()) return;
-        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->new Deviation(20)), input.getExperimentInformation().getPrecursorIonType().getCharge()).analyzePrecursor(input.getExperimentInformation().getIonMass()); //todo ElementFiter: this use of "or Else use 20 pp" clashes with whiteset.resolve. Should we expect given Dev values everywhere at this stage or set some default earlier?
-        final Deviation ms2dev = input.getAnnotation(MS2MassDeviation.class).map(x -> x.allowedMassDeviation).orElseGet(() -> new Deviation(20));
+        final List<MassToLipid.LipidCandidate> lipidCandidates = new MassToLipid(input.getAnnotation(MS1MassDeviation.class).map(x->x.allowedMassDeviation).orElseGet(()->MASSDEV), input.getExperimentInformation().getPrecursorIonType().getCharge()).analyzePrecursor(input.getExperimentInformation().getIonMass()); //todo ElementFiter: this use of "or Else use 20 pp" clashes with whiteset.resolve. Should we expect given Dev values everywhere at this stage or set some default earlier?
+        final Deviation ms2dev = input.getAnnotation(MS2MassDeviation.class).map(x -> x.allowedMassDeviation).orElseGet(() -> MASSDEV);
         final MassToLipid m2l = new MassToLipid(ms2dev, input.getExperimentInformation().getPrecursorIonType().getCharge());
         final Spectrum<ProcessedPeak> peaklist = Spectrums.wrap(input.getMergedPeaks());
         final SimpleSpectrum ms2 = new SimpleSpectrum(peaklist);
@@ -186,7 +187,8 @@ public class ElGordoPlugin extends SiriusPlugin  {
                     final LipidAnnotation annotation = ano.getAnnotationAt(k);
                     final int j = ano.getPeakIndexAt(k);
                     if (j < 0) continue;
-                    final int i = Spectrums.mostIntensivePeakWithin(peaklist, ms2.getMzAt(j), ms2dev);
+                    // TODO: workaround: use exact mass instead of el gordo mass, such that SIRIUS and El Gordo agree with each other in mass deviation
+                    final int i = Spectrums.mostIntensivePeakWithin(peaklist, /*ms2.getMzAt(j)*/  ano.getIonType().neutralMassToPrecursorMass(ano.getFormula().getMass()) , ms2dev);
                     if (i >= 0) {
                         final MolecularFormula formula = annotation.getMeasuredPeakFormula();
                         ProcessedPeak pk = input.getMergedPeaks().get(i);

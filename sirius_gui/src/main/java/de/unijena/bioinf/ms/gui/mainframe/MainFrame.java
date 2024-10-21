@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -65,23 +66,20 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     //Logging Panel
+    @Getter
     private final SiriusGui gui;
     private CompoundListView compoundListView;
+
+    @Getter
+    private FilterableCompoundListPanel filterableCompoundListPanel;
 
     public void ensureCompoundIsVisible(int index){
         compoundListView.ensureIndexIsVisible(index);
     }
 
-    public SiriusGui getGui() {
-        return gui;
-    }
-
     //left side panel
+    @Getter
     private CompoundList compoundList;
-
-    public CompoundList getCompoundList() {
-        return compoundList;
-    }
 
     public EventList<InstanceBean> getCompounds() {
         return compoundList.getCompoundList();
@@ -100,18 +98,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private SpectralMatchList spectralMatchList;
 
 
+    @Getter
     private ResultPanel resultsPanel;
 
-    public ResultPanel getResultsPanel() {
-        return resultsPanel;
-    }
-
     //toolbar
+    @Getter
     private SiriusToolbar toolbar;
-
-    public SiriusToolbar getToolbar() {
-        return toolbar;
-    }
 
 
     private final ActionMap globalActions = new ActionMap();
@@ -180,12 +172,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //build left sidepane
         compoundListView = new CompoundListView(gui, compoundList);
-        FilterableCompoundListPanel compoundListPanel = new FilterableCompoundListPanel(compoundListView);
-        compoundListPanel.setPreferredSize(new Dimension(228, (int) compoundListPanel.getPreferredSize().getHeight()));
+        filterableCompoundListPanel = new FilterableCompoundListPanel(compoundListView);
+        filterableCompoundListPanel.setPreferredSize(new Dimension(228, (int) filterableCompoundListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 
         //BUILD the MainFrame (GUI)
-        mainPanel.setLeftComponent(compoundListPanel);
+        mainPanel.setLeftComponent(filterableCompoundListPanel);
         mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 

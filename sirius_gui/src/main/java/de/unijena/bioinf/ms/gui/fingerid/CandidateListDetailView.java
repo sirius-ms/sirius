@@ -85,13 +85,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private PlaceholderTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    private ResultPanel resultPanel;
+    private final ResultPanel resultPanel;
 
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(sourceList);
 
-        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null /*|| experiment.stream().noneMatch(e -> e.getPredictedFingerprint().isPresent())*/)//todo nightsky:  how to check if fingerprint was computed but no results found?
+        getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            if (instanceBean == null || !instanceBean.getComputedTools().isStructureSearch())
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);

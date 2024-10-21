@@ -26,6 +26,8 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.table.*;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -40,7 +42,7 @@ import java.util.Map;
 /**
  * @author Markus Fleischauer
  */
-public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
+public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> implements Loadable {
     @Getter
     private final ActionTable<FormulaResultBean> table;
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
@@ -48,6 +50,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
     private SortedList<FormulaResultBean> sortedSource;
     private final SiriusResultTableFormat tableFormat;
 
+    private final LoadablePanel loadingWrapper;
     public FormulaListDetailView(final FormulaList source) {
         super(source);
         //todo dirty hack until search field bug is fixed
@@ -78,7 +81,14 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
         table.getColumnModel().getColumn(8).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
 
-        this.add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
+        loadingWrapper = new LoadablePanel(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
+        add(loadingWrapper, BorderLayout.CENTER);
+        source.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
+    }
+
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return loadingWrapper.setLoading(loading, absolute);
     }
 
     @Override

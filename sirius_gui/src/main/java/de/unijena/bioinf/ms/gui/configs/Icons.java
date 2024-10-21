@@ -39,10 +39,13 @@ import java.io.IOException;
 public abstract class Icons {
     //ICONS
 
-    public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
-    public static final ImageIcon FILTER_LOADER_60 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_60.gif"));
-    public static final ImageIcon FILTER_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_120.gif"));
-    public static final ImageIcon FILTER_LOADER_160 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_160.gif"));
+//    public static final ImageIcon ATOM_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/AtomSpinner_120_2s.gif"));
+//    public static final ImageIcon ATOM_LOADER_200 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/AtomSpinner_200_2s.gif"));
+
+    public static final ImageIcon ECLIPSE_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/eclipseSpinner-120.gif"));
+    public static final ImageIcon ECLIPSE_LOADER_160 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/eclipseSpinner-160.gif"));
+    public static final ImageIcon ECLIPSE_LOADER_THICK_160 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/eclipseSpinnerThick-160.gif"));
+    public static final ImageIcon ECLIPSE_LOADER_200 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/eclipseSpinner-200.gif"));
 
     public static final Icon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
 
@@ -159,11 +162,22 @@ public abstract class Icons {
     public static final Icon FINGER_32 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint@0.5x.png"));
     public static final Icon FINGER_64 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-fingerprint.png"));
 
-    public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
+//    public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
 
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+
+
+
+    public static BufferedImage NO_RESULT_IMAGE_160() {
+        try {
+            return ImageIO.read(Icons.class.getResource("/icons/no-results-icon-160.png"));
+        } catch (IOException e) {
+            LoggerFactory.getLogger(Icons.class).error("Could not read image!", e);
+            return null;
+        }
+    }
 
     public static BufferedImage DRAG_N_DROP_IMAGE_160() {
         try {
