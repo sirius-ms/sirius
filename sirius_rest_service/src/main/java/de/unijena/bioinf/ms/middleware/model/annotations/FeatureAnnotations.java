@@ -71,9 +71,14 @@ public class FeatureAnnotations {
     @Schema(nullable = true)
     protected ExpansiveSearchConfidenceMode.Mode expansiveSearchState;
 
+    /**
+     * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
+     */
     @Schema(nullable = true)
     protected List<String> specifiedDatabases;
-
+    /**
+     * List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.
+     */
     @Schema(nullable = true)
     protected List<String> expandedDatabases;
 }
