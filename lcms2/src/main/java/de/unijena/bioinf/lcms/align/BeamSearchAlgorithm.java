@@ -23,9 +23,6 @@ public class BeamSearchAlgorithm implements AlignmentAlgorithm{
             eachR:
             for (int r = rinit; r < right.length; ++r) {
                 final MoI R = right[r];
-                if (Math.abs(L.getMz()-141.06990637150443)<0.001 && Math.abs(R.getMz()-141.06915600855461)<0.001) {
-                    System.err.println("CHECK!");
-                }
                 final double mzDelta = L.getMz() - R.getMz();
                 if (mzDelta>maxAllowedMzDiff) {
                     rinit=r;
