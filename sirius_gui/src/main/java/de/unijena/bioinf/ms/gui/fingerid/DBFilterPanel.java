@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
@@ -43,8 +44,8 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
             DataSource.ALL.name(), DataSource.TRAIN.name()
     );
 
-    public final static Color specifiedDbBgColor = Color.CYAN;
-    public final static Color fallbackDbBgColor = Color.LIGHT_GRAY;
+    public final static Color specifiedDbBgColor = Colors.ICON_BLUE;
+    public final static Color fallbackDbBgColor = Colors.EXPANSIVE_SEARCH_WARNING;
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -116,11 +117,11 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
             for (JCheckBox checkbox : checkboxes) {
                 checkbox.setSelected(false);
                 if (specifiedDBs.contains(checkbox.getName())) {
-                    checkbox.setBackground(specifiedDbBgColor);
+                    checkbox.setForeground(specifiedDbBgColor);
                     checkbox.setToolTipText("Was selected for searching");
                 } else if (fallbackDBs.contains(checkbox.getName())) {
-                    checkbox.setBackground(fallbackDbBgColor);
-                    checkbox.setToolTipText("Was used as fallback for searching");
+                    checkbox.setForeground(fallbackDbBgColor);
+                    checkbox.setToolTipText("Was used as to expand search space by expansive search.");
                 } else {
                     checkbox.setBackground(null);
                     checkbox.setToolTipText(null);
