@@ -25,6 +25,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.
  * The different annotation fields within this summary object are null if the corresponding
@@ -68,5 +70,16 @@ public class FeatureAnnotations {
      */
     @Schema(nullable = true)
     protected ExpansiveSearchConfidenceMode.Mode expansiveSearchState;
+
+    /**
+     * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
+     */
+    @Schema(nullable = true)
+    protected List<String> specifiedDatabases;
+    /**
+     * List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.
+     */
+    @Schema(nullable = true)
+    protected List<String> expandedDatabases;
 }
 

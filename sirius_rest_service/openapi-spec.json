@@ -6907,6 +6907,24 @@
           },
           "expansiveSearchState": {
             "$ref": "#/components/schemas/ConfidenceMode"
+          },
+          "specifiedDatabases": {
+            "type": "array",
+            "description": "List of databases that have been specified by for structure db search. Null if no structure db search has been performed.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "expandedDatabases": {
+            "type": "array",
+            "description": "List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           }
         },
         "description": "Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.\n The different annotation fields within this summary object are null if the corresponding\n feature does not contain the represented results. If fields are non-null\n the corresponding result has been computed but might still be empty.",
