@@ -52,16 +52,16 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         }
 
         @Override
-        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-            int selectedSize = selection.getSelected().size();
-            int filteredSize = (selection.getDeselected().size() + selectedSize);
+        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
+            int selectedSize = selected.size();
+            int filteredSize = (deselected.size() + selectedSize);
             decorateElementCounter(selectedSize, filteredSize, fullSize);
         }
     };
 
     @Override
-    public boolean setLoading(boolean loading) {
-        return center.setLoading(loading);
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return center.setLoading(loading, absolute);
     }
 
     private void decorateElementCounter(int selectedSize, int filteredSize, int fullSize) {
