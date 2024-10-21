@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-6.0.6-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-6.0.7-informational.svg)](https://shields.io/)
 [![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 [![Join community chat at https://gitter.im/sirius-ms/general](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sirius-ms/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -28,18 +28,18 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.6 (2024-09-28)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.7 (2024-10-21)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-win64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-win64.zip)
-- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-osx64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-osx64.zip)
-- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-linux64.zip)
+- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64.zip)
+- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64.zip)
+- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-linux64.zip)
 
 <!--
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.6 (2024-09-28)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.7 (2024-10-21)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-win64-headless.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-win64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-osx64-headless.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-osx64-headless.zip)
-- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.6/sirius-6.0.6-linux64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64-headless.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64-headless.zip)
+- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64-headless.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64-headless.zip)
+- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-linux64-headless.zip)
 -->
 
 
