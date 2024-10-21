@@ -29,16 +29,19 @@ import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
-import io.sirius.ms.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.DataQuality;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -61,9 +64,12 @@ public class CompoundList {
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> observableScource;
-    final SortedList<InstanceBean> sortedSource;
     @Getter
-    final EventList<InstanceBean> compoundList;
+    final SortedList<InstanceBean> sortedSource;
+    final FilterList<InstanceBean> filterList;
+    @Getter
+    final EventList<InstanceBean> compoundList; // wrapper for filteredList that executes events in swing edt
+
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
@@ -108,7 +114,7 @@ public class CompoundList {
 
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
-        FilterList<InstanceBean> filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
+        filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
         compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
@@ -125,10 +131,14 @@ public class CompoundList {
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
         compountListSelectionModel.addListSelectionListener(e -> {
+            final Component c = gui.getMainFrame().getResultsPanel().getSelectedComponent();
+            if (c instanceof Loadable l)
+                l.setLoading(true, true);
+
             if (!e.getValueIsAdjusting()) {
                 compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
                 compountListSelectionModel.getSelected().forEach(InstanceBean::enableProjectSpaceListener);
-                notifyListenerSelectionChange();
+                notifyListenerSelectionChange(e);
             }
         });
 
@@ -221,29 +231,31 @@ public class CompoundList {
     }
 
     public void fireFilterChanged() {
+        compoundFilterModel.updateAdducts(sortedSource);
         compoundFilterModel.fireUpdateCompleted();
     }
 
     private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
+        //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
-            event.reset();//this is hell important to reset the iterator
-            l.fullListChanged(event, compountListSelectionModel, compoundList.size());
+            l.fullListChanged(event.copy(), compountListSelectionModel, compoundList.size());
         }
-        event.reset();
         compoundFilterModel.updateAdducts(event.getSourceList());
         updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
+        //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
-            event.reset();//this is hell important to reset the iterator
-            l.listChanged(event, compountListSelectionModel, sortedSource.size());
+            l.listChanged(event.copy(), compountListSelectionModel, sortedSource.size());
         }
     }
 
-    private void notifyListenerSelectionChange() {
+    private void notifyListenerSelectionChange(ListSelectionEvent event) {
+        final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compountListSelectionModel.getSelected());
+        final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compountListSelectionModel.getDeselected());
         for (ExperimentListChangeListener l : listeners) {
-            l.listSelectionChanged(compountListSelectionModel, sortedSource.size());
+            l.listSelectionChanged(compountListSelectionModel, selected, deselected, sortedSource.size());
         }
     }
 
@@ -260,11 +272,7 @@ public class CompoundList {
         return compountListSelectionModel;
     }
 
-    public int getFullSize(){
+    public int getFullSize() {
         return sortedSource.size();
-    }
-
-    public SortedList<InstanceBean> getSortedSource() {
-        return sortedSource;
     }
 }

@@ -26,10 +26,11 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.utils.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -66,8 +67,9 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
     private DrainMatcherEventQueueJJob drainMatcherEventQueueJob;
 
     private final SwingJobManager jobManager;
-    //    private boolean autoLoader;
-    //todo maybe as list?
+
+    @Setter
+    @Getter
     private Loadable loadable;
 
 
@@ -85,7 +87,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
      *                              //     * @see #MatcheEditorBackgroundJJob(MatcherEditor, JJob)
      */
     public BackgroundJJobMatcheEditor(MatcherEditor<E> source) {
-        this(source, Jobs.MANAGER(), (l,j) -> {});
+        this(source, Jobs.MANAGER(), (l1,l2) -> false);
     }
 
     /**
@@ -105,14 +107,6 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
         this.jobManager = manager;
         this.source = source;
         this.source.addMatcherEditorListener(this.queuingMatcherEditorListener);
-    }
-
-    public Loadable getLoadable() {
-        return loadable;
-    }
-
-    public void setLoadable(Loadable loadable) {
-        this.loadable = loadable;
     }
 
     /**
@@ -179,7 +173,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
 
         // fetch the last matcher event - it is the basis of the MatcherEvent which must be returned
         // all that remains is to determine the type of the MatcherEvent to return
-        final Event<E> lastMatcherEvent = matcherEvents.get(matcherEvents.size() - 1);
+        final Event<E> lastMatcherEvent = matcherEvents.getLast();
         final int lastMatcherEventType = lastMatcherEvent.getType();
 
         // if the last MatcherEvent is a MATCH_ALL or MATCH_NONE type, we can safely return it immediately
@@ -188,8 +182,8 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
             boolean constrained = false;
             boolean relaxed = false;
 
-            for (Iterator<Event<E>> i = matcherEvents.iterator(); i.hasNext(); ) {
-                switch (i.next().getType()) {
+            for (Event<E> matcherEvent : matcherEvents) {
+                switch (matcherEvent.getType()) {
                     case Event.MATCH_ALL:
                         relaxed = true;
                         break;
@@ -236,15 +230,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
         }
 
         drainMatcherEventQueueJob = new DrainMatcherEventQueueJJob();
-        /*if (autoLoader) {
-            LoadingBackroundTask<Boolean> diag = LoadingBackroundTask.runInBackground(MainFrame.MF, "Applying Filters...", true, jobManager, drainMatcherEventQueueJob);
-            System.out.println("Set Modalitu");
-            diag.setModalityType(Dialog.ModalityType.MODELESS);
-            System.out.println("Set MOd Done");
-
-        } else {*/
-        this.jobManager.submitJob(drainMatcherEventQueueJob); //todo wrap to swingjjob?
-//        }
+        this.jobManager.submitJob(drainMatcherEventQueueJob);
     }
 
     /**
@@ -281,7 +267,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
 
         @Override
         protected Boolean compute() throws Exception {
-            loadable.setLoading(true, this);
+            loadable.setLoading(true);
             try {
                 while (true) {
                     checkForInterruption();
@@ -317,7 +303,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
                     }
                 }
             } finally {
-                loadable.setLoading(false, this);
+                loadable.setLoading(false);
             }
         }
     }

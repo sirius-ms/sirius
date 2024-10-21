@@ -23,13 +23,14 @@ import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTableView;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.StructurePreview;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class FingerprintPanel extends JPanel implements PanelDescription {
+public class FingerprintPanel extends LoadablePanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
@@ -43,7 +44,7 @@ public class FingerprintPanel extends JPanel implements PanelDescription {
 
     protected Logger logger = LoggerFactory.getLogger(FingerprintPanel.class);
     public FingerprintPanel(FingerprintList table) {
-        super(new BorderLayout());
+        super(new JPanel(new BorderLayout()));
 
         final FingerprintTableView north = new FingerprintTableView(table);
         JPanel south;
@@ -60,8 +61,10 @@ public class FingerprintPanel extends JPanel implements PanelDescription {
         south.setBorder(BorderFactory.createEmptyBorder(1,1,1,1));
         south.add(preview,BorderLayout.CENTER);
 
-        add(north, BorderLayout.CENTER);
-        add(south, BorderLayout.SOUTH);
+        getContent().add(north, BorderLayout.CENTER);
+        getContent().add(south, BorderLayout.SOUTH);
+
+        table.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }
 
 
