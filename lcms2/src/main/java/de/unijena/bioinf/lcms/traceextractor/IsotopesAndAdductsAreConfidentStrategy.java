@@ -39,7 +39,7 @@ public class IsotopesAndAdductsAreConfidentStrategy implements MassOfInterestCon
         float confidence = 0f;
         if (moi.isMultiCharged()) confidence = -1000f; // reject multiple charged ions for alignment
         if (moi.isIsotopePeak()) confidence -= 1000f; // reject isotope peaks
-        if(moi.getIsotopes()!=null) confidence += (moi.getIsotopes().isotopeIntensities.length-1)*50; // add score for each detected isotope peak
+        if(moi.getIsotopes()!=null && moi.getIsotopes().isotopeIntensities.length>0) confidence += (moi.getIsotopes().isotopeIntensities.length-1)*50; // add score for each detected isotope peak
         confidence += estimateConfidenceForAdducts(sample, moi, spectrum); // add score for each detected adduct
         return confidence;
     }

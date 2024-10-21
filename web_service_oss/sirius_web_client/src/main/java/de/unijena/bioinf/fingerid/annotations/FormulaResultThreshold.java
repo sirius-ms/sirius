@@ -26,8 +26,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Specifies if the list of Molecular Formula Identifications is filtered by a soft threshold
- * (calculateThreshold) before CSI:FingerID predictions are calculated.
+ * Specifies if the list of Molecular Formula Identifications is filtered by a soft threshold (calculateThreshold) before CSI:FingerID predictions are calculated.
  */
 
 public class FormulaResultThreshold implements Ms2ExperimentAnnotation {

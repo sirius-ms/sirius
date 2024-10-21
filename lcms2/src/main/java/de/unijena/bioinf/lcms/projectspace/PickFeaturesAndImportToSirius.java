@@ -89,7 +89,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             isotopes[k] = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace.getIsotopes()[k]);
         }
         // now extract the compounds
-        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes);
+        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes, tracker);
         if (features.length == 0) {
             removeMergedTrace(adapter, tid, isotopes);
             tracker.noFeatureFound(mergedTrace);
@@ -99,11 +99,11 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         return features;
     }
 
-    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds) {
+    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, Tracker tracker) {
         // first we use segmentation to split the trace into segments
         // when then apply this segments to all traces and isotopes
+        tracker.startExtractingCompounds(mergedSample, mergedTrace);
         TraceSegment[] traceSegments = segmentationStrategy.extractMergedSegments(traceSegmenter, mergedSample, mergedTrace);
-
         // if there is no compound found in the trace...
         if (traceSegments.length==0) return new AlignedFeatures[0];
 

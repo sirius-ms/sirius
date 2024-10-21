@@ -44,6 +44,7 @@ import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
@@ -65,6 +66,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
     private WriteableSpectralLibrary databaseAsSpecLib;
@@ -174,9 +176,15 @@ public class CustomDatabaseImporter {
             Ms2Experiment experiment = iterator.next();
             List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
 
-            String smiles = experiment.getAnnotation(Smiles.class)
-                    .map(Smiles::toString)
-                    .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
+            Optional<String> maybeSmiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString);
+
+            if (maybeSmiles.isEmpty()) {
+                log.warn("Record {} from {} does not contain SMILES. Skipping.", experiment.getName(), experiment.getSource());
+                continue;
+            }
+
+            String smiles = maybeSmiles.get();
+
             CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class)
                     .orElseGet(() -> CompoundMetaData.builder()
                             .compoundName(experiment.getName())

@@ -77,9 +77,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-                if (!selection.isSelectionEmpty())
-                    changeData(selection.getSelected().get(0));
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+                if (!selected.isEmpty())
+                    changeData(selected.getFirst());
                 else
                     changeData(null);
             }
@@ -120,7 +120,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                                 break;
                             index.incrementAndGet();
                         }
-                        //set selection
+                        //last change to interrupt before propagating change to edt
+                        checkForInterruption();
+
+                        //update selection
                         Jobs.runEDTAndWait(() -> {
                             if (index.get() < elementList.size())
                                 elementListSelectionModel.setSelectionInterval(index.get(), index.get());
@@ -128,7 +131,9 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                                 elementListSelectionModel.clearSelection();
                         });
                     } else {
-                        elementListSelectionModel.clearSelection();
+                        //last change to interrupt before propagating change to edt
+                        checkForInterruption();
+                        Jobs.runEDTAndWait(() -> elementListSelectionModel.clearSelection());
                     }
                     return true;
                 }

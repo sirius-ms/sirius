@@ -24,10 +24,8 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * use this parameter if you want to force to report at least
- * numberOfResultsToKeepPerIonization results per ionization.
- * if le 0, this parameter will have no effect and just the top
- * numberOfResultsToKeep results will be reported.
+ * Use this parameter if you want to force to report at least numberOfResultsToKeepPerIonization results per ionization.
+ * If set to 0, this parameter will have no effect and just the top numberOfResultsToKeep results will be reported.
  * */
 @DefaultProperty
 public class NumberOfCandidatesPerIonization implements Ms2ExperimentAnnotation {

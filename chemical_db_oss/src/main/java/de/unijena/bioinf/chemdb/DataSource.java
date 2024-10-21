@@ -55,10 +55,10 @@ public enum DataSource {
     BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "bloodexposome", "https://bloodexposome.org/#/description?qcid=%s", new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")),
     TeroMol("TeroMOL", 8388608,  "mol_id", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")),
 
-    PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null, null, null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
-    PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
-    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
-    PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONBIO("PubChem: bio and metabolites", 16777216,  null, null, null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
+    PUBCHEMANNOTATIONDRUG("PubChem: drug", 33554432,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem: safety and toxic", 67108864,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONFOOD("PubChem: food", 134217728,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
 
     LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", new Publication("Rutz A et al., The LOTUS initiative for open knowledge management in natural products research. eLife. 2022", "10.7554/eLife.70780")),
     FooDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?

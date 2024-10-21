@@ -4,7 +4,7 @@ plugins {
 
 version = "0.9-SNAPSHOT"
 
-//exclude from publishing
+// PUBLISHING DISABLED
 tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
 
 dependencies {

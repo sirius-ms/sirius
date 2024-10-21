@@ -23,7 +23,6 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import org.jetbrains.annotations.Nullable;
@@ -107,8 +106,8 @@ public class CollisionEnergy implements Serializable {
             if (value == null || value.isBlank())
                 return null;
             return fromString(value);
-        } catch (NumberFormatException e) {
-            LoggerFactory.getLogger(CollisionEnergy.class).error("Could not parse Collision Energy '" + value + "'. Try ignoring...");
+        } catch (Exception e) {
+            LoggerFactory.getLogger(CollisionEnergy.class).error("Could not parse Collision Energy '{}'. Error: {}. Try ignoring...", value, e.getMessage());
             return null;
         }
     }

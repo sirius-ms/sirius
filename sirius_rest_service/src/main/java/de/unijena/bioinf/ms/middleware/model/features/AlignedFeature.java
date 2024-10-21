@@ -19,9 +19,11 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
+import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,7 +42,7 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
     @Schema(enumAsRef = true, name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo}
+    public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo, computedTools}
 
     // identifier
     @NotNull
@@ -125,4 +127,11 @@ public class AlignedFeature {
      * True if any computation is modifying this feature or its results
      */
     protected boolean computing;
+
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
+                    "Specifies which tools have been executed for this feature. " +
+                    "Can be used to estimate which results can be expected. " +
+                            "Null if it was not requested und non-null otherwise.")
+    @JsonIgnoreProperties(value = { "alignedFeatureId" })
+    protected ComputedSubtools computedTools;
 }

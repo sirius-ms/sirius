@@ -57,7 +57,6 @@ public class ResultPanel extends JTabbedPane {
 
     public ResultPanel(final StructureList databaseStructureList, final StructureList combinedStructureListSubstructureView, final StructureList combinedStructureListDeNovoView, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
         super();
-        this.setToolTipText("Results");
 
         spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
