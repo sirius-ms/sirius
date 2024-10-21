@@ -20,30 +20,30 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
-import java.util.Vector;
+import java.util.function.Supplier;
 
 public class JListDropImage<T> extends JList<T> implements DropImage {
+
+    private Supplier<Boolean> isEmptyCheck = () -> getModel().getSize() == 0;
+    private Supplier<Boolean> noResultsCheck = () -> false;
 
     public JListDropImage(ListModel<T> dataModel) {
         super(dataModel);
     }
-
-    public JListDropImage(T[] listData) {
-        super(listData);
+    public JListDropImage(ListModel<T> dataModel, @NotNull Supplier<Boolean> isEmptyCheck, @NotNull Supplier<Boolean> noResultsCheck) {
+        super(dataModel);
+        this.isEmptyCheck = isEmptyCheck;
+        this.noResultsCheck = noResultsCheck;
     }
 
-    public JListDropImage(Vector<? extends T> listData) {
-        super(listData);
-    }
-
-    public JListDropImage() {
-    }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        paintDropImage(g, () -> getModel().getSize() == 0);
+        paintDropImage(g, isEmptyCheck, noResultsCheck);
     }
 }
