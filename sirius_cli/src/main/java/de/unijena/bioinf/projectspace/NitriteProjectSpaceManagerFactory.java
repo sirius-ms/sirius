@@ -40,12 +40,20 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
 
         if (projectLocation == null) {
             projectLocation = FileUtils.newTempFile("sirius-tmp-project-" + TsidCreator.getTsid(), SIRIUS_PROJECT_SUFFIX);
-            log.warn("No unique output location found. Writing output to Temporary folder: " + projectLocation.toString());
+            log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation.toString());
             if (Files.exists(projectLocation)) {
                 throw new IOException("Could not create new Project '" + projectLocation + "' because it already exists");
             }
         }
-
+        //add project file suffix if file not yet exists
+        if (!projectLocation.toString().endsWith(SIRIUS_PROJECT_SUFFIX)) {
+            if (!Files.exists(projectLocation)) {
+                String old = projectLocation.getFileName().toString();
+                String nu = old + SIRIUS_PROJECT_SUFFIX;
+                log.warn("Given project file '{}' does not contain the `{}` file extension. Renamed file to '{}'.", old, SIRIUS_PROJECT_SUFFIX, nu);
+                projectLocation = projectLocation.getParent().resolve(nu);
+            }
+        }
         return new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
     }
 
