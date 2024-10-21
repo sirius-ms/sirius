@@ -237,7 +237,7 @@ public class FeatureAnnotations {
   }
 
    /**
-   * Get specifiedDatabases
+   * List of databases that have been specified by for structure db search. Null if no structure db search has been performed.
    * @return specifiedDatabases
   **/
   @jakarta.annotation.Nullable
@@ -270,7 +270,7 @@ public class FeatureAnnotations {
   }
 
    /**
-   * Get expandedDatabases
+   * List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.
    * @return expandedDatabases
   **/
   @jakarta.annotation.Nullable
