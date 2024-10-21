@@ -43,13 +43,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * Created by fleisch on 15.05.17.
- */
 public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
-    public enum ViewState {NOT_COMPUTED, EMPTY, DATA}
+    public enum ViewState {NOT_COMPUTED, EMPTY, DATA, LOADING}
 
     private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 

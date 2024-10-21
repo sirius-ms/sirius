@@ -23,6 +23,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
@@ -92,7 +93,7 @@ public class GuiUtils {
         }
 
         //nicer times for tooltips
-        ToolTipManager.sharedInstance().setInitialDelay(250);
+        ToolTipManager.sharedInstance().setInitialDelay(500);
         ToolTipManager.sharedInstance().setDismissDelay(60000);
     }
 
@@ -238,15 +239,8 @@ public class GuiUtils {
 
     public static Dimension getEffectiveScreenSize(@NotNull GraphicsConfiguration c) {
         Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-//        Insets in = getScreenInsets(c);
         return new Dimension((int) Math.round(d.width * .8), (int) Math.round(d.height * .8));
     }
-
-   /* public static Insets getScreenInsets(@NotNull GraphicsConfiguration c) {
-        //height of the task bar
-        return Toolkit.getDefaultToolkit().getScreenInsets(c);
-    }*/
-
 
     public static JPanel newNoResultsComputedPanel() {
         return newNoResultsComputedPanel(null);
@@ -254,17 +248,6 @@ public class GuiUtils {
 
     public static JPanel newNoResultsComputedPanel(@Nullable String message) {
         JPanel p = new JPanel(new BorderLayout());
-//        JButton button = new ToolbarButton(SiriusActions.COMPUTE.getInstance());
-
-//        GridBagConstraints gbc = new GridBagConstraints();
-//        gbc.gridwidth = GridBagConstraints.REMAINDER;
-//        gbc.anchor = GridBagConstraints.NORTH;
-
-//        JPanel bp =  new JPanel(new GridBagLayout());
-//        bp.add(button, gbc);
-
-//        p.add(bp, BorderLayout.CENTER);
-
         JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         pp.add(new JLabel(message == null ? "No results Computed!" : message));
         p.add(pp, BorderLayout.SOUTH);
@@ -364,5 +347,35 @@ public class GuiUtils {
             box.setSelectedItem(defaultSelection);
 
         return box;
+    }
+
+    public static JPanel newLoadingPanel() {
+        return newLoadingPanel("Loading...");
+    }
+
+    public static JPanel newLoadingPanel(@Nullable String loadingMessage) {
+        return newLoadingPanel(Icons.ATOM_LOADER_200, loadingMessage);
+    }
+
+    public static JPanel newLoadingPanel(@NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Colors.BACKGROUND);
+        //todo transparency would be cool
+        panel.setOpaque(true);
+        JLabel iconLabel = new JLabel(filterAnimation, SwingUtilities.CENTER);
+        JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
+//        if (filter) {
+//            iconLabel = new JLabel(Icons.FILTER_LOADER_160, SwingUtilities.CENTER);
+//            Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
+//            label = new JLabel("Filtering...");
+//        } else {
+//            iconLabel = new JLabel(Icons.ATOM_LOADER_200, SwingUtilities.CENTER);
+//            Icons.ATOM_LOADER_200.setImageObserver(iconLabel);
+//            label = new JLabel("Loading...");
+//        }
+        panel.add(iconLabel, BorderLayout.CENTER);
+        if (label != null)
+            panel.add(label, BorderLayout.SOUTH);
+        return panel;
     }
 }
