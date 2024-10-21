@@ -39,6 +39,7 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
@@ -280,7 +281,10 @@ public final class BackgroundRuns {
     }
 
     private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
-        return withWriteLock(() -> {
+        StopWatch w = new StopWatch();
+        w.start();
+        log.info("Submitting computation of `{}` features.", runToSubmit.getAffectedFeatureIds().size());
+        BackgroundRunJob ret = withWriteLock(() -> {
             log.info("Locking Instances for Computation...");
             List<String> fids = null;
             try {
@@ -296,11 +300,12 @@ public final class BackgroundRuns {
             } catch (Exception e) {
                 // just in case something goes wrong during submission, then  we do not want to have locked instances
                 if (fids != null)
-                    computingInstances.addAll(fids);
+                    fids.forEach(computingInstances::remove);
                 throw e;
             }
         });
-
+        log.info("Computation of `{}` features submitted in `{}`.", runToSubmit.getAffectedFeatureIds().size(), w);
+        return ret;
     }
 
     public class BackgroundRunJob extends BasicJJob<Boolean> {

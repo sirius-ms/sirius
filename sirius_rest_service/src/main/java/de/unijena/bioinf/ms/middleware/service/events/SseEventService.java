@@ -117,7 +117,7 @@ public class SseEventService implements EventService<SseEmitter> {
                                         .id(TSID.fast().toString()));
 //                                System.out.println("Send event" + e.build().toString() + " to Client: " + emitter.toString()); //todo remove debug
                             } catch (IOException e) {
-                                logDebug("Error when sending event to client!", e);
+                                logWarn("Error when sending SSE from SIRIUS API!", e);
                                 emitter.completeWithError(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
                             }
                         }
