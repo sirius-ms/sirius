@@ -70,6 +70,10 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
         return countFeatures();
     }
 
+    default boolean isEmpty() {
+        return size() == 0;
+    }
+
     void close() throws IOException;
 
     /**
