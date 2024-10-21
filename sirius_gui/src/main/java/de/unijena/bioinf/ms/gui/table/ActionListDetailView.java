@@ -71,6 +71,7 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
         addToCenterCard(ActionList.ViewState.NOT_COMPUTED, GuiUtils.newNoResultsComputedPanel());
         addToCenterCard(ActionList.ViewState.EMPTY, GuiUtils.newEmptyResultsPanel());
+        addToCenterCard(ActionList.ViewState.LOADING, GuiUtils.newLoadingPanel("Fetching data..."));
         add(centerCardPanel, BorderLayout.CENTER);
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
     }
@@ -84,11 +85,11 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
         showCenterCard(name);
     }
 
-    protected void showCenterCard(@NotNull ActionList.ViewState name) {
+    public void showCenterCard(@NotNull ActionList.ViewState name) {
         showCenterCard(name.name());
     }
 
-    protected void showCenterCard(@NotNull String name) {
+    public void showCenterCard(@NotNull String name) {
         centerCard.show(centerCardPanel, name);
     }
 

@@ -18,15 +18,25 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.utils;
-
-import de.unijena.bioinf.jjobs.ProgressJJob;
-import org.jetbrains.annotations.Nullable;
+package de.unijena.bioinf.ms.gui.utils.loading;
 
 @FunctionalInterface
 public interface Loadable {
-    default void setLoading(boolean loading){
-        setLoading(loading, null);
+    boolean setLoading(boolean loading, boolean absolute);
+
+    default boolean setLoading(boolean loading){
+        return setLoading(loading, false);
     }
-    void setLoading(boolean loading, @Nullable ProgressJJob<?> loadingJob);
+
+    default boolean increaseLoading() {
+        return setLoading(true);
+    }
+
+    default boolean decreaseLoading() {
+        return setLoading(false);
+    }
+
+    default boolean disableLoading() {
+        return setLoading(false, true);
+    }
 }

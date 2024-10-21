@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 // FingerID Scheduler job does not manage dependencies between different  tools.
@@ -158,12 +159,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
             final BayesnetScoring[] scorings = NetUtils.tryAndWait(() -> {
                 BayesnetScoring[] s = new BayesnetScoring[idResults.size()];
+                final AtomicReference<InterruptedException> ex = new AtomicReference<>();
                 webAPI.executeBatch((api, client) -> {
                     for (int i = 0; i < idResults.size(); i++) {
                         try {//interrupt if canceled
                             checkForInterruption();
                         } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                            ex.set(e);
+                            return;
                         }
                         final FingerIdResult fingeridInput = idResults.get(i);
                         // fingerblast job: score candidate fingerprints against predicted fingerprint
@@ -176,6 +179,9 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                         );
                     }
                 });
+                if (ex.get() != null)
+                    throw ex.get();
+
                 return s;
             }, this::checkForInterruption);
 

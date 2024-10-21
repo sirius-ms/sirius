@@ -45,8 +45,8 @@ public class SummarizeSelectedAction extends SummarizeAllAction {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+                setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }
         });
     }
