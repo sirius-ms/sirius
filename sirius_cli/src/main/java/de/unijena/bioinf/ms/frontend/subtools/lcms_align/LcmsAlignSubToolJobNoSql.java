@@ -67,6 +67,7 @@ import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -75,6 +76,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
+    private static final Logger log = LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class);
     List<Path> inputFiles;
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
@@ -181,99 +183,111 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         updateProgress(totalProgress, progress,"Aligning runs");
         AlignmentBackbone bac = processing.align();
-        updateProgress(totalProgress, ++progress, "Merging runs");
-        ProcessedSample merged = processing.merge(bac);
-        DoubleArrayList avgAl = new DoubleArrayList();
-        System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
-        System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
+        HashMap<DataQuality, Integer> countMap;
+        try {
+            updateProgress(totalProgress, ++progress, "Merging runs");
+            ProcessedSample merged = processing.merge(bac);
+            DoubleArrayList avgAl = new DoubleArrayList();
+            System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
+            System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 
-        updateProgress(totalProgress, ++progress, "Importing features");
-        if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
-            System.err.println("No features found.");
-            progress += 2;
-            updateProgress(totalProgress, progress, "No features");
-            return;
-        }
-        importedFeatureIds = processing.getImportedFeatureIds();
-
-        updateProgress(totalProgress, ++progress,"Detecting adducts");
-        System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
-
-        final double allowedAdductRtDeviation;
-        if (bac.getSamples().length <= 3) {
-            FloatArrayList peakWidths = new FloatArrayList();
-            for (long fid : processing.getImportedFeatureIds()) {
-                ps.getStorage().getByPrimaryKey(fid, AlignedFeatures.class).ifPresent((feature)->{
-                    // here we can also obtain statistics if we need them
-                    Double v = feature.getFwhm();
-                    if (v!=null) peakWidths.add(v.floatValue());
-
-                });
+            updateProgress(totalProgress, ++progress, "Importing features");
+            if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
+                System.err.println("No features found.");
+                progress += 2;
+                updateProgress(totalProgress, progress, "No features");
+                return;
             }
-            float medianPeakWidth = 1;
-            if (!peakWidths.isEmpty()) {
-                peakWidths.sort(null);
-                medianPeakWidth = peakWidths.getFloat(peakWidths.size()/2);
-            }
-            allowedAdductRtDeviation = Math.max(1,medianPeakWidth);
-        } else {
-            allowedAdductRtDeviation = bac.getStatistics().getExpectedRetentionTimeDeviation();
-        }
-        LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use " + allowedAdductRtDeviation + " s as allowed deviation between adducts" );
+            importedFeatureIds = processing.getImportedFeatureIds();
 
-        AdductManager adductManager = new AdductManager(merged.getPolarity());
+            updateProgress(totalProgress, ++progress,"Detecting adducts");
+            System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
 
-        // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
-        // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
-        ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
-        {
-            final LongList importedCids = new LongArrayList();
-            AlignedFeatures[] alignedFeatures = store.findAllStr(AlignedFeatures.class)
-                            .filter(f -> f.getApexIntensity() != null)
-                            .filter(AbstractFeature::isRTInterval)
-                    .toArray(AlignedFeatures[]::new);
-            AdductNetwork network = new AdductNetwork(provider,alignedFeatures, adductManager, allowedAdductRtDeviation);
-            network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
-                    (compound) -> groupFeaturesToCompound(store, compound, importedCids));
-            importedCompoundIds = importedCids;
-        }
+            final double allowedAdductRtDeviation;
+            if (bac.getSamples().length <= 3) {
+                FloatArrayList peakWidths = new FloatArrayList();
+                for (long fid : processing.getImportedFeatureIds()) {
+                    ps.getStorage().getByPrimaryKey(fid, AlignedFeatures.class).ifPresent((feature)->{
+                        // here we can also obtain statistics if we need them
+                        Double v = feature.getFwhm();
+                        if (v!=null) peakWidths.add(v.floatValue());
 
-        updateProgress(totalProgress, ++progress, "Assessing data quality");
-        // quality assessment
-        HashMap<DataQuality, Integer> countMap = new HashMap<>();
-        for (DataQuality q : DataQuality.values()) {
-            countMap.put(q, 0);
-        }
-        final QualityAssessment qa = alignRuns ? new QualityAssessment(): new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
-        ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
-        store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
-        ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
-        store.findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
-            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
-                @Override
-                protected DataQuality compute() throws Exception {
-                    QualityReport report = QualityReport.withDefaultCategories(alignRuns);
-                    ps.fetchFeatures(feature);
-                    ps.fetchIsotopicFeatures(feature);
-                    ps.fetchMsData(feature);
-                    try {
-                        qa.addToReport(report, (MergedLCMSRun) merged.getRun(), feature, provider);
-                        report.setAlignedFeatureId(feature.getAlignedFeatureId());
-                        feature.setDataQuality(report.getOverallQuality());
-                        store.insert(report);
-                        store.upsert(feature);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return report.getOverallQuality();
+                    });
                 }
-            }));
-        });
-        jobs.forEach(x->{
-            DataQuality q = x.takeResult();
-            countMap.put(q, countMap.get(q)+1);
-        });
+                float medianPeakWidth = 1;
+                if (!peakWidths.isEmpty()) {
+                    peakWidths.sort(null);
+                    medianPeakWidth = peakWidths.getFloat(peakWidths.size()/2);
+                }
+                allowedAdductRtDeviation = Math.max(1,medianPeakWidth);
+            } else {
+                allowedAdductRtDeviation = bac.getStatistics().getExpectedRetentionTimeDeviation();
+            }
+            LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use {} s as allowed deviation between adducts", allowedAdductRtDeviation);
+
+            AdductManager adductManager = new AdductManager(merged.getPolarity());
+
+            // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
+            // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
+            ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
+            {
+                final LongList importedCids = new LongArrayList();
+                AlignedFeatures[] alignedFeatures = store.findAllStr(AlignedFeatures.class)
+                                .filter(f -> f.getApexIntensity() != null)
+                                .filter(AbstractFeature::isRTInterval)
+                        .toArray(AlignedFeatures[]::new);
+                AdductNetwork network = new AdductNetwork(provider,alignedFeatures, adductManager, allowedAdductRtDeviation);
+                network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
+                network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
+                importedCompoundIds = importedCids;
+            }
+
+            updateProgress(totalProgress, ++progress, "Assessing data quality");
+            // quality assessment
+            countMap = new HashMap<>();
+            for (DataQuality q : DataQuality.values()) {
+                countMap.put(q, 0);
+            }
+            final QualityAssessment qa = alignRuns ? new QualityAssessment(): new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
+            ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
+            store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
+            ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
+            store.findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
+                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
+                    @Override
+                    protected DataQuality compute() throws Exception {
+                        QualityReport report = QualityReport.withDefaultCategories(alignRuns);
+                        ps.fetchFeatures(feature);
+                        ps.fetchIsotopicFeatures(feature);
+                        ps.fetchMsData(feature);
+                        try {
+                            qa.addToReport(report, (MergedLCMSRun) merged.getRun(), feature, provider);
+                            report.setAlignedFeatureId(feature.getAlignedFeatureId());
+                            feature.setDataQuality(report.getOverallQuality());
+                            store.insert(report);
+                            store.upsert(feature);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        return report.getOverallQuality();
+                    }
+                }));
+            });
+            jobs.forEach(x->{
+                DataQuality q = x.takeResult();
+                countMap.put(q, countMap.get(q)+1);
+            });
+        } finally {
+            for (ProcessedSample sample : bac.getSamples()) {
+                try {
+                    logInfo("Deleting temporary sample storages...");
+                    sample.getStorage().close();
+                } catch (IOException e) {
+                    logError("Error closing sample storage {}", e, sample.getUid());
+                }
+            }
+        }
 
         System.out.printf(
                 """

@@ -11,13 +11,18 @@ import de.unijena.bioinf.lcms.merge.MergeStorage;
 import de.unijena.bioinf.lcms.spectrum.SpectrumStorage;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.statistics.SampleStatsDataType;
+import lombok.Getter;
+import lombok.Setter;
 import org.h2.mvstore.*;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
-public abstract class LCMSStorage{
+public abstract class LCMSStorage implements Closeable {
 
     private static Deviation DEFAULT_DEVIATION = new Deviation(10);
 
@@ -25,11 +30,11 @@ public abstract class LCMSStorage{
         return () -> {
             final File tempFile = File.createTempFile("sirius", ".mvstore");
             tempFile.deleteOnExit();
-            return new MVTraceStorage(tempFile.getAbsolutePath());
+            return new MVTraceStorage(tempFile.getAbsolutePath(), true);
         };
     }
     public static LCMSStorageFactory persistentStorage(File filename) throws IOException {
-        return () -> new MVTraceStorage(filename.getAbsolutePath());
+        return () -> new MVTraceStorage(filename.getAbsolutePath(), false);
     }
 
     public abstract void commit();
@@ -67,14 +72,20 @@ class MVTraceStorage extends LCMSStorage {
 
     private MVStore storage;
     private MVMap<Integer, SampleStats> statisticsObj;
+    @Setter
+    @Getter
     private ScanPointMapping mapping;
     private MvBasedAlignmentStorage alignmentStorage;
     private TraceStorage.MvTraceStorage traceStorage;
     private SpectrumStorage.MvSpectrumStorage spectrumStorage;
 
     private int cacheSizeInMegabytes;
+    private final boolean deleteOnClose;
+    private final String file;
 
-    public MVTraceStorage(String file) {
+    public MVTraceStorage(String file, boolean deleteOnClose) {
+        this.file = file;
+        this.deleteOnClose = deleteOnClose;
         MVStore.Builder builder = new MVStore.Builder();
         this.cacheSizeInMegabytes = getDefaultCacheSize();
         this.storage = builder.fileName(file).autoCommitDisabled().cacheSize(cacheSizeInMegabytes).open();
@@ -137,14 +148,6 @@ class MVTraceStorage extends LCMSStorage {
         return (int)Math.max(16, Math.min(memoryPerCore, 1024));
     }
 
-    public ScanPointMapping getMapping() {
-        return mapping;
-    }
-
-    public void setMapping(ScanPointMapping mapping) {
-        this.mapping = mapping;
-    }
-
     @Override
     public void setStatistics(SampleStats stats) {
         statisticsObj.put(0, stats);
@@ -190,4 +193,13 @@ class MVTraceStorage extends LCMSStorage {
         }
     }
 
+    @Override
+    public synchronized void close() throws IOException {
+        if (!storage.isClosed()) {
+            commit();
+            storage.close();
+            if (deleteOnClose)
+                Files.deleteIfExists(Path.of(file));
+        }
+    }
 }
