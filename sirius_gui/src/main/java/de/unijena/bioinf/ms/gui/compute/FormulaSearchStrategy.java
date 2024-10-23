@@ -299,6 +299,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         addStrategyChangeListener(s -> elementFilterPanel.setVisible(s != Strategy.PROVIDED));
 
         parameterBindings.put("CandidateFormulas", () -> strategy == Strategy.PROVIDED ? String.join(",", Arrays.stream(formulaListModel.toArray()).map(x -> (String) x).toList()) : ",");
+        //todo we will need a parameter binding to ignore the input file config in single-compute-mode. Hence, these CandidateFormulas are not overriden
 
         return card;
     }
