@@ -132,7 +132,7 @@ public class ImportAction extends AbstractGuiAction {
                             input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Preprocessing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import, find & align...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
 
                 task.awaitResult();
@@ -147,7 +147,7 @@ public class ImportAction extends AbstractGuiAction {
                             true,
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
                 task.awaitResult();
             }
