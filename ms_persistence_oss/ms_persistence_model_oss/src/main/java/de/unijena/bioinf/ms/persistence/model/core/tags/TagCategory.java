@@ -33,14 +33,10 @@ import java.util.List;
 @ToString
 public class TagCategory {
 
-    public enum ValueRange {
-        FIXED, VARIABLE
-    }
-
     @Getter
     @AllArgsConstructor
     public enum ValueType {
-        NONE(Void.class), BOOL(Boolean.class), INT(Integer.class), DOUBLE(Double.class), STRING(String.class);
+        NONE(Void.class), BOOL(Boolean.class), INT(Integer.class), DOUBLE(Double.class), STRING(String.class), DATE(Long.class), TIME(Long.class);
         private final Class<?> valueClass;
     }
 
@@ -55,10 +51,11 @@ public class TagCategory {
 
     private ValueType valueType;
 
-    private ValueRange valueRange;
-
     private List<?> possibleValues;
 
     private String categoryType;
+
+    @Builder.Default
+    private boolean editable = true;
 
 }
