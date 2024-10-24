@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.tags;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -29,6 +30,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Tag {
 
     @Id
@@ -38,8 +40,16 @@ public class Tag {
 
     private long taggedObjectId;
 
-    private long categoryId;
+    private String category;
 
-    private Object value;
+    private boolean bool;
+
+    private int int32;
+
+    private long int64;
+
+    private double real;
+
+    private String text;
 
 }

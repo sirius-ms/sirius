@@ -23,10 +23,11 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
@@ -46,20 +47,20 @@ public class Tag {
      * Name of the tag category
      */
     @NotNull
-    private String categoryName;
+    private String category;
 
     @Getter
     @Setter
     @SuperBuilder
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public abstract static class ValueTag<T> extends Tag {
+    public static class BoolTag extends Tag {
 
         /**
-         * Tag value
+         * Boolean value
          */
-        @Nullable
-        private T value;
+        @NotNull
+        private Boolean bool;
 
     }
 
@@ -68,8 +69,13 @@ public class Tag {
     @SuperBuilder
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class BoolTag extends ValueTag<Boolean> {
+    public static class IntTag extends Tag {
 
+        /**
+         * Integer value
+         */
+        @NotNull
+        private Integer integer;
     }
 
     @Getter
@@ -77,8 +83,12 @@ public class Tag {
     @SuperBuilder
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class IntTag extends ValueTag<Integer> {
+    public static class DoubleTag extends Tag {
 
+        /**
+         * Floating point value
+         */
+        private Double real;
     }
 
     @Getter
@@ -86,8 +96,12 @@ public class Tag {
     @SuperBuilder
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class DoubleTag extends ValueTag<Double> {
+    public static class StringTag extends Tag {
 
+        /**
+         * Text value
+         */
+        private String text;
     }
 
     @Getter
@@ -95,8 +109,25 @@ public class Tag {
     @SuperBuilder
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class StringTag extends ValueTag<String> {
+    public static class DateTag extends Tag {
 
+        /**
+         * Date value in format yyyy-mm-dd
+         */
+        private String date;
+    }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class TimeTag extends Tag {
+
+        /**
+         * Time value in format HH:mm:ss
+         */
+        private String time;
     }
 
 }

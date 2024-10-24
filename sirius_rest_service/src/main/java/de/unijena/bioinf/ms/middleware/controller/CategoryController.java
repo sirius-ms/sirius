@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -85,8 +86,27 @@ public class CategoryController {
      * @return the tag categories that have been added
      */
     @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagCategory> addCategories(@PathVariable String projectId, @Valid @RequestBody List<TagCategory> categories) {
-        return projectsProvider.getProjectOrThrow(projectId).addCategories(categories);
+    public List<TagCategory> addCategories(
+            @PathVariable String projectId,
+            @Valid @RequestBody List<TagCategoryImport> categories
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).addCategories(categories, true);
+    }
+
+    /**
+     * Add a possible value to the tag category in the project.
+     *
+     * @param projectId    project-space to add to.
+     * @param categoryName the tag category to add to
+     * @return the tag categories that have been added
+     */
+    @PutMapping(value = "/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TagCategory addPossibleValuesToCategory(
+            @PathVariable String projectId,
+            @PathVariable String categoryName,
+            @Valid @RequestBody List<?> possibleValues
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).addPossibleValuesToCategory(categoryName, possibleValues);
     }
 
     /**
@@ -97,7 +117,7 @@ public class CategoryController {
      */
     @DeleteMapping(value = "/{categoryName}")
     public void deleteCategories(@PathVariable String projectId, @PathVariable String categoryName) {
-        projectsProvider.getProjectOrThrow(projectId).deleteCategories(List.of(categoryName));
+        projectsProvider.getProjectOrThrow(projectId).deleteCategory(categoryName);
     }
 
 }

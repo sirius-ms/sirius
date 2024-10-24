@@ -21,93 +21,20 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
-@Builder
-@AllArgsConstructor
+@SuperBuilder
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TagCategory {
+public class TagCategory extends TagCategoryImport {
 
-    public enum ValueRange {
-        FIXED, VARIABLE
-    }
-
-    public enum ValueType {
-        NONE, BOOLEAN, INTEGER, DOUBLE, STRING
-    }
-
-    @NotNull
-    protected String name;
-
-    @NotNull
-    protected ValueType valueType;
-
-    @NotNull
     @Builder.Default
-    protected ValueRange valueRange = ValueRange.VARIABLE;
-
-    @Nullable
-    protected List<?> possibleValues;
-
-    @Nullable
-    protected String categoryType;
-
-    public static TagCategoryBuilder builder() {
-        return new TagCategoryBuilder() {
-            @Override
-            public TagCategory build() {
-                TagCategory category = super.build();
-                if (category.valueType == ValueType.NONE && category.possibleValues != null && !category.possibleValues.isEmpty()) {
-                    throw new IllegalArgumentException("No possible values allowed.");
-                }
-                if (category.valueRange == ValueRange.VARIABLE && category.possibleValues != null && !category.possibleValues.isEmpty()) {
-                    throw new IllegalArgumentException("No possible values allowed.");
-                }
-                if (category.valueRange == ValueRange.FIXED) {
-                    if (category.possibleValues == null || category.possibleValues.isEmpty()) {
-                        throw new IllegalArgumentException("No possible values provided.");
-                    }
-                    switch (category.valueType) {
-                        case BOOLEAN -> {
-                            for (Object o : category.possibleValues) {
-                                if (!(o instanceof Boolean)) {
-                                    throw new IllegalArgumentException(o + " is not a boolean.");
-                                }
-                            }
-                        }
-                        case INTEGER -> {
-                            for (Object o : category.possibleValues) {
-                                if (!(o instanceof Integer)) {
-                                    throw new IllegalArgumentException(o + " is not an integer.");
-                                }
-                            }
-                        }
-                        case DOUBLE -> {
-                            for (Object o : category.possibleValues) {
-                                if (!(o instanceof Double)) {
-                                    throw new IllegalArgumentException(o + " is not a double.");
-                                }
-                            }
-                        }
-                        case STRING -> {
-                            for (Object o : category.possibleValues) {
-                                if (!(o instanceof String)) {
-                                    throw new IllegalArgumentException(o + " is not a String.");
-                                }
-                            }
-                        }
-                    }
-                }
-                return category;
-            }
-        };
-    }
+    protected boolean editable = true;
 
 }

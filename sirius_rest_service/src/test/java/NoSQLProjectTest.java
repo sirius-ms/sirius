@@ -27,14 +27,23 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
-import de.unijena.bioinf.ms.middleware.model.tags.*;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
+import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
+import org.apache.lucene.search.Query;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.domain.Page;
@@ -42,7 +51,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -215,22 +228,19 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            Map<String, TagCategory> catIn = Map.of(
-                    "c0", TagCategory.builder().name("c0").valueType(TagCategory.ValueType.NONE).categoryType("foo").build(),
-                    "c1", TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).possibleValues(List.of(true, false)).build(),
-                    "c2", TagCategory.builder().name("c2").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.INTEGER).possibleValues(List.of(0, 1)).build(),
-                    "c3", TagCategory.builder().name("c3").valueRange(TagCategory.ValueRange.VARIABLE).valueType(TagCategory.ValueType.DOUBLE).build(),
-                    "c4", TagCategory.builder().name("c4").valueRange(TagCategory.ValueRange.VARIABLE).valueType(TagCategory.ValueType.STRING).build()
+            Map<String, TagCategoryImport> catIn = Map.of(
+                    "c0", TagCategoryImport.builder().name("c0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).categoryType("foo").build(),
+                    "c1", TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(true, false)).build(),
+                    "c2", TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, List.of(0, 1)).build(),
+                    "c3", TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
+                    "c4", TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
             );
 
             Assert.assertThrows(IllegalArgumentException.class, () -> project.addCategories(
-                    List.of(TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).build())
-            ));
-            Assert.assertThrows(IllegalArgumentException.class, () -> project.addCategories(
-                    List.of(TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).possibleValues(List.of(0, 1)).build())
-            ));
+                    List.of(TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(0, 1)).build()), true)
+            );
 
-            Map<String, TagCategory> cats0 = project.addCategories(new ArrayList<>(catIn.values())).stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
+            Map<String, TagCategory> cats0 = project.addCategories(new ArrayList<>(catIn.values()), true).stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
             Map<String, TagCategory> cats1 = project.findCategories().stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
             Map<String, TagCategory> cats2 = catIn.keySet().stream().map(project::findCategoryByName).collect(Collectors.toMap(TagCategory::getName, Function.identity()));
 
@@ -245,11 +255,10 @@ public class NoSQLProjectTest {
             Assert.assertEquals(catIn.size(), cats2.size());
 
             for (String name : catIn.keySet()) {
-                TagCategory c = catIn.get(name);
+                TagCategoryImport c = catIn.get(name);
                 for (Map<String, TagCategory> comparison : List.of(cats0, cats1, cats2)) {
                     TagCategory cc = comparison.get(name);
                     Assert.assertEquals(c.getName(), cc.getName());
-                    Assert.assertEquals(c.getValueRange(), cc.getValueRange());
                     Assert.assertEquals(c.getValueType(), cc.getValueType());
                     Assert.assertEquals(c.getPossibleValues(), cc.getPossibleValues());
                     if (c.getPossibleValues() != null && cc.getPossibleValues() != null) {
@@ -259,11 +268,31 @@ public class NoSQLProjectTest {
             }
 
             Assert.assertNull(project.addCategories(
-                    List.of(TagCategory.builder().name("cfoo0").valueType(TagCategory.ValueType.NONE).build())
+                    List.of(TagCategoryImport.builder().name("cfoo0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).build()), true
             ).getFirst().getPossibleValues());
             Assert.assertNull(project.addCategories(
-                    List.of(TagCategory.builder().name("cfoo1").valueType(TagCategory.ValueType.BOOLEAN).valueRange(TagCategory.ValueRange.VARIABLE).build())
+                    List.of(TagCategoryImport.builder().name("cfoo1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, null).build()), false
             ).getFirst().getPossibleValues());
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteCategory("foo"));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteCategory("cfoo1"));
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo0", List.of(true, false)));
+
+            List<String> before = project.findCategories().stream().map(TagCategory::getName).toList();
+            project.deleteCategory("cfoo0");
+            List<String> after = project.findCategories().stream().map(TagCategory::getName).toList();
+
+            Assert.assertEquals(before.size() - 1, after.size());
+            Assert.assertFalse(after.contains("cfoo0"));
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo0", List.of(true, false)));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo1", List.of(true, false)));
+
+            project.addPossibleValuesToCategory("c4", List.of("sample", "blank"));
+            Assert.assertArrayEquals(new String[]{"sample", "blank"}, project.findCategoryByName("c4").getPossibleValues().toArray(String[]::new));
+            project.addPossibleValuesToCategory("c4", List.of("qq"));
+            Assert.assertArrayEquals(new String[]{"sample", "blank", "qq"}, project.findCategoryByName("c4").getPossibleValues().toArray(String[]::new));
 
         }
 
@@ -295,36 +324,36 @@ public class NoSQLProjectTest {
                     );
 
             ps.getStorage().insertAll(runs);
-            Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
+            final Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
 
-            project.addCategories(List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
+            project.addCategories(List.of(TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, null).build()), true);
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c1").value(true).build()));
-            Map<String, Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().category("c1").bool(true).build()));
+            Map<String, ? extends Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
-            Assert.assertEquals(true, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(true, ((Tag.BoolTag) tags.get("c1")).getBool());
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c1").value(false).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().category("c1").bool(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
-            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c2").value(false).build())));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.DoubleTag.builder().categoryName("c1").value(2.0).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().category("c2").bool(false).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.DoubleTag.builder().category("c1").real(2.0).build())));
 
             project.addCategories(List.of(
-                    TagCategory.builder().name("c2").valueType(TagCategory.ValueType.INTEGER).build(),
-                    TagCategory.builder().name("c3").valueType(TagCategory.ValueType.DOUBLE).build(),
-                    TagCategory.builder().name("c4").valueType(TagCategory.ValueType.STRING).build()
-            ));
+                    TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, null).build(),
+                    TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
+                    TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
+            ), true);
 
             project.addTagsToObject(Run.class, run.getRunId(), List.of(
-                    Tag.BoolTag.builder().categoryName("c1").value(false).build(),
-                    Tag.IntTag.builder().categoryName("c2").value(42).build(),
-                    Tag.DoubleTag.builder().categoryName("c3").value(42.0).build(),
-                    Tag.StringTag.builder().categoryName("c4").value("42").build()
+                    Tag.BoolTag.builder().category("c1").bool(false).build(),
+                    Tag.IntTag.builder().category("c2").integer(42).build(),
+                    Tag.DoubleTag.builder().category("c3").real(42.0).build(),
+                    Tag.StringTag.builder().category("c4").text("42").build()
             ));
 
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
@@ -333,36 +362,63 @@ public class NoSQLProjectTest {
             Assert.assertTrue(tags.get("c2") instanceof Tag.IntTag);
             Assert.assertTrue(tags.get("c3") instanceof Tag.DoubleTag);
             Assert.assertTrue(tags.get("c4") instanceof Tag.StringTag);
-            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
-            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getValue());
-            Assert.assertEquals(Double.valueOf(42.0), ((Tag.DoubleTag) tags.get("c3")).getValue());
-            Assert.assertEquals("42", ((Tag.StringTag) tags.get("c4")).getValue());
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
+            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getInteger());
+            Assert.assertEquals(Double.valueOf(42.0), ((Tag.DoubleTag) tags.get("c3")).getReal());
+            Assert.assertEquals("42", ((Tag.StringTag) tags.get("c4")).getText());
 
-            project.deleteTagsFromObject(Run.class, run.getRunId(), List.of("c3", "c4"));
+            project.deleteTagsFromObject(run.getRunId(), List.of("c3", "c4"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(2, tags.size());
             Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
             Assert.assertTrue(tags.get("c2") instanceof Tag.IntTag);
-            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
-            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getValue());
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
+            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getInteger());
 
-            project.deleteCategories(List.of("c2", "c3"));
+            Page<Run> page = project.findObjectsByTag(Run.class, "category:c2 AND integer:{12 TO 43}", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Assert.assertEquals(1, page.getTotalElements());
+            Assert.assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
+            Assert.assertEquals(2, tags.size());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertTrue(tags.get("c2") instanceof Tag.IntTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
+            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getInteger());
+
+            project.deleteCategory("c2");
+            project.deleteCategory("c3");
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
-            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
 
-            Page<Run> page = project.findObjectsByTag(Run.class, "c1", TagFilter.TaggedFilter.builder().build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTag(Run.class, "category:c1", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
-            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getBool());
 
-            page = project.findObjectsByTag(Run.class, "c1", TagFilter.TaggedFilter.builder().value(false).build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            project.addCategories(List.of(
+                    TagCategoryImport.builder().name("date").valueTypeAndPossibleValues(TagCategory.ValueType.DATE, null).build(),
+                    TagCategoryImport.builder().name("time").valueTypeAndPossibleValues(TagCategory.ValueType.TIME, null).build()
+                    ), true);
+
+            final Run run2 = project.findRunById(Long.toString(runs.get(1).getRunId()));
+            project.addTagsToObject(Run.class, run2.getRunId(), List.of(
+                    Tag.DateTag.builder().category("date").date("2024-12-31").build(),
+                    Tag.TimeTag.builder().category("time").time("12:00:00").build()
+            ));
+
+            page = project.findObjectsByTag(Run.class, "date:[2024-12-01 TO 2025-12-31] OR time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
-            Assert.assertEquals(Long.toString(runs.get(1).getRunId()), page.getContent().getFirst().getRunId());
+            Assert.assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
+            tags = page.get().findFirst().orElseThrow().getTags();
+            Assert.assertEquals(2, tags.size());
+            Assert.assertTrue(tags.get("date") instanceof Tag.DateTag);
+            Assert.assertEquals("2024-12-31", ((Tag.DateTag) tags.get("date")).getDate());
+            Assert.assertTrue(tags.get("time") instanceof Tag.TimeTag);
+            Assert.assertEquals("12:00:00", ((Tag.TimeTag) tags.get("time")).getTime());
         }
 
     }
@@ -391,20 +447,20 @@ public class NoSQLProjectTest {
             List<Run> sample = runs.subList(2 * runs.size() / 3, runs.size());
 
             project.addCategories(List.of(
-                    TagCategory.builder().categoryType("sampleCat").name("sample type").valueType(TagCategory.ValueType.STRING).valueRange(TagCategory.ValueRange.FIXED).possibleValues(List.of("control", "blank", "sample")).build()
-            ));
+                    TagCategoryImport.builder().categoryType("sampleCat").name("sample type").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("control", "blank", "sample")).build()
+            ), true);
 
             StopWatch watch = new StopWatch();
             watch.start();
 
             for (Run run : control) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("control").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().category("sample type").text("control").build()));
             }
             for (Run run : blank) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("blank").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().category("sample type").text("blank").build()));
             }
             for (Run run : sample) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("sample").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().category("sample type").text("sample").build()));
             }
 
             watch.stop();
@@ -413,12 +469,38 @@ public class NoSQLProjectTest {
             watch = new StopWatch();
             watch.start();
 
-            project.findObjectsByTag(Run.class, "sample type", TagFilter.StringTagFilter.builder().equals("sample").build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            project.findObjectsByTag(Run.class, "category:\"sample type\" AND text:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
 
             watch.stop();
             System.out.println("FIND OBJ BY TAGS: " + watch);
         }
 
+    }
+
+    @Test
+    public void testFilterTranslation() throws IOException, NoSuchMethodException, QueryNodeException, InvocationTargetException, IllegalAccessException {
+        StandardQueryParser parser = new StandardQueryParser(new StandardAnalyzer());
+        parser.setPointsConfigMap(Map.of(
+                "integer", new PointsConfig(new DecimalFormat(), Long.class),
+                "real", new PointsConfig(new DecimalFormat(), Double.class),
+                "date", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class),
+                "time", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Long.class)
+        ));
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            Method convert = project.getClass().getDeclaredMethod("convertQuery", Query.class);
+            convert.setAccessible(true);
+            Query query = parser.parse("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00", "text");
+            Filter filter = (Filter) convert.invoke(project, query);
+            Assert.assertEquals(
+                    "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, 2147483647]) OR real:[-Infinity, 3.0] OR int64:[1704063600000, 1704063600000] OR int64:[1696111200000, 1703372400000] OR int64:[-9223372036854775808, 1640991599999] OR int64:[39600000, 39600000] OR int64:[39600000, 46799999] OR int64:[-9223372036854775808, 32399999])",
+                    filter.toString()
+            );
+        }
     }
 
 }
