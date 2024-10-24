@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Getter
 @Slf4j
@@ -54,8 +55,14 @@ public class TestSetup {
                 throw new RuntimeException("Failed to create temp directory", e);
             }
         }
+
         // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
-        Path bootJar = dataDir.getParent().getParent().getParent().getParent().getParent().getParent().resolve("sirius_rest_service/build/libs/sirius_rest_service-6.0.6-SNAPSHOT-boot.jar");
+        Path bootJar;
+        try (Stream<Path> walker = Files.walk(dataDir.getParent().getParent().getParent().getParent().getParent().getParent()
+                .resolve("sirius_rest_service/build/libs"))){
+            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).findAny().orElseThrow();
+        }
+
         siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
     }
 
