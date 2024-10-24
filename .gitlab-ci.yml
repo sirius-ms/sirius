@@ -30,6 +30,7 @@ test:
     - apt-get update
     - apt-get install -y liblapack3
     - ./gradlew test --stacktrace
+#    - ./gradlew testSDK --stacktrace  //todo add sdk tests
   artifacts:
     when: always
     reports:
