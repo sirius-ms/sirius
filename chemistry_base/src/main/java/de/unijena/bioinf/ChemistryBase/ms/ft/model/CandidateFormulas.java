@@ -45,7 +45,7 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
     protected final Map<Class, Set<MolecularFormula>> providersToNeutralFormulas;
 
     @NotNull
-    protected final Set<Class> inputFileProviders;
+    protected final Set<Class> userInputProviders;
 
     @NotNull
     protected final Set<Class> spectralLibraryMatchProviders;
@@ -55,25 +55,26 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
         //if we actually want to allow measured formulas, this should be done explicitly, not implicitly
         this.providersToNeutralFormulas = new HashMap<>();
         this.providersToNeutralFormulas.put(provider, neutralformulas);
-        this.inputFileProviders = new HashSet<>();
+        this.userInputProviders = new HashSet<>();
         this.spectralLibraryMatchProviders = new HashSet<>();
 
     }
 
-    private CandidateFormulas(@NotNull Map<Class, Set<MolecularFormula>> providersToNeutralFormulas, @NotNull Set<Class> inputFileProviders, @NotNull Set<Class> spectralLibraryMatchProviders) {
+    private CandidateFormulas(@NotNull Map<Class, Set<MolecularFormula>> providersToNeutralFormulas, @NotNull Set<Class> userInputProviders, @NotNull Set<Class> spectralLibraryMatchProviders) {
         //if non-private contructor is needed, add check for only neutral formulas
         //if we actually want to allow measured formulas, this should be done explicitly, not implicitly
         this.providersToNeutralFormulas = providersToNeutralFormulas;
-        this.inputFileProviders = inputFileProviders;
+        this.userInputProviders = userInputProviders;
         this.spectralLibraryMatchProviders = spectralLibraryMatchProviders;
     }
 
     /**
+     * This method should only be used by the CLI and input file parsers to created CandidateFormulas. Hence, the provider sources remain known.
      * @param value Set of Molecular Formulas to be used as candidates for molecular formula estimation with SIRIUS
      */
     @DefaultInstanceProvider
-    public static CandidateFormulas newInstance(@DefaultProperty List<String> value) {
-        return CandidateFormulas.of(value, DefaultInstanceProvider.class);
+    private static CandidateFormulas newInstance(@DefaultProperty List<String> value) {
+        return CandidateFormulas.of(value, DefaultInstanceProvider.class, true, false);
     }
 
     public void addAndMerge(CandidateFormulas otherFormulas) {
@@ -81,7 +82,7 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
             Set<MolecularFormula> neutralFormulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
             neutralFormulas.addAll(otherFormulas.providersToNeutralFormulas.get(provider));
         }
-        inputFileProviders.addAll(otherFormulas.inputFileProviders);
+        userInputProviders.addAll(otherFormulas.userInputProviders);
         spectralLibraryMatchProviders.addAll(spectralLibraryMatchProviders);
     }
 
@@ -90,10 +91,10 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
         formulas.addAll(neutralFormulas);
     }
 
-    public void addAndMergeInputFileFormulas(Set<MolecularFormula> neutralFormulas, Class provider) {
+    public void addAndMergeUserInputFormulas(Set<MolecularFormula> neutralFormulas, Class provider) {
         Set<MolecularFormula> formulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
         formulas.addAll(neutralFormulas);
-        inputFileProviders.add(provider);
+        userInputProviders.add(provider);
     }
 
     public void addAndMergeSpectralLibrarySearchFormulas(Set<MolecularFormula> neutralFormulas, Class provider) {
@@ -106,8 +107,8 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
         return Whiteset.ofNeutralizedFormulas(collectFormulasFromAllProviders(), CandidateFormulas.class);
     }
 
-    public Whiteset getWhitesetOfInputFileCandidates() {
-        return Whiteset.ofNeutralizedFormulas(getCandidatesFromInputFile(), CandidateFormulas.class);
+    public Whiteset getWhitesetOfUserInputCandidates() {
+        return Whiteset.ofNeutralizedFormulas(getCandidatesFromUserInput(), CandidateFormulas.class);
     }
 
     public Whiteset getWhitesetOfSpectralLibaryMatches() {
@@ -122,6 +123,10 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
         return providersToNeutralFormulas.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
     }
 
+    public String getFormulaListAsString() {
+        return getFormulas().stream().map(Objects::toString).collect(Collectors.joining(","));
+    }
+
     public int numberOfFormulas() {
         return providersToNeutralFormulas.values().stream().mapToInt(Set::size).sum();
     }
@@ -131,14 +136,14 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
     }
 
     /**
-     * @return true if candidate formulas were provided by inputFileProviders such as JenaMsParser
+     * @return true if candidate formulas (non-empty set) were provided by user input such as file parser (JenaMsParser, MgfPaser) or CLI / API parameter
      */
-    public boolean hasInputFileProvider() {
-        return inputFileProviders.size()>0;
+    public boolean hasUserInputProvider() {
+        return userInputProviders.size()>0 && providersToNeutralFormulas.entrySet().stream().filter((entry -> userInputProviders.contains(entry.getKey()))).anyMatch(entry -> entry.getValue().size()>0);
     }
 
-    private Set<MolecularFormula> getCandidatesFromInputFile() {
-        return providersToNeutralFormulas.entrySet().stream().filter((entry -> inputFileProviders.contains(entry.getKey()))).flatMap(e -> e.getValue().stream()).collect(Collectors.toSet());
+    private Set<MolecularFormula> getCandidatesFromUserInput() {
+        return providersToNeutralFormulas.entrySet().stream().filter((entry -> userInputProviders.contains(entry.getKey()))).flatMap(e -> e.getValue().stream()).collect(Collectors.toSet());
     }
 
     public boolean hasSpectralLibraryMatchProvidersProvider() {
@@ -159,7 +164,7 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
         return of(formulas, provider, false, false);
     }
 
-    public static CandidateFormulas of(List<String> formulas, Class provider, boolean isInputFileProvider,  boolean isSpectralLibrarySearchProvider) {
+    public static CandidateFormulas of(List<String> formulas, Class provider, boolean isUserInputProvider,  boolean isSpectralLibrarySearchProvider) {
         final Set<MolecularFormula> fs = formulas.stream().map(s -> {
             try {
                 return MolecularFormula.parse(s);
@@ -169,7 +174,7 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
             }
         }).filter(Objects::nonNull).collect(Collectors.toSet());
         CandidateFormulas cf =  new CandidateFormulas(fs, provider);
-        if (isInputFileProvider) cf.inputFileProviders.add(provider);
+        if (isUserInputProvider) cf.userInputProviders.add(provider);
         if (isSpectralLibrarySearchProvider) cf.spectralLibraryMatchProviders.add(provider);
         return cf;
     }
