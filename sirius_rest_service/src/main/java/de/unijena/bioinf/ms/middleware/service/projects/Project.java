@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagFilter;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
@@ -149,11 +149,11 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, String categoryName, TagFilter filter, Pageable pageable, @NotNull EnumSet<O> optFields);
+    <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
 
     List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags);
 
-    void deleteTagsFromObject(Class<?> taggable, String objectId, List<String> categoryNames);
+    void deleteTagsFromObject(String objectId, List<String> categoryNames);
 
     List<TagCategory> findCategories();
 
@@ -161,11 +161,11 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     TagCategory findCategoryByName(String categoryName);
 
-    List<TagCategory> addCategories(List<TagCategory> categories);
+    List<TagCategory> addCategories(List<TagCategoryImport> categories, boolean editable);
 
-    void deleteCategories(List<String> categoryNames);
+    void deleteCategory(String categoryName);
 
-    // tags: add/delete category, add tag to run
+    TagCategory addPossibleValuesToCategory(String categoryName, List<?> values);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

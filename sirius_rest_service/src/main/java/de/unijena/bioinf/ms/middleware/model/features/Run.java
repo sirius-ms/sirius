@@ -21,12 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
-import de.unijena.bioinf.ms.persistence.model.core.run.Fragmentation;
-import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
-import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -72,6 +67,6 @@ public class Run {
      * Key: tag category, value: tag
      */
     @Schema(nullable = true)
-    protected Map<String, Tag> tags;
+    protected Map<String, ? extends Tag> tags;
 
 }
