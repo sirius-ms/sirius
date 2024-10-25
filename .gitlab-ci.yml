@@ -29,7 +29,7 @@ unitTests:
   script:
     - ./gradlew test --stacktrace
   artifacts:
-    when: always
+    when: on_failure
     reports:
       junit: "**/build/test-results/test/TEST-*.xml"
 
@@ -40,9 +40,21 @@ integrationTests:
   script:
     - ./gradlew integrationTest --stacktrace
   artifacts:
-    when: always
+    when: on_failure
     reports:
       junit: "**/build/test-results/integrationTest/TEST-*.xml"
+
+acceptanceTests:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: test-app
+  when: manual
+  script:
+    - ./gradlew acceptanceTest --stacktrace
+  artifacts:
+    when: on_failure
+    reports:
+      junit: "**/build/test-results/acceptanceTest/TEST-*.xml"
 
 buildLinux64:
   variables:
