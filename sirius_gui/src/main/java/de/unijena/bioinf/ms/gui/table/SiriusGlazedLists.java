@@ -36,7 +36,7 @@ public class SiriusGlazedLists {
         multiUpdate(list, null);
     }
     public static <E> void multiUpdate(EventList<E> list, @Nullable Set<E> elementsToUpdate) {
-        list.getReadWriteLock().readLock().lock();
+        list.getReadWriteLock().writeLock().lock();
         try {
             final ListEventAssembler<E> eventAssembler = new ListEventAssembler<>(list, list.getPublisher());
             eventAssembler.beginEvent();
@@ -46,7 +46,7 @@ public class SiriusGlazedLists {
             }
             eventAssembler.commitEvent();
         } finally {
-            list.getReadWriteLock().readLock().unlock();
+            list.getReadWriteLock().writeLock().unlock();
         }
     }
 
