@@ -60,7 +60,8 @@ public class TestSetup {
         Path bootJar;
         try (Stream<Path> walker = Files.walk(dataDir.getParent().getParent().getParent().getParent().getParent().getParent()
                 .resolve("sirius_rest_service/build/libs"))){
-            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).findAny().orElseThrow();
+            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).findAny()
+                    .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
         }
 
         siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
