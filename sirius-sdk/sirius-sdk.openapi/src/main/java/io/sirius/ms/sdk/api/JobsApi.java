@@ -533,6 +533,70 @@ public class JobsApi {
         return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap);
     }
     /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getJobConfigNamesRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return apiClient.invokeAPI("/api/job-config-names", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<String> getJobConfigNames() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return ResponseEntity&lt;List&lt;String&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<String>> getJobConfigNamesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getJobConfigNamesWithResponseSpec() throws WebClientResponseException {
+        return getJobConfigNamesRequestCreation();
+    }
+    /**
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s

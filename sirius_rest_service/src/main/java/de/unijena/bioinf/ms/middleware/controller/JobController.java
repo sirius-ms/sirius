@@ -255,6 +255,21 @@ public class JobController {
         }
     }
 
+    /**
+     * Get all (non-default) job configuration names
+     */
+    @GetMapping(value = "/job-config-names", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<String> getJobConfigNames() {
+        try {
+            return FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
+                    .map(p -> p.getFileName().toString())
+                    .map(f -> f.replaceFirst("\\.json$", ""))
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.", e);
+        }
+    }
 
     /**
      * Request job configuration with given name.

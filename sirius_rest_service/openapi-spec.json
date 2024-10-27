@@ -4949,6 +4949,31 @@
         }
       }
     },
+    "/api/job-config-names": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get all (non-default) job configuration names",
+        "description": "Get all (non-default) job configuration names",
+        "operationId": "getJobConfigNames",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/info": {
       "get": {
         "tags": [
