@@ -1723,8 +1723,9 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output",
+            "description": "if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
@@ -4912,8 +4913,9 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output",
+            "description": "if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
