@@ -47,8 +47,8 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete job from
         String jobId = "jobId_example"; // String | of the job to be deleted
-        Boolean cancelIfRunning = true; // Boolean | If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-        Boolean awaitDeletion = true; // Boolean | If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+        Boolean cancelIfRunning = true; // Boolean | If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+        Boolean awaitDeletion = true; // Boolean | If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
         try {
             apiInstance.deleteJob(projectId, jobId, cancelIfRunning, awaitDeletion);
         } catch (ApiException e) {
@@ -69,8 +69,8 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete job from | |
 | **jobId** | **String**| of the job to be deleted | |
-| **cancelIfRunning** | **Boolean**| If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
-| **awaitDeletion** | **Boolean**| If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
+| **cancelIfRunning** | **Boolean**| If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
+| **awaitDeletion** | **Boolean**| If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
 
 ### Return type
 
@@ -182,8 +182,8 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete jobs from
-        Boolean cancelIfRunning = true; // Boolean | If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-        Boolean awaitDeletion = true; // Boolean | If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+        Boolean cancelIfRunning = true; // Boolean | If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+        Boolean awaitDeletion = true; // Boolean | If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
         try {
             apiInstance.deleteJobs(projectId, cancelIfRunning, awaitDeletion);
         } catch (ApiException e) {
@@ -203,8 +203,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete jobs from | |
-| **cancelIfRunning** | **Boolean**| If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
-| **awaitDeletion** | **Boolean**| If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
+| **cancelIfRunning** | **Boolean**| If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
+| **awaitDeletion** | **Boolean**| If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
 
 ### Return type
 
@@ -364,7 +364,7 @@ No authorization required
 
 ## getJobConfig
 
-> JobSubmission getJobConfig(name, includeConfigMap)
+> JobSubmission getJobConfig(name, includeConfigMap, moveParametersToConfigMap)
 
 Request job configuration with given name.
 
@@ -387,9 +387,10 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
         try {
-            JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap);
+            JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfig");
@@ -408,7 +409,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **name** | **String**| name of the job-config to return | |
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
+| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
 
 ### Return type
 
@@ -454,7 +456,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         try {
             List<JobSubmission> result = apiInstance.getJobConfigs(includeConfigMap);
             System.out.println(result);
@@ -474,7 +476,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
+| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
 
 ### Return type
 

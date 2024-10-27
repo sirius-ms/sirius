@@ -638,7 +638,7 @@
           {
             "name": "cancelIfRunning",
             "in": "query",
-            "description": "If true job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
+            "description": "If true, job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -648,7 +648,7 @@
           {
             "name": "awaitDeletion",
             "in": "query",
-            "description": "If true request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
+            "description": "If true, request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1723,9 +1723,19 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
+            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
             "required": false,
             "deprecated": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "moveParametersToConfigMap",
+            "in": "query",
+            "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters",
+            "required": false,
             "schema": {
               "type": "boolean",
               "default": false
@@ -2299,7 +2309,7 @@
           {
             "name": "cancelIfRunning",
             "in": "query",
-            "description": "If true job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
+            "description": "If true, job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -2309,7 +2319,7 @@
           {
             "name": "awaitDeletion",
             "in": "query",
-            "description": "If true request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
+            "description": "If true, request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -4913,7 +4923,7 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
+            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
             "required": false,
             "deprecated": true,
             "schema": {
