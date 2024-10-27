@@ -387,7 +387,7 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output
+        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         try {
             JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap);
             System.out.println(result);
@@ -408,7 +408,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **name** | **String**| name of the job-config to return | |
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output | [optional] [default to false] |
+| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
 
 ### Return type
 
@@ -454,7 +454,7 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output
+        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         try {
             List<JobSubmission> result = apiInstance.getJobConfigs(includeConfigMap);
             System.out.println(result);
@@ -474,7 +474,7 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output | [optional] [default to false] |
+| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
 
 ### Return type
 

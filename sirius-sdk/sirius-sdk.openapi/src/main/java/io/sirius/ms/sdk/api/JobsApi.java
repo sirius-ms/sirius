@@ -452,7 +452,7 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -492,7 +492,7 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -506,7 +506,7 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -520,7 +520,7 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -531,7 +531,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -564,7 +564,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -577,7 +577,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseEntity&lt;List&lt;JobSubmission&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -590,7 +590,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

@@ -237,12 +237,12 @@ public class JobController {
     /**
      * Request all available job configurations
      *
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return list of available {@link JobSubmission}s
      */
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public List<JobSubmission> getJobConfigs(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    public List<JobSubmission> getJobConfigs(@Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
@@ -273,12 +273,12 @@ public class JobController {
      * Request job configuration with given name.
      *
      * @param name             name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return {@link JobSubmission} for given name.
      */
     @GetMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobSubmission getJobConfig(@PathVariable @NotNull String name, @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    public JobSubmission getJobConfig(@PathVariable @NotNull String name, @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
