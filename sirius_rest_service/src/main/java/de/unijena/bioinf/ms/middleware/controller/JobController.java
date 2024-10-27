@@ -243,28 +243,15 @@ public class JobController {
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<JobSubmission> getJobConfigs(@Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
-            List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile).map(config -> {
-                try (InputStream inputStream = Files.newInputStream(config)) {
-                    return mapper.readValue(inputStream, JobSubmission.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).collect(Collectors.toList()));
+            List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
+                    .map(this::readFromFile).collect(Collectors.toList()));
 
             if (!includeConfigMap) js.forEach(j -> j.setConfigMap(null));
 
             return js;
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof IOException) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when parsing job-config files.", e.getCause());
-            } else {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error.", e.getCause());
-            }
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.", e);
         }
     }
 
@@ -282,19 +269,12 @@ public class JobController {
         if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
-        if (Files.notExists(config) || !Files.isRegularFile(config))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job-config with name '" + name + "' does not exist.");
 
-        try (InputStream s = Files.newInputStream(config)) {
-            JobSubmission js = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    .readValue(s, JobSubmission.class);
-            if (!includeConfigMap) js.setConfigMap(null);
-            return js;
-
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when reading job-config file '" + config + "'.", e);
-
+        JobSubmission js = readFromFile(config);
+        if (!includeConfigMap) {
+            js.setConfigMap(null);
         }
+        return js;
     }
 
     /**
@@ -335,5 +315,17 @@ public class JobController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void deleteJobConfig(@PathVariable String name) throws IOException {
         Files.deleteIfExists(Workspace.runConfigDir.resolve(name + ".json"));
+    }
+
+    private JobSubmission readFromFile(Path path) {
+        if (Files.notExists(path) || !Files.isRegularFile(path))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job-config '" + path + "' does not exist.");
+
+        try (InputStream s = Files.newInputStream(path)) {
+            return new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .readValue(s, JobSubmission.class);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when reading job-config file '" + path + "'.", e);
+        }
     }
 }
