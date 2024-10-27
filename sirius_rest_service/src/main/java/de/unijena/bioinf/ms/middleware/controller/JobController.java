@@ -154,7 +154,7 @@ public class JobController {
                                   @RequestParam(required = false) @Nullable Boolean recompute,
                                   @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) {
-        final JobSubmission js = getJobConfig(jobConfigName, true);
+        final JobSubmission js = getJobConfig(jobConfigName, true, false);
         js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
@@ -185,9 +185,9 @@ public class JobController {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      *
      * @param projectId       project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     * @param awaitDeletion   If true, request will block until deletion succeeded or failed.
      *                        If the job is still running the request will wait until the job has finished.
      */
 
@@ -207,9 +207,9 @@ public class JobController {
      *
      * @param projectId       project-space to delete job from
      * @param jobId           of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     * @param awaitDeletion   If true, request will block until deletion succeeded or failed.
      *                        If the job is still running the request will wait until the job has finished.
      */
     @DeleteMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -237,7 +237,7 @@ public class JobController {
     /**
      * Request all available job configurations
      *
-     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return list of available {@link JobSubmission}s
      */
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -260,17 +260,23 @@ public class JobController {
      * Request job configuration with given name.
      *
      * @param name             name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return {@link JobSubmission} for given name.
      */
     @GetMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobSubmission getJobConfig(@PathVariable @NotNull String name, @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    public JobSubmission getJobConfig(@PathVariable @NotNull String name,
+                                      @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
+                                      @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
         if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
 
         JobSubmission js = readFromFile(config);
+        if (moveParametersToConfigMap) {
+            js.mergeCombinedConfigMap();
+        }
         if (!includeConfigMap) {
             js.setConfigMap(null);
         }
