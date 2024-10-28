@@ -226,12 +226,21 @@ public class JobController {
      * Request default job configuration
      *
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return {@link JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
-        return JobSubmission.createDefaultInstance(includeConfigMap);
+    public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
+                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
+        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap);
+        if (moveParametersToConfigMap) {
+            js.mergeCombinedConfigMap();
+        }
+        if (!includeConfigMap) {
+            js.setConfigMap(null);
+        }
+        return js;
     }
 
     /**
@@ -284,7 +293,7 @@ public class JobController {
     public JobSubmission getJobConfig(@PathVariable @NotNull String name,
                                       @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
                                       @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
-        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap);
+        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
 

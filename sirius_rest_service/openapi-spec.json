@@ -5057,6 +5057,16 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "moveParametersToConfigMap",
+            "in": "query",
+            "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
