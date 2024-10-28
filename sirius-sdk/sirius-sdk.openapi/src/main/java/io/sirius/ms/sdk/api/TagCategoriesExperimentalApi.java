@@ -3,6 +3,7 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.TagCategory;
+import io.sirius.ms.sdk.model.TagCategoryImport;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,15 +27,15 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TagCategoriesApi {
+public class TagCategoriesExperimentalApi {
     private ApiClient apiClient;
 
-    public TagCategoriesApi() {
+    public TagCategoriesExperimentalApi() {
         this(new ApiClient());
     }
 
     @Autowired
-    public TagCategoriesApi(ApiClient apiClient) {
+    public TagCategoriesExperimentalApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
@@ -51,19 +52,19 @@ public class TagCategoriesApi {
      * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
-     * @param tagCategory the tag categories to be added
+     * @param tagCategoryImport the tag categories to be added
      * @return List&lt;TagCategory&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addCategoriesRequestCreation(String projectId, List<TagCategory> tagCategory) throws WebClientResponseException {
-        Object postBody = tagCategory;
+    private ResponseSpec addCategoriesRequestCreation(String projectId, List<TagCategoryImport> tagCategoryImport) throws WebClientResponseException {
+        Object postBody = tagCategoryImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'tagCategory' is set
-        if (tagCategory == null) {
-            throw new WebClientResponseException("Missing the required parameter 'tagCategory' when calling addCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'tagCategoryImport' is set
+        if (tagCategoryImport == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tagCategoryImport' when calling addCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -95,13 +96,13 @@ public class TagCategoriesApi {
      * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
-     * @param tagCategory the tag categories to be added
+     * @param tagCategoryImport the tag categories to be added
      * @return List&lt;TagCategory&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<TagCategory> addCategories(String projectId, List<TagCategory> tagCategory) throws WebClientResponseException {
+    public List<TagCategory> addCategories(String projectId, List<TagCategoryImport> tagCategoryImport) throws WebClientResponseException {
         ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
-        return addCategoriesRequestCreation(projectId, tagCategory).bodyToFlux(localVarReturnType).collectList().block();
+        return addCategoriesRequestCreation(projectId, tagCategoryImport).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -109,13 +110,13 @@ public class TagCategoriesApi {
      * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
-     * @param tagCategory the tag categories to be added
+     * @param tagCategoryImport the tag categories to be added
      * @return ResponseEntity&lt;List&lt;TagCategory&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<TagCategory>> addCategoriesWithHttpInfo(String projectId, List<TagCategory> tagCategory) throws WebClientResponseException {
+    public ResponseEntity<List<TagCategory>> addCategoriesWithHttpInfo(String projectId, List<TagCategoryImport> tagCategoryImport) throws WebClientResponseException {
         ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
-        return addCategoriesRequestCreation(projectId, tagCategory).toEntityList(localVarReturnType).block();
+        return addCategoriesRequestCreation(projectId, tagCategoryImport).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -123,12 +124,105 @@ public class TagCategoriesApi {
      * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
-     * @param tagCategory the tag categories to be added
+     * @param tagCategoryImport the tag categories to be added
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addCategoriesWithResponseSpec(String projectId, List<TagCategory> tagCategory) throws WebClientResponseException {
-        return addCategoriesRequestCreation(projectId, tagCategory);
+    public ResponseSpec addCategoriesWithResponseSpec(String projectId, List<TagCategoryImport> tagCategoryImport) throws WebClientResponseException {
+        return addCategoriesRequestCreation(projectId, tagCategoryImport);
+    }
+    /**
+     * Add a possible value to the tag category in the project.
+     * Add a possible value to the tag category in the project.
+     * <p><b>200</b> - the tag categories that have been added
+     * @param projectId project-space to add to.
+     * @param categoryName the tag category to add to
+     * @param requestBody The requestBody parameter
+     * @return TagCategory
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addPossibleValuesToCategoryRequestCreation(String projectId, String categoryName, List<Object> requestBody) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addPossibleValuesToCategory", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'categoryName' is set
+        if (categoryName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling addPossibleValuesToCategory", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling addPossibleValuesToCategory", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("categoryName", categoryName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/categories/{categoryName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Add a possible value to the tag category in the project.
+     * Add a possible value to the tag category in the project.
+     * <p><b>200</b> - the tag categories that have been added
+     * @param projectId project-space to add to.
+     * @param categoryName the tag category to add to
+     * @param requestBody The requestBody parameter
+     * @return TagCategory
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TagCategory addPossibleValuesToCategory(String projectId, String categoryName, List<Object> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
+        return addPossibleValuesToCategoryRequestCreation(projectId, categoryName, requestBody).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Add a possible value to the tag category in the project.
+     * Add a possible value to the tag category in the project.
+     * <p><b>200</b> - the tag categories that have been added
+     * @param projectId project-space to add to.
+     * @param categoryName the tag category to add to
+     * @param requestBody The requestBody parameter
+     * @return ResponseEntity&lt;TagCategory&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TagCategory> addPossibleValuesToCategoryWithHttpInfo(String projectId, String categoryName, List<Object> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
+        return addPossibleValuesToCategoryRequestCreation(projectId, categoryName, requestBody).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Add a possible value to the tag category in the project.
+     * Add a possible value to the tag category in the project.
+     * <p><b>200</b> - the tag categories that have been added
+     * @param projectId project-space to add to.
+     * @param categoryName the tag category to add to
+     * @param requestBody The requestBody parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addPossibleValuesToCategoryWithResponseSpec(String projectId, String categoryName, List<Object> requestBody) throws WebClientResponseException {
+        return addPossibleValuesToCategoryRequestCreation(projectId, categoryName, requestBody);
     }
     /**
      * Delete tag categories with the given names from the specified project-space.
