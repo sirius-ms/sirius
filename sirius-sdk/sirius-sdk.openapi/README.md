@@ -203,11 +203,11 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project.
-*RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space.
-*RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
-*RunsApi* | [**getRunsPaged**](docs/RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space.
-*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tagged/{categoryName} | Get objects by tag.
+*RunsExperimentalApi* | [**addTags**](docs/RunsExperimentalApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project.
+*RunsExperimentalApi* | [**deleteTags**](docs/RunsExperimentalApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space.
+*RunsExperimentalApi* | [**getRun**](docs/RunsExperimentalApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
+*RunsExperimentalApi* | [**getRunsPaged**](docs/RunsExperimentalApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space.
+*RunsExperimentalApi* | [**objectsByTag**](docs/RunsExperimentalApi.md#objectsByTag) | **GET** /api/projects/{projectId}/runs/tagged | Get objects by tag
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
@@ -218,17 +218,19 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**importIntoDatabaseAsJob**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
-*TagCategoriesApi* | [**addCategories**](docs/TagCategoriesApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | Add tag categories to the project.
-*TagCategoriesApi* | [**deleteCategories**](docs/TagCategoriesApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given names from the specified project-space.
-*TagCategoriesApi* | [**getCategories**](docs/TagCategoriesApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space.
-*TagCategoriesApi* | [**getCategoriesByType**](docs/TagCategoriesApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space.
-*TagCategoriesApi* | [**getCategoryByName**](docs/TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | Get tag category by name in the given project-space.
+*TagCategoriesExperimentalApi* | [**addCategories**](docs/TagCategoriesExperimentalApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | Add tag categories to the project.
+*TagCategoriesExperimentalApi* | [**addPossibleValuesToCategory**](docs/TagCategoriesExperimentalApi.md#addPossibleValuesToCategory) | **PUT** /api/projects/{projectId}/categories/{categoryName} | Add a possible value to the tag category in the project.
+*TagCategoriesExperimentalApi* | [**deleteCategories**](docs/TagCategoriesExperimentalApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given names from the specified project-space.
+*TagCategoriesExperimentalApi* | [**getCategories**](docs/TagCategoriesExperimentalApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space.
+*TagCategoriesExperimentalApi* | [**getCategoriesByType**](docs/TagCategoriesExperimentalApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space.
+*TagCategoriesExperimentalApi* | [**getCategoryByName**](docs/TagCategoriesExperimentalApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | Get tag category by name in the given project-space.
 
 
 ## Documentation for Models
 
  - [AccountCredentials](docs/AccountCredentials.md)
  - [AccountInfo](docs/AccountInfo.md)
+ - [AddTagsRequestInner](docs/AddTagsRequestInner.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)
@@ -241,7 +243,6 @@ Class | Method | HTTP request | Description
  - [BasicSpectrum](docs/BasicSpectrum.md)
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
  - [BoolTag](docs/BoolTag.md)
- - [BoolTagFilter](docs/BoolTagFilter.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)
  - [Category](docs/Category.md)
@@ -262,9 +263,9 @@ Class | Method | HTTP request | Description
  - [ConsensusCriterionDeNovo](docs/ConsensusCriterionDeNovo.md)
  - [DBLink](docs/DBLink.md)
  - [DataQuality](docs/DataQuality.md)
+ - [DateTag](docs/DateTag.md)
  - [Deviation](docs/Deviation.md)
  - [DoubleTag](docs/DoubleTag.md)
- - [DoubleTagFilter](docs/DoubleTagFilter.md)
  - [Feature](docs/Feature.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
@@ -278,7 +279,6 @@ Class | Method | HTTP request | Description
  - [Info](docs/Info.md)
  - [InstrumentProfile](docs/InstrumentProfile.md)
  - [IntTag](docs/IntTag.md)
- - [IntTagFilter](docs/IntTagFilter.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
  - [Item](docs/Item.md)
  - [Job](docs/Job.md)
@@ -291,7 +291,6 @@ Class | Method | HTTP request | Description
  - [LossEdge](docs/LossEdge.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
- - [ObjectsByTagRequest](docs/ObjectsByTagRequest.md)
  - [PageAlignedFeature](docs/PageAlignedFeature.md)
  - [PageCompound](docs/PageCompound.md)
  - [PageFormulaCandidate](docs/PageFormulaCandidate.md)
@@ -309,7 +308,6 @@ Class | Method | HTTP request | Description
  - [QuantificationTable](docs/QuantificationTable.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
- - [RunTagsValue](docs/RunTagsValue.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
@@ -322,7 +320,6 @@ Class | Method | HTTP request | Description
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
  - [StringTag](docs/StringTag.md)
- - [StringTagFilter](docs/StringTagFilter.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)
@@ -330,9 +327,11 @@ Class | Method | HTTP request | Description
  - [StructureDbSearch](docs/StructureDbSearch.md)
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
+ - [Tag](docs/Tag.md)
  - [TagCategory](docs/TagCategory.md)
- - [TaggedFilter](docs/TaggedFilter.md)
+ - [TagCategoryImport](docs/TagCategoryImport.md)
  - [Term](docs/Term.md)
+ - [TimeTag](docs/TimeTag.md)
  - [Timeout](docs/Timeout.md)
  - [Trace](docs/Trace.md)
  - [TraceSet](docs/TraceSet.md)

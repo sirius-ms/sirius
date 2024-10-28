@@ -37,7 +37,9 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/runs")
-@Tag(name = "Runs", description = "This API allows accessing LC/MS runs.")
+@Tag(name = "Runs (EXPERIMENTAL)", description = "This API allows accessing LC/MS runs." +
+        "All Endpoints are experimental and not part of the stable API specification. " +
+        "These endpoints can change at any time, even in minor updates.")
 public class RunController extends TagController<Run, Run.OptField> {
 
     @Autowired

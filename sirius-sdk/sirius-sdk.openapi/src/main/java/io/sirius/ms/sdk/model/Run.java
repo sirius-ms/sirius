@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.RunTagsValue;
+import io.sirius.ms.sdk.model.AddTagsRequestInner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ public class Run {
   private List<String> massAnalyzers;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
-  private Map<String, RunTagsValue> tags;
+  private Map<String, AddTagsRequestInner> tags;
 
   public Run() {
   }
@@ -225,13 +225,13 @@ public class Run {
     this.massAnalyzers = massAnalyzers;
   }
 
-  public Run tags(Map<String, RunTagsValue> tags) {
+  public Run tags(Map<String, AddTagsRequestInner> tags) {
     
     this.tags = tags;
     return this;
   }
 
-  public Run putTagsItem(String key, RunTagsValue tagsItem) {
+  public Run putTagsItem(String key, AddTagsRequestInner tagsItem) {
     if (this.tags == null) {
       this.tags = new HashMap<>();
     }
@@ -247,14 +247,14 @@ public class Run {
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Map<String, RunTagsValue> getTags() {
+  public Map<String, AddTagsRequestInner> getTags() {
     return tags;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TAGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTags(Map<String, RunTagsValue> tags) {
+  public void setTags(Map<String, AddTagsRequestInner> tags) {
     this.tags = tags;
   }
 

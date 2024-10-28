@@ -31,15 +31,19 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   TagCategory.JSON_PROPERTY_NAME,
+  TagCategory.JSON_PROPERTY_DESCRIPTION,
   TagCategory.JSON_PROPERTY_VALUE_TYPE,
-  TagCategory.JSON_PROPERTY_VALUE_RANGE,
   TagCategory.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagCategory.JSON_PROPERTY_CATEGORY_TYPE
+  TagCategory.JSON_PROPERTY_CATEGORY_TYPE,
+  TagCategory.JSON_PROPERTY_EDITABLE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TagCategory {
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
+
+  public static final String JSON_PROPERTY_DESCRIPTION = "description";
+  private String description;
 
   /**
    * Gets or Sets valueType
@@ -53,7 +57,11 @@ public class TagCategory {
     
     DOUBLE("DOUBLE"),
     
-    STRING("STRING");
+    STRING("STRING"),
+    
+    DATE("DATE"),
+    
+    TIME("TIME");
 
     private String value;
 
@@ -85,49 +93,14 @@ public class TagCategory {
   public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
   private ValueTypeEnum valueType;
 
-  /**
-   * Gets or Sets valueRange
-   */
-  public enum ValueRangeEnum {
-    FIXED("FIXED"),
-    
-    VARIABLE("VARIABLE");
-
-    private String value;
-
-    ValueRangeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static ValueRangeEnum fromValue(String value) {
-      for (ValueRangeEnum b : ValueRangeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
-  public static final String JSON_PROPERTY_VALUE_RANGE = "valueRange";
-  private ValueRangeEnum valueRange;
-
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
   private List<Object> possibleValues = new ArrayList<>();
 
   public static final String JSON_PROPERTY_CATEGORY_TYPE = "categoryType";
   private String categoryType;
+
+  public static final String JSON_PROPERTY_EDITABLE = "editable";
+  private Boolean editable;
 
   public TagCategory() {
   }
@@ -157,6 +130,31 @@ public class TagCategory {
     this.name = name;
   }
 
+  public TagCategory description(String description) {
+    
+    this.description = description;
+    return this;
+  }
+
+   /**
+   * Get description
+   * @return description
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getDescription() {
+    return description;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_DESCRIPTION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public TagCategory valueType(ValueTypeEnum valueType) {
     
     this.valueType = valueType;
@@ -180,31 +178,6 @@ public class TagCategory {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setValueType(ValueTypeEnum valueType) {
     this.valueType = valueType;
-  }
-
-  public TagCategory valueRange(ValueRangeEnum valueRange) {
-    
-    this.valueRange = valueRange;
-    return this;
-  }
-
-   /**
-   * Get valueRange
-   * @return valueRange
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE_RANGE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public ValueRangeEnum getValueRange() {
-    return valueRange;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_VALUE_RANGE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValueRange(ValueRangeEnum valueRange) {
-    this.valueRange = valueRange;
   }
 
   public TagCategory possibleValues(List<Object> possibleValues) {
@@ -265,6 +238,31 @@ public class TagCategory {
     this.categoryType = categoryType;
   }
 
+  public TagCategory editable(Boolean editable) {
+    
+    this.editable = editable;
+    return this;
+  }
+
+   /**
+   * Get editable
+   * @return editable
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEditable() {
+    return editable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEditable(Boolean editable) {
+    this.editable = editable;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -275,15 +273,16 @@ public class TagCategory {
     }
     TagCategory tagCategory = (TagCategory) o;
     return Objects.equals(this.name, tagCategory.name) &&
+        Objects.equals(this.description, tagCategory.description) &&
         Objects.equals(this.valueType, tagCategory.valueType) &&
-        Objects.equals(this.valueRange, tagCategory.valueRange) &&
         Objects.equals(this.possibleValues, tagCategory.possibleValues) &&
-        Objects.equals(this.categoryType, tagCategory.categoryType);
+        Objects.equals(this.categoryType, tagCategory.categoryType) &&
+        Objects.equals(this.editable, tagCategory.editable);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, valueType, valueRange, possibleValues, categoryType);
+    return Objects.hash(name, description, valueType, possibleValues, categoryType, editable);
   }
 
   @Override
@@ -291,10 +290,11 @@ public class TagCategory {
     StringBuilder sb = new StringBuilder();
     sb.append("class TagCategory {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
-    sb.append("    valueRange: ").append(toIndentedString(valueRange)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
     sb.append("    categoryType: ").append(toIndentedString(categoryType)).append("\n");
+    sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("}");
     return sb.toString();
   }

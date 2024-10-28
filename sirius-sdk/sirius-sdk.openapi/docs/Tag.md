@@ -7,7 +7,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**categoryName** | **String** |  |  [optional] |
+|**category** | **String** | Name of the tag category |  [optional] |
+|**type** | **String** |  |  |
 
 
 

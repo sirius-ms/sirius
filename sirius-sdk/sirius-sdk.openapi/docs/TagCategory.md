@@ -8,10 +8,11 @@
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
 |**name** | **String** |  |  [optional] |
+|**description** | **String** |  |  [optional] |
 |**valueType** | [**ValueTypeEnum**](#ValueTypeEnum) |  |  [optional] |
-|**valueRange** | [**ValueRangeEnum**](#ValueRangeEnum) |  |  [optional] |
 |**possibleValues** | **List&lt;Object&gt;** |  |  [optional] |
 |**categoryType** | **String** |  |  [optional] |
+|**editable** | **Boolean** |  |  [optional] |
 
 
 
@@ -24,15 +25,8 @@
 | INTEGER | &quot;INTEGER&quot; |
 | DOUBLE | &quot;DOUBLE&quot; |
 | STRING | &quot;STRING&quot; |
-
-
-
-## Enum: ValueRangeEnum
-
-| Name | Value |
-|---- | -----|
-| FIXED | &quot;FIXED&quot; |
-| VARIABLE | &quot;VARIABLE&quot; |
+| DATE | &quot;DATE&quot; |
+| TIME | &quot;TIME&quot; |
 
 
 
