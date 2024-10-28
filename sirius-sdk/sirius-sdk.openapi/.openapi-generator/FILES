@@ -26,6 +26,7 @@ docs/CompoundClasses.md
 docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundsApi.md
+docs/ComputedSubtools.md
 docs/ConfidenceMode.md
 docs/ConnectionCheck.md
 docs/ConnectionError.md
@@ -169,6 +170,7 @@ src/main/java/io/sirius/ms/sdk/model/CompoundClassType.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClasses.java
 src/main/java/io/sirius/ms/sdk/model/CompoundImport.java
 src/main/java/io/sirius/ms/sdk/model/CompoundOptField.java
+src/main/java/io/sirius/ms/sdk/model/ComputedSubtools.java
 src/main/java/io/sirius/ms/sdk/model/ConfidenceMode.java
 src/main/java/io/sirius/ms/sdk/model/ConnectionCheck.java
 src/main/java/io/sirius/ms/sdk/model/ConnectionError.java
@@ -256,3 +258,5 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
+src/test/java/io/sirius/ms/sdk/api/ExperimentalApiTest.java
+src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java

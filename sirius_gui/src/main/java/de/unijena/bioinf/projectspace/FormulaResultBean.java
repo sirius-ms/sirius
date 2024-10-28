@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -362,11 +363,9 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return Optional.ofNullable(getCanopusResults().second());
     }
 
+    private final static Comparator<Integer> RANK_COMPARATOR = Comparator.nullsLast(Comparator.naturalOrder());
     @Override
     public int compareTo(FormulaResultBean o) {
-        return Double.compare(
-                o.getSiriusScore().orElse(Double.NaN),
-                getSiriusScore().orElse(Double.NaN)
-        );
+        return RANK_COMPARATOR.compare(getRank().orElse(null), o.getRank().orElse(null));
     }
 }

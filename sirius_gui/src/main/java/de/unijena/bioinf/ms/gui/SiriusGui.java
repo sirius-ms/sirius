@@ -73,7 +73,7 @@ public class SiriusGui {
         this.connectionMonitor = connectionMonitor;
         this.siriusClient = siriusClient;
         properties = new GuiProperties();
-        projectManager = new GuiProjectManager(projectId, this.siriusClient, properties);
+        projectManager = new GuiProjectManager(projectId, this.siriusClient, properties, this);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
 

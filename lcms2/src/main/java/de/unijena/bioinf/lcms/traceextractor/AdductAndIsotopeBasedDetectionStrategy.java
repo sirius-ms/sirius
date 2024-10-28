@@ -61,7 +61,7 @@ public class AdductAndIsotopeBasedDetectionStrategy implements TraceDetectionStr
         }
 
         for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
-            for (int maximum : apexDetection.detectMaxima(statistics, trace)) {
+            for (int maximum : apexDetection.detectMaxima(statistics, trace, new int[0])) {
                 SimpleSpectrum spec = sample.getStorage().getSpectrumStorage().getSpectrum(maximum);
                 // isotopes
                 detectIsotopes(sample, callback, spec, maximum, trace.averagedMz());

@@ -27,6 +27,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+// ATTENTION: This class is also used in public Nightsky API please modify with care and check implications for API.
+
 @SuperBuilder
 @Getter
 @Setter

@@ -110,6 +110,7 @@ public class BatchComputeDialog extends JDialog {
                 // make subtool config panels
                 formulaIDConfigPanel = tmp;
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
+                final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
                 zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
                 fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
@@ -139,12 +140,27 @@ public class BatchComputeDialog extends JDialog {
 
                     });
                     addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+                    zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
                 }
 
                 if (ms2) {
+                    final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
+
                     addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
+                    fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
+
                     JPanel searchRow = addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
                     addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
+                    csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+                    msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+
+                    // computing formulaId will discard fingerprints, so we need to enable it for structure search
+                    formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> {
+                        if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
+                            fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
+                            fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
+                        }
+                    });
                 }
             }
             // make south panel with Recompute/Compute/Abort
@@ -398,7 +414,7 @@ public class BatchComputeDialog extends JDialog {
                     if (finalComps != null && !finalComps.isEmpty())
                         jobSubmission.setAlignedFeatureIds(finalComps.stream()
                                 .map(InstanceBean::getFeatureId).toList());
-                    Job job = gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
+                    gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(getClass()).error("Error when starting Computation.", e);
                     new ExceptionDialog(mf(), "Error when starting Computation: " + e.getMessage());

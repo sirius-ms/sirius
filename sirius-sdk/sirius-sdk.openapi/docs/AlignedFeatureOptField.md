@@ -15,5 +15,7 @@
 
 * `TOPANNOTATIONSDENOVO` (value: `"topAnnotationsDeNovo"`)
 
+* `COMPUTEDTOOLS` (value: `"computedTools"`)
+
 
 

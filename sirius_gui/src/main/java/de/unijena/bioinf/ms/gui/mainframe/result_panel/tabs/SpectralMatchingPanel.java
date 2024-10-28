@@ -25,6 +25,8 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,18 +34,20 @@ import java.awt.*;
 
 import static de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel.*;
 
-public class SpectralMatchingPanel extends JPanel implements PanelDescription {
+public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
 
 
     private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
+    @NotNull
+    private final LoadablePanel loadablePanel;
 
 
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
+
         this.spectraVisualizationPanel = new SpectraVisualizationPanel(MS2_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY, MS2_MERGED_DISPLAY);
         this.tableView = new SpectralMatchingTableView(matchList);
-
         this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<SpectralMatchBean> selections = (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource();
             selections.getSelected().stream().findFirst().ifPresentOrElse(
@@ -55,7 +59,14 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
         major.setDividerLocation(250);
-        add(major, BorderLayout.CENTER);
+        loadablePanel = new LoadablePanel(major);
+        add(loadablePanel, BorderLayout.CENTER);
+        matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
+    }
+
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return loadablePanel.setLoading(loading, absolute);
     }
 
     @Override

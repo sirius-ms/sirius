@@ -27,18 +27,29 @@ import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
 public interface DropImage {
-    BufferedImage BACKGROUND = Icons.DRAG_N_DROP_IMAGE_160();
+    BufferedImage EMPTY_DROP = Icons.DRAG_N_DROP_IMAGE_160();
+    BufferedImage NO_FILTER_RESULTS = Icons.NO_RESULT_IMAGE_160();
 
-    default void paintDropImage(Graphics g, Supplier<Boolean> onlyIf) {
-        if (onlyIf.get()) {
-            if (BACKGROUND != null) {
-                Graphics2D g2d = (Graphics2D) g.create();
-                int x = getWidth() / 2 - BACKGROUND.getWidth() / 2;
-                int y = getHeight() / 2 - BACKGROUND.getHeight() / 2;
-                g2d.drawImage(BACKGROUND, null, x, y);
-                g2d.dispose();
-            }
+    default void paintDropImage(Graphics g, Supplier<Boolean> isEmpty) {
+        paintDropImage(g, isEmpty, () -> false);
+    }
+
+    default void paintDropImage(Graphics g, Supplier<Boolean> isEmpty, Supplier<Boolean> noResults) {
+        BufferedImage image = null;
+        if (isEmpty.get()) {
+            image = EMPTY_DROP;
+        } else if (noResults.get()) {
+            image = NO_FILTER_RESULTS;
         }
+
+        if (image != null) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            int x = getWidth() / 2 - image.getWidth() / 2;
+            int y = getHeight() / 2 - image.getHeight() / 2;
+            g2d.drawImage(image, null, x, y);
+            g2d.dispose();
+        }
+
     }
 
     int getHeight();

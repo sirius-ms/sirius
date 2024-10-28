@@ -252,6 +252,7 @@ Class | Method | HTTP request | Description
  - [CompoundClasses](docs/CompoundClasses.md)
  - [CompoundImport](docs/CompoundImport.md)
  - [CompoundOptField](docs/CompoundOptField.md)
+ - [ComputedSubtools](docs/ComputedSubtools.md)
  - [ConfidenceMode](docs/ConfidenceMode.md)
  - [ConnectionCheck](docs/ConnectionCheck.md)
  - [ConnectionError](docs/ConnectionError.md)

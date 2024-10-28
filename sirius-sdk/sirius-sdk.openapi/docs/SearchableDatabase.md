@@ -19,6 +19,7 @@
 |**numberOfStructures** | **Long** | Number of unique compounds available in this database. |  [optional] |
 |**numberOfFormulas** | **Long** | Number of different molecular formulas available in this database. |  [optional] |
 |**numberOfReferenceSpectra** | **Long** | Number of reference spectra available in this database |  [optional] |
+|**errorMessage** | **String** | Error message if the database could not be loaded |  [optional] |
 
 
 

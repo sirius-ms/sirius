@@ -100,7 +100,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
                     + failedJobs.stream().map(JJob::identifier).collect(Collectors.joining(System.lineSeparator() + "\t"))
             );
         if (!failedInstances.isEmpty())
-            logWarn("There are " + failedInstances.size() + " invalid input Instances!"
+            logDebug("There are " + failedInstances.size() + " invalid input Instances!"
                     + " Skipping Invalid Input Instances: " + System.lineSeparator() + "\t"
                     + failedInstances.stream().map(Instance::toString).collect(Collectors.joining(System.lineSeparator() + "\t"))
             );
