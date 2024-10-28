@@ -23,14 +23,16 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.Tag;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TagFilter
+ * TimeTag
  */
 @JsonPropertyOrder({
-  TagFilter.JSON_PROPERTY_TYPE
+  TimeTag.JSON_PROPERTY_CATEGORY,
+  TimeTag.JSON_PROPERTY_TIME
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 @JsonIgnoreProperties(
@@ -38,43 +40,72 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   allowSetters = true // allows the type to be set during deserialization
 )
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = BoolTagFilter.class, name = "BoolTagFilter"),
-  @JsonSubTypes.Type(value = DoubleTagFilter.class, name = "DoubleTagFilter"),
-  @JsonSubTypes.Type(value = IntTagFilter.class, name = "IntTagFilter"),
-  @JsonSubTypes.Type(value = TaggedFilter.class, name = "TaggedFilter"),
-})
 
-public class TagFilter {
-  public static final String JSON_PROPERTY_TYPE = "type";
-  protected String type;
+public class TimeTag extends Tag {
+  public static final String JSON_PROPERTY_CATEGORY = "category";
+  private String category;
 
-  public TagFilter() {
+  public static final String JSON_PROPERTY_TIME = "time";
+  private String time;
+
+  public TimeTag() {
+
   }
 
-  public TagFilter type(String type) {
+  public TimeTag category(String category) {
     
-    this.type = type;
+    this.category = category;
     return this;
   }
 
    /**
-   * Get type
-   * @return type
+   * Name of the tag category
+   * @return category
   **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_TYPE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getType() {
-    return type;
+  public String getCategory() {
+    return category;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TYPE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setType(String type) {
-    this.type = type;
+  @JsonProperty(JSON_PROPERTY_CATEGORY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategory(String category) {
+    this.category = category;
+  }
+
+  public TimeTag time(String time) {
+    
+    this.time = time;
+    return this;
+  }
+
+   /**
+   * Time value in format HH:mm:ss
+   * @return time
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TIME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getTime() {
+    return time;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TIME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTime(String time) {
+    this.time = time;
+  }
+
+  @Override
+  public TimeTag type(String type) {
+    this.setType(type);
+    return this;
   }
 
   @Override
@@ -85,20 +116,24 @@ public class TagFilter {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TagFilter tagFilter = (TagFilter) o;
-    return Objects.equals(this.type, tagFilter.type);
+    TimeTag timeTag = (TimeTag) o;
+    return Objects.equals(this.category, timeTag.category) &&
+        Objects.equals(this.time, timeTag.time) &&
+        super.equals(o);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type);
+    return Objects.hash(category, time, super.hashCode());
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TagFilter {\n");
-    sb.append("    type: ").append(toIndentedString(type)).append("\n");
+    sb.append("class TimeTag {\n");
+    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
+    sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    time: ").append(toIndentedString(time)).append("\n");
     sb.append("}");
     return sb.toString();
   }

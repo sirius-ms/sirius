@@ -2,7 +2,7 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
-import io.sirius.ms.sdk.model.ObjectsByTagRequest;
+import io.sirius.ms.sdk.model.AddTagsRequestInner;
 import io.sirius.ms.sdk.model.PageRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
@@ -29,15 +29,15 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class RunsApi {
+public class RunsExperimentalApi {
     private ApiClient apiClient;
 
-    public RunsApi() {
+    public RunsExperimentalApi() {
         this(new ApiClient());
     }
 
     @Autowired
-    public RunsApi(ApiClient apiClient) {
+    public RunsExperimentalApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
@@ -55,12 +55,12 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param requestBody tags to add.
-     * @return List&lt;Object&gt;
+     * @param addTagsRequestInner tags to add.
+     * @return List&lt;AddTagsRequestInner&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
-        Object postBody = requestBody;
+    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
+        Object postBody = addTagsRequestInner;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
@@ -69,9 +69,9 @@ public class RunsApi {
         if (objectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'objectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'requestBody' is set
-        if (requestBody == null) {
-            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'addTagsRequestInner' is set
+        if (addTagsRequestInner == null) {
+            throw new WebClientResponseException("Missing the required parameter 'addTagsRequestInner' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -95,7 +95,7 @@ public class RunsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
+        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -105,13 +105,13 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param requestBody tags to add.
-     * @return List&lt;Object&gt;
+     * @param addTagsRequestInner tags to add.
+     * @return List&lt;AddTagsRequestInner&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Object> addTags(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return addTagsRequestCreation(projectId, objectId, requestBody).bodyToFlux(localVarReturnType).collectList().block();
+    public List<AddTagsRequestInner> addTags(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
+        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
+        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -120,13 +120,13 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param requestBody tags to add.
-     * @return ResponseEntity&lt;List&lt;Object&gt;&gt;
+     * @param addTagsRequestInner tags to add.
+     * @return ResponseEntity&lt;List&lt;AddTagsRequestInner&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Object>> addTagsWithHttpInfo(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return addTagsRequestCreation(projectId, objectId, requestBody).toEntityList(localVarReturnType).block();
+    public ResponseEntity<List<AddTagsRequestInner>> addTagsWithHttpInfo(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
+        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
+        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -135,12 +135,12 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param requestBody tags to add.
+     * @param addTagsRequestInner tags to add.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
-        return addTagsRequestCreation(projectId, objectId, requestBody);
+    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
+        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner);
     }
     /**
      * Delete tag with the given category from the object with the specified ID in the specified project-space.
@@ -414,12 +414,11 @@ public class RunsApi {
         return getRunsPagedRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
-     * Get objects by tag.
-     * Get objects by tag.
+     * Get objects by tag
+     * Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project space to get objects from.
-     * @param categoryName category of the tag.
-     * @param objectsByTagRequest tag filter.
+     * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -427,31 +426,23 @@ public class RunsApi {
      * @return PageRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec objectsByTagRequestCreation(String projectId, String categoryName, ObjectsByTagRequest objectsByTagRequest, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        Object postBody = objectsByTagRequest;
+    private ResponseSpec objectsByTagRequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByTag", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'categoryName' is set
-        if (categoryName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling objectsByTag", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'objectsByTagRequest' is set
-        if (objectsByTagRequest == null) {
-            throw new WebClientResponseException("Missing the required parameter 'objectsByTagRequest' when calling objectsByTag", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
-        pathParams.put("categoryName", categoryName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
@@ -461,24 +452,21 @@ public class RunsApi {
             "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
+        final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tagged/{categoryName}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Get objects by tag.
-     * Get objects by tag.
+     * Get objects by tag
+     * Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project space to get objects from.
-     * @param categoryName category of the tag.
-     * @param objectsByTagRequest tag filter.
+     * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -486,18 +474,17 @@ public class RunsApi {
      * @return PageRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageRun objectsByTag(String projectId, String categoryName, ObjectsByTagRequest objectsByTagRequest, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+    public PageRun objectsByTag(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
-        return objectsByTagRequestCreation(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return objectsByTagRequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Get objects by tag.
-     * Get objects by tag.
+     * Get objects by tag
+     * Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project space to get objects from.
-     * @param categoryName category of the tag.
-     * @param objectsByTagRequest tag filter.
+     * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -505,18 +492,17 @@ public class RunsApi {
      * @return ResponseEntity&lt;PageRun&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageRun> objectsByTagWithHttpInfo(String projectId, String categoryName, ObjectsByTagRequest objectsByTagRequest, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageRun> objectsByTagWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
-        return objectsByTagRequestCreation(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return objectsByTagRequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Get objects by tag.
-     * Get objects by tag.
+     * Get objects by tag
+     * Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project space to get objects from.
-     * @param categoryName category of the tag.
-     * @param objectsByTagRequest tag filter.
+     * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
@@ -524,7 +510,7 @@ public class RunsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec objectsByTagWithResponseSpec(String projectId, String categoryName, ObjectsByTagRequest objectsByTagRequest, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        return objectsByTagRequestCreation(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields);
+    public ResponseSpec objectsByTagWithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        return objectsByTagRequestCreation(projectId, filter, page, size, sort, optFields);
     }
 }
