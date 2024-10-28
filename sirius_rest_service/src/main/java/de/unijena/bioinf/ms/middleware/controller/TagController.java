@@ -67,13 +67,13 @@ public abstract class TagController<T, O extends Enum<O>> {
      *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code category:my_category}</li>
      *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer&lt;3}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
      *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code integer:[* TO 3] }</li>
      * </ul>
      *
      * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
      *
-     * <h2>Filter syntax example</h2>
+     * <h3>Example</h3>
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
@@ -85,7 +85,7 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return
      */
-    @PostMapping(value = "/tagged", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/tagged", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<T> objectsByTag(@PathVariable String projectId,
                                 @RequestParam(defaultValue = "") String filter,
                                 @ParameterObject Pageable pageable,

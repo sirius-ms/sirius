@@ -13,8 +13,8 @@
   ],
   "tags": [
     {
-      "name": "Tag categories",
-      "description": "This API allows accessing tag categories."
+      "name": "Tag categories (EXPERIMENTAL)",
+      "description": "This API allows accessing tag categories.All Endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
     {
       "name": "EXPERIMENTAL",
@@ -23,6 +23,10 @@
     {
       "name": "Info",
       "description": "Status und Information"
+    },
+    {
+      "name": "Runs (EXPERIMENTAL)",
+      "description": "This API allows accessing LC/MS runs.All Endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
     {
       "name": "Jobs",
@@ -59,10 +63,6 @@
     {
       "name": "Projects",
       "description": "Manage SIRIUS projects."
-    },
-    {
-      "name": "Runs",
-      "description": "This API allows accessing LC/MS runs."
     }
   ],
   "paths": {
@@ -244,7 +244,7 @@
     "/api/projects/{projectId}/runs/tags/{objectId}": {
       "put": {
         "tags": [
-          "Runs"
+          "Runs (EXPERIMENTAL)"
         ],
         "summary": "Add tags to an object in the project.",
         "description": "Add tags to an object in the project. Tags with the same category name will be overwritten.",
@@ -276,7 +276,29 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/Tag"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Tag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BoolTag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DateTag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DoubleTag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IntTag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StringTag"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TimeTag"
+                    }
+                  ]
                 }
               }
             }
@@ -291,7 +313,29 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Tag"
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/Tag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/BoolTag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DateTag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/DoubleTag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/IntTag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/StringTag"
+                      },
+                      {
+                        "$ref": "#/components/schemas/TimeTag"
+                      }
+                    ]
                   }
                 }
               }
@@ -367,7 +411,7 @@
     "/api/projects/{projectId}/categories": {
       "get": {
         "tags": [
-          "Tag categories"
+          "Tag categories (EXPERIMENTAL)"
         ],
         "summary": "Get all tag categories in the given project-space.",
         "description": "Get all tag categories in the given project-space.",
@@ -401,7 +445,7 @@
       },
       "put": {
         "tags": [
-          "Tag categories"
+          "Tag categories (EXPERIMENTAL)"
         ],
         "summary": "Add tag categories to the project.",
         "description": "Add tag categories to the project. Category names must not exist in the project.",
@@ -424,7 +468,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/TagCategory"
+                  "$ref": "#/components/schemas/TagCategoryImport"
                 }
               }
             }
@@ -444,6 +488,134 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/categories/{categoryName}": {
+      "get": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Get tag category by name in the given project-space.",
+        "description": "Get tag category by name in the given project-space.",
+        "operationId": "getCategoryByName",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of the category",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategory"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Add a possible value to the tag category in the project.",
+        "description": "Add a possible value to the tag category in the project.",
+        "operationId": "addPossibleValuesToCategory",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "the tag category to add to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tag categories that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategory"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Delete tag categories with the given names from the specified project-space.",
+        "description": "Delete tag categories with the given names from the specified project-space.",
+        "operationId": "deleteCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of category to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -656,122 +828,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/runs/tagged/{categoryName}": {
-      "post": {
-        "tags": [
-          "Runs"
-        ],
-        "summary": "Get objects by tag.",
-        "description": "Get objects by tag.",
-        "operationId": "objectsByTag",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project space to get objects from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "category of the tag.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/RunOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "tag filter.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "oneOf": [
-                  {
-                    "$ref": "#/components/schemas/BoolTagFilter"
-                  },
-                  {
-                    "$ref": "#/components/schemas/DoubleTagFilter"
-                  },
-                  {
-                    "$ref": "#/components/schemas/IntTagFilter"
-                  },
-                  {
-                    "$ref": "#/components/schemas/StringTagFilter"
-                  },
-                  {
-                    "$ref": "#/components/schemas/TaggedFilter"
-                  }
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageRun"
                 }
               }
             }
@@ -2443,7 +2499,7 @@
     "/api/projects/{projectId}/runs/{runId}": {
       "get": {
         "tags": [
-          "Runs"
+          "Runs (EXPERIMENTAL)"
         ],
         "summary": "Get run with the given identifier from the specified project-space.",
         "description": "Get run with the given identifier from the specified project-space.",
@@ -2495,10 +2551,100 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/tagged": {
+      "get": {
+        "tags": [
+          "Runs (EXPERIMENTAL)"
+        ],
+        "summary": "Get objects by tag",
+        "description": "Get objects by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e",
+        "operationId": "objectsByTag",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project space to get objects from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "tag filter.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RunOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRun"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/runs/page": {
       "get": {
         "tags": [
-          "Runs"
+          "Runs (EXPERIMENTAL)"
         ],
         "summary": "Get all available runs in the given project-space.",
         "description": "Get all available runs in the given project-space.",
@@ -3163,85 +3309,10 @@
         }
       }
     },
-    "/api/projects/{projectId}/categories/{categoryName}": {
-      "get": {
-        "tags": [
-          "Tag categories"
-        ],
-        "summary": "Get tag category by name in the given project-space.",
-        "description": "Get tag category by name in the given project-space.",
-        "operationId": "getCategoryByName",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "name of the category",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag category.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagCategory"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Tag categories"
-        ],
-        "summary": "Delete tag categories with the given names from the specified project-space.",
-        "description": "Delete tag categories with the given names from the specified project-space.",
-        "operationId": "deleteCategories",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to delete from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "name of category to delete.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/categories/type/{categoryType}": {
       "get": {
         "tags": [
-          "Tag categories"
+          "Tag categories (EXPERIMENTAL)"
         ],
         "summary": "Get tag categories by type in the given project-space.",
         "description": "Get tag categories by type in the given project-space.",
@@ -5829,7 +5900,7 @@
     "/api/projects/{projectId}/runs/tags/{objectId}/{categoryName}": {
       "delete": {
         "tags": [
-          "Runs"
+          "Runs (EXPERIMENTAL)"
         ],
         "summary": "Delete tag with the given category from the object with the specified ID in the specified project-space.",
         "description": "Delete tag with the given category from the object with the specified ID in the specified project-space.",
@@ -5990,13 +6061,159 @@
           }
         }
       },
-      "Tag": {
-        "type": "object"
+      "BoolTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "bool": {
+                "type": "boolean",
+                "description": "Boolean value"
+              }
+            }
+          }
+        ]
       },
-      "TagCategory": {
+      "DateTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "date": {
+                "type": "string",
+                "description": "Date value in format yyyy-mm-dd"
+              }
+            }
+          }
+        ]
+      },
+      "DoubleTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "real": {
+                "type": "number",
+                "description": "Floating point value",
+                "format": "double"
+              }
+            }
+          }
+        ]
+      },
+      "IntTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "integer": {
+                "type": "integer",
+                "description": "Integer value",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
+      "StringTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "text": {
+                "type": "string",
+                "description": "Text value"
+              }
+            }
+          }
+        ]
+      },
+      "Tag": {
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Name of the tag category"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "discriminator": {
+          "propertyName": "type"
+        }
+      },
+      "TimeTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "time": {
+                "type": "string",
+                "description": "Time value in format HH:mm:ss"
+              }
+            }
+          }
+        ]
+      },
+      "TagCategoryImport": {
         "type": "object",
         "properties": {
           "name": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "valueType": {
@@ -6006,14 +6223,9 @@
               "BOOLEAN",
               "INTEGER",
               "DOUBLE",
-              "STRING"
-            ]
-          },
-          "valueRange": {
-            "type": "string",
-            "enum": [
-              "FIXED",
-              "VARIABLE"
+              "STRING",
+              "DATE",
+              "TIME"
             ]
           },
           "possibleValues": {
@@ -6024,6 +6236,41 @@
           },
           "categoryType": {
             "type": "string"
+          }
+        }
+      },
+      "TagCategory": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "BOOLEAN",
+              "INTEGER",
+              "DOUBLE",
+              "STRING",
+              "DATE",
+              "TIME"
+            ]
+          },
+          "possibleValues": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "categoryType": {
+            "type": "string"
+          },
+          "editable": {
+            "type": "boolean"
           }
         }
       },
@@ -6227,369 +6474,6 @@
             "nullable": true
           }
         }
-      },
-      "BoolTagFilter": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/TagFilter"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "value": {
-                "type": "boolean"
-              }
-            }
-          }
-        ]
-      },
-      "DoubleTagFilter": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/TagFilter"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "equals": {
-                "type": "number",
-                "format": "double"
-              },
-              "lessThan": {
-                "type": "number",
-                "format": "double"
-              },
-              "lessThanEquals": {
-                "type": "number",
-                "format": "double"
-              },
-              "greaterThan": {
-                "type": "number",
-                "format": "double"
-              },
-              "greaterThanEquals": {
-                "type": "number",
-                "format": "double"
-              }
-            }
-          }
-        ]
-      },
-      "IntTagFilter": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/TagFilter"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "equals": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "lessThan": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "lessThanEquals": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "greaterThan": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "greaterThanEquals": {
-                "type": "integer",
-                "format": "int32"
-              }
-            }
-          }
-        ]
-      },
-      "StringTagFilter": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/TagFilter"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "equals": {
-                "type": "string"
-              },
-              "notEquals": {
-                "type": "string"
-              },
-              "contains": {
-                "type": "string"
-              },
-              "regexMatch": {
-                "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "TagFilter": {
-        "type": "object"
-      },
-      "TaggedFilter": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/TagFilter"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "value": {
-                "type": "boolean"
-              }
-            }
-          }
-        ]
-      },
-      "RunOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "tags"
-        ]
-      },
-      "BoolTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "categoryName": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "value": {
-                "type": "boolean",
-                "description": "Tag value"
-              }
-            }
-          }
-        ]
-      },
-      "DoubleTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "categoryName": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "value": {
-                "type": "number",
-                "description": "Tag value",
-                "format": "double"
-              }
-            }
-          }
-        ]
-      },
-      "IntTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "categoryName": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "value": {
-                "type": "integer",
-                "description": "Tag value",
-                "format": "int32"
-              }
-            }
-          }
-        ]
-      },
-      "PageRun": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Run"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unpaged": {
-            "type": "boolean"
-          }
-        }
-      },
-      "Run": {
-        "type": "object",
-        "properties": {
-          "runId": {
-            "type": "string",
-            "description": "Identifier"
-          },
-          "name": {
-            "type": "string",
-            "description": "Informative, human-readable name of this run"
-          },
-          "chromatography": {
-            "type": "string",
-            "nullable": true
-          },
-          "ionization": {
-            "type": "string",
-            "nullable": true
-          },
-          "fragmentation": {
-            "type": "string",
-            "nullable": true
-          },
-          "massAnalyzers": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "tags": {
-            "type": "object",
-            "additionalProperties": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Tag"
-                },
-                {
-                  "$ref": "#/components/schemas/BoolTag"
-                },
-                {
-                  "$ref": "#/components/schemas/DoubleTag"
-                },
-                {
-                  "$ref": "#/components/schemas/IntTag"
-                },
-                {
-                  "$ref": "#/components/schemas/StringTag"
-                }
-              ]
-            },
-            "description": "Key: tag category, value: tag",
-            "nullable": true
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "empty": {
-            "type": "boolean"
-          },
-          "sorted": {
-            "type": "boolean"
-          },
-          "unsorted": {
-            "type": "boolean"
-          }
-        }
-      },
-      "StringTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "categoryName": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "value": {
-                "type": "string",
-                "description": "Tag value"
-              }
-            }
-          }
-        ]
       },
       "Canopus": {
         "type": "object",
@@ -8576,6 +8460,163 @@
           }
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
+      },
+      "RunOptField": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "tags"
+        ]
+      },
+      "Run": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Informative, human-readable name of this run"
+          },
+          "chromatography": {
+            "type": "string",
+            "nullable": true
+          },
+          "ionization": {
+            "type": "string",
+            "nullable": true
+          },
+          "fragmentation": {
+            "type": "string",
+            "nullable": true
+          },
+          "massAnalyzers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Tag"
+                },
+                {
+                  "$ref": "#/components/schemas/BoolTag"
+                },
+                {
+                  "$ref": "#/components/schemas/DateTag"
+                },
+                {
+                  "$ref": "#/components/schemas/DoubleTag"
+                },
+                {
+                  "$ref": "#/components/schemas/IntTag"
+                },
+                {
+                  "$ref": "#/components/schemas/StringTag"
+                },
+                {
+                  "$ref": "#/components/schemas/TimeTag"
+                }
+              ]
+            },
+            "description": "Key: tag category, value: tag",
+            "nullable": true
+          }
+        }
+      },
+      "PageRun": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Run"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageableObject": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unpaged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SortObject": {
+        "type": "object",
+        "properties": {
+          "empty": {
+            "type": "boolean"
+          },
+          "sorted": {
+            "type": "boolean"
+          },
+          "unsorted": {
+            "type": "boolean"
+          }
+        }
       },
       "PageJob": {
         "type": "object",

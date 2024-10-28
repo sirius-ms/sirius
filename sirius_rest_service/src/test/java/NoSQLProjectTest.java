@@ -18,6 +18,8 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
@@ -419,8 +421,23 @@ public class NoSQLProjectTest {
             Assert.assertEquals("2024-12-31", ((Tag.DateTag) tags.get("date")).getDate());
             Assert.assertTrue(tags.get("time") instanceof Tag.TimeTag);
             Assert.assertEquals("12:00:00", ((Tag.TimeTag) tags.get("time")).getTime());
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findObjectsByTag(Run.class, "", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
         }
 
+    }
+
+    @Test
+    public void testTagPolymorphism() throws JsonProcessingException {
+        Tag tag = Tag.BoolTag.builder().bool(true).category("cat").build();
+//        System.out.println(tag.getType());
+
+        ObjectMapper mapper = new ObjectMapper();
+        String string = mapper.writeValueAsString(tag);
+        System.out.println(string);
+        Tag out = mapper.convertValue(string, Tag.class);
+        System.out.println(out.getClass());
+//        System.out.println(out.getType());
     }
 
     @Test
