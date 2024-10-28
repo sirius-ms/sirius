@@ -61,7 +61,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-class LcmsAlignTest {
+class LcmsAlignAcceptanceTest {
 
     private static class Feature {
         private final double rtstart;

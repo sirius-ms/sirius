@@ -24,13 +24,15 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassTableView;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class CompoundClassPanel extends JPanel implements PanelDescription {
+public class CompoundClassPanel extends JPanel implements Loadable, PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
@@ -47,14 +49,20 @@ public class CompoundClassPanel extends JPanel implements PanelDescription {
     protected Logger logger = LoggerFactory.getLogger(CompoundClassPanel.class);
 
     final JSplitPane sp;
-
+    final LoadablePanel loadablePanel;
     public CompoundClassPanel(CompoundClassList table, FormulaList siriusResultElements) {
         super(new BorderLayout());
 
         final CompoundClassTableView center = new CompoundClassTableView(table);
         final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements);
         sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center);
-        add(sp, BorderLayout.CENTER);
+        loadablePanel = new LoadablePanel(sp);
+        add(loadablePanel, BorderLayout.CENTER);
+        table.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }
 
+    @Override
+    public boolean setLoading(boolean loading, boolean absolute) {
+        return loadablePanel.setLoading(loading, absolute);
+    }
 }
