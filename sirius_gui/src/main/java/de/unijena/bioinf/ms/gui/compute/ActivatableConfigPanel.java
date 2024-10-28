@@ -20,11 +20,14 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +45,13 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
+    public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
+
+
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
     protected final String[] toolDescription;
+    @Getter
     protected final C content;
     protected PropertyChangeListener listener;
     protected final SiriusGui gui;
@@ -128,10 +135,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         return activationButton == null || activationButton.isSelected();
     }
 
-    public C getContent() {
-        return content;
-    }
-
     public List<String> asParameterList() {
         return content.asParameterList();
     }
@@ -155,5 +158,30 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         void onChange(C content, boolean enabled);
     }
 
+    /**
+     * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
+     * @param upstreamTool the tool which produces the data required for this tool
+     * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
+     */
+    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
+        this.addEnableChangeListener((c, enabled) -> {
+            if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
+                upstreamTool.activationButton.doClick(0);
+                showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
+            }
+        });
+        upstreamTool.addEnableChangeListener((c, enabled) -> {
+            if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
+                this.activationButton.doClick(0);
+                showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
+            }
+        });
+    }
+
+    public void showAutoEnableInfoDialog(String message) {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_TOOL_AUTOENABLE, false)) {
+            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_TOOL_AUTOENABLE);
+        }
+    }
 }
 

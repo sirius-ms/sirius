@@ -666,7 +666,7 @@ public class Sirius {
         private List<IdentificationResult> createIdentificationResultsAndResolveAdducts(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
             //clear scores for none MS/MS results
             if (experiment.getMs2Spectra().isEmpty()){
-                logWarn("Instance has no MS/MS data. Tree score will be unreliable. Setting TreeScore to 0");
+                logDebug("Instance has no MS/MS data. Tree score will be unreliable. Setting TreeScore to 0");
                 for (FTree ftree : fr.getResults())
                     ftree.setTreeWeight(new FTreeMetricsHelper(ftree).getIsotopeMs1Score());
             }

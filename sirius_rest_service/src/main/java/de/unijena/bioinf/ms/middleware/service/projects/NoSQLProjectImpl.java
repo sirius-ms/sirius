@@ -358,7 +358,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         // now collect ALL features belonging to this trace
         List<AlignedFeatures> allMergedFeatures = new ArrayList<>(storage.findStr(Filter.where("traceRef.traceId").eq(ref.getTraceId()), AlignedFeatures.class).toList());
-        allMergedFeatures.removeIf(x->x.getAlignedFeatureId()==mainFeature.getAlignedFeatureId());
+        allMergedFeatures.removeIf(x -> x.getAlignedFeatureId() == mainFeature.getAlignedFeatureId());
         allMergedFeatures.addFirst(mainFeature);
 
         for (AlignedFeatures singleFeature : allMergedFeatures) {
@@ -372,11 +372,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         HashMap<Long, SourceTrace> sources = new HashMap<>();
         HashMap<Long, Set<Long>> sample2sources = new HashMap<>();
 
-        HashMap<Long,List<Feature>> sample2Feature = new HashMap<>();
+        HashMap<Long, List<Feature>> sample2Feature = new HashMap<>();
         for (int k = 0; k < allMergedFeatures.size(); ++k) {
             for (Feature sampleFeature : allMergedFeatures.get(k).getFeatures().orElse(Collections.emptyList())) {
                 if (sampleFeature.getRunId() != null) {
-                    sample2Feature.computeIfAbsent(sampleFeature.getRunId(), (x)->new ArrayList<>()).add(sampleFeature);
+                    sample2Feature.computeIfAbsent(sampleFeature.getRunId(), (x) -> new ArrayList<>()).add(sampleFeature);
                     samples.computeIfAbsent(sampleFeature.getRunId(), (key) -> {
                         try {
                             return storage.getByPrimaryKey(key, LCMSRun.class).orElse(null);
@@ -393,7 +393,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 throw new RuntimeException(e);
                             }
                         });
-                        sample2sources.computeIfAbsent(sampleFeature.getRunId(), (key)->new HashSet<>());
+                        sample2sources.computeIfAbsent(sampleFeature.getRunId(), (key) -> new HashSet<>());
                         sample2sources.get(sampleFeature.getRunId()).add(tr);
                     }
                 }
@@ -429,10 +429,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             mergedtrace.setSampleName(merged.getName());
             mergedtrace.setLabel(merged.getName());
             mergedtrace.setNormalizationFactor(1d);
-            ArrayList<TraceSet.Annotation> anos=new ArrayList<>();
+            ArrayList<TraceSet.Annotation> anos = new ArrayList<>();
             for (AlignedFeatures features : allMergedFeatures) {
-                String anoPrefix = features==mainFeature ? "[MAIN]" : "";
-                anoPrefix += "["+features.getDataQuality().name().toUpperCase() + "]";
+                String anoPrefix = features == mainFeature ? "[MAIN]" : "";
+                anoPrefix += "[" + features.getDataQuality().name().toUpperCase() + "]";
                 anos.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, anoPrefix + features.getAlignedFeatureId(),
                         features.getTraceRef().getApex(), features.getTraceRef().getStart(), features.getTraceRef().getEnd()));
             }
@@ -449,13 +449,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             List<SourceTrace> sourceTraces = sample2sources.getOrDefault(sampleKey, Collections.emptySet()).stream().map(sources::get).toList();
             final double[] traceIntensities = new double[primaryTrace.getIntensities().length];
             for (SourceTrace t : sourceTraces) {
-                if (sourceTraces.size()>1) {
+                if (sourceTraces.size() > 1) {
                     LoggerFactory.getLogger(NoSQLProjectImpl.class).warn("It is unusual to have two source traces for the same sample in the same merged trace...");
                 }
                 int offset = t.getScanIndexOffset() - mergedTrace.getScanIndexOffset();
                 FloatList fl = t.getIntensities();
-                for (int k=0; k < fl.size(); ++k) {
-                    final int targetLocation = offset+k;
+                for (int k = 0; k < fl.size(); ++k) {
+                    final int targetLocation = offset + k;
                     if (targetLocation >= 0 && targetLocation < traceIntensities.length) {
                         traceIntensities[targetLocation] += fl.getFloat(k);
                     }
@@ -477,12 +477,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             for (Feature features : sample2Feature.get(sampleKey)) {
                 if (features.getTraceReference().isEmpty()) continue;
                 RawTraceRef reference = features.getTraceReference().get();
-                int apex = (reference.getApex()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
-                int left = (reference.getStart()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
-                int right = (reference.getEnd()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
+                int apex = (reference.getApex() + reference.getScanIndexOffsetOfTrace()) - mergedTrace.getScanIndexOffset();
+                int left = (reference.getStart() + reference.getScanIndexOffsetOfTrace()) - mergedTrace.getScanIndexOffset();
+                int right = (reference.getEnd() + reference.getScanIndexOffsetOfTrace()) - mergedTrace.getScanIndexOffset();
 
                 annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE,
-                        (features.getAlignedFeatureId()==mainFeature.getAlignedFeatureId()) ? "[MAIN]"+String.valueOf(features.getAlignedFeatureId()) : String.valueOf(features.getAlignedFeatureId()),
+                        (features.getAlignedFeatureId() == mainFeature.getAlignedFeatureId()) ? "[MAIN]" + String.valueOf(features.getAlignedFeatureId()) : String.valueOf(features.getAlignedFeatureId()),
                         apex, left, right));
             }
 
@@ -533,7 +533,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
             if (f.getApexIntensity() == null) continue; // ignore features without lcms information
             String prefix = "[CORRELATED]";
-            if (fid!=null && fid==f.getAlignedFeatureId()) {
+            if (fid != null && fid == f.getAlignedFeatureId()) {
                 prefix = "[MAIN]";
             }
             String mainLabel;
@@ -542,7 +542,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             } else {
                 mainLabel = prefix + " " + f.getDetectedAdducts().getAllAdducts().stream().sorted()
                         .map(PrecursorIonType::toString)
-                        .map(s -> s.replaceAll("\\s+",""))
+                        .map(s -> s.replaceAll("\\s+", ""))
                         .collect(Collectors.joining(" | "));
             }
 
@@ -717,7 +717,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             mergedFeatureFields.add(AlignedFeature.OptField.topAnnotationsDeNovo);
 
         // features
-        List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList-> featuresList.stream()
+        List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList -> featuresList.stream()
                 .map(f -> convertToApiFeature(f, mergedFeatureFields))).toList();
         builder.features(features);
 
@@ -825,7 +825,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
         }
 
-        builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(),featureImport.getRtEndSeconds(),featureImport.getRtApexSeconds()));
+        builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
 
         if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
             de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
@@ -886,6 +886,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
+        if (optFields.contains(AlignedFeature.OptField.computedTools))
+            builder.computedTools(
+                    project().findByFeatureIdStr(features.getAlignedFeatureId(), ComputedSubtools.class)
+                            .findFirst().orElseGet(() -> ComputedSubtools.builder().build())
+            );
 
         return builder.build();
     }
@@ -1122,7 +1127,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             cSum.setConfidenceExactMatch(it.getConfidenceExact());
                             cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
                             cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                            //todo add searched database and expanded databases
+                            cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
+                            cSum.setExpandedDatabases(it.getExpandedDatabases());
                         });
         } else {
             Pair<String[], Database.SortOrder[]> formSort = sortFormulaCandidate(null); //null == default

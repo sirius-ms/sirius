@@ -15,10 +15,7 @@ import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
 import de.unijena.bioinf.lcms.merge.MergeTracesWithoutGapFilling;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
-import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
-import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolationWindowAssignmentStrategy;
-import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
-import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
+import de.unijena.bioinf.lcms.msms.*;
 import de.unijena.bioinf.lcms.projectspace.PickFeaturesAndImportToSirius;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
@@ -123,7 +120,8 @@ public class LCMSProcessing {
     private LongList importedFeatureIds = new LongArrayList();
 
     @Getter @Setter
-    private Tracker tracker = new Tracker.NOOP();
+    private Tracker tracker = //new TrackFeatureToFile(new File("/home/kaidu/Downloads/debug_lcms/log.txt"),            Range.of(127.0387,127.0389), Range.of(0d,100d));
+            new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
@@ -182,6 +180,7 @@ public class LCMSProcessing {
         extractMoIsForAlignment(sample);
         collectStatisticsBeforeAlignment(sample);
         importScanPointMapping(sample, sample.getRun().getRunId());
+        sample.getStorage().commit();
     }
 
     public AlignmentBackbone align() throws IOException {
@@ -202,6 +201,7 @@ public class LCMSProcessing {
             updateRetentionTimeAxis(sample);
         }
         merged.getStorage().getAlignmentStorage().setStatistics(alignmentBackbone.getStatistics());
+        merged.getStorage().commit();
         return alignmentBackbone;
     }
 
@@ -209,6 +209,7 @@ public class LCMSProcessing {
         FloatArrayList ms2NoiseLevels = new FloatArrayList();
         FloatArrayList ppmsWithinTraces = new FloatArrayList(), ppmsBetweenTraces = new FloatArrayList();
         FloatArrayList absWithinTraces = new FloatArrayList(), absBetweenTraces = new FloatArrayList();
+        DoubleArrayList averagePeakWidth = new DoubleArrayList();
         for (ProcessedSample sample : samples) {
             SampleStats s = sample.getStorage().getStatistics();
             ms2NoiseLevels.add(s.getMs2NoiseLevel());
@@ -216,18 +217,22 @@ public class LCMSProcessing {
             ppmsBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getPpm());
             absWithinTraces.add((float)s.getMs1MassDeviationWithinTraces().getAbsolute());
             absBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
+            averagePeakWidth.add(sample.getTraceStats().getAveragePeakWidth());
         }
         SampleStats statistics = new SampleStats(
                 new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()),
                 new Deviation(Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),Statistics.robustAverage(absWithinTraces.toFloatArray())),
-                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray()))
+                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray())),
+                Statistics.robustAverage(averagePeakWidth.toDoubleArray())
         );
         merged.getStorage().setStatistics(statistics);
+
     }
 
     public ProcessedSample merge(AlignmentBackbone backbone) {
         ProcessedSample merged = this.samples.get(samples.size()-1);
         mergeStrategy.merge(merged, backbone, tracker);
+        merged.getStorage().commit();
         return merged;
     }
 
@@ -302,6 +307,7 @@ public class LCMSProcessing {
                 });
         SampleStats st = merged.getStorage().getStatistics();
         fwhms.sort(null);
+        heightDividedByfwhms.sort(null);
         DoubleList ms2NoiseLevel = new DoubleArrayList();
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             SampleStats statistics = sample.getStorage().getStatistics();
@@ -370,17 +376,19 @@ public class LCMSProcessing {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));
             peak.ifPresent(p->tracker.tracePicked(p.averagedMz(), sample.getMapping().getRetentionTimeAt(p.apex()), sample, p));
         });
+        sample.getStorage().commit();
     }
 
     private void assignMs2Trace(ProcessedSample sample) {
         for (Ms2SpectrumHeader ms2SpectrumHeader : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
-            int traceId = ms2TraceStrategy.getTraceFor(sample, ms2SpectrumHeader);
-            if (traceId >= 0) {
-                sample.getStorage().getTraceStorage().setTraceForMs2(ms2SpectrumHeader.getUid(), traceId);
+            Optional<MsMsTraceReference> traceId = ms2TraceStrategy.getTraceFor(sample, ms2SpectrumHeader);
+            if (traceId.isPresent()) {
+                sample.getStorage().getTraceStorage().assignTraceForMs2(traceId.get());
             } else {
                 LoggerFactory.getLogger(LCMSProcessing.class).debug("No suitable trace found for MSMS " + ms2SpectrumHeader);
             }
         }
+        sample.getStorage().commit();
     }
 
     private void extractMoIsForAlignment(ProcessedSample sample) {
@@ -412,6 +420,7 @@ public class LCMSProcessing {
                 }
             }
         }
+        sample.getStorage().commit();
     }
 
     private void detectIsotopesForMoI(ProcessedSample sample, ContiguousTrace trace, TraceSegment segment, MoI moi) {
@@ -421,6 +430,7 @@ public class LCMSProcessing {
         } else {
             moi.setIsotopePeakFlag(true);
         }
+        sample.getStorage().commit();
     }
 
     public MergedTrace collectMergedTrace(ProcessedSample merged, int uid) {

@@ -34,7 +34,9 @@ public enum AlignedFeatureOptField {
   
   TOPANNOTATIONS("topAnnotations"),
   
-  TOPANNOTATIONSDENOVO("topAnnotationsDeNovo");
+  TOPANNOTATIONSDENOVO("topAnnotationsDeNovo"),
+  
+  COMPUTEDTOOLS("computedTools");
 
   private String value;
 

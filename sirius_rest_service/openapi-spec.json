@@ -2102,6 +2102,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeWithErrors",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5598,6 +5607,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeWithErrors",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -6098,6 +6116,11 @@
             "type": "integer",
             "description": "Number of reference spectra available in this database",
             "format": "int64",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the database could not be loaded",
             "nullable": true
           }
         }
@@ -7354,7 +7377,8 @@
           "msData",
           "features",
           "topAnnotations",
-          "topAnnotationsDeNovo"
+          "topAnnotationsDeNovo",
+          "computedTools"
         ]
       },
       "AlignedFeature": {
@@ -7458,6 +7482,9 @@
           "computing": {
             "type": "boolean",
             "description": "Write lock for this feature. If the feature is locked no write operations are possible.\n True if any computation is modifying this feature or its results"
+          },
+          "computedTools": {
+            "$ref": "#/components/schemas/ComputedSubtools"
           }
         },
         "description": "The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information\n that might be displayed in some summary view."
@@ -7702,6 +7729,34 @@
         "description": "Container class that holds the most likely compound class for different levels of each ontology for a\n certain Compound/Feature/FormulaCandidate/PredictedFingerprint.",
         "nullable": true
       },
+      "ComputedSubtools": {
+        "type": "object",
+        "properties": {
+          "librarySearch": {
+            "type": "boolean"
+          },
+          "formulaSearch": {
+            "type": "boolean"
+          },
+          "zodiac": {
+            "type": "boolean"
+          },
+          "fingerprint": {
+            "type": "boolean"
+          },
+          "canopus": {
+            "type": "boolean"
+          },
+          "structureSearch": {
+            "type": "boolean"
+          },
+          "deNovoSearch": {
+            "type": "boolean"
+          }
+        },
+        "description": "Specifies which tools have been executed for this feature. Can be used to estimate which results can be expected. Null if it was not requested und non-null otherwise.",
+        "nullable": true
+      },
       "ConsensusAnnotationsCSI": {
         "type": "object",
         "properties": {
@@ -7906,6 +7961,24 @@
           },
           "expansiveSearchState": {
             "$ref": "#/components/schemas/ConfidenceMode"
+          },
+          "specifiedDatabases": {
+            "type": "array",
+            "description": "List of databases that have been specified by for structure db search. Null if no structure db search has been performed.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "expandedDatabases": {
+            "type": "array",
+            "description": "List of databases that have been used to expand search space during expansive search. Null if no structure db search has been performed.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           }
         },
         "description": "Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.\n The different annotation fields within this summary object are null if the corresponding\n feature does not contain the represented results. If fields are non-null\n the corresponding result has been computed but might still be empty.",
