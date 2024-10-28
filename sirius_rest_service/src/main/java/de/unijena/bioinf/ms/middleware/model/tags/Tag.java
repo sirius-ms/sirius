@@ -34,12 +34,15 @@ import org.jetbrains.annotations.NotNull;
 @SuperBuilder
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
+        @JsonSubTypes.Type(value= Tag.class, name = "tag"),
         @JsonSubTypes.Type(value= Tag.BoolTag.class, name = "bool"),
         @JsonSubTypes.Type(value= Tag.IntTag.class, name = "int"),
         @JsonSubTypes.Type(value= Tag.DoubleTag.class, name = "double"),
-        @JsonSubTypes.Type(value = Tag.StringTag.class, name = "string")
+        @JsonSubTypes.Type(value = Tag.StringTag.class, name = "string"),
+        @JsonSubTypes.Type(value = Tag.DateTag.class, name = "date"),
+        @JsonSubTypes.Type(value = Tag.TimeTag.class, name = "time")
 })
 public class Tag {
 

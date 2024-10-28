@@ -33,7 +33,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/categories")
-@Tag(name = "Tag categories", description = "This API allows accessing tag categories.")
+@Tag(name = "Tag categories (EXPERIMENTAL)", description = "This API allows accessing tag categories." +
+        "All Endpoints are experimental and not part of the stable API specification. " +
+        "These endpoints can change at any time, even in minor updates.")
 public class CategoryController {
 
     final protected ProjectsProvider<?> projectsProvider;

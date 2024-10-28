@@ -7,8 +7,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**categoryName** | **String** | Name of the tag category |  [optional] |
-|**value** | **Integer** | Tag value |  [optional] |
+|**category** | **String** | Name of the tag category |  [optional] |
+|**integer** | **Integer** | Integer value |  [optional] |
 
 
 

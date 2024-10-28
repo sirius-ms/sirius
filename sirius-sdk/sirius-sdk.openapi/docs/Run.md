@@ -13,7 +13,7 @@
 |**ionization** | **String** |  |  [optional] |
 |**fragmentation** | **String** |  |  [optional] |
 |**massAnalyzers** | **List&lt;String&gt;** |  |  [optional] |
-|**tags** | [**Map&lt;String, RunTagsValue&gt;**](RunTagsValue.md) | Key: tag category, value: tag |  [optional] |
+|**tags** | [**Map&lt;String, AddTagsRequestInner&gt;**](AddTagsRequestInner.md) | Key: tag category, value: tag |  [optional] |
 
 
 

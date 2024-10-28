@@ -2,6 +2,7 @@ README.md
 docs/AccountCredentials.md
 docs/AccountInfo.md
 docs/ActuatorApi.md
+docs/AddTagsRequestInner.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQuality.md
@@ -14,7 +15,6 @@ docs/BackgroundComputationsStateEvent.md
 docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
 docs/BoolTag.md
-docs/BoolTagFilter.md
 docs/Canopus.md
 docs/CanopusPrediction.md
 docs/Category.md
@@ -36,9 +36,9 @@ docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/DataQuality.md
+docs/DateTag.md
 docs/Deviation.md
 docs/DoubleTag.md
-docs/DoubleTagFilter.md
 docs/ExperimentalApi.md
 docs/Feature.md
 docs/FeatureAnnotations.md
@@ -56,7 +56,6 @@ docs/Info.md
 docs/InfoApi.md
 docs/InstrumentProfile.md
 docs/IntTag.md
-docs/IntTagFilter.md
 docs/IsotopePatternAnnotation.md
 docs/Item.md
 docs/Job.md
@@ -71,7 +70,6 @@ docs/LoginAndAccountApi.md
 docs/LossEdge.md
 docs/MsData.md
 docs/MsNovelist.md
-docs/ObjectsByTagRequest.md
 docs/PageAlignedFeature.md
 docs/PageCompound.md
 docs/PageFormulaCandidate.md
@@ -90,8 +88,7 @@ docs/ProjectsApi.md
 docs/QuantificationTable.md
 docs/Run.md
 docs/RunOptField.md
-docs/RunTagsValue.md
-docs/RunsApi.md
+docs/RunsExperimentalApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -105,7 +102,6 @@ docs/SpectralLibrarySearch.md
 docs/SpectralMatchingType.md
 docs/SpectrumAnnotation.md
 docs/StringTag.md
-docs/StringTagFilter.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -113,10 +109,12 @@ docs/StructureCandidateScored.md
 docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
-docs/TagCategoriesApi.md
+docs/Tag.md
+docs/TagCategoriesExperimentalApi.md
 docs/TagCategory.md
-docs/TaggedFilter.md
+docs/TagCategoryImport.md
 docs/Term.md
+docs/TimeTag.md
 docs/Timeout.md
 docs/Trace.md
 docs/TraceSet.md
@@ -133,9 +131,9 @@ src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
 src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
 src/main/java/io/sirius/ms/sdk/api/ProjectsApi.java
-src/main/java/io/sirius/ms/sdk/api/RunsApi.java
+src/main/java/io/sirius/ms/sdk/api/RunsExperimentalApi.java
 src/main/java/io/sirius/ms/sdk/api/SearchableDatabasesApi.java
-src/main/java/io/sirius/ms/sdk/api/TagCategoriesApi.java
+src/main/java/io/sirius/ms/sdk/api/TagCategoriesExperimentalApi.java
 src/main/java/io/sirius/ms/sdk/client/ApiClient.java
 src/main/java/io/sirius/ms/sdk/client/RFC3339DateFormat.java
 src/main/java/io/sirius/ms/sdk/client/ServerConfiguration.java
@@ -147,6 +145,7 @@ src/main/java/io/sirius/ms/sdk/client/auth/HttpBasicAuth.java
 src/main/java/io/sirius/ms/sdk/client/auth/HttpBearerAuth.java
 src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
+src/main/java/io/sirius/ms/sdk/model/AddTagsRequestInner.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQuality.java
@@ -159,7 +158,6 @@ src/main/java/io/sirius/ms/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/io/sirius/ms/sdk/model/BasicSpectrum.java
 src/main/java/io/sirius/ms/sdk/model/BinaryFingerprint.java
 src/main/java/io/sirius/ms/sdk/model/BoolTag.java
-src/main/java/io/sirius/ms/sdk/model/BoolTagFilter.java
 src/main/java/io/sirius/ms/sdk/model/Canopus.java
 src/main/java/io/sirius/ms/sdk/model/CanopusPrediction.java
 src/main/java/io/sirius/ms/sdk/model/Category.java
@@ -180,9 +178,9 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
+src/main/java/io/sirius/ms/sdk/model/DateTag.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
 src/main/java/io/sirius/ms/sdk/model/DoubleTag.java
-src/main/java/io/sirius/ms/sdk/model/DoubleTagFilter.java
 src/main/java/io/sirius/ms/sdk/model/Feature.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
@@ -196,7 +194,6 @@ src/main/java/io/sirius/ms/sdk/model/ImportResult.java
 src/main/java/io/sirius/ms/sdk/model/Info.java
 src/main/java/io/sirius/ms/sdk/model/InstrumentProfile.java
 src/main/java/io/sirius/ms/sdk/model/IntTag.java
-src/main/java/io/sirius/ms/sdk/model/IntTagFilter.java
 src/main/java/io/sirius/ms/sdk/model/IsotopePatternAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/Item.java
 src/main/java/io/sirius/ms/sdk/model/Job.java
@@ -209,7 +206,6 @@ src/main/java/io/sirius/ms/sdk/model/LipidAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/LossEdge.java
 src/main/java/io/sirius/ms/sdk/model/MsData.java
 src/main/java/io/sirius/ms/sdk/model/MsNovelist.java
-src/main/java/io/sirius/ms/sdk/model/ObjectsByTagRequest.java
 src/main/java/io/sirius/ms/sdk/model/PageAlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/PageCompound.java
 src/main/java/io/sirius/ms/sdk/model/PageFormulaCandidate.java
@@ -227,7 +223,6 @@ src/main/java/io/sirius/ms/sdk/model/ProjectInfoOptField.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationTable.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
-src/main/java/io/sirius/ms/sdk/model/RunTagsValue.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabase.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
@@ -240,7 +235,6 @@ src/main/java/io/sirius/ms/sdk/model/SpectralLibrarySearch.java
 src/main/java/io/sirius/ms/sdk/model/SpectralMatchingType.java
 src/main/java/io/sirius/ms/sdk/model/SpectrumAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/StringTag.java
-src/main/java/io/sirius/ms/sdk/model/StringTagFilter.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidate.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateFormula.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateOptField.java
@@ -248,9 +242,11 @@ src/main/java/io/sirius/ms/sdk/model/StructureCandidateScored.java
 src/main/java/io/sirius/ms/sdk/model/StructureDbSearch.java
 src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
+src/main/java/io/sirius/ms/sdk/model/Tag.java
 src/main/java/io/sirius/ms/sdk/model/TagCategory.java
-src/main/java/io/sirius/ms/sdk/model/TaggedFilter.java
+src/main/java/io/sirius/ms/sdk/model/TagCategoryImport.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
+src/main/java/io/sirius/ms/sdk/model/TimeTag.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/Trace.java
 src/main/java/io/sirius/ms/sdk/model/TraceSet.java
@@ -258,5 +254,3 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
-src/test/java/io/sirius/ms/sdk/api/ExperimentalApiTest.java
-src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java
