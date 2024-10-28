@@ -1,20 +1,20 @@
-# RunsApi
+# RunsExperimentalApi
 
 All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addTags**](RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project. |
-| [**deleteTags**](RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space. |
-| [**getRun**](RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
-| [**getRunsPaged**](RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
-| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tagged/{categoryName} | Get objects by tag. |
+| [**addTags**](RunsExperimentalApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project. |
+| [**deleteTags**](RunsExperimentalApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space. |
+| [**getRun**](RunsExperimentalApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
+| [**getRunsPaged**](RunsExperimentalApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
+| [**objectsByTag**](RunsExperimentalApi.md#objectsByTag) | **GET** /api/projects/{projectId}/runs/tagged | Get objects by tag |
 
 
 
 ## addTags
 
-> List&lt;Object&gt; addTags(projectId, objectId, requestBody)
+> List&lt;AddTagsRequestInner&gt; addTags(projectId, objectId, addTagsRequestInner)
 
 Add tags to an object in the project.
 
@@ -28,22 +28,22 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
 import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.RunsApi;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
         String objectId = "objectId_example"; // String | object to tag.
-        List<Object> requestBody = null; // List<Object> | tags to add.
+        List<AddTagsRequestInner> addTagsRequestInner = Arrays.asList(); // List<AddTagsRequestInner> | tags to add.
         try {
-            List<Object> result = apiInstance.addTags(projectId, objectId, requestBody);
+            List<AddTagsRequestInner> result = apiInstance.addTags(projectId, objectId, addTagsRequestInner);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#addTags");
+            System.err.println("Exception when calling RunsExperimentalApi#addTags");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -60,11 +60,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
 | **objectId** | **String**| object to tag. | |
-| **requestBody** | [**List&lt;Object&gt;**](Object.md)| tags to add. | |
+| **addTagsRequestInner** | [**List&lt;AddTagsRequestInner&gt;**](AddTagsRequestInner.md)| tags to add. | |
 
 ### Return type
 
-**List&lt;Object&gt;**
+[**List&lt;AddTagsRequestInner&gt;**](AddTagsRequestInner.md)
 
 ### Authorization
 
@@ -98,21 +98,21 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
 import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.RunsApi;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
         String objectId = "objectId_example"; // String | object to delete tag from.
         String categoryName = "categoryName_example"; // String | category name of the tag to delete.
         try {
             apiInstance.deleteTags(projectId, objectId, categoryName);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#deleteTags");
+            System.err.println("Exception when calling RunsExperimentalApi#deleteTags");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -167,14 +167,14 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
 import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.RunsApi;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String runId = "runId_example"; // String | identifier of run to access.
         List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
@@ -182,7 +182,7 @@ public class Example {
             Run result = apiInstance.getRun(projectId, runId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#getRun");
+            System.err.println("Exception when calling RunsExperimentalApi#getRun");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -237,14 +237,14 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
 import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.RunsApi;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
@@ -254,7 +254,7 @@ public class Example {
             PageRun result = apiInstance.getRunsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#getRunsPaged");
+            System.err.println("Exception when calling RunsExperimentalApi#getRunsPaged");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -297,11 +297,11 @@ No authorization required
 
 ## objectsByTag
 
-> PageRun objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields)
+> PageRun objectsByTag(projectId, filter, page, size, sort, optFields)
 
-Get objects by tag.
+Get objects by tag
 
-Get objects by tag.
+Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
 
 ### Example
 
@@ -311,26 +311,25 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
 import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.RunsApi;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project space to get objects from.
-        String categoryName = "categoryName_example"; // String | category of the tag.
-        ObjectsByTagRequest objectsByTagRequest = new ObjectsByTagRequest(); // ObjectsByTagRequest | tag filter.
+        String filter = ""; // String | tag filter.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageRun result = apiInstance.objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields);
+            PageRun result = apiInstance.objectsByTag(projectId, filter, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#objectsByTag");
+            System.err.println("Exception when calling RunsExperimentalApi#objectsByTag");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -346,8 +345,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project space to get objects from. | |
-| **categoryName** | **String**| category of the tag. | |
-| **objectsByTagRequest** | [**ObjectsByTagRequest**](ObjectsByTagRequest.md)| tag filter. | |
+| **filter** | **String**| tag filter. | [optional] [default to ] |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
@@ -363,7 +361,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
