@@ -217,6 +217,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
+    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        throw new UnsupportedOperationException("Sirius project space does not support advanced search and never will be.");
+    }
+
+    @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
         final List<AlignedFeature> alignedFeatures = projectSpaceManager.getProjectSpaceImpl().stream()

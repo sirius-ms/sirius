@@ -87,9 +87,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPaged(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, removeNone(optFields));
     }
 
     /**

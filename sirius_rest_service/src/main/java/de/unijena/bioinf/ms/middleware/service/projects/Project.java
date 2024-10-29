@@ -84,6 +84,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId);
 
+    Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
