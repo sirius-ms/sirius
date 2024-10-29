@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -29,8 +30,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +47,28 @@ import java.util.Set;
 @Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature {
+public class AlignedFeature implements Iterable<IndexableField> {
+    @JsonIgnore
+    @NotNull
+    @Override
+    public Iterator<IndexableField> iterator() {
+        return List.of( //storing all the base fields allows to load feature list solely based on index.
+                (IndexableField) new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES),
+                new StringField("compoundId", alignedFeatureId, Field.Store.YES),
+                new StringField("externalFeatureId", alignedFeatureId, Field.Store.YES),
+                new TextField("name", name == null?"":name, Field.Store.YES),
+                new DoubleField("ionMass", ionMass, Field.Store.YES),
+                new StringField("quality", quality == null? DataQuality.NOT_APPLICABLE.name():quality.name(), Field.Store.YES),
+                new IntField("charge", charge, Field.Store.YES),
+                new DoubleField("rtStartSeconds", rtStartSeconds==null?Double.NaN:rtStartSeconds, Field.Store.YES),
+                new DoubleField("rtEndSeconds", rtEndSeconds==null?Double.NaN:rtEndSeconds, Field.Store.YES),
+                new DoubleField("rtApexSeconds", rtApexSeconds==null?Double.NaN:rtApexSeconds, Field.Store.YES),
+                new StringField("hasMs1", String.valueOf(hasMs1), Field.Store.YES),
+                new StringField("hasMsMs", String.valueOf(hasMsMs), Field.Store.YES)
+                //todo top annotation index.
+        ).iterator();
+    }
+
 
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo, computedTools, tags}

@@ -22,6 +22,12 @@ ext['okhttp.version'] = okhttp_version
 version = siriusFrontendVersion
 
 dependencies {
+    implementation 'org.apache.lucene:lucene-core:10.0.0'
+    implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
+
+//    implementation 'org.apache.solr:solr-solrj:10.0.0'
+//    implementation 'org.apache.solr:solr-core:10.0.0'
+
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
     implementation project(':sirius_cli')
     implementation project(':sirius_gui')
