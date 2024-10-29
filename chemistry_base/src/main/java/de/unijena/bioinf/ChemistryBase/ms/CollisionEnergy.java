@@ -167,6 +167,11 @@ public class CollisionEnergy implements Serializable {
         return String.valueOf(minEnergy);
     }
 
+    public static String stringify(double minEnergy, int decimal) {
+        if (Math.abs((int) minEnergy - minEnergy) < 1e-12) return String.valueOf((int) minEnergy);
+        return String.format("%." + decimal + "f", minEnergy);
+    }
+
     public static Comparator<CollisionEnergy> getMinEnergyComparator() {
         return Comparator.comparingDouble(CollisionEnergy::getMinEnergy);
     }
@@ -264,6 +269,19 @@ public class CollisionEnergy implements Serializable {
 
         return stringify(minEnergySource) + " - " + stringify(maxEnergySource) + " eV" +
                 (Double.isNaN(minEnergy) || Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy) + " - " + stringify(maxEnergy) + " eV)");
+    }
+
+    public String toString(int decimal) {
+        decimal = Math.max(0, decimal);
+        if (minEnergy == maxEnergy && minEnergySource == maxEnergySource)
+            return stringify(minEnergySource, decimal) + " eV" +
+                    (Double.isNaN(minEnergy) ? "" : " (corrected " + stringify(minEnergy, decimal) + " eV)");
+        if (minEnergy != maxEnergy && minEnergySource == maxEnergySource)
+            return stringify(minEnergySource, decimal) + " eV" +
+                    (Double.isNaN(minEnergy) || Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy, decimal) + " - " + stringify(maxEnergy, decimal) + " eV)");
+
+        return stringify(minEnergySource, decimal) + " - " + stringify(maxEnergySource, decimal) + " eV" +
+                (Double.isNaN(minEnergy) || Double.isNaN(maxEnergy) ? "" : " (corrected " + stringify(minEnergy, decimal) + " - " + stringify(maxEnergy, decimal) + " eV)");
     }
 
     @Override
