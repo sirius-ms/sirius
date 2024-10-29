@@ -263,7 +263,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     private List<Segment> computePersistentHomology(Trace trace, Filter filter, double _noiseLevel, double expectedPeakWidth, int[] pointsOfInterestArray) {
-        if (trace.apexIntensity() < noiseCoefficient * _noiseLevel) return Collections.emptyList();
+        // if ANY point of interest lies within this trace, we want to keep it, even if intensity is super low
+        if (Arrays.stream(pointsOfInterestArray).noneMatch(trace::inRange) &&  trace.apexIntensity() < noiseCoefficient * _noiseLevel) {
+            return Collections.emptyList();
+        }
 
         final TraceIntensityArray seq = new TraceIntensityArray(trace, pointsOfInterestArray, filter);
 
