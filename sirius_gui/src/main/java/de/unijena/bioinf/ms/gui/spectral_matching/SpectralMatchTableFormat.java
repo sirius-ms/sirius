@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import io.sirius.ms.sdk.model.BasicSpectrum;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
@@ -66,14 +66,17 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
     @Override
     public Object getColumnValue(SpectralMatchBean baseObject, int column) {
         return switch (column) {
-            case 0 -> baseObject.getReference().map(BasicSpectrum::getName).orElse("");
+            case 0 -> baseObject.getReference().map(BasicSpectrum::getName).orElse(null);
             case 1 -> baseObject.getMatch().getMolecularFormula();
             case 2 -> baseObject.getMatch().getSmiles();
-            case 3 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).map(d -> Double.toString(d)).orElse("N/A");
+            case 3 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).orElse(null);
             case 4 -> baseObject.getMatch().getSimilarity();
             case 5 -> baseObject.getMatch().getSharedPeaks();
-            case 6 -> Optional.ofNullable(baseObject.getMatch().getAdduct()).orElse("N/A");
-            case 7 -> baseObject.getReference().map(BasicSpectrum::getCollisionEnergy).orElse("N/A");
+            case 6 -> baseObject.getMatch().getAdduct();
+            case 7 -> baseObject.getReference().map(spectrum -> {
+                CollisionEnergy energy = CollisionEnergy.fromStringOrNull(spectrum.getCollisionEnergy());
+                return energy != null ? energy : CollisionEnergy.none();
+            }).orElse(CollisionEnergy.none());
 //            case 8 -> "N/A"; //todo nightsky -> do we want to add this info to the api model?
             case 8 -> baseObject.getMatch().getDbName();
             case 9 -> baseObject.getDBLink();
