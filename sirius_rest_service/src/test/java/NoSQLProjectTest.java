@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.middleware.controller.TagController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
@@ -57,6 +58,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
@@ -495,7 +497,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testFilterTranslation() throws IOException, NoSuchMethodException, QueryNodeException, InvocationTargetException, IllegalAccessException {
+    public void testFilterTranslation() throws IOException, NoSuchMethodException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
         StandardQueryParser parser = new StandardQueryParser(new StandardAnalyzer());
         parser.setPointsConfigMap(Map.of(
                 "integer", new PointsConfig(new DecimalFormat(), Long.class),
@@ -514,7 +516,13 @@ public class NoSQLProjectTest {
             Query query = parser.parse("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00", "text");
             Filter filter = (Filter) convert.invoke(project, query);
             Assert.assertEquals(
-                    "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, 2147483647]) OR real:[-Infinity, 3.0] OR int64:[1704063600000, 1704063600000] OR int64:[1696111200000, 1703372400000] OR int64:[-9223372036854775808, 1640991599999] OR int64:[39600000, 39600000] OR int64:[39600000, 46799999] OR int64:[-9223372036854775808, 32399999])",
+                    "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
+                            "int64:[" + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
+                            "int64:[" + TagController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
+                            "int64:[" + Long.MIN_VALUE + ", " + (TagController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
+                            "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TagController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
+                            "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TagController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
+                            "int64:[" + Long.MIN_VALUE + ", " + (TagController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
                     filter.toString()
             );
         }
