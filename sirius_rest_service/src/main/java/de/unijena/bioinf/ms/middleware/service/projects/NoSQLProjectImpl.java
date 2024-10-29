@@ -1427,6 +1427,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .build();
     }
 
+
+    @Override
+    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        if (searchQuery==null || searchQuery.isBlank())
+            return findAlignedFeatures(pageable, optFields);
+
+        if (searchService == null)
+            throw new IllegalStateException("Cannot perform search query. No search index available!");
+
+        Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, AlignedFeature.class, "alignedFeatureId", "name");
+
+        Stream<AlignedFeatures> stream = ids.stream().map(Long::parseLong).map(id -> {
+            try {
+                return storage().getByPrimaryKey(id, AlignedFeatures.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).flatMap(Optional::stream);
+
+        List<AlignedFeature> features = fetchDataAndConvertAlignedFeatures(stream, optFields);
+
+        return new PageImpl<>(features, pageable, ids.getTotalElements());
+    }
+
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {

@@ -26,10 +26,12 @@ import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,7 +57,7 @@ public class NitriteNoSqlProjectConfig {
     public ProjectsProvider<?> projectsProvider(ComputeService computeService,
                                                 SearchService searchService,
                                                 EventService<?> eventService,
-                                                ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
+                                                @Autowired(required = false) ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
     ) {
         return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService, searchService);
     }
