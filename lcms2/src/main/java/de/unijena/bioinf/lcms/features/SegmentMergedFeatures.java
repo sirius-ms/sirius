@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.features;
 
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
@@ -69,13 +70,18 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         // we have to remap the raw noise level to the projected noise level....
         final double rawNoiseLevel = stats.noiseLevel(trace.getRawApex());
         final double projectedNoiseLevel = trace.projectedIntensity(trace.getProjectedApex()) * rawNoiseLevel / trace.rawIntensity(trace.getRawApex());
-        final int[] pointsOfInterest = Arrays.stream(trace.getMs2Refs()).mapToInt(x->sample.getScanPointInterpolator().roundIndex(x.rawScanIdx)).distinct().toArray();
-
+        int[] pointsOfInterest = Arrays.stream(trace.getMs2Refs()).mapToInt(x->sample.getScanPointInterpolator().roundIndex(x.rawScanIdx)).distinct().toArray();
+        // add apexes of parent segments as point of interests?
+        final int[] apexesOfParent = Arrays.stream(traceSegments).mapToInt(x->x.apex).filter(trace::inProjectedRange).toArray();
+        int oldn=pointsOfInterest.length;
+        pointsOfInterest = Arrays.copyOf(pointsOfInterest, pointsOfInterest.length + apexesOfParent.length);
+        System.arraycopy(apexesOfParent, 0, pointsOfInterest, oldn, apexesOfParent.length);
+        ////////////////////////////////////////////////////////
         TraceSegment[] childSegments = new PersistentHomology(true).detectSegments(trace.projected(mergedSample.getMapping()),
                 projectedNoiseLevel/10d, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest).toArray(TraceSegment[]::new);
         if (childSegments.length==0) {
             if (traceSegments.length>0) LoggerFactory.getLogger(SegmentMergedFeatures.class).warn("No segments found in child trace!");
-            return childSegments;
+            return new TraceSegment[traceSegments.length]; // return null array
         }
         // align the child segments with the parent segments
         TraceSegment[] alignedSegments = traceAlignment(mergedSample, mergedTrace, traceSegments, trace.projected(mergedSample.getMapping()), childSegments);
