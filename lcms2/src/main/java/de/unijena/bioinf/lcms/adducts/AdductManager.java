@@ -53,6 +53,7 @@ public class AdductManager {
         }
         this.precursorTypes.addAll(adducts);
         this.losses.addAll(insource.stream().map(PrecursorIonType::getInSourceFragmentation).collect(Collectors.toSet()));
+        precursorTypes.removeIf(x->this.losses.contains(x.getAdduct()));
         this.multimereIonTypes.addAll(multimeres);
         buildMassDifferences();
     }
