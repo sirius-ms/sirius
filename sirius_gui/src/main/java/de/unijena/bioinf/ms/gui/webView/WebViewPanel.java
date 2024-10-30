@@ -19,8 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -36,7 +36,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.FutureTask;
@@ -74,17 +73,10 @@ public abstract class WebViewPanel extends JFXPanel {
         this.html_builder = new StringBuilder("<html><head></head><body>\n");
         queueTaskInJFXThread(() -> {
             this.webView = new WebView();
-            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            if (theme.equals("Dark")) {
-                this.webView.getEngine().setUserStyleSheetLocation(
-                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont(cssDarkResource))
-                );
-            } else {
-                this.webView.getEngine().setUserStyleSheetLocation(
-                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont(cssLightResource))
-                );
-            }
+            this.webView.getEngine().setUserStyleSheetLocation(
+                    WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont(
+                            Colors.isDarkTheme() ? cssDarkResource : cssLightResource))
+            );
             this.setScene(new Scene(this.webView));
         });
     }

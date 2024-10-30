@@ -29,7 +29,7 @@ import java.io.InputStreamReader;
 public class WebviewHTMLTextJPanel extends WebViewJPanel{
     private final String html;
     public WebviewHTMLTextJPanel(String htmlText) {
-        super();
+        super("/sirius/style-light.css","/sirius/style-dark.css");
         final StringBuilder buf = new StringBuilder();
         try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(WebviewHTMLTextJPanel.class.getResourceAsStream("/sirius/text.html")))) {
             String line;
