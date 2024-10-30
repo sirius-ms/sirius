@@ -16,6 +16,26 @@ body {
     font-size: 12px;
 }
 
+/* unvisited link */
+a:link {
+    color: $TEXT_LINK;
+}
+
+/* visited link */
+a:visited {
+    color: $TEXT_LINK_VISITED;
+}
+
+/* mouse over link */
+a:hover {
+    color: $TEXT_LINK_HOVER;
+}
+
+/* selected link */
+a:active {
+    color: $TEXT_LINK_ACTIVE;
+}
+
 .label, .legend {
     font-size: 13px;
 }
