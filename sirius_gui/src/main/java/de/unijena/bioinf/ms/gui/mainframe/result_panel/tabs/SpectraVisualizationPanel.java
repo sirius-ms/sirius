@@ -356,7 +356,7 @@ public class SpectraVisualizationPanel extends JPanel implements
             );
             return new DepictionGenerator()
                     .withAromaticDisplay()
-                    .withAtomColors(new UniColor(Colors.FOREGROUND))
+                    .withAtomColors(new UniColor(Colors.FOREGROUND_INTERFACE))
                     .withBackgroundColor(Colors.BACKGROUND)
                     .depict(graph.getMolecule()).toSvgStr();
         } catch (CDKException e) {
