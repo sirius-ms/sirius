@@ -14,7 +14,7 @@ All URIs are relative to *http://localhost:8888*
 
 ## addTags
 
-> List&lt;AddTagsRequestInner&gt; addTags(projectId, objectId, addTagsRequestInner)
+> List&lt;Tag&gt; addTags(projectId, objectId, tag)
 
 Add tags to an object in the project.
 
@@ -38,9 +38,9 @@ public class Example {
         RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
         String objectId = "objectId_example"; // String | object to tag.
-        List<AddTagsRequestInner> addTagsRequestInner = Arrays.asList(); // List<AddTagsRequestInner> | tags to add.
+        List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
         try {
-            List<AddTagsRequestInner> result = apiInstance.addTags(projectId, objectId, addTagsRequestInner);
+            List<Tag> result = apiInstance.addTags(projectId, objectId, tag);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsExperimentalApi#addTags");
@@ -60,11 +60,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
 | **objectId** | **String**| object to tag. | |
-| **addTagsRequestInner** | [**List&lt;AddTagsRequestInner&gt;**](AddTagsRequestInner.md)| tags to add. | |
+| **tag** | [**List&lt;Tag&gt;**](Tag.md)| tags to add. | |
 
 ### Return type
 
-[**List&lt;AddTagsRequestInner&gt;**](AddTagsRequestInner.md)
+[**List&lt;Tag&gt;**](Tag.md)
 
 ### Authorization
 
