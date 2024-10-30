@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -39,7 +40,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.FutureTask;
 
@@ -79,12 +79,16 @@ public class WebViewJPanel extends JFXPanel {
             });
             final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
             final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            final String css = switch (theme) {
-                case "Dark" -> "style-dark.css";
-                case "Classic" -> "style-classic.css";
-                default -> "style-light.css";
-            };
-            this.webView.getEngine().setUserStyleSheetLocation(getClass().getResource("/sirius/" + css).toExternalForm());
+            if (theme.equals("Dark")) {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/styles-dark.css"))
+                );
+            } else {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/styles.css"))
+                );
+            }
+
             this.setScene(new Scene(this.webView));
         });
     }

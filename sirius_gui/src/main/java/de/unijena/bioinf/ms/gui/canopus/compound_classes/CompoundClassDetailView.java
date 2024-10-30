@@ -44,10 +44,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
@@ -104,8 +102,9 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                     CompoundClass cfClass =  it.next();
                     mainClassPanel.add(new ClassifClass(cfClass, cfClass == mainClass));
                     if (it.hasNext()) {
-                        final JLabel comp = new JLabel("\u27be");
-                        comp.setFont(Fonts.FONT_BOLD.deriveFont(18f));
+                        final JLabel comp = new JLabel("\u203A");
+//                        comp.setBorder(BorderFactory.createEmptyBorder(3 * ClassifClass.PADDING, 0, 0, 0)); //roughly centered
+                        comp.setFont(Fonts.FONT_MEDIUM.deriveFont(18f));
                         mainClassPanel.add(comp);
                     }
                 }
@@ -127,6 +126,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 int width = Math.max(Math.max(mainClassPanel.getPreferredSize().width, alternativeClassPanels.getPreferredSize().width), npcPanel.getPreferredSize().width);
                 descriptionPanel.removeAll();
                 final JLabel comp = new JLabel();
+                comp.setForeground(Colors.FOREGROUND_DATA);
                 comp.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
                 descriptionPanel.add(comp);
@@ -134,11 +134,20 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 descriptionPanel.setMaximumSize(new Dimension(width, descriptionPanel.getMaximumSize().height));
             }
 
-            container.add(new TextHeaderBoxPanel("Main Classes", mainClassPanel));
-            container.add(new TextHeaderBoxPanel("Description", descriptionPanel));
-            container.add(new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels));
+            TextHeaderBoxPanel t;
+            t = new TextHeaderBoxPanel("Main Classes", mainClassPanel);
+            Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            container.add(t);
+            t = new TextHeaderBoxPanel("Description", descriptionPanel);
+            Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            container.add(t);
+            t = new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels);
+            Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            container.add(t);
             //if (npcClasses.length>0)
-            container.add(new TextHeaderBoxPanel("Natural Product Classes", npcPanel));
+            t = new TextHeaderBoxPanel("Natural Product Classes", npcPanel);
+            Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            container.add(t);
         }
         revalidate();
         repaint();
@@ -214,9 +223,9 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(cfClass.getProbability() * 100)) + " %</b></p><p>" + cfClass.getDescription() + "</p>");
             this.main = main;
             this.cfClass = cfClass;
-            typeFont = Fonts.FONT_BOLD.deriveFont(10f);
+            typeFont = Fonts.FONT_MEDIUM.deriveFont(10f);
             typeName = new TextLayout(cfClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
-            classFont = Fonts.FONT_BOLD.deriveFont(13f);
+            classFont = Fonts.FONT_MEDIUM.deriveFont(13f);
             className = new TextLayout(cfClass.getName(), classFont, new FontRenderContext(null, false, false));
             setOpaque(false);
             classBox = className.getPixelBounds(null, 0, 0);
@@ -232,22 +241,23 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             final Graphics2D g = (Graphics2D) g_;
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            final Color color = main ? Colors.CLASSIFIER_MAIN : Colors.CLASSIFIER_OTHER;
+            final Color color = main ? Colors.CompoundClassesView.CLASSIFIER_MAIN : Colors.CompoundClassesView.CLASSIFIER_OTHER;
             g.setColor(color);
             final int boxwidth = Math.max(classBox.width, typeBox.width) + 2 * PADDING;
             final int boxheight = classBox.height + 2 * PADDING + GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.CompoundClassesView.CLASSIFIER_TEXT);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth - typeBox.width) / 2;
 
             g.setFont(classFont);
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.CompoundClassesView.CLASSIFIER_TEXT);
             g.drawString(cfClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
             // draw header string
             g.setFont(typeFont);
+            g.setColor(Colors.FOREGROUND_DATA);
             { // draw gaps for header string
                 int headerTextWidth = g.getFontMetrics().stringWidth(cfClass.getLevel()) + 4;
                 g.setStroke(new BasicStroke(1.5f));
@@ -257,7 +267,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 g.setColor(color);
                 g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
             }
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.FOREGROUND_DATA);
             g.drawString(cfClass.getLevel(), gap, typeBox.height + GAP_TOP);
         }
 
@@ -305,9 +315,9 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             super();
             setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(npcClass.getProbability() * 100)) + " %</b></p></html>");
             this.npcClass = npcClass;
-            typeFont = Fonts.FONT_BOLD.deriveFont(10f);
+            typeFont = Fonts.FONT_MEDIUM.deriveFont(10f);
             typeName = new TextLayout(npcClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
-            classFont = Fonts.FONT_BOLD.deriveFont(13f);
+            classFont = Fonts.FONT_MEDIUM.deriveFont(13f);
             className = new TextLayout(npcClass.getName(), classFont, new FontRenderContext(null, false, false));
             setOpaque(false);
             classBox = className.getPixelBounds(null, 0, 0);
@@ -322,22 +332,23 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             final Graphics2D g = (Graphics2D) g_;
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            final Color color = Colors.CLASSIFIER_OTHER;
+            final Color color = Colors.CompoundClassesView.CLASSIFIER_OTHER;
             g.setColor(color);
             final int boxwidth = Math.max(classBox.width, typeBox.width) + 2 * PADDING;
             final int boxheight = classBox.height + 2 * PADDING + GAP_TOP;
             g.fillRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.CompoundClassesView.CLASSIFIER_TEXT);
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth - typeBox.width) / 2;
 
             g.setFont(classFont);
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.CompoundClassesView.CLASSIFIER_TEXT);
             g.drawString(npcClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
             // draw header string
             g.setFont(typeFont);
+            g.setColor(Colors.FOREGROUND_DATA);
             { // draw gaps for header string
                 int headerTextWidth = g.getFontMetrics().stringWidth(npcClass.getLevel()) + 4;
                 g.setStroke(new BasicStroke(1.5f));
@@ -347,8 +358,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 g.setColor(color);
                 g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
             }
-
-            g.setColor(Colors.FOREGROUND);
+            g.setColor(Colors.FOREGROUND_DATA);
             g.drawString(npcClass.getLevel(), gap, typeBox.height + GAP_TOP);
 
         }
