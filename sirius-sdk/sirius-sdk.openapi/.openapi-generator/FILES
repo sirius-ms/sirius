@@ -2,7 +2,6 @@ README.md
 docs/AccountCredentials.md
 docs/AccountInfo.md
 docs/ActuatorApi.md
-docs/AddTagsRequestInner.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQuality.md
@@ -14,7 +13,6 @@ docs/Axes.md
 docs/BackgroundComputationsStateEvent.md
 docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
-docs/BoolTag.md
 docs/Canopus.md
 docs/CanopusPrediction.md
 docs/Category.md
@@ -36,9 +34,7 @@ docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/DataQuality.md
-docs/DateTag.md
 docs/Deviation.md
-docs/DoubleTag.md
 docs/ExperimentalApi.md
 docs/Feature.md
 docs/FeatureAnnotations.md
@@ -55,7 +51,6 @@ docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
 docs/InstrumentProfile.md
-docs/IntTag.md
 docs/IsotopePatternAnnotation.md
 docs/Item.md
 docs/Job.md
@@ -101,7 +96,6 @@ docs/SpectralLibraryMatchSummary.md
 docs/SpectralLibrarySearch.md
 docs/SpectralMatchingType.md
 docs/SpectrumAnnotation.md
-docs/StringTag.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -114,7 +108,6 @@ docs/TagCategoriesExperimentalApi.md
 docs/TagCategory.md
 docs/TagCategoryImport.md
 docs/Term.md
-docs/TimeTag.md
 docs/Timeout.md
 docs/Trace.md
 docs/TraceSet.md
@@ -145,7 +138,6 @@ src/main/java/io/sirius/ms/sdk/client/auth/HttpBasicAuth.java
 src/main/java/io/sirius/ms/sdk/client/auth/HttpBearerAuth.java
 src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
-src/main/java/io/sirius/ms/sdk/model/AddTagsRequestInner.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQuality.java
@@ -157,7 +149,6 @@ src/main/java/io/sirius/ms/sdk/model/Axes.java
 src/main/java/io/sirius/ms/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/io/sirius/ms/sdk/model/BasicSpectrum.java
 src/main/java/io/sirius/ms/sdk/model/BinaryFingerprint.java
-src/main/java/io/sirius/ms/sdk/model/BoolTag.java
 src/main/java/io/sirius/ms/sdk/model/Canopus.java
 src/main/java/io/sirius/ms/sdk/model/CanopusPrediction.java
 src/main/java/io/sirius/ms/sdk/model/Category.java
@@ -178,9 +169,7 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
-src/main/java/io/sirius/ms/sdk/model/DateTag.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
-src/main/java/io/sirius/ms/sdk/model/DoubleTag.java
 src/main/java/io/sirius/ms/sdk/model/Feature.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
@@ -193,7 +182,6 @@ src/main/java/io/sirius/ms/sdk/model/GuiInfo.java
 src/main/java/io/sirius/ms/sdk/model/ImportResult.java
 src/main/java/io/sirius/ms/sdk/model/Info.java
 src/main/java/io/sirius/ms/sdk/model/InstrumentProfile.java
-src/main/java/io/sirius/ms/sdk/model/IntTag.java
 src/main/java/io/sirius/ms/sdk/model/IsotopePatternAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/Item.java
 src/main/java/io/sirius/ms/sdk/model/Job.java
@@ -234,7 +222,6 @@ src/main/java/io/sirius/ms/sdk/model/SpectralLibraryMatchSummary.java
 src/main/java/io/sirius/ms/sdk/model/SpectralLibrarySearch.java
 src/main/java/io/sirius/ms/sdk/model/SpectralMatchingType.java
 src/main/java/io/sirius/ms/sdk/model/SpectrumAnnotation.java
-src/main/java/io/sirius/ms/sdk/model/StringTag.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidate.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateFormula.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateOptField.java
@@ -246,7 +233,6 @@ src/main/java/io/sirius/ms/sdk/model/Tag.java
 src/main/java/io/sirius/ms/sdk/model/TagCategory.java
 src/main/java/io/sirius/ms/sdk/model/TagCategoryImport.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
-src/main/java/io/sirius/ms/sdk/model/TimeTag.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/Trace.java
 src/main/java/io/sirius/ms/sdk/model/TraceSet.java

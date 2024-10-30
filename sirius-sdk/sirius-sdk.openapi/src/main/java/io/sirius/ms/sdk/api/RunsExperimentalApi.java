@@ -2,10 +2,10 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
-import io.sirius.ms.sdk.model.AddTagsRequestInner;
 import io.sirius.ms.sdk.model.PageRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
+import io.sirius.ms.sdk.model.Tag;
 
 import java.util.HashMap;
 import java.util.List;
@@ -55,12 +55,12 @@ public class RunsExperimentalApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param addTagsRequestInner tags to add.
-     * @return List&lt;AddTagsRequestInner&gt;
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
-        Object postBody = addTagsRequestInner;
+    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        Object postBody = tag;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
@@ -69,9 +69,9 @@ public class RunsExperimentalApi {
         if (objectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'objectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'addTagsRequestInner' is set
-        if (addTagsRequestInner == null) {
-            throw new WebClientResponseException("Missing the required parameter 'addTagsRequestInner' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'tag' is set
+        if (tag == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -95,7 +95,7 @@ public class RunsExperimentalApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -105,13 +105,13 @@ public class RunsExperimentalApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param addTagsRequestInner tags to add.
-     * @return List&lt;AddTagsRequestInner&gt;
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AddTagsRequestInner> addTags(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
-        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
-        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner).bodyToFlux(localVarReturnType).collectList().block();
+    public List<Tag> addTags(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTagsRequestCreation(projectId, objectId, tag).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -120,13 +120,13 @@ public class RunsExperimentalApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param addTagsRequestInner tags to add.
-     * @return ResponseEntity&lt;List&lt;AddTagsRequestInner&gt;&gt;
+     * @param tag tags to add.
+     * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AddTagsRequestInner>> addTagsWithHttpInfo(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
-        ParameterizedTypeReference<AddTagsRequestInner> localVarReturnType = new ParameterizedTypeReference<AddTagsRequestInner>() {};
-        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner).toEntityList(localVarReturnType).block();
+    public ResponseEntity<List<Tag>> addTagsWithHttpInfo(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTagsRequestCreation(projectId, objectId, tag).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -135,12 +135,12 @@ public class RunsExperimentalApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param addTagsRequestInner tags to add.
+     * @param tag tags to add.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<AddTagsRequestInner> addTagsRequestInner) throws WebClientResponseException {
-        return addTagsRequestCreation(projectId, objectId, addTagsRequestInner);
+    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        return addTagsRequestCreation(projectId, objectId, tag);
     }
     /**
      * Delete tag with the given category from the object with the specified ID in the specified project-space.

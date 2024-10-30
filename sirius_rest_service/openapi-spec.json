@@ -276,29 +276,7 @@
               "schema": {
                 "type": "array",
                 "items": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/Tag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/BoolTag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/DateTag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/DoubleTag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/IntTag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/StringTag"
-                    },
-                    {
-                      "$ref": "#/components/schemas/TimeTag"
-                    }
-                  ]
+                  "$ref": "#/components/schemas/Tag"
                 }
               }
             }
@@ -313,29 +291,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "oneOf": [
-                      {
-                        "$ref": "#/components/schemas/Tag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/BoolTag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/DateTag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/DoubleTag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/IntTag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/StringTag"
-                      },
-                      {
-                        "$ref": "#/components/schemas/TimeTag"
-                      }
-                    ]
+                    "$ref": "#/components/schemas/Tag"
                   }
                 }
               }
@@ -6061,151 +6017,46 @@
           }
         }
       },
-      "BoolTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "bool": {
-                "type": "boolean",
-                "description": "Boolean value"
-              }
-            }
-          }
-        ]
-      },
-      "DateTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "date": {
-                "type": "string",
-                "description": "Date value in format yyyy-mm-dd"
-              }
-            }
-          }
-        ]
-      },
-      "DoubleTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "real": {
-                "type": "number",
-                "description": "Floating point value",
-                "format": "double"
-              }
-            }
-          }
-        ]
-      },
-      "IntTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "integer": {
-                "type": "integer",
-                "description": "Integer value",
-                "format": "int32"
-              }
-            }
-          }
-        ]
-      },
-      "StringTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "text": {
-                "type": "string",
-                "description": "Text value"
-              }
-            }
-          }
-        ]
-      },
       "Tag": {
-        "required": [
-          "type"
-        ],
         "type": "object",
         "properties": {
           "category": {
             "type": "string",
             "description": "Name of the tag category"
           },
-          "type": {
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "BOOLEAN",
+              "INTEGER",
+              "DOUBLE",
+              "STRING",
+              "DATE",
+              "TIME"
+            ]
+          },
+          "bool": {
+            "type": "boolean"
+          },
+          "integer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "real": {
+            "type": "number",
+            "format": "double"
+          },
+          "text": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "time": {
             "type": "string"
           }
-        },
-        "discriminator": {
-          "propertyName": "type"
         }
-      },
-      "TimeTag": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Tag"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "category": {
-                "type": "string",
-                "description": "Name of the tag category"
-              },
-              "time": {
-                "type": "string",
-                "description": "Time value in format HH:mm:ss"
-              }
-            }
-          }
-        ]
       },
       "TagCategoryImport": {
         "type": "object",
@@ -8503,29 +8354,7 @@
           "tags": {
             "type": "object",
             "additionalProperties": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Tag"
-                },
-                {
-                  "$ref": "#/components/schemas/BoolTag"
-                },
-                {
-                  "$ref": "#/components/schemas/DateTag"
-                },
-                {
-                  "$ref": "#/components/schemas/DoubleTag"
-                },
-                {
-                  "$ref": "#/components/schemas/IntTag"
-                },
-                {
-                  "$ref": "#/components/schemas/StringTag"
-                },
-                {
-                  "$ref": "#/components/schemas/TimeTag"
-                }
-              ]
+              "$ref": "#/components/schemas/Tag"
             },
             "description": "Key: tag category, value: tag",
             "nullable": true
