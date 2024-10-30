@@ -96,16 +96,16 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     }
 
     public void initColorsAndFonts() {
-        compoundFont = Fonts.FONT_BOLD.deriveFont(13f);
-        propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
-        statusFont = Fonts.FONT_BOLD.deriveFont(24f);
+        compoundFont = Fonts.FONT_MEDIUM.deriveFont(13f);
+        propertyFont = Fonts.FONT_MEDIUM.deriveFont(12f);
+        statusFont = Fonts.FONT_DEJAVU_SANS.deriveFont(24f);
         valueFont = Fonts.FONT.deriveFont(12f);
 
-        selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
-        selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-        evenBackground = Colors.LIST_EVEN_BACKGROUND;
-        unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
-        activatedForeground = UIManager.getColor("List.foreground");
+        selectedBackground = Colors.CellsAndRows.LargerCells.SELECTED_CELL;
+        selectedForeground = Colors.CellsAndRows.LargerCells.SELECTED_CELL_TEXT;
+        evenBackground = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1;
+        unevenBackground = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_2;
+        activatedForeground = Colors.CellsAndRows.LargerCells.CELL_TEXT;
     }
 
     @Override

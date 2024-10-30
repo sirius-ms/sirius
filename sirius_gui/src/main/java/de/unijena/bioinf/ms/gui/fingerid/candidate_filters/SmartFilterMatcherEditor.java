@@ -33,6 +33,7 @@ import java.util.function.BooleanSupplier;
 public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
 
     private final Color foreground;
+    private final Color background;
     private final BooleanSupplier isEnabled;
 
     public SmartFilterMatcherEditor(JTextField textField) {
@@ -42,6 +43,7 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
         super();
         this.isEnabled = isEnabled;
         foreground = textField.getForeground();
+        background = textField.getBackground();
         textField.addActionListener(propertyChangeEvent -> fireChanged(new SmartMatcher(textField)));
     }
 
@@ -51,6 +53,7 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
 
         public SmartMatcher(JTextField textField) {
             textField.setForeground(foreground); //set neutral color if smart matching inactive
+            textField.setBackground(background);
 
             if (! isEnabled.getAsBoolean())
                 return;
@@ -69,10 +72,12 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
             try {
                 smartsPattern = SmartsPattern.create(smart);
                 isValidSmartString = true;
-                textField.setForeground(Colors.ICON_GREEN);
+                textField.setBackground(Colors.GOOD_IS_GREEN_PALE);
+                textField.setForeground(Color.BLACK);
             } catch (Exception e) {
                 isValidSmartString = false;
-                textField.setForeground(Colors.ICON_GREEN);
+                textField.setBackground(Colors.TEXT_ERROR);
+                textField.setForeground(Color.BLACK);
                 textField.setToolTipText("invalid SMART string.");
             }
         }
