@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import io.sirius.ms.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -45,10 +46,12 @@ public class LCMSWebview extends JFXPanel {
             boolean DarkMode = theme.equals("Dark");
             if (!DarkMode) {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles.css"))
+                );
             } else {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles-dark.css"))
+                );
             }
             setScene(new Scene(webView));
             final String htmlContent = getHTMLContent();

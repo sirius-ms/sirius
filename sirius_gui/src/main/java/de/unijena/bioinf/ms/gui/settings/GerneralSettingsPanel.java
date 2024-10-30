@@ -62,7 +62,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         add(new JXTitledSeparator("Graphical User Interface"));
 
         theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-        String[] themes = new String[]{"Light", "Dark", "Classic"};
+        String[] themes = new String[]{"Light", "Dark"};
         themeBox = new JComboBox<>(themes);
         themeBox.setSelectedItem(theme);
         themeBox.setToolTipText("Set theme of the Graphical User Interface");
