@@ -232,6 +232,9 @@ public class Colors {
     public final static Color TEXT_WARN = CUSTOM_PINK; //CUSTOM_ORANGE; (orange not good in light theme)
     public final static Color TEXT_ERROR = CUSTOM_PINK;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
+    public final static Color TEXT_LINK_VISITED = CUSTOM_PINK;
+    public final static Color TEXT_LINK_ACTIVE = GOOD_IS_GREEN_VIBRANT;
+    public final static Color TEXT_LINK_HOVER = CUSTOM_LIGHT_BLUE;
 
 
     public static class SplashScreen {
