@@ -87,10 +87,6 @@ public class ProjectCreateAction extends ProjectOpenAction {
         jfc.addChoosableFileFilter(new NoSQLProjectFileFilter());
 
         //region jfilechooser hack
-
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-
         JPanel chooserSouthComponent;
         JPanel central = (JPanel) ((BorderLayout) jfc.getLayout()).getLayoutComponent(BorderLayout.CENTER);
         chooserSouthComponent = (JPanel) ((BorderLayout) central.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
