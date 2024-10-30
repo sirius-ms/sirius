@@ -20,30 +20,20 @@
 
 package de.unijena.bioinf.ms.middleware.model.tags;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import de.unijena.bioinf.ms.middleware.controller.TagController;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
-@SuperBuilder
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value= Tag.class, name = "tag"),
-        @JsonSubTypes.Type(value= Tag.BoolTag.class, name = "bool"),
-        @JsonSubTypes.Type(value= Tag.IntTag.class, name = "int"),
-        @JsonSubTypes.Type(value= Tag.DoubleTag.class, name = "double"),
-        @JsonSubTypes.Type(value = Tag.StringTag.class, name = "string"),
-        @JsonSubTypes.Type(value = Tag.DateTag.class, name = "date"),
-        @JsonSubTypes.Type(value = Tag.TimeTag.class, name = "time")
-})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
 
     /**
@@ -52,85 +42,80 @@ public class Tag {
     @NotNull
     private String category;
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class BoolTag extends Tag {
+    /**
+     *
+     */
+    @NotNull
+    private TagCategoryImport.ValueType valueType;
 
-        /**
-         * Boolean value
-         */
-        @NotNull
-        private Boolean bool;
+    @Nullable
+    private Boolean bool;
 
-    }
+    @Nullable
+    private Integer integer;
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class IntTag extends Tag {
+    @Nullable
+    private Double real;
 
-        /**
-         * Integer value
-         */
-        @NotNull
-        private Integer integer;
-    }
+    @Nullable
+    private String text;
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class DoubleTag extends Tag {
+    @Nullable
+    private String date;
 
-        /**
-         * Floating point value
-         */
-        private Double real;
-    }
+    @Nullable
+    private String time;
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class StringTag extends Tag {
+    public static TagBuilder builder() {
+        return new TagBuilder() {
 
-        /**
-         * Text value
-         */
-        private String text;
-    }
+            @Override
+            public TagBuilder date(@Nullable String date) {
+                try {
+                    TagController.DATE_FORMAT.parse(date);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Illegal date value: " + date);
+                }
+                return super.date(date);
+            }
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class DateTag extends Tag {
+            @Override
+            public TagBuilder time(@Nullable String time) {
+                try {
+                    TagController.TIME_FORMAT.parse(time);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Illegal time value: " + time);
+                }
+                return super.time(time);
+            }
 
-        /**
-         * Date value in format yyyy-mm-dd
-         */
-        private String date;
-    }
+            @SneakyThrows
+            @Override
+            public Tag build() {
+                Tag tag = super.build();
 
-    @Getter
-    @Setter
-    @SuperBuilder
-    @NoArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class TimeTag extends Tag {
+                int fieldSet = 0;
+                if (tag.getBool() != null) fieldSet |= 0x000001;
+                if (tag.getInteger() != null) fieldSet |= 0x000010;
+                if (tag.getReal() != null) fieldSet |= 0x000100;
+                if (tag.getText() != null) fieldSet |= 0x001000;
+                if (tag.getDate() != null) fieldSet |= 0x010000;
+                if (tag.getTime() != null) fieldSet |= 0x100000;
 
-        /**
-         * Time value in format HH:mm:ss
-         */
-        private String time;
+                switch (tag.getValueType()) {
+                    case NONE: if (fieldSet != 0) throw new IllegalArgumentException("No values allowed."); break;
+                    case BOOLEAN: if (fieldSet != 0x000001) throw new IllegalArgumentException("Only boolean values allowed."); break;
+                    case INTEGER: if (fieldSet != 0x000010) throw new IllegalArgumentException("Only integer values allowed."); break;
+                    case DOUBLE: if (fieldSet != 0x000100) throw new IllegalArgumentException("Only floating point values allowed."); break;
+                    case STRING: if (fieldSet != 0x001000) throw new IllegalArgumentException("Only string values allowed."); break;
+                    case DATE: if (fieldSet != 0x010000) throw new IllegalArgumentException("Only date values allowed."); break;
+                    case TIME: if (fieldSet != 0x100000) throw new IllegalArgumentException("Only time values allowed."); break;
+                }
+
+                return tag;
+            }
+        };
+
     }
 
 }

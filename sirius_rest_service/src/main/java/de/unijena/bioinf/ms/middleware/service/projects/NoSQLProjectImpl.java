@@ -947,29 +947,36 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag tag, de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category) {
         return switch (category.getValueType()) {
-            case NONE -> Tag.builder().category(category.getName()).build();
-            case BOOL -> Tag.BoolTag.builder().category(category.getName()).bool(tag.isBool()).build();
-            case INT -> Tag.IntTag.builder().category(category.getName()).integer(tag.getInt32()).build();
-            case DOUBLE -> Tag.DoubleTag.builder().category(category.getName()).real(tag.getReal()).build();
-            case STRING -> Tag.StringTag.builder().category(category.getName()).text(tag.getText()).build();
-            case DATE -> Tag.DateTag.builder().category(category.getName()).date(TagController.DATE_FORMAT.format(new Date(tag.getInt64()))).build();
-            case TIME -> Tag.TimeTag.builder().category(category.getName()).time(TagController.TIME_FORMAT.format(new Date(tag.getInt64()))).build();
+            case NONE -> Tag.builder().valueType(TagCategoryImport.ValueType.NONE).category(category.getName()).build();
+            case BOOL -> Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category(category.getName()).bool(tag.isBool()).build();
+            case INT -> Tag.builder().valueType(TagCategoryImport.ValueType.INTEGER).category(category.getName()).integer(tag.getInt32()).build();
+            case DOUBLE -> Tag.builder().valueType(TagCategoryImport.ValueType.DOUBLE).category(category.getName()).real(tag.getReal()).build();
+            case STRING -> Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category(category.getName()).text(tag.getText()).build();
+            case DATE -> Tag.builder().valueType(TagCategoryImport.ValueType.DATE).category(category.getName()).date(TagController.DATE_FORMAT.format(new Date(tag.getInt64()))).build();
+            case TIME -> Tag.builder().valueType(TagCategoryImport.ValueType.TIME).category(category.getName()).time(TagController.TIME_FORMAT.format(new Date(tag.getInt64()))).build();
         };
     }
 
     private de.unijena.bioinf.ms.persistence.model.core.tags.Tag setProjectTagValue(de.unijena.bioinf.ms.persistence.model.core.tags.Tag projectTag, Tag apiTag) throws ParseException {
-        if (apiTag instanceof Tag.BoolTag boolTag) {
-            projectTag.setBool(boolTag.getBool());
-        } else if (apiTag instanceof Tag.IntTag intTag) {
-            projectTag.setInt32(intTag.getInteger());
-        } else if (apiTag instanceof Tag.DoubleTag doubleTag) {
-            projectTag.setReal(doubleTag.getReal());
-        } else if (apiTag instanceof Tag.StringTag stringTag) {
-            projectTag.setText(stringTag.getText());
-        } else if (apiTag instanceof Tag.DateTag dateTag) {
-            projectTag.setInt64(TagController.DATE_FORMAT.parse(dateTag.getDate()).getTime());
-        } else if (apiTag instanceof Tag.TimeTag timeTag) {
-            projectTag.setInt64(TagController.TIME_FORMAT.parse(timeTag.getTime()).getTime());
+        switch (apiTag.getValueType()) {
+            case BOOLEAN: projectTag.setBool(Boolean.TRUE.equals(apiTag.getBool())); break;
+            case INTEGER: projectTag.setInt32(apiTag.getInteger() != null ? apiTag.getInteger() : 0); break;
+            case DOUBLE: projectTag.setReal(apiTag.getReal() != null ? apiTag.getReal() : Double.NaN); break;
+            case STRING: projectTag.setText(apiTag.getText()); break;
+            case DATE:
+                try {
+                    projectTag.setInt64(TagController.DATE_FORMAT.parse(apiTag.getDate()).getTime());
+                } catch (Exception e) {
+                    projectTag.setInt64(0);
+                }
+                break;
+            case TIME:
+                try {
+                    projectTag.setInt64(TagController.TIME_FORMAT.parse(apiTag.getTime()).getTime());
+                } catch (Exception e) {
+                    projectTag.setInt64(0);
+                }
+                break;
         }
         return projectTag;
     }
@@ -1489,24 +1496,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Object getValueFromTag(Tag tag) throws ParseException {
-        if (tag instanceof Tag.BoolTag boolTag) {
-            return boolTag.getBool();
-        } else if (tag instanceof Tag.IntTag intTag) {
-            return intTag.getInteger();
-        } else if (tag instanceof Tag.DoubleTag doubleTag) {
-            return doubleTag.getReal();
-        } else if (tag instanceof Tag.StringTag stringTag) {
-            return stringTag.getText();
-        } else if (tag instanceof Tag.DateTag dateTag) {
-            return TagController.DATE_FORMAT.parse(dateTag.getDate()).getTime();
-        } else if (tag instanceof Tag.TimeTag timeTag) {
-            return TagController.TIME_FORMAT.parse(timeTag.getTime()).getTime();
-        }
-        return null;
+        return switch (tag.getValueType()) {
+            case NONE -> null;
+            case BOOLEAN -> tag.getBool();
+            case INTEGER -> tag.getInteger();
+            case DOUBLE -> tag.getReal();
+            case STRING -> tag.getText();
+            case DATE -> {
+                try {
+                    yield TagController.DATE_FORMAT.parse(tag.getDate()).getTime();
+                } catch (Exception e) {
+                    yield 0L;
+                }
+            }
+            case TIME -> {
+                try {
+                    yield TagController.TIME_FORMAT.parse(tag.getTime()).getTime();
+                } catch (Exception e) {
+                    yield 0L;
+                }
+            }
+        };
     }
 
     @Override
     public List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags) {
+        // TODO
         try {
             Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
             long objId = Long.parseLong(objectId);
@@ -1523,15 +1538,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 }
                 de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategory());
                 if (switch (category.getValueType()) {
-                    case STRING -> !(tag instanceof Tag.StringTag);
-                    case BOOL -> !(tag instanceof Tag.BoolTag);
-                    case INT -> !(tag instanceof Tag.IntTag);
-                    case DOUBLE -> !(tag instanceof Tag.DoubleTag);
-                    case DATE -> !(tag instanceof Tag.DateTag);
-                    case TIME -> !(tag instanceof Tag.TimeTag);
-                    case NONE ->
-                            tag instanceof Tag.StringTag || tag instanceof Tag.BoolTag || tag instanceof Tag.IntTag ||
-                                    tag instanceof Tag.DoubleTag;
+                    case STRING -> tag.getValueType() != TagCategoryImport.ValueType.STRING;
+                    case BOOL -> tag.getValueType() != TagCategoryImport.ValueType.BOOLEAN;
+                    case INT -> tag.getValueType() != TagCategoryImport.ValueType.INTEGER;
+                    case DOUBLE -> tag.getValueType() != TagCategoryImport.ValueType.DOUBLE;
+                    case DATE -> tag.getValueType() != TagCategoryImport.ValueType.DATE;
+                    case TIME -> tag.getValueType() != TagCategoryImport.ValueType.TIME;
+                    case NONE -> tag.getValueType() != TagCategoryImport.ValueType.NONE;
                 }) {
                     throw new ResponseStatusException(BAD_REQUEST, "Wrong tag type '" + tag.getClass() + " for category " + tag.getCategory() + ".");
                 }
