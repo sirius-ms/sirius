@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.tags;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -31,6 +32,7 @@ import lombok.*;
 @Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
 
     @Id
