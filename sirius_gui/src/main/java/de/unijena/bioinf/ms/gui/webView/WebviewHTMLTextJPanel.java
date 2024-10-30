@@ -44,4 +44,12 @@ public class WebviewHTMLTextJPanel extends WebViewJPanel{
     public void load() {
        load(html);
     }
+
+    public static String styleWarningColor(String text) {
+        return "<span class='warn'>"+text+"</span>";
+    }
+
+    public static String styleErrorColor(String text) {
+        return "<span class='error'>"+text+"</span>";
+    }
 }

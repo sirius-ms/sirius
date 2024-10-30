@@ -27,6 +27,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
@@ -153,11 +154,14 @@ public class CompoundList {
     private void colorByActiveFilter() {
         //is any filtering option active (despite the text filter which is visible all the time)
         if (isFilterInverted()) {
-            openFilterPanelButton.setBackground(new Color(235, 94, 85));
+            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
+            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
         } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
-            openFilterPanelButton.setBackground(new Color(49, 153, 187));
+            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
+            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
         } else {
             openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
+            openFilterPanelButton.setForeground(Colors.FOREGROUND_DATA);
         }
     }
 
