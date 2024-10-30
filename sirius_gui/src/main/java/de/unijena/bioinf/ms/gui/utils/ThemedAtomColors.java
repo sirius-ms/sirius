@@ -29,11 +29,21 @@ import java.awt.*;
 
 public class ThemedAtomColors extends CDK2DAtomColors {
 
+    private Color mainColor;
+
+    public ThemedAtomColors() {
+        this(Colors.FOREGROUND_DATA);
+    }
+
+    public ThemedAtomColors(Color mainColor) {
+        this.mainColor = mainColor;
+    }
+
     @Override
     public Color getAtomColor(IAtom atom) {
         Elements elem = Elements.ofString(atom.getSymbol());
         if (elem == Elements.Hydrogen || elem == Elements.Carbon || elem == Elements.Unknown) {
-            return Colors.FOREGROUND;
+            return mainColor;
         }
         return super.getAtomColor(atom);
     }

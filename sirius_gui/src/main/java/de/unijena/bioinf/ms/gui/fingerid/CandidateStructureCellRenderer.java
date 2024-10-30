@@ -35,7 +35,7 @@ public class CandidateStructureCellRenderer implements ListCellRenderer<Fingerpr
     public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
         JPanel nu =  new JPanel();
         image.molecule = value;
-        image.backgroundColor = (index % 2 == 0 ? Colors.LIST_EVEN_BACKGROUND : Colors.LIST_UNEVEN_BACKGROUND);
+        image.backgroundColor = (index % 2 == 0 ? Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1 : Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1);
         nu.setBackground(image.backgroundColor);
         nu.add(image);
         return nu;

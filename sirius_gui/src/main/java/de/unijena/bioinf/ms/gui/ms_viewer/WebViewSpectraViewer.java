@@ -36,7 +36,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
     HashMap<String, Object> bridges;
 
     public WebViewSpectraViewer() {
-        super();
+        super("/js/styles.css", "/js/styles-dark.css");
         addJS("d3.min.js");
         addJS("svg-export.js");
         addJS("spectra_viewer/spectra_viewer_oop.js");
