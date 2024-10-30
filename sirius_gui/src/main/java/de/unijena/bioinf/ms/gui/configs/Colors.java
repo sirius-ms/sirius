@@ -18,19 +18,13 @@
  */
 
 package de.unijena.bioinf.ms.gui.configs;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 11.10.16.
- */
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
-import java.util.Properties;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -38,21 +32,22 @@ import java.util.Properties;
  */
 @Slf4j
 public class Colors {
-    enum THEME {LIGHT, DARK};
+    public enum Theme {LIGHT, DARK}
 
-    public final static THEME theme;
-    static {
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        String themeStr = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light").toUpperCase();
-        try {
-            THEME.valueOf(themeStr);
-        } catch (IllegalArgumentException e) {
-            log.warn("Unknown theme specified '" + themeStr + "'. Using light theme.");
-            themeStr = THEME.LIGHT.name();
-        }
-        theme = THEME.valueOf(themeStr);
+    private final static Theme THEME = PropertyManager.getEnum("de.unijena.bioinf.sirius.ui.theme", Theme.LIGHT);
 
+    public static Theme THEME() {
+        return THEME;
     }
+
+    public static boolean isDarkTheme() {
+        return THEME() == Theme.DARK;
+    }
+
+    public static boolean isLightTheme() {
+        return THEME() == Theme.LIGHT;
+    }
+
     //--------------------------------------------
 
 
@@ -216,14 +211,14 @@ public class Colors {
 
 
 
-    public final static Color FOREGROUND_INTERFACE = (theme == THEME.LIGHT ? Themes.Light.FOREGROUND : Themes.Dark.FOREGROUND_INTERFACE);
-    public final static Color FOREGROUND_DATA = (theme == THEME.LIGHT ? Themes.Light.FOREGROUND : Themes.Dark.FOREGROUND_DATA);
-    public final static Color BACKGROUND = (theme == THEME.LIGHT ? Themes.Light.BACKGROUND : Themes.Dark.BACKGROUND);
+    public final static Color FOREGROUND_INTERFACE = (THEME == Theme.LIGHT ? Themes.Light.FOREGROUND : Themes.Dark.FOREGROUND_INTERFACE);
+    public final static Color FOREGROUND_DATA = (THEME == Theme.LIGHT ? Themes.Light.FOREGROUND : Themes.Dark.FOREGROUND_DATA);
+    public final static Color BACKGROUND = (THEME == Theme.LIGHT ? Themes.Light.BACKGROUND : Themes.Dark.BACKGROUND);
 
-    public final static Color SWITCH_FOREGROUND = (theme == THEME.LIGHT ? Themes.Light.SWITCH_FOREGROUND : Themes.Dark.SWITCH_FOREGROUND);
-    public final static Color SWITCH_BACKGROUND = (theme == THEME.LIGHT ? Themes.Light.SWITCH_BACKGROUND : Themes.Dark.SWITCH_BACKGROUND);
+    public final static Color SWITCH_FOREGROUND = (THEME == Theme.LIGHT ? Themes.Light.SWITCH_FOREGROUND : Themes.Dark.SWITCH_FOREGROUND);
+    public final static Color SWITCH_BACKGROUND = (THEME == Theme.LIGHT ? Themes.Light.SWITCH_BACKGROUND : Themes.Dark.SWITCH_BACKGROUND);
 
-    public final static Color WEBVIEW_TEXT_IN_POPUPS_BACKGROUND = (theme == THEME.LIGHT ? Themes.Light.WEBVIEW_TEXT_IN_POPUPS_BACKGROUND : Themes.Dark.WEBVIEW_TEXT_IN_POPUPS_BACKGROUND);
+    public final static Color WEBVIEW_TEXT_IN_POPUPS_BACKGROUND = (THEME == Theme.LIGHT ? Themes.Light.WEBVIEW_TEXT_IN_POPUPS_BACKGROUND : Themes.Dark.WEBVIEW_TEXT_IN_POPUPS_BACKGROUND);
 
 
     public final static Color EXPANSIVE_SEARCH_WARNING_TEXT = Color.WHITE;
@@ -261,29 +256,29 @@ public class Colors {
 
         //feature navigation and structure detail view
         public static class LargerCells {
-            public final static Color ALTERNATING_CELL_1 = (theme == THEME.LIGHT ? Themes.Light.LargerCells.ALTERNATING_CELL_1 : Themes.Dark.LargerCells.ALTERNATING_CELL_1);
-            public final static Color ALTERNATING_CELL_2 = (theme == THEME.LIGHT ? Themes.Light.LargerCells.ALTERNATING_CELL_2 : Themes.Dark.LargerCells.ALTERNATING_CELL_2);
-            public final static Color CELL_TEXT = (theme == THEME.LIGHT ? Themes.Light.LargerCells.CELL_TEXT : Themes.Dark.LargerCells.CELL_TEXT);
+            public final static Color ALTERNATING_CELL_1 = (THEME == Theme.LIGHT ? Themes.Light.LargerCells.ALTERNATING_CELL_1 : Themes.Dark.LargerCells.ALTERNATING_CELL_1);
+            public final static Color ALTERNATING_CELL_2 = (THEME == Theme.LIGHT ? Themes.Light.LargerCells.ALTERNATING_CELL_2 : Themes.Dark.LargerCells.ALTERNATING_CELL_2);
+            public final static Color CELL_TEXT = (THEME == Theme.LIGHT ? Themes.Light.LargerCells.CELL_TEXT : Themes.Dark.LargerCells.CELL_TEXT);
 
-            public final static Color SELECTED_CELL = (theme == THEME.LIGHT ? Themes.Light.LargerCells.SELECTED_CELL : Themes.Dark.LargerCells.SELECTED_CELL);
+            public final static Color SELECTED_CELL = (THEME == Theme.LIGHT ? Themes.Light.LargerCells.SELECTED_CELL : Themes.Dark.LargerCells.SELECTED_CELL);
             public final static Color SELECTED_CELL_TEXT = Color.BLACK;
         }
 
         public static class Tables {
-            public final static Color ALTERNATING_ROW_1 = (theme == THEME.LIGHT ? Themes.Light.Tables.ALTERNATING_ROW_1 : Themes.Dark.Tables.ALTERNATING_ROW_1);
-            public final static Color ALTERNATING_ROW_2 = (theme == THEME.LIGHT ? Themes.Light.Tables.ALTERNATING_ROW_2 : Themes.Dark.Tables.ALTERNATING_ROW_2);
+            public final static Color ALTERNATING_ROW_1 = (THEME == Theme.LIGHT ? Themes.Light.Tables.ALTERNATING_ROW_1 : Themes.Dark.Tables.ALTERNATING_ROW_1);
+            public final static Color ALTERNATING_ROW_2 = (THEME == Theme.LIGHT ? Themes.Light.Tables.ALTERNATING_ROW_2 : Themes.Dark.Tables.ALTERNATING_ROW_2);
 
-            public final static Color SELECTED_ROW = (theme == THEME.LIGHT ? Themes.Light.Tables.SELECTED_ROW : Themes.Dark.Tables.SELECTED_ROW);
+            public final static Color SELECTED_ROW = (THEME == Theme.LIGHT ? Themes.Light.Tables.SELECTED_ROW : Themes.Dark.Tables.SELECTED_ROW);
 
             public final static Color SELECTED_ROW_TEXT = Color.BLACK;
         }
-        public final static Color BEST_HIT = (theme == THEME.LIGHT ? Themes.Light.BEST_HIT : Themes.Dark.BEST_HIT);
-        public final static Color BEST_HIT_ALTERNATING_CELL_1 = (theme == THEME.LIGHT ? Themes.Light.BEST_HIT_ALTERNATING_CELL_1 : Themes.Dark.BEST_HIT_ALTERNATING_CELL_1);
-        public final static Color BEST_HIT_ALTERNATING_CELL_2 = (theme == THEME.LIGHT ? Themes.Light.BEST_HIT_ALTERNATING_CELL_2 : Themes.Dark.BEST_HIT_ALTERNATING_CELL_2);
-        public final static Color BEST_HIT_SELECTED = (theme == THEME.LIGHT ? Themes.Light.BEST_HIT_SELECTED : Themes.Dark.BEST_HIT_SELECTED);
+        public final static Color BEST_HIT = (THEME == Theme.LIGHT ? Themes.Light.BEST_HIT : Themes.Dark.BEST_HIT);
+        public final static Color BEST_HIT_ALTERNATING_CELL_1 = (THEME == Theme.LIGHT ? Themes.Light.BEST_HIT_ALTERNATING_CELL_1 : Themes.Dark.BEST_HIT_ALTERNATING_CELL_1);
+        public final static Color BEST_HIT_ALTERNATING_CELL_2 = (THEME == Theme.LIGHT ? Themes.Light.BEST_HIT_ALTERNATING_CELL_2 : Themes.Dark.BEST_HIT_ALTERNATING_CELL_2);
+        public final static Color BEST_HIT_SELECTED = (THEME == Theme.LIGHT ? Themes.Light.BEST_HIT_SELECTED : Themes.Dark.BEST_HIT_SELECTED);
         public final static Color BEST_HIT_TEXT = Color.BLACK;
 
-        public final static Color ALTERNATING_CELL_ROW_TEXT_COLOR = (theme == THEME.LIGHT ? Themes.Light.ALTERNATING_CELL_ROW_TEXT_COLOR : Themes.Dark.ALTERNATING_CELL_ROW_TEXT_COLOR);
+        public final static Color ALTERNATING_CELL_ROW_TEXT_COLOR = (THEME == Theme.LIGHT ? Themes.Light.ALTERNATING_CELL_ROW_TEXT_COLOR : Themes.Dark.ALTERNATING_CELL_ROW_TEXT_COLOR);
     }
 
     public static class Quality {
@@ -299,8 +294,8 @@ public class Colors {
 
 
     public static class Spectrum {
-        public final static Color SELECTED_PEAK_BACKGROUND_BOX = (theme == THEME.LIGHT ? Themes.Light.Spectrum.SELECTED_PEAK_BACKGROUND_BOX : Themes.Dark.Spectrum.SELECTED_PEAK_BACKGROUND_BOX);
-        public final static Color SIMULATED_ISOTOPE_PATTTEN_PEAK = (theme == THEME.LIGHT ? Themes.Light.Spectrum.SIMULATED_ISOTOPE_PATTTEN_PEAK : Themes.Dark.Spectrum.SIMULATED_ISOTOPE_PATTTEN_PEAK);
+        public final static Color SELECTED_PEAK_BACKGROUND_BOX = (THEME == Theme.LIGHT ? Themes.Light.Spectrum.SELECTED_PEAK_BACKGROUND_BOX : Themes.Dark.Spectrum.SELECTED_PEAK_BACKGROUND_BOX);
+        public final static Color SIMULATED_ISOTOPE_PATTTEN_PEAK = (THEME == Theme.LIGHT ? Themes.Light.Spectrum.SIMULATED_ISOTOPE_PATTTEN_PEAK : Themes.Dark.Spectrum.SIMULATED_ISOTOPE_PATTTEN_PEAK);
 
         public final static Color EXPLAINED_PEAKS_FORMULA = CUSTOM_BLUE;
         public final static Color EXPLAINED_PEAKS_STRUCTURE = Color.decode("#8ee481");
@@ -324,17 +319,17 @@ public class Colors {
     }
 
     public static class MolecularStructures {
-        public final static Color SELECTED_SUBSTRUCTURE = (theme == THEME.LIGHT ? Themes.Light.MolecularStructures.SELECTED_SUBSTRUCTURE : Themes.Dark.MolecularStructures.SELECTED_SUBSTRUCTURE);
-        public final static Color BACKGROUND_STRUCTURE = (theme == THEME.LIGHT ? Themes.Light.MolecularStructures.BACKGROUND_STRUCTURE : Themes.Dark.MolecularStructures.BACKGROUND_STRUCTURE);
-        public final static Color BREAKING_BOND = (theme == THEME.LIGHT ? Themes.Light.MolecularStructures.BREAKING_BOND : Themes.Dark.MolecularStructures.BREAKING_BOND);
+        public final static Color SELECTED_SUBSTRUCTURE = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.SELECTED_SUBSTRUCTURE : Themes.Dark.MolecularStructures.SELECTED_SUBSTRUCTURE);
+        public final static Color BACKGROUND_STRUCTURE = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.BACKGROUND_STRUCTURE : Themes.Dark.MolecularStructures.BACKGROUND_STRUCTURE);
+        public final static Color BREAKING_BOND = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.BREAKING_BOND : Themes.Dark.MolecularStructures.BREAKING_BOND);
 
     }
 
 
     public static class CompoundClassesView {
-        public final static Color CLASSIFIER_MAIN = (theme == THEME.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_MAIN : Themes.Dark.CompoundClassesView.CLASSIFIER_MAIN);
-        public final static Color CLASSIFIER_OTHER = (theme == THEME.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_OTHER: Themes.Dark.CompoundClassesView.CLASSIFIER_OTHER);
-        public final static Color CLASSIFIER_TEXT = (theme == THEME.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_TEXT: Themes.Dark.CompoundClassesView.CLASSIFIER_TEXT);
+        public final static Color CLASSIFIER_MAIN = (THEME == Theme.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_MAIN : Themes.Dark.CompoundClassesView.CLASSIFIER_MAIN);
+        public final static Color CLASSIFIER_OTHER = (THEME == Theme.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_OTHER: Themes.Dark.CompoundClassesView.CLASSIFIER_OTHER);
+        public final static Color CLASSIFIER_TEXT = (THEME == Theme.LIGHT ? Themes.Light.CompoundClassesView.CLASSIFIER_TEXT: Themes.Dark.CompoundClassesView.CLASSIFIER_TEXT);
     }
 
     public static class StructuresView {
@@ -356,15 +351,15 @@ public class Colors {
             public final static Color MAIN_DB_WITH_LINK = Color.decode("#b3d9e5");
 
             public final static Color MAIN_DB_NO_LINK = Color.decode("#b3d9e5");
-            public final static Color MAIN_DB_NO_LINK_TEXT  = (theme == THEME.LIGHT ? Themes.Light.StructuresView.Sources.MAIN_DB_NO_LINK_TEXT : Themes.Dark.StructuresView.Sources.MAIN_DB_NO_LINK_TEXT);
-            public final static Color MAIN_DB_NO_LINK_BORDER  = (theme == THEME.LIGHT ? Themes.Light.StructuresView.Sources.MAIN_DB_NO_LINK_BORDER : Themes.Dark.StructuresView.Sources.MAIN_DB_NO_LINK_BORDER);
+            public final static Color MAIN_DB_NO_LINK_TEXT  = (THEME == Theme.LIGHT ? Themes.Light.StructuresView.Sources.MAIN_DB_NO_LINK_TEXT : Themes.Dark.StructuresView.Sources.MAIN_DB_NO_LINK_TEXT);
+            public final static Color MAIN_DB_NO_LINK_BORDER  = (THEME == Theme.LIGHT ? Themes.Light.StructuresView.Sources.MAIN_DB_NO_LINK_BORDER : Themes.Dark.StructuresView.Sources.MAIN_DB_NO_LINK_BORDER);
 
             public final static Color CUSTOM_DB = Color.decode("#feff9e");
 
             //only tagged, but DB not known to SIRIUS instance
             public final static Color CUSTOM_DB_NOT_LOADED = Color.decode("#feff9e");
-            public final static Color CUSTOM_DB_NOT_LOADED_TEXT = (theme == THEME.LIGHT ? Themes.Light.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT : Themes.Dark.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT);
-            public final static Color CUSTOM_DB_NOT_LOADED_BORDER = (theme == THEME.LIGHT ? Themes.Light.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER : Themes.Dark.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER);
+            public final static Color CUSTOM_DB_NOT_LOADED_TEXT = (THEME == Theme.LIGHT ? Themes.Light.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT : Themes.Dark.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT);
+            public final static Color CUSTOM_DB_NOT_LOADED_BORDER = (THEME == Theme.LIGHT ? Themes.Light.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER : Themes.Dark.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER);
 
 
             public final static Color DE_NOVO = Color.decode("#d40f57");
@@ -398,18 +393,18 @@ public class Colors {
         };
 
         //for adduct/isotope view
-        public final static Color MAIN_FEATURE_COLOR = (theme == THEME.LIGHT ? Themes.Light.LCMSVIEW.MAIN_FEATURE_COLOR : Themes.Dark.LCMSVIEW.MAIN_FEATURE_COLOR);
-        public final static Color ADDUCT_FEATURE_COLOR = (theme == THEME.LIGHT ? Themes.Light.LCMSVIEW.ADDUCT_FEATURE_COLOR : Themes.Dark.LCMSVIEW.ADDUCT_FEATURE_COLOR);
+        public final static Color MAIN_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.MAIN_FEATURE_COLOR : Themes.Dark.LCMSVIEW.MAIN_FEATURE_COLOR);
+        public final static Color ADDUCT_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.ADDUCT_FEATURE_COLOR : Themes.Dark.LCMSVIEW.ADDUCT_FEATURE_COLOR);
 
         public final static String ISOTOPE_DASH_STYLE = "5,3"; //not a Color, but style
 
         public final static Color MAIN_FEATURE_BOX_FILL = Color.decode("#999999");
         public final static Color MAIN_FEATURE_BOX_STROKE = Color.decode("#999999");
 
-        public final static Color SECONDARY_FEATURE_BOX_FILL = (theme == THEME.LIGHT ? MAIN_FEATURE_BOX_FILL.brighter() : MAIN_FEATURE_BOX_FILL.darker());
-        public final static Color SECONDARY_FEATURE_BOX_STROKE = (theme == THEME.LIGHT ? MAIN_FEATURE_BOX_STROKE.brighter() : MAIN_FEATURE_BOX_STROKE.darker());
+        public final static Color SECONDARY_FEATURE_BOX_FILL = (THEME == Theme.LIGHT ? MAIN_FEATURE_BOX_FILL.brighter() : MAIN_FEATURE_BOX_FILL.darker());
+        public final static Color SECONDARY_FEATURE_BOX_STROKE = (THEME == Theme.LIGHT ? MAIN_FEATURE_BOX_STROKE.brighter() : MAIN_FEATURE_BOX_STROKE.darker());
 
-        public final static Color LEGEND_FOCUS = (theme == THEME.LIGHT ? Color.decode("#f2f2f2") : Color.decode("#595959"));
+        public final static Color LEGEND_FOCUS = (THEME == Theme.LIGHT ? Color.decode("#f2f2f2") : Color.decode("#595959"));
 
 
 
@@ -419,7 +414,7 @@ public class Colors {
             double variationFactor = (int) Math.floor(index / FEATUR_TRACE_COLORS.length);
 
             Color color;
-            if (theme == THEME.DARK) {
+            if (THEME == Theme.DARK) {
                 color = brighter(baseColor, variationFactor/10.0 + 0.1);
             } else {
                 color = darker(baseColor, variationFactor/10.0);
@@ -550,8 +545,8 @@ public class Colors {
         UIManager.put("CheckBox.icon.selectedBackground", new ColorUIResource(Menu.ICON_BLUE)); //radio buttons, checkboxes //todo this only works in dark mode, not light mode
         UIManager.put("CheckBox.icon.checkmarkColor", new ColorUIResource(Color.WHITE));
 
-        UIManager.put("Component.focusedBorderColor", (theme == THEME.LIGHT ? CUSTOM_LIGHT_BLUE : CUSTOM_LIGHT_BLUE.darker()));
-        UIManager.put("Component.focusColor", (theme == THEME.LIGHT ? CUSTOM_LIGHT_BLUE : CUSTOM_LIGHT_BLUE.darker()));
+        UIManager.put("Component.focusedBorderColor", (THEME == Theme.LIGHT ? CUSTOM_LIGHT_BLUE : CUSTOM_LIGHT_BLUE.darker()));
+        UIManager.put("Component.focusColor", (THEME == Theme.LIGHT ? CUSTOM_LIGHT_BLUE : CUSTOM_LIGHT_BLUE.darker()));
 
 
         UIManager.put("OptionPane.questionIcon", Icons.HELP_32);

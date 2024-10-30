@@ -67,18 +67,16 @@ public class GuiUtils {
     public final static int LARGE_GAP = 20;
 
     public static void initUI() {
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
-        switch (theme) {
-            case "Dark":
+        switch (Colors.THEME()) {
+            case DARK:
                 try {
                     UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
                     e.printStackTrace();
                 }
-            case "Light":
+            case LIGHT:
             default:
                 try {
                     UIManager.setLookAndFeel(new FlatIntelliJLaf());
