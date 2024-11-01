@@ -5,8 +5,12 @@ import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import lombok.SneakyThrows;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -24,22 +28,26 @@ import org.springframework.data.domain.Pageable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.StreamSupport;
 
 public class LuceneSearchService implements SearchService {
     private static final Logger log = LoggerFactory.getLogger(LuceneSearchService.class);
 
     @NotNull
-    private final Analyzer analyzer = new StandardAnalyzer();
+    private final Map<String, PointsConfig> pointsConfigMap = new ConcurrentHashMap<>();
+    @NotNull
+    private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
+    @NotNull
+    private final Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), fieldAnalyzers);
     @NotNull
     private final Path luceneIndexHome;
     @NotNull
-    private final Reader searcher = new Reader(analyzer);
+    private final Reader searcher = new Reader(analyzer, pointsConfigMap);
     @NotNull
-    private final Writer indexer = new Writer(analyzer);
+    private final Writer indexer = new Writer(analyzer, fieldAnalyzers, pointsConfigMap);
 
 
     @NotNull
@@ -67,7 +75,7 @@ public class LuceneSearchService implements SearchService {
 //        Directory directory = FSDirectory.open(indexDir);
         Directory directory = new ByteBuffersDirectory();
         getSearchIndexWriter().indexWriters.put(project.getProjectId(), directory);
-        getSearchIndexReader().indexSearchers.put(project.getProjectId(),directory);
+        getSearchIndexReader().indexSearchers.put(project.getProjectId(), directory);
     }
 
     @Override
@@ -110,8 +118,9 @@ public class LuceneSearchService implements SearchService {
         private final StandardQueryParser queryParser; //= new QueryParser(null, new StandardAnalyzer());
         private ConcurrentHashMap<String, Directory> indexSearchers = new ConcurrentHashMap<>();
 
-        public Reader(Analyzer analyzer) {
+        public Reader(@NotNull Analyzer analyzer, @NotNull Map<String, PointsConfig> pointsConfigMap) {
             queryParser = new StandardQueryParser(analyzer); //todo do we want to have default fields?
+            queryParser.setPointsConfigMap(pointsConfigMap);
         }
 
         @SneakyThrows
@@ -120,7 +129,7 @@ public class LuceneSearchService implements SearchService {
             if (!indexSearchers.containsKey(projectId))
                 throw new IllegalArgumentException("No Index found for project " + projectId);
 
-            try (IndexReader reader =  DirectoryReader.open(indexSearchers.get(projectId))) {
+            try (IndexReader reader = DirectoryReader.open(indexSearchers.get(projectId))) {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 Query queryObject = queryParser.parse(query, defaultField);
                 TopFieldDocs res = searcher.search(queryObject, (int) (paging.getOffset() + paging.getPageSize()), convertSort(paging.getSort()));
@@ -155,28 +164,35 @@ public class LuceneSearchService implements SearchService {
     //todo multi thread safety
     //todo error handling and type safety
     public static class Writer implements SearchIndexWriter {
-
         @NotNull
         private final ConcurrentHashMap<String, Directory> indexWriters = new ConcurrentHashMap<>();
         private final Analyzer analyzer;
+        private final Map<String, Analyzer> fieldAnalyzers;
+        private final Map<String, PointsConfig> pointsConfigMap;
 
-        public Writer(Analyzer analyzer) {
+        public Writer(@NotNull Analyzer analyzer, @NotNull Map<String, Analyzer> fieldAnalyzers, @NotNull Map<String, PointsConfig> pointsConfigMap) {
             this.analyzer = analyzer;
+            this.fieldAnalyzers = fieldAnalyzers;
+            this.pointsConfigMap = pointsConfigMap;
         }
 
         @SneakyThrows
         @Override
-        public <T> void addBean(String projectId, T bean) {
+        public <T extends Iterable<IndexableField>> void addBean(String projectId, T bean) {
             try (IndexWriter w = new IndexWriter(indexWriters.get(projectId), new IndexWriterConfig(analyzer))) {
-                w.addDocument((Iterable<? extends IndexableField>) bean);
+                extractPointValues(bean, pointsConfigMap);
+                extractPerFieldAnalyzer(bean, fieldAnalyzers);
+                w.addDocument(bean);
             }
         }
 
         @SneakyThrows
         @Override
-        public <T> void addBeans(String projectId, Iterable<T> bean) {
-            try (IndexWriter w = new IndexWriter(indexWriters.get(projectId),  new IndexWriterConfig(analyzer))) {
-                w.addDocuments(StreamSupport.stream(bean.spliterator(), false).map(b -> (Iterable<? extends IndexableField>) b).toList());
+        public <T extends Iterable<IndexableField>> void addBeans(String projectId, Iterable<T> beans) {
+            try (IndexWriter w = new IndexWriter(indexWriters.get(projectId), new IndexWriterConfig(analyzer))) {
+                beans.forEach(b -> extractPerFieldAnalyzer(b, fieldAnalyzers));
+                beans.forEach(b -> extractPointValues(b, pointsConfigMap));
+                w.addDocuments(beans);
             }
         }
 
@@ -196,5 +212,44 @@ public class LuceneSearchService implements SearchService {
         }
     }
 
+    public static void extractPerFieldAnalyzer(Iterable<IndexableField> fields, @NotNull final Map<String, Analyzer> fieldAnalyzers) {
+        if (fields != null) {
+            for (IndexableField f : fields) {
+                if (!fieldAnalyzers.containsKey(f.name())) { //this and putIfAbsent is a bit like double-checked locking
+                    if (f instanceof StringField || f instanceof KeywordField)
+                        fieldAnalyzers.putIfAbsent(f.name(), new KeywordAnalyzer());
+                }
+            }
+        }
+    }
 
+    public static void extractPointValues(Iterable<IndexableField> fields, @NotNull final Map<String, PointsConfig> pointsConfigMap) {
+        if (fields != null) {
+            for (IndexableField f : fields) {
+                if (!pointsConfigMap.containsKey(f.name())) { //this and putIfAbsent is a bit like double-checked locking
+                    switch (f) {
+                        case FloatField d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
+                        case FloatPoint d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
+                        case DoubleField d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
+                        case DoublePoint d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
+                        case IntField d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
+                        case IntPoint d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
+                        case LongField d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
+                        case LongPoint d ->
+                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
+                        default -> {
+                            //handle everything else
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
