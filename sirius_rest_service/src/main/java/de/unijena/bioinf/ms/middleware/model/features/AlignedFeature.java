@@ -22,7 +22,9 @@ package de.unijena.bioinf.ms.middleware.model.features;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
@@ -34,8 +36,8 @@ import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,26 +49,37 @@ import java.util.Set;
 @Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature implements Iterable<IndexableField> {
+public class AlignedFeature implements LuceneDocument {
     @JsonIgnore
     @NotNull
     @Override
     public Iterator<IndexableField> iterator() {
-        return List.of( //storing all the base fields allows to load feature list solely based on index.
-                (IndexableField) new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES),
-                new StringField("compoundId", alignedFeatureId, Field.Store.YES),
-                new StringField("externalFeatureId", alignedFeatureId, Field.Store.YES),
-                new TextField("name", name == null?"":name, Field.Store.YES),
-                new DoubleField("ionMass", ionMass, Field.Store.YES),
-                new StringField("quality", quality == null? DataQuality.NOT_APPLICABLE.name():quality.name(), Field.Store.YES),
-                new IntField("charge", charge, Field.Store.YES),
-                new DoubleField("rtStartSeconds", rtStartSeconds==null?Double.NaN:rtStartSeconds, Field.Store.YES),
-                new DoubleField("rtEndSeconds", rtEndSeconds==null?Double.NaN:rtEndSeconds, Field.Store.YES),
-                new DoubleField("rtApexSeconds", rtApexSeconds==null?Double.NaN:rtApexSeconds, Field.Store.YES),
-                new StringField("hasMs1", String.valueOf(hasMs1), Field.Store.YES),
-                new StringField("hasMsMs", String.valueOf(hasMsMs), Field.Store.YES)
-                //todo top annotation index.
-        ).iterator();
+        return new ArrayList<IndexableField>() {{ //storing all the base fields allows to load feature list solely based on index.
+
+            add(new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES));
+            add(new StringField("compoundId", alignedFeatureId, Field.Store.YES));
+            add(new StringField("externalFeatureId", alignedFeatureId, Field.Store.YES));
+            if (name != null && !name.isBlank())
+                add(new TextField("name", name, Field.Store.YES));
+            add(new DoublePoint("ionMass", ionMass));
+            add(new IntPoint("charge", charge));
+            if (rtStartSeconds != null)
+                add(new DoublePoint("rtStartSeconds", rtStartSeconds));
+            if (rtEndSeconds != null)
+                add(new DoublePoint("rtEndSeconds", rtEndSeconds));
+            if (rtApexSeconds != null)
+                add(new DoublePoint("rtApexSeconds", rtApexSeconds));
+            add(new StringField("hasMs1", String.valueOf(hasMs1), Field.Store.NO));
+            add(new StringField("hasMsMs", String.valueOf(hasMsMs), Field.Store.NO));
+
+            //weired fields
+            if (quality != null)
+                add(new KeywordField("quality", quality.name(), Field.Store.NO));
+            if (detectedAdducts != null && !detectedAdducts.isEmpty())
+                detectedAdducts.forEach(adduct -> add(new KeywordField("detectedAdducts", adduct, Field.Store.NO)));
+            else
+                add(new KeywordField("detectedAdducts", PrecursorIonType.unknown(charge).toString(), Field.Store.NO));
+        }}.iterator();
     }
 
 
