@@ -41,15 +41,14 @@ import java.util.ArrayList;
 
 class CompoundStructureImage extends JPanel {
 
-    protected static final Font nameFont, rankFont, matchFont;
+    protected static final Font formulaFont, scoreFont;
     private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
 
     static {
         //init fonts
         final Font tempFont = Fonts.FONT_MEDIUM;
-        nameFont = tempFont.deriveFont(13f);
-        matchFont = tempFont.deriveFont(18f);
-        rankFont = tempFont.deriveFont(18f);
+        formulaFont = tempFont.deriveFont(14f);
+        scoreFont = tempFont.deriveFont(18f);
     }
 
     protected FingerprintCandidateBean molecule;
@@ -66,7 +65,7 @@ class CompoundStructureImage extends JPanel {
         // make generators
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
-        generators.add(new StandardGenerator(nameFont));
+        generators.add(new StandardGenerator(formulaFont));
 
         // setup the renderer
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
@@ -102,22 +101,22 @@ class CompoundStructureImage extends JPanel {
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
 
-        gg.setFont(rankFont);
+        gg.setFont(formulaFont);
         gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         final String fromulaString = molecule.getMolecularFormula();
         final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
             final int x = 3;
-            final int y = getHeight() - (int) (bound.getHeight());
+            final int y = 0; // top-left
             final int h = (int) (y + bound.getHeight());
             gg.drawString(fromulaString, x, h - 2);
         }
 
         //todo change to gif
         final String scoreText = decimalFormat.format(molecule.getScore());
-        double tw = gg.getFontMetrics(matchFont).getStringBounds(scoreText, gg).getWidth();
+        double tw = gg.getFontMetrics(scoreFont).getStringBounds(scoreText, gg).getWidth();
 
-        gg.setFont(matchFont);
+        gg.setFont(scoreFont);
         gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
     }
