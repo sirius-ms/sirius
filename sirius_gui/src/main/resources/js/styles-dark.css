@@ -225,3 +225,10 @@ rect.terribleQualityFeatureBox {
     text-align: right;
     min-width: 60px;
 }
+
+#agpl-logo-fill{
+    fill: white;
+}
+#agpl-logo-stroke{
+    stroke: white;
+}

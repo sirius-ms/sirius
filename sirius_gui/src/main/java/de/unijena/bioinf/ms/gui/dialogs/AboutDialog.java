@@ -29,6 +29,8 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,6 +43,7 @@ import java.io.InputStreamReader;
 
 public class AboutDialog extends JDialog {
     public static final String PROPERTY_KEY = "de.unijena.bioinf.sirius.ui.cite";
+    private static final Logger log = LoggerFactory.getLogger(AboutDialog.class);
 
     private final JButton close, bibtex, clipboard;
     private JCheckBox dontAsk;
@@ -55,23 +58,18 @@ public class AboutDialog extends JDialog {
         String htmlText =  "<html><head></head><body>Data missing!</html>\n";
         WebViewJPanel htmlPanel =  new WebViewJPanel();
         try {
-
-            {
-                final StringBuilder buf = new StringBuilder();
-                try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")))) {
-                    String line;
-                    while ((line = br.readLine()) != null) buf.append(line).append('\n');
-                }
-                buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
-                htmlText = buf.append("</div></body></html>").toString().replace("#IMAGE#",
-                        this.getClass().getResource(Colors.isDarkTheme()
-                                ?"/sirius/AGPLv3_LogoWhite.svg":"/sirius/AGPLv3_Logo.svg").toString());
+            final StringBuilder buf = new StringBuilder();
+            try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")))) {
+                String line;
+                while ((line = br.readLine()) != null) buf.append(line).append('\n');
             }
+            buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
+            htmlText = buf.append("</div></body></html>").toString();
 
             add(htmlPanel, BorderLayout.CENTER);
             htmlPanel.load(htmlText);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error when loading about html.", e);
         }
 
         JPanel south = new JPanel();
