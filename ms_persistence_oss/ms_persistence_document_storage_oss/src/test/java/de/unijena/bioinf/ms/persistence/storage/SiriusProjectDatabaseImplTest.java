@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
@@ -642,7 +643,7 @@ public class SiriusProjectDatabaseImplTest {
 
     @ParameterizedTest
     @MethodSource("peakListData")
-    public void cascadeDeleteTest(String inputFile, int expectedMsMs, boolean ms1, boolean rt) {
+    public void cascadeDeleteTest(String inputFile) {
         withDb(db -> {
             try (InputStream in = Objects.requireNonNull(SiriusProjectDatabaseImplTest.class.getResourceAsStream(inputFile))) {
                 CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, URI.create(inputFile));
@@ -659,6 +660,31 @@ public class SiriusProjectDatabaseImplTest {
                     }
                 }
             }
+        });
+    }
+
+
+    private static Stream<Arguments> projectProperties() {
+        return Stream.of(
+                Arguments.of("doubleValue", 1.234),
+                Arguments.of("intValue", 23),
+                Arguments.of("stringValue", "TestString"),
+                Arguments.of("boolValue", true),
+                Arguments.of("enumValue", ProjectType.PEAKLISTS)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("projectProperties")
+    public void testProjectProjectProperties(String key, Object value) {
+        withDb(db -> {
+            assertTrue(db.upsertProjectProperty(key, value).isEmpty(),"Return not empty after INSERT!");
+            assertEquals(value, db.findProjectProperty(key, value.getClass()).get(), "Found value does not match inserted value after INSERT.");
+            assertTrue(db.upsertProjectProperty(key, value).isPresent(), "Return not present after UPSERT!");
+            assertEquals(value, db.findProjectProperty(key, value.getClass()).get(), "Found value does not match inserted value after UPSERT.");
+            assertTrue(db.removeProjectProperty(key), "Remove return not true.");
+            assertTrue(db.findProjectProperty(key, value.getClass()).isEmpty(), "Found value not empty after REMOVE.");
+
         });
     }
 
