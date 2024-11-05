@@ -36,11 +36,13 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
+import lombok.SneakyThrows;
 import org.dizitart.no2.collection.Document;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -88,6 +90,34 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
         }
     }
 
+    @SneakyThrows
+    @Override
+    public <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType) {
+        return getStorage().findStr(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key))
+                .findFirst().map(d -> d.get("value", valueType));
+    }
+
+    @SneakyThrows
+    @Override
+    public <T> Optional<T> upsertProjectProperty(@NotNull String key, T value) {
+        return (Optional<T>) getStorage().write(() -> {
+            Optional<Document> old = getStorage().findStr(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key))
+                    .findFirst();
+
+            Document nu;
+            if (old.isPresent()) {
+                nu = old.get();
+                nu.put("value", value);
+            } else {
+                nu = Document.createDocument(Map.of("key", key, "value", value));
+            }
+
+            getStorage().upsert(PROJECT_PROPERTIES_COLLECTION, nu);
+
+            return old.map(d -> d.get("value", value.getClass()));
+        });
+    }
+
     private <T extends FingerprintData<?>> Optional<T> findFpData(@NotNull Class<T> clzz, int charge, @NotNull Function<Document, T> expander) throws IOException {
         return getStorage().findStr(FP_DATA_COLLECTION, Filter.and(
                         Filter.where("type").eq(clzz.getSimpleName()),
@@ -95,35 +125,25 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
                 .findFirst().map(expander);
     }
 
+    @SneakyThrows
     @Override
     public <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge) {
-        try {
-            return findFpData(dataClazz, charge, FpDataDocs.toDataFunction(dataClazz));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return findFpData(dataClazz, charge, FpDataDocs.toDataFunction(dataClazz));
     }
 
+    @SneakyThrows
     @Override
     public void insertFingerprintData(StandardFingerprintData<?> fpData, int charge) {
         // this should not be easy to update sind changing this data can make parts of the project unreadable
         // wie should provide a project update method that takes care of deleting/updating the related data.
-        try {
-            getStorage().insert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
-            updateSerializers();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        getStorage().insert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
+        updateSerializers();
     }
 
+    @SneakyThrows
     @Override
     public void insertFingerprintData(FingerIdData fpData, int charge) {
-        try {
-            getStorage().upsert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
-            updateSerializers();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        getStorage().upsert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
+        updateSerializers();
     }
 }
