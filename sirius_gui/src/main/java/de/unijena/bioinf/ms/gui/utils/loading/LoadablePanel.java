@@ -35,8 +35,7 @@ public class LoadablePanel extends JPanel implements Loadable {
 
     public boolean setLoading(boolean loading, boolean absolute) {
         AtomicBoolean result = new AtomicBoolean(false);
-        try {
-            Jobs.runEDTAndWait(() -> {
+            Jobs.runEDTLater(() -> {
                 result.set(loadingCounter.updateAndGet(current -> {
                     if (absolute)
                         return loading ? 1 : 0;
@@ -47,9 +46,6 @@ public class LoadablePanel extends JPanel implements Loadable {
                 if (!centerCards.isCardActive(cardName))
                     centerCards.show(this, cardName);
             });
-        } catch (InvocationTargetException | InterruptedException e) {
-            LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly.");
-        }
         return result.get();
     }
 

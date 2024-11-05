@@ -203,7 +203,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 onSuccess.accept(projectName, selectedFile.toPath());
 
             } catch (Exception e) {
-                new StacktraceDialog(mainFrame, e.getMessage(), e);
+                Jobs.runEDTLater(() -> new StacktraceDialog(mainFrame, e.getMessage(), e));
             }
         }
     }
