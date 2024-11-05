@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
@@ -45,15 +46,10 @@ class CompoundStructureImage extends JPanel {
 
     static {
         //init fonts
-        final Font tempFont = Fonts.FONT_BOLD;
-        if (tempFont != null) {
-            nameFont = tempFont.deriveFont(13f);
-            matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(18f);
-        } else {
-            nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
-
-        }
+        final Font tempFont = Fonts.FONT_MEDIUM;
+        nameFont = tempFont.deriveFont(13f);
+        matchFont = tempFont.deriveFont(18f);
+        rankFont = tempFont.deriveFont(18f);
     }
 
     protected FingerprintCandidateBean molecule;
@@ -79,6 +75,8 @@ class CompoundStructureImage extends JPanel {
                 highlightStyle);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
                 new ThemedAtomColors());
+        renderer.getRenderer2DModel().set(StandardGenerator.AnnotationColor.class,
+                Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         setVisible(true);
     }
 
@@ -105,6 +103,7 @@ class CompoundStructureImage extends JPanel {
         }
 
         gg.setFont(rankFont);
+        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         final String fromulaString = molecule.getMolecularFormula();
         final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
@@ -119,6 +118,7 @@ class CompoundStructureImage extends JPanel {
         double tw = gg.getFontMetrics(matchFont).getStringBounds(scoreText, gg).getWidth();
 
         gg.setFont(matchFont);
+        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
     }
 }
