@@ -38,27 +38,39 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
     protected NumberFormat nf = new DecimalFormat("#0.000");
 
 
-    protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
-    protected Color backColor = Colors.LIST_EVEN_BACKGROUND;
+    protected Color foreColor = Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR;
+    protected Color backColor = Colors.CellsAndRows.Tables.ALTERNATING_ROW_1;
     protected String value;
     private final int highlightColumn;
 
     private final Function<Object, String> toString;
 
-    public SiriusResultTableCellRenderer(int highlightColumn,  @NotNull Function<Object, String> toString) {
-        this(highlightColumn,null, toString);
+    private final Font customFont;
+
+    public SiriusResultTableCellRenderer(int highlightColumn, @NotNull Function<Object, String> toString, @Nullable Font customFont) {
+        this(highlightColumn,null, toString, customFont);
     }
 
     public SiriusResultTableCellRenderer(int highlightColumn) {
-        this(highlightColumn, (NumberFormat) null);
+        this(highlightColumn, (NumberFormat) null, null);
+    }
+
+    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable Font customFont) {
+        this(highlightColumn, (NumberFormat) null, customFont);
     }
 
     public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat) {
-        this(highlightColumn, lableFormat, (v) -> v == null ? "" : v.toString());
+        this(highlightColumn, lableFormat, (v) -> v == null ? "" : v.toString(), null);
     }
-    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat, @NotNull Function<Object, String> toString) {
+
+    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat, @Nullable Font customFont) {
+        this(highlightColumn, lableFormat, (v) -> v == null ? "" : v.toString(), customFont);
+    }
+
+    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat, @NotNull Function<Object, String> toString, @Nullable Font customFont) {
         this.toString = toString;
         this.highlightColumn = highlightColumn;
+        this.customFont = customFont;
         if (lableFormat != null)
             this.nf = lableFormat;
     }
@@ -71,19 +83,25 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
 
         if (isSelected) {
             if (best) {
-                backColor = Colors.LIST_SELECTED_GREEN;
+                backColor = Colors.CellsAndRows.BEST_HIT_SELECTED;
+                foreColor = Colors.CellsAndRows.BEST_HIT_TEXT;
             } else {
-                backColor = Colors.LIST_SELECTED_BACKGROUND;
+                backColor = Colors.CellsAndRows.Tables.SELECTED_ROW;
+                foreColor = Colors.CellsAndRows.Tables.SELECTED_ROW_TEXT;
             }
-            foreColor = Colors.LIST_SELECTED_FOREGROUND;
         } else {
             if (best) {
-                backColor = Colors.LIST_LIGHT_GREEN;
+                backColor = Colors.CellsAndRows.BEST_HIT;
+                foreColor = Colors.CellsAndRows.BEST_HIT_TEXT;
             } else {
-                if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
-                else backColor = Colors.LIST_UNEVEN_BACKGROUND;
+                if (row % 2 == 0) {
+                    backColor = Colors.CellsAndRows.Tables.ALTERNATING_ROW_1;}
+                else {
+                    backColor = Colors.CellsAndRows.Tables.ALTERNATING_ROW_2;
+                }
+                foreColor = Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR;
             }
-            foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
+
 
         }
 
@@ -104,7 +122,7 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             setHorizontalAlignment(SwingConstants.CENTER);
         }
 
-        setFont(table.getFont());
+        setFont(customFont != null ? customFont : table.getFont());
         setValue(this.value);
         setToolTipText(GuiUtils.formatToolTip(Math.min(getFontMetrics(getFont()).stringWidth(this.value), GuiUtils.toolTipWidth), this.value));
 

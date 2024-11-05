@@ -17,19 +17,20 @@ public class LoadablePanel extends JPanel implements Loadable {
     protected final AtomicInteger loadingCounter = new AtomicInteger(0);
     private final SiriusCardLayout centerCards = new SiriusCardLayout();
 
-    public LoadablePanel(@NotNull JComponent content) {
+   /* public LoadablePanel(@NotNull JComponent content) {
         this(content, "Loading...");
     }
 
     public LoadablePanel(@NotNull JComponent content, @Nullable String loadingMessage) {
         this(content, Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
-    }
+    }*/
 
     //todo maybe add some error state card?
-    public LoadablePanel(@NotNull JComponent content, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
+    public LoadablePanel(@NotNull JComponent content/*, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage*/) {
         setLayout(centerCards);
         add("content", content);
-        add("load", GuiUtils.newLoadingPanel(filterAnimation, loadingMessage));
+//        add("load", GuiUtils.newLoadingPanel(filterAnimation, loadingMessage));
+        add("load", GuiUtils.newLoadingWebPanel());
     }
 
     public boolean setLoading(boolean loading, boolean absolute) {

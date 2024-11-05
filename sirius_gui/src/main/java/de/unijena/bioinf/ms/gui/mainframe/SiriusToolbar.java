@@ -36,7 +36,7 @@ public class SiriusToolbar extends JToolBar {
 
 
     SiriusToolbar(SiriusGui gui) {
-        setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
+        setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.Menu.ICON_BLUE));
         //create/open/save project
         createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(gui, true));
         add(createB);

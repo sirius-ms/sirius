@@ -22,11 +22,16 @@ package de.unijena.bioinf.ms.gui.utils;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
+import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +44,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -60,37 +67,29 @@ public class GuiUtils {
     public final static int LARGE_GAP = 20;
 
     public static void initUI() {
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
-        switch (theme) {
-            case "Dark":
+        switch (Colors.THEME()) {
+            case DARK:
                 try {
                     UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
                     e.printStackTrace();
                 }
-            case "Light":
+            case LIGHT:
+            default:
                 try {
                     UIManager.setLookAndFeel(new FlatIntelliJLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
+                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
                     e.printStackTrace();
                 }
-            case "Classic":
-            default:
-                try {
-                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                        if ("Nimbus".equals(info.getName())) {
-                            UIManager.setLookAndFeel(info.getClassName());
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
-                }
         }
+
+        //load fonts. Run AFTER setting look-and-feel
+        Fonts.initFonts();
+        Colors.adjustLookAndFeel();
 
         //nicer times for tooltips
         ToolTipManager.sharedInstance().setInitialDelay(500);
@@ -100,32 +99,10 @@ public class GuiUtils {
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        final Color prevCol = g2.getColor();
         String icon = isComputing ? "\u2699" : "";
-
-
-        /*switch (state) {
-            case COMPUTING:
-                icon = "\u2699";
-                break;
-            case COMPUTED:
-                g2.setColor(Colors.ICON_GREEN);
-                icon = "\u2713";
-                break;
-            case QUEUED:
-                icon = "...";
-                break;
-            case FAILED:
-                g2.setColor(Colors.ICON_RED);
-                icon = "\u2718";
-                break;
-            default:
-                icon = "";
-        }*/
 
         int offset = g2.getFontMetrics().stringWidth(icon);
         g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);
-        g2.setColor(prevCol);
     }
 
     public static class SimplePainter extends AbstractRegionPainter {
@@ -349,7 +326,7 @@ public class GuiUtils {
         return box;
     }
 
-    public static JPanel newLoadingPanel() {
+    /*public static JPanel newLoadingPanel() {
         return newLoadingPanel("Loading...");
     }
 
@@ -364,18 +341,25 @@ public class GuiUtils {
         panel.setOpaque(true);
         JLabel iconLabel = new JLabel(filterAnimation, SwingUtilities.CENTER);
         JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
-//        if (filter) {
-//            iconLabel = new JLabel(Icons.FILTER_LOADER_160, SwingUtilities.CENTER);
-//            Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
-//            label = new JLabel("Filtering...");
-//        } else {
-//            iconLabel = new JLabel(Icons.ATOM_LOADER_200, SwingUtilities.CENTER);
-//            Icons.ATOM_LOADER_200.setImageObserver(iconLabel);
-//            label = new JLabel("Loading...");
-//        }
+
         panel.add(iconLabel, BorderLayout.CENTER);
         if (label != null)
             panel.add(label, BorderLayout.SOUTH);
         return panel;
+    }*/
+
+    public static WebViewJPanel newLoadingWebPanel() {
+        final WebViewJPanel panel = new WebViewJPanel();
+        final StringBuilder buf = new StringBuilder();
+        try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(GuiUtils.class.getResourceAsStream("/animations/eclipse-loader-160px.html")))) {
+            String line;
+            while ((line = br.readLine()) != null) buf.append(line).append('\n');
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        panel.load(buf.toString());
+        return panel;
     }
+
+
 }
