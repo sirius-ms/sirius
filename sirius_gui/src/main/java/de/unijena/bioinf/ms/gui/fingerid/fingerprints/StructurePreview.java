@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 import de.unijena.bioinf.ChemistryBase.fp.ExtendedConnectivityProperty;
 import de.unijena.bioinf.ChemistryBase.fp.SubstructureProperty;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
@@ -77,14 +76,14 @@ public class StructurePreview extends JPanel implements Runnable {
 
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
-        generators.add(new StandardGenerator(Fonts.FONT_BOLD.deriveFont(13f)));
+        generators.add(new StandardGenerator(Fonts.FONT_MEDIUM.deriveFont(13f)));
         // setup the renderer
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
-                StandardGenerator.HighlightStyle.OuterGlow);
+                StandardGenerator.HighlightStyle.Colored);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new ThemedAtomColors());
+                new ThemedAtomColors(Colors.MolecularStructures.SELECTED_SUBSTRUCTURE));
 
         setPreferredSize(new Dimension(0, 220));
     }
@@ -225,16 +224,14 @@ public class StructurePreview extends JPanel implements Runnable {
         if (queryTool.matches(molecule)) {
             final List<Integer> inds = queryTool.getMatchingAtoms().get(0);
             if (inds.isEmpty()) {
-                hightlightAll(molecule);
                 return;
             }
             final HashSet<IAtom> atoms = new HashSet<>(inds.size());
             for (int i : inds) {
                 atoms.add(molecule.getAtom(i));
             }
-            highlightAtomsAndBonds(molecule, atoms);
+            colorBackgroundAtomsAndBonds(molecule, atoms);
         } else {
-            hightlightAll(molecule);
         }
     }
 
@@ -246,35 +243,21 @@ public class StructurePreview extends JPanel implements Runnable {
             for (int i : inds) {
                 atoms.add(molecule.getAtom(i));
             }
-            highlightAtomsAndBonds(molecule, atoms);
+            colorBackgroundAtomsAndBonds(molecule, atoms);
         }
     }
 
-    private void highlightAtomsAndBonds(IAtomContainer molecule, HashSet<IAtom> atoms) {
-        // reduce glow effect when ALL atoms of the molecule are highlighted
-        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
-        if (atoms.size() == molecule.getAtomCount()) {
-            highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
-        }
+    private void colorBackgroundAtomsAndBonds(IAtomContainer molecule, HashSet<IAtom> atoms) {
+        //put unselected atoms to background by "highlighting" with unobtrusive color
+        for (IAtom atom : molecule.atoms()) {
+            if (atoms.contains(atom)) continue;
 
-        for (IAtom atom : atoms) {
-            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
+            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.MolecularStructures.BACKGROUND_STRUCTURE);
             for (IBond b : molecule.getConnectedBondsList(atom)) {
-                if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
+                if (!atoms.contains(b.getAtom(0)) || !atoms.contains(b.getAtom(1))) {
+                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.MolecularStructures.BACKGROUND_STRUCTURE);
                 }
             }
-        }
-    }
-
-    private void hightlightAll(IAtomContainer molecule) {
-        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
-        highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
-        for (IAtom atom : molecule.atoms()) {
-            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
-        }
-        for (IBond bond : molecule.bonds()) {
-            bond.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
         }
     }
 }

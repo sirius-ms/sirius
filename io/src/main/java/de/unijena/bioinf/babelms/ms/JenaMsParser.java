@@ -307,11 +307,12 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 this.externalSource = new SpectrumFileSource(URI.create(value));
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 final List<String> valueList = Arrays.asList(value.split("\\s+|,"));
+                final CandidateFormulas current = CandidateFormulas.of(valueList, JenaMsParser.class, true, false); //provider information is actually lost during conversion to file config parameter. In the end it is using the DefaultInstanceProvider to deserialize the config information
                 if (this.formulas == null) {
-                    this.formulas = CandidateFormulas.of(valueList, JenaMsParser.class, true, false);
+                    this.formulas = current;
                 } else {
-                    warn("Molecular formulas is set twice, Sirius will collect them as a Whitelist!");
-                    this.formulas.addAndMerge(CandidateFormulas.of(valueList, JenaMsParser.class, true, false));
+                    warn("Molecular formulas is set twice, SIRIUS will merge them into one whitelist!");
+                    this.formulas.addAndMerge(current);
                 }
             } else if (optionName.equals("parentmass")) {
                 if (parentMass != 0) warn("parent mass is set twice");
@@ -437,10 +438,14 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             //set fields
             exp.setIonMass(parentMass);
             if (formulas != null) {
-                if (formulas.numberOfFormulas() == 1)
-                    exp.setMolecularFormula(formulas.getFormulas().iterator().next());
-                else
-                    exp.setAnnotation(CandidateFormulas.class, formulas);
+                if (formulas.numberOfFormulas() == 1) {
+                    exp.setMolecularFormula(formulas.getFormulas().iterator().next()); //this is for backwards compatibility with any old code / evaluation scripts etc. this should not be necessary for SIRIUS frontend application
+                }
+                try {
+                    changeConfig("CandidateFormulas", formulas.getFormulaListAsString());
+                } catch (IOException e) {
+                    log.error("Could not set given whitelist of formulas as configuration: "+formulas.getFormulaListAsString(), e);
+                }
             }
             exp.setName(compoundName);
             exp.setFeatureId(featureId);

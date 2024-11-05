@@ -12,7 +12,7 @@ dependencies {
     testImplementation 'org.junit.platform:junit-platform-launcher:1.11.0'
 }
 
-test {
+integrationTest {
     dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
     testLogging {
         outputs.upToDateWhen {false}
