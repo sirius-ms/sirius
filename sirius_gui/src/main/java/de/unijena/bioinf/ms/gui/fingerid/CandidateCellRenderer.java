@@ -51,18 +51,17 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     protected static final int maxRankFontSize = 30;
     protected static final int minRankFontSize = 10;
-    protected final static Font nameFont, propertyFont, rankFont, matchFont, headlineFont;
+    protected final static Font nameFont, propertyFont, rankFont, headlineFont;
 
     static {
         //init fonts
         final Font tempFont = Fonts.FONT_MEDIUM;
         if (tempFont != null) {
-            nameFont = tempFont.deriveFont(13f);
+            nameFont = tempFont.deriveFont(16f);
             propertyFont = tempFont.deriveFont(16f);
-            matchFont = tempFont.deriveFont(18f);
             rankFont = tempFont.deriveFont(maxRankFontSize);
         } else {
-            nameFont = propertyFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
+            nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
 
         headlineFont = nameFont.deriveFont(Map.of(
@@ -114,6 +113,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             nameLabel = new JLabel("");
             nameLabel.setFont(nameFont);
             nameLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            nameLabel.setBorder(new EmptyBorder(0,3,0,0));
 
             north.add(nameLabel, BorderLayout.WEST);
 
@@ -134,7 +134,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
             nameLabel.setText(value.getName());
         } else {
-            nameLabel.setText("");
+            nameLabel.setText("-");
         }
 
         if (value.getCandidate().getRank() != null) {
