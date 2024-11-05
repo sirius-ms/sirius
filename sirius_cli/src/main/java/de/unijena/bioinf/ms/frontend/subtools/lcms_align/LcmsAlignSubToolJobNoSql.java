@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -49,10 +47,10 @@ import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -72,7 +70,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
@@ -148,6 +149,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
+
+        setProjectTypeOrThrow(ps);
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
@@ -302,6 +305,22 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 stopWatch,
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
+    }
+
+    private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
+        Optional<ProjectType> psType = ps.findProjectType();
+        if (psType.isPresent()) {
+            switch (psType.get()) {
+                case DIRECT_IMPORT ->
+                        throw new IllegalArgumentException("Project already contains data from direct API import. Full MS runs (.mzml, .mzxml) cannot be added to such project.  Please create a new project for your data.");
+                case PEAKLISTS ->
+                        throw new IllegalArgumentException("Project already contains peak-list data (e.g .ms, .mgf, .mat). Full MS runs (.mzml, .mzxml) cannot be added to peak-list based projects.");
+                default ->
+                        throw new IllegalStateException("Project already contains preprocessed features. It is currently not supported to add additional data after preprocessing has been performed. Please create a new project for your data.");
+            }
+        }else {
+            ps.upsertProjectType(alignRuns && inputFiles.size() > 1  ? ProjectType.ALIGNED_RUNS : ProjectType.UNALIGNED_RUNS);
+        }
     }
 
     @Override
