@@ -528,7 +528,7 @@ class SpectrumPlot extends Base {
 
                 if (self.structureView) {
                     document.getElementById("anno_leftClick").innerText = Base.annotation(self, selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-                    if (hasStructure(self.spectrum.peaks[self.selected.leftClick])) {
+                    if (hasFormula(self.spectrum.peaks[self.selected.leftClick])) { //SpectrumPlot.showStructure method handles formula-only peaks without structure
                         SpectrumPlot.showStructure(self, self.selected.leftClick);
                     } else {
                         SpectrumPlot.showStructure(self, -1);
