@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
@@ -134,6 +135,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     default <T extends Enum<T>> Optional<T> findProjectPropertyAsEnum(@NotNull String key, Class<T> dataClazz) {
         return findProjectProperty(key, dataClazz);
+    }
+
+    default Optional<ProjectType> findProjectType() {
+        return findProjectProperty("projectType", ProjectType.class);
+    }
+
+    default Optional<ProjectType> upsertProjectType(@NotNull ProjectType projectType) {
+        return upsertProjectProperty("projectType", projectType);
     }
 
     @SneakyThrows
