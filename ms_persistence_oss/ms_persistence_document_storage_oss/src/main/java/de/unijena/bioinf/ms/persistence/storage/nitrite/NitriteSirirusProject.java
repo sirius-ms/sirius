@@ -23,11 +23,11 @@ package de.unijena.bioinf.ms.persistence.storage.nitrite;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
-import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -50,12 +50,15 @@ import java.util.function.Function;
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
     //this is just needed to update json serializers with fingerprint data if it arrives
     private final Metadata metadata;
+
     public NitriteSirirusProject(@NotNull Path location) throws IOException {
         this(location, SiriusProjectDocumentDatabase.buildMetadata(), NitriteDatabase.MVStoreCompression.DEFLATE); //highest compression rate
     }
+
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression) throws IOException {
         this(location, metadata, compression, 256, 65536); //64Kib
     }
+
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
         super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte));
         this.metadata = metadata;
