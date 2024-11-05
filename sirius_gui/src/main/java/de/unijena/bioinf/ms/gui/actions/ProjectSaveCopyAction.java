@@ -99,7 +99,7 @@ public class ProjectSaveCopyAction extends AbstractGuiAction {
 //                mainFrame.ps().saveCopy(selectedFile.toPath(), mainFrame);
 //                Jobs.runEDTAndWait(() -> mainFrame.setTitlePath(mainFrame.ps().projectSpace().getLocation().toString()));
             } catch (Exception e2) {
-                new StacktraceDialog(mainFrame, e2.getMessage(), e2);
+                Jobs.runEDTLater(() -> new StacktraceDialog(mainFrame, e2.getMessage(), e2));
             }
         }
     }

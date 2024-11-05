@@ -152,8 +152,8 @@ public class ImportAction extends AbstractGuiAction {
                 task.awaitResult();
             }
 
-        } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
+        } catch (Exception e) {
+            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause()));
         }
     }
 }
