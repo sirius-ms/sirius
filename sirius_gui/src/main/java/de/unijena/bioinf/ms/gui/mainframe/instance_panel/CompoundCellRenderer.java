@@ -230,17 +230,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     }
 
     private static Icon getQualityIcon(@NotNull DataQuality quality) {
-        switch (quality) {
-            case LOWEST:
-                return Icons.TRAFFIC_LIGHT_TINY_GRAY;
-            case BAD:
-                return Icons.TRAFFIC_LIGHT_TINY[0];
-            case DECENT:
-                return Icons.TRAFFIC_LIGHT_TINY[1];
-            case GOOD:
-                return Icons.TRAFFIC_LIGHT_TINY[2];
-        }
-        return Icons.TRAFFIC_LIGHT_TINY_GRAY;
+        return switch (quality) {
+            case BAD -> Icons.TRAFFIC_LIGHT_BOARDER[0].derive(9,9);
+            case DECENT -> Icons.TRAFFIC_LIGHT_BOARDER[1].derive(9,9);
+            case GOOD -> Icons.TRAFFIC_LIGHT_BOARDER[2].derive(9,9);
+            default -> Icons.TRAFFIC_LIGHT_LOWEST_BOARDER.derive(9,9);
+        };
     }
 
 }

@@ -68,7 +68,7 @@ public class DatabaseDialog extends JDialog {
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
-        JPanel header = new DialogHeader(Icons.DB_64);
+        JPanel header = new DialogHeader(Icons.DB.derive(64,64));
         add(header, BorderLayout.NORTH);
 
         dbList = new JList<>();

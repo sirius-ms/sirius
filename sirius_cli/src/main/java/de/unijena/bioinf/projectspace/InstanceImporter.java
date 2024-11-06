@@ -31,6 +31,7 @@ import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class InstanceImporter {
                 switch (psType.get()) {
                     case ALIGNED_RUNS:
                     case UNALIGNED_RUNS:
-                        throw new IllegalArgumentException("Project already data from MS runs (.mzml, .mzxml) that have been preprocessed in SIRIUS. Peak-;ist data cannot be added to such project.  Please create a new project for your data.");
+                        throw new ProjectTypeException("Project already contains preprocessed MS runs (.mzml, .mzxml). Additional peak-list data cannot be added to such project. Please create a new project to import your data.", ProjectType.PEAKLISTS, psType.get());
                 }
             }else {
                 ps.upsertProjectType(ProjectType.PEAKLISTS);

@@ -142,7 +142,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected JToolBar getToolBar() {
         JToolBar tb = super.getToolBar();
 
-        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "Filter by selected molecular property (square)");
+        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MOLECULAR_PROPERTY.derive(24,24), "Filter by selected molecular property (square)");
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");

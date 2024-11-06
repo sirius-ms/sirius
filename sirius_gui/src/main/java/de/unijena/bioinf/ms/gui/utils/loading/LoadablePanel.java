@@ -29,8 +29,7 @@ public class LoadablePanel extends JPanel implements Loadable {
     public LoadablePanel(@NotNull JComponent content/*, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage*/) {
         setLayout(centerCards);
         add("content", content);
-//        add("load", GuiUtils.newLoadingPanel(filterAnimation, loadingMessage));
-        add("load", GuiUtils.newLoadingWebPanel());
+        add("load", GuiUtils.newSpinnerProgressPanel());
     }
 
     public boolean setLoading(boolean loading, boolean absolute) {

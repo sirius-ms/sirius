@@ -21,14 +21,12 @@ package de.unijena.bioinf.ms.gui.utils;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
@@ -37,6 +35,7 @@ import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
+import raven.swing.spinner.SpinnerProgress;
 
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
@@ -51,7 +50,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -326,12 +324,12 @@ public class GuiUtils {
         return box;
     }
 
-    /*public static JPanel newLoadingPanel() {
+    public static JPanel newLoadingPanel() {
         return newLoadingPanel("Loading...");
     }
 
     public static JPanel newLoadingPanel(@Nullable String loadingMessage) {
-        return newLoadingPanel(Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
+        return newLoadingPanel(Icons.FP_LOADER, loadingMessage);
     }
 
     public static JPanel newLoadingPanel(@NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
@@ -346,7 +344,37 @@ public class GuiUtils {
         if (label != null)
             panel.add(label, BorderLayout.SOUTH);
         return panel;
-    }*/
+    }
+
+    public static JPanel newSpinnerProgressPanel() {
+        return newSpinnerProgressPanel("Loading...");
+    }
+
+    public static JPanel newSpinnerProgressPanel(@Nullable String loadingMessage) {
+        return newSpinnerProgressPanel(null, loadingMessage);
+    }
+
+    public static JPanel newSpinnerProgressPanel(@Nullable FlatSVGIcon filterIcon, @Nullable String loadingMessage) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(Colors.BACKGROUND);
+
+        panel.setOpaque(true);
+        SpinnerProgress spinner = filterIcon == null ? new SpinnerProgress() : new SpinnerProgress(filterIcon);
+        spinner.setStringPainted(false);
+        spinner.setIndeterminate(true);
+        spinner.setPreferredSize(new Dimension(160, 160));
+
+        JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
+
+        // Create a wrapper panel to hold the fixed-size panel
+        JPanel wrapperPanel = new JPanel(new GridBagLayout());
+        wrapperPanel.add(spinner); // Add fixed-size panel to the center of the wrapper
+
+        panel.add(wrapperPanel, BorderLayout.CENTER);
+        if (label != null)
+            panel.add(label, BorderLayout.SOUTH);
+        return panel;
+    }
 
     public static WebViewJPanel newLoadingWebPanel() {
         final WebViewJPanel panel = new WebViewJPanel();
