@@ -57,7 +57,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @NotNull
     PSM getProjectSpaceManager();
 
-    Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type);
+    Optional<QuantificationTable> getQuantification(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType);
+
+    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);

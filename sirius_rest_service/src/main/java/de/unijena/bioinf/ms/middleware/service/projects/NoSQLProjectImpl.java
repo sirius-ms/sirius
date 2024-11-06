@@ -73,10 +73,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.*;
 import jakarta.persistence.Id;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
@@ -152,37 +149,133 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return projectSpaceManager;
     }
 
-    @Override
     @SneakyThrows
-    public Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type) {
-        if (type != QuantificationTable.QuantificationType.APEX_HEIGHT) return Optional.empty();
-        Database<?> storage = storage();
-        Optional<AlignedFeatures> maybeFeature = storage.getByPrimaryKey(Long.parseLong(alignedFeatureId), AlignedFeatures.class);
-        if (maybeFeature.isEmpty()) return Optional.empty();
-        AlignedFeatures feature = maybeFeature.get();
-        storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
-        // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+    @Override
+    public Optional<QuantificationTable> getQuantification(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
+        Optional<QuantificationTable> table = initQuantTable(type, rowType);
+        if (table.isEmpty())
+            return Optional.empty();
 
-        List<LCMSRun> samples = new ArrayList<>();
-        for (Feature value : features) {
-            samples.add(storage.getByPrimaryKey(value.getRunId(), LCMSRun.class).orElse(null));
+        List<double[]> values = new ArrayList<>();
+        LongList rowIds = new LongArrayList();
+        List<String> rowNames = new ArrayList<>();
+
+        if (rowType == QuantificationTable.RowType.FEATURES) {
+            storage().findAllStr(AlignedFeatures.class).forEach(alignedFeatures -> addToTable(alignedFeatures, values, rowIds, rowNames, table.get()));
+        } else {
+            storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class).forEach(compound -> addToTable(compound, values, rowIds, rowNames, table.get()));
         }
 
-        QuantificationTable table = new QuantificationTable();
-        table.setQuantificationType(type);
-        table.setRowType(QuantificationTable.RowType.FEATURES);
-        table.setColumnType(QuantificationTable.ColumnType.SAMPLES);
-        table.setRowIds(new long[]{feature.getAlignedFeatureId()});
-        table.setRowNames(new String[]{feature.getName()});
-        table.setColumnIds(features.stream().mapToLong(AbstractFeature::getRunId).toArray());
-        table.setColumnNames(samples.stream().map(x -> x == null ? "unknown" : x.getName()).toArray(String[]::new));
-        double[] vec = new double[samples.size()];
-        for (int k = 0; k < features.size(); ++k) {
-            vec[k] = features.get(k).getApexIntensity();
+        table.get().setValues(values.toArray(double[][]::new));
+        table.get().setRowIds(rowIds.toLongArray());
+        table.get().setRowNames(rowNames.toArray(String[]::new));
+
+        return table;
+    }
+
+    @SneakyThrows
+    @Override
+    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
+        Optional<QuantificationTable> table = initQuantTable(type, rowType);
+        if (table.isEmpty())
+            return Optional.empty();
+
+        List<double[]> values = new ArrayList<>();
+        LongList rowIds = new LongArrayList();
+        List<String> rowNames = new ArrayList<>();
+
+        if (rowType == QuantificationTable.RowType.FEATURES) {
+            Optional<AlignedFeatures> alignedFeature = storage().getByPrimaryKey(Long.parseLong(objectId), AlignedFeatures.class);
+            if (alignedFeature.isEmpty())
+                return Optional.empty();
+
+            addToTable(alignedFeature.get(), values, rowIds, rowNames, table.get());
+        } else {
+            Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> compound = storage().getByPrimaryKey(Long.parseLong(objectId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+            if (compound.isEmpty())
+                return Optional.empty();
+
+            addToTable(compound.get(), values, rowIds, rowNames, table.get());
         }
-        table.setValues(new double[][]{vec});
-        return Optional.of(table);
+
+        table.get().setValues(values.toArray(double[][]::new));
+        table.get().setRowIds(rowIds.toLongArray());
+        table.get().setRowNames(rowNames.toArray(String[]::new));
+
+        return table;
+    }
+
+    private Optional<QuantificationTable> initQuantTable(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) throws IOException {
+        List<LCMSRun> runs = storage().findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
+
+        if (runs.isEmpty())
+            return Optional.empty();
+
+        long[] runIds = new long[runs.size()];
+        String[] runNames = new String[runs.size()];
+        for (int i = 0; i < runs.size(); i++) {
+            runIds[i] = runs.get(i).getRunId();
+            runNames[i] = runs.get(i).getName();
+        }
+
+        return Optional.of(QuantificationTable
+                .builder()
+                .rowType(rowType)
+                .quantificationType(type)
+                .columnType(QuantificationTable.ColumnType.SAMPLES)
+                .columnIds(runIds)
+                .columnNames(runNames)
+                .build()
+        );
+    }
+
+    @SneakyThrows
+    private <T> void addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantificationTable table) {
+        Long2ObjectMap<List<Feature>> features = new Long2ObjectOpenHashMap<>();
+        if (parent instanceof AlignedFeatures alignedFeature) {
+            rowIds.add(alignedFeature.getAlignedFeatureId());
+            rowNames.add(alignedFeature.getName());
+
+            storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class).forEach(feature -> {
+                features.put(feature.getRunId(), List.of(feature));
+            });
+        } else if (parent instanceof de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
+            rowIds.add(compound.getCompoundId());
+            rowNames.add(compound.getName());
+
+            storage().findStr(Filter.where("compoundId").eq(compound.getCompoundId()), AlignedFeature.class).forEach(alignedFeature -> {
+                try {
+                    storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class).forEach(feature -> {
+                        if (!features.containsKey(feature.getRunId())) {
+                            features.put(feature.getRunId(), new ArrayList<>());
+                        }
+                        features.get(feature.getRunId()).add(feature);
+                    });
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        values.add(getQuantTableRow(features, table));
+    }
+
+    private double[] getQuantTableRow(Long2ObjectMap<List<Feature>> features, QuantificationTable table) {
+        double[] row = new double[table.getColumnIds().length];
+        for (int i = 0; i < row.length; i++) {
+            if (features.containsKey(table.getColumnIds()[i])) {
+                row[i] = switch (table.getQuantificationType()) {
+                    case APEX_HEIGHT -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
+                    case AREA_UNDER_CURVE -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).average().orElse(Double.NaN);
+                    case APEX_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexMass).average().orElse(Double.NaN);
+                    case AVERAGE_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAverageMass).average().orElse(Double.NaN);
+                    case APEX_RT -> features.get(table.getColumnIds()[i]).stream().mapToDouble(f -> f.getRetentionTime().getMiddleTime()).average().orElse(Double.NaN);
+                    case FULL_WIDTH_HALF_MAX -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getFwhm).average().orElse(Double.NaN);
+                };
+            } else {
+                row[i] = Double.NaN;
+            }
+        }
+        return row;
     }
 
     @Override

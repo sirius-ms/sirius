@@ -45,7 +45,17 @@ public class QuantificationTable {
    * Gets or Sets quantificationType
    */
   public enum QuantificationTypeEnum {
-    APEX_HEIGHT("APEX_HEIGHT");
+    APEX_HEIGHT("APEX_HEIGHT"),
+    
+    AREA_UNDER_CURVE("AREA_UNDER_CURVE"),
+    
+    APEX_MASS("APEX_MASS"),
+    
+    AVERAGE_MASS("AVERAGE_MASS"),
+    
+    APEX_RT("APEX_RT"),
+    
+    FULL_WIDTH_HALF_MAX("FULL_WIDTH_HALF_MAX");
 
     private String value;
 
@@ -81,7 +91,9 @@ public class QuantificationTable {
    * Gets or Sets rowType
    */
   public enum RowTypeEnum {
-    FEATURES("FEATURES");
+    FEATURES("FEATURES"),
+    
+    COMPOUNDS("COMPOUNDS");
 
     private String value;
 

@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.QuantificationTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
@@ -114,6 +115,35 @@ public class CompoundController {
     }
 
     /**
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all
+     * samples it is contained in.
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return
+     */
+    @GetMapping(value = "/{compoundId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantificationTable.RowType.COMPOUNDS);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
+    }
+
+    /**
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all
+     * runs they are contained in.
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return
+     */
+    @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.COMPOUNDS);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
+    }
+
+    /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      *
      * @param projectId  project-space to read from.
@@ -146,5 +176,9 @@ public class CompoundController {
     @DeleteMapping(value = "/{compoundId}")
     public void deleteCompound(@PathVariable String projectId, @PathVariable String compoundId) {
         projectsProvider.getProjectOrThrow(projectId).deleteCompoundById(compoundId);
+    }
+
+    protected static String idString(String pid, String cid) {
+        return "'" + pid + "/" + cid + "'";
     }
 }

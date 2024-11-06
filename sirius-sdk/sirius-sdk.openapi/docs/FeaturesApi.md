@@ -26,7 +26,8 @@ All URIs are relative to *http://localhost:8888*
 | [**getIsotopePatternAnnotation**](FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. |
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
-| [**getQuantification**](FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature. |
+| [**getQuantification1**](FeaturesApi.md#getQuantification1) | **GET** /api/projects/{projectId}/aligned-features/quantification | Returns the full quantification table. |
+| [**getQuantificationRow1**](FeaturesApi.md#getQuantificationRow1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature. |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format. |
 | [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
@@ -1604,13 +1605,13 @@ No authorization required
 | **200** | Mass Spec data of this feature (aligned over runs). |  -  |
 
 
-## getQuantification
+## getQuantification1
 
-> QuantificationTable getQuantification(projectId, alignedFeatureId, type)
+> QuantificationTable getQuantification1(projectId, type)
 
-Returns a single quantification table row for the given feature.
+Returns the full quantification table.
 
-Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
+Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
 
 ### Example
 
@@ -1629,13 +1630,12 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
-        String type = "APEX_HEIGHT"; // String | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+        String type = "APEX_HEIGHT"; // String | quantification type.
         try {
-            QuantificationTable result = apiInstance.getQuantification(projectId, alignedFeatureId, type);
+            QuantificationTable result = apiInstance.getQuantification1(projectId, type);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getQuantification");
+            System.err.println("Exception when calling FeaturesApi#getQuantification1");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -1651,8 +1651,77 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **alignedFeatureId** | **String**| feature which intensities should be read out | |
-| **type** | **String**| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT] |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+
+### Return type
+
+[**QuantificationTable**](QuantificationTable.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getQuantificationRow1
+
+> QuantificationTable getQuantificationRow1(projectId, alignedFeatureId, type)
+
+Returns a single quantification table row for the given feature.
+
+Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which should be read out
+        String type = "APEX_HEIGHT"; // String | quantification type.
+        try {
+            QuantificationTable result = apiInstance.getQuantificationRow1(projectId, alignedFeatureId, type);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getQuantificationRow1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature which should be read out | |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
 
 ### Return type
 

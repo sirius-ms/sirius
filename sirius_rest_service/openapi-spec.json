@@ -3133,6 +3133,117 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/{compoundId}/quantification": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Returns a single quantification table row for the given feature.",
+        "description": "Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all\n samples it is contained in.",
+        "operationId": "getQuantificationRow",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "description": "compound which should be read out",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_HEIGHT",
+              "enum": [
+                "APEX_HEIGHT",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantificationTable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/quantification": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Returns the full quantification table.",
+        "description": "Returns the full quantification table. The quantification table contains a quantification of the features within all\n runs they are contained in.",
+        "operationId": "getQuantification",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_HEIGHT",
+              "enum": [
+                "APEX_HEIGHT",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantificationTable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/page": {
       "get": {
         "tags": [
@@ -3795,8 +3906,8 @@
           "Features"
         ],
         "summary": "Returns a single quantification table row for the given feature.",
-        "description": "Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all\n samples it is contained in.",
-        "operationId": "getQuantification",
+        "description": "Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all\n samples it is contained in.",
+        "operationId": "getQuantificationRow_1",
         "parameters": [
           {
             "name": "projectId",
@@ -3810,7 +3921,7 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
-            "description": "feature which intensities should be read out",
+            "description": "feature which should be read out",
             "required": true,
             "schema": {
               "type": "string"
@@ -3819,13 +3930,18 @@
           {
             "name": "type",
             "in": "query",
-            "description": "quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.",
+            "description": "quantification type.",
             "required": false,
             "schema": {
               "type": "string",
               "default": "APEX_HEIGHT",
               "enum": [
-                "APEX_HEIGHT"
+                "APEX_HEIGHT",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
               ]
             }
           }
@@ -5362,6 +5478,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageStructureCandidateFormula"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/quantification": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns the full quantification table.",
+        "description": "Returns the full quantification table. The quantification table contains a quantification of the features within all\n runs they are contained in.",
+        "operationId": "getQuantification_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_HEIGHT",
+              "enum": [
+                "APEX_HEIGHT",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantificationTable"
                 }
               }
             }
@@ -8532,6 +8699,79 @@
           }
         }
       },
+      "QuantificationTable": {
+        "type": "object",
+        "properties": {
+          "quantificationType": {
+            "type": "string",
+            "enum": [
+              "APEX_HEIGHT",
+              "AREA_UNDER_CURVE",
+              "APEX_MASS",
+              "AVERAGE_MASS",
+              "APEX_RT",
+              "FULL_WIDTH_HALF_MAX"
+            ]
+          },
+          "rowType": {
+            "type": "string",
+            "enum": [
+              "FEATURES",
+              "COMPOUNDS"
+            ]
+          },
+          "columnType": {
+            "type": "string",
+            "enum": [
+              "SAMPLES"
+            ]
+          },
+          "rowIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          "columnIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          "rowNames": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "columnNames": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          }
+        }
+      },
       "PageCompound": {
         "type": "object",
         "properties": {
@@ -8654,73 +8894,6 @@
           },
           "empty": {
             "type": "boolean"
-          }
-        }
-      },
-      "QuantificationTable": {
-        "type": "object",
-        "properties": {
-          "quantificationType": {
-            "type": "string",
-            "enum": [
-              "APEX_HEIGHT"
-            ]
-          },
-          "rowType": {
-            "type": "string",
-            "enum": [
-              "FEATURES"
-            ]
-          },
-          "columnType": {
-            "type": "string",
-            "enum": [
-              "SAMPLES"
-            ]
-          },
-          "rowIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "integer",
-              "format": "int64",
-              "nullable": true
-            }
-          },
-          "columnIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "integer",
-              "format": "int64",
-              "nullable": true
-            }
-          },
-          "rowNames": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "columnNames": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": {
-                "type": "number",
-                "format": "double"
-              }
-            }
           }
         }
       },

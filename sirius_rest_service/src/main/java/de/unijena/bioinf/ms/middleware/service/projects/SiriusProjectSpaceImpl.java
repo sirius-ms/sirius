@@ -125,7 +125,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type) {
+    public Optional<QuantificationTable> getQuantification(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
+        throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
+    }
+
+    @Override
+    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
