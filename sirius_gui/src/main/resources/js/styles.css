@@ -90,6 +90,9 @@ text.label, text.legend {
     width: 6px;
 }
 
+/*The peak attributes are currently not change by hovering.*/
+/*.peak_hover {}*/
+
 .peak_shadow{ /*<= Set style for all shadow*/
     /*fill: lightgrey;*/
     width: 10px;
