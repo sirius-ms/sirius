@@ -36,7 +36,6 @@ docs/DBLink.md
 docs/DataQuality.md
 docs/Deviation.md
 docs/ExperimentalApi.md
-docs/Feature.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeaturesApi.md
@@ -170,7 +169,6 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
-src/main/java/io/sirius/ms/sdk/model/Feature.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
 src/main/java/io/sirius/ms/sdk/model/FingerprintPrediction.java

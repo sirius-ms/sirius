@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +141,21 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, removeNone(optFields));
+    }
+
+    /**
+     * Get list of features that were aligned over runs with the given identifier from the specified project-space.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeature with additional annotations and MS/MS data (if specified).
+     */
+    @Hidden
+    @GetMapping(value = "/{alignedFeatureId}/features", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Feature> getFeatures(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findFeaturesByAlignedFeatureId(alignedFeatureId);
     }
 
     /**

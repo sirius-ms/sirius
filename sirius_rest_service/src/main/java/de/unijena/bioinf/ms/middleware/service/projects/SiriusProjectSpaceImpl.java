@@ -214,6 +214,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
+    public List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
                 .map(projectSpaceManager::importInstanceWithUniqueId)

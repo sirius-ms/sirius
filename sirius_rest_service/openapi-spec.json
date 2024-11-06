@@ -7110,7 +7110,6 @@
         "enum": [
           "none",
           "msData",
-          "features",
           "topAnnotations",
           "topAnnotationsDeNovo",
           "computedTools"
@@ -7168,24 +7167,6 @@
             "format": "double",
             "nullable": true
           },
-          "rtFWHM": {
-            "type": "number",
-            "description": "Full width at half maximum of the feature on the retention time axis in seconds",
-            "format": "double",
-            "nullable": true
-          },
-          "apexIntensity": {
-            "type": "number",
-            "description": "Intensity of the apex of the feature",
-            "format": "double",
-            "nullable": true
-          },
-          "areaUnderCurve": {
-            "type": "number",
-            "description": "Area under curve of the whole feature",
-            "format": "double",
-            "nullable": true
-          },
           "quality": {
             "$ref": "#/components/schemas/DataQuality"
           },
@@ -7199,14 +7180,6 @@
           },
           "msData": {
             "$ref": "#/components/schemas/MsData"
-          },
-          "features": {
-            "type": "array",
-            "description": "List of the aligned features",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/Feature"
-            }
           },
           "topAnnotations": {
             "$ref": "#/components/schemas/FeatureAnnotations"
@@ -7607,67 +7580,6 @@
             "format": "double"
           }
         },
-        "nullable": true
-      },
-      "Feature": {
-        "type": "object",
-        "properties": {
-          "featureId": {
-            "type": "string",
-            "description": "Identifier"
-          },
-          "alignedFeatureId": {
-            "type": "string",
-            "description": "ID of the AlignedFeature this feature belongs to"
-          },
-          "runId": {
-            "type": "string",
-            "description": "ID of the run this feature belongs to"
-          },
-          "averageMz": {
-            "type": "number",
-            "description": "Average m/z over the whole feature",
-            "format": "double",
-            "nullable": true
-          },
-          "rtStartSeconds": {
-            "type": "number",
-            "description": "Start of the feature on the retention time axis in seconds",
-            "format": "double",
-            "nullable": true
-          },
-          "rtEndSeconds": {
-            "type": "number",
-            "description": "End of the feature on the retention time axis in seconds",
-            "format": "double",
-            "nullable": true
-          },
-          "rtApexSeconds": {
-            "type": "number",
-            "description": "Apex of the feature on the retention time axis in seconds",
-            "format": "double",
-            "nullable": true
-          },
-          "rtFWHM": {
-            "type": "number",
-            "description": "Full width at half maximum of the feature on the retention time axis in seconds",
-            "format": "double",
-            "nullable": true
-          },
-          "apexIntensity": {
-            "type": "number",
-            "description": "Intensity of the apex of the feature",
-            "format": "double",
-            "nullable": true
-          },
-          "areaUnderCurve": {
-            "type": "number",
-            "description": "Area under curve of the whole feature",
-            "format": "double",
-            "nullable": true
-          }
-        },
-        "description": "The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information\n that might be displayed in some summary view.",
         "nullable": true
       },
       "FeatureAnnotations": {

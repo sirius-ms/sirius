@@ -18,14 +18,10 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**rtApexSeconds** | **Double** |  |  [optional] |
-|**rtFWHM** | **Double** | Full width at half maximum of the feature on the retention time axis in seconds |  [optional] |
-|**apexIntensity** | **Double** | Intensity of the apex of the feature |  [optional] |
-|**areaUnderCurve** | **Double** | Area under curve of the whole feature |  [optional] |
 |**quality** | **DataQuality** |  |  [optional] |
 |**hasMs1** | **Boolean** | If true, the feature has at lease one MS1 spectrum |  [optional] |
 |**hasMsMs** | **Boolean** | If true, the feature has at lease one MS/MS spectrum |  [optional] |
 |**msData** | [**MsData**](MsData.md) |  |  [optional] |
-|**features** | [**List&lt;Feature&gt;**](Feature.md) | List of the aligned features |  [optional] |
 |**topAnnotations** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |
 |**topAnnotationsDeNovo** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |
 |**computing** | **Boolean** | Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results |  [optional] |
