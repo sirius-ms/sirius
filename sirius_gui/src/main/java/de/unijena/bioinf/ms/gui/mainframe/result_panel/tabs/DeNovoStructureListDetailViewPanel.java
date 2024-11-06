@@ -64,7 +64,7 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS_24, "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
+            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS.derive(24,24), "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
             showDatabaseHits.setSelected(true);
             tb.add(showDatabaseHits, getIndexOfSecondGap(tb) + 1);
 

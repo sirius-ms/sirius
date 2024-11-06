@@ -41,7 +41,7 @@ public class ProjectSaveCopyAction extends AbstractGuiAction {
 
     public ProjectSaveCopyAction(SiriusGui gui) {
         super("Save Copy", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_FILE.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Save a copy of the current project. (current location stays active)");
         setEnabled(true);
 

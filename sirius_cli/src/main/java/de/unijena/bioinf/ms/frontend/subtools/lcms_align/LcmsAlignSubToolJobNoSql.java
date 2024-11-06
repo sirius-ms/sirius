@@ -52,6 +52,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -312,11 +314,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (psType.isPresent()) {
             switch (psType.get()) {
                 case DIRECT_IMPORT ->
-                        throw new IllegalArgumentException("Project already contains data from direct API import. Full MS runs (.mzml, .mzxml) cannot be added to such project.  Please create a new project for your data.");
+                        throw new ProjectTypeException("Project already contains data from direct API import. Additional MS run data (.mzml, .mzxml) cannot be added to this project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.DIRECT_IMPORT);
                 case PEAKLISTS ->
-                        throw new IllegalArgumentException("Project already contains peak-list data (e.g .ms, .mgf, .mat). Full MS runs (.mzml, .mzxml) cannot be added to peak-list based projects.");
+                        throw new ProjectTypeException("Project already contains peak-list data (e.g .ms, .mgf, .mat). Additional MS run data (.mzml, .mzxml) cannot be added to peak-list based projects. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.PEAKLISTS);
                 default ->
-                        throw new IllegalStateException("Project already contains preprocessed features. It is currently not supported to add additional data after preprocessing has been performed. Please create a new project for your data.");
+                        throw new ProjectStateException("Project already contains preprocessed features. It is currently not supported to add additional data after preprocessing has been performed. Please create a new project to import your data.");
             }
         }else {
             ps.upsertProjectType(alignRuns && inputFiles.size() > 1  ? ProjectType.ALIGNED_RUNS : ProjectType.UNALIGNED_RUNS);

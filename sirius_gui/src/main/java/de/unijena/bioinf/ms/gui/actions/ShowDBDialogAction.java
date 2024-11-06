@@ -33,7 +33,7 @@ public class ShowDBDialogAction extends AbstractGuiAction {
 
     public ShowDBDialogAction(SiriusGui gui) {
         super("Databases", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.DB_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.DB.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Configure Databases");
     }
 
