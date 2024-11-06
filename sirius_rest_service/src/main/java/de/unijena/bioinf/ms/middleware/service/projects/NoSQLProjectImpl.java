@@ -848,10 +848,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .hasMs1(features.isHasMs1())
                 .hasMsMs(features.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
-                .rtFWHM(features.getFwhm())
-                .charge(features.getCharge())
-                .apexIntensity(features.getApexIntensity())
-                .areaUnderCurve(features.getAreaUnderCurve());
+                .charge(features.getCharge());
         if (features.getDetectedAdducts() != null) {
             de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = features.getDetectedAdducts().clone();
             adducts.removeAllWithSource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
@@ -877,10 +874,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             project().fetchMsData(features);
             features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
-        }
-        if (optFields.contains(AlignedFeature.OptField.features)) {
-            project().fetchFeatures(features);
-            features.getFeatures().map(f -> f.stream().map(this::convertToApiFeature0).toList()).ifPresent(builder::features);
         }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
@@ -1340,6 +1333,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         long total = storage().countAll(AlignedFeatures.class);
 
         return new PageImpl<>(features, pageable, total);
+    }
+
+    @SneakyThrows
+    @Override
+    public List<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
+        return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
     }
 
     @Override

@@ -262,7 +262,6 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
- - [Feature](docs/Feature.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)

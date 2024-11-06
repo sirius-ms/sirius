@@ -120,6 +120,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
+    List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
+
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
