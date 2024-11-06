@@ -10,6 +10,8 @@ All URIs are relative to *http://localhost:8888*
 | [**getCompoundTraces**](CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces |  |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
 | [**getCompoundsPaged**](CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space. |
+| [**getQuantification**](CompoundsApi.md#getQuantification) | **GET** /api/projects/{projectId}/compounds/quantification | Returns the full quantification table. |
+| [**getQuantificationRow**](CompoundsApi.md#getQuantificationRow) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quantification | Returns a single quantification table row for the given feature. |
 
 
 
@@ -438,4 +440,142 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Compounds with additional optional fields (if specified). |  -  |
+
+
+## getQuantification
+
+> QuantificationTable getQuantification(projectId, type)
+
+Returns the full quantification table.
+
+Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String type = "APEX_HEIGHT"; // String | quantification type.
+        try {
+            QuantificationTable result = apiInstance.getQuantification(projectId, type);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#getQuantification");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+
+### Return type
+
+[**QuantificationTable**](QuantificationTable.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getQuantificationRow
+
+> QuantificationTable getQuantificationRow(projectId, compoundId, type)
+
+Returns a single quantification table row for the given feature.
+
+Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String compoundId = "compoundId_example"; // String | compound which should be read out
+        String type = "APEX_HEIGHT"; // String | quantification type.
+        try {
+            QuantificationTable result = apiInstance.getQuantificationRow(projectId, compoundId, type);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#getQuantificationRow");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **compoundId** | **String**| compound which should be read out | |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+
+### Return type
+
+[**QuantificationTable**](QuantificationTable.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 

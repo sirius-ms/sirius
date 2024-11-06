@@ -755,17 +755,31 @@ public class AlignedFeatureController {
      */
 
     /**
-     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all
      * samples it is contained in.
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param alignedFeatureId feature which should be read out
+     * @param type quantification type.
      * @return
      */
     @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
-        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeature(alignedFeatureId, type);
+    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantificationTable.RowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
+    }
+
+    /**
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all
+     * runs they are contained in.
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return
+     */
+    @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.FEATURES);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
     }
 

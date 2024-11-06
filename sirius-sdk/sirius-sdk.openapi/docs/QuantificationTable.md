@@ -23,6 +23,11 @@
 | Name | Value |
 |---- | -----|
 | APEX_HEIGHT | &quot;APEX_HEIGHT&quot; |
+| AREA_UNDER_CURVE | &quot;AREA_UNDER_CURVE&quot; |
+| APEX_MASS | &quot;APEX_MASS&quot; |
+| AVERAGE_MASS | &quot;AVERAGE_MASS&quot; |
+| APEX_RT | &quot;APEX_RT&quot; |
+| FULL_WIDTH_HALF_MAX | &quot;FULL_WIDTH_HALF_MAX&quot; |
 
 
 
@@ -31,6 +36,7 @@
 | Name | Value |
 |---- | -----|
 | FEATURES | &quot;FEATURES&quot; |
+| COMPOUNDS | &quot;COMPOUNDS&quot; |
 
 
 
