@@ -2109,24 +2109,104 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param type quantification type.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationRequestCreation(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    private ResponseSpec getQuantification1RequestCreation(String projectId, String type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantificationTable getQuantification1(String projectId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantification1RequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantificationTable> getQuantification1WithHttpInfo(String projectId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantification1RequestCreation(projectId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getQuantification1WithResponseSpec(String projectId, String type) throws WebClientResponseException {
+        return getQuantification1RequestCreation(projectId, type);
+    }
+    /**
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which should be read out
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getQuantificationRow1RequestCreation(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantificationRow1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantificationRow1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2156,46 +2236,46 @@ public class FeaturesApi {
 
     /**
      * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param alignedFeatureId feature which should be read out
+     * @param type quantification type.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTable getQuantification(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    public QuantificationTable getQuantificationRow1(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param alignedFeatureId feature which should be read out
+     * @param type quantification type.
      * @return ResponseEntity&lt;QuantificationTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    public ResponseEntity<QuantificationTable> getQuantificationRow1WithHttpInfo(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
 
     /**
      * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param alignedFeatureId feature which should be read out
+     * @param type quantification type.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type);
+    public ResponseSpec getQuantificationRow1WithResponseSpec(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type);
     }
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.

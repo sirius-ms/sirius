@@ -8,6 +8,7 @@ import io.sirius.ms.sdk.model.CompoundImport;
 import io.sirius.ms.sdk.model.CompoundOptField;
 import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.PageCompound;
+import io.sirius.ms.sdk.model.QuantificationTable;
 import io.sirius.ms.sdk.model.TraceSet;
 
 import java.util.HashMap;
@@ -597,5 +598,174 @@ public class CompoundsApi {
      */
     public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
+    }
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getQuantificationRequestCreation(String projectId, String type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantificationTable getQuantification(String projectId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRequestCreation(projectId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the full quantification table.
+     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String type) throws WebClientResponseException {
+        return getQuantificationRequestCreation(projectId, type);
+    }
+    /**
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getQuantificationRowRequestCreation(String projectId, String compoundId, String type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantificationRow", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'compoundId' is set
+        if (compoundId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling getQuantificationRow", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("compoundId", compoundId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/{compoundId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantificationTable getQuantificationRow(String projectId, String compoundId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRowRequestCreation(projectId, compoundId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantificationTable> getQuantificationRowWithHttpInfo(String projectId, String compoundId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRowRequestCreation(projectId, compoundId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getQuantificationRowWithResponseSpec(String projectId, String compoundId, String type) throws WebClientResponseException {
+        return getQuantificationRowRequestCreation(projectId, compoundId, type);
     }
 }
