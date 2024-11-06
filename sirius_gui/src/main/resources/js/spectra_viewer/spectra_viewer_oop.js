@@ -194,16 +194,22 @@ class Base {
         self.translateHover(event.clientX, event.clientY);
         self.tooltip.html(Base.annotation(self, d));
         self.tooltip.style("opacity", 1);
-        d3.select("#peak" + i).classed("peak_hover", true);
+        const hoveredPeak = d3.select("#peak" + i);
+        hoveredPeak.classed("peak_hover", true);
+        Base.setXandCenterPeak(self, hoveredPeak);
         if (self.selected.hover !== i) {
-            d3.select("#peak" + self.selected.hover).classed("peak_hover", false);
+            const peak = d3.select("#peak" + self.selected.hover);
+            peak.classed("peak_hover", false);
+            Base.setXandCenterPeak(self, peak);
             self.selected.hover = i;
         }
     }
 
     static mouseleaveGeneral(self) {
         if (self.selected.hover !== null) {
-            d3.select("#peak" + self.selected.hover).classed("peak_hover", false);
+            const peak = d3.select("#peak" + self.selected.hover);
+            peak.classed("peak_hover", false);
+            Base.setXandCenterPeak(self, peak);
             self.selected.hover = null;
             self.hideHover();
         }
@@ -315,6 +321,13 @@ class Base {
             callback(self, duration);
         });
     }
+
+    static setXandCenterPeak(self, peak) {
+        peak.attr("x", function(d) {
+            var rectWidth = this.getBoundingClientRect().width;
+            return self.x(d.mz) - rectWidth / 2;
+        });
+    }
 }
 
 class SpectrumPlot extends Base {
@@ -375,7 +388,8 @@ class SpectrumPlot extends Base {
     static update_peaks(self, duration) {
         self.peakArea.selectAll(".peak").transition().duration(duration)
             .attr("x", function (d) {
-                return self.x(d.mz);
+                var rectWidth = this.getBoundingClientRect().width;
+                return self.x(d.mz) - rectWidth / 2;
             })
             .attr("y", function (d) {
                 return (self.y(d.intensity) < 0) ? 0 : self.y(d.intensity);
@@ -389,15 +403,18 @@ class SpectrumPlot extends Base {
     }
 
     static update_shadow(self, id, i, duration) {
-        // offset = (10-2)/2 = 4, depends on peak width (2px) and the shadow width (10px)
-        self.peakArea.select(id).transition().duration(duration)
-            .attr("x", self.x(self.spectrum.peaks[i].mz)-4)
+        var peak = self.peakArea.select(id);
+        var rectWidth = peak.node().getBoundingClientRect().width;
+        peak.transition().duration(duration)
+            .attr("x", self.x(self.spectrum.peaks[i].mz) - rectWidth / 2)
             .attr("visibility", "visible");
     }
 
     static selectNewPeak(self, d, i, newPeak) {
         if (self.selected.leftClick !== -1 && self.selected.leftClick !== null && !newPeak.classed("peak_select")) {
-            d3.select("#peak" + self.selected.leftClick).attr("class", SpectrumPlot.resetColor(self, self.spectrum.peaks[self.selected.leftClick]));
+            var deselectedPeak = d3.select("#peak" + self.selected.leftClick);
+            deselectedPeak.attr("class", SpectrumPlot.resetColor(self, self.spectrum.peaks[self.selected.leftClick]));
+            Base.setXandCenterPeak(self, deselectedPeak);
         }
         try {
             connector.selectionChanged(self.mzs[i]);
@@ -406,6 +423,8 @@ class SpectrumPlot extends Base {
         }
         self.selected.leftClick = i;
         newPeak.classed("peak_select", true);
+        Base.setXandCenterPeak(self, newPeak);
+
         if (self.structureView) {
             self.annoArea.attr("id", "anno_leftClick");
             document.getElementById("anno_leftClick").innerText = Base.annotation(self, d).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
@@ -427,6 +446,7 @@ class SpectrumPlot extends Base {
         }
         self.selected.leftClick = null;
         peak.classed("peak_select", false);
+        Base.setXandCenterPeak(self, peak);
         self.peakArea.select("#shadow_select").attr("visibility", "hidden");
         if (self.structureView) {
             document.getElementById("anno_leftClick").innerText = "Left click to choose a green or black peak...";
@@ -478,17 +498,26 @@ class SpectrumPlot extends Base {
                 }
             }
             if (new_selected !== -1) {
-                self.svg.select("#peak" + self.selected.leftClick).attr("class", SpectrumPlot.resetColor(self, self.spectrum.peaks[self.selected.leftClick]));
+                const lastPeak = self.svg.select("#peak" + self.selected.leftClick)
+                lastPeak.attr("class", SpectrumPlot.resetColor(self, self.spectrum.peaks[self.selected.leftClick]));
                 if (self.selected.leftClick === self.selected.hover) {
-                    self.svg.select("#peak" + self.selected.leftClick).classed("peak_hover", true);
+                    lastPeak.classed("peak_hover", true);
                 }
                 try {
                     connector.selectionChanged(self.mzs[new_selected]);
                 } catch (error) {
                     null;
                 }
+                Base.setXandCenterPeak(self, lastPeak);
                 self.selected.leftClick = new_selected;
-                self.svg.select("#peak" + self.selected.leftClick).classed("peak_select", true);
+                const newPeak = self.svg.select("#peak" + self.selected.leftClick);
+                newPeak.classed("peak_select", true);
+                Base.setXandCenterPeak(self, newPeak);
+
+                if (self.selected.leftClick !== -1 && self.selected.leftClick !== null) {
+                    SpectrumPlot.update_shadow(self, "#shadow_select", self.selected.leftClick, 0);
+                }
+
                 if (selectedPeak.mz <= self.domain_tmp.xMin) {
                     Base.setXdomain(self, selectedPeak.mz - 3, self.domain_tmp.xMax - (self.domain_tmp.xMin - selectedPeak.mz) - 3);
                     SpectrumPlot.update_peaks(self, 50);
@@ -496,8 +525,7 @@ class SpectrumPlot extends Base {
                     Base.setXdomain(self, self.domain_tmp.xMin + (selectedPeak.mz - self.domain_tmp.xMax) + 3, selectedPeak.mz + 3);
                     SpectrumPlot.update_peaks(self, 50);
                 }
-                SpectrumPlot.update_y(self, 50);
-                SpectrumPlot.update_peaks(self, 50);
+
                 if (self.structureView) {
                     document.getElementById("anno_leftClick").innerText = Base.annotation(self, selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
                     if (hasStructure(self.spectrum.peaks[self.selected.leftClick])) {
@@ -692,9 +720,6 @@ class SpectrumPlot extends Base {
             .data(this.spectrum.peaks)
             .enter()
             .append("rect")
-            .attr("x", function (d) {
-                return self.x(d.mz);
-            })
             .attr("y", function (d) {
                 return self.y(d.intensity);
             })
@@ -707,6 +732,10 @@ class SpectrumPlot extends Base {
             })
             .attr("class", function (d, i) {
                 return (self.selected.leftClick === i) ? "peak_select peak" : SpectrumPlot.resetColor(self, d);
+            })
+            .attr("x", function (d) {
+                var rectWidth = this.getBoundingClientRect().width;
+                return self.x(d.mz) - rectWidth / 2;
             });
         if (self.selected.leftClick !== -1 && self.selected.leftClick !== null) {
             SpectrumPlot.update_shadow(self, "#shadow_select", self.selected.leftClick, 0);
@@ -716,6 +745,7 @@ class SpectrumPlot extends Base {
             this.svg.on("mousemove", Base.mouseMoving(self.spectrum, self.x, self.y, function (i) {
                 const newSelected = d3.select("#peak" + i);
                 newSelected.classed("peak_hover", true);
+                Base.setXandCenterPeak(self, newSelected);
                 self.tooltip.style("opacity", 1);
                 self.tooltip.html(Base.annotation(self, self.spectrum.peaks[i]));
                 SpectrumPlot.update_shadow(self, "#shadow_hover", i, 0);
@@ -729,6 +759,7 @@ class SpectrumPlot extends Base {
                         lastSelected.classed("peak_hover", false);
                     }
                     self.selected.hover = i;
+                    Base.setXandCenterPeak(self, lastSelected);
                 }
             }, function () {
                 //NOTE: If the distance between 2 peaks is too narrow, mouseleave might be skipped.
@@ -739,6 +770,7 @@ class SpectrumPlot extends Base {
                     } else {
                         lastSelected.classed("peak_hover", false);
                     }
+                    Base.setXandCenterPeak(self, lastSelected);
                     self.selected.hover = null;
                     self.hideHover();
                     self.peakArea.select("#shadow_hover").attr("visibility", "hidden");
@@ -827,7 +859,8 @@ class MirrorPlot extends Base {
     static update_peaksX(self, duration) {
         self.peakArea.selectAll(".peak_mirrorTop").transition().duration(duration)
             .attr("x", function (d) {
-                return self.x(d.mz);
+                var rectWidth = this.getBoundingClientRect().width;
+                return self.x(d.mz) - rectWidth / 2;
             })
             .attr("y", function (d) {
                 return self.y1(d.intensity);
@@ -837,7 +870,8 @@ class MirrorPlot extends Base {
             });
         self.peakArea.selectAll(".peak_matched").transition().duration(duration)
                     .attr("x", function (d) {
-                        return self.x(d.mz);
+                        var rectWidth = this.getBoundingClientRect().width;
+                        return self.x(d.mz) - rectWidth / 2;
                     })
                     .attr("y", function (d) {
                         return self.y1(d.intensity);
@@ -847,7 +881,8 @@ class MirrorPlot extends Base {
                     });
         self.peakArea.selectAll(".peak_mirrorBottom").transition().duration(duration)
             .attr("x", function (d) {
-                return self.x(d.mz);
+                var rectWidth = this.getBoundingClientRect().width;
+                return self.x(d.mz) - rectWidth / 2;
             })
             .attr("height", function (d) {
                 return self.y2(d.intensity) - self.h / 2;
