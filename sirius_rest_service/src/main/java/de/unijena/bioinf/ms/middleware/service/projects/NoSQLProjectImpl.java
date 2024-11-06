@@ -1028,7 +1028,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             switch (psType.get()) {
                 case ALIGNED_RUNS:
                 case UNALIGNED_RUNS: {
-                    ProjectTypeException reason = new ProjectTypeException("Project already data from MS runs (.mzml, .mzxml) that have been preprocessed in SIRIUS. Additional data cannot be added to such project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, psType.get());
+                    ProjectTypeException reason = new ProjectTypeException("Project contains data from MS runs (.mzml, .mzxml) that have been preprocessed in SIRIUS. Additional data cannot be added to such project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, psType.get());
                     throw new ResponseStatusException(BAD_REQUEST, reason.getMessage(), reason);
                 }
             }
