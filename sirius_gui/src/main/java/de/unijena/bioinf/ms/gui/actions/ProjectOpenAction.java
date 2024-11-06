@@ -56,7 +56,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     public ProjectOpenAction(SiriusGui gui) {
         this("Open", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Open a previously saved project.");
     }
 

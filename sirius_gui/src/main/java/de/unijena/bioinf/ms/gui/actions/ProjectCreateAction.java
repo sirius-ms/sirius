@@ -68,7 +68,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
     public ProjectCreateAction(SiriusGui gui) {
         super("New", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location.");
         setEnabled(true);
     }
