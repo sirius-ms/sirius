@@ -14,6 +14,11 @@ function hasFormula(peak) {
     return (peak?.peakAnnotation?.molecularFormula != null)
 }
 
+function isSelectablePeak(peak) {
+    //formula-only peaks not selectable in Epimetheus view
+    return ((!self.structureView && hasFormula(peak)) || hasStructure(peak));
+}
+
 class Base {
     constructor() {
         this.pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
@@ -457,7 +462,7 @@ class SpectrumPlot extends Base {
 
     static mouseup(self, d, i) {
         if (!self.pan.mousemoveCheck) {
-            if (hasFormula(d)) {
+            if (isSelectablePeak(d)) {
                 let tmp = d3.select("#peak" + i);
                 if (self.selected.leftClick !== null && tmp.classed("peak_select")) {
                     SpectrumPlot.cancelSelection(self, tmp);
@@ -477,7 +482,7 @@ class SpectrumPlot extends Base {
             if (e.keyCode === 37 && self.selected.leftClick !== 0) { // left
                 new_selected = self.selected.leftClick - 1;
                 selectedPeak = self.spectrum.peaks[new_selected];
-                while (!hasFormula(selectedPeak)) {
+                while (!isSelectablePeak(selectedPeak)) {
                     if (new_selected === 0) {
                         new_selected = -1;
                         break;
@@ -488,7 +493,7 @@ class SpectrumPlot extends Base {
             } else if (e.keyCode === 39 && self.selected.leftClick !== self.mzsSize - 1) { // right
                 new_selected = self.selected.leftClick + 1;
                 selectedPeak = self.spectrum.peaks[new_selected];
-                while (!hasFormula(selectedPeak)) {
+                while (!isSelectablePeak(selectedPeak)) {
                     if (new_selected === self.mzsSize - 1) {
                         new_selected = -1;
                         break;
@@ -528,7 +533,7 @@ class SpectrumPlot extends Base {
 
                 if (self.structureView) {
                     document.getElementById("anno_leftClick").innerText = Base.annotation(self, selectedPeak).replace(/<br>/g, "\n").replace(/&nbsp;/g, "");
-                    if (hasStructure(self.spectrum.peaks[self.selected.leftClick])) {
+                    if (hasFormula(self.spectrum.peaks[self.selected.leftClick])) { //SpectrumPlot.showStructure method handles formula-only peaks without structure
                         SpectrumPlot.showStructure(self, self.selected.leftClick);
                     } else {
                         SpectrumPlot.showStructure(self, -1);
