@@ -1,0 +1,7 @@
+version = '0.9-SNAPSHOT'
+
+dependencies {
+    implementation 'wishartlab.openscience.biotransformer:biotransformer:3.0.0'
+    api project(":chemical_db_oss")
+    api project(":chemical_db_oss:chemdb_nitrite_oss")
+}
