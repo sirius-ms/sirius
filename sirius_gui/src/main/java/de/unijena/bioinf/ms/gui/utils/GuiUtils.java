@@ -362,7 +362,7 @@ public class GuiUtils {
         SpinnerProgress spinner = filterIcon == null ? new SpinnerProgress() : new SpinnerProgress(filterIcon);
         spinner.setStringPainted(false);
         spinner.setIndeterminate(true);
-        spinner.setPreferredSize(new Dimension(160, 160));
+        spinner.setPreferredSize(new Dimension(128, 128));
 
         JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
 
