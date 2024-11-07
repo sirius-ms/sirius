@@ -190,7 +190,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withNewDatabaseAndDeNovoFlag(boolean isDatabase, boolean isDeNovo) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, labels, bestRefMatchLabel, moreRefMatchesLabel);
     }
 
     /**
