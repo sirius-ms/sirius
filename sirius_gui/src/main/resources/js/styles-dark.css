@@ -100,11 +100,11 @@ text.label, text.legend {
 .peak_structInfo { fill: $Spectrum.EXPLAINED_PEAKS_STRUCTURE; width: 2px; } /* explained structure */
 
 .peak_select {
-    width: 6px;
+    width: 4px;
 }
 .peak_shadow{ /*<= Set style for all shadow*/
     /*fill: lightgrey;*/
-    width: 10px;
+    width: 12px;
     /* filter: blur(3px);*/
 }
 #shadow_select{ fill: #737373;} /*<= Set style for individual shadow */
