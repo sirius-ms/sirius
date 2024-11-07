@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: azul/zulu-openjdk:21-latest
+  image: amazoncorretto/21-alpine-jdk
   tags: [$RUNNER_TAGS]
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
