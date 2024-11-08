@@ -549,7 +549,7 @@ public class Colors {
         UIManager.put("Component.focusColor", (THEME == Theme.LIGHT ? CUSTOM_LIGHT_BLUE : CUSTOM_LIGHT_BLUE.darker()));
 
 
-        UIManager.put("OptionPane.questionIcon", Icons.HELP_32);
+        UIManager.put("OptionPane.questionIcon", Icons.HELP.derive(32,32));
     }
 
 

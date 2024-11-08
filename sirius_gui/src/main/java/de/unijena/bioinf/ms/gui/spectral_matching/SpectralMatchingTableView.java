@@ -124,7 +124,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         int total = source.getTotalSize();
         BiFunction<Integer, Integer, String> toolTipText = (s, t) -> s < t ? "Load " + (t - s) + " more reference spectr" + (t - s > 1 ? "a." : "um.") : "Load more reference spectra.";
 
-        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, toolTipText.apply(size, total));
+        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL.derive(24,24), toolTipText.apply(size, total));
         loadAll.setEnabled(source.getSize() < source.getTotalSize());
         source.addSizeChangedListener((s, t) -> {
             loadAll.setToolTipText(toolTipText.apply(s, t));
