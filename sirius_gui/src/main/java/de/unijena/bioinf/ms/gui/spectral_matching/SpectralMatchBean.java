@@ -95,4 +95,8 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
     public int getRank() {
         return Optional.ofNullable(getMatch().getRank()).orElse(0);
     }
+
+    public InstanceBean getParentInstance() {
+        return instance;
+    }
 }

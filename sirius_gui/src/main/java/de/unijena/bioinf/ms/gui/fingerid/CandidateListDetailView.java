@@ -82,6 +82,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     private final ResultPanel resultPanel;
+    private final SiriusGui gui;
 
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(sourceList);
@@ -98,6 +99,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         this.resultPanel = resultPanel;
+        this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui, getSource().getBestFunc()));
@@ -283,7 +285,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
         Jobs.runEDTLater(() -> new SpectralMatchingDialog(
                 (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean)
+                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean, gui)
         ).setVisible(true));
     }
 
