@@ -4,8 +4,10 @@ import de.unijena.bioinf.lcms.trace.LCMSStorage;
 
 import java.io.IOException;
 
-public interface LCMSStorageFactory {
+public interface LCMSStorageFactory extends AutoCloseable {
 
-    public LCMSStorage createNewStorage() throws IOException;
+    LCMSStorage createNewStorage() throws IOException;
 
+    @Override
+    default void close(){}
 }

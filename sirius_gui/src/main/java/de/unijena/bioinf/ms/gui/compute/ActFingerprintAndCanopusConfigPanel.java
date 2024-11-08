@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
     public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
         super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
-                Icons.FINGER_32, true, FingerprintAndCanopusConfigPanel::new);
+                Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new);
     }
 
     @Override

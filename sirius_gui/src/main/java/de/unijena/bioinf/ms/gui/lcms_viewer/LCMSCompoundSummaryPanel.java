@@ -11,6 +11,7 @@
 
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import io.sirius.ms.sdk.model.AlignedFeatureQuality;
@@ -59,44 +60,30 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         DataQuality quality = DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue());
         if (quality==null || quality==DataQuality.NOT_APPLICABLE) return;
         final TitledIconBorder peakHeader = new TitledIconBorder(qualityCheckResult.getCategoryName());
-        peakHeader.setIcon(getLargeColoredIcon(DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue())));
+        peakHeader.setIcon(getColoredIcon(DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue()), 32));
         JPanel peakPanel = new JPanel();
         peakPanel.setLayout(new BoxLayout(peakPanel,BoxLayout.Y_AXIS));
         peakPanel.setBorder(peakHeader);
         add(peakPanel);
 
         for (Item check : checkList) {
-            JLabel c = new JLabel("<html>"+check.getDescription()+"</html>", getSmallColoredIcon(DataQuality.valueOf(check.getQuality().getValue())), JLabel.LEADING);
-            c.setBorder(BorderFactory.createEmptyBorder(6,0,2,0));
+            JLabel c = new JLabel("<html>" + check.getDescription() + "</html>", getColoredIcon(DataQuality.valueOf(check.getQuality().getValue()), 16), JLabel.LEADING);
+            c.setBorder(BorderFactory.createEmptyBorder(6, 0, 2, 0));
             peakPanel.add(c);
         }
     }
 
-    private Icon getSmallColoredIcon(DataQuality quality) {
-        switch (quality) {
-            case GOOD:
-                return Icons.TRAFFIC_LIGHT_SMALL[2];
-            case DECENT:
-                return Icons.TRAFFIC_LIGHT_SMALL[1];
-            case BAD:
-                return Icons.TRAFFIC_LIGHT_SMALL[0];
-            case LOWEST, NOT_APPLICABLE:
-                return Icons.TRAFFIC_LIGHT_SMALL_GRAY;
-        }
-        return Icons.TRAFFIC_LIGHT_SMALL_GRAY;
+    private Icon getColoredIcon(DataQuality quality, int size) {
+        return getColoredIcon(quality).derive(size, size);
     }
-    private Icon getLargeColoredIcon(DataQuality quality) {
-        switch (quality) {
-            case GOOD:
-                return Icons.TRAFFIC_LIGHT_MEDIUM[2];
-            case DECENT:
-                return Icons.TRAFFIC_LIGHT_MEDIUM[1];
-            case BAD:
-                return Icons.TRAFFIC_LIGHT_MEDIUM[0];
-            case LOWEST, NOT_APPLICABLE:
-                return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
-        }
-        return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
+
+    private FlatSVGIcon getColoredIcon(DataQuality quality) {
+        return switch (quality) {
+            case GOOD -> Icons.TRAFFIC_LIGHT[2];
+            case DECENT -> Icons.TRAFFIC_LIGHT[1];
+            case BAD -> Icons.TRAFFIC_LIGHT[0];
+            default -> Icons.TRAFFIC_LIGHT_LOWEST;
+        };
     }
 
     @Override
