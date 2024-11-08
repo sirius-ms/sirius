@@ -197,7 +197,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     }
 
     protected Function<SpectralMatchBean, Boolean> getBestFunc() {
-        //best match defined by the top structure database hit for highlighting in table.
+        //best match (used for highlighting in table view) is defined by the top structure database hit.
         return c -> {
             if (c.getParentInstance() == null) return false;
 
