@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -34,6 +35,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation.NO_DB;
 
 public class FormulaSearchStrategy extends ConfigPanel {
     public enum Strategy implements DescriptiveOptions {
@@ -102,6 +105,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected DBSelectionListPanel searchDBList;
     protected JComboBox<ElementAlphabetStrategy> defaultStrategyElementFilterSelector;
     protected JPanel elementFilterPanel;
+    protected JCheckBox elementFilterForBottomUp, elementFilterForDatabase;
+    protected JSpinner denovoUpTo;
+    protected DefaultListModel<String> providedFormulaListModel;
+    protected JTextField elementFilterEnforcedTextBox;
+    protected JTextField elementFilterDetectableElementsTextBox;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -201,7 +209,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         final TwoColumnPanel options = new TwoColumnPanel();
 
-        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+        denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
         options.addNamed("Perform de novo below m/z", denovoUpTo);
 
         parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> switch (strategy) {
@@ -235,8 +243,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.LINE_AXIS));
 
-        DefaultListModel<String> formulaListModel = new DefaultListModel<>();
-        JList<String> formulaList = new JList<>(formulaListModel);
+        providedFormulaListModel = new DefaultListModel<>();
+        JList<String> formulaList = new JList<>(providedFormulaListModel);
         formulaList.setVisibleRowCount(6);
         JScrollPane listScroller = new JScrollPane(formulaList);
 
@@ -268,7 +276,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
                     if (!formula.isBlank()) {
                         MolecularFormula mf = MolecularFormula.parseOrNull(formula);
                         if (mf != null && !mf.isEmpty()) {
-                            formulaListModel.addElement(mf.toString());
+                            providedFormulaListModel.addElement(mf.toString());
                         } else {
                             unparsed.add(formula);
                         }
@@ -285,7 +293,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             public void actionPerformed(ActionEvent e) {
                 int[] selected = formulaList.getSelectedIndices();
                 for (int i = selected.length - 1; i >= 0; i--) {
-                    formulaListModel.remove(selected[i]);
+                    providedFormulaListModel.remove(selected[i]);
                 }
             }
         };
@@ -298,7 +306,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         addStrategyChangeListener(s -> elementFilterPanel.setVisible(s != Strategy.PROVIDED));
 
-        parameterBindings.put("CandidateFormulas", () -> strategy == Strategy.PROVIDED ? String.join(",", Arrays.stream(formulaListModel.toArray()).map(x -> (String) x).toList()) : ",");
+        parameterBindings.put("CandidateFormulas", () -> strategy == Strategy.PROVIDED ? String.join(",", Arrays.stream(providedFormulaListModel.toArray()).map(x -> (String) x).toList()) : ",");
         //todo we will need a parameter binding to ignore the input file config in single-compute-mode. Hence, these CandidateFormulas are not overriden
 
         return card;
@@ -320,14 +328,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final TwoColumnPanel filterFields = new TwoColumnPanel();
 
         JLabel constraintsLabel = new JLabel("Allowed elements");
-        JTextField enforcedTextBox = makeParameterTextField("FormulaSettings.enforced", 20);
-        enforcedTextBox.setEditable(false); //todo if we want to allow editing this text we need validation.
+        elementFilterEnforcedTextBox = makeParameterTextField("FormulaSettings.enforced", 20);
+        elementFilterEnforcedTextBox.setEditable(false); //todo if we want to allow editing this text we need validation.
 
         JLabel autodetectLabel = new JLabel("Autodetect");
-        final JTextField selectedDetectableElementsTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
-        if (selectedDetectableElementsTextBox != null) {
-            selectedDetectableElementsTextBox.setEditable(false);
-            selectedDetectableElementsTextBox.setText(join(allAutoDetectableElements.stream().filter(e -> formulaSettings.getAutoDetectionElements().contains(e)).collect(Collectors.toList()))); //intersection of detectable elements of the used predictor and the specified detectable alphabet
+        elementFilterDetectableElementsTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
+        if (elementFilterDetectableElementsTextBox != null) {
+            elementFilterDetectableElementsTextBox.setEditable(false);
+            elementFilterDetectableElementsTextBox.setText(join(allAutoDetectableElements.stream().filter(e -> formulaSettings.getAutoDetectionElements().contains(e)).collect(Collectors.toList()))); //intersection of detectable elements of the used predictor and the specified detectable alphabet
         }
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -338,26 +346,31 @@ public class FormulaSearchStrategy extends ConfigPanel {
         if (!isBatchDialog) {
             if (hasMs1AndIsSingleMode) {
                 buttonAutodetect.addActionListener(e ->
-                        detectElementsAndLoad(ecs.getFirst(), allAutoDetectableElements, enforcedTextBox));
+                        detectElementsAndLoad(ecs.getFirst(), allAutoDetectableElements, elementFilterEnforcedTextBox));
             }
             buttonPanel.add(buttonAutodetect);
         }
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
-        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, enforcedTextBox, buttonPanel));
-        if (isBatchDialog) {
-            filterComponents.addAll(List.of(autodetectLabel, selectedDetectableElementsTextBox));
+        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, elementFilterEnforcedTextBox, buttonPanel));
+        if (elementFilterDetectableElementsTextBox != null) {
+            filterComponents.addAll(List.of(autodetectLabel, elementFilterDetectableElementsTextBox));
         }
-        int columnWidth = enforcedTextBox.getPreferredSize().width;
+        int columnWidth = elementFilterEnforcedTextBox.getPreferredSize().width;
         int sidePanelWidth = buttonPanel.getPreferredSize().width;
-        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
-        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE, columnWidth, sidePanelWidth);
+        elementFilterForBottomUp = addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
+        elementFilterForDatabase = addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE, columnWidth, sidePanelWidth);
+
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(
+                strategy == Strategy.BOTTOM_UP && elementFilterForBottomUp.isSelected()
+                        || strategy == Strategy.DEFAULT && defaultStrategyElementFilterSelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(strategy == Strategy.DATABASE && elementFilterForDatabase.isSelected()));
 
         int constraintsGridY = filterFields.both.gridy;
-        filterFields.add(constraintsLabel, enforcedTextBox);
-        if (isBatchDialog) {
-            filterFields.add(autodetectLabel, selectedDetectableElementsTextBox);
+        filterFields.add(constraintsLabel, elementFilterEnforcedTextBox);
+        if (elementFilterDetectableElementsTextBox != null) {
+            filterFields.add(autodetectLabel, elementFilterDetectableElementsTextBox);
         }
 
 
@@ -369,13 +382,13 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         //open element selection panel
         buttonEdit.addActionListener(e -> {
-            FormulaConstraints currentConstraints = FormulaConstraints.fromString(enforcedTextBox.getText());
-            Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(selectedDetectableElementsTextBox, allAutoDetectableElements) : null;
+            FormulaConstraints currentConstraints = FormulaConstraints.fromString(elementFilterEnforcedTextBox.getText());
+            Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(elementFilterDetectableElementsTextBox, allAutoDetectableElements) : null;
             ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
             if (dialog.isSuccess()) {
-                enforcedTextBox.setText(dialog.getConstraints().toString(","));
-                if (isBatchDialog) {
-                    selectedDetectableElementsTextBox.setText(join(dialog.getAutoDetect()));
+                elementFilterEnforcedTextBox.setText(dialog.getConstraints().toString(","));
+                if (elementFilterDetectableElementsTextBox != null) {
+                    elementFilterDetectableElementsTextBox.setText(join(dialog.getAutoDetect()));
                 }
             }
         });
@@ -384,16 +397,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
         addStrategyChangeListener(strategy -> {
             if (!isBatchDialog) {
                 if (hasMs1AndIsSingleMode) {
-                    detectElementsAndLoad(ecs.getFirst(), allAutoDetectableElements, enforcedTextBox);
+                    detectElementsAndLoad(ecs.getFirst(), allAutoDetectableElements, elementFilterEnforcedTextBox);
                     buttonAutodetect.setToolTipText("Element detection has already been performed once opened the compute dialog."
                             + "Auto detectable element are: " + join(allAutoDetectableElements)
                             + ".\nIf no elements can be detected the following fallback is used: " + formulaSettings.getFallbackAlphabet().toString(",")
                             + ".\nAdditionally, the following default elements are always used: " + getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
                 } else {
-                    setDefaultElements(Collections.EMPTY_SET, enforcedTextBox);
+                    setDefaultElements(Collections.EMPTY_SET, elementFilterEnforcedTextBox);
                 }
             } else {
-                setDefaultElements(allAutoDetectableElements, enforcedTextBox);
+                setDefaultElements(allAutoDetectableElements, elementFilterEnforcedTextBox);
             }
         });
 
@@ -440,7 +453,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyElementFilterSelector);
     }
 
-    private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
+    /**
+     * @return the checkbox to turn on element filter
+     */
+    private JCheckBox addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
         JCheckBox useElementFilter = new JCheckBox() {
             @Override
             public void setVisible(boolean flag) {
@@ -452,15 +468,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
                 }
             }
         };
-
-        if (s == Strategy.DATABASE) {
-            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(strategy == Strategy.DATABASE && useElementFilter.isSelected()));
-        }
-        if (s == Strategy.BOTTOM_UP) {
-            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(
-                    strategy == Strategy.BOTTOM_UP && useElementFilter.isSelected()
-                    || strategy == Strategy.DEFAULT && defaultStrategyElementFilterSelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
-        }
 
         JLabel label = new JLabel("Enable element filter");
 
@@ -485,6 +492,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(s).add(checkBoxPanel);
         strategyComponents.get(s).add(useElementFilter);
         strategyComponents.get(s).add(invisiblePanel);
+
+        return useElementFilter;
     }
 
     private String join(Collection<?> objects) {
@@ -577,5 +586,68 @@ public class FormulaSearchStrategy extends ConfigPanel {
         public void setEnabled(boolean b) {
             if (isActivatable) super.setEnabled(b);
         }
+    }
+
+    @Override
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        Strategy s = getStrategyFromPreset(preset);
+
+        if (((DefaultComboBoxModel<Strategy>)strategyBox.getModel()).getIndexOf(s) == -1) {
+            throw new UnsupportedOperationException("Strategy from the preset " + s + " is not available for the data");
+        }
+        strategyBox.setSelectedItem(s);
+
+        boolean applyElementFilterToBottomUp = Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToBottomUp"));
+
+        if (s == Strategy.DEFAULT) {
+            denovoUpTo.setValue(Double.parseDouble(preset.get("FormulaSearchSettings.performDeNovoBelowMz")));
+            defaultStrategyElementFilterSelector.setSelectedItem(applyElementFilterToBottomUp ? ElementAlphabetStrategy.BOTH : ElementAlphabetStrategy.DE_NOVO_ONLY);
+        }
+
+        if (s == Strategy.BOTTOM_UP) {
+            elementFilterForBottomUp.setEnabled(applyElementFilterToBottomUp);
+        }
+
+        if (s == Strategy.DATABASE) {
+            searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("FormulaSearchDB")));
+            elementFilterForDatabase.setEnabled(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
+        }
+
+        if (s == Strategy.PROVIDED) {
+            for (String c : preset.get("CandidateFormulas").split(",")) {
+                providedFormulaListModel.addElement(c);
+            }
+        }
+
+        FormulaConstraints enforced = FormulaConstraints.fromString(preset.get("FormulaSettings.enforced"));
+        elementFilterEnforcedTextBox.setText(enforced.toString(","));
+
+        if (elementFilterDetectableElementsTextBox != null) {
+            FormulaConstraints detectable = FormulaConstraints.fromString(preset.get("FormulaSettings.detectable"));
+            elementFilterDetectableElementsTextBox.setText(detectable.toString(","));
+        }
+    }
+
+    private Strategy getStrategyFromPreset(Map<String, String> preset) {
+        double bottomUpAbove = Double.parseDouble(preset.get("FormulaSearchSettings.performBottomUpAboveMz"));
+        double deNovoBelow = Double.parseDouble(preset.get("FormulaSearchSettings.performDeNovoBelowMz"));
+
+        if (bottomUpAbove == 0 && deNovoBelow > 0 && Double.isFinite(deNovoBelow)) return Strategy.DEFAULT;
+        if (bottomUpAbove == 0 && deNovoBelow == 0) return Strategy.BOTTOM_UP;
+        if (bottomUpAbove == Double.POSITIVE_INFINITY && deNovoBelow == Double.POSITIVE_INFINITY) return Strategy.DE_NOVO;
+
+        if (bottomUpAbove == Double.POSITIVE_INFINITY && deNovoBelow == 0) {
+            String dbs = preset.get("FormulaSearchDB");
+            if (!dbs.isBlank() && !dbs.trim().equals(",") && !dbs.trim().equals(NO_DB)) {
+                return Strategy.DATABASE;
+            }
+
+            String candidates = preset.get("CandidateFormulas");
+            if (!candidates.isBlank() && !candidates.trim().equals(",")) {
+                return Strategy.PROVIDED;
+            }
+        }
+
+        throw new UnsupportedOperationException("Formula search strategy could not be determined from the parameters");
     }
 }
