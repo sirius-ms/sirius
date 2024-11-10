@@ -21,30 +21,33 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
+import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import io.sirius.ms.sdk.model.SearchableDatabase;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Panel to configure SIRIUS Computations
@@ -59,8 +62,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     public enum Instrument {
         QTOF("Q-TOF", MsInstrumentation.Instrument.QTOF, "qtof", 10),
-        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5),
-        FTICR("FT-ICR", MsInstrumentation.Instrument.FTICR, "orbitrap", 2);
+        ORBI("Orbitrap", MsInstrumentation.Instrument.ORBI, "orbitrap", 5);
 //        BRUKER("Q-TOF (isotopes)", MsInstrumentation.Instrument.BRUKER_MAXIS, "qtof", 10); // there is now if separate MS/MS isotope setting
 
         public final String name, profile;
@@ -88,11 +90,13 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected JToggleButton enforceAdducts;
     protected JComboBox<Instrument> profileSelector;
     protected JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
+    protected JCheckBox isotopeSettingsFilter, enforceElGordo;
 
     public enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
     protected JComboBox<Strategy> ms2IsotpeSetting;
 
+    @Getter
     protected FormulaSearchStrategy formulaSearchStrategy;
 
 
@@ -134,7 +138,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
             smallParameters.addNamed("Instrument", profileSelector);
 
-            addAdvancedParameter(smallParameters, "Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+            isotopeSettingsFilter = makeParameterCheckBox("IsotopeSettings.filter");
+            addAdvancedParameter(smallParameters, "Filter by isotope pattern", isotopeSettingsFilter);
 
             ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
@@ -154,7 +159,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIonization", 0, 10000, 1);
             addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
 
-            smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
+            enforceElGordo = makeParameterCheckBox("EnforceElGordoFormula");  //El Gordo detects lipids and by default fixes the formula
+            smallParameters.addNamed("Fix formula for detected lipid", enforceElGordo);
 
 
             //sync profile with ppm spinner
@@ -220,9 +226,6 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             add(technicalParameters);
             addAdvancedComponent(technicalParameters);
         }
-
-        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(ecs);
-        refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
     }
 
     protected boolean isBatchDialog() {
@@ -237,7 +240,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         addAdvancedComponent(control);
     }
 
-    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(List<InstanceBean> ecs) {
+    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(PrecursorIonType[] fallbackAdducts, PrecursorIonType[] enforcedAdducts) {
         Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
@@ -245,20 +248,19 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         Set<PrecursorIonType> possibleAdducts = gui.getProjectManager().INSTANCE_LIST.stream().map(InstanceBean::getDetectedAdducts).flatMap(Set::stream).filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
         Set<PrecursorIonType> selectedAdducts = new HashSet<>(detectedAdductsNoMulti);
 
-        AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
             PeriodicTable.getInstance().getPositiveAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
             if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownPositive())) {
-                settings.getFallback().stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                settings.getEnforced().stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                Arrays.stream(fallbackAdducts).filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                Arrays.stream(enforcedAdducts).filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
             }
         }
 
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
             PeriodicTable.getInstance().getNegativeAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
             if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownNegative())) {
-                settings.getFallback().stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                settings.getEnforced().stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                Arrays.stream(fallbackAdducts).filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                Arrays.stream(enforcedAdducts).filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
             }
         }
 
@@ -270,10 +272,6 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         adductList.checkBoxList.uncheckAll();
         selectedAdducts.forEach(adductList.checkBoxList::check);
         adductList.setEnabled(true);
-    }
-
-    public FormulaSearchStrategy getFormulaSearchStrategy() {
-        return formulaSearchStrategy;
     }
 
     public Instrument getInstrument() {
@@ -302,5 +300,51 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     public List<SearchableDatabase> getFormulaSearchDBs() {
         return formulaSearchStrategy.getFormulaSearchDBs();
+    }
+
+    @Override
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        String profileString = preset.get("AlgorithmProfile");
+        Instrument instrument = Arrays.stream(Instrument.values()).filter(i -> i.profile.equalsIgnoreCase(profileString)).findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("Could not parse algorithm profile " + profileString));
+        profileSelector.setSelectedItem(instrument);
+
+        isotopeSettingsFilter.setEnabled(Boolean.parseBoolean(preset.get("IsotopeSettings.filter")));
+
+        String isotopeMs2Setting = preset.get("IsotopeMs2Settings");
+        try {
+            ms2IsotpeSetting.setSelectedItem(Strategy.valueOf(isotopeMs2Setting));
+        } catch (IllegalArgumentException e) {
+            throw new UnsupportedOperationException("Could not parse MS/MS isotope scorer " + isotopeMs2Setting);
+        }
+
+        if (preset.get("MS2MassDeviation.allowedMassDeviation").equals(preset.get("SpectralMatchingMassDeviation.allowedPeakDeviation"))
+                && preset.get("MS2MassDeviation.allowedMassDeviation").equals(preset.get("SpectralMatchingMassDeviation.allowedPrecursorDeviation"))) {
+            Deviation d = Deviation.fromString(preset.get("MS2MassDeviation.allowedMassDeviation"));
+            ppmSpinner.setValue(d.getPpm());
+        } else {
+            throw new UnsupportedOperationException("Properties MS2MassDeviation.allowedMassDeviation, SpectralMatchingMassDeviation.allowedPeakDeviation, SpectralMatchingMassDeviation.allowedPrecursorDeviation should all have the same value");
+        }
+
+        candidatesSpinner.setValue(Integer.parseInt(preset.get("NumberOfCandidates")));
+        candidatesPerIonSpinner.setValue(Integer.parseInt(preset.get("NumberOfCandidatesPerIonization")));
+
+        enforceElGordo.setEnabled(Boolean.parseBoolean(preset.get("EnforceElGordoFormula")));
+
+        try {
+            PrecursorIonType[] fallbackAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.fallback"));
+            PrecursorIonType[] enforcedAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.enforced"));
+            Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, enforcedAdducts);
+            refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
+        } catch (Exception e) {
+            throw new UnsupportedOperationException("Could not parse adducts: " + e.getMessage());
+        }
+
+        treeTimeout.setValue(Integer.parseInt(preset.get("Timeout.secondsPerTree")));
+        comoundTimeout.setValue(Integer.parseInt(preset.get("Timeout.secondsPerInstance")));
+        mzHeuristic.setValue(Integer.parseInt(preset.get("UseHeuristic.useHeuristicAboveMz")));
+        mzHeuristicOnly.setValue(Integer.parseInt(preset.get("UseHeuristic.useOnlyHeuristicAboveMz")));
+
+        formulaSearchStrategy.applyValuesFromPreset(preset);
     }
 }
