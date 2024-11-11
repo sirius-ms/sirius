@@ -822,7 +822,6 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
      * For single-amount elements the number is skipped. For zero-amount elements both number and element
      * symbol is skipped. Example: CH4, H2, NOH, Fe
      * <p>
-     * TODO: Handle special cases of negative amounts!
      */
     public String formatByHill() {
         final short[] amounts = buffer();
@@ -838,12 +837,7 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
                 elements[k++] = selection.get(i);
             }
         }
-        Arrays.sort(elements, 0, k, new Comparator<Element>() {
-            @Override
-            public int compare(Element o1, Element o2) {
-                return o1.getSymbol().compareTo(o2.getSymbol());
-            }
-        });
+        Arrays.sort(elements, 0, k, Comparator.comparing(Element::getSymbol));
         final int h = numberOfHydrogens();
         if (hasCarbon) {
             if (c < 0) buffer.append("-");
@@ -863,7 +857,8 @@ public abstract class MolecularFormula implements Cloneable, Iterable<Element>, 
             final int n = numberOf(elements[i]);
             if (n < 0) buffer.append("-");
             buffer.append(elements[i]);
-            if (Math.abs(n) > 1) buffer.append(n);
+            if (Math.abs(n) > 1)
+                buffer.append(Math.abs(n));
         }
         return buffer.toString();
     }
