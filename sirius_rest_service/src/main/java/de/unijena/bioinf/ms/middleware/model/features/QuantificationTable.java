@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -13,11 +14,6 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class QuantificationTable {
-
-    @Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
-    public enum QuantificationType {
-        APEX_HEIGHT, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX
-    }
 
     @Schema(enumAsRef = false, name = "RowType", nullable = false)
     public enum RowType {

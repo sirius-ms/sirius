@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,7 +61,7 @@ public class CategoryController {
      * Get tag categories by type in the given project-space.
      *
      * @param projectId    project-space to read from.
-     * @param categoryType name of the category
+     * @param categoryType type of the category
      * @return Tag categories.
      */
     @GetMapping(value = "/type/{categoryType}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -112,7 +113,7 @@ public class CategoryController {
     }
 
     /**
-     * Delete tag categories with the given names from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
      *
      * @param projectId     project-space to delete from.
      * @param categoryName  name of category to delete.
@@ -120,6 +121,73 @@ public class CategoryController {
     @DeleteMapping(value = "/{categoryName}")
     public void deleteCategories(@PathVariable String projectId, @PathVariable String categoryName) {
         projectsProvider.getProjectOrThrow(projectId).deleteCategory(categoryName);
+    }
+
+    /**
+     * Get all tag category groups in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @return Tag category groups.
+     */
+    @GetMapping(value = "/groups", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<TagCategoryGroup> getGroups(@PathVariable String projectId) {
+//        return projectsProvider.getProjectOrThrow(projectId).findCategories();
+        return null;
+    }
+
+    /**
+     * Get tag category groups by type in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @param groupType type of the category group
+     * @return Tag categories.
+     */
+    @GetMapping(value = "/groups/type/{groupType}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<TagCategoryGroup> getGroupsByType(@PathVariable String projectId, @PathVariable String groupType) {
+//        return projectsProvider.getProjectOrThrow(projectId).findCategoriesByType(categoryType);
+        return null;
+    }
+
+    /**
+     * Get tag category group by name in the given project-space.
+     *
+     * @param projectId    project-space to read from.
+     * @param groupName name of the category
+     * @return Tag category.
+     */
+    @GetMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TagCategoryGroup getGroupByName(@PathVariable String projectId, @PathVariable String groupName) {
+//        return projectsProvider.getProjectOrThrow(projectId).findCategoryByName(groupName);
+        return null;
+    }
+
+    /**
+     * Group tag categories in the project. The group name must not exist in the project.
+     *
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param query     query to create the group
+     * @return the tag categories that have been added
+     */
+    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<TagCategory> addGroup(
+            @PathVariable String projectId,
+            @PathVariable String groupName,
+            @PathVariable String query // TODO query type?
+    ) {
+        return null;
+//        return projectsProvider.getProjectOrThrow(projectId).addCategories(categories, true);
+    }
+
+    /**
+     * Delete tag category groups with the given name from the specified project-space.
+     *
+     * @param projectId  project-space to delete from.
+     * @param groupName  name of group to delete.
+     */
+    @DeleteMapping(value = "/{categoryName}")
+    public void deleteGroup(@PathVariable String projectId, @PathVariable String groupName) {
+//        projectsProvider.getProjectOrThrow(projectId).deleteCategory(categoryName);
     }
 
 }

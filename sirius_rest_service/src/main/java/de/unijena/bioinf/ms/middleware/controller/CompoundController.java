@@ -21,14 +21,17 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
+import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.QuantificationTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import io.swagger.v3.oas.annotations.Operation;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,14 +55,15 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
         + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
         + "corresponding annotation results (which are usually computed on a per-feature basis)")
-public class CompoundController {
+public class CompoundController implements StatisticsController<FoldChange.CompoundFoldChange> {
 
-
+    private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
 
     @Autowired
-    public CompoundController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
+    public CompoundController(ComputeService computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
+        this.computeService = computeService;
         this.projectsProvider = projectsProvider;
         this.globalConfig = globalConfig;
     }
@@ -123,7 +127,7 @@ public class CompoundController {
      * @return
      */
     @GetMapping(value = "/{compoundId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantificationTable.RowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
@@ -137,7 +141,7 @@ public class CompoundController {
      * @return
      */
     @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
@@ -180,5 +184,15 @@ public class CompoundController {
 
     protected static String idString(String pid, String cid) {
         return "'" + pid + "/" + cid + "'";
+    }
+
+    @Override
+    public ProjectsProvider<?> getProjectsProvider() {
+        return projectsProvider;
+    }
+
+    @Override
+    public ComputeService getComputeService() {
+        return computeService;
     }
 }
