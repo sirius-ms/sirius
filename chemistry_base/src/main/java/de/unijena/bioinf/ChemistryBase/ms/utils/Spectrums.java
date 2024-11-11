@@ -30,6 +30,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import it.unimi.dsi.fastutil.Pair;
 import org.apache.commons.lang3.Range;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -297,7 +298,7 @@ public class Spectrums {
     public static <P extends Peak, S extends Spectrum<P>>
     Spectrum<P> getIntensityOrderedSpectrum(S spectrum) {
         final PeaklistSpectrum<P> wrapper = new PeaklistSpectrum<>(spectrum);
-        Collections.sort(wrapper.peaks, getPeakIntensityComparatorReversed());
+        wrapper.peaks.sort(getPeakIntensityComparatorReversed());
         return wrapper;
     }
 
@@ -840,8 +841,11 @@ public class Spectrums {
 
     }
 
-    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
-        if (spectrum.isEmpty()) return Spectrums.empty();
+    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(@Nullable S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
+        if (spectrum == null)
+            return null;
+        if (spectrum.isEmpty())
+            return Spectrums.empty();
         final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
         for (int k=0; k < spec.size(); ++k) {
@@ -864,6 +868,30 @@ public class Spectrums {
 
         return new SimpleSpectrum(buffer);
     }
+
+    /**
+     *
+     * @param spectrum spectrum to extract peaks from
+     * @param numberOfPeaksToKeep number of peaks to keep after extraction (top numberOfPeaksToKeep most intense peaks)
+     * @return new Spectrum that contains the 'numberOfPeaksToKeep' peaks. If spectrum is null, null will be returned.
+     */
+    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(@Nullable S spectrum, int numberOfPeaksToKeep) {
+        if (spectrum == null)
+            return null;
+        if (spectrum.isEmpty())
+            return Spectrums.empty();
+        if (spectrum.size() <= numberOfPeaksToKeep)
+            return new SimpleSpectrum(spectrum);
+
+        final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        for (int i = 0; i < numberOfPeaksToKeep; i++) {
+            buffer.setIntensityAt(i, spec.getIntensityAt(i));
+            buffer.setMzAt(i, spec.getMzAt(i));
+        }
+        return new SimpleSpectrum(buffer);
+    }
+
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {
         P2 transform(P1 input);
