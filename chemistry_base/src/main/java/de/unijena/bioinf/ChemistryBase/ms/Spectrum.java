@@ -22,6 +22,9 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
 
     double getMzAt(int index);
@@ -38,6 +41,9 @@ public interface Spectrum<T extends Peak> extends Iterable<T>, Cloneable {
         return size()==0;
     }
 
+    default Stream<T> stream(){
+        return StreamSupport.stream(spliterator(), false);
+    }
 
     /*
      * This are the only extensions we need to be Compatible with myxo viewers and stuff, i know this is not the perfect model
