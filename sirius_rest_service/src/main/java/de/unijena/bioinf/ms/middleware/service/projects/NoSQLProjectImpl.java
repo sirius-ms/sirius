@@ -31,7 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.ms.middleware.controller.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -55,6 +55,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -151,7 +152,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantification(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantificationTable> getQuantification(QuantificationType type, QuantificationTable.RowType rowType) {
         Optional<QuantificationTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
@@ -175,7 +176,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationType type, QuantificationTable.RowType rowType) {
         Optional<QuantificationTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
@@ -205,7 +206,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return table;
     }
 
-    private Optional<QuantificationTable> initQuantTable(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType) throws IOException {
+    private Optional<QuantificationTable> initQuantTable(QuantificationType type, QuantificationTable.RowType rowType) throws IOException {
         List<LCMSRun> runs = storage().findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
 
         if (runs.isEmpty())
@@ -264,7 +265,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (int i = 0; i < row.length; i++) {
             if (features.containsKey(table.getColumnIds()[i])) {
                 row[i] = switch (table.getQuantificationType()) {
-                    case APEX_HEIGHT -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
+                    case APEX_INTENSITY -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
                     case AREA_UNDER_CURVE -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).average().orElse(Double.NaN);
                     case APEX_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexMass).average().orElse(Double.NaN);
                     case AVERAGE_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAverageMass).average().orElse(Double.NaN);

@@ -18,10 +18,9 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.controller;
+package de.unijena.bioinf.ms.middleware.controller.mixins;
 
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -33,19 +32,13 @@ import java.text.SimpleDateFormat;
 import java.util.EnumSet;
 import java.util.List;
 
-public abstract class TagController<T, O extends Enum<O>> {
+public interface TagController<T, O extends Enum<O>> extends ProjectProvidingController {
 
-    final protected ProjectsProvider<?> projectsProvider;
+    SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
-    public static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-
-    protected TagController(ProjectsProvider<?> projectsProvider) {
-        this.projectsProvider = projectsProvider;
-    }
-
-    protected abstract Class<T> getTaggable();
+    Class<T> getTaggable();
 
     /**
      * Get objects by tag.
@@ -86,12 +79,12 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @return
      */
     @GetMapping(value = "/tagged", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<T> objectsByTag(@PathVariable String projectId,
+    default Page<T> objectsByTag(@PathVariable String projectId,
                                 @RequestParam(defaultValue = "") String filter,
                                 @ParameterObject Pageable pageable,
                                 @RequestParam(defaultValue = "") EnumSet<O> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findObjectsByTag(getTaggable(), filter, pageable, optFields);
+        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTag(getTaggable(), filter, pageable, optFields);
     }
 
     /**
@@ -103,8 +96,8 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @return the tags that have been added
      */
     @PutMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<? extends Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
-        return projectsProvider.getProjectOrThrow(projectId).addTagsToObject(getTaggable(), objectId, tags);
+    default List<? extends Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
+        return getProjectsProvider().getProjectOrThrow(projectId).addTagsToObject(getTaggable(), objectId, tags);
     }
 
     /**
@@ -115,8 +108,8 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @param categoryName  category name of the tag to delete.
      */
     @DeleteMapping(value = "/tags/{objectId}/{categoryName}")
-    public void deleteTags(@PathVariable String projectId, @PathVariable String objectId, @PathVariable String categoryName) {
-        projectsProvider.getProjectOrThrow(projectId).deleteTagsFromObject(objectId, List.of(categoryName));
+    default void deleteTags(@PathVariable String projectId, @PathVariable String objectId, @PathVariable String categoryName) {
+        getProjectsProvider().getProjectOrThrow(projectId).deleteTagsFromObject(objectId, List.of(categoryName));
     }
 
 }

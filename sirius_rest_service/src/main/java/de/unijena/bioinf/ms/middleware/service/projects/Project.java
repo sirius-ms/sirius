@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +58,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @NotNull
     PSM getProjectSpaceManager();
 
-    Optional<QuantificationTable> getQuantification(QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType);
+    Optional<QuantificationTable> getQuantification(QuantificationType type, QuantificationTable.RowType rowType);
 
-    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationTable.QuantificationType type, QuantificationTable.RowType rowType);
+    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationType type, QuantificationTable.RowType rowType);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);

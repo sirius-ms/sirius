@@ -22,13 +22,17 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
+import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,14 +58,16 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeatureController {
+public class AlignedFeatureController implements StatisticsController<FoldChange.AlignedFeatureFoldChange> {
 
+    private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
     private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
 
     @Autowired
-    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
+    public AlignedFeatureController(ComputeService computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
+        this.computeService = computeService;
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
         this.globalConfig = globalConfig;
@@ -763,7 +769,7 @@ public class AlignedFeatureController {
      * @return
      */
     @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantificationTable.RowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
@@ -777,7 +783,7 @@ public class AlignedFeatureController {
      * @return
      */
     @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
@@ -809,6 +815,16 @@ public class AlignedFeatureController {
 
     protected static String idString(String pid, String fid, String foId) {
         return "'" + pid + "/" + fid + "/" + foId + "'";
+    }
+
+    @Override
+    public ProjectsProvider<?> getProjectsProvider() {
+        return projectsProvider;
+    }
+
+    @Override
+    public ComputeService getComputeService() {
+        return computeService;
     }
 }
 
