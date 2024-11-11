@@ -30,8 +30,10 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -61,6 +63,13 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(Tag.class, Index.unique("taggedObjectId", "category"), Index.nonUnique("taggedObjectClass", "category", "value"))
 
                 .addRepository(TagCategory.class, Index.unique("name"), Index.nonUnique("categoryType"))
+
+                .addRepository(TagCategoryGroup.class, Index.unique("name"), Index.nonUnique("groupType"))
+
+                // TODO what indexes do the fold change classes need?
+                .addRepository(FoldChange.CompoundFoldChange.class)
+
+                .addRepository(FoldChange.AlignedFeaturesFoldChange.class)
 
                 .addRepository(LCMSRun.class,
                         Index.nonUnique("name"))

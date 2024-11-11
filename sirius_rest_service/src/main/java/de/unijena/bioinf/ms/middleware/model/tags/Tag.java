@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.controller.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

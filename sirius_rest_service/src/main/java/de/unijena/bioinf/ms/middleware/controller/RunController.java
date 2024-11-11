@@ -20,10 +20,11 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Getter;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,15 +41,18 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Tag(name = "Runs (EXPERIMENTAL)", description = "This API allows accessing LC/MS runs." +
         "All Endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
-public class RunController extends TagController<Run, Run.OptField> {
+public class RunController implements TagController<Run, Run.OptField> {
+
+    @Getter
+    private ProjectsProvider<?> projectsProvider;
 
     @Autowired
     public RunController(ProjectsProvider<?> projectsProvider) {
-        super(projectsProvider);
+        this.projectsProvider = projectsProvider;
     }
 
     @Override
-    protected Class<Run> getTaggable() {
+    public Class<Run> getTaggable() {
         return Run.class;
     }
 
