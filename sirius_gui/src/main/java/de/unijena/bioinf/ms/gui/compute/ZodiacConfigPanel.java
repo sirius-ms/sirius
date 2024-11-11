@@ -23,27 +23,49 @@ import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 
+import javax.swing.*;
+import java.util.Map;
+
 public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOptions> {
+
+    private final JSpinner candidatesAt300, candidatesAt800, edgeThreshold, minLocalConnections;
+    private final JCheckBox twoStep;
 
     public ZodiacConfigPanel(boolean displayAdvancedParameters) {
         super(ZodiacOptions.class, displayAdvancedParameters);
+
+        candidatesAt300 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1);
+        candidatesAt800 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1);
+        twoStep = makeParameterCheckBox("ZodiacRunInTwoSteps");
+        edgeThreshold = makeDoubleParameterSpinner("ZodiacEdgeFilterThresholds.thresholdFilter", .5, 1, .01);
+        minLocalConnections = makeIntParameterSpinner("ZodiacEdgeFilterThresholds.minLocalConnections", 0, 10000, 1);
+
         createPanel();
     }
     private void createPanel() {
 
         final TwoColumnPanel general = new TwoColumnPanel();
-        general.addNamed("Considered candidates at 300m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1));
-        general.addNamed("Considered candidates at 800m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1));
-        general.addNamed("Use  2-step approach", makeParameterCheckBox("ZodiacRunInTwoSteps"));
+        general.addNamed("Considered candidates at 300m/z", candidatesAt300);
+        general.addNamed("Considered candidates at 800m/z", candidatesAt800);
+        general.addNamed("Use  2-step approach", twoStep);
         TextHeaderBoxPanel generalPanel = new TextHeaderBoxPanel("General", general);
         addAdvancedComponent(generalPanel);
         add(generalPanel);
 
         final TwoColumnPanel edgeFilter = new TwoColumnPanel();
-        edgeFilter.addNamed("Edge Threshold", makeDoubleParameterSpinner("ZodiacEdgeFilterThresholds.thresholdFilter", .5, 1, .01));
-        edgeFilter.addNamed("Min Local Connections", makeIntParameterSpinner("ZodiacEdgeFilterThresholds.minLocalConnections", 0, 10000, 1));
+        edgeFilter.addNamed("Edge Threshold", edgeThreshold);
+        edgeFilter.addNamed("Min Local Connections", minLocalConnections);
         TextHeaderBoxPanel edgePanel = new TextHeaderBoxPanel("Edge Filters", edgeFilter);
         addAdvancedComponent(edgePanel);
         add(edgePanel);
+    }
+
+    @Override
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        candidatesAt300.setValue(Integer.parseInt(preset.get("ZodiacNumberOfConsideredCandidatesAt300Mz")));
+        candidatesAt800.setValue(Integer.parseInt(preset.get("ZodiacNumberOfConsideredCandidatesAt800Mz")));
+        twoStep.setEnabled(Boolean.parseBoolean(preset.get("ZodiacRunInTwoSteps")));
+        edgeThreshold.setValue(Double.parseDouble(preset.get("ZodiacEdgeFilterThresholds.thresholdFilter")));
+        minLocalConnections.setValue(Integer.parseInt(preset.get("ZodiacEdgeFilterThresholds.minLocalConnections")));
     }
 }
