@@ -18,6 +18,7 @@ import io.sirius.ms.sdk.model.TraceSet;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -33,12 +34,19 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     private LCMSCompoundSummaryPanel summaryPanel;
     private int activeIndex;
 
-    enum Order {
+    interface Order {
+        public String name();
+    }
+    enum FeatureOrder implements Order {
         ALPHABETICALLY("alphabetically"), BY_INTENSITY("by intensity");
         private final String label;
-        Order(String label) {
+        FeatureOrder(String label) {
             this.label = label;
         }
+    }
+
+    enum AdductOrder implements Order {
+        ALPHABETICALLY_MAIN_FIRST;
     }
 
     enum ViewType {
@@ -49,9 +57,12 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
     }
 
-    private Order order = Order.ALPHABETICALLY;
+    private Order order = FeatureOrder.ALPHABETICALLY;
     private ViewType viewType = ViewType.ALIGNMENT;
     private final LoadablePanel loadable;
+
+    private final ButtonGroup orderSelectionGroup;
+    private final JLabel orderLabel;
 
     public LCMSViewerPanel(FormulaList siriusResultElements) {
         // set content
@@ -81,13 +92,13 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
         toolbar.add(Box.createHorizontalStrut(18));
         {
-            JLabel label = new JLabel("Order samples ");
-            toolbar.add(label);
-            ButtonGroup group = new ButtonGroup();
-            for (Order o : Order.values()) {
+            orderLabel = new JLabel("Order samples ");
+            toolbar.add(orderLabel);
+            orderSelectionGroup = new ButtonGroup();
+            for (FeatureOrder o : FeatureOrder.values()) {
                 JRadioButton button = new JRadioButton(new SetOrder(o));
                 if(o==order) button.setSelected(true);
-                group.add(button);
+                orderSelectionGroup.add(button);
                 toolbar.add(button);
             }
         }
@@ -104,7 +115,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
         Order value;
 
-        public SetOrder(Order order) {
+        public SetOrder(FeatureOrder order) {
             super(order.label);
             this.value = order;
         }
@@ -131,6 +142,8 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         public void actionPerformed(ActionEvent e) {
             if (viewType != value) {
                 viewType = value;
+                orderLabel.setVisible(viewType != ViewType.COMPOUND);
+                Collections.list(orderSelectionGroup.getElements()).forEach(b -> b.setVisible(viewType != ViewType.COMPOUND));
                 updateContent();
             }
         }
@@ -198,7 +211,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
 
         spec = ColoredTraceSet.buildTrace(spec, viewType);
-        lcmsWebview.setInstance(spec, order, viewType, currentInstance.getFeatureId());
+        lcmsWebview.setInstance(spec, viewType == ViewType.ALIGNMENT ? order : AdductOrder.ALPHABETICALLY_MAIN_FIRST, viewType, currentInstance.getFeatureId());
     }
 
     public void setActiveIndex(int id) {
