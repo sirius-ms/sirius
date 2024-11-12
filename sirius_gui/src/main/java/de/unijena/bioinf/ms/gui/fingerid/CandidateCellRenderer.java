@@ -291,7 +291,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (candidate == null || candidate.getCandidate() == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
-                add(new DatabaseLabelPanel(label));
+                JPanel wrapper = new JPanel();
+                wrapper.setOpaque(false);
+                wrapper.setLayout(new FlowLayout(FlowLayout.CENTER)); // center horizontally in wrapper - else different label names might move the label
+                DatabaseLabelPanel labelPanel = new DatabaseLabelPanel(label);
+                wrapper.add(labelPanel);
+                wrapper.setPreferredSize(new Dimension((int) labelPanel.getPreferredSize().getWidth(), (int) getPreferredSize().getHeight()));
+                add(wrapper);
             }
         }
     }
@@ -335,13 +341,15 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
+            Rectangle gggggp = getParent().getParent().getParent().getParent().getParent().getParent().getBounds();
+            Rectangle ggggp = getParent().getParent().getParent().getParent().getParent().getBounds();
             Rectangle gggp = getParent().getParent().getParent().getParent().getBounds();
             Rectangle ggp = getParent().getParent().getParent().getBounds();
             Rectangle gp = getParent().getParent().getBounds();
             Rectangle p = getParent().getBounds();
             Rectangle s = getBounds();
-            final int rx = (int) (s.getX() + p.getX() + gp.getX() + ggp.getX() + gggp.getX());
-            final int ry = (int) (s.getY() + p.getY() + gp.getY() + ggp.getY() + gggp.getY());
+            final int rx = (int) (s.getX() + p.getX() + gp.getX() + ggp.getX() + gggp.getX() + ggggp.getX() + gggggp.getX());
+            final int ry = (int) (s.getY() + p.getY() + gp.getY() + ggp.getY() + gggp.getY() + ggggp.getY() + gggggp.getY());
 
             label.rect.setBounds(rx, ry, w, h);
             if (color != null) {
