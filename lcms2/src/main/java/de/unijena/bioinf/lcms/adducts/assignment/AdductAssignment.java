@@ -3,8 +3,6 @@ package de.unijena.bioinf.lcms.adducts.assignment;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.lcms.adducts.IonType;
 import de.unijena.bioinf.lcms.adducts.IonType;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
