@@ -148,6 +148,10 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         this.ionization = ion;
         this.inSourceFragmentation = insource == null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
+        if (!this.inSourceFragmentation.isAllPositiveOrZero())
+            throw new IllegalArgumentException("Negative element amounts are not allowed in in-source fragments.");
+        if (!this.adduct.isAllPositiveOrZero())
+            throw new IllegalArgumentException("Negative element amounts are not allowed in adducts.");
         this.special = special;
         this.multimere = (byte)multimere;
         this.multipleIons = checkForMultipleIons();

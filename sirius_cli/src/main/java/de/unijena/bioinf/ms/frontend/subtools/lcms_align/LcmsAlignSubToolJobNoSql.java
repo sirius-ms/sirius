@@ -293,9 +293,16 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                              # Decent Al. Features:         %d
                              # Bad Al. Features:            %d
                              # Lowest Quality Al. Features: %d
+                            
+                             # Total Al. Features: %d
                             \s""",
                     stopWatch,
-                    countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
+
+                    countMap.get(DataQuality.GOOD),
+                    countMap.get(DataQuality.DECENT),
+                    countMap.get(DataQuality.BAD),
+                    countMap.get(DataQuality.LOWEST),
+                    countMap.values().stream().mapToInt(Integer::intValue).sum()
             );
         } finally {
             processing.closeStorages();
