@@ -117,7 +117,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             north.add(nameLabel, BorderLayout.WEST);
 
-            image = new CompoundStructureImage();
+            image = new CompoundStructureImage(gui);
             descriptionPanel = new DescriptionPanel();
             allStructureInfoWithoutRank.add(north, BorderLayout.NORTH);
             allStructureInfoWithoutRank.add(image, BorderLayout.WEST);
