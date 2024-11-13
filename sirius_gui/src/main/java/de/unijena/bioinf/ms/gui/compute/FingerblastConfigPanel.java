@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -27,23 +28,25 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer
  */
 
-//here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
+//here we can show fingerid options. If it becomes too much, we can change this to a setting like tabbed pane
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
     private final StructureSearchStrategy structureSearchStrategy;
     private final JCheckBox pubChemFallback;
+    private final JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox;
 
     protected final SiriusGui gui;
     protected final FormulaIDConfigPanel syncSource;
@@ -58,7 +61,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         pubChemFallback.setSelected(true);
         pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
 
-        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null, () -> pubChemFallback.isSelected());
+        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null, pubChemFallback::isSelected);
 
         parameterBindings.put("StructureSearchDB", () -> {
             List<SearchableDatabase> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
@@ -70,7 +73,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
 
         //confidence score approximate mode settings
-        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(
+        confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(
                 ExpansiveSearchConfidenceMode.Mode.getActiveModes(),
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode);
 
@@ -115,5 +118,18 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             dbList.setItemEnabled(pubChemDB, true);
             dbList.setItemToolTip(pubChemDB, null);
         }
+    }
+
+    @Override
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        ExpansiveSearchConfidenceMode.Mode expansiveMode = ExpansiveSearchConfidenceMode.Mode.valueOf(preset.get("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode"));
+        if (expansiveMode == ExpansiveSearchConfidenceMode.Mode.OFF) {
+            pubChemFallback.setEnabled(false);
+        } else {
+            pubChemFallback.setEnabled(true);
+            confidenceModeBox.setSelectedItem(expansiveMode);
+        }
+
+        structureSearchStrategy.getSearchDBList().select(SearchableDBAnnotation.makeDB(preset.get("StructureSearchDB")));
     }
 }
