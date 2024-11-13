@@ -2,8 +2,15 @@
     float: right;
 }
 
+@font-face {
+    font-family: 'CustomFont';
+    src: url('#FONT_URL#') format('truetype'); /* Replace the variable with the URL to the font */
+    font-weight: normal;
+    font-style: normal;
+}
+
 * {
-    font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+    font-family: 'CustomFont', Arial, Helvetica, sans-serif;
 }
 
 html {
@@ -12,30 +19,38 @@ html {
 
 body {
     font-size: 0.85em; /* That is your text's default font size. Here i chose 12px */
-    background-color: #46494b;
-    color: #bbb;
+    background-color: $WEBVIEW_TEXT_IN_POPUPS_BACKGROUND;
+    color: $FOREGROUND_INTERFACE;
 }
 
 img {
-    background-color: #bbb;
+    background-color: $WEBVIEW_TEXT_IN_POPUPS_BACKGROUND;
 }
 
 /* unvisited link */
 a:link {
-  color: #6f8bbf;
+    color: $TEXT_LINK;
 }
 
 /* visited link */
 a:visited {
-  color: violet;
+    color: $TEXT_LINK_VISITED;
 }
 
 /* mouse over link */
 a:hover {
-  color: violet;
+    color: $TEXT_LINK_HOVER;
 }
 
 /* selected link */
 a:active {
-  color: blue;
+    color: $TEXT_LINK_ACTIVE;
+}
+
+.warn {
+    color: $TEXT_WARN;
+}
+
+.error {
+    color: $TEXT_ERROR;
 }

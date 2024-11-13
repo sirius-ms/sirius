@@ -20,11 +20,10 @@
 package de.unijena.bioinf.ms.gui.tree_viewer;
 
 import de.unijena.bioinf.ftalign.CommonLossScoring;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 
 import java.util.Arrays;
-import java.util.Properties;
 
 /*
 NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
@@ -46,9 +45,7 @@ public class WebViewTreeViewer extends WebViewPanel implements TreeViewerBrowser
         cancelTasks();
         // START HACK: TreeViewerConnector does not seem to work! set common losses and theme as JS variables!
         executeJS(COMMON_LOSS_VAR);
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-        if (theme.equals("Dark")) {
+        if (Colors.isDarkTheme()) {
             executeJS("var theme = 'elegant-dark';");
         }
         // END HACK
