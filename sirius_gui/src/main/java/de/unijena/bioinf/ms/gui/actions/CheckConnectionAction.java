@@ -76,11 +76,11 @@ public class CheckConnectionAction extends AbstractGuiAction {
 
         if (check != null) {
             if (isConnected(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES.derive(32,32));
             else if (isWarningOnly(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN.derive(32,32));
             else
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO.derive(32,32));
         }
     }
 }

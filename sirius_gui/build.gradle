@@ -42,7 +42,10 @@ dependencies {
     api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
     api 'org.apache.xmlgraphics:fop:2.7'
 
-    implementation 'com.formdev:flatlaf:3.5'
+    implementation 'com.formdev:flatlaf:3.5.2'
+    implementation 'com.formdev:flatlaf-extras:3.5.2'
+    implementation 'com.github.weisj:jsvg:1.6.1'
+    implementation 'raven.swing:spinner-progress:1.0.0'
 
     api "org.apache.commons:commons-text:$commons_text_version"
     if (excludeJFX)

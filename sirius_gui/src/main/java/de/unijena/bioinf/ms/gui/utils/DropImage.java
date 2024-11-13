@@ -27,7 +27,7 @@ import java.awt.image.BufferedImage;
 import java.util.function.Supplier;
 
 public interface DropImage {
-    BufferedImage EMPTY_DROP = Icons.DRAG_N_DROP_IMAGE_160();
+    BufferedImage EMPTY_DROP = Icons.DRAG_N_DROP_IMAGE(160,160);
     BufferedImage NO_FILTER_RESULTS = Icons.NO_RESULT_IMAGE_160();
 
     default void paintDropImage(Graphics g, Supplier<Boolean> isEmpty) {

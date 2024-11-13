@@ -44,7 +44,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
             DataSource.ALL.name(), DataSource.TRAIN.name()
     );
 
-    public final static Color specifiedDbBgColor = Colors.ICON_BLUE;
+    public final static Color specifiedDbBgColor = Colors.Menu.ICON_BLUE;
     public final static Color fallbackDbBgColor = Colors.EXPANSIVE_SEARCH_WARNING;
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();

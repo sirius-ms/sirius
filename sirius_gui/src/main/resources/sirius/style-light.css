@@ -2,15 +2,57 @@
     float: right;
 }
 
-* {
-    font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+@font-face {
+    font-family: 'CustomFont';
+    src: url('#FONT_URL#') format('truetype'); /* Replace the variable with the URL to the font */
+    font-weight: normal;
+    font-style: normal;
 }
 
-html {
-    font-size: 100% /* or 62.5% or whatever you like, it doesn't matter, it's just a browser fix, however "rem" units will be based on that value, so make it confortable for calculations */
+* {
+    font-family: 'CustomFont', Arial, Helvetica, sans-serif;
 }
+
+/*
+html {
+    font-size: 100% !* or 62.5% or whatever you like, it doesn't matter, it's just a browser fix, however "rem" units will be based on that value, so make it confortable for calculations *!
+}
+*/
 
 body {
     font-size: 0.85em; /* That is your text's default font size. Here i chose 12px */
-    background-color: #f2f2f2;
+    background-color: $WEBVIEW_TEXT_IN_POPUPS_BACKGROUND;
+    color: $FOREGROUND_INTERFACE;
+}
+
+img {
+    background-color: $WEBVIEW_TEXT_IN_POPUPS_BACKGROUND;
+}
+
+/* unvisited link */
+a:link {
+    color: $TEXT_LINK;
+}
+
+/* visited link */
+a:visited {
+    color: $TEXT_LINK_VISITED;
+}
+
+/* mouse over link */
+a:hover {
+    color: $TEXT_LINK_HOVER;
+}
+
+/* selected link */
+a:active {
+    color: $TEXT_LINK_ACTIVE;
+}
+
+.warn {
+    color: $TEXT_WARN;
+}
+
+.error {
+    color: $TEXT_ERROR;
 }
