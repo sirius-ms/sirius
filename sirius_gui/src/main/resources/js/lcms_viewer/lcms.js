@@ -211,6 +211,7 @@ class LiquidChromatographyPlot {
                     .attr("id", (d)=>`curve-${j}`)
                     .style('fill', 'none')
                     .style('stroke', tr.color)
+                    .style('stroke-dasharray', tr.strokeDashArray)
                     .on("mouseover", (e,d)=>{this.focusOn(j)})
                     .on("mouseout",(e,d)=>this.removeFocus());
                 this.traces.push(trace);
@@ -223,7 +224,6 @@ class LiquidChromatographyPlot {
             .attr('class', "lcmaincurve lclines")
             .attr('d', this.line)
             .style('fill', 'none')
-            .style('stroke', getEmphColor())
             .style('stroke-width', '3px');
         }
 
@@ -244,30 +244,27 @@ class LiquidChromatographyPlot {
         this.zoomOut.append("rect").classed("lczoombox",true).attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
 
         this.zoomOut.append("circle")
+            .attr('class', "magnifier")
             .attr("cx", 11)
             .attr("cy", 11)
             .attr("r", 8)
-            .attr("stroke", getEmphColor())
             .attr("fill", "none")
-            .attr("stroke-width", 2);
 
         // Draw the horizontal line (minus sign)
         this.zoomOut.append("line")
+            .attr('class', "magnifier")
             .attr("x1", 7)
             .attr("y1", 11)
             .attr("x2", 15)
             .attr("y2", 11)
-            .attr("stroke", getEmphColor())
-            .attr("stroke-width", 2);
 
         // Draw the handle of the magnifying glass
         this.zoomOut.append("line")
+            .attr('class', "magnifier")
             .attr("x1", 16.6569)
             .attr("y1", 16.6569)
             .attr("x2", 23)
             .attr("y2", 23)
-            .attr("stroke", getEmphColor())
-            .attr("stroke-width", 2);
 
 
     }
@@ -429,7 +426,6 @@ class LCAlignmentData extends AbstractLiquidChromatographyData {
         for (var i=0; i < this.json.traces.length; ++i) {
             if (this.json.traces[i].merged===true) {
                 let tr = new Trace(this, this.json.traces[i], -1, "");
-                tr.color = getEmphColor();
                 this.setSpecialTrace(tr);
             } else {
                 let tr = new Trace(this, this.json.traces[i], this.traces.length,this.json.traces[i].sampleName);
@@ -453,7 +449,6 @@ class LCCompoundData extends AbstractLiquidChromatographyData {
             let tr = new Trace(this, this.json.traces[i], this.traces.length, this.json.traces[i].label);
             this.addTrace(tr);
             if (this.json.traces[i].id==mainFeature) {
-                tr.color = getEmphColor();
                 this.setSpecialTrace(tr);
             }
         }
@@ -477,7 +472,8 @@ class Trace {
         this.traceset = traceset;
         this.index = index;
         this.label = label;
-        this.color = index >= 0 ? getColor(index) : null;
+        this.color = index >= 0 ? (json.color != null ? json.color : getColor(index)) : null;
+        this.strokeDashArray = json.dashStyle ? json.dashStyle : 'none';
         let norm = traceset.normFactor;
         let rts = traceset.retentionTimes();
         let len = rts.length;
@@ -598,14 +594,8 @@ class DataSelection {
     }
 }
 
-function getEmphColor() {
-    if (isDark()) {
-        return "#fff";
-    } else {
-        return "black";
-    }
-}
 
+//only used as fallback
 function getColor(index) {
     const colorPalette = [
 "#a6cee3",

@@ -28,8 +28,6 @@ import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
-import de.unijena.bioinf.lcms.utils.TrackFeatureToFile;
-import de.unijena.bioinf.lcms.utils.TrackFeatureToLog;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
@@ -43,11 +41,9 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.Range;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -58,7 +54,7 @@ public class LCMSProcessing {
     /**
      * Creates temporary databases to store traces and spectra
      */
-    @Getter @Setter private LCMSStorageFactory storageFactory = LCMSStorage.temporaryStorage();
+    private final LCMSStorageFactory storageFactory = LCMSStorage.temporaryStorage();
 
     /**
      * Calculates noise thresholds from raw Spectra
@@ -444,5 +440,8 @@ public class LCMSProcessing {
         return MergedTrace.collect(merged, sampleByIdx, projectedTraces, isotopes);
     }
 
+    public void closeStorages(){
+        storageFactory.close();
+    }
 
 }

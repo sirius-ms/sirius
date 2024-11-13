@@ -17,25 +17,24 @@ public class LoadablePanel extends JPanel implements Loadable {
     protected final AtomicInteger loadingCounter = new AtomicInteger(0);
     private final SiriusCardLayout centerCards = new SiriusCardLayout();
 
-    public LoadablePanel(@NotNull JComponent content) {
+   /* public LoadablePanel(@NotNull JComponent content) {
         this(content, "Loading...");
     }
 
     public LoadablePanel(@NotNull JComponent content, @Nullable String loadingMessage) {
         this(content, Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
-    }
+    }*/
 
     //todo maybe add some error state card?
-    public LoadablePanel(@NotNull JComponent content, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
+    public LoadablePanel(@NotNull JComponent content/*, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage*/) {
         setLayout(centerCards);
         add("content", content);
-        add("load", GuiUtils.newLoadingPanel(filterAnimation, loadingMessage));
+        add("load", GuiUtils.newSpinnerProgressPanel());
     }
 
     public boolean setLoading(boolean loading, boolean absolute) {
         AtomicBoolean result = new AtomicBoolean(false);
-        try {
-            Jobs.runEDTAndWait(() -> {
+            Jobs.runEDTLater(() -> {
                 result.set(loadingCounter.updateAndGet(current -> {
                     if (absolute)
                         return loading ? 1 : 0;
@@ -46,9 +45,6 @@ public class LoadablePanel extends JPanel implements Loadable {
                 if (!centerCards.isCardActive(cardName))
                     centerCards.show(this, cardName);
             });
-        } catch (InvocationTargetException | InterruptedException e) {
-            LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly.");
-        }
         return result.get();
     }
 

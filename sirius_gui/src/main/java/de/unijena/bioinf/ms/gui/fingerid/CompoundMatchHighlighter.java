@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.openscience.cdk.exception.CDKException;
@@ -125,9 +126,9 @@ public class CompoundMatchHighlighter {
         final IAtomContainer molecule = compound.getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
-        highlight(molecule, match, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
-        highlight(molecule, unsure, CandidateListDetailView.INVERT_HIGHLIGHTED_COLOR2);
-        highlight(molecule, nomatch, CandidateListDetailView.INVERT_HIGHLIGHTED_COLOR);
+        highlight(molecule, match, Colors.StructuresView.HIGHLIGHT_MATCHING_SUBSTRUCTURES_AGREEMENT_GOOD);
+        highlight(molecule, unsure, Colors.StructuresView.HIGHLIGHT_MATCHING_SUBSTRUCTURES_AGREEMENT_UNCERTAIN);
+        highlight(molecule, nomatch, Colors.StructuresView.HIGHLIGHT_MATCHING_SUBSTRUCTURES_AGREEMENT_DISAGREE);
     }
 
     private void highlight(IAtomContainer molecule, int[] mapping, Color primaryHighlightedColor) {

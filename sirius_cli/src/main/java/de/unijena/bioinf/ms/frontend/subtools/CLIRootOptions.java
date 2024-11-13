@@ -173,32 +173,33 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         if (spaceManagerFactory instanceof SiriusProjectSpaceManagerFactory)
             throw new CommandLine.PicocliException("File based Sirius projects a no longer supported! Please convert them to the new '.sirius' format.");
 
-        InputFilesOptions input = getInput();
-        if (input != null && !input.msInput.msParserfiles.isEmpty() && !input.msInput.lcmsFiles.isEmpty())
-            throw new CommandLine.PicocliException("LC-MS runs (.mzml/.mzxml) and peak list data (.ms/.mgf/.mat/.msp/.mblib) cannot be processed at the same time! Please use separate projects for each of the input data types.");
+        if (spaceManagerFactory instanceof NitriteProjectSpaceManagerFactory psFactory) {
+            InputFilesOptions input = getInput();
+            if (input != null && !input.msInput.msParserfiles.isEmpty() && !input.msInput.lcmsFiles.isEmpty())
+                throw new CommandLine.PicocliException("LC-MS runs (.mzml/.mzxml) and peak list data (.ms/.mgf/.mat/.msp/.mblib) cannot be processed at the same time! Please use separate projects for each of the input data types.");
 
-        // mzml/mzxml files found but no preprocessing specified by user. providing default lcms-align job as fallback
-        if (input != null && !input.msInput.lcmsFiles.isEmpty()) {
-            LOG.info("LCMS run (.mzml/.mzxml) data found. Should be ");
-            return ((LcmsAlignOptions) new CommandLine(new LcmsAlignOptions()).parseArgs().commandSpec().commandLine().getCommand())
-                    .makePreprocessingJob(this, spaceManagerFactory, null);
-        } else {
-            return new PreprocessingJob<>() {
-                @Override
-                protected ProjectSpaceManager compute() throws Exception {
-                    ProjectSpaceManager space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());
-                    if (space != null) {
-                        if (input != null) //run import only if something was given
-                            submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
-                        if (space.isEmpty())
-                            logInfo("Project-Space still empty after data import step. Starting application without input data.");
-
-                        return space;
+            // mzml/mzxml files found but no preprocessing specified by user. providing default lcms-align job as fallback
+            if (input != null && !input.msInput.lcmsFiles.isEmpty()) {
+                LOG.info("LCMS run (.mzml/.mzxml) data found. Should be ");
+                return ((LcmsAlignOptions) new CommandLine(new LcmsAlignOptions()).parseArgs().commandSpec().commandLine().getCommand())
+                        .makePreprocessingJob(this, psFactory, null);
+            } else {
+                return new PreprocessingJob<>() {
+                    @Override
+                    protected ProjectSpaceManager compute() throws Exception {
+                        NoSQLProjectSpaceManager space = psFactory.createOrOpen(psOpts.getOutputProjectLocation());
+                        if (space != null) {
+                            if (input != null) //run import only if something was given
+                                submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
+                            if (space.isEmpty())
+                                logInfo("Project-Space still empty after data import step. Starting application without input data.");
+                            return space;
+                        }
+                        throw new CommandLine.PicocliException("No Project-Space for writing output!");
                     }
-                    throw new CommandLine.PicocliException("No Project-Space for writing output!");
-                }
-            };
+                };
+            }
         }
-
+        throw new IllegalArgumentException("Unknown Project space type.");
     }
 }

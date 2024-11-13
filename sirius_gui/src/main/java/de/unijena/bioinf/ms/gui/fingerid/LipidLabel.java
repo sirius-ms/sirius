@@ -53,8 +53,8 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
 
     public LipidLabel(StructureList source) {
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
-        setForeground(Color.WHITE);
-        setBackground(Colors.DB_ELGORDO);
+        setForeground(Colors.StructuresView.Sources.SPECIAL_TEXT);
+        setBackground(Colors.StructuresView.Sources.SPECIAL);
         setOpaque(true);
         setToolTipText(GuiUtils.formatToolTip(
                 "El Gordo classified this compound as lipid and determined the lipid species de novo. " +
