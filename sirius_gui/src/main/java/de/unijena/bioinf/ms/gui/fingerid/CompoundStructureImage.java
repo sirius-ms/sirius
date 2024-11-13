@@ -19,13 +19,18 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.color.IAtomColorer;
+import org.openscience.cdk.renderer.color.UniColor;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -36,10 +41,11 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-class CompoundStructureImage extends JPanel {
+class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT {
 
     protected static final Font formulaFont, scoreFont;
     private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
@@ -55,11 +61,13 @@ class CompoundStructureImage extends JPanel {
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 
-    public CompoundStructureImage() {
-        this(StandardGenerator.HighlightStyle.OuterGlow);
+    public CompoundStructureImage(SiriusGui gui) {
+        this(StandardGenerator.HighlightStyle.OuterGlow, gui);
     }
 
-    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle) {
+    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle, SiriusGui gui) {
+        gui.getProperties().addPropertyChangeListener("molecularStructuresDisplayColors", this);
+
         setOpaque(false);
         setPreferredSize(new Dimension(374, 215));
         // make generators
@@ -72,8 +80,8 @@ class CompoundStructureImage extends JPanel {
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 highlightStyle);
-        renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new ThemedAtomColors());
+        setAtomColoring(gui.getProperties().getMolecularStructureDisplayColors());
+
         renderer.getRenderer2DModel().set(StandardGenerator.AnnotationColor.class,
                 Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         setVisible(true);
@@ -119,5 +127,24 @@ class CompoundStructureImage extends JPanel {
         gg.setFont(scoreFont);
         gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
+    }
+
+    @Override
+    public void propertyChangeInEDT(PropertyChangeEvent propertyChangeEvent) {
+        if (propertyChangeEvent.getNewValue() instanceof MolecularStructuresDisplayColors mode) {
+            setAtomColoring(mode);
+            repaint();
+        }
+
+    }
+
+    private void setAtomColoring(MolecularStructuresDisplayColors mode) {
+        if (mode == MolecularStructuresDisplayColors.MONOCHROME) {
+            Color chosenColor = Colors.MolecularStructures.SELECTED_SUBSTRUCTURE;
+            IAtomColorer atomColorer = new UniColor(chosenColor);
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, atomColorer);
+        } else {
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, new ThemedAtomColors());
+        }
     }
 }
