@@ -150,15 +150,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         image.backgroundColor = (index % 2 == 0 ? EVEN : ODD);
         allStructureInfoWithoutRank.setBackground((index % 2 == 0 ? EVEN : ODD));
-        if (gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.EXACT) || value.getCandidate().getMcesDistToTopHit() == null) {
-            rankLabel.setForeground(value.getScore() >= stats.getMax() ? Colors.CellsAndRows.BEST_HIT_TEXT : Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-            rankLabel.setBackground(value.getScore() >= stats.getMax() ? (index % 2 == 0 ? Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_1 : Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_2) : (index % 2 == 0 ? EVEN : ODD));
-        } else {
-            if (value.getCandidate().getMcesDistToTopHit() != null) {
-                rankLabel.setForeground(isBest.apply(value) ? Colors.CellsAndRows.BEST_HIT_TEXT : Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-                rankLabel.setBackground(isBest.apply(value) ? (index % 2 == 0 ? Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_1 : Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_2) : (index % 2 == 0 ? EVEN : ODD));
-            }
-        }
+
+        rankLabel.setForeground(isBest.apply(value) ? Colors.CellsAndRows.BEST_HIT_TEXT : Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+        rankLabel.setBackground(isBest.apply(value) ? (index % 2 == 0 ? Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_1 : Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_2) : (index % 2 == 0 ? EVEN : ODD));
 
         setOpaque(true);
         setBackground(image.backgroundColor);
