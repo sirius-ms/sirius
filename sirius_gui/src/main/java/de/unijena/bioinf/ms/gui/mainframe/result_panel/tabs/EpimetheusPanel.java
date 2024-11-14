@@ -90,7 +90,7 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO_24, "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO.derive(24,24), "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
             showMSNovelist.setSelected(true);
             tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
 

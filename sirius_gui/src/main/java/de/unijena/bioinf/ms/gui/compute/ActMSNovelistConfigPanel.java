@@ -38,7 +38,7 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel(SiriusGui gui) {
-        super(gui, "MSNovelist", Icons.DENOVO_32, false, () -> new SubToolConfigPanel<>(MsNovelistOptions.class) {});
+        super(gui, "MSNovelist", Icons.DENOVO.derive(32,32), false, () -> new SubToolConfigPanel<>(MsNovelistOptions.class) {});
         listener = evt -> checkConnection(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
         gui.getConnectionMonitor().addConnectionStateListener(listener);
         checkConnection(gui.getConnectionMonitor().getCurrentCheckResult());

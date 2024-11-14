@@ -122,7 +122,6 @@ ext {
 }
 
 
-
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
 project.ext.set("winSuffix", "win")
@@ -246,11 +245,6 @@ allprojects {
 
     }
 
-    test {
-        useJUnitPlatform()
-        maxHeapSize = "16G"
-    }
-
     //there are some outdated incompatible trove dependencies in some libs.
     // this is to exclude them and enforce the one we need.
     configurations.configureEach {
@@ -264,6 +258,45 @@ allprojects {
     configurations {
         compileClasspath {
             resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform {
+            filter { //filter test groups that do not have to run on every commit
+                excludeTestsMatching "*IntegrationTest"
+                excludeTestsMatching "*ApiTest"
+                excludeTestsMatching "*AcceptanceTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+
+    //We usually just do them for the sirius-sdk. Maybe also for the cli
+    def integrationTest = tasks.register("integrationTest", Test) {
+        group = 'verification'
+        useJUnitPlatform {
+            filter {
+                includeTestsMatching "*IntegrationTest"
+                includeTestsMatching "*ApiTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+    def acceptanceTest = tasks.register("acceptanceTest", Test) {
+        group = 'verification'
+        useJUnitPlatform {
+            filter {
+                includeTestsMatching "*AcceptanceTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+            maxHeapSize = "16G"
         }
     }
 }

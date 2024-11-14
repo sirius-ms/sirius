@@ -23,17 +23,16 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
 
-/**
- * Created by fleisch on 05.06.17.
- */
 public class BooleanJlabel extends JLabel {
+    final static Icon YES = Icons.YES.derive(16, 16);
+    final static Icon NO = Icons.NO.derive(16, 16);
 
     public void setState(boolean state) {
-        setIcon(state ? Icons.YES_16:Icons.NO_16);
+        setIcon(state?YES:NO);
     }
 
     public boolean isTrue() {
-        return getIcon().equals(Icons.YES_16);
+        return getIcon().equals(YES);
     }
 
     public BooleanJlabel(boolean state) {
