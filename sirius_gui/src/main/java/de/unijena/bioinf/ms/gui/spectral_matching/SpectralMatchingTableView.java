@@ -28,6 +28,7 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -43,10 +44,10 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatchBean, InstanceBean, SpectralMatchList> {
 
@@ -100,9 +101,17 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         table.comparatorChooser.getComparatorsForColumn(9).add(dbLinkComparator);
 
         table.setSelectionModel(filteredSelectionModel);
-        final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null,
-                (v) -> v == null ? "N/A" : (v instanceof CollisionEnergy ce ? (ce.equals(CollisionEnergy.none()) ? "N/A" : ce.toString(2)) : v.toString())
-        );
+
+        Function<Object, String> toString = v -> {
+            if (v ==null)
+                return "N/A";
+            if (v instanceof CollisionEnergy ce)
+                return ce.equals(CollisionEnergy.none()) ? "N/A" : ce.toString(2);
+            return v.toString();
+        };
+        final SiriusResultTableCellRenderer defaultRenderer =
+                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize()));
+
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
         table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
