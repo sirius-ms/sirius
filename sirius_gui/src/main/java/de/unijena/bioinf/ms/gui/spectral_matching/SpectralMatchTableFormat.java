@@ -73,10 +73,10 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 4 -> baseObject.getMatch().getSimilarity();
             case 5 -> baseObject.getMatch().getSharedPeaks();
             case 6 -> baseObject.getMatch().getAdduct();
-            case 7 -> baseObject.getReference().map(spectrum -> {
-                CollisionEnergy energy = CollisionEnergy.fromStringOrNull(spectrum.getCollisionEnergy());
-                return energy != null ? energy : CollisionEnergy.none();
-            }).orElse(CollisionEnergy.none());
+            case 7 -> baseObject.getReference()
+                    .map(BasicSpectrum::getCollisionEnergy)
+                    .map(CollisionEnergy::fromStringOrNull)
+                    .orElse(CollisionEnergy.none());
 //            case 8 -> "N/A"; //todo nightsky -> do we want to add this info to the api model?
             case 8 -> baseObject.getMatch().getDbName();
             case 9 -> baseObject.getDBLink();
