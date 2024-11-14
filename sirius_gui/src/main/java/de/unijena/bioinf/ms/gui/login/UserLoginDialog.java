@@ -66,7 +66,7 @@ public class UserLoginDialog extends JDialog {
         setLayout(new BorderLayout());
 
         //============= NORTH =================
-        add(new DialogHeader(Icons.KEY_64), BorderLayout.NORTH);
+        add(new DialogHeader(Icons.KEY.derive(64,64)), BorderLayout.NORTH);
 
 
         //============= SOUTH =================

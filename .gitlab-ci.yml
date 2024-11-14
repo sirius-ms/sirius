@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: azul/zulu-openjdk:21-latest
+  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-jdk-lapack:ubuntu-zulu-21
   tags: [$RUNNER_TAGS]
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
@@ -18,22 +18,41 @@ stages:
   - publish-app
 
 before_script:
-  - rm /etc/apt/sources.list.d/zulu-openjdk.list
-  - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client wget gnupg unzip liblapack-dev curl git -y )'
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
 
-test:
+unitTests:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: test-libs
   script:
-    - apt-get update
-    - apt-get install -y liblapack3
     - ./gradlew test --stacktrace
   artifacts:
-    when: always
+    when: on_failure
     reports:
-      junit: "**/build/test-results/test/**/TEST-*.xml"
+      junit: "**/build/test-results/test/TEST-*.xml"
+
+integrationTests:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: test-libs
+  script:
+    - ./gradlew integrationTest --stacktrace
+  artifacts:
+    when: on_failure
+    reports:
+      junit: "**/build/test-results/integrationTest/TEST-*.xml"
+
+acceptanceTests:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: test-app
+  when: manual
+  script:
+    - ./gradlew acceptanceTest --stacktrace
+  artifacts:
+    when: on_failure
+    reports:
+      junit: "**/build/test-results/acceptanceTest/TEST-*.xml"
 
 buildLinux64:
   variables:

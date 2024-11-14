@@ -44,23 +44,24 @@ import java.util.function.Function;
 public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidateBean> {
     public static final int MIN_CELL_SIZE = 5;
     public final static int CELL_SIZE = 15;
-    private static Color LOW = Color.RED, MED = Color.WHITE, HIGH = new Color(100, 149, 237);
-    private final static Color EVEN = Colors.LIST_EVEN_BACKGROUND;
-    private final static Color ODD = Colors.LIST_UNEVEN_BACKGROUND;
+    private static Color LOW = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_LOW_PROBABILITY, MED = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_MEDIUM_PROBABILITY, HIGH = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_HIGH_PROBABILITY;
+    private final static Color EVEN = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1;
+    private final static Color ODD = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_2;
 
 
-    protected final static Font nameFont, propertyFont, rankFont, matchFont, headlineFont;
+    protected static final int maxRankFontSize = 30;
+    protected static final int minRankFontSize = 10;
+    protected final static Font nameFont, propertyFont, rankFont, headlineFont;
 
     static {
         //init fonts
-        final Font tempFont = Fonts.FONT_BOLD;
+        final Font tempFont = Fonts.FONT_MEDIUM;
         if (tempFont != null) {
-            nameFont = tempFont.deriveFont(13f);
+            nameFont = tempFont.deriveFont(16f);
             propertyFont = tempFont.deriveFont(16f);
-            matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(20f);
+            rankFont = tempFont.deriveFont(maxRankFontSize);
         } else {
-            nameFont = propertyFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
+            nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
 
         headlineFont = nameFont.deriveFont(Map.of(
@@ -73,6 +74,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
+    private JPanel allStructureInfoWithoutRank;
 
 
     private FingerprintCandidateBean currentCandidate;
@@ -91,23 +93,39 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         this.isBest = isBest;
         setLayout(new BorderLayout());
 
-        JPanel north = new JPanel(new BorderLayout());
-        north.setOpaque(false);
-        north.setBorder(new EmptyBorder(1, 1, 1, 1));
-
-        nameLabel = new JLabel("");
-        nameLabel.setFont(nameFont);
         rankLabel = new JLabel("");
         rankLabel.setFont(rankFont);
+        rankLabel.setPreferredSize(new Dimension(62, 100)); //border plus width of 2-digit number in font 30
+        rankLabel.setSize(new Dimension(62, 100)); //to make sure also first rendering is correct.
+        rankLabel.setVerticalAlignment(SwingConstants.CENTER);
+        rankLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        rankLabel.setBorder(new EmptyBorder(1, 10, 1, 10));
 
-        north.add(nameLabel, BorderLayout.WEST);
-        north.add(rankLabel, BorderLayout.EAST);
+        rankLabel.setOpaque(true);
 
-        image = new CompoundStructureImage();
-        descriptionPanel = new DescriptionPanel();
-        add(north, BorderLayout.NORTH);
-        add(image, BorderLayout.WEST);
-        add(descriptionPanel, BorderLayout.CENTER);
+        allStructureInfoWithoutRank = new JPanel(new BorderLayout());
+        {
+
+            JPanel north = new JPanel(new BorderLayout());
+            north.setOpaque(false);
+            north.setBorder(new EmptyBorder(1, 1, 1, 1));
+
+            nameLabel = new JLabel("");
+            nameLabel.setFont(nameFont);
+            nameLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            nameLabel.setBorder(new EmptyBorder(0,3,0,0));
+
+            north.add(nameLabel, BorderLayout.WEST);
+
+            image = new CompoundStructureImage();
+            descriptionPanel = new DescriptionPanel();
+            allStructureInfoWithoutRank.add(north, BorderLayout.NORTH);
+            allStructureInfoWithoutRank.add(image, BorderLayout.WEST);
+            allStructureInfoWithoutRank.add(descriptionPanel, BorderLayout.CENTER);
+        }
+
+        add(rankLabel, BorderLayout.WEST);
+        add(allStructureInfoWithoutRank, BorderLayout.CENTER);
 
     }
 
@@ -116,7 +134,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
             nameLabel.setText(value.getName());
         } else {
-            nameLabel.setText("");
+            nameLabel.setText("-");
         }
 
         if (value.getCandidate().getRank() != null) {
@@ -125,12 +143,21 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             rankLabel.setText("");
         }
 
+        // Calculate the optimal font size for this label
+        adjustFontSizeToFitText(rankLabel, maxRankFontSize, minRankFontSize);
+
         image.molecule = value;
+
+        image.backgroundColor = (index % 2 == 0 ? EVEN : ODD);
+        allStructureInfoWithoutRank.setBackground((index % 2 == 0 ? EVEN : ODD));
         if (gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.EXACT) || value.getCandidate().getMcesDistToTopHit() == null) {
-            image.backgroundColor = value.getScore() >= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+            rankLabel.setForeground(value.getScore() >= stats.getMax() ? Colors.CellsAndRows.BEST_HIT_TEXT : Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            rankLabel.setBackground(value.getScore() >= stats.getMax() ? (index % 2 == 0 ? Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_1 : Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_2) : (index % 2 == 0 ? EVEN : ODD));
         } else {
-            if (value.getCandidate().getMcesDistToTopHit() != null)
-                image.backgroundColor = isBest.apply(value) ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+            if (value.getCandidate().getMcesDistToTopHit() != null) {
+                rankLabel.setForeground(isBest.apply(value) ? Colors.CellsAndRows.BEST_HIT_TEXT : Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+                rankLabel.setBackground(isBest.apply(value) ? (index % 2 == 0 ? Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_1 : Colors.CellsAndRows.BEST_HIT_ALTERNATING_CELL_2) : (index % 2 == 0 ? EVEN : ODD));
+            }
         }
 
         setOpaque(true);
@@ -140,6 +167,28 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         return this;
     }
 
+    private void adjustFontSizeToFitText(JLabel label, int maxFontSize, int minFontSize) {
+        String text = label.getText();
+        Font currentFont = label.getFont();
+        int fontSize = maxFontSize;
+
+        Insets borderInsets = label.getInsets(); // Get the border insets (padding around the text)
+        int availableWidth =  label.getWidth() - (borderInsets.left + borderInsets.right); // width subtracting borders
+
+
+        FontMetrics fm = label.getFontMetrics(new Font(currentFont.getName(), Font.PLAIN, fontSize));
+        int stringWidth = fm.stringWidth(text);
+
+        // Adjust the font size until the text fits within the available width
+        while (stringWidth > availableWidth && fontSize > minFontSize) {
+            fontSize--;
+            fm = label.getFontMetrics(new Font(currentFont.getName(), Font.PLAIN, fontSize));
+            stringWidth = fm.stringWidth(text);
+        }
+
+        label.setFont(new Font(currentFont.getName(), Font.PLAIN, fontSize));
+    }
+
     @Override
     public void paint(Graphics g) {
         super.paint(g);
@@ -147,7 +196,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         final Rectangle ra = descriptionPanel.ag.getBounds();
         // add offset of parents
         ra.setLocation(
-                ra.x + descriptionPanel.getX() + descriptionPanel.agpanel.getX(),
+                ra.x + descriptionPanel.getX() + descriptionPanel.agpanel.getX() + rankLabel.getWidth(), //todo coloring: someone please check if this is the correct way to fix the offset of fingerprint property squares after adding rank label to front
                 ra.y + descriptionPanel.getY() + descriptionPanel.agpanel.getY());
         currentCandidate.substructures.setBounds(ra.x, ra.y, ra.width, ra.height);
     }
@@ -201,11 +250,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 final int b;
 
                 if (agreement.indizes[i] == candidateJList.highlightAgree) {
-                    g.setColor(Color.BLUE);
-                    b = 2;
+                    g.setColor(Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_PRIMARY);
+                    b = 4;
                 } else {
                     b = 1;
-                    g.setColor(Colors.FOREGROUND);
+                    g.setColor(Colors.FOREGROUND_INTERFACE);
                 }
 
                 g.fillRect((CELL_SIZE * col) + reduction - b, (CELL_SIZE * row) + reduction - b, (CELL_SIZE - reduction - reduction) + b + b, (CELL_SIZE - reduction - reduction) + b + b);
@@ -228,7 +277,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private static final int DB_LABEL_PADDING = 4;
 
     public static class DatabasePanel extends JPanel {
-        public static final Font DB_PANEL_FONT = Fonts.FONT_BOLD.deriveFont(11f);
+        public static final Font DB_PANEL_FONT = Fonts.FONT_MEDIUM.deriveFont(11f);
 
         public DatabasePanel() {
             setOpaque(false);
@@ -242,7 +291,13 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (candidate == null || candidate.getCandidate() == null) return;
 
             for (DatabaseLabel label : candidate.labels) {
-                add(new DatabaseLabelPanel(label));
+                JPanel wrapper = new JPanel();
+                wrapper.setOpaque(false);
+                wrapper.setLayout(new FlowLayout(FlowLayout.CENTER)); // center horizontally in wrapper - else different label names might move the label
+                DatabaseLabelPanel labelPanel = new DatabaseLabelPanel(label);
+                wrapper.add(labelPanel);
+                wrapper.setPreferredSize(new Dimension((int) labelPanel.getPreferredSize().getWidth(), (int) getPreferredSize().getHeight()));
+                add(wrapper);
             }
         }
     }
@@ -250,15 +305,19 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private static class LabelPanel extends JPanel {
 
         private final Color color;
+        private final Color textColor;
+        private final Color borderColor;
 
         private final DatabaseLabel label;
 
         public LabelPanel(DatabaseLabel label) {
-            this(null, label, false);
+            this(null, null, null, label, false);
         }
 
-        public LabelPanel(Color color, DatabaseLabel label, boolean tight) {
+        public LabelPanel(Color color, Color textColor, Color borderColor, DatabaseLabel label, boolean tight) {
             this.color = color;
+            this.textColor = (textColor != null ? textColor : Colors.FOREGROUND_DATA);
+            this.borderColor = (borderColor != null ? borderColor : Colors.FOREGROUND_INTERFACE);
             this.label = label;
             Font font = DatabasePanel.DB_PANEL_FONT;
             setFont(font);
@@ -282,24 +341,24 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             final int th = m.getHeight();
             final int w = tw + DB_LABEL_PADDING;
             final int h = th + DB_LABEL_PADDING;
+            Rectangle gggggp = getParent().getParent().getParent().getParent().getParent().getParent().getBounds();
+            Rectangle ggggp = getParent().getParent().getParent().getParent().getParent().getBounds();
             Rectangle gggp = getParent().getParent().getParent().getParent().getBounds();
             Rectangle ggp = getParent().getParent().getParent().getBounds();
             Rectangle gp = getParent().getParent().getBounds();
             Rectangle p = getParent().getBounds();
             Rectangle s = getBounds();
-            final int rx = (int) (s.getX() + p.getX() + gp.getX() + ggp.getX() + gggp.getX());
-            final int ry = (int) (s.getY() + p.getY() + gp.getY() + ggp.getY() + gggp.getY());
+            final int rx = (int) (s.getX() + p.getX() + gp.getX() + ggp.getX() + gggp.getX() + ggggp.getX() + gggggp.getX());
+            final int ry = (int) (s.getY() + p.getY() + gp.getY() + ggp.getY() + gggp.getY() + ggggp.getY() + gggggp.getY());
 
             label.rect.setBounds(rx, ry, w, h);
             if (color != null) {
                 g.setColor(color);
                 g.fillRoundRect(2, 2, w, h, 4, 4);
-                g.setColor(Colors.FOREGROUND);
+                g.setColor(borderColor);
                 g.drawRoundRect(2, 2, w, h, 4, 4);
-                g.setColor(color.equals(Colors.DB_CUSTOM) ? Color.BLACK : Color.WHITE);
-            } else {
-                g.setColor(Colors.FOREGROUND);
             }
+            g.setColor(textColor);
             g.drawString(label.name(), 2 + (w - tw) / 2, h - (h - th) / 2);
         }
     }
@@ -307,20 +366,45 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private static class DatabaseLabelPanel extends LabelPanel {
 
         public DatabaseLabelPanel(DatabaseLabel label) {
-            super(color(label), label, true);
+            this(label, true);
+        }
+
+        public DatabaseLabelPanel(DatabaseLabel label, boolean tight) {
+            super(color(label), textColor(label), borderColor(label), label, tight);
         }
 
         private static Color color(DatabaseLabel label) {
             if ("De Novo".equals(label.sourceName))
-                return Colors.DB_DENOVO;
+                return Colors.StructuresView.Sources.DE_NOVO;
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
-            if (s == null) return Colors.DB_UNKNOWN;
-            if (s.isCustomSource()) return Colors.DB_CUSTOM;
-            if (s.name().equals(DataSource.TRAIN.name())) return Colors.DB_TRAINING;
-            if (s.name().startsWith(DataSource.LIPID.name())) return Colors.DB_ELGORDO;
-            return label.values.length == 0 || s.URI() == null ? Colors.DB_UNLINKED : Colors.DB_LINKED;
+            if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED;
+            if (s.isCustomSource()) return Colors.StructuresView.Sources.CUSTOM_DB;
+            if (s.name().equals(DataSource.TRAIN.name())) return Colors.StructuresView.Sources.TRAINING_DATA;
+            if (s.name().startsWith(DataSource.LIPID.name())) return Colors.StructuresView.Sources.SPECIAL;
+            return label.values.length == 0 || s.URI() == null ? Colors.StructuresView.Sources.MAIN_DB_NO_LINK : Colors.StructuresView.Sources.MAIN_DB_WITH_LINK;
         }
 
+        private static Color textColor(DatabaseLabel label) {
+            if ("De Novo".equals(label.sourceName))
+                return Colors.StructuresView.Sources.DE_NOVO_TEXT;
+            CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
+            if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT;
+            if (s.isCustomSource()) return Colors.StructuresView.Sources.DEFAULT_TEXT;
+            if (s.name().equals(DataSource.TRAIN.name())) return Colors.StructuresView.Sources.TRAINING_DATA_TEXT;
+            if (s.name().startsWith(DataSource.LIPID.name())) return Colors.StructuresView.Sources.TRAINING_DATA_TEXT;
+            return label.values.length == 0 || s.URI() == null ? Colors.StructuresView.Sources.MAIN_DB_NO_LINK_TEXT : Colors.StructuresView.Sources.DEFAULT_TEXT;
+        }
+
+        private static Color borderColor(DatabaseLabel label) {
+            if ("De Novo".equals(label.sourceName))
+                return Colors.StructuresView.Sources.DE_NOVO_BORDER;
+            CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
+            if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER;
+            if (s.isCustomSource()) return Colors.StructuresView.Sources.DEFAULT_BORDER;;
+            if (s.name().equals(DataSource.TRAIN.name())) return Colors.StructuresView.Sources.DEFAULT_BORDER;
+            if (s.name().startsWith(DataSource.LIPID.name())) return Colors.StructuresView.Sources.DEFAULT_BORDER;
+            return label.values.length == 0 || s.URI() == null ? Colors.StructuresView.Sources.MAIN_DB_NO_LINK_BORDER : Colors.StructuresView.Sources.DEFAULT_BORDER;
+        }
     }
 
     public class DescriptionPanel extends JPanel {
@@ -342,6 +426,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 agpanel = new JPanel(new BorderLayout());
                 agpanel.setOpaque(false);
                 agreements = new JLabel("Substructures:", SwingConstants.LEFT);
+                agreements.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
                 agreements.setFont(headlineFont);
                 agpanel.add(agreements, BorderLayout.NORTH);
 
@@ -362,6 +447,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 final JPanel dbLabelPanel = new JPanel(new BorderLayout());
                 final JLabel dbl = new JLabel("Sources", SwingConstants.LEFT);
                 dbl.setFont(headlineFont);
+                dbl.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
                 dbLabelPanel.setOpaque(false);
                 dbLabelPanel.add(dbl, BorderLayout.NORTH);
                 databasePanel = new DatabasePanel();
@@ -407,11 +493,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 innerBox.setOpaque(false);
 
                 JLabel refLabel = new JLabel("Reference Spectra");
+                refLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
                 refLabel.setHorizontalTextPosition(SwingConstants.LEFT);
                 refLabel.setFont(headlineFont);
                 innerBox.add(refLabel);
                 innerBox.add(Box.createVerticalStrut(2));
-                LabelPanel lp = new LabelPanel(Colors.DB_CUSTOM, value.bestRefMatchLabel, false);
+                LabelPanel lp = new DatabaseLabelPanel(value.bestRefMatchLabel, false);
                 lp.setAlignmentX(Component.CENTER_ALIGNMENT);
                 innerBox.add(lp);
 

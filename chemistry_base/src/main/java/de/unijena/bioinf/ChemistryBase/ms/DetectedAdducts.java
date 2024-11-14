@@ -174,15 +174,19 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
     private static final PrecursorIonType M_PLUS = PrecursorIonType.getPrecursorIonType("[M]+");
     private static final PrecursorIonType M_H_PLUS = PrecursorIonType.getPrecursorIonType("[M+H]+");
 
+    private static final PrecursorIonType M_MINUS = PrecursorIonType.getPrecursorIonType("[M]-");
+    private static final PrecursorIonType M_MINUS_H_MINUS = PrecursorIonType.getPrecursorIonType("[M-H]-");
+
     /**
      * 1. remove unknown and not supported adducts
-     * 2. guarantees that never both, [M]+ and [M+H]+, are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ is favored.
+     * 2. guarantees that for intrinsically charged compounds, never both, "[M]+ and [M+H]+" or "[M]- and [M-H]-", are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ and [M-H]- are favored.
      * @param possibleAdducts
      * @return
      */
     private PossibleAdducts cleanAdducts(PossibleAdducts possibleAdducts) {
         Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown() && a.isSupportedForFragmentationTreeComputation()).collect(Collectors.toCollection(HashSet::new));
         if (adducts.contains(M_PLUS) && adducts.contains(M_H_PLUS)) adducts.remove(M_PLUS);
+        if (adducts.contains(M_MINUS) && adducts.contains(M_MINUS_H_MINUS)) adducts.remove(M_MINUS);
         return new PossibleAdducts(adducts);
     }
 

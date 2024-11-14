@@ -417,10 +417,9 @@ public class MzMLParser implements LCMSParser {
 
     private static Pattern SCAN_PATTERN = Pattern.compile("scan=(\\d+)"), ALT_PATTERN = Pattern.compile("\\S+=(\\d+)");
     private int parseScanNumber(String sid, Integer index) {
-        if (sid == null || sid.isEmpty()){
-            LoggerFactory.getLogger(MzMLParser.class).warn("Scan ID is null or Empty. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+        if (sid == null || sid.isEmpty())
             return index;
-        }
+
         Matcher m = SCAN_PATTERN.matcher(sid);
         if (m.find()) {
             return Integer.parseInt(m.group(1));
