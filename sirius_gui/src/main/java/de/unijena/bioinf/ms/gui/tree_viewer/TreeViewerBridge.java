@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import netscape.javascript.JSObject;
 import org.slf4j.LoggerFactory;
 
@@ -49,11 +50,14 @@ public class TreeViewerBridge {
                                                      "rel_int" };
     static public final String[] COLOR_VARIANTS_3 = { "md_mz", "md_ppm" };
 
-    static public final String[] COLOR_SCHEMES_2 = {"blues", "greens", "reds", "viridis" };
-    static public final String[] COLOR_SCHEMES_3 = { "red to blue", "brown to turquoise" };
+    static public final String[] COLOR_SCHEME_NAMES_2 = {"default" };
+    static public final String[] COLOR_SCHEME_NAMES_3 = { "default" };
 
-    static public final String COLOR_SCHEME_2 = "blues";
-    static public final String COLOR_SCHEME_3 = "red to blue";
+    static public final String[] COLOR_SCHEME_COLORS_2 = {"['"+Colors.asHex(Colors.FragementationTree.ONE_COLOR_GRADIENT_MIN)+"', '"+Colors.asHex(Colors.FragementationTree.ONE_COLOR_GRADIENT_MAX)+"']"};
+    static public final String[] COLOR_SCHEME_COLORS_3 = {"['"+Colors.asHex(Colors.FragementationTree.TWO_COLOR_GRADIENT_LEFT)+"', '"+Colors.asHex(Colors.FragementationTree.TWO_COLOR_GRADIENT_MIDDLE)+"', '"+Colors.asHex(Colors.FragementationTree.TWO_COLOR_GRADIENT_RIGHT)+"']"};
+
+    static public final String COLOR_SCHEME_NAME_2 = "default";
+    static public final String COLOR_SCHEME_NAME_3 = "default";
 
     static public final String[] NODE_ANNOTATIONS = {
         "m/z", "mass deviation in m/z", "mass deviation in ppm",
@@ -73,8 +77,8 @@ public class TreeViewerBridge {
 
     public TreeViewerBridge(TreeViewerBrowser browser) {
         this.browser = browser;
-        this.color_scheme_2_selected = COLOR_SCHEME_2;
-        this.color_scheme_3_selected = COLOR_SCHEME_3;
+        this.color_scheme_2_selected = COLOR_SCHEME_NAME_2;
+        this.color_scheme_3_selected = COLOR_SCHEME_NAME_3;
     }
 
     public String functionString(String function, String... args) {
@@ -134,6 +138,20 @@ public class TreeViewerBridge {
 
     public String getJSONTree(){
         return (String) browser.getJSObject("getJSONTree()");
+    }
+
+    public static String get2ColorPaletteByNameOrDefault(String colorName) {
+        for (int i = 0; i < COLOR_SCHEME_NAMES_2.length; i++) {
+            if (colorName.equalsIgnoreCase(COLOR_SCHEME_NAMES_2[i])) return COLOR_SCHEME_COLORS_2[i];
+        }
+        return COLOR_SCHEME_COLORS_2[0];
+    }
+
+    public static String get3ColorPaletteByNameOrDefault(String colorName) {
+        for (int i = 0; i < COLOR_SCHEME_NAMES_3.length; i++) {
+            if (colorName.equalsIgnoreCase(COLOR_SCHEME_NAMES_3[i])) return COLOR_SCHEME_COLORS_3[i];
+        }
+        return COLOR_SCHEME_COLORS_3[0];
     }
 
     // capabilities below are handled by TreeConfig now

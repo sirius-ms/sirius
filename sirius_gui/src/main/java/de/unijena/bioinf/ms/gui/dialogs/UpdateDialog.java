@@ -92,6 +92,6 @@ public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener
 
     @Override
     protected Icon makeDialogIcon() {
-        return Icons.REFRESH_32;
+        return Icons.REFRESH.derive(32,32);
     }
 }
