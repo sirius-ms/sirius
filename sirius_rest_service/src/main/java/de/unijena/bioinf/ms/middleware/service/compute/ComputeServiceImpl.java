@@ -30,6 +30,8 @@ import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateE
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.projectspace.Instance;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -222,6 +224,13 @@ public class ComputeServiceImpl implements ComputeService {
                                                 @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
                 .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
+        registerServerEventListener(run, project.getProjectId());
+        return extractJobId(run, optFields);
+    }
+
+    @Override
+    public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target, @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChange(left, right, aggregation, quantification, target);
         registerServerEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);
     }

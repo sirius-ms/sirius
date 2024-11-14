@@ -24,5 +24,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
 public enum AggregationType {
-    AVG, MIN, MAX, MODE
+    AVG, MIN, MAX, MEDIAN
 }

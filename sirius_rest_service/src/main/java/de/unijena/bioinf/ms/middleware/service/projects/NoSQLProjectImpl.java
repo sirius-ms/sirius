@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
@@ -56,6 +57,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
@@ -761,6 +763,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
+    private Pair<String[], Database.SortOrder[]> sortFoldChange(Sort sort) {
+        return sort(sort, Pair.of("foldChange", Database.SortOrder.DESCENDING), Function.identity());
+    }
+
     private Filter spectralMatchFilter(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
         long longId = Long.parseLong(alignedFeatureId);
         return Filter.and(
@@ -1201,6 +1207,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .luceneQuery(group.getLuceneQuery())
                 .groupType(group.getGroupType())
                 .categories(new ArrayList<>(group.getCategories()))
+                .build();
+    }
+
+    private FoldChange.AlignedFeatureFoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
+        return FoldChange.AlignedFeatureFoldChange.builder()
+                .alignedFeatureId(Long.toString(foldChange.getAlignedFeatureId()))
+                .leftGroup(foldChange.getLeftGroup())
+                .rightGroup(foldChange.getRightGroup())
+                .aggregation(foldChange.getAggregation())
+                .quantification(foldChange.getQuantification())
+                .foldChange(foldChange.getFoldChange())
+                .build();
+    }
+
+    private FoldChange.CompoundFoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
+        return FoldChange.CompoundFoldChange.builder()
+                .compoundId(Long.toString(foldChange.getCompoundId()))
+                .leftGroup(foldChange.getLeftGroup())
+                .rightGroup(foldChange.getRightGroup())
+                .aggregation(foldChange.getAggregation())
+                .quantification(foldChange.getQuantification())
+                .foldChange(foldChange.getFoldChange())
                 .build();
     }
 
@@ -1900,6 +1928,98 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         storage().remove(group.get());
+    }
+
+    @SneakyThrows
+    @Override
+    @SuppressWarnings("unchecked")
+    public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
+        List<F> objects;
+        long total;
+        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
+            if (AlignedFeature.class.equals(target)) {
+                objects = (List<F>) storage()
+                        .findAllStr(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
+                        .map(this::convertToApiFoldChange)
+                        .toList();
+            } else if (Compound.class.equals(target)) {
+                objects = (List<F>) storage()
+                        .findAllStr(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
+                        .map(this::convertToApiFoldChange)
+                        .toList();
+            } else {
+                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+            }
+            total = objects.size();
+        } else {
+            Pair<String[], Database.SortOrder[]> sort = sortRun(pageable.getSort());
+            if (AlignedFeature.class.equals(target)) {
+                objects = (List<F>) storage().findAllStr(
+                                de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class,
+                                pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+                        .map(fc -> convertToApiFoldChange(fc))
+                        .toList();
+                total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class);
+            } else if (Compound.class.equals(target)) {
+                objects = (List<F>) storage().findAllStr(
+                                de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class,
+                                pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+                        .map(fc -> convertToApiFoldChange(fc))
+                        .toList();
+                total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class);
+            } else {
+                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+            }
+        }
+
+        return new PageImpl<>(objects, pageable, total);
+    }
+
+    @SneakyThrows
+    @Override
+    @SuppressWarnings("unchecked")
+    public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
+        if (AlignedFeature.class.equals(target)) {
+            return (List<F>) storage()
+                    .findStr(Filter.where("foreignId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
+                    .map(this::convertToApiFoldChange)
+                    .toList();
+        } else if (Compound.class.equals(target)) {
+            return  (List<F>) storage()
+                    .findStr(Filter.where("foreignId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
+                    .map(this::convertToApiFoldChange)
+                    .toList();
+        } else {
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+        }
+    }
+
+    @SneakyThrows
+    @Override
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationType quantification) {
+        if (AlignedFeature.class.equals(target)) {
+            storage().removeAll(
+                    Filter.and(
+                            Filter.where("leftGroup").eq(left),
+                            Filter.where("rightGroup").eq(right),
+                            Filter.where("aggregation").eq(aggregation),
+                            Filter.where("quantification").eq(quantification)
+                    ),
+                    de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class
+            );
+        } else if (Compound.class.equals(target)) {
+            storage().removeAll(
+                    Filter.and(
+                            Filter.where("leftGroup").eq(left),
+                            Filter.where("rightGroup").eq(right),
+                            Filter.where("aggregation").eq(aggregation),
+                            Filter.where("quantification").eq(quantification)
+                    ),
+                    de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class
+            );
+        }else {
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+        }
     }
 
     private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {
