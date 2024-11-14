@@ -35,9 +35,9 @@ public abstract class Statistics {
     @Id
     protected long id;
 
-    protected long leftGroupId;
+    protected String leftGroup;
 
-    protected long rightGroupId;
+    protected String rightGroup;
 
     protected AggregationType aggregation;
 

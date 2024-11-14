@@ -55,7 +55,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
         + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
         + "corresponding annotation results (which are usually computed on a per-feature basis)")
-public class CompoundController implements StatisticsController<FoldChange.CompoundFoldChange> {
+public class CompoundController implements StatisticsController<Compound, FoldChange.CompoundFoldChange> {
 
     private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
@@ -195,4 +195,10 @@ public class CompoundController implements StatisticsController<FoldChange.Compo
     public ComputeService getComputeService() {
         return computeService;
     }
+
+    @Override
+    public Class<Compound> getTarget() {
+        return Compound.class;
+    }
+
 }

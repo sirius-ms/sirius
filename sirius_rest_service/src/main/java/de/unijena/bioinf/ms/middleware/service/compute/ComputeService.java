@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.service.compute;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.DisposableBean;
@@ -44,6 +46,9 @@ public interface ComputeService extends DisposableBean {
 
     Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
+
+    Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target,
+                                     @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitCommandJob(@NotNull Project<?> psm, CommandSubmission commandSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields);

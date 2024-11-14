@@ -58,7 +58,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeatureController implements StatisticsController<FoldChange.AlignedFeatureFoldChange> {
+public class AlignedFeatureController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange> {
 
     private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
@@ -825,6 +825,11 @@ public class AlignedFeatureController implements StatisticsController<FoldChange
     @Override
     public ComputeService getComputeService() {
         return computeService;
+    }
+
+    @Override
+    public Class<AlignedFeature> getTarget() {
+        return AlignedFeature.class;
     }
 }
 

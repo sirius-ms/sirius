@@ -31,10 +31,12 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -182,6 +184,12 @@ public interface Project<PSM extends ProjectSpaceManager> {
     TagCategoryGroup addTagGroup(String name, String query, String type);
 
     void deleteTagGroup(String name);
+
+    <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
+
+    <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
+
+    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationType quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

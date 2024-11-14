@@ -364,6 +364,87 @@
         "deprecated": true
       }
     },
+    "/api/projects/{projectId}/compounds/foldchange/compute": {
+      "put": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "TODO doc\n Import and Align full MS-Runs from various formats into the specified project as background job.",
+        "description": "TODO doc\n Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+        "operationId": "computeFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MODE"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/categories": {
       "get": {
         "tags": [
@@ -546,8 +627,8 @@
         "tags": [
           "Tag categories (EXPERIMENTAL)"
         ],
-        "summary": "Delete tag categories with the given names from the specified project-space.",
-        "description": "Delete tag categories with the given names from the specified project-space.",
+        "summary": "Delete tag categories with the given name from the specified project-space.",
+        "description": "Delete tag categories with the given name from the specified project-space.",
         "operationId": "deleteCategories",
         "parameters": [
           {
@@ -572,6 +653,220 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/categories/groups/{groupName}": {
+      "get": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Get tag category group by name in the given project-space.",
+        "description": "Get tag category group by name in the given project-space.",
+        "operationId": "getGroupByName",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategoryGroup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Group tag categories in the project.",
+        "description": "Group tag categories in the project. The group name must not exist in the project.",
+        "operationId": "addGroup",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of the new group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "filter query to create the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "type of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the tag category group that was added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategoryGroup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Delete tag category groups with the given name from the specified project-space.",
+        "description": "Delete tag category groups with the given name from the specified project-space.",
+        "operationId": "deleteGroup",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of group to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/foldchange/compute": {
+      "put": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "TODO doc\n Import and Align full MS-Runs from various formats into the specified project as background job.",
+        "description": "TODO doc\n Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+        "operationId": "computeFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MODE"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
           }
         }
       }
@@ -3169,7 +3464,7 @@
               "type": "string",
               "default": "APEX_HEIGHT",
               "enum": [
-                "APEX_HEIGHT",
+                "APEX_INTENSITY",
                 "AREA_UNDER_CURVE",
                 "APEX_MASS",
                 "AVERAGE_MASS",
@@ -3220,7 +3515,7 @@
               "type": "string",
               "default": "APEX_HEIGHT",
               "enum": [
-                "APEX_HEIGHT",
+                "APEX_INTENSITY",
                 "AREA_UNDER_CURVE",
                 "APEX_MASS",
                 "AVERAGE_MASS",
@@ -3336,6 +3631,214 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/foldchange": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "operationId": "listFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompoundFoldChange"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Compounds"
+        ],
+        "operationId": "deleteFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MODE"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/foldchange/{objectId}": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "operationId": "getFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundFoldChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/cf-data": {
       "get": {
         "tags": [
@@ -3397,7 +3900,7 @@
           {
             "name": "categoryType",
             "in": "path",
-            "description": "name of the category",
+            "description": "type of the category",
             "required": true,
             "schema": {
               "type": "string"
@@ -3413,6 +3916,87 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/categories/groups": {
+      "get": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Get all tag category groups in the given project-space.",
+        "description": "Get all tag category groups in the given project-space.",
+        "operationId": "getGroups",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag category groups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategoryGroup"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/categories/groups/type/{groupType}": {
+      "get": {
+        "tags": [
+          "Tag categories (EXPERIMENTAL)"
+        ],
+        "summary": "Get tag category groups by type in the given project-space.",
+        "description": "Get tag category groups by type in the given project-space.",
+        "operationId": "getGroupsByType",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupType",
+            "in": "path",
+            "description": "type of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategoryGroup"
                   }
                 }
               }
@@ -3936,7 +4520,7 @@
               "type": "string",
               "default": "APEX_HEIGHT",
               "enum": [
-                "APEX_HEIGHT",
+                "APEX_INTENSITY",
                 "AREA_UNDER_CURVE",
                 "APEX_MASS",
                 "AVERAGE_MASS",
@@ -5512,7 +6096,7 @@
               "type": "string",
               "default": "APEX_HEIGHT",
               "enum": [
-                "APEX_HEIGHT",
+                "APEX_INTENSITY",
                 "AREA_UNDER_CURVE",
                 "APEX_MASS",
                 "AVERAGE_MASS",
@@ -5609,6 +6193,214 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/foldchange": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "listFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeatureFoldChange"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "deleteFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MODE"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE",
+                "APEX_MASS",
+                "AVERAGE_MASS",
+                "APEX_RT",
+                "FULL_WIDTH_HALF_MAX"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/foldchange/{objectId}": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "getFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlignedFeatureFoldChange"
+                  }
                 }
               }
             }
@@ -6225,6 +7017,90 @@
           }
         }
       },
+      "Job": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier to access the job via the API"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command string of the executed Task",
+            "nullable": true
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "affectedCompoundIds": {
+            "type": "array",
+            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "affectedAlignedFeatureIds": {
+            "type": "array",
+            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          }
+        },
+        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
+      },
+      "JobProgress": {
+        "type": "object",
+        "properties": {
+          "indeterminate": {
+            "type": "boolean",
+            "description": "Is the progress indeterminate or not",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by user or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
+            "enum": [
+              "WAITING",
+              "READY",
+              "QUEUED",
+              "SUBMITTED",
+              "RUNNING",
+              "CANCELED",
+              "FAILED",
+              "DONE"
+            ]
+          },
+          "currentProgress": {
+            "type": "integer",
+            "description": "Current progress value of the job.",
+            "format": "int64",
+            "nullable": true
+          },
+          "maxProgress": {
+            "type": "integer",
+            "description": "Progress value to reach (might also change during execution)",
+            "format": "int64",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Progress information and warnings.",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the job did not finish successfully failed.",
+            "nullable": true
+          }
+        },
+        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api.",
+        "nullable": true
+      },
       "TagCategoryImport": {
         "type": "object",
         "properties": {
@@ -6289,6 +7165,26 @@
           },
           "editable": {
             "type": "boolean"
+          }
+        }
+      },
+      "TagCategoryGroup": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "luceneQuery": {
+            "type": "string"
+          },
+          "groupType": {
+            "type": "string"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -6943,90 +7839,6 @@
           "progress",
           "affectedIds"
         ]
-      },
-      "Job": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier to access the job via the API"
-          },
-          "command": {
-            "type": "string",
-            "description": "Command string of the executed Task",
-            "nullable": true
-          },
-          "progress": {
-            "$ref": "#/components/schemas/JobProgress"
-          },
-          "affectedCompoundIds": {
-            "type": "array",
-            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "affectedAlignedFeatureIds": {
-            "type": "array",
-            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          }
-        },
-        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
-      },
-      "JobProgress": {
-        "type": "object",
-        "properties": {
-          "indeterminate": {
-            "type": "boolean",
-            "description": "Is the progress indeterminate or not",
-            "nullable": true
-          },
-          "state": {
-            "type": "string",
-            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by user or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
-            "enum": [
-              "WAITING",
-              "READY",
-              "QUEUED",
-              "SUBMITTED",
-              "RUNNING",
-              "CANCELED",
-              "FAILED",
-              "DONE"
-            ]
-          },
-          "currentProgress": {
-            "type": "integer",
-            "description": "Current progress value of the job.",
-            "format": "int64",
-            "nullable": true
-          },
-          "maxProgress": {
-            "type": "integer",
-            "description": "Progress value to reach (might also change during execution)",
-            "format": "int64",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "Progress information and warnings.",
-            "nullable": true
-          },
-          "errorMessage": {
-            "type": "string",
-            "description": "Error message if the job did not finish successfully failed.",
-            "nullable": true
-          }
-        },
-        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api.",
-        "nullable": true
       },
       "CommandSubmission": {
         "required": [
@@ -8705,7 +9517,7 @@
           "quantificationType": {
             "type": "string",
             "enum": [
-              "APEX_HEIGHT",
+              "APEX_INTENSITY",
               "AREA_UNDER_CURVE",
               "APEX_MASS",
               "AVERAGE_MASS",
@@ -8797,6 +9609,90 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Compound"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CompoundFoldChange": {
+        "type": "object",
+        "properties": {
+          "leftGroup": {
+            "type": "string"
+          },
+          "rightGroup": {
+            "type": "string"
+          },
+          "aggregation": {
+            "type": "string",
+            "enum": [
+              "AVG",
+              "MIN",
+              "MAX",
+              "MODE"
+            ]
+          },
+          "quantification": {
+            "type": "string",
+            "enum": [
+              "APEX_INTENSITY",
+              "AREA_UNDER_CURVE",
+              "APEX_MASS",
+              "AVERAGE_MASS",
+              "APEX_RT",
+              "FULL_WIDTH_HALF_MAX"
+            ]
+          },
+          "foldChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "compoundId": {
+            "type": "string"
+          }
+        }
+      },
+      "PageCompoundFoldChange": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompoundFoldChange"
             }
           },
           "number": {
@@ -9236,6 +10132,90 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
+            }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlignedFeatureFoldChange": {
+        "type": "object",
+        "properties": {
+          "leftGroup": {
+            "type": "string"
+          },
+          "rightGroup": {
+            "type": "string"
+          },
+          "aggregation": {
+            "type": "string",
+            "enum": [
+              "AVG",
+              "MIN",
+              "MAX",
+              "MODE"
+            ]
+          },
+          "quantification": {
+            "type": "string",
+            "enum": [
+              "APEX_INTENSITY",
+              "AREA_UNDER_CURVE",
+              "APEX_MASS",
+              "AVERAGE_MASS",
+              "APEX_RT",
+              "FULL_WIDTH_HALF_MAX"
+            ]
+          },
+          "foldChange": {
+            "type": "number",
+            "format": "double"
+          },
+          "alignedFeatureId": {
+            "type": "string"
+          }
+        }
+      },
+      "PageAlignedFeatureFoldChange": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeatureFoldChange"
             }
           },
           "number": {
