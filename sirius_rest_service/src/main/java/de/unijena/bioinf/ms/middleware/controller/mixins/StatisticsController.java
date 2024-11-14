@@ -24,16 +24,22 @@ import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import org.jetbrains.annotations.NotNull;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.*;
 
-public interface StatisticsController<F extends FoldChange> extends ProjectProvidingController, ComputeServiceController {
+import java.util.EnumSet;
+import java.util.List;
+
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+
+public interface StatisticsController<T, F extends FoldChange> extends ProjectProvidingController, ComputeServiceController {
+
+
+    Class<T> getTarget();
 
     /**
      * TODO doc
@@ -46,43 +52,42 @@ public interface StatisticsController<F extends FoldChange> extends ProjectProvi
     @PutMapping(value = "/foldchange/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
     default Job computeFoldChange(
             @PathVariable String projectId,
-            @PathVariable String leftGroupName,
-            @PathVariable String rightGroupName,
-            @PathVariable AggregationType aggregationType,
-            @PathVariable QuantificationType quantificationType
+            @NotNull @RequestParam String left,
+            @NotNull @RequestParam String right,
+            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification,
+            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
             ) {
-        // TODO
-        return null;
+        // TODO test this
+        return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), left, right, aggregation, quantification, getTarget(), removeNone(optFields));
     }
 
     @GetMapping(value = "/foldchange", produces = MediaType.APPLICATION_JSON_VALUE)
     default Page<F> listFoldChange(
             @PathVariable String projectId,
-            @PathVariable String leftGroupName,
-            @PathVariable String rightGroupName,
             @ParameterObject Pageable pageable
     ) {
-        return null;
-//        return projectsProvider.getProjectOrThrow(projectId).findObjectsByTag(getTaggable(), filter, pageable, optFields);
+        return getProjectsProvider().getProjectOrThrow(projectId).listFoldChanges(getTarget(), pageable);
     }
 
     @GetMapping(value = "/foldchange/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    default F getFoldChange(
+    default List<F> getFoldChange(
             @PathVariable String projectId,
             @PathVariable String objectId,
-            @PathVariable String leftGroupName,
-            @PathVariable String rightGroupName
+            @ParameterObject Pageable pageable
     ) {
-        return null;
+        return getProjectsProvider().getProjectOrThrow(projectId).getFoldChanges(getTarget(), objectId);
     }
 
     @DeleteMapping(value = "/foldchange")
     default void deleteFoldChange(
             @PathVariable String projectId,
-            @PathVariable String leftGroupName,
-            @PathVariable String rightGroupName
+            @NotNull @RequestParam String left,
+            @NotNull@RequestParam String right,
+            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification
     ) {
-//        return projectsProvider.getProjectOrThrow(projectId).findObjectsByTag(getTaggable(), filter, pageable, optFields);
+        getProjectsProvider().getProjectOrThrow(projectId).deleteFoldChange(getTarget(), left, right, aggregation, quantification);
     }
 
 }
