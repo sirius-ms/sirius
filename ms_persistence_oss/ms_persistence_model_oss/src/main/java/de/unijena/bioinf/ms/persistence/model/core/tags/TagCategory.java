@@ -36,7 +36,7 @@ public class TagCategory {
     @Getter
     @AllArgsConstructor
     public enum ValueType {
-        NONE(Void.class), BOOL(Boolean.class), INT(Integer.class), DOUBLE(Double.class), STRING(String.class), DATE(Long.class), TIME(Long.class);
+        NONE(Void.class), BOOLEAN(Boolean.class), INTEGER(Integer.class), DOUBLE(Double.class), STRING(String.class), DATE(Long.class), TIME(Long.class);
         private final Class<?> valueClass;
     }
 
@@ -46,8 +46,6 @@ public class TagCategory {
     private String name;
 
     private String description;
-
-    private String type;
 
     private ValueType valueType;
 

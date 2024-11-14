@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
@@ -299,6 +300,72 @@ public class NoSQLProjectTest {
         }
 
     }
+
+    @Test
+    public void testGroups() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            List<TagCategoryImport> catIn = List.of(
+                    TagCategoryImport.builder().name("c0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).categoryType("foo").build(),
+                    TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(true, false)).build(),
+                    TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, List.of(0, 1)).build(),
+                    TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
+                    TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
+            );
+
+            project.addCategories(catIn, true);
+
+            project.addTagGroup("group1", "name:c0 AND categoryType:foo", "type1");
+            project.addTagGroup("group2", "valueType:INTEGER", "type1");
+            project.addTagGroup("group3", "name:c1 OR name:c3", "type2");
+
+            Map<String, TagCategoryGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagCategoryGroup::getName, Function.identity()));
+
+            Assert.assertEquals(3, groups.size());
+            Assert.assertTrue(groups.containsKey("group1"));
+            Assert.assertTrue(groups.containsKey("group2"));
+            Assert.assertTrue(groups.containsKey("group3"));
+            Assert.assertEquals("type1", groups.get("group1").getGroupType());
+            Assert.assertEquals("type1", groups.get("group2").getGroupType());
+            Assert.assertEquals("type2", groups.get("group3").getGroupType());
+            Assert.assertEquals(1, groups.get("group1").getCategories().size());
+            Assert.assertEquals(1, groups.get("group2").getCategories().size());
+            Assert.assertEquals(2, groups.get("group3").getCategories().size());
+            Assert.assertEquals("c0", groups.get("group1").getCategories().getFirst());
+            Assert.assertEquals("c2", groups.get("group2").getCategories().getFirst());
+            Assert.assertTrue(groups.get("group3").getCategories().contains("c1"));
+            Assert.assertTrue(groups.get("group3").getCategories().contains("c3"));
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("foo"));
+            TagCategoryGroup group = project.findTagGroup("group1");
+            Assert.assertNotNull(group);
+            Assert.assertEquals("group1", group.getName());
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroupsByType("foo"));
+            List<String> groupNames = project.findTagGroupsByType("type1").stream().map(TagCategoryGroup::getName).toList();
+            Assert.assertEquals(2, groupNames.size());
+            Assert.assertTrue(groupNames.contains("group1"));
+            Assert.assertTrue(groupNames.contains("group2"));
+
+            project.deleteCategory("c3");
+            group = project.findTagGroup("group3");
+            Assert.assertEquals(1, group.getCategories().size());
+            Assert.assertEquals("c1", group.getCategories().getFirst());
+            project.deleteCategory("c1");
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("group3"));
+
+            project.deleteTagGroup("group2");
+            groupNames = project.findTagGroups().stream().map(TagCategoryGroup::getName).toList();
+            Assert.assertEquals(1, groupNames.size());
+            Assert.assertEquals("group1", groupNames.getFirst());
+        }
+    }
+
+    // TODO test fold change
 
     @Test
     public void testTags() throws IOException {
