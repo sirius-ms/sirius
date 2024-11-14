@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.projectspace.Instance;
@@ -171,6 +172,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
     void deleteCategory(String categoryName);
 
     TagCategory addPossibleValuesToCategory(String categoryName, List<?> values);
+
+    List<TagCategoryGroup> findTagGroups();
+
+    List<TagCategoryGroup> findTagGroupsByType(String type);
+
+    TagCategoryGroup findTagGroup(String name);
+
+    TagCategoryGroup addTagGroup(String name, String query, String type);
+
+    void deleteTagGroup(String name);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

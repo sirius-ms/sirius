@@ -35,7 +35,6 @@ public abstract class FoldChange extends Statistics implements ForeignKey {
 
     protected double foldChange;
 
-    @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
     @Getter
@@ -45,7 +44,6 @@ public abstract class FoldChange extends Statistics implements ForeignKey {
 
     }
 
-    @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
     @Getter
