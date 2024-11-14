@@ -21,8 +21,11 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.ExtendedConnectivityProperty;
 import de.unijena.bioinf.ChemistryBase.fp.SubstructureProperty;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -30,6 +33,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.color.IAtomColorer;
+import org.openscience.cdk.renderer.color.UniColor;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -44,11 +49,12 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class StructurePreview extends JPanel implements Runnable {
+public class StructurePreview extends JPanel implements Runnable, PropertyChangeListenerEDT {
 
     protected static Logger logger = LoggerFactory.getLogger(StructurePreview.class);
     protected final FingerprintVisualization[] visualizations;
@@ -61,10 +67,12 @@ public class StructurePreview extends JPanel implements Runnable {
     protected volatile boolean shutdown = false;
 
     public StructurePreview(FingerprintList table) {
-        this(table.visualizations);
+        this(table.visualizations, table.gui);
     }
 
-    public StructurePreview(FingerprintVisualization[] visualizations) {
+    public StructurePreview(FingerprintVisualization[] visualizations, SiriusGui gui) {
+        gui.getProperties().addPropertyChangeListener("molecularStructuresDisplayColors", this);
+
         setBackground(Colors.BACKGROUND);
         this.visualizations = visualizations;
         this.entry = null;
@@ -82,8 +90,7 @@ public class StructurePreview extends JPanel implements Runnable {
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 StandardGenerator.HighlightStyle.Colored);
-        renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new ThemedAtomColors(Colors.MolecularStructures.SELECTED_SUBSTRUCTURE));
+        setAtomColoring(gui.getProperties().getMolecularStructureDisplayColors());
 
         setPreferredSize(new Dimension(0, 220));
     }
@@ -258,6 +265,25 @@ public class StructurePreview extends JPanel implements Runnable {
                     b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.MolecularStructures.BACKGROUND_STRUCTURE);
                 }
             }
+        }
+    }
+
+    @Override
+    public void propertyChangeInEDT(PropertyChangeEvent propertyChangeEvent) {
+        if (propertyChangeEvent.getNewValue() instanceof MolecularStructuresDisplayColors mode) {
+            setAtomColoring(mode);
+            repaint();
+        }
+    }
+
+    private void setAtomColoring(MolecularStructuresDisplayColors mode) {
+        if (mode == MolecularStructuresDisplayColors.MONOCHROME) {
+            Color chosenColor = Colors.FOREGROUND_DATA;
+            IAtomColorer atomColorer = new UniColor(chosenColor);
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, atomColorer);
+        } else {
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
+                    new ThemedAtomColors(Colors.MolecularStructures.SELECTED_SUBSTRUCTURE));
         }
     }
 }
