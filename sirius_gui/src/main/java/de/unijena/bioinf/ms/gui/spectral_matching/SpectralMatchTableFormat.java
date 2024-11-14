@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import io.sirius.ms.sdk.model.BasicSpectrum;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
@@ -68,15 +68,18 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
     public Object getColumnValue(SpectralMatchBean baseObject, int column) {
         return switch (column) {
             case 0 -> baseObject.getRank();
-            case 1 -> baseObject.getReference().map(BasicSpectrum::getName).orElse("");
+            case 1 -> baseObject.getReference().map(BasicSpectrum::getName).orElse(null);
             case 2 -> baseObject.getMatch().getMolecularFormula();
             case 3 -> baseObject.getMatch().getSmiles();
-            case 4 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).map(d -> Double.toString(d)).orElse("N/A");
+            case 4 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).orElse(null);
             case 5 -> baseObject.getMatch().getSimilarity();
             case 6 -> baseObject.getMatch().getSharedPeaks();
-            case 7 -> Optional.ofNullable(baseObject.getMatch().getAdduct()).orElse("N/A");
-            case 8 -> baseObject.getReference().map(BasicSpectrum::getCollisionEnergy).orElse("N/A");
-//            case 8 -> "N/A"; //todo nightsky -> do we want to add this info to the api model?
+            case 7 -> baseObject.getMatch().getAdduct();
+            case 8 -> baseObject.getReference()
+                    .map(BasicSpectrum::getCollisionEnergy)
+                    .map(CollisionEnergy::fromStringOrNull)
+                    .orElse(CollisionEnergy.none());
+//            case 8 -> "N/A"; //do we want to add this info to the nightsky api model?
             case 9 -> baseObject.getMatch().getDbName();
             case 10 -> baseObject.getDBLink();
             case 11 -> isBest.apply(baseObject);
