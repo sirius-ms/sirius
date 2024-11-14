@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.persistence.model.core.tags;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -40,6 +42,6 @@ public class TagCategoryGroup {
 
     private String groupType;
 
-    private long[] objectIds;
+    private List<String> categories;
 
 }

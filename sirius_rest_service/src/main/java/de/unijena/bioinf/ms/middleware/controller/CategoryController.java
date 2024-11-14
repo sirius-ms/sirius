@@ -131,34 +131,31 @@ public class CategoryController {
      */
     @GetMapping(value = "/groups", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TagCategoryGroup> getGroups(@PathVariable String projectId) {
-//        return projectsProvider.getProjectOrThrow(projectId).findCategories();
-        return null;
+        return projectsProvider.getProjectOrThrow(projectId).findTagGroups();
     }
 
     /**
      * Get tag category groups by type in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param groupType type of the category group
+     * @param groupType type of the group
      * @return Tag categories.
      */
     @GetMapping(value = "/groups/type/{groupType}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TagCategoryGroup> getGroupsByType(@PathVariable String projectId, @PathVariable String groupType) {
-//        return projectsProvider.getProjectOrThrow(projectId).findCategoriesByType(categoryType);
-        return null;
+        return projectsProvider.getProjectOrThrow(projectId).findTagGroupsByType(groupType);
     }
 
     /**
      * Get tag category group by name in the given project-space.
      *
-     * @param projectId    project-space to read from.
-     * @param groupName name of the category
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
      * @return Tag category.
      */
     @GetMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public TagCategoryGroup getGroupByName(@PathVariable String projectId, @PathVariable String groupName) {
-//        return projectsProvider.getProjectOrThrow(projectId).findCategoryByName(groupName);
-        return null;
+        return projectsProvider.getProjectOrThrow(projectId).findTagGroup(groupName);
     }
 
     /**
@@ -166,17 +163,18 @@ public class CategoryController {
      *
      * @param projectId project-space to add to.
      * @param groupName name of the new group
-     * @param query     query to create the group
-     * @return the tag categories that have been added
+     * @param filter    filter query to create the group
+     * @param type      type of the group
+     * @return the tag category group that was added
      */
-    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagCategory> addGroup(
+    @PutMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TagCategoryGroup addGroup(
             @PathVariable String projectId,
             @PathVariable String groupName,
-            @PathVariable String query // TODO query type?
+            @RequestParam String filter,
+            @RequestParam String type
     ) {
-        return null;
-//        return projectsProvider.getProjectOrThrow(projectId).addCategories(categories, true);
+        return projectsProvider.getProjectOrThrow(projectId).addTagGroup(groupName, filter, type);
     }
 
     /**
@@ -185,9 +183,9 @@ public class CategoryController {
      * @param projectId  project-space to delete from.
      * @param groupName  name of group to delete.
      */
-    @DeleteMapping(value = "/{categoryName}")
+    @DeleteMapping(value = "/groups/{groupName}")
     public void deleteGroup(@PathVariable String projectId, @PathVariable String groupName) {
-//        projectsProvider.getProjectOrThrow(projectId).deleteCategory(categoryName);
+        projectsProvider.getProjectOrThrow(projectId).deleteTagGroup(groupName);
     }
 
 }

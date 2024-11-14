@@ -71,6 +71,7 @@ dependencies {
     implementation "org.apache.commons:commons-text:$commons_text_version"
 
     implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
+    implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->

@@ -54,6 +54,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
@@ -308,6 +309,31 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public TagCategory addPossibleValuesToCategory(String categoryName, List<?> values) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagCategoryGroup> findTagGroups() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagCategoryGroup> findTagGroupsByType(String type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagCategoryGroup findTagGroup(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagCategoryGroup addTagGroup(String name, String query, String type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTagGroup(String name) {
         throw new UnsupportedOperationException();
     }
 
