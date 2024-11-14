@@ -82,7 +82,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
         ActionTable<SpectralMatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
         Comparator<CollisionEnergy> minCEComparator = CollisionEnergy.getMinEnergyComparator();
-        Comparator ceComparator = (Comparator<SpectralMatchBean>) (b1, b2) -> minCEComparator.compare(
+        Comparator<?> ceComparator = (Comparator<SpectralMatchBean>) (b1, b2) -> minCEComparator.compare(
                 b1.getReference().map(spectrum -> {
                     CollisionEnergy energy = CollisionEnergy.fromStringOrNull(spectrum.getCollisionEnergy());
                     return energy != null ? energy : CollisionEnergy.none();
@@ -92,7 +92,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                     return energy != null ? energy : CollisionEnergy.none();
                 }).orElse(CollisionEnergy.none()));
 
-        Comparator dbLinkComparator = Comparator.comparing((SpectralMatchBean b) -> b.getDBLink().toString());
+        Comparator<?> dbLinkComparator = Comparator.comparing((SpectralMatchBean b) -> b.getDBLink().toString());
 
         table.comparatorChooser.getComparatorsForColumn(7).clear();
         table.comparatorChooser.getComparatorsForColumn(7).add(ceComparator);
