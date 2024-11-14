@@ -37,7 +37,6 @@ import java.util.function.Function;
 public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
     protected NumberFormat nf = new DecimalFormat("#0.000");
 
-
     protected Color foreColor = Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR;
     protected Color backColor = Colors.CellsAndRows.Tables.ALTERNATING_ROW_1;
     protected String value;
@@ -47,16 +46,12 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
 
     private final Font customFont;
 
-    public SiriusResultTableCellRenderer(int highlightColumn, @NotNull Function<Object, String> toString, @Nullable Font customFont) {
-        this(highlightColumn,null, toString, customFont);
-    }
-
     public SiriusResultTableCellRenderer(int highlightColumn) {
-        this(highlightColumn, (NumberFormat) null, null);
+        this(highlightColumn, null, null);
     }
 
     public SiriusResultTableCellRenderer(int highlightColumn, @Nullable Font customFont) {
-        this(highlightColumn, (NumberFormat) null, customFont);
+        this(highlightColumn, null, customFont);
     }
 
     public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat) {
