@@ -102,6 +102,15 @@ class LiquidChromatographyPlot {
         if (this.order == "BY_INTENSITY") {
             comparisonFunction = (u,v)=>v.relativeMainFeatureIntensity-u.relativeMainFeatureIntensity;
         }
+
+        if (this.order == "ALPHABETICALLY_MAIN_FIRST") { //this is for adduct view, to ensure that correlated traces are sorted behind main feature
+            comparisonFunction = (u, v) => {
+                if (u.label.startsWith("[MAIN]") && !v.label.startsWith("[MAIN]")) return -1;
+                if (!u.label.startsWith("[MAIN]") && v.label.startsWith("[MAIN]")) return 1;
+                return u.label.localeCompare(v.label);
+            };
+        }
+
         this.samples = d3.select("#lclegend-container");
         this.samples.selectAll("ul").remove();
 

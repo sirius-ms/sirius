@@ -178,17 +178,18 @@ rect.terribleQualityFeatureBox {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
+    columns: 2;
 }
 
 .lclegend-item {
     display: flex;
     align-items: center;
-    width: 48%;
+    width: 96%;
     margin: 0%;
     box-sizing: border-box;
     padding:9px;
+    break-inside: avoid; /* prevent single item from splitting across columns */
+    border: 1px solid $BACKGROUND; /*'invisible' border to prevent jumping*/
 }
 .lclegend-item.lcfocused {
     border: 1px solid black;
