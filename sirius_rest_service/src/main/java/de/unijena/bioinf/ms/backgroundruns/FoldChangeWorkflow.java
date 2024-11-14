@@ -41,6 +41,7 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -101,7 +102,9 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
         return progressSupport.currentCombinedProgress();
     }
 
+    // TODO test the workflow and job submission!
     // TODO maybe return list of affected instances (see BackgroundRuns.cleanup())
+    // TODO re-build api
 
     @Override
     public void run() {
@@ -157,6 +160,8 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     AtomicReference<List<BasicJJob<?>>> jobs = new AtomicReference<>(new ArrayList<>());
 
                     if (AlignedFeature.class.equals(target)) {
+                        cleanupFoldChanges(FoldChange.AlignedFeaturesFoldChange.class);
+
                         AtomicReference<List<AlignedFeatures>> features = new AtomicReference<>(new ArrayList<>());
                         psm.getProject().getAllAlignedFeatures().forEach(af -> {
                             if (features.get().size() == 100) {
@@ -166,6 +171,8 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         });
                         jobs.get().add(submitAlignedFeaturesComputation(features.get(), leftRuns, rightRuns));
                     } else if (Compound.class.equals(target)) {
+                        cleanupFoldChanges(FoldChange.CompoundFoldChange.class);
+
                         AtomicReference<List<Compound>> compounds = new AtomicReference<>(new ArrayList<>());
                         psm.getProject().getAllCompounds().forEach(c -> {
                             jobs.get().add(submitCompoundComputation(compounds.get(), leftRuns, rightRuns));
@@ -226,7 +233,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                                         .build()
                                 );
                             }
-                            upsertFoldChanges(foldChanges, FoldChange.CompoundFoldChange.class);
+                            psm.getProject().getStorage().insertAll(foldChanges);
                             updateProgress(total.get(), progress.addAndGet(1));
                             return null;
                         }
@@ -272,7 +279,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                                         .build()
                                 );
                             }
-                            upsertFoldChanges(foldChanges, FoldChange.AlignedFeaturesFoldChange.class);
+                            psm.getProject().getStorage().insertAll(foldChanges);
                             updateProgress(total.get(), progress.addAndGet(1));
                             return null;
                         }
@@ -299,9 +306,16 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     };
                 }
 
-                private <F extends FoldChange> void upsertFoldChanges(List<F> foldChanges, Class<F> clazz) {
-                    // TODO how to efficiently check if the fc already exists? -> maybe I should check before running the computation?
-                    // TODO maybe also overwrite option?
+                private <F extends FoldChange> void cleanupFoldChanges(Class<F> clazz) throws IOException {
+                    psm.getProject().getStorage().removeAll(
+                            Filter.and(
+                                    Filter.where("left").eq(left),
+                                    Filter.where("right").eq(right),
+                                    Filter.where("aggregation").eq(aggregation),
+                                    Filter.where("quantification").eq(quantification)
+                            ),
+                            clazz
+                    );
                 }
 
             };
