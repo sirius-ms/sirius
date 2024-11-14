@@ -459,8 +459,13 @@ public class InstanceBean implements SiriusPCS {
     }
 
     private <R> R withSpectralMatchingCache(Function<SpectralMatchingCache, R> doWithCache) {
+        //double-checked locking, msData must be volatile
         if (spectralMatchingCache == null) {
-            spectralMatchingCache = new SpectralMatchingCache(this);
+            synchronized (this) {
+                if (spectralMatchingCache == null) {
+                    spectralMatchingCache = new SpectralMatchingCache(this);
+                }
+            }
         }
         return doWithCache.apply(spectralMatchingCache);
     }
