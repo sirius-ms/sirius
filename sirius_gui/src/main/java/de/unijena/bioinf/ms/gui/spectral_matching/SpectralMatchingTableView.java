@@ -110,7 +110,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
             return v.toString();
         };
         final SiriusResultTableCellRenderer defaultRenderer =
-                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize()));
+                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, null);
 
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
