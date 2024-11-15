@@ -20,7 +20,27 @@
 
 package de.unijena.bioinf.ms.gui.properties;
 
-public enum ConfidenceDisplayMode {
-    EXACT,
-    APPROXIMATE
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+
+public enum ConfidenceDisplayMode implements DescriptiveOptions {
+    APPROXIMATE ("Approximate (default)", "Select the confidence score display mode. \"exact\" will show confidences for the exact top hit structure to be correct. \"approximate\" will show confidences for the top hit or a sufficiently similar structure to be correct. Structure candidates that are within the similarity threshold are marked in green"),
+    EXACT ("Exact", "Select the confidence score display mode. \"exact\" will show confidences for the exact top hit structure to be correct. \"approximate\" will show confidences for the top hit or a sufficiently similar structure to be correct. Structure candidates that are within the similarity threshold are marked in green");
+
+    private final String description;
+    private final String displayName;
+
+    ConfidenceDisplayMode(String displayName, String description) {
+        this.displayName = displayName;
+        this.description = description;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
 }
