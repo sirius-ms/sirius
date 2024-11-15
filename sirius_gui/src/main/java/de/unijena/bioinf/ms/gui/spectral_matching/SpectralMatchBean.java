@@ -45,6 +45,11 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     private InstanceBean instance = null;
 
+    /**
+     * correponds to top molecular structure database hit (of a similar hit based on MCES distance in approximate mode)
+     */
+    private boolean isBest;
+
     public SpectralMatchBean(SpectralLibraryMatch match, InstanceBean instance) {
         this.match = match;
         try {
@@ -98,5 +103,13 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     public InstanceBean getParentInstance() {
         return instance;
+    }
+
+    public boolean isBest() {
+        return isBest;
+    }
+
+    protected void setBest(boolean best) {
+        isBest = best;
     }
 }
