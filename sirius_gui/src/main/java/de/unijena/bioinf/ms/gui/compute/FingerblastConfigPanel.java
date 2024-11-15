@@ -124,9 +124,9 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
     public void applyValuesFromPreset(Map<String, String> preset) {
         ExpansiveSearchConfidenceMode.Mode expansiveMode = ExpansiveSearchConfidenceMode.Mode.valueOf(preset.get("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode"));
         if (expansiveMode == ExpansiveSearchConfidenceMode.Mode.OFF) {
-            pubChemFallback.setEnabled(false);
+            pubChemFallback.setSelected(false);
         } else {
-            pubChemFallback.setEnabled(true);
+            pubChemFallback.setSelected(true);
             confidenceModeBox.setSelectedItem(expansiveMode);
         }
 

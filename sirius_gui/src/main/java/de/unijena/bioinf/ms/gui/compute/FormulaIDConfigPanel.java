@@ -309,7 +309,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                 .orElseThrow(() -> new UnsupportedOperationException("Could not parse algorithm profile " + profileString));
         profileSelector.setSelectedItem(instrument);
 
-        isotopeSettingsFilter.setEnabled(Boolean.parseBoolean(preset.get("IsotopeSettings.filter")));
+        isotopeSettingsFilter.setSelected(Boolean.parseBoolean(preset.get("IsotopeSettings.filter")));
 
         String isotopeMs2Setting = preset.get("IsotopeMs2Settings");
         try {
@@ -329,7 +329,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         candidatesSpinner.setValue(Integer.parseInt(preset.get("NumberOfCandidates")));
         candidatesPerIonSpinner.setValue(Integer.parseInt(preset.get("NumberOfCandidatesPerIonization")));
 
-        enforceElGordo.setEnabled(Boolean.parseBoolean(preset.get("EnforceElGordoFormula")));
+        enforceElGordo.setSelected(Boolean.parseBoolean(preset.get("EnforceElGordoFormula")));
 
         try {
             PrecursorIonType[] fallbackAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.fallback"));

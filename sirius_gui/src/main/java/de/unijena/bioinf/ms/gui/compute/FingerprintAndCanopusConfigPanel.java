@@ -33,6 +33,6 @@ public class FingerprintAndCanopusConfigPanel extends ConfigPanel{
 
     @Override
     public void applyValuesFromPreset(Map<String, String> preset) {
-        threshold.setEnabled(Boolean.parseBoolean(preset.get("FormulaResultThreshold")));
+        threshold.setSelected(Boolean.parseBoolean(preset.get("FormulaResultThreshold")));
     }
 }
