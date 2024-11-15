@@ -28,7 +28,6 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -79,7 +78,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
             }
         });
 
-        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
+        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(SpectralMatchBean::isMatchesTopStructureHit);
         ActionTable<SpectralMatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
         Comparator<CollisionEnergy> minCEComparator = CollisionEnergy.getMinEnergyComparator();
         Comparator<?> ceComparator = (Comparator<SpectralMatchBean>) (b1, b2) -> minCEComparator.compare(

@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
@@ -95,7 +94,6 @@ public class ResultPanel extends JTabbedPane {
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
-        gui.getProperties().addPropertyChangeListener("confidenceDisplayMode", (evt) -> {spectralMatchingPanel.repaint();});
 
         setSelectedIndex(1);
     }
