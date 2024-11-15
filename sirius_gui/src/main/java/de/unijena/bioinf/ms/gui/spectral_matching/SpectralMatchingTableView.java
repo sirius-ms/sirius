@@ -28,7 +28,6 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -79,7 +78,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
             }
         });
 
-        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
+        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(SpectralMatchBean::isMatchesTopStructureHit);
         ActionTable<SpectralMatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
         Comparator<CollisionEnergy> minCEComparator = CollisionEnergy.getMinEnergyComparator();
         Comparator<?> ceComparator = (Comparator<SpectralMatchBean>) (b1, b2) -> minCEComparator.compare(
@@ -110,11 +109,11 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
             return v.toString();
         };
         final SiriusResultTableCellRenderer defaultRenderer =
-                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize()));
+                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, null);
 
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
 
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer,
                 dbLink -> {
@@ -132,7 +131,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         return null;
                     }
                 }, DBLink::getId);
-        linkRenderer.registerToTable(table, 9);
+        linkRenderer.registerToTable(table, 10);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
