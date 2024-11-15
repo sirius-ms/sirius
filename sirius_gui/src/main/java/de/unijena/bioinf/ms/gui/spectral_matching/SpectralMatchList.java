@@ -40,7 +40,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBean> {
 
@@ -186,7 +185,6 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                     });
 
                     checkForInterruption();
-
                     refillElementsEDT(instanceBean, beans);
                     return true;
                 }
@@ -200,7 +198,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         String inchiKey = fingerprintCandidateBean.getCandidate().getInchiKey();
         double mces = Optional.ofNullable(fingerprintCandidateBean.getCandidate().getMcesDistToTopHit()).orElse(Double.MAX_VALUE);
         beans.forEach(bean -> {
-            bean.setBest(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getCandidateInChiKey()));
+            bean.setMatchesTopStructureHit(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getCandidateInChiKey()));
         });
     }
 
@@ -215,7 +213,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                 //loading additional structure candidates only as required
                 hasNext[0] = loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize);
             }
-            bean.setBest(mces != null && mces<= mcesThreshold);
+            bean.setMatchesTopStructureHit(mces != null && mces<= mcesThreshold);
         });
     }
 
@@ -237,13 +235,4 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
 
         return true;
     }
-
-
-    protected Function<SpectralMatchBean, Boolean> getBestFunc() {
-        //best match (used for highlighting in table view) is defined by the top structure database hit (and similar structures based on MCES)
-        return c -> {
-            return c.isBest();
-        };
-    }
-
 }
