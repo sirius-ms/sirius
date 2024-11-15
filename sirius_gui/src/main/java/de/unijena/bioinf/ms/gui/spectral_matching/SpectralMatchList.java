@@ -34,14 +34,9 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.PageStructureCandidateFormula;
-import io.sirius.ms.sdk.model.StructureCandidateFormula;
-import io.sirius.ms.sdk.model.StructureCandidateScored;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -158,12 +153,17 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
 
                     List<SpectralMatchBean> beans;
                     int total;
+                    final int mcesThreshold = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? 2 : 0; //threshold for top structure hits
                     if (fingerprintCandidateBean != null) {
                         beans = loadAll ? fingerprintCandidateBean.getAllSpectralMatches() : fingerprintCandidateBean.getTopSpectralMatches();
                         total = fingerprintCandidateBean.getNumberOfSpectralMatches();
+                        //flag library hits with top structure candidates. Theoretically, in this case, all library hits should have the same structure and either all match or not
+                        flagLibraryMatchesIfFingerprintCandidateIsBestStructureHit(fingerprintCandidateBean, beans, mcesThreshold);
                     } else if (instanceBean != null) {
                         beans = loadAll ? instanceBean.getAllSpectralMatches() : instanceBean.getTopSpectralMatches();
                         total = instanceBean.getNumberOfSpectralMatches();
+                        //flag library hits with top structure candidates
+                        flagLibraryMatchesOfAllBestStructureHits(instanceBean, beans, mcesThreshold);
                     } else {
                         beans = List.of();
                         total = 0;
@@ -196,37 +196,53 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         }
     }
 
-    protected Function<SpectralMatchBean, Boolean> getBestFunc() {
-        //best match (used for highlighting in table view) is defined by the top structure database hit.
-        return c -> {
-            if (c.getParentInstance() == null) return false;
+    private void flagLibraryMatchesIfFingerprintCandidateIsBestStructureHit(FingerprintCandidateBean fingerprintCandidateBean, List<SpectralMatchBean> beans, int mcesThreshold) {
+        String inchiKey = fingerprintCandidateBean.getCandidate().getInchiKey();
+        double mces = Optional.ofNullable(fingerprintCandidateBean.getCandidate().getMcesDistToTopHit()).orElse(Double.MAX_VALUE);
+        beans.forEach(bean -> {
+            bean.setBest(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getCandidateInChiKey()));
+        });
+    }
 
-            boolean isTopStructureHit = c.getParentInstance().getStructureAnnotation().map(StructureCandidateScored::getInchiKey)
-                    .map(key -> Objects.equals(key, c.getMatch().getCandidateInChiKey())).orElse(false);
-
-            if (isTopStructureHit) {
-                return true;
-            } else if (gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)){
-                //If Approximate confidence mode is active, also check for MCEs
-                int pageNum = 0;
-                final int pageSize = 10;
-                PageStructureCandidateFormula structureCandidates = c.getParentInstance().getStructureCandidatesPage(pageNum, pageSize, false);
-
-                while (structureCandidates  != null && structureCandidates.getContent() != null && !structureCandidates.getContent().isEmpty()) {
-                    Optional<StructureCandidateFormula> sameStructure = structureCandidates.getContent().stream().filter(sc -> Objects.equals(sc.getInchiKey(), c.getMatch().getCandidateInChiKey())).findAny();
-                    if (sameStructure.isPresent()) {
-                        //only one matching structure candidate is in the whole list
-                        return Optional.ofNullable(sameStructure.get().getMcesDistToTopHit()).orElse(Double.MAX_VALUE) <= 2;
-                    } else {
-                        ++pageNum;
-                        if (Optional.ofNullable(structureCandidates.getTotalPages()).orElse(Integer.MAX_VALUE) < pageNum) return false; //last page, but structure not found
-                        structureCandidates = c.getParentInstance().getStructureCandidatesPage(pageNum, pageSize, false); //load next page
-                    }
-                }
-                return false;
-            } else {
-                return false;
+    private void flagLibraryMatchesOfAllBestStructureHits(InstanceBean instanceBean, List<SpectralMatchBean> beans, int mcesThreshold) {
+        int[] pageNum = new int[]{0};
+        final int pageSize = 10; //if sorted, 99% of the hits should be in the first top 10 structures.
+        Map<String, Double> structureCandidateInchiKeyToMCES = new HashMap<>();
+        boolean[] hasNext = new boolean[]{loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize)};
+        beans.forEach(bean -> {
+            Double mces = structureCandidateInchiKeyToMCES.get(bean.getMatch().getCandidateInChiKey());
+            while (mces == null && hasNext[0]) {
+                //loading additional structure candidates only as required
+                hasNext[0] = loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize);
             }
+            bean.setBest(mces != null && mces<= mcesThreshold);
+        });
+    }
+
+    /**
+     *
+     * @param structureCandidates
+     * @param instanceBean
+     * @param pageNum
+     * @param pageSize
+     * @return false if no further candidates are available
+     */
+    private boolean loadNextPage(Map<String, Double> structureCandidates, InstanceBean instanceBean, int pageNum, int pageSize) {
+        PageStructureCandidateFormula page = instanceBean.getStructureCandidatesPage(pageNum, pageSize, false);
+        if (page == null || page.getContent() == null || page.getContent().isEmpty()) return false;
+
+        page.getContent().stream().filter(c -> Objects.nonNull(c.getInchiKey())).forEach( c -> {
+            structureCandidates.put(c.getInchiKey(), Optional.ofNullable(c.getMcesDistToTopHit()).orElse(Double.MAX_VALUE));
+        });
+
+        return true;
+    }
+
+
+    protected Function<SpectralMatchBean, Boolean> getBestFunc() {
+        //best match (used for highlighting in table view) is defined by the top structure database hit (and similar structures based on MCES)
+        return c -> {
+            return c.isBest();
         };
     }
 
