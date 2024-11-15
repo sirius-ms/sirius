@@ -317,6 +317,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         throw new ProjectTypeException("Project already contains data from direct API import. Additional MS run data (.mzml, .mzxml) cannot be added to this project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.DIRECT_IMPORT);
                 case PEAKLISTS ->
                         throw new ProjectTypeException("Project already contains peak-list data (e.g .ms, .mgf, .mat). Additional MS run data (.mzml, .mzxml) cannot be added to peak-list based projects. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.PEAKLISTS);
+                case UNALIGNED_RUNS -> {
+                    if (alignRuns) throw new ProjectStateException("Project already contains preprocessed features from aligning MS runs. Additional data cannot be added. Please create a new project to import your data.");
+                }
                 default ->
                         throw new ProjectStateException("Project already contains preprocessed features. It is currently not supported to add additional data after preprocessing has been performed. Please create a new project to import your data.");
             }
