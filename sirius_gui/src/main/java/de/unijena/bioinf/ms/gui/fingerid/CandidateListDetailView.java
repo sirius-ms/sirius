@@ -270,7 +270,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
 
             for (DatabaseLabel l : candidate.labels) {
-                if (l.rect.contains(point.x, point.y)) {
+                if (l.contains(point)) {
                     clickOnDBLabel(l, candidate);
                     break;
                 }

@@ -728,12 +728,12 @@ class SpectrumPlot extends Base {
             .attr("y", function (d) {
                 return self.y(d.intensity);
             })
-//            .style("width", "1px") //do not use attr for the width here, it will not allow to override the values from css!
+//            .style("width", "1px") //do not use attr for the width here, it will not allow to override the values from css! We fixed spectrum export by text-replace on the svg string
             .attr("height", function (d) {
                 return self.h - self.y(d.intensity);
             })
             .attr("id", function (d, i) {
-                return "peak" + i;
+                return "peak" + i; //if this id format ever changes, also adapt the code for svg export formatting in SpectraVisualizationPanel
             })
             .attr("class", function (d, i) {
                 return (self.selected.leftClick === i) ? "peak_select peak" : SpectrumPlot.resetColor(self, d);
