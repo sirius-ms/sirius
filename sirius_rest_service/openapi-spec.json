@@ -5399,6 +5399,9 @@
             "description": "Description of this project.",
             "nullable": true
           },
+          "type": {
+            "$ref": "#/components/schemas/ProjectType"
+          },
           "compatible": {
             "type": "boolean",
             "description": "Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.\n If true project is up-to-date and there are no restrictions regarding usage.\n If false project is incompatible and therefore \"read only\" until the incompatible results have been removed. See updateProject endpoint for further information\n If NULL the information has not been requested.",
@@ -5423,6 +5426,16 @@
             "nullable": true
           }
         }
+      },
+      "ProjectType": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "DIRECT_IMPORT",
+          "PEAKLISTS",
+          "ALIGNED_RUNS",
+          "UNALIGNED_RUNS"
+        ]
       },
       "SearchableDatabaseParameters": {
         "type": "object",
