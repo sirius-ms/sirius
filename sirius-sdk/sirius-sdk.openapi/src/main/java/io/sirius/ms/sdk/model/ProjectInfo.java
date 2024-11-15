@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.ProjectType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectInfo.JSON_PROPERTY_PROJECT_ID,
   ProjectInfo.JSON_PROPERTY_LOCATION,
   ProjectInfo.JSON_PROPERTY_DESCRIPTION,
+  ProjectInfo.JSON_PROPERTY_TYPE,
   ProjectInfo.JSON_PROPERTY_COMPATIBLE,
   ProjectInfo.JSON_PROPERTY_NUM_OF_FEATURES,
   ProjectInfo.JSON_PROPERTY_NUM_OF_COMPOUNDS,
@@ -45,6 +47,9 @@ public class ProjectInfo {
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
+
+  public static final String JSON_PROPERTY_TYPE = "type";
+  private ProjectType type;
 
   public static final String JSON_PROPERTY_COMPATIBLE = "compatible";
   private Boolean compatible;
@@ -134,6 +139,31 @@ public class ProjectInfo {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public ProjectInfo type(ProjectType type) {
+    
+    this.type = type;
+    return this;
+  }
+
+   /**
+   * Get type
+   * @return type
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ProjectType getType() {
+    return type;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setType(ProjectType type) {
+    this.type = type;
   }
 
   public ProjectInfo compatible(Boolean compatible) {
@@ -248,6 +278,7 @@ public class ProjectInfo {
     return Objects.equals(this.projectId, projectInfo.projectId) &&
         Objects.equals(this.location, projectInfo.location) &&
         Objects.equals(this.description, projectInfo.description) &&
+        Objects.equals(this.type, projectInfo.type) &&
         Objects.equals(this.compatible, projectInfo.compatible) &&
         Objects.equals(this.numOfFeatures, projectInfo.numOfFeatures) &&
         Objects.equals(this.numOfCompounds, projectInfo.numOfCompounds) &&
@@ -256,7 +287,7 @@ public class ProjectInfo {
 
   @Override
   public int hashCode() {
-    return Objects.hash(projectId, location, description, compatible, numOfFeatures, numOfCompounds, numOfBytes);
+    return Objects.hash(projectId, location, description, type, compatible, numOfFeatures, numOfCompounds, numOfBytes);
   }
 
   @Override
@@ -266,6 +297,7 @@ public class ProjectInfo {
     sb.append("    projectId: ").append(toIndentedString(projectId)).append("\n");
     sb.append("    location: ").append(toIndentedString(location)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    compatible: ").append(toIndentedString(compatible)).append("\n");
     sb.append("    numOfFeatures: ").append(toIndentedString(numOfFeatures)).append("\n");
     sb.append("    numOfCompounds: ").append(toIndentedString(numOfCompounds)).append("\n");
