@@ -47,9 +47,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -66,6 +64,7 @@ public class BatchComputeDialog extends JDialog {
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
 
+    public static final String DEFAULT_PRESET_DISPLAY_NAME = "default";
 
     // main parts
     private Box mainPanel;
@@ -86,6 +85,8 @@ public class BatchComputeDialog extends JDialog {
 
     private final SiriusGui gui;
 
+    private JobSubmission preset;
+
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
         gui.getConnectionMonitor().checkConnectionInBackground();
@@ -96,6 +97,9 @@ public class BatchComputeDialog extends JDialog {
         Jobs.runInBackgroundAndLoad(this, "Initializing Compute Dialog...", () -> {
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             setLayout(new BorderLayout());
+
+            JPanel presetPanel = makePresetPanel();
+            add(presetPanel, BorderLayout.NORTH);
 
             mainPanel = Box.createVerticalBox();
             mainPanel.setBorder(BorderFactory.createEmptyBorder());
@@ -231,6 +235,8 @@ public class BatchComputeDialog extends JDialog {
 
                 this.add(southPanel, BorderLayout.SOUTH);
             }
+
+            activatePreset(DEFAULT_PRESET_DISPLAY_NAME);
 
             //finalize panel build
             setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
@@ -539,6 +545,53 @@ public class BatchComputeDialog extends JDialog {
 
     private boolean isAnyAdductSelected(ActFormulaIDConfigPanel configPanel) {
         return !configPanel.getContent().getSelectedAdducts().isEmpty();
+    }
+
+    private JPanel makePresetPanel() {
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("Preset"));
+
+        List<String> presetNames = new ArrayList<>();
+        presetNames.add(DEFAULT_PRESET_DISPLAY_NAME);
+        presetNames.addAll(gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigNames()));
+
+        JComboBox<String> presetDropdown = new JComboBox<>(presetNames.toArray(String[]::new));
+        panel.add(presetDropdown);
+
+        JButton savePreset = new JButton("Save");
+        JButton saveAsPreset = new JButton("Save as");
+        JButton viewPreset = new JButton("View");
+        JButton removePreset = new JButton("Remove");
+
+        panel.add(savePreset);
+        panel.add(saveAsPreset);
+        panel.add(viewPreset);
+        panel.add(removePreset);
+
+        return panel;
+    }
+
+    private void activatePreset(String presetName) {
+        if (presetName.equals(DEFAULT_PRESET_DISPLAY_NAME)) {
+            preset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
+        } else {
+            preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
+            // todo check if has non-default non-UI elements
+        }
+
+        Map<String, String> configMap = preset.getConfigMap();
+
+        formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams().isEnabled(), configMap);
+        zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams().isEnabled(), configMap);
+
+        if (!preset.getFingerprintPredictionParams().isEnabled().equals(preset.getCanopusParams().isEnabled())) {
+            throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously");
+        }
+        fingerprintAndCanopusConfigPanel.applyValuesFromPreset(preset.getFingerprintPredictionParams().isEnabled(), configMap);
+        csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams().isEnabled(), configMap);
+        msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams().isEnabled(), configMap);
+
+        recomputeBox.setEnabled(preset.isRecompute());
     }
 
     //todo reenable in the future?

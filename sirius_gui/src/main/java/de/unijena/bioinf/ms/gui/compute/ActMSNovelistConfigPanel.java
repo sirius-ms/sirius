@@ -31,6 +31,7 @@ import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.Subscription;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
@@ -89,4 +90,10 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
         setButtonEnabled(enabled, "Can't connect to prediction server!");
     }
 
+    @Override
+    public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
+        if (enable != isToolSelected()) {
+            activationButton.doClick(0);
+        }
+    }
 }
