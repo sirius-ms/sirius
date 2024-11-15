@@ -176,12 +176,8 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {
         return c -> {
-            if (c.getScore() >= csiScoreStats.getMax()) //ensures that tophit is always best no matter what with mces
-                return true;
-            if (compoundList.getGui().getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)) {
-                return c.getCandidate().getMcesDistToTopHit() != null && c.getCandidate().getMcesDistToTopHit() <= 2;
-            }
-            return false;
+            final int threshold = compoundList.getGui().getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? 2 : 0;
+            return c.getCandidate().getMcesDistToTopHit() != null && c.getCandidate().getMcesDistToTopHit() <= threshold;
         };
     }
 
