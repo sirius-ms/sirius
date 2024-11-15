@@ -183,5 +183,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
             new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_TOOL_AUTOENABLE);
         }
     }
+
+    /**
+     * Activates/deactivates the panel and applies preset parameters to the UI
+     * @throws UnsupportedOperationException if the parameter values are not compatible with the UI
+     */
+    public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
+        if (enable != isToolSelected()) {
+            activationButton.doClick(0);
+        }
+        content.applyValuesFromPreset(preset);
+    }
+
 }
 
