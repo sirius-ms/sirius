@@ -605,12 +605,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         if (s == Strategy.BOTTOM_UP) {
-            elementFilterForBottomUp.setEnabled(applyElementFilterToBottomUp);
+            elementFilterForBottomUp.setSelected(applyElementFilterToBottomUp);
         }
 
         if (s == Strategy.DATABASE) {
             searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("FormulaSearchDB")));
-            elementFilterForDatabase.setEnabled(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
+            elementFilterForDatabase.setSelected(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
         }
 
         if (s == Strategy.PROVIDED) {
