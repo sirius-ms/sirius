@@ -95,6 +95,7 @@ public class ResultPanel extends JTabbedPane {
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
+        gui.getProperties().addPropertyChangeListener("confidenceDisplayMode", (evt) -> {spectralMatchingPanel.repaint();});
 
         setSelectedIndex(1);
     }
