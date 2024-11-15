@@ -64,7 +64,7 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
     public void applyValuesFromPreset(Map<String, String> preset) {
         candidatesAt300.setValue(Integer.parseInt(preset.get("ZodiacNumberOfConsideredCandidatesAt300Mz")));
         candidatesAt800.setValue(Integer.parseInt(preset.get("ZodiacNumberOfConsideredCandidatesAt800Mz")));
-        twoStep.setEnabled(Boolean.parseBoolean(preset.get("ZodiacRunInTwoSteps")));
+        twoStep.setSelected(Boolean.parseBoolean(preset.get("ZodiacRunInTwoSteps")));
         edgeThreshold.setValue(Double.parseDouble(preset.get("ZodiacEdgeFilterThresholds.thresholdFilter")));
         minLocalConnections.setValue(Integer.parseInt(preset.get("ZodiacEdgeFilterThresholds.minLocalConnections")));
     }
