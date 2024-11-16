@@ -156,6 +156,10 @@ public class GuiProjectManager implements Closeable {
                     }
                 } finally {
                     siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false);
+                    ProjectInfo projectInfo = getClient().projects().getProjectSpace(projectId, List.of(ProjectInfoOptField.NONE));
+
+                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getResultsPanel()
+                            .showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(projectInfo.getType())));
                 }
             }
         });
@@ -226,6 +230,7 @@ public class GuiProjectManager implements Closeable {
         disableProjectListener();
         siriusClient.removeEventListener(computeListener);
         properties.removePropertyChangeListener(confidenceModeListender);
+        debounceExec.cancel();
     }
 
     public FingerIdData getFingerIdData(int charge) {

@@ -84,6 +84,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -355,8 +357,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                     new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles)
             );
             return new DepictionGenerator()
-                    .withAromaticDisplay()
-                    .withAtomColors(new UniColor(Colors.FOREGROUND))
+                    .withAtomColors(new UniColor(Colors.FOREGROUND_INTERFACE))
                     .withBackgroundColor(Colors.BACKGROUND)
                     .depict(graph.getMolecule()).toSvgStr();
         } catch (CDKException e) {
@@ -656,7 +657,7 @@ public class SpectraVisualizationPanel extends JPanel implements
 
 
         jfc.addChoosableFileFilter(svgFilter);
-        jfc.addChoosableFileFilter(pdfFilter);
+//        jfc.addChoosableFileFilter(pdfFilter); //todo there is currently some issue with the pdf export because some rect elements have no 'width' attribute
         jfc.addChoosableFileFilter(jsonFilter);
 
         jfc.setFileFilter(svgFilter);
@@ -741,7 +742,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                     if (fff == FileFormat.svg) {
                         final StringBuilder svgSpectra = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svgSpectra.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
-                        WebViewIO.writeSVG(fSelectedFile, svgSpectra.toString());
+                        WebViewIO.writeSVG(fSelectedFile, enforcePeakWidth(svgSpectra.toString()));
                         if (exportStructure) {
                             // second file for structure SVG
                             final StringBuilder svgStructure = new StringBuilder();
@@ -753,7 +754,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                         final StringBuilder svg = new StringBuilder();
                         Jobs.runJFXAndWait(() -> svg.append((String) browser.getJSObject("svgExport.getSvgString(document.getElementById('spectrumView'))")));
                         // remove selection etc. rectangles as <rect>s without width attribute break Rasterizer
-                        WebViewIO.writePDF(fSelectedFile, svg.toString().replaceAll("<rect [^>]*class=\"(selection|handle)[^>]+>", ""));
+                        WebViewIO.writePDF(fSelectedFile, enforcePeakWidth(svg.toString()).replaceAll("<rect [^>]*class=\"(selection|handle)[^>]+>", ""));
                         if (exportStructure) {
                             // second file for structure PDF
                             final StringBuilder svgStructure = new StringBuilder();
@@ -772,5 +773,18 @@ public class SpectraVisualizationPanel extends JPanel implements
                 }
             });
         }
+    }
+
+    private static final Pattern PEAK_ID_WITH_STYLE = Pattern.compile("(id=\"peak[0-9]+\"[^>]*style=\")");
+    /**
+     * since the css styling information gets lost, we set the peak width here, so that the peakss are not invisible.
+     * All intends to fix this in the .js broke the actual viewer.
+     *
+     * Assumes that peaks have ids 'peak[0-9]+
+     */
+    private String enforcePeakWidth(String svgString) {
+        Matcher m = PEAK_ID_WITH_STYLE.matcher(svgString);
+        String replaced =  m.replaceAll((mr) -> mr.group(1)+"width: 2px;");
+        return replaced;
     }
 }

@@ -67,10 +67,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
-    public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
-    public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
-    public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
-    public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
     protected JList<FingerprintCandidateBean> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
@@ -86,6 +82,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     private final ResultPanel resultPanel;
+    private final SiriusGui gui;
 
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(sourceList);
@@ -102,6 +99,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         this.resultPanel = resultPanel;
+        this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui, getSource().getBestFunc()));
@@ -146,7 +144,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected JToolBar getToolBar() {
         JToolBar tb = super.getToolBar();
 
-        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "Filter by selected molecular property (square)");
+        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MOLECULAR_PROPERTY.derive(24,24), "Filter by selected molecular property (square)");
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");
@@ -272,7 +270,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
 
             for (DatabaseLabel l : candidate.labels) {
-                if (l.rect.contains(point.x, point.y)) {
+                if (l.contains(point)) {
                     clickOnDBLabel(l, candidate);
                     break;
                 }
@@ -287,7 +285,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
         Jobs.runEDTLater(() -> new SpectralMatchingDialog(
                 (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean)
+                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean, gui)
         ).setVisible(true));
     }
 

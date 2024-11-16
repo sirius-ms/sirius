@@ -62,7 +62,7 @@ public class AccountPanel extends JPanel {
 
         JPanel iconPanel = new JPanel(new BorderLayout());
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
-        refresh = new ToolbarButton(Icons.REFRESH_32);
+        refresh = new ToolbarButton(Icons.REFRESH.derive(32,32));
         refresh.addActionListener(e ->
                 Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
                     try {
@@ -120,7 +120,7 @@ public class AccountPanel extends JPanel {
     public void reloadChanges() {
         DecodedJWT userInfo = getLogin();
         if (userInfo == null) {
-            userIconLabel.setIcon(Icons.USER_128);
+            userIconLabel.setIcon(Icons.USER.derive(128,128));
             userInfoLabel.setText("Please log in!");
             create.setAction(SiriusActions.SIGN_UP.getInstance(gui, true));
             login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
@@ -139,7 +139,7 @@ public class AccountPanel extends JPanel {
                 userIconLabel.setIcon(new ImageIcon(image));
             } catch (Throwable e) {
                 LoggerFactory.getLogger(getClass()).warn("Could not load profile image: " + e.getMessage());
-                userIconLabel.setIcon(Icons.USER_GREEN_128);
+                userIconLabel.setIcon(Icons.USER_GREEN.derive(128,128));
             }
             userInfoLabel.setText("<html>Logged in as:<br><b>"
                     + userInfo.getClaim("email").asString() + "</b>"

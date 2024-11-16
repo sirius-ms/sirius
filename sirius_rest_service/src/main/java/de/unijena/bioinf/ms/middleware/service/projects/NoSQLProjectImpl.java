@@ -50,9 +50,11 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -93,6 +95,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 
@@ -1019,9 +1022,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return new PageImpl<>(compounds, pageable, total);
     }
 
+    private void setProjectTypeOrThrow(SiriusProjectDocumentDatabase<? extends Database<?>> ps) {
+        Optional<ProjectType> psType = ps.findProjectType();
+        if (psType.isPresent()) {
+            switch (psType.get()) {
+                case ALIGNED_RUNS:
+                case UNALIGNED_RUNS: {
+                    ProjectTypeException reason = new ProjectTypeException("Project contains data from MS runs (.mzml, .mzxml) that have been preprocessed in SIRIUS. Additional data cannot be added to such project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, psType.get());
+                    throw new ResponseStatusException(BAD_REQUEST, reason.getMessage(), reason);
+                }
+            }
+        }else {
+            ps.upsertProjectType(ProjectType.DIRECT_IMPORT);
+        }
+    }
+
     @SneakyThrows
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();

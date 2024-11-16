@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.table.*;
 import lombok.Getter;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,8 @@ public class CandidateListTableView extends CandidateListView {
 
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(10).setCellRenderer(new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize())));
+        table.getColumnModel().getColumn(11).setCellRenderer(new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize())));
         //todo nightsky: add pubmed link feature!
 //        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
 //        linkRenderer.registerToTable(table, 6);
