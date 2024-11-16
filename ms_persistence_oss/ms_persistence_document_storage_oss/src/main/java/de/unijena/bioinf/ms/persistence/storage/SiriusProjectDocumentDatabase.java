@@ -26,12 +26,13 @@ import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
-import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -53,6 +54,7 @@ import java.util.stream.Stream;
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
+    String PROJECT_PROPERTIES_COLLECTION = "PROJECT_PROPERTIES";
 
     static Metadata buildMetadata() throws IOException {
         return buildMetadata(Metadata.build());
@@ -61,6 +63,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
+                .addCollection(PROJECT_PROPERTIES_COLLECTION, Index.unique("key"))
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
@@ -111,6 +114,44 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     void insertFingerprintData(FingerIdData fpData, int charge);
 
     <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
+
+    <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType);
+
+    default Optional<String> findProjectPropertyAsString(String key) {
+        return findProjectProperty(key, String.class);
+    }
+
+    default Optional<Double> findProjectPropertyAsDouble(@NotNull String key) {
+        return findProjectProperty(key, Double.class);
+    }
+
+    default Optional<Integer> findProjectPropertyAsInt(@NotNull String key) {
+        return findProjectProperty(key, Integer.class);
+    }
+
+    default Optional<Boolean> findProjectPropertyAsBoolean(@NotNull String key) {
+        return findProjectProperty(key, Boolean.class);
+    }
+
+    default <T extends Enum<T>> Optional<T> findProjectPropertyAsEnum(@NotNull String key, Class<T> dataClazz) {
+        return findProjectProperty(key, dataClazz);
+    }
+
+    default Optional<ProjectType> findProjectType() {
+        return findProjectProperty("projectType", ProjectType.class);
+    }
+
+    default Optional<ProjectType> upsertProjectType(@NotNull ProjectType projectType) {
+        return upsertProjectProperty("projectType", projectType);
+    }
+
+    @SneakyThrows
+    default boolean removeProjectProperty(@NotNull String key) {
+        return getStorage().removeAll(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key)) > 0;
+    }
+
+
+    <T> Optional<T> upsertProjectProperty(String key, T value);
 
     @SneakyThrows
     default Optional<CsiStructureSearchResult> findCsiStructureSearchResult(long alignedFeatureId, boolean includeStructureMatches) {

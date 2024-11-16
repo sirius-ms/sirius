@@ -19,12 +19,14 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -39,14 +41,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
-import java.util.Optional;
-import java.util.Properties;
 import java.util.concurrent.FutureTask;
 
 public class WebViewJPanel extends JFXPanel {
     public WebView webView;
 
     public WebViewJPanel() {
+        this("/js/styles.css", "/js/styles-dark.css");
+    }
+    public WebViewJPanel(@NotNull String cssLightResource, @NotNull String cssDarkResource) {
         queueTaskInJFXThread(() -> {
             this.webView = new WebView();
             webView.getEngine().getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
@@ -77,14 +80,11 @@ public class WebViewJPanel extends JFXPanel {
                     }
                 }
             });
-            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            final String css = switch (theme) {
-                case "Dark" -> "style-dark.css";
-                case "Classic" -> "style-classic.css";
-                default -> "style-light.css";
-            };
-            this.webView.getEngine().setUserStyleSheetLocation(getClass().getResource("/sirius/" + css).toExternalForm());
+            this.webView.getEngine().setUserStyleSheetLocation(
+                    WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont(
+                            Colors.isDarkTheme() ? cssDarkResource : cssLightResource))
+            );
+
             this.setScene(new Scene(this.webView));
         });
     }

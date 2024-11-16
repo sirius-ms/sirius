@@ -37,6 +37,7 @@ public class SwitchConfidenceModeAction extends AbstractGuiAction implements Pro
     public SwitchConfidenceModeAction(SiriusGui gui) {
         super(SWITCH_TO_EXACT, gui);
         gui.getProperties().addPropertyChangeListener("confidenceDisplayMode", this);
+        setActionName(gui.getProperties().getConfidenceDisplayMode());
     }
 
     @Override

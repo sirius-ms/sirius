@@ -594,43 +594,4 @@ public class BatchComputeDialog extends JDialog {
         recomputeBox.setEnabled(preset.isRecompute());
     }
 
-    //todo reenable in the future?
-//    private void checkConnection(ConnectionCheck checkResult) {
-//       if (checkResult != null) {
-//            if (isConnected(checkResult)) {
-//                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected()) && isWorkerWarning(checkResult)) {
-//                    if (checkResult.getWorkerInfo() == null ||
-//                            (!checkResult.isSupportsNegPredictorTypes()
-//                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
-//
-//                            (!checkResult.isSupportsPosPredictorTypes()
-//                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isPositive()))
-//                    ) new WorkerWarningDialog(gui, checkResult.getWorkerInfo() == null);
-//                }
-//            } else {
-//                if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-//                    new WarnFormulaSourceDialog(mf());
-//                    formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
-//                }
-//            }
-//        } else {
-//            if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-//                new WarnFormulaSourceDialog(mf());
-//                formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
-//            }
-//        }
-//    }
-//
-//    private static class WarnFormulaSourceDialog extends WarningDialog {
-//        private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
-//        public static final String FORMULA_SOURCE_WARNING_MESSAGE =
-//                "<b>Warning:</b> No connection to webservice available! <br>" +
-//                        "Online databases cannot be used for formula identification.<br> " +
-//                        "If online databases are selected, the default option <br>" +
-//                        "(all molecular formulas) will be used instead. Spectral library matching will also not be performed.";
-//
-//        public WarnFormulaSourceDialog(Frame owner) {
-//            super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
-//        }
-//    }
 }

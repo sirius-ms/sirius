@@ -32,7 +32,7 @@ public class OpenLogAction extends AbstractAction {
 
     public OpenLogAction() {
         super("Log");
-        putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.LOG.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
         source = new LogDialog(false, Level.INFO); //todo property for log level;
     }

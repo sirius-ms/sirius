@@ -288,6 +288,7 @@ Class | Method | HTTP request | Description
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
+ - [ProjectType](docs/ProjectType.md)
  - [QuantificationTable](docs/QuantificationTable.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)

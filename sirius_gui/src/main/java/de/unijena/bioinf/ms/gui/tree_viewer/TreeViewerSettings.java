@@ -168,10 +168,10 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
         colorVariant = new JComboBox<>(TreeViewerBridge.COLOR_VARIANTS_DESC);
         JLabel colorVariantLabel = new JLabel("Colors:");
         panel.add(colorVariantLabel, colorVariant);
-        scheme2Box = new JComboBox<>(TreeViewerBridge.COLOR_SCHEMES_2);
-        panel.add(new JLabel("Color scheme (2 colors):"), scheme2Box);
-        scheme3Box = new JComboBox<>(TreeViewerBridge.COLOR_SCHEMES_3);
-        panel.add(new JLabel("Color scheme (3 colors):"), scheme3Box);
+        scheme2Box = new JComboBox<>(TreeViewerBridge.COLOR_SCHEME_NAMES_2);
+//        panel.add(new JLabel("Color scheme (2 colors):"), scheme2Box); //excluded from the panel because likely no user ever sets this. 2-color and 3-color is alway quite misleading here
+        scheme3Box = new JComboBox<>(TreeViewerBridge.COLOR_SCHEME_NAMES_3);
+//        panel.add(new JLabel("Color scheme (3 colors):"), scheme3Box); //excluded from the panel because likely no user ever sets this.
         colorBarCB = new JCheckBox("color legend");
         panel.add(colorBarCB);
         lossColorCB = new JCheckBox("color losses");
@@ -304,10 +304,10 @@ public class TreeViewerSettings extends JFrame implements ItemListener,
             localConfig.set("edgeLabels", edgeLabelCB.isSelected());
         } else if (source.equals(scheme2Box)){
             localConfig.set("colorScheme2",
-                            (String) scheme2Box.getSelectedItem());
+                            TreeViewerBridge.get2ColorPaletteByNameOrDefault((String)scheme2Box.getSelectedItem()));
         }else if (source.equals(scheme3Box)){
             localConfig.set("colorScheme3",
-                            (String) scheme3Box.getSelectedItem());
+                            TreeViewerBridge.get3ColorPaletteByNameOrDefault((String)scheme3Box.getSelectedItem()));
         }else if (source.equals(colorBarCB)){
             localConfig.set("colorBar", colorBarCB.isSelected());
         } else if (source.equals(edgeLabelMode)){

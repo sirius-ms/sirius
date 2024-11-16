@@ -51,7 +51,7 @@ public final class GuiProperties implements PropertyChangeOrator {
 
     // region ConfidenceDisplayMode
     @NotNull
-    private ConfidenceDisplayMode confidenceDisplayMode = SiriusProperties.getEnum("de.unijena.bioinf.sirius.ui.ConfidenceDisplayMode", null, ConfidenceDisplayMode.APPROXIMATE);
+    private ConfidenceDisplayMode confidenceDisplayMode = SiriusProperties.getEnum("de.unijena.bioinf.sirius.ui.confidenceDisplayMode", null, ConfidenceDisplayMode.APPROXIMATE);
 
     public synchronized void setConfidenceDisplayMode(@NotNull ConfidenceDisplayMode confidenceDisplayMode) {
         @NotNull ConfidenceDisplayMode old = this.confidenceDisplayMode;
@@ -69,6 +69,21 @@ public final class GuiProperties implements PropertyChangeOrator {
 
     public synchronized void switchConfidenceDisplayMode() {
         setConfidenceDisplayMode(isConfidenceViewMode(ConfidenceDisplayMode.EXACT) ? ConfidenceDisplayMode.APPROXIMATE : ConfidenceDisplayMode.EXACT);
+    }
+    //endregion
+
+    // region MolecularStructuresDisplayColors
+    @NotNull
+    private MolecularStructuresDisplayColors molecularStructureDisplayColors = SiriusProperties.getEnum("de.unijena.bioinf.sirius.ui.molecularStructuresDisplayColors", null, MolecularStructuresDisplayColors.CPK);
+
+    public synchronized void setMolecularStructureDisplayColors(@NotNull MolecularStructuresDisplayColors molecularStructuresDisplayColors) {
+        @NotNull MolecularStructuresDisplayColors old = this.molecularStructureDisplayColors;
+        this.molecularStructureDisplayColors = molecularStructuresDisplayColors;
+        pcs.firePropertyChange("molecularStructuresDisplayColors", old, this.molecularStructureDisplayColors);
+    }
+
+    public synchronized MolecularStructuresDisplayColors getMolecularStructureDisplayColors() {
+        return molecularStructureDisplayColors;
     }
     //endregion
 }
