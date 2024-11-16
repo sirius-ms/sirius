@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
@@ -61,7 +60,7 @@ public class ResultPanel extends JTabbedPane {
         spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
 
-        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
+        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
 
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
@@ -82,9 +81,6 @@ public class ResultPanel extends JTabbedPane {
                                 .flatMap(List::stream).map(CompoundClassBean::new).toList()), siriusResultElements
         );
 
-
-        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
-
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
         addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
@@ -96,6 +92,21 @@ public class ResultPanel extends JTabbedPane {
 
         addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
 
-        setSelectedIndex(1);
+        setSelectedIndex(indexOfTab("Formulas"));
+    }
+
+    private void addLcmsTab() {
+        insertTab("LC-MS", null, lcmsTab, lcmsTab.getDescription(), 0);
+    }
+
+    public void showLcmsTab(boolean show) {
+        int idx = indexOfTab("LC-MS");
+        if (show && idx < 0) {
+            addLcmsTab();
+            return;
+        }
+        if (!show && idx >= 0){
+            removeTabAt(idx);
+        }
     }
 }

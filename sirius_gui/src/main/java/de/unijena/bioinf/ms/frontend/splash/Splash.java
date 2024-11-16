@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.frontend.splash;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
     public Splash(boolean indeterminate) {
         UIDefaults overrides = new UIDefaults();
 //        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(155, 166, 219)));
-        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(212, 20, 90)));
+        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(Colors.SplashScreen.PROGRESS_BAR));
 
         progressBar = new JProgressBar(min, max);
         progressBar.putClientProperty("Nimbus.Overrides", overrides);
@@ -46,7 +47,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
         contentPane.add(new JLabel(icon, JLabel.CENTER), BorderLayout.CENTER);
         contentPane.add(progressBar, BorderLayout.SOUTH);
 
-        this.setBackground(Color.WHITE);
+        this.setBackground(Colors.SplashScreen.BACKGROUND);
         this.setLocationRelativeTo(null);
         this.setVisible(true);
     }

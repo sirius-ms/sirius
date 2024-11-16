@@ -75,6 +75,10 @@ public class BottomUpSearch extends SiriusPlugin {
             }
         }
         final HashSet<Decomposition> decompositions = new HashSet<>();
+        for (Ionization ionMode : ionModes) {
+            final double mz = ionMode.subtractFromMass(input.getExperimentInformation().getIonMass());
+            Arrays.stream(MOLECULAR_FORMULA_MAP.searchMass(mz, dev)).forEach(x -> decompositions.add(new Decomposition(x,ionMode,0d)));
+        }
         weighting.forEach((formula, weight)->{
             if (weight >= 0.05) {
                 decompositions.add(formula);

@@ -2,11 +2,13 @@ package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 public class IonType {
 
     protected PrecursorIonType ionType;
@@ -53,11 +55,15 @@ public class IonType {
         if (multimere!=0 && multimere<1) {
             throw new IllegalArgumentException();
         }
-        if (multimere>1) {
-            throw new UnsupportedOperationException("Have to implement multimere support first");
-        }
-        return Optional.of(ionType.substituteInsource(ionType.getInSourceFragmentation().add(insource)));
 
+        //These kind of in-source fragments should not exist at all. However, the can occur due to ambiguous adduct relation direction.
+        //For now we just filter them out if they occur.
+        if (!insource.isAllPositiveOrZero()) {
+            IonType.log.warn("In Source fragments with negative element amount are not supported. Ignoring this adduct.");
+            return Optional.empty();
+        }
+
+        return Optional.of(ionType.substituteInsource(ionType.getInSourceFragmentation().add(insource)));
     }
 
     @Override
