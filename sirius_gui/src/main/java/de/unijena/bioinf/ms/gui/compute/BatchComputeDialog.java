@@ -34,11 +34,11 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import javax.swing.*;
@@ -46,16 +46,18 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
-
+@Slf4j
 public class BatchComputeDialog extends JDialog {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
@@ -65,10 +67,12 @@ public class BatchComputeDialog extends JDialog {
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
 
     public static final String DEFAULT_PRESET_DISPLAY_NAME = "default";
+    public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
     // main parts
     private Box mainPanel;
     private JCheckBox recomputeBox;
+    private JButton showCommand;
 
     // tool configurations
     private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
@@ -85,7 +89,9 @@ public class BatchComputeDialog extends JDialog {
 
     private final SiriusGui gui;
 
+    private JComboBox<String> presetDropdown;
     private JobSubmission preset;
+    private boolean presetFrozen;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
@@ -203,7 +209,7 @@ public class BatchComputeDialog extends JDialog {
                 compute.addActionListener(e -> startComputing());
                 JButton abort = new JButton("Cancel");
                 abort.addActionListener(e -> dispose());
-                JButton showCommand = new JButton("Show Command");
+                showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
                     final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                     if (warnNoMethodIsSelected()) return;
@@ -401,12 +407,12 @@ public class BatchComputeDialog extends JDialog {
                             String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" +
                                     Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) +
                                     "'. You can switch to heuristic tree computation only to compute results without the need of an ILP Solver.";
-                            LoggerFactory.getLogger(BatchComputeDialog.class).error(noILPSolver);
+                            log.error(noILPSolver);
                             new ExceptionDialog(BatchComputeDialog.this, noILPSolver);
                             dispose();
                             return false;
                         } else {
-                            LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + info.getAvailableILPSolvers().getFirst());
+                            log.info("Compute trees using {}", info.getAvailableILPSolvers().getFirst());
                         }
                         updateProgress(0, 100, 1, "ILP solver check DONE!");
                     }
@@ -422,7 +428,7 @@ public class BatchComputeDialog extends JDialog {
                                 .map(InstanceBean::getFeatureId).toList());
                     gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when starting Computation.", e);
+                    log.error("Error when starting Computation.", e);
                     new ExceptionDialog(mf(), "Error when starting Computation: " + e.getMessage());
                 }
 
@@ -479,56 +485,67 @@ public class BatchComputeDialog extends JDialog {
 
 
     private JobSubmission makeJobSubmission() {
-        // create computation parameters
+        if (presetFrozen) {
+            return preset;
+        }
+
         JobSubmission sub = new JobSubmission();
         sub.setConfigMap(new HashMap<>());
+        sub.getConfigMap().putAll(preset.getConfigMap());
+        sub.getConfigMap().putAll(getAllUIParameterBindings());
 
-        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
+        if (formulaIDConfigPanel.isToolSelected()) {
             if (checkResult == null || isConnected(checkResult) || isWarningOnly(checkResult))
                 sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
             else
-                LoggerFactory.getLogger(getClass()).warn("Do not perform spectral matching due to missing server connection.");
+                log.warn("Do not perform spectral matching due to missing server connection.");
             sub.setFormulaIdParams(new Sirius().enabled(true));
-            sub.getConfigMap().putAll(formulaIDConfigPanel.asConfigMap());
         }
 
-        if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
+        if (zodiacConfigs.isToolSelected()) {
             sub.setZodiacParams(new Zodiac().enabled(true));
-            sub.getConfigMap().putAll(zodiacConfigs.asConfigMap());
         }
 
         //canopus prediction included. Must now run before structure database search
-        if (fingerprintAndCanopusConfigPanel != null && fingerprintAndCanopusConfigPanel.isToolSelected()) {
+        if (fingerprintAndCanopusConfigPanel.isToolSelected()) {
             sub.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
             sub.setCanopusParams(new Canopus().enabled(true));
-            sub.getConfigMap().putAll(fingerprintAndCanopusConfigPanel.asConfigMap());
         }
 
-        if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
+        if (csiSearchConfigs.isToolSelected()) {
             sub.setStructureDbSearchParams(new StructureDbSearch().enabled(true));
-            sub.getConfigMap().putAll(csiSearchConfigs.asConfigMap());
         }
 
-        if (msNovelistConfigs != null && msNovelistConfigs.isToolSelected()) {
+        if (msNovelistConfigs.isToolSelected()) {
             sub.setMsNovelistParams(new MsNovelist().enabled(true));
-            sub.getConfigMap().putAll(msNovelistConfigs.asConfigMap());
         }
 
-        sub.setRecompute(recomputeBox.isSelected());
         return sub;
     }
 
+
+    /**
+     * @return a map of all parameter bindings from the UI elements
+     */
+    private Map<String, String> getAllUIParameterBindings() {
+        HashMap<String, String> bindings = Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
+                .map(ActivatableConfigPanel::asConfigMap)
+                .collect(HashMap::new, HashMap::putAll, HashMap::putAll);
+        bindings.put("RecomputeResults", Boolean.toString(recomputeBox.isSelected()));
+        return bindings;
+    }
+
     private boolean warnNoMethodIsSelected() {
-        if (!isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)) {
+        if (isAnySelected(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs) || presetFrozen) {
+            return false;
+        } else {
             new WarningDialog(this, "Please select at least one method.");
             return true;
-        } else {
-            return false;
         }
     }
 
-    private boolean isAnySelected(ActivatableConfigPanel... configPanels) {
-        for (ActivatableConfigPanel configPanel : configPanels) {
+    private boolean isAnySelected(ActivatableConfigPanel<?>... configPanels) {
+        for (ActivatableConfigPanel<?> configPanel : configPanels) {
             if (configPanel != null && configPanel.isToolSelected()) return true;
         }
         return false;
@@ -548,50 +565,162 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private JPanel makePresetPanel() {
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.add(new JLabel("Preset"));
 
-        List<String> presetNames = new ArrayList<>();
-        presetNames.add(DEFAULT_PRESET_DISPLAY_NAME);
-        presetNames.addAll(gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigNames()));
+        presetDropdown = new JComboBox<>();
+        reloadPresets();
 
-        JComboBox<String> presetDropdown = new JComboBox<>(presetNames.toArray(String[]::new));
         panel.add(presetDropdown);
 
         JButton savePreset = new JButton("Save");
+        savePreset.setEnabled(false);
+        savePreset.setToolTipText("Update current preset with selected parameters");
+
         JButton saveAsPreset = new JButton("Save as");
-        JButton viewPreset = new JButton("View");
+        saveAsPreset.setToolTipText("Save current selection as a new preset");
+
         JButton removePreset = new JButton("Remove");
+        removePreset.setEnabled(false);
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
-        panel.add(viewPreset);
         panel.add(removePreset);
+
+        presetDropdown.addItemListener(event -> {
+            if (event.getStateChange() == ItemEvent.SELECTED) {
+                String presetName = (String)event.getItem();
+                activatePreset(presetName);
+
+                boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
+                savePreset.setEnabled(!defaultSelected && !presetFrozen);
+                removePreset.setEnabled(!defaultSelected);
+            }
+        });
+
+        savePreset.addActionListener(e -> {
+            String presetName = (String) presetDropdown.getSelectedItem();
+            JobSubmission currentConfig = makeJobSubmission();
+            gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true));
+        });
+
+        saveAsPreset.addActionListener(e -> {
+
+            String newPresetName = (String)JOptionPane.showInputDialog(
+                    this,
+                    "New preset name",
+                    null,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    null,
+                    presetDropdown.getSelectedItem() + "_copy");
+
+            if (newPresetName != null && !newPresetName.isBlank()) {
+                JobSubmission currentConfig = makeJobSubmission();
+                try {
+                    String createdPresetName = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false));
+                    reloadPresets();
+                    presetDropdown.setSelectedItem(createdPresetName);
+                } catch (Exception ex) {
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+                            ex.getMessage(),
+                            null,
+                            JOptionPane.ERROR_MESSAGE));
+                }
+            }
+        });
+
+        removePreset.addActionListener(e -> {
+            String presetName = (String) presetDropdown.getSelectedItem();
+            gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobConfig(presetName));
+            reloadPresets();
+        });
 
         return panel;
     }
 
+    /**
+     * Removes all current presets from the preset dropdown and loads them again
+     */
+    private void reloadPresets() {
+        presetDropdown.removeAllItems();
+        List<String> presetNames = new ArrayList<>();
+        presetNames.add(DEFAULT_PRESET_DISPLAY_NAME);
+        presetNames.addAll(gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigNames()));
+        presetNames.forEach(presetDropdown::addItem);
+    }
+
     private void activatePreset(String presetName) {
-        if (presetName.equals(DEFAULT_PRESET_DISPLAY_NAME)) {
-            preset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
-        } else {
-            preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
-            // todo check if has non-default non-UI elements
+        presetUnfreeze();
+        try {
+            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
+            if (presetName.equals(DEFAULT_PRESET_DISPLAY_NAME)) {
+                preset = defaultPreset;
+            } else {
+                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
+                Set<String> uiParameters = getAllUIParameterBindings().keySet();
+                String hiddenParameters = preset.getConfigMap().entrySet().stream()
+                        .filter(e -> !uiParameters.contains(e.getKey()))
+                        .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
+                        .map(e -> e.getKey() + " = " + e.getValue())
+                        .collect(Collectors.joining("\n"));
+                if (!hiddenParameters.isEmpty()) {
+                    throw new UnsupportedOperationException("Preset sets hidden parameters:\n" + hiddenParameters);
+                }
+            }
+
+            Map<String, String> configMap = preset.getConfigMap();
+
+            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
+            zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
+
+            boolean fpEnabled = preset.getFingerprintPredictionParams() != null && preset.getFingerprintPredictionParams().isEnabled();
+            boolean canopusEnabled = preset.getCanopusParams() != null && preset.getCanopusParams().isEnabled();
+            if (fpEnabled != canopusEnabled) {
+                throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously");
+            }
+            fingerprintAndCanopusConfigPanel.applyValuesFromPreset(fpEnabled, configMap);
+            csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
+            msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
+
+            recomputeBox.setSelected(Boolean.parseBoolean(configMap.get("RecomputeResults")));
+        } catch (Exception e) {
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+                    "The preset cannot be loaded:\n" + e.getMessage() + "\n\nYou can start a computation with this preset, but cannot edit the parameters.",
+                    "Cannot load preset",
+                    JOptionPane.WARNING_MESSAGE));
+            presetFreeze();
         }
+    }
 
-        Map<String, String> configMap = preset.getConfigMap();
+    private void presetFreeze() {
+        presetFrozen = true;
+        Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
+                .forEach(panel -> {
+                    if (panel.isToolSelected()) {
+                        panel.activationButton.doClick(0);
+                    }
+                    panel.setButtonEnabled(false, PRESET_FROZEN_MESSAGE);
+                });
 
-        formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams().isEnabled(), configMap);
-        zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams().isEnabled(), configMap);
+        recomputeBox.setEnabled(false);
+        showCommand.setEnabled(false);
+    }
 
-        if (!preset.getFingerprintPredictionParams().isEnabled().equals(preset.getCanopusParams().isEnabled())) {
-            throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously");
+    private void presetUnfreeze() {
+        presetFrozen = false;
+        Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
+                .forEach(this::presetUnfreezePanel);
+
+        recomputeBox.setEnabled(true);
+        showCommand.setEnabled(true);
+    }
+
+    private void presetUnfreezePanel(ActivatableConfigPanel<?> panel) {
+        String buttonToolTip = panel.activationButton.getToolTipText();
+        if (buttonToolTip != null && buttonToolTip.contains(PRESET_FROZEN_MESSAGE)) {
+            panel.setButtonEnabled(true);
         }
-        fingerprintAndCanopusConfigPanel.applyValuesFromPreset(preset.getFingerprintPredictionParams().isEnabled(), configMap);
-        csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams().isEnabled(), configMap);
-        msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams().isEnabled(), configMap);
-
-        recomputeBox.setEnabled(preset.isRecompute());
     }
 
 }
