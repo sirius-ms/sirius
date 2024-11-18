@@ -65,7 +65,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         parameterBindings.put("StructureSearchDB", () -> {
             List<SearchableDatabase> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
-            return checkedDBs.isEmpty() ? null : checkedDBs.stream()
+            return checkedDBs.isEmpty() ? "," : checkedDBs.stream()
                     .map(SearchableDatabase::getDatabaseId)
                     .filter(db -> !(db.equals(DataSource.PUBCHEM.name()) && pubChemFallback.isSelected()))
                     .collect(Collectors.joining(","));
@@ -130,6 +130,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             confidenceModeBox.setSelectedItem(expansiveMode);
         }
 
+        structureSearchStrategy.getSearchDBList().checkBoxList.uncheckAll();
         structureSearchStrategy.getSearchDBList().select(SearchableDBAnnotation.makeDB(preset.get("StructureSearchDB")));
     }
 }
