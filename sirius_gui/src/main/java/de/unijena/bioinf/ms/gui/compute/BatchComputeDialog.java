@@ -400,7 +400,7 @@ public class BatchComputeDialog extends JDialog {
                     // CHECK ILP SOLVER
                     //check for IPL solver only if it is actually needed during analysis
                     double minMass = finalComps.stream().mapToDouble(InstanceBean::getIonMass).min().orElse(0);
-                    if (((Double) formulaIDConfigPanel.getContent().mzHeuristicOnly.getValue()) > minMass) {
+                    if (((SpinnerNumberModel) formulaIDConfigPanel.getContent().mzHeuristicOnly.getModel()).getNumber().doubleValue() > minMass) {
                         updateProgress(0, 100, 0, "Checking ILP solvers...");
                         Info info = gui.getSiriusClient().infos().getInfo(false, false);
                         if (info.getAvailableILPSolvers().isEmpty()) {
