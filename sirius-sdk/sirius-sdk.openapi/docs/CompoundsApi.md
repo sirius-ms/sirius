@@ -5,17 +5,17 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features. |
-| [**computeFoldChange**](CompoundsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/foldchange/compute | Compute the fold change between two groups |
+| [**computeFoldChange**](CompoundsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/foldchange/compute | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
-| [**deleteFoldChange**](CompoundsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/foldchange | Delete fold change |
+| [**deleteFoldChange**](CompoundsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/foldchange | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
 | [**getCompoundTraces**](CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces |  |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
 | [**getCompoundsPaged**](CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space. |
-| [**getFoldChange**](CompoundsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange/{objectId} | List all fold changes that are associated with an object |
+| [**getFoldChange**](CompoundsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange/{objectId} | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object |
 | [**getQuantification**](CompoundsApi.md#getQuantification) | **GET** /api/projects/{projectId}/compounds/quantification | Returns the full quantification table. |
 | [**getQuantificationRow**](CompoundsApi.md#getQuantificationRow) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quantification | Returns a single quantification table row for the given feature. |
-| [**listFoldChange**](CompoundsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange | List all fold changes in the project space |
+| [**listFoldChange**](CompoundsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space |
 
 
 
@@ -97,9 +97,9 @@ No authorization required
 
 > Job computeFoldChange(projectId, left, right, aggregation, quantification, optFields)
 
-Compute the fold change between two groups
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
 
-Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -118,8 +118,8 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to compute the fold change in.
-        String left = "left_example"; // String | name of the left group.
-        String right = "right_example"; // String | name of the right group.
+        String left = "left_example"; // String | name of the left tag group.
+        String right = "right_example"; // String | name of the right tag group.
         String aggregation = "AVG"; // String | aggregation type.
         String quantification = "APEX_INTENSITY"; // String | quantification type.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
@@ -143,8 +143,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to compute the fold change in. | |
-| **left** | **String**| name of the left group. | |
-| **right** | **String**| name of the right group. | |
+| **left** | **String**| name of the left tag group. | |
+| **right** | **String**| name of the right tag group. | |
 | **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
 | **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
@@ -240,9 +240,9 @@ No authorization required
 
 > deleteFoldChange(projectId, left, right, aggregation, quantification)
 
-Delete fold change
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
 
-Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -599,9 +599,9 @@ No authorization required
 
 > List&lt;CompoundFoldChange&gt; getFoldChange(projectId, objectId, page, size, sort)
 
-List all fold changes that are associated with an object
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
 
-List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -811,9 +811,9 @@ No authorization required
 
 > PageCompoundFoldChange listFoldChange(projectId, page, size, sort)
 
-List all fold changes in the project space
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
 
-List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 

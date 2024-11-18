@@ -32,6 +32,8 @@ import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
 import io.sirius.ms.sdk.model.StructureCandidateFormula;
 import io.sirius.ms.sdk.model.StructureCandidateOptField;
 import io.sirius.ms.sdk.model.StructureCandidateScored;
+import io.sirius.ms.sdk.model.Tag;
+import io.sirius.ms.sdk.model.TagGroup;
 import io.sirius.ms.sdk.model.TraceSet;
 
 import java.util.HashMap;
@@ -172,12 +174,207 @@ public class FeaturesApi {
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return TagGroup
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addGroup1RequestCreation(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'filter' is set
+        if (filter == null) {
+            throw new WebClientResponseException("Missing the required parameter 'filter' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'type' is set
+        if (type == null) {
+            throw new WebClientResponseException("Missing the required parameter 'type' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("groupName", groupName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return TagGroup
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TagGroup addGroup1(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return addGroup1RequestCreation(projectId, groupName, filter, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return ResponseEntity&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TagGroup> addGroup1WithHttpInfo(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return addGroup1RequestCreation(projectId, groupName, filter, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addGroup1WithResponseSpec(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        return addGroup1RequestCreation(projectId, groupName, filter, type);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param objectId object to tag.
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addTags1RequestCreation(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        Object postBody = tag;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'objectId' is set
+        if (objectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'tag' is set
+        if (tag == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("objectId", objectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param objectId object to tag.
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Tag> addTags1(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTags1RequestCreation(projectId, objectId, tag).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param objectId object to tag.
+     * @param tag tags to add.
+     * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Tag>> addTags1WithHttpInfo(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTags1RequestCreation(projectId, objectId, tag).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param objectId object to tag.
+     * @param tag tags to add.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addTags1WithResponseSpec(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+        return addTags1RequestCreation(projectId, objectId, tag);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -228,12 +425,12 @@ public class FeaturesApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -246,12 +443,12 @@ public class FeaturesApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -264,12 +461,12 @@ public class FeaturesApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -437,8 +634,8 @@ public class FeaturesApi {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
     }
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -488,8 +685,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -504,8 +701,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -520,8 +717,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -533,6 +730,171 @@ public class FeaturesApi {
      */
     public ResponseSpec deleteFoldChange1WithResponseSpec(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
         return deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param groupName name of group to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteGroup1RequestCreation(String projectId, String groupName) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling deleteGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("groupName", groupName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param groupName name of group to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteGroup1(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteGroup1RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param groupName name of group to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteGroup1WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteGroup1RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param groupName name of group to delete.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteGroup1WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+        return deleteGroup1RequestCreation(projectId, groupName);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteTags1RequestCreation(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'objectId' is set
+        if (objectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'categoryName' is set
+        if (categoryName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("objectId", objectId);
+        pathParams.put("categoryName", categoryName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags/{objectId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteTags1(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteTags1RequestCreation(projectId, objectId, categoryName).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteTags1WithHttpInfo(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteTags1RequestCreation(projectId, objectId, categoryName).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteTags1WithResponseSpec(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        return deleteTags1RequestCreation(projectId, objectId, categoryName);
     }
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
@@ -1479,8 +1841,8 @@ public class FeaturesApi {
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -1529,8 +1891,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -1546,8 +1908,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -1563,8 +1925,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -2149,6 +2511,246 @@ public class FeaturesApi {
      */
     public ResponseSpec getFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
+     * @return TagGroup
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGroupByName1RequestCreation(String projectId, String groupName) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupByName1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling getGroupByName1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("groupName", groupName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
+     * @return TagGroup
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TagGroup getGroupByName1(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupByName1RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
+     * @return ResponseEntity&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TagGroup> getGroupByName1WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupByName1RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGroupByName1WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+        return getGroupByName1RequestCreation(projectId, groupName);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGroups1RequestCreation(String projectId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroups1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<TagGroup> getGroups1(String projectId) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroups1RequestCreation(projectId).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<TagGroup>> getGroups1WithHttpInfo(String projectId) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroups1RequestCreation(projectId).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGroups1WithResponseSpec(String projectId) throws WebClientResponseException {
+        return getGroups1RequestCreation(projectId);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGroupsByType1RequestCreation(String projectId, String groupType) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupsByType1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupType' is set
+        if (groupType == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupType' when calling getGroupsByType1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("groupType", groupType);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/type/{groupType}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<TagGroup> getGroupsByType1(String projectId, String groupType) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupsByType1RequestCreation(projectId, groupType).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<TagGroup>> getGroupsByType1WithHttpInfo(String projectId, String groupType) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupsByType1RequestCreation(projectId, groupType).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGroupsByType1WithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
+        return getGroupsByType1RequestCreation(projectId, groupType);
     }
     /**
      * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
@@ -3802,8 +4404,8 @@ public class FeaturesApi {
         return getTracesRequestCreation(projectId, alignedFeatureId, includeAll);
     }
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -3846,8 +4448,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -3862,8 +4464,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -3878,8 +4480,8 @@ public class FeaturesApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -3890,5 +4492,209 @@ public class FeaturesApi {
      */
     public ResponseSpec listFoldChange1WithResponseSpec(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
         return listFoldChange1RequestCreation(projectId, page, size, sort);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec objectsByGroup1RequestCreation(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'group' is set
+        if (group == null) {
+            throw new WebClientResponseException("Missing the required parameter 'group' when calling objectsByGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "group", group));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/grouped", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PageAlignedFeature objectsByGroup1(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PageAlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PageAlignedFeature> objectsByGroup1WithHttpInfo(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec objectsByGroup1WithResponseSpec(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields);
+    }
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project space to get objects from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec objectsByTag1RequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByTag1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project space to get objects from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PageAlignedFeature objectsByTag1(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project space to get objects from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PageAlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PageAlignedFeature> objectsByTag1WithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged objects
+     * @param projectId project space to get objects from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec objectsByTag1WithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields);
     }
 }
