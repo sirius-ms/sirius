@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
+import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
@@ -157,18 +158,18 @@ public class NoSQLProjectTest {
             ms2.setScanNumber(5);
 
             List<FeatureImport> imports = List.of(FeatureImport.builder()
-                            .name("foo")
-                            .externalFeatureId("testFID")
-                            .ionMass(42d)
-                            .charge(1)
-                            .detectedAdducts(Set.of("M+H+"))
-                            .rtStartSeconds(6d)
-                            .rtApexSeconds(9d)
-                            .rtEndSeconds(12d)
-                            .mergedMs1(ms1)
-                            .ms1Spectra(List.of(ms1))
-                            .ms2Spectra(List.of(ms2, ms2))
-                            .build());
+                    .name("foo")
+                    .externalFeatureId("testFID")
+                    .ionMass(42d)
+                    .charge(1)
+                    .detectedAdducts(Set.of("M+H+"))
+                    .rtStartSeconds(6d)
+                    .rtApexSeconds(9d)
+                    .rtEndSeconds(12d)
+                    .mergedMs1(ms1)
+                    .ms1Spectra(List.of(ms1))
+                    .ms2Spectra(List.of(ms2, ms2))
+                    .build());
 
             List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
             List<AlignedFeature> features2 = project.findAlignedFeatures(Pageable.unpaged(), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
@@ -460,12 +461,12 @@ public class NoSQLProjectTest {
 
             List<LCMSRun> runs = List.of(
                     LCMSRun.builder()
-                        .name("run1")
-                        .chromatography(Chromatography.LC)
-                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
-                        .ionization(Ionization.byValue("ESI").orElseThrow())
-                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
-                        .build(),
+                            .name("run1")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build(),
                     LCMSRun.builder()
                             .name("run2")
                             .chromatography(Chromatography.LC)
@@ -473,7 +474,7 @@ public class NoSQLProjectTest {
                             .ionization(Ionization.byValue("ESI").orElseThrow())
                             .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                             .build()
-                    );
+            );
 
             ps.getStorage().insertAll(runs);
             final Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
@@ -554,7 +555,7 @@ public class NoSQLProjectTest {
             project.addCategories(List.of(
                     TagCategoryImport.builder().name("date").valueTypeAndPossibleValues(TagCategory.ValueType.DATE, null).build(),
                     TagCategoryImport.builder().name("time").valueTypeAndPossibleValues(TagCategory.ValueType.TIME, null).build()
-                    ), true);
+            ), true);
 
             final Run run2 = project.findRunById(Long.toString(runs.get(1).getRunId()));
             project.addTagsToObject(Run.class, run2.getRunId(), List.of(
@@ -632,35 +633,18 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testFilterTranslation() throws IOException, NoSuchMethodException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
-        StandardQueryParser parser = new StandardQueryParser(new StandardAnalyzer());
-        parser.setPointsConfigMap(Map.of(
-                "integer", new PointsConfig(new DecimalFormat(), Long.class),
-                "real", new PointsConfig(new DecimalFormat(), Double.class),
-                "date", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class),
-                "time", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Long.class)
-        ));
-
-        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
-        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
-
-            Method convert = project.getClass().getDeclaredMethod("convertQuery", Query.class);
-            convert.setAccessible(true);
-            Query query = parser.parse("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00", "text");
-            Filter filter = (Filter) convert.invoke(project, query);
-            Assert.assertEquals(
-                    "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
-                            "int64:[" + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
-                            "int64:[" + TagController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
-                            "int64:[" + Long.MIN_VALUE + ", " + (TagController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
-                            "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TagController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
-                            "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TagController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
-                            "int64:[" + Long.MIN_VALUE + ", " + (TagController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
-                    filter.toString()
-            );
-        }
+    public void testFilterTranslation() throws IOException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
+        Filter filter = LuceneUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
+        Assert.assertEquals(
+                "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
+                        "int64:[" + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
+                        "int64:[" + TagController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
+                        "int64:[" + Long.MIN_VALUE + ", " + (TagController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
+                        "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TagController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
+                        "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TagController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
+                        "int64:[" + Long.MIN_VALUE + ", " + (TagController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
+                filter.toString()
+        );
     }
 
 }
