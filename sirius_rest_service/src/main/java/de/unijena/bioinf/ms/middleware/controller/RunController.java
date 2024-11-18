@@ -52,7 +52,7 @@ public class RunController implements TagController<Run, Run.OptField> {
     }
 
     @Override
-    public Class<Run> getTaggable() {
+    public Class<Run> getTagTarget() {
         return Run.class;
     }
 

@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 
-import java.util.List;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,14 +32,12 @@ import java.util.List;
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TagCategoryGroup {
+public class TagGroup {
 
     private String name;
 
     private String luceneQuery;
 
     private String groupType;
-
-    private List<String> categories;
 
 }

@@ -55,8 +55,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
@@ -270,12 +270,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags) {
+    public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
         throw new UnsupportedOperationException();
     }
 
@@ -315,22 +315,27 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<TagCategoryGroup> findTagGroups() {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategoryGroup> findTagGroupsByType(String type) {
+    public List<TagGroup> findTagGroups() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategoryGroup findTagGroup(String name) {
+    public List<TagGroup> findTagGroupsByType(String type) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategoryGroup addTagGroup(String name, String query, String type) {
+    public TagGroup findTagGroup(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagGroup addTagGroup(String name, String query, String type) {
         throw new UnsupportedOperationException();
     }
 

@@ -112,28 +112,28 @@ public class Filter {
             return singleValue(value, Type.LTE);
         }
 
-        public <T extends Comparable<T>> Filter beetween(T left, T right) {
+        public <T extends Comparable<T>> Filter between(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, false, false}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenLeftInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenLeftInclusive(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, true, false}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenRightInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenRightInclusive(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, false, true}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenBothInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenBothInclusive(T left, T right) {
             if (left.compareTo(right) > 0) {
                 throw new IllegalArgumentException(left + " must be >= " + right);
             }

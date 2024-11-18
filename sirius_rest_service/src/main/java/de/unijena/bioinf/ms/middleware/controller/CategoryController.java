@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -121,71 +120,6 @@ public class CategoryController {
     @DeleteMapping(value = "/{categoryName}")
     public void deleteCategories(@PathVariable String projectId, @PathVariable String categoryName) {
         projectsProvider.getProjectOrThrow(projectId).deleteCategory(categoryName);
-    }
-
-    /**
-     * Get all tag category groups in the given project-space.
-     *
-     * @param projectId project-space to read from.
-     * @return Tag category groups.
-     */
-    @GetMapping(value = "/groups", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagCategoryGroup> getGroups(@PathVariable String projectId) {
-        return projectsProvider.getProjectOrThrow(projectId).findTagGroups();
-    }
-
-    /**
-     * Get tag category groups by type in the given project-space.
-     *
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return Tag categories.
-     */
-    @GetMapping(value = "/groups/type/{groupType}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagCategoryGroup> getGroupsByType(@PathVariable String projectId, @PathVariable String groupType) {
-        return projectsProvider.getProjectOrThrow(projectId).findTagGroupsByType(groupType);
-    }
-
-    /**
-     * Get tag category group by name in the given project-space.
-     *
-     * @param projectId project-space to read from.
-     * @param groupName name of the group
-     * @return Tag category.
-     */
-    @GetMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TagCategoryGroup getGroupByName(@PathVariable String projectId, @PathVariable String groupName) {
-        return projectsProvider.getProjectOrThrow(projectId).findTagGroup(groupName);
-    }
-
-    /**
-     * Group tag categories in the project. The group name must not exist in the project.
-     *
-     * @param projectId project-space to add to.
-     * @param groupName name of the new group
-     * @param filter    filter query to create the group
-     * @param type      type of the group
-     * @return the tag category group that was added
-     */
-    @PutMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TagCategoryGroup addGroup(
-            @PathVariable String projectId,
-            @PathVariable String groupName,
-            @RequestParam String filter,
-            @RequestParam String type
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).addTagGroup(groupName, filter, type);
-    }
-
-    /**
-     * Delete tag category groups with the given name from the specified project-space.
-     *
-     * @param projectId  project-space to delete from.
-     * @param groupName  name of group to delete.
-     */
-    @DeleteMapping(value = "/groups/{groupName}")
-    public void deleteGroup(@PathVariable String projectId, @PathVariable String groupName) {
-        projectsProvider.getProjectOrThrow(projectId).deleteTagGroup(groupName);
     }
 
 }

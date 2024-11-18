@@ -23,15 +23,13 @@ package de.unijena.bioinf.ms.persistence.model.core.tags;
 import jakarta.persistence.Id;
 import lombok.*;
 
-import java.util.List;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
 @ToString
-public class TagCategoryGroup {
+public class TagGroup {
 
     @Id
     private long id;
@@ -41,7 +39,5 @@ public class TagCategoryGroup {
     private String luceneQuery;
 
     private String groupType;
-
-    private List<String> categories;
 
 }
