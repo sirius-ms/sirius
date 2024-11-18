@@ -336,6 +336,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             PrecursorIonType[] enforcedAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.enforced"));
             Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, enforcedAdducts);
             refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
+            enforceAdducts.setSelected(preset.get("AdductSettings.fallback").equals(preset.get("AdductSettings.enforced")));
         } catch (Exception e) {
             throw new UnsupportedOperationException("Could not parse adducts: " + e.getMessage());
         }
