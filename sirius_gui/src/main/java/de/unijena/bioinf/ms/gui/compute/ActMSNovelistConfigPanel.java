@@ -61,6 +61,7 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
         boolean isExplorerLic = sub != null && Optional.ofNullable(sub.getServiceUrl()).map(s -> s.contains("agilent")).orElse(false) && !"sub|888983e6-da01-4af7-b431-921c59f0028f".equals(sub.getSid());
 
         setButtonEnabled(!isExplorerLic, "Your Subscription does not contain the de novo structure generation feature.");
+        setButtonEnabled(true, notConnectedMessage);
     }
 
     @Override
