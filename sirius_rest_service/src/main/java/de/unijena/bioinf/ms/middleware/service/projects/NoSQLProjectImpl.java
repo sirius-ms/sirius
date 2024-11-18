@@ -45,9 +45,10 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -82,17 +83,6 @@ import jakarta.persistence.Id;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.custom.CustomAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
-import org.apache.lucene.document.DoublePoint;
-import org.apache.lucene.document.LongPoint;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
-import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
-import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
-import org.apache.lucene.search.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -105,9 +95,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -1133,80 +1121,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         return builder.build();
     }
-
-    //region tmp query parsing TODO: remove after implementing lucene indexing
-
-    private Filter convertQuery(Query query) throws IOException {
-        if (query instanceof TermQuery termQuery) {
-            return Filter.where(termQuery.getTerm().field()).eq(termQuery.getTerm().text());
-        } else if (query instanceof RegexpQuery regexpQuery) {
-            return Filter.where(regexpQuery.getRegexp().field()).regex(regexpQuery.getRegexp().text());
-        } else if (query instanceof PhraseQuery phraseQuery) {
-            return Filter.where(phraseQuery.getField()).eq(Arrays.stream(phraseQuery.getTerms()).map(Term::text).collect(Collectors.joining(" ")));
-        } else if (query instanceof PointRangeQuery pointRangeQuery) {
-            return createRangeFilter(pointRangeQuery.getField(), pointRangeQuery.getLowerPoint(), pointRangeQuery.getUpperPoint());
-        } else if (query instanceof BooleanQuery booleanQuery) {
-            return joinClauses(booleanQuery.clauses());
-        }
-        throw new IllegalArgumentException("Query type not supported.");
-    }
-
-    private Filter createRangeFilter(String field, byte[] lower, byte[] upper) {
-        if (field.equals("real")) {
-            return Filter
-                    .where("real")
-                    .beetweenBothInclusive(DoublePoint.decodeDimension(lower, 0), DoublePoint.decodeDimension(upper, 0));
-        } else if (field.equals("integer")) {
-            long low = LongPoint.decodeDimension(lower, 0);
-            long up = LongPoint.decodeDimension(upper, 0);
-            return Filter
-                    .where("int32")
-                    .beetweenBothInclusive(
-                            low < Integer.MIN_VALUE ? Integer.MIN_VALUE : (int) low,
-                            up > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) up
-                    );
-        } else {
-            return Filter
-                    .where("int64")
-                    .beetweenBothInclusive(LongPoint.decodeDimension(lower, 0), LongPoint.decodeDimension(upper, 0));
-        }
-    }
-
-    private Filter joinClauses(List<BooleanClause> clauses) throws IOException {
-        List<Filter> or = new ArrayList<>();
-        List<Filter> and = new ArrayList<>();
-        for (BooleanClause clause : clauses) {
-            if (clause.occur().equals(BooleanClause.Occur.SHOULD)) {
-                if (!and.isEmpty()) {
-                    or.add(Filter.and(and.toArray(Filter[]::new)));
-                    and.clear();
-                }
-                or.add(convertQuery(clause.query()));
-            } else if (clause.occur().equals(BooleanClause.Occur.MUST) || clause.occur().equals(BooleanClause.Occur.FILTER)) {
-                and.add(convertQuery(clause.query()));
-            } else {
-                throw new IllegalArgumentException();
-            }
-        }
-        if (!and.isEmpty()) {
-            or.add(Filter.and(and.toArray(Filter[]::new)));
-        }
-
-        if (or.isEmpty())
-            throw new IllegalArgumentException();
-        if (or.size() == 1)
-            return or.getFirst();
-        return Filter.or(or.toArray(Filter[]::new));
-    }
-
-    //endregion
-
-    private TagCategoryGroup convertToApiTagGroup(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup group) {
-        return TagCategoryGroup.builder()
+    
+    private TagGroup convertToApiTagGroup(de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup group) {
+        return TagGroup.builder()
                 .name(group.getName())
                 .luceneQuery(group.getLuceneQuery())
                 .groupType(group.getGroupType())
-                .categories(new ArrayList<>(group.getCategories()))
                 .build();
     }
 
@@ -1597,21 +1517,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Filter tagFilter;
         try {
-            StandardQueryParser parser = new StandardQueryParser(new StandardAnalyzer());
-            parser.setPointsConfigMap(Map.of(
-                    "integer", new PointsConfig(new DecimalFormat(), Long.class),
-                    "real", new PointsConfig(new DecimalFormat(), Double.class),
-                    "date", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class),
-                    "time", new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Long.class)
-            ));
-            Query query = parser.parse(filter, "text");
-            tagFilter = Filter.and(
-                    Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()),
-                    convertQuery(query)
-            );
+            tagFilter = LuceneUtils.translateTagFilter(filter);
         } catch (Exception e) {
             throw new ResponseStatusException(BAD_REQUEST, "Parse error: " + filter);
         }
+        tagFilter = Filter.and(
+                Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()),
+                tagFilter
+        );
         Long[] objectIds = storage().findStr(tagFilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 
@@ -1654,10 +1567,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags) {
-        // TODO
+    public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
         try {
-            Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
+            Class<?> taggedObjectClass = getTaggedObjectClass(target);
             long objId = Long.parseLong(objectId);
             if (storage().getByPrimaryKey(objId, taggedObjectClass).isEmpty())
                 throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
@@ -1808,21 +1720,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             throw new ResponseStatusException(BAD_REQUEST, "Category can not be edited: " + categoryName);
         }
         storage().removeAll(Filter.where("category").eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
-
-        List<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup> groupsToUpdate = new ArrayList<>();
-        List<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup> groupsToDelete = new ArrayList<>();
-        storage().findStr(Filter.where("categories").elemMatch().eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class).forEach(group -> {
-            if (group.getCategories().contains(categoryName)) {
-                if (group.getCategories().size() <= 1) {
-                    groupsToDelete.add(group);
-                } else {
-                    group.getCategories().remove(categoryName);
-                    groupsToUpdate.add(group);
-                }
-            }
-        });
-        storage().upsertAll(groupsToUpdate);
-        storage().removeAll(groupsToDelete);
         storage().remove(category.get());
     }
 
@@ -1855,18 +1752,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public List<TagCategoryGroup> findTagGroups() {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields) {
+        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("name").eq(group), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
+        if (tagGroup.isEmpty())
+            return Page.empty();
+
+        return findObjectsByTag(target, tagGroup.get().getLuceneQuery(), pageable, optFields);
+    }
+
+    @SneakyThrows
+    @Override
+    public List<TagGroup> findTagGroups() {
         return storage()
-                .findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class)
+                .findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class)
                 .map(this::convertToApiTagGroup)
                 .toList();
     }
 
     @SneakyThrows
     @Override
-    public List<TagCategoryGroup> findTagGroupsByType(String type) {
-        List<TagCategoryGroup> groups = storage()
-                .findStr(Filter.where("groupType").eq(type), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class)
+    public List<TagGroup> findTagGroupsByType(String type) {
+        List<TagGroup> groups = storage()
+                .findStr(Filter.where("groupType").eq(type), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class)
                 .map(this::convertToApiTagGroup)
                 .toList();
         if (groups.isEmpty()) {
@@ -1877,42 +1784,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public TagCategoryGroup findTagGroup(String name) {
+    public TagGroup findTagGroup(String name) {
         return convertToApiTagGroup(storage()
-                .findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class)
+                .findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class)
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No such tag category group: " + name)));
     }
 
     @SneakyThrows
     @Override
-    public TagCategoryGroup addTagGroup(String name, String filter, String type) {
-        if (storage().findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class).count() > 0) {
+    public TagGroup addTagGroup(String name, String filter, String type) {
+        if (storage().findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).count() > 0) {
             throw new ResponseStatusException(NOT_ACCEPTABLE, "Tag category group " + name + " already exists");
         }
 
-        Filter tagCatFilter;
-        try (Analyzer analyzer = CustomAnalyzer.builder()
-                .withTokenizer(StandardTokenizerFactory.NAME)
-                .build()) {
-            StandardQueryParser parser = new StandardQueryParser(analyzer);
-            Query query = parser.parse(filter, "name");
-            tagCatFilter = convertQuery(query);
-        }
-        List<String> categories = storage()
-                .findStr(tagCatFilter, de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
-                .map(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory::getName)
-                .toList();
-        if (categories.isEmpty()) {
-            throw new ResponseStatusException(NOT_FOUND, "No tag category found for: " + filter);
-        }
-
-        de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup group = de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup
+        de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup group = de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup
                 .builder()
                 .name(name)
                 .luceneQuery(filter)
                 .groupType(type)
-                .categories(categories)
                 .build();
 
         storage().insert(group);
@@ -1922,7 +1812,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteTagGroup(String name) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup> group = storage().findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategoryGroup.class).findFirst();
+        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> group = storage().findStr(Filter.where("name").eq(name), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (group.isEmpty()) {
             throw new ResponseStatusException(NOT_FOUND, "No such category group: " + name);
         }
