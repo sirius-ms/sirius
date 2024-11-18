@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller.mixins;
 
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -38,7 +39,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
 
     SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
-    Class<T> getTaggable();
+    Class<T> getTagTarget();
 
     /**
      * Get objects by tag.
@@ -76,7 +77,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
      * @param filter       tag filter.
      * @param pageable     pageable.
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
-     * @return
+     * @return tagged objects
      */
     @GetMapping(value = "/tagged", produces = MediaType.APPLICATION_JSON_VALUE)
     default Page<T> objectsByTag(@PathVariable String projectId,
@@ -84,7 +85,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
                                 @ParameterObject Pageable pageable,
                                 @RequestParam(defaultValue = "") EnumSet<O> optFields
     ) {
-        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTag(getTaggable(), filter, pageable, optFields);
+        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTag(getTagTarget(), filter, pageable, optFields);
     }
 
     /**
@@ -97,7 +98,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
      */
     @PutMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     default List<? extends Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
-        return getProjectsProvider().getProjectOrThrow(projectId).addTagsToObject(getTaggable(), objectId, tags);
+        return getProjectsProvider().getProjectOrThrow(projectId).addTagsToObject(getTagTarget(), objectId, tags);
     }
 
     /**
@@ -110,6 +111,91 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     @DeleteMapping(value = "/tags/{objectId}/{categoryName}")
     default void deleteTags(@PathVariable String projectId, @PathVariable String objectId, @PathVariable String categoryName) {
         getProjectsProvider().getProjectOrThrow(projectId).deleteTagsFromObject(objectId, List.of(categoryName));
+    }
+
+    /**
+     * Get objects by tag group.
+     *
+     * @param projectId project-space to delete from.
+     * @param group     tag group name.
+     * @param pageable  pageable.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged objects
+     */
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    default Page<T> objectsByGroup(@PathVariable String projectId,
+                                   @RequestParam String group,
+                                   @ParameterObject Pageable pageable,
+                                   @RequestParam(defaultValue = "") EnumSet<O> optFields
+    ) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTagGroup(getTagTarget(), group, pageable, optFields);
+    }
+
+    /**
+     * Get all tag category groups in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @return Tag category groups.
+     */
+    @GetMapping(value = "/groups", produces = MediaType.APPLICATION_JSON_VALUE)
+    default List<TagGroup> getGroups(@PathVariable String projectId) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findTagGroups();
+    }
+
+    /**
+     * Get tag groups by type in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return Tag groups.
+     */
+    @GetMapping(value = "/groups/type/{groupType}", produces = MediaType.APPLICATION_JSON_VALUE)
+    default List<TagGroup> getGroupsByType(@PathVariable String projectId, @PathVariable String groupType) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findTagGroupsByType(groupType);
+    }
+
+    /**
+     * Get tag group by name in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @param groupName name of the group
+     * @return Tag group.
+     */
+    @GetMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    default TagGroup getGroupByName(@PathVariable String projectId, @PathVariable String groupName) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findTagGroup(groupName);
+    }
+
+    /**
+     * Group tags in the project. The group name must not exist in the project.
+     *
+     * See {@code /tagged} for filter syntax.
+     *
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter    filter query to create the group
+     * @param type      type of the group
+     * @return the tag group that was added
+     */
+    @PutMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    default TagGroup addGroup(
+            @PathVariable String projectId,
+            @PathVariable String groupName,
+            @RequestParam String filter,
+            @RequestParam String type
+    ) {
+        return getProjectsProvider().getProjectOrThrow(projectId).addTagGroup(groupName, filter, type);
+    }
+
+    /**
+     * Delete tag groups with the given name from the specified project-space.
+     *
+     * @param projectId  project-space to delete from.
+     * @param groupName  name of group to delete.
+     */
+    @DeleteMapping(value = "/groups/{groupName}")
+    default void deleteGroup(@PathVariable String projectId, @PathVariable String groupName) {
+        getProjectsProvider().getProjectOrThrow(projectId).deleteTagGroup(groupName);
     }
 
 }

@@ -34,8 +34,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.projectspace.Instance;
@@ -157,9 +157,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
+    <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
 
-    List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags);
+    List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
 
     void deleteTagsFromObject(String objectId, List<String> categoryNames);
 
@@ -175,13 +175,15 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     TagCategory addPossibleValuesToCategory(String categoryName, List<?> values);
 
-    List<TagCategoryGroup> findTagGroups();
+    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
 
-    List<TagCategoryGroup> findTagGroupsByType(String type);
+    List<TagGroup> findTagGroups();
 
-    TagCategoryGroup findTagGroup(String name);
+    List<TagGroup> findTagGroupsByType(String type);
 
-    TagCategoryGroup addTagGroup(String name, String query, String type);
+    TagGroup findTagGroup(String name);
+
+    TagGroup addTagGroup(String name, String query, String type);
 
     void deleteTagGroup(String name);
 

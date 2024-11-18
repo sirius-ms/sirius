@@ -53,7 +53,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.*;
 
@@ -251,10 +250,10 @@ public class NitriteDatabaseTest {
                     Filter.where("a").regex("foo"),
                     Filter.where("a").in("foo", "bar"),
                     Filter.where("a").notIn("foo", "bar"),
-                    Filter.where("a").beetween(41, 43),
-                    Filter.where("a").beetweenLeftInclusive(41, 43),
-                    Filter.where("a").beetweenRightInclusive(41, 43),
-                    Filter.where("a").beetweenBothInclusive(41, 43),
+                    Filter.where("a").between(41, 43),
+                    Filter.where("a").betweenLeftInclusive(41, 43),
+                    Filter.where("a").betweenRightInclusive(41, 43),
+                    Filter.where("a").betweenBothInclusive(41, 43),
                     Filter.where("a").elemMatch().eq(42),
                     Filter.where("a").elemMatch().elemMatch().eq(42),
                     // CONJUGATE FILTERS

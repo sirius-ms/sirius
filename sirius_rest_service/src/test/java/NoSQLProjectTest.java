@@ -20,6 +20,7 @@
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
 import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
@@ -28,12 +29,17 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryGroup;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -60,6 +66,7 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -309,21 +316,41 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            List<TagCategoryImport> catIn = List.of(
-                    TagCategoryImport.builder().name("c0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).categoryType("foo").build(),
-                    TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(true, false)).build(),
-                    TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, List.of(0, 1)).build(),
-                    TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
-                    TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
+            project.addCategories(List.of(
+                    TagCategoryImport.builder().name("sample").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("sample", "blank", "control")).build()
+            ), true);
+
+            List<LCMSRun> runs = List.of(
+                    LCMSRun.builder().name("run1")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build(),
+                    LCMSRun.builder().name("run2")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build(),
+                    LCMSRun.builder().name("run3")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build()
             );
 
-            project.addCategories(catIn, true);
+            ps.getStorage().insertAll(runs);
+            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("sample").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("blank").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("control").build()));
 
-            project.addTagGroup("group1", "name:c0 AND categoryType:foo", "type1");
-            project.addTagGroup("group2", "valueType:INTEGER", "type1");
-            project.addTagGroup("group3", "name:c1 OR name:c3", "type2");
+            project.addTagGroup("group1", "category:sample AND text:sample", "type1");
+            project.addTagGroup("group2", "category:sample AND text:blank", "type1");
+            project.addTagGroup("group3", "category:sample AND text:control", "type2");
 
-            Map<String, TagCategoryGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagCategoryGroup::getName, Function.identity()));
+            Map<String, TagGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagGroup::getName, Function.identity()));
 
             Assert.assertEquals(3, groups.size());
             Assert.assertTrue(groups.containsKey("group1"));
@@ -332,40 +359,96 @@ public class NoSQLProjectTest {
             Assert.assertEquals("type1", groups.get("group1").getGroupType());
             Assert.assertEquals("type1", groups.get("group2").getGroupType());
             Assert.assertEquals("type2", groups.get("group3").getGroupType());
-            Assert.assertEquals(1, groups.get("group1").getCategories().size());
-            Assert.assertEquals(1, groups.get("group2").getCategories().size());
-            Assert.assertEquals(2, groups.get("group3").getCategories().size());
-            Assert.assertEquals("c0", groups.get("group1").getCategories().getFirst());
-            Assert.assertEquals("c2", groups.get("group2").getCategories().getFirst());
-            Assert.assertTrue(groups.get("group3").getCategories().contains("c1"));
-            Assert.assertTrue(groups.get("group3").getCategories().contains("c3"));
+
+            Page<Run> r1 = project.findObjectsByTagGroup(Run.class, "group1", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+            Assert.assertEquals(1, r1.getContent().size());
+            Assert.assertEquals("run1", r1.getContent().getFirst().getName());
+            Page<Run> r2 = project.findObjectsByTagGroup(Run.class, "group2", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+            Assert.assertEquals(1, r2.getContent().size());
+            Assert.assertEquals("run2", r2.getContent().getFirst().getName());
+            Page<Run> r3 = project.findObjectsByTagGroup(Run.class, "group3", Pageable.unpaged(), EnumSet.of(Run.OptField.none));
+            Assert.assertEquals(1, r3.getContent().size());
+            Assert.assertEquals("run3", r3.getContent().getFirst().getName());
 
             Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("foo"));
-            TagCategoryGroup group = project.findTagGroup("group1");
+            TagGroup group = project.findTagGroup("group1");
             Assert.assertNotNull(group);
             Assert.assertEquals("group1", group.getName());
 
             Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroupsByType("foo"));
-            List<String> groupNames = project.findTagGroupsByType("type1").stream().map(TagCategoryGroup::getName).toList();
+            List<String> groupNames = project.findTagGroupsByType("type1").stream().map(TagGroup::getName).toList();
             Assert.assertEquals(2, groupNames.size());
             Assert.assertTrue(groupNames.contains("group1"));
             Assert.assertTrue(groupNames.contains("group2"));
 
-            project.deleteCategory("c3");
-            group = project.findTagGroup("group3");
-            Assert.assertEquals(1, group.getCategories().size());
-            Assert.assertEquals("c1", group.getCategories().getFirst());
-            project.deleteCategory("c1");
-            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("group3"));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("group4"));
 
             project.deleteTagGroup("group2");
-            groupNames = project.findTagGroups().stream().map(TagCategoryGroup::getName).toList();
+            project.deleteTagGroup("group3");
+            groupNames = project.findTagGroups().stream().map(TagGroup::getName).toList();
             Assert.assertEquals(1, groupNames.size());
             Assert.assertEquals("group1", groupNames.getFirst());
         }
     }
 
-    // TODO test fold change
+    @Test
+    public void testFoldChange() throws IOException, ExecutionException {
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            project.addCategories(List.of(
+                    TagCategoryImport.builder().name("sample").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("sample", "blank", "control")).build()
+            ), true);
+
+            List<LCMSRun> runs = List.of(
+                    LCMSRun.builder().name("run1")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build(),
+                    LCMSRun.builder().name("run2")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build()
+            );
+
+            ps.getStorage().insertAll(runs);
+            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("sample").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("blank").build()));
+
+            AlignedFeatures af = AlignedFeatures.builder().name("af").build();
+            ps.getStorage().insert(af);
+
+            Feature f1 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(2.0).runId(runs.get(0).getRunId()).build();
+            Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+            ps.getStorage().insertAll(List.of(f1, f2));
+
+            project.addTagGroup("sample", "category:sample AND text:sample", "type1");
+            project.addTagGroup("blank", "category:sample AND text:blank", "type1");
+
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+
+            List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
+            Assert.assertEquals(1, fc.size());
+            Assert.assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
+            Assert.assertEquals(FoldChange.AlignedFeatureFoldChange.class, fc.getFirst().getClass());
+            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), ((FoldChange.AlignedFeatureFoldChange) fc.getFirst()).getAlignedFeatureId());
+            fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+            Assert.assertEquals(1, fc.size());
+            Assert.assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
+            Assert.assertEquals(FoldChange.AlignedFeatureFoldChange.class, fc.getFirst().getClass());
+            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), ((FoldChange.AlignedFeatureFoldChange) fc.getFirst()).getAlignedFeatureId());
+
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY);
+            fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+            Assert.assertEquals(0, fc.size());
+        }
+    }
 
     @Test
     public void testTags() throws IOException {
