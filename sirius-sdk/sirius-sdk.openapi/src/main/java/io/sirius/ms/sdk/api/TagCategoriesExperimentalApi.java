@@ -225,8 +225,8 @@ public class TagCategoriesExperimentalApi {
         return addPossibleValuesToCategoryRequestCreation(projectId, categoryName, requestBody);
     }
     /**
-     * Delete tag categories with the given names from the specified project-space.
-     * Delete tag categories with the given names from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param categoryName name of category to delete.
@@ -265,8 +265,8 @@ public class TagCategoriesExperimentalApi {
     }
 
     /**
-     * Delete tag categories with the given names from the specified project-space.
-     * Delete tag categories with the given names from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param categoryName name of category to delete.
@@ -278,8 +278,8 @@ public class TagCategoriesExperimentalApi {
     }
 
     /**
-     * Delete tag categories with the given names from the specified project-space.
-     * Delete tag categories with the given names from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param categoryName name of category to delete.
@@ -291,8 +291,8 @@ public class TagCategoriesExperimentalApi {
     }
 
     /**
-     * Delete tag categories with the given names from the specified project-space.
-     * Delete tag categories with the given names from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
+     * Delete tag categories with the given name from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param categoryName name of category to delete.
@@ -381,7 +381,7 @@ public class TagCategoriesExperimentalApi {
      * Get tag categories by type in the given project-space.
      * <p><b>200</b> - Tag categories.
      * @param projectId project-space to read from.
-     * @param categoryType name of the category
+     * @param categoryType type of the category
      * @return List&lt;TagCategory&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -424,7 +424,7 @@ public class TagCategoriesExperimentalApi {
      * Get tag categories by type in the given project-space.
      * <p><b>200</b> - Tag categories.
      * @param projectId project-space to read from.
-     * @param categoryType name of the category
+     * @param categoryType type of the category
      * @return List&lt;TagCategory&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -438,7 +438,7 @@ public class TagCategoriesExperimentalApi {
      * Get tag categories by type in the given project-space.
      * <p><b>200</b> - Tag categories.
      * @param projectId project-space to read from.
-     * @param categoryType name of the category
+     * @param categoryType type of the category
      * @return ResponseEntity&lt;List&lt;TagCategory&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -452,7 +452,7 @@ public class TagCategoriesExperimentalApi {
      * Get tag categories by type in the given project-space.
      * <p><b>200</b> - Tag categories.
      * @param projectId project-space to read from.
-     * @param categoryType name of the category
+     * @param categoryType type of the category
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
