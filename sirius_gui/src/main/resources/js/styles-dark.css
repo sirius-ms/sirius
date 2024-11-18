@@ -1,30 +1,60 @@
 /* Global style */
+@font-face {
+    font-family: 'CustomFont';
+    src: url('#FONT_URL#') format('truetype'); /* Replace the variable with the URL to the font */
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    font-family: 'CustomFont', Arial, Helvetica, sans-serif;
+}
+
 body {
     overflow-x: hidden;
     overflow-y: hidden;
-    font-family: sans-serif;
     font-size: 12px;
     background-color: #3C3F41FF;
-    color: #bbb;
+    color: $FOREGROUND_DATA;
+}
+
+/* unvisited link */
+a:link {
+    color: $TEXT_LINK;
+}
+
+/* visited link */
+a:visited {
+    color: $TEXT_LINK_VISITED;
+}
+
+/* mouse over link */
+a:hover {
+    color: $TEXT_LINK_HOVER;
+}
+
+/* selected link */
+a:active {
+    color: $TEXT_LINK_ACTIVE;
 }
 
 text {
-    color: #bbb;
+    color: $FOREGROUND_DATA;
 }
 
 .label, .legend {
     font-size: 13px;
-    color: #bbb;
+    color: $FOREGROUND_DATA;
 }
 /* for svg we have to use the fill attribute instead of the color attribute */
 text.label, text.legend {
     font-size: 13px;
-    fill:#bbb;
+    fill:$FOREGROUND_DATA;
 }
 
 #tooltip, .popup {
     color: black;
-    background-color: #bbb;
+    background-color: $FOREGROUND_INTERFACE;
     border: solid 1px;
     border-radius:  5px;
     padding:  5px;
@@ -35,8 +65,8 @@ text.label, text.legend {
 
 .spectrum_label, .spectrum_legend {
     text-anchor: middle;
-    color: #bbb;
-    fill: #bbb;
+    color: $FOREGROUND_DATA;
+    fill: $FOREGROUND_DATA;
 }
 
 #container {
@@ -60,18 +90,25 @@ text.label, text.legend {
 }
 
 /* SpectraViewer_v2 Changeable: */
-.spectrum_legend { fill: #808080; }
+.spectrum_legend { fill: $FOREGROUND_DATA; }
 
-.peak { width: 2px;}
-.peak_1 { fill: #bbb; width: 2px; }
-.peak_2 { fill: #32CD32; width: 2px; }
-.peak_matched { fill: #045FB4; width: 2px; }
-.peak_structInfo { fill: #af7ac5; width: 2px; }
-.peak_hover { fill: red; width: 2px; }
+.peak {fill: $FOREGROUND_DATA; width: 2px;}
+.peak_mirrorTop { fill: $FOREGROUND_DATA; width: 2px; } /* normal peaks without explanation */
+.peak_mirrorBottom { fill: $FOREGROUND_DATA; width: 2px; } /* simulated isotope peaks */
+.peak_matched { fill: $Spectrum.EXPLAINED_PEAKS_FORMULA; width: 2px; } /*isotope peaks in MS1 that were matched to simulated isotope peaks*/
+.peak_formulaInfo { fill: $Spectrum.EXPLAINED_PEAKS_FORMULA; width: 2px; } /* explained formula */
+.peak_structInfo { fill: $Spectrum.EXPLAINED_PEAKS_STRUCTURE; width: 2px; } /* explained structure */
+
 .peak_select {
-    fill: #4169E1;
-    width: 3px;
+    width: 4px;
 }
+.peak_shadow{ /*<= Set style for all shadow*/
+    /*fill: lightgrey;*/
+    width: 12px;
+    /* filter: blur(3px);*/
+}
+#shadow_select{ fill: #737373;} /*<= Set style for individual shadow */
+#shadow_hover{ fill: #595959;} /*<= Set style for individual shadow*/
 
 #str_border {
     border: 0.5px solid #cfcfcf;
@@ -79,57 +116,65 @@ text.label, text.legend {
     padding: 5px;
 }
 
-.highlight_bond { stroke: #4169E1; }
-.highlight_cut { stroke: red; }
-.highlight_atom { fill: #4169E1; }
-g.highlight_atom path { fill: #4169E1; }
-.rest_bond { stroke: #A9A9A9; }
-.rest_atom { fill: #A9A9A9; }
-.default_bond { fill: #bbb; }
-.default_atom { fill: #bbb; }
 
-.diff_ruler { stroke: #bbb; }
-.diff_label { fill: #bbb; }
-.diff_band { stroke: #32CD32; stroke-width: 2px}
+.highlight_bond { stroke: $MolecularStructures.SELECTED_SUBSTRUCTURE;}
+.highlight_cut { stroke: $MolecularStructures.BREAKING_BOND;}
+.highlight_atom { fill: $MolecularStructures.SELECTED_SUBSTRUCTURE; }
+g.highlight_atom path { fill: $MolecularStructures.SELECTED_SUBSTRUCTURE; }
+.rest_bond { stroke: $MolecularStructures.BACKGROUND_STRUCTURE;}
+.rest_atom { fill: $MolecularStructures.BACKGROUND_STRUCTURE; }
+.default_bond { stroke: $MolecularStructures.SELECTED_SUBSTRUCTURE; } /* default stroke-width is 0.19px */
+.default_atom { fill: $MolecularStructures.SELECTED_SUBSTRUCTURE; }
 
-.intensity_1 { fill: #bbb; }
-.intensity_2 { fill: #bbb; }
+.diff_ruler { stroke: $FOREGROUND_DATA; }
+.diff_label { fill: $FOREGROUND_DATA; }
+.diff_band { stroke: $FOREGROUND_DATA; stroke-width: 2px}
 
 
 /*
     LCMS-Viewer
 */
+.lcmaincurve {
+    stroke: $LCMSVIEW.MAIN_FEATURE_COLOR;
+    stroke-width: 3px;
+}
+
+.magnifier {
+    stroke: #ffffff;
+    stroke-width: 2px;
+}
+
 rect.secondaryFeatureBox {
-        fill:gray;
-        fill-opacity: 0.01;
-        stroke:gray;
-        stroke-width: 1px;
+    fill:$LCMSVIEW.SECONDARY_FEATURE_BOX_FILL;
+    fill-opacity: 0.03;
+    stroke:$LCMSVIEW.SECONDARY_FEATURE_BOX_STROKE;
+    stroke-width: 2px;
 }
 rect.secondaryFeatureBox:hover {
-        fill:gray;
-        fill-opacity: 0.08;
-        stroke:gray;
-        stroke-width: 1px;
+    fill:$LCMSVIEW.SECONDARY_FEATURE_BOX_FILL;
+    fill-opacity: 0.08;
+    stroke:$LCMSVIEW.SECONDARY_FEATURE_BOX_STROKE;
+    stroke-width: 4px;
 }
 
 rect.mainFeatureBox {
-        fill:steelblue;
-        fill-opacity: 0.03;
-        stroke:steelblue;
-        stroke-width: 3px;
+    fill:$LCMSVIEW.MAIN_FEATURE_BOX_FILL;
+    fill-opacity: 0.05;
+    stroke:$LCMSVIEW.MAIN_FEATURE_BOX_STROKE;
+    stroke-width: 3px;
 }
 rect.mainFeatureBox:hover {
-        fill:steelblue;
-        fill-opacity: 0.08;
-        stroke:steelblue;
-        stroke-width: 3px;
+    fill:$LCMSVIEW.MAIN_FEATURE_BOX_FILL;
+    fill-opacity: 0.15;
+    stroke:$LCMSVIEW.MAIN_FEATURE_BOX_STROKE;
+    stroke-width: 4px;
 }
 rect.terribleQualityFeatureBox {
     stroke-dasharray: 3;
 }
 .noiselevel {
     stroke-width: 1px;
-    stroke:black;
+    stroke:white;
     stroke-dasharray: 3;
 
 }
@@ -143,21 +188,22 @@ rect.terribleQualityFeatureBox {
     list-style-type: none;
     padding: 0;
     margin: 0;
-    display: flex;
-    flex-wrap: wrap;
+    columns: 2;
 }
 
 .lclegend-item {
     display: flex;
     align-items: center;
-    width: 48%;
+    width: 96%;
     margin: 0%;
     box-sizing: border-box;
     padding:9px;
+    break-inside: avoid; /* prevent single item from splitting across columns */
+    border: 1px solid $BACKGROUND; /*'invisible' border to prevent jumping*/
 }
 .lclegend-item.lcfocused {
-    border: 1px solid black;
-    background-color: SlateBlue;
+    border: 1px solid white;
+    background-color: $LCMSVIEW.LEGEND_FOCUS;
 }
 
 .lccolor-box {
@@ -179,4 +225,11 @@ rect.terribleQualityFeatureBox {
     margin-left: 10px;
     text-align: right;
     min-width: 60px;
+}
+
+#agpl-logo-fill{
+    fill: white;
+}
+#agpl-logo-stroke{
+    stroke: white;
 }

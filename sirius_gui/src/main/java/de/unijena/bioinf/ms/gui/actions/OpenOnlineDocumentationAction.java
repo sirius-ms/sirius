@@ -37,7 +37,7 @@ public class OpenOnlineDocumentationAction extends AbstractAction {
     protected final Frame popupOwner;
     public OpenOnlineDocumentationAction(Frame popupOwner) {
         super("Help");
-        putValue(Action.LARGE_ICON_KEY, Icons.HELP_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.HELP.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Open online documentation");
         this.popupOwner = popupOwner;
     }

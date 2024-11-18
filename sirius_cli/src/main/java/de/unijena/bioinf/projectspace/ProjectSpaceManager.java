@@ -22,6 +22,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -64,6 +65,10 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     int countCompounds();
 
     long sizeInBytes();
+
+    @NotNull default Optional<ProjectType> getType(){
+        return Optional.empty();
+    }
 
     @Override
     default int size() {

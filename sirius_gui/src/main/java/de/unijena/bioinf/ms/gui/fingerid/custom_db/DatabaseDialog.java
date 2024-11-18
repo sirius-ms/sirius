@@ -68,7 +68,7 @@ public class DatabaseDialog extends JDialog {
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
-        JPanel header = new DialogHeader(Icons.DB_64);
+        JPanel header = new DialogHeader(Icons.DB.derive(64,64));
         add(header, BorderLayout.NORTH);
 
         dbList = new JList<>();
@@ -310,7 +310,7 @@ public class DatabaseDialog extends JDialog {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             SearchableDatabase db = (SearchableDatabase) value;
             if (db.getErrorMessage() != null && !db.getErrorMessage().isBlank()) {
-                setForeground(Colors.LIST_DEACTIVATED_FOREGROUND);
+                setForeground(Colors.TEXT_ERROR);
             }
             return this;
         }

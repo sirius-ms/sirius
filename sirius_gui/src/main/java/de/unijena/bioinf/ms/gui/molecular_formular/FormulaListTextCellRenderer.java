@@ -36,7 +36,7 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
     private Font valueFont, mfFont, propertyFont, rankFont, statusFont;
 
     private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
-    private Color activatedForeground, deactivatedForeground, disableBackground;
+    private Color activatedForeground;
 
     private FormulaResultBean sre;
 
@@ -54,19 +54,17 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     public void initColorsAndFonts() {
         //todo replace font with them from utils class
-        mfFont = Fonts.FONT_BOLD.deriveFont(13f);
-        propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
-        statusFont = Fonts.FONT_BOLD.deriveFont(24f);
-        rankFont = Fonts.FONT_BOLD.deriveFont(16f);
+        mfFont = Fonts.FONT_MEDIUM.deriveFont(13f);
+        propertyFont = Fonts.FONT_MEDIUM.deriveFont(12f);
+        statusFont = Fonts.FONT_MEDIUM.deriveFont(24f);
+        rankFont = Fonts.FONT_MEDIUM.deriveFont(16f);
         valueFont = Fonts.FONT.deriveFont(12f);
 
-        selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
-        selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-        evenBackground = Colors.LIST_EVEN_BACKGROUND;
-        disableBackground = UIManager.getColor("ComboBox.background");
-        unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
-        activatedForeground = UIManager.getColor("List.foreground");
-        deactivatedForeground = Color.GRAY;
+        selectedBackground = Colors.CellsAndRows.LargerCells.SELECTED_CELL;
+        selectedForeground = Colors.CellsAndRows.LargerCells.SELECTED_CELL_TEXT;
+        evenBackground = Colors.CellsAndRows.Tables.ALTERNATING_ROW_1;
+        unevenBackground = Colors.CellsAndRows.Tables.ALTERNATING_ROW_2;
+        activatedForeground = Colors.CellsAndRows.LargerCells.CELL_TEXT;
     }
 
     @Override
@@ -77,19 +75,21 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
         if (isSelected) {
             if (bestHitFunc.apply(value)) {
-                this.backColor = Colors.LIST_SELECTED_GREEN;
+                backColor = Colors.CellsAndRows.BEST_HIT_SELECTED;
+                foreColor = Colors.CellsAndRows.BEST_HIT_TEXT;
             } else {
-                this.backColor = this.selectedBackground;
+                backColor = this.selectedBackground;
+                foreColor = this.selectedForeground;
             }
-            this.foreColor = this.selectedForeground;
         } else {
             if (bestHitFunc.apply(value)) {
-                this.backColor = Colors.LIST_LIGHT_GREEN;
+                backColor = Colors.CellsAndRows.BEST_HIT;
+                foreColor = Colors.CellsAndRows.BEST_HIT_TEXT;
             } else {
-                if (index % 2 == 0) this.backColor = this.evenBackground;
-                else this.backColor = this.unevenBackground;
+                if (index % 2 == 0) backColor = evenBackground;
+                else this.backColor = unevenBackground;
+                foreColor = activatedForeground;
             }
-            this.foreColor = this.activatedForeground;
         }
 
         return this;

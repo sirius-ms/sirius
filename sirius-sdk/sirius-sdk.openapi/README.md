@@ -320,6 +320,7 @@ Class | Method | HTTP request | Description
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
+ - [ProjectType](docs/ProjectType.md)
  - [QuantificationTable](docs/QuantificationTable.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)

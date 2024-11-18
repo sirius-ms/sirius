@@ -68,7 +68,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
     public ProjectCreateAction(SiriusGui gui) {
         super("New", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.ADD_DOC.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Create a new empty project at the given location.");
         setEnabled(true);
     }
@@ -87,17 +87,9 @@ public class ProjectCreateAction extends ProjectOpenAction {
         jfc.addChoosableFileFilter(new NoSQLProjectFileFilter());
 
         //region jfilechooser hack
-
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-
         JPanel chooserSouthComponent;
-        if (theme.equals("Classic")) {
-            chooserSouthComponent = (JPanel) ((BorderLayout) jfc.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
-        } else {
-            JPanel central = (JPanel) ((BorderLayout) jfc.getLayout()).getLayoutComponent(BorderLayout.CENTER);
-            chooserSouthComponent = (JPanel) ((BorderLayout) central.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
-        }
+        JPanel central = (JPanel) ((BorderLayout) jfc.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+        chooserSouthComponent = (JPanel) ((BorderLayout) central.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
 
         PlaceholderTextField projectNameField = new PlaceholderTextField("");
 
@@ -211,7 +203,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 onSuccess.accept(projectName, selectedFile.toPath());
 
             } catch (Exception e) {
-                new StacktraceDialog(mainFrame, e.getMessage(), e);
+                Jobs.runEDTLater(() -> new StacktraceDialog(mainFrame, e.getMessage(), e));
             }
         }
     }

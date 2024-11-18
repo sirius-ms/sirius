@@ -34,7 +34,7 @@ import java.text.NumberFormat;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCellRenderer {
-    protected Color[] colors = {Colors.GRADIENT_RED, Colors.GRADIENT_YELLOW, Colors.GRADIENT_GREEN};
+    protected Color[] colors = {Colors.FormulasView.SCORE_BAR, Colors.FormulasView.SCORE_BAR, Colors.FormulasView.SCORE_BAR}; //it is now one-color-only. Keep it as gradient for simplicity and easier updating
     protected float[] fractions = {.1f, .5f, 1f};
     protected float[] fractionsTwoWay = {.3f, 1f};
 
@@ -111,11 +111,11 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
 
         if (twoWayBar) {
             if (toFill > 0.5) {
-                LinearGradientPaint gp = new LinearGradientPaint((int) ((double)getWidth() / 2d), 0, getWidth() - 5, getHeight(), new float[]{0f,1}, new Color[]{backColor,Colors.GRADIENT_GREEN}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                LinearGradientPaint gp = new LinearGradientPaint((int) ((double)getWidth() / 2d), 0, getWidth() - 5, getHeight(), new float[]{0f,1}, new Color[]{backColor,Colors.FingerprintsView.PROBABILITY_OVER_50}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
                 g2d.setPaint(gp);
                 g2d.fillRect(getWidth() / 2, 2, (int) (((double)getWidth() / 2d) * (toFill-0.5)/0.5) - 5, getHeight() - 4);
             } else {
-                LinearGradientPaint gp = new LinearGradientPaint(5, 0, (int) ((double)getWidth() / 2d), getHeight(), new float[]{0f,1}, new Color[]{Colors.GRADIENT_RED,backColor}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                LinearGradientPaint gp = new LinearGradientPaint(5, 0, (int) ((double)getWidth() / 2d), getHeight(), new float[]{0f,1}, new Color[]{Colors.FingerprintsView.PROBABILITY_UNDER_50,backColor}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
                 g2d.setPaint(gp);
                 double start = ((double)getWidth() / 2d * toFill/0.5);
                 g2d.fillRect(5 + (int)start, 2, (int) ((((double)getWidth() / 2d) - start)), getHeight() - 4);
@@ -128,7 +128,7 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
 
 
         if (!Float.isNaN(thresh)) {
-            g2d.setPaint(Colors.ICON_BLUE);
+            g2d.setPaint(Colors.Menu.ICON_BLUE);
             g2d.setStroke(new BasicStroke(2));
             g2d.drawLine((int) (getWidth() * thresh) - 5, 0, (int) (getWidth() * thresh) - 5, getHeight()/* - 4*/);
         }

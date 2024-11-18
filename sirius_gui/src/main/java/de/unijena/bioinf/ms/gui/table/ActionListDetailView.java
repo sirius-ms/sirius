@@ -71,7 +71,7 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
         addToCenterCard(ActionList.ViewState.NOT_COMPUTED, GuiUtils.newNoResultsComputedPanel());
         addToCenterCard(ActionList.ViewState.EMPTY, GuiUtils.newEmptyResultsPanel());
-        addToCenterCard(ActionList.ViewState.LOADING, GuiUtils.newLoadingPanel("Fetching data..."));
+        addToCenterCard(ActionList.ViewState.LOADING, GuiUtils.newSpinnerProgressPanel());
         add(centerCardPanel, BorderLayout.CENTER);
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
     }

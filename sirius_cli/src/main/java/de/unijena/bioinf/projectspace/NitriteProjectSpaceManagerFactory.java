@@ -22,7 +22,14 @@ package de.unijena.bioinf.projectspace;
 
 import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
+import de.unijena.bioinf.ms.properties.ConfigType;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +61,26 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
                 projectLocation = projectLocation.getParent().resolve(nu);
             }
         }
-        return new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        updateProjectType(projectSpaceManager.getProject());
+        return projectSpaceManager;
     }
 
+    @SneakyThrows
+    private static void updateProjectType(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
+        if (project.findProjectType().isEmpty()) {
+            if (project.getStorage().countAll(MergedLCMSRun.class) > 0) {
+                project.upsertProjectType(ProjectType.ALIGNED_RUNS);
+            } else if (project.getStorage().countAll(LCMSRun.class) > 0) {
+                project.upsertProjectType(ProjectType.UNALIGNED_RUNS);
+            } else {
+                project.getAllAlignedFeatures().findAny().ifPresent(af -> {
+                    if (project.getConfig(af.getAlignedFeatureId(), ConfigType.INPUT_FILE).isPresent())
+                        project.upsertProjectType(ProjectType.PEAKLISTS);
+                    else
+                        project.upsertProjectType(ProjectType.DIRECT_IMPORT);
+                });
+            }
+        }
+    }
 }
