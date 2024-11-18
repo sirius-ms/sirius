@@ -42,19 +42,15 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     Class<T> getTarget();
 
     /**
-     * Compute the fold change between two groups.
+     * <strong>(EXPERIMENTAL)</strong> Compute the fold change between two groups of runs.
      *
-     * <p>
-     * <h2>EXPERIMENTAL</h2>
-     * This endpoint is experimental and not part of the stable API specification.
-     * This endpoint can change at any time, even in minor updates.
-     * </p>
+     * The runs need to be tagged and grouped.
      *
-     * Computes the fold change between the left and right group.
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId      project-space to compute the fold change in.
-     * @param left           name of the left group.
-     * @param right          name of the right group.
+     * @param left           name of the left tag group.
+     * @param right          name of the right tag group.
      * @param aggregation    aggregation type.
      * @param quantification quantification type.
      * @param optFields      job opt fields.
@@ -73,13 +69,9 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     }
 
     /**
-     * List all fold changes in the project space.
+     * <strong>(EXPERIMENTAL)</strong> List all fold changes in the project space.
      *
-     * <p>
-     * <h2>EXPERIMENTAL</h2>
-     * This endpoint is experimental and not part of the stable API specification.
-     * This endpoint can change at any time, even in minor updates.
-     * </p>
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId project-space to read from.
      * @param pageable  pageable.
@@ -94,13 +86,9 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     }
 
     /**
-     * List all fold changes that are associated with an object.
+     * <strong>(EXPERIMENTAL)</strong> List all fold changes that are associated with an object.
      *
-     * <p>
-     * <h2>EXPERIMENTAL</h2>
-     * This endpoint is experimental and not part of the stable API specification.
-     * This endpoint can change at any time, even in minor updates.
-     * </p>
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId project-space to read from.
      * @param objectId  id of the object the fold changes are assigned to.
@@ -117,13 +105,9 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     }
 
     /**
-     * Delete fold change.
+     * <strong>(EXPERIMENTAL)</strong> Delete fold change.
      *
-     * <p>
-     * <h2>EXPERIMENTAL</h2>
-     * This endpoint is experimental and not part of the stable API specification.
-     * This endpoint can change at any time, even in minor updates.
-     * </p>
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId      project-space to delete from.
      * @param left           name of the left group.

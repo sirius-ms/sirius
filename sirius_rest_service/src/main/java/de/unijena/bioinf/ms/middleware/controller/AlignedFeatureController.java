@@ -23,6 +23,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
@@ -58,7 +59,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeatureController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange> {
+public class AlignedFeatureController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange>, TagController<AlignedFeature, AlignedFeature.OptField> {
 
     private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
@@ -829,6 +830,11 @@ public class AlignedFeatureController implements StatisticsController<AlignedFea
 
     @Override
     public Class<AlignedFeature> getTarget() {
+        return AlignedFeature.class;
+    }
+
+    @Override
+    public Class<AlignedFeature> getTagTarget() {
         return AlignedFeature.class;
     }
 }

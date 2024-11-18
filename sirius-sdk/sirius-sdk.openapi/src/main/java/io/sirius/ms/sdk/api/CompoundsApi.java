@@ -158,12 +158,12 @@ public class CompoundsApi {
         return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures);
     }
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -214,12 +214,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -232,12 +232,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -250,12 +250,12 @@ public class CompoundsApi {
     }
 
     /**
-     * Compute the fold change between two groups
-     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left group.
-     * @param right name of the right group.
+     * @param left name of the left tag group.
+     * @param right name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
@@ -344,8 +344,8 @@ public class CompoundsApi {
         return deleteCompoundRequestCreation(projectId, compoundId);
     }
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -395,8 +395,8 @@ public class CompoundsApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -411,8 +411,8 @@ public class CompoundsApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -427,8 +427,8 @@ public class CompoundsApi {
     }
 
     /**
-     * Delete fold change
-     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param left name of the left group.
@@ -810,8 +810,8 @@ public class CompoundsApi {
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
     }
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -860,8 +860,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -877,8 +877,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -894,8 +894,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes that are associated with an object
-     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes
      * @param projectId project-space to read from.
      * @param objectId id of the object the fold changes are assigned to.
@@ -1078,8 +1078,8 @@ public class CompoundsApi {
         return getQuantificationRowRequestCreation(projectId, compoundId, type);
     }
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -1122,8 +1122,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -1138,8 +1138,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -1154,8 +1154,8 @@ public class CompoundsApi {
     }
 
     /**
-     * List all fold changes in the project space
-     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - fold changes.
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
