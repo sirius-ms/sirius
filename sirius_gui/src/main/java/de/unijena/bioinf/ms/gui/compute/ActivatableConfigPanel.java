@@ -34,10 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -46,7 +44,6 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
     public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
-
 
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
@@ -57,6 +54,9 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected final SiriusGui gui;
 
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
+
+    protected Set<String> disabledReasons = new HashSet<>();
+    protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
         this(gui, toolname, buttonIcon, false, contentSuppl);
@@ -87,15 +87,13 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
         add(activationButton, content);
 
-
         if (checkServerConnection) {
-            listener = evt -> setButtonEnabled(isConnected(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck()));
+            listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
             gui.getConnectionMonitor().addConnectionStateListener(listener);
             @Nullable ConnectionCheck check = gui.getConnectionMonitor().getCurrentCheckResult();
-            setButtonEnabled(check == null || isConnected(check));
-        } else {
-            listener = null;
-            setButtonEnabled(true);
+            if (check != null) {
+                processConnectionCheck(check);
+            }
         }
 
         activationButton.addActionListener(e -> setComponentsEnabled(activationButton.isSelected()));
@@ -103,27 +101,24 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         setComponentsEnabled(activationButton.isSelected());
     }
 
+    protected void processConnectionCheck(ConnectionCheck check) {
+        setButtonEnabled(isConnected(check), notConnectedMessage);
+    }
+
     protected void setComponentsEnabled(final boolean enabled){
         GuiUtils.setEnabled(content, enabled);
         listeners.forEach(e -> e.onChange(content, enabled));
     }
 
-
-    protected void setButtonEnabled(final boolean enabled) {
-        setButtonEnabled(enabled, null);
-    }
-
-    protected void setButtonEnabled(final boolean enabled, @Nullable String disabledMessage) {
-        if (enabled != activationButton.isEnabled()) {
-            if (enabled) {
-                activationButton.setEnabled(true);
-                activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
-            } else {
-                activationButton.setEnabled(false);
-                activationButton.setSelected(false);
-                activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(Stream.concat(Stream.of("Disabled: " + disabledMessage), Arrays.stream(this.toolDescription)).toList()));
-            }
+    protected void setButtonEnabled(final boolean enabled, @Nullable String reason) {
+        if (enabled) {
+            disabledReasons.remove(reason);
+        } else {
+            disabledReasons.add(reason);
+            activationButton.setSelected(false);
         }
+        activationButton.setEnabled(disabledReasons.isEmpty());
+        activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(Stream.concat(disabledReasons.stream().map(r -> "Disabled: " + r), Arrays.stream(this.toolDescription)).toList()));
     }
 
     public void destroy(){

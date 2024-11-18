@@ -23,13 +23,11 @@ import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import io.sirius.ms.sdk.model.AccountInfo;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.Subscription;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -39,19 +37,17 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel(SiriusGui gui) {
-        super(gui, "MSNovelist", Icons.DENOVO.derive(32,32), false, () -> new SubToolConfigPanel<>(MsNovelistOptions.class) {});
-        listener = evt -> checkConnection(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
-        gui.getConnectionMonitor().addConnectionStateListener(listener);
-        checkConnection(gui.getConnectionMonitor().getCurrentCheckResult());
+        super(gui, "MSNovelist", Icons.DENOVO.derive(32,32), true, () -> new SubToolConfigPanel<>(MsNovelistOptions.class) {});
+        notConnectedMessage = "Can't connect to prediction server!";
     }
 
-    private void checkConnection(@Nullable ConnectionCheck checkResult) {
-        if (checkResult == null)
+    @Override
+    protected void processConnectionCheck(ConnectionCheck check) {
+        if (check == null)
             return;
 
-        boolean connected = isConnected(checkResult);
-        if (!connected) {
-            setButtonEnabled(false);
+        if (!isConnected(check)) {
+            setButtonEnabled(false, notConnectedMessage);
             return;
         }
 
@@ -62,7 +58,7 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
                 .filter(s -> s.getSid() != null)
                 .filter(s -> s.getSid().equals(info.getActiveSubscriptionId())).findFirst()
                 .orElse(null);
-        boolean isExplorerLic = sub != null && Optional.ofNullable(sub.getServiceUrl()).map(s -> s.contains("agilent")).orElse(false) && !sub.getSid().equals("sub|888983e6-da01-4af7-b431-921c59f0028f");
+        boolean isExplorerLic = sub != null && Optional.ofNullable(sub.getServiceUrl()).map(s -> s.contains("agilent")).orElse(false) && !"sub|888983e6-da01-4af7-b431-921c59f0028f".equals(sub.getSid());
 
         setButtonEnabled(!isExplorerLic, "Your Subscription does not contain the de novo structure generation feature.");
     }
@@ -83,11 +79,6 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
             }
         }
         super.setComponentsEnabled(enabled);
-    }
-
-    @Override
-    protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, "Can't connect to prediction server!");
     }
 
     @Override

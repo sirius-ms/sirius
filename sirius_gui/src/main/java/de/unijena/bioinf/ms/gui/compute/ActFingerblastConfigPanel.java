@@ -27,11 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
     public ActFingerblastConfigPanel(@NotNull SiriusGui gui, @Nullable final FormulaIDConfigPanel syncSource) {
         super(gui, "Search DBs", Icons.DB_LENS.derive(32,32), true, () -> new FingerblastConfigPanel(gui, syncSource));
-    }
-
-    @Override
-    protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled,"Can't connect to structure db server!");
+        notConnectedMessage = "Can't connect to structure db server!";
     }
 
     @Override

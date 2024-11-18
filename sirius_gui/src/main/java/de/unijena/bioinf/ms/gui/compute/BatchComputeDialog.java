@@ -602,6 +602,7 @@ public class BatchComputeDialog extends JDialog {
             String presetName = (String) presetDropdown.getSelectedItem();
             JobSubmission currentConfig = makeJobSubmission();
             gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true));
+            activatePreset(presetName);
         });
 
         saveAsPreset.addActionListener(e -> {
@@ -710,17 +711,9 @@ public class BatchComputeDialog extends JDialog {
     private void presetUnfreeze() {
         presetFrozen = false;
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
-                .forEach(this::presetUnfreezePanel);
+                .forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
 
         recomputeBox.setEnabled(true);
         showCommand.setEnabled(true);
     }
-
-    private void presetUnfreezePanel(ActivatableConfigPanel<?> panel) {
-        String buttonToolTip = panel.activationButton.getToolTipText();
-        if (buttonToolTip != null && buttonToolTip.contains(PRESET_FROZEN_MESSAGE)) {
-            panel.setButtonEnabled(true);
-        }
-    }
-
 }
