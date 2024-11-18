@@ -42,7 +42,14 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     Class<T> getTagTarget();
 
     /**
+     *
      * Get objects by tag.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -89,6 +96,14 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
+     * Add tags to an object in the project.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
      * Add tags to an object in the project. Tags with the same category name will be overwritten.
      *
      * @param projectId  project-space to add to.
@@ -104,6 +119,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     /**
      * Delete tag with the given category from the object with the specified ID in the specified project-space.
      *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
      * @param projectId     project-space to delete from.
      * @param objectId      object to delete tag from.
      * @param categoryName  category name of the tag to delete.
@@ -115,6 +136,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
 
     /**
      * Get objects by tag group.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
      *
      * @param projectId project-space to delete from.
      * @param group     tag group name.
@@ -134,6 +161,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     /**
      * Get all tag category groups in the given project-space.
      *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
      * @param projectId project-space to read from.
      * @return Tag category groups.
      */
@@ -144,6 +177,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
 
     /**
      * Get tag groups by type in the given project-space.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
      *
      * @param projectId project-space to read from.
      * @param groupType type of the group
@@ -157,6 +196,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     /**
      * Get tag group by name in the given project-space.
      *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
      * @param projectId project-space to read from.
      * @param groupName name of the group
      * @return Tag group.
@@ -167,9 +212,20 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
+     *
+     * Group tags in the project.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
      * Group tags in the project. The group name must not exist in the project.
      *
+     * <p>
      * See {@code /tagged} for filter syntax.
+     * </p>
      *
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -189,6 +245,12 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
 
     /**
      * Delete tag groups with the given name from the specified project-space.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
      *
      * @param projectId  project-space to delete from.
      * @param groupName  name of group to delete.
