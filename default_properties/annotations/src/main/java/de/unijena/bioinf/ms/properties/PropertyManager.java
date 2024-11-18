@@ -316,11 +316,13 @@ public class PropertyManager {
         String val = backupKey != null
                 ? PROPERTIES.getString(key, PROPERTIES.getString(backupKey, null))
                 : PROPERTIES.getString(key, null);
-        return val == null ? defaultValue : Enum.valueOf(cls, val);
+        return val == null ? defaultValue : parseEnum(val, cls);
     }
 
     private static <E extends Enum<E>> E parseEnum(@NotNull String name, @NotNull Class<E> cls) {
-        return Enum.valueOf(cls, name);
+        return Arrays.stream(cls.getEnumConstants())
+                .filter(e -> e.name().equalsIgnoreCase(name)).findAny().orElseThrow(() -> new IllegalArgumentException(
+                "No enum constant " + cls.getCanonicalName() + "." + name));
     }
 
 

@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
@@ -342,7 +343,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         JPanel panel = new JPanel(new BorderLayout());
 
         loginErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        loginErrorLabel.setText("<html><p style=\"background-color:#ffafaf; color:black\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
+        loginErrorLabel.setText("<html><p style=\"color:"+ Colors.asHex(Colors.TEXT_WARN)+"\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
         loginErrorLabel.setVisible(false);
 
         importButton = new JButton("Import structures and spectra");

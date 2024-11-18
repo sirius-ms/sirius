@@ -45,6 +45,12 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     private InstanceBean instance = null;
 
+    /**
+     * Corresponds to top molecular structure database hit (of a similar hit based on MCES distance in approximate mode)
+     */
+    @Getter
+    private boolean matchesTopStructureHit;
+
     public SpectralMatchBean(SpectralLibraryMatch match, InstanceBean instance) {
         this.match = match;
         try {
@@ -94,5 +100,15 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     public int getRank() {
         return Optional.ofNullable(getMatch().getRank()).orElse(0);
+    }
+
+    public InstanceBean getParentInstance() {
+        return instance;
+    }
+
+    protected void setMatchesTopStructureHit(boolean matchesTopStructureHit) {
+        boolean old = this.matchesTopStructureHit;
+        this.matchesTopStructureHit = matchesTopStructureHit;
+        pcs.firePropertyChange("matchesTopStructureHit", old, this.matchesTopStructureHit);
     }
 }
