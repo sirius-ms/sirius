@@ -42,12 +42,23 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     Class<T> getTarget();
 
     /**
-     * TODO doc
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
-     * Possible formats (mzML, mzXML)
+     * Compute the fold change between two groups.
      *
-     * @param projectId    Project-space to import into.
-     * @return the import job.
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
+     * Computes the fold change between the left and right group.
+     *
+     * @param projectId      project-space to compute the fold change in.
+     * @param left           name of the left group.
+     * @param right          name of the right group.
+     * @param aggregation    aggregation type.
+     * @param quantification quantification type.
+     * @param optFields      job opt fields.
+     * @return
      */
     @PutMapping(value = "/foldchange/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
     default Job computeFoldChange(
@@ -58,10 +69,22 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
             @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification,
             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
             ) {
-        // TODO test this
         return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), left, right, aggregation, quantification, getTarget(), removeNone(optFields));
     }
 
+    /**
+     * List all fold changes in the project space.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
+     * @param projectId project-space to read from.
+     * @param pageable  pageable.
+     * @return fold changes.
+     */
     @GetMapping(value = "/foldchange", produces = MediaType.APPLICATION_JSON_VALUE)
     default Page<F> listFoldChange(
             @PathVariable String projectId,
@@ -70,6 +93,20 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
         return getProjectsProvider().getProjectOrThrow(projectId).listFoldChanges(getTarget(), pageable);
     }
 
+    /**
+     * List all fold changes that are associated with an object.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
+     * @param projectId project-space to read from.
+     * @param objectId  id of the object the fold changes are assigned to.
+     * @param pageable  pageable.
+     * @return fold changes
+     */
     @GetMapping(value = "/foldchange/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     default List<F> getFoldChange(
             @PathVariable String projectId,
@@ -79,6 +116,21 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
         return getProjectsProvider().getProjectOrThrow(projectId).getFoldChanges(getTarget(), objectId);
     }
 
+    /**
+     * Delete fold change.
+     *
+     * <p>
+     * <h2>EXPERIMENTAL</h2>
+     * This endpoint is experimental and not part of the stable API specification.
+     * This endpoint can change at any time, even in minor updates.
+     * </p>
+     *
+     * @param projectId      project-space to delete from.
+     * @param left           name of the left group.
+     * @param right          name of the right group.
+     * @param aggregation    aggregation type.
+     * @param quantification quantification type.
+     */
     @DeleteMapping(value = "/foldchange")
     default void deleteFoldChange(
             @PathVariable String projectId,
