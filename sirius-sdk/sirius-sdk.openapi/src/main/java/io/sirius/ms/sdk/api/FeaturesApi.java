@@ -3,6 +3,7 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AlignedFeature;
+import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
 import io.sirius.ms.sdk.model.AnnotatedMsMsData;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
@@ -14,9 +15,12 @@ import io.sirius.ms.sdk.model.FormulaCandidateOptField;
 import io.sirius.ms.sdk.model.FragmentationTree;
 import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.IsotopePatternAnnotation;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.LipidAnnotation;
 import io.sirius.ms.sdk.model.MsData;
 import io.sirius.ms.sdk.model.PageAlignedFeature;
+import io.sirius.ms.sdk.model.PageAlignedFeatureFoldChange;
 import io.sirius.ms.sdk.model.PageFormulaCandidate;
 import io.sirius.ms.sdk.model.PageSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PageStructureCandidateFormula;
@@ -166,6 +170,114 @@ public class FeaturesApi {
      */
     public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
+    }
+    /**
+     * Compute the fold change between two groups
+     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @param optFields job opt fields.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec computeFoldChange1RequestCreation(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'left' is set
+        if (left == null) {
+            throw new WebClientResponseException("Missing the required parameter 'left' when calling computeFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'right' is set
+        if (right == null) {
+            throw new WebClientResponseException("Missing the required parameter 'right' when calling computeFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/foldchange/compute", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Compute the fold change between two groups
+     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @param optFields job opt fields.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job computeFoldChange1(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Compute the fold change between two groups
+     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @param optFields job opt fields.
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> computeFoldChange1WithHttpInfo(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Compute the fold change between two groups
+     * Compute the fold change between two groups.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Computes the fold change between the left and right group.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @param optFields job opt fields.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec computeFoldChange1WithResponseSpec(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+        return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields);
     }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -323,6 +435,104 @@ public class FeaturesApi {
      */
     public ResponseSpec deleteAlignedFeaturesWithResponseSpec(String projectId, List<String> requestBody) throws WebClientResponseException {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
+    }
+    /**
+     * Delete fold change
+     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteFoldChange1RequestCreation(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'left' is set
+        if (left == null) {
+            throw new WebClientResponseException("Missing the required parameter 'left' when calling deleteFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'right' is set
+        if (right == null) {
+            throw new WebClientResponseException("Missing the required parameter 'right' when calling deleteFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
+        
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/foldchange", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Delete fold change
+     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteFoldChange1(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Delete fold change
+     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteFoldChange1WithHttpInfo(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Delete fold change
+     * Delete fold change.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param left name of the left group.
+     * @param right name of the right group.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteFoldChange1WithResponseSpec(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+        return deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification);
     }
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
@@ -1267,6 +1477,105 @@ public class FeaturesApi {
      */
     public ResponseSpec getFingerprintPredictionWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
+    }
+    /**
+     * List all fold changes that are associated with an object
+     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return List&lt;AlignedFeatureFoldChange&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFoldChange1RequestCreation(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'objectId' is set
+        if (objectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling getFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("objectId", objectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/foldchange/{objectId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * List all fold changes that are associated with an object
+     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return List&lt;AlignedFeatureFoldChange&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<AlignedFeatureFoldChange> getFoldChange1(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+        return getFoldChange1RequestCreation(projectId, objectId, page, size, sort).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * List all fold changes that are associated with an object
+     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseEntity&lt;List&lt;AlignedFeatureFoldChange&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<AlignedFeatureFoldChange>> getFoldChange1WithHttpInfo(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+        return getFoldChange1RequestCreation(projectId, objectId, page, size, sort).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * List all fold changes that are associated with an object
+     * List all fold changes that are associated with an object.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFoldChange1WithResponseSpec(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        return getFoldChange1RequestCreation(projectId, objectId, page, size, sort);
     }
     /**
      * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
@@ -3491,5 +3800,95 @@ public class FeaturesApi {
      */
     public ResponseSpec getTracesWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         return getTracesRequestCreation(projectId, alignedFeatureId, includeAll);
+    }
+    /**
+     * List all fold changes in the project space
+     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes.
+     * @param projectId project-space to read from.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PageAlignedFeatureFoldChange
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec listFoldChange1RequestCreation(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling listFoldChange1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/foldchange", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * List all fold changes in the project space
+     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes.
+     * @param projectId project-space to read from.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return PageAlignedFeatureFoldChange
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PageAlignedFeatureFoldChange listFoldChange1(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+        return listFoldChange1RequestCreation(projectId, page, size, sort).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * List all fold changes in the project space
+     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes.
+     * @param projectId project-space to read from.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseEntity&lt;PageAlignedFeatureFoldChange&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PageAlignedFeatureFoldChange> listFoldChange1WithHttpInfo(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+        return listFoldChange1RequestCreation(projectId, page, size, sort).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * List all fold changes in the project space
+     * List all fold changes in the project space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+     * <p><b>200</b> - fold changes.
+     * @param projectId project-space to read from.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec listFoldChange1WithResponseSpec(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        return listFoldChange1RequestCreation(projectId, page, size, sort);
     }
 }

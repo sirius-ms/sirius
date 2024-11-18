@@ -6,7 +6,7 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**addCategories**](TagCategoriesExperimentalApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | Add tag categories to the project. |
 | [**addPossibleValuesToCategory**](TagCategoriesExperimentalApi.md#addPossibleValuesToCategory) | **PUT** /api/projects/{projectId}/categories/{categoryName} | Add a possible value to the tag category in the project. |
-| [**deleteCategories**](TagCategoriesExperimentalApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given names from the specified project-space. |
+| [**deleteCategories**](TagCategoriesExperimentalApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given name from the specified project-space. |
 | [**getCategories**](TagCategoriesExperimentalApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space. |
 | [**getCategoriesByType**](TagCategoriesExperimentalApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space. |
 | [**getCategoryByName**](TagCategoriesExperimentalApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | Get tag category by name in the given project-space. |
@@ -155,9 +155,9 @@ No authorization required
 
 > deleteCategories(projectId, categoryName)
 
-Delete tag categories with the given names from the specified project-space.
+Delete tag categories with the given name from the specified project-space.
 
-Delete tag categories with the given names from the specified project-space.
+Delete tag categories with the given name from the specified project-space.
 
 ### Example
 
@@ -309,7 +309,7 @@ public class Example {
 
         TagCategoriesExperimentalApi apiInstance = new TagCategoriesExperimentalApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String categoryType = "categoryType_example"; // String | name of the category
+        String categoryType = "categoryType_example"; // String | type of the category
         try {
             List<TagCategory> result = apiInstance.getCategoriesByType(projectId, categoryType);
             System.out.println(result);
@@ -330,7 +330,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **categoryType** | **String**| name of the category | |
+| **categoryType** | **String**| type of the category | |
 
 ### Return type
 

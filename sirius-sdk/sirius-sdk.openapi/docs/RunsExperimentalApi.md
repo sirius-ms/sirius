@@ -4,21 +4,99 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addTags**](RunsExperimentalApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project. |
-| [**deleteTags**](RunsExperimentalApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space. |
+| [**addGroup**](RunsExperimentalApi.md#addGroup) | **PUT** /api/projects/{projectId}/runs/groups/{groupName} | Group tags in the project |
+| [**addTags**](RunsExperimentalApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project |
+| [**deleteGroup**](RunsExperimentalApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/runs/groups/{groupName} | Delete tag groups with the given name from the specified project-space |
+| [**deleteTags**](RunsExperimentalApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space |
+| [**getGroupByName**](RunsExperimentalApi.md#getGroupByName) | **GET** /api/projects/{projectId}/runs/groups/{groupName} | Get tag group by name in the given project-space |
+| [**getGroups**](RunsExperimentalApi.md#getGroups) | **GET** /api/projects/{projectId}/runs/groups | Get all tag category groups in the given project-space |
+| [**getGroupsByType**](RunsExperimentalApi.md#getGroupsByType) | **GET** /api/projects/{projectId}/runs/groups/type/{groupType} | Get tag groups by type in the given project-space |
 | [**getRun**](RunsExperimentalApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
 | [**getRunsPaged**](RunsExperimentalApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
+| [**objectsByGroup**](RunsExperimentalApi.md#objectsByGroup) | **GET** /api/projects/{projectId}/runs/grouped | Get objects by tag group |
 | [**objectsByTag**](RunsExperimentalApi.md#objectsByTag) | **GET** /api/projects/{projectId}/runs/tagged | Get objects by tag |
 
+
+
+## addGroup
+
+> TagGroup addGroup(projectId, groupName, filter, type)
+
+Group tags in the project
+
+Group tags in the project.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        String groupName = "groupName_example"; // String | name of the new group
+        String filter = "filter_example"; // String | filter query to create the group
+        String type = "type_example"; // String | type of the group
+        try {
+            TagGroup result = apiInstance.addGroup(projectId, groupName, filter, type);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#addGroup");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **groupName** | **String**| name of the new group | |
+| **filter** | **String**| filter query to create the group | |
+| **type** | **String**| type of the group | |
+
+### Return type
+
+[**TagGroup**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tag group that was added |  -  |
 
 
 ## addTags
 
 > List&lt;Tag&gt; addTags(projectId, objectId, tag)
 
-Add tags to an object in the project.
+Add tags to an object in the project
 
-Add tags to an object in the project. Tags with the same category name will be overwritten.
+Add tags to an object in the project.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   Add tags to an object in the project. Tags with the same category name will be overwritten.
 
 ### Example
 
@@ -82,13 +160,80 @@ No authorization required
 | **200** | the tags that have been added |  -  |
 
 
+## deleteGroup
+
+> deleteGroup(projectId, groupName)
+
+Delete tag groups with the given name from the specified project-space
+
+Delete tag groups with the given name from the specified project-space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String groupName = "groupName_example"; // String | name of group to delete.
+        try {
+            apiInstance.deleteGroup(projectId, groupName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#deleteGroup");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **groupName** | **String**| name of group to delete. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
 ## deleteTags
 
 > deleteTags(projectId, objectId, categoryName)
 
-Delete tag with the given category from the object with the specified ID in the specified project-space.
+Delete tag with the given category from the object with the specified ID in the specified project-space
 
-Delete tag with the given category from the object with the specified ID in the specified project-space.
+Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
 
 ### Example
 
@@ -149,6 +294,208 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+
+## getGroupByName
+
+> TagGroup getGroupByName(projectId, groupName)
+
+Get tag group by name in the given project-space
+
+Get tag group by name in the given project-space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String groupName = "groupName_example"; // String | name of the group
+        try {
+            TagGroup result = apiInstance.getGroupByName(projectId, groupName);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#getGroupByName");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **groupName** | **String**| name of the group | |
+
+### Return type
+
+[**TagGroup**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag group. |  -  |
+
+
+## getGroups
+
+> List&lt;TagGroup&gt; getGroups(projectId)
+
+Get all tag category groups in the given project-space
+
+Get all tag category groups in the given project-space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        try {
+            List<TagGroup> result = apiInstance.getGroups(projectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#getGroups");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+
+### Return type
+
+[**List&lt;TagGroup&gt;**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag category groups. |  -  |
+
+
+## getGroupsByType
+
+> List&lt;TagGroup&gt; getGroupsByType(projectId, groupType)
+
+Get tag groups by type in the given project-space
+
+Get tag groups by type in the given project-space.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String groupType = "groupType_example"; // String | type of the group
+        try {
+            List<TagGroup> result = apiInstance.getGroupsByType(projectId, groupType);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#getGroupsByType");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **groupType** | **String**| type of the group | |
+
+### Return type
+
+[**List&lt;TagGroup&gt;**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag groups. |  -  |
 
 
 ## getRun
@@ -295,13 +642,89 @@ No authorization required
 | **200** | Runs with tags (if specified). |  -  |
 
 
+## objectsByGroup
+
+> PageRun objectsByGroup(projectId, group, page, size, sort, optFields)
+
+Get objects by tag group
+
+Get objects by tag group.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsExperimentalApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsExperimentalApi apiInstance = new RunsExperimentalApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String group = "group_example"; // String | tag group name.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            PageRun result = apiInstance.objectsByGroup(projectId, group, page, size, sort, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsExperimentalApi#objectsByGroup");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **group** | **String**| tag group name. | |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**PageRun**](PageRun.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | tagged objects |  -  |
+
+
 ## objectsByTag
 
 > PageRun objectsByTag(projectId, filter, page, size, sort, optFields)
 
 Get objects by tag
 
-Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
+Get objects by tag.   &lt;p&gt;  &lt;h2&gt;EXPERIMENTAL&lt;/h2&gt;  This endpoint is experimental and not part of the stable API specification.  This endpoint can change at any time, even in minor updates.  &lt;/p&gt;   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;
 
 ### Example
 
@@ -368,5 +791,5 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | tagged objects |  -  |
 

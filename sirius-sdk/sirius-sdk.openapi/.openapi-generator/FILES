@@ -3,6 +3,7 @@ docs/AccountCredentials.md
 docs/AccountInfo.md
 docs/ActuatorApi.md
 docs/AlignedFeature.md
+docs/AlignedFeatureFoldChange.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQuality.md
 docs/AnnotatedMsMsData.md
@@ -21,6 +22,7 @@ docs/Compound.md
 docs/CompoundClass.md
 docs/CompoundClassType.md
 docs/CompoundClasses.md
+docs/CompoundFoldChange.md
 docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundsApi.md
@@ -65,7 +67,9 @@ docs/LossEdge.md
 docs/MsData.md
 docs/MsNovelist.md
 docs/PageAlignedFeature.md
+docs/PageAlignedFeatureFoldChange.md
 docs/PageCompound.md
+docs/PageCompoundFoldChange.md
 docs/PageFormulaCandidate.md
 docs/PageJob.md
 docs/PageRun.md
@@ -106,6 +110,7 @@ docs/Tag.md
 docs/TagCategoriesExperimentalApi.md
 docs/TagCategory.md
 docs/TagCategoryImport.md
+docs/TagGroup.md
 docs/Term.md
 docs/Timeout.md
 docs/Trace.md
@@ -138,6 +143,7 @@ src/main/java/io/sirius/ms/sdk/client/auth/HttpBearerAuth.java
 src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
+src/main/java/io/sirius/ms/sdk/model/AlignedFeatureFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQuality.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
@@ -156,6 +162,7 @@ src/main/java/io/sirius/ms/sdk/model/Compound.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClass.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClassType.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClasses.java
+src/main/java/io/sirius/ms/sdk/model/CompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/CompoundImport.java
 src/main/java/io/sirius/ms/sdk/model/CompoundOptField.java
 src/main/java/io/sirius/ms/sdk/model/ComputedSubtools.java
@@ -193,7 +200,9 @@ src/main/java/io/sirius/ms/sdk/model/LossEdge.java
 src/main/java/io/sirius/ms/sdk/model/MsData.java
 src/main/java/io/sirius/ms/sdk/model/MsNovelist.java
 src/main/java/io/sirius/ms/sdk/model/PageAlignedFeature.java
+src/main/java/io/sirius/ms/sdk/model/PageAlignedFeatureFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/PageCompound.java
+src/main/java/io/sirius/ms/sdk/model/PageCompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/PageFormulaCandidate.java
 src/main/java/io/sirius/ms/sdk/model/PageJob.java
 src/main/java/io/sirius/ms/sdk/model/PageRun.java
@@ -230,6 +239,7 @@ src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
 src/main/java/io/sirius/ms/sdk/model/Tag.java
 src/main/java/io/sirius/ms/sdk/model/TagCategory.java
 src/main/java/io/sirius/ms/sdk/model/TagCategoryImport.java
+src/main/java/io/sirius/ms/sdk/model/TagGroup.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/Trace.java

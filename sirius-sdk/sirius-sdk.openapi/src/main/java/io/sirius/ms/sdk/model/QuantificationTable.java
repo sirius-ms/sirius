@@ -45,7 +45,7 @@ public class QuantificationTable {
    * Gets or Sets quantificationType
    */
   public enum QuantificationTypeEnum {
-    APEX_HEIGHT("APEX_HEIGHT"),
+    APEX_INTENSITY("APEX_INTENSITY"),
     
     AREA_UNDER_CURVE("AREA_UNDER_CURVE"),
     
