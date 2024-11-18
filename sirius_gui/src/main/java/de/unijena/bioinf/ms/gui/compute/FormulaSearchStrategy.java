@@ -614,6 +614,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         if (s == Strategy.PROVIDED) {
+            providedFormulaListModel.removeAllElements();
             for (String c : preset.get("CandidateFormulas").split(",")) {
                 providedFormulaListModel.addElement(c);
             }
