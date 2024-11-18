@@ -1,8 +1,9 @@
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import io.sirius.ms.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -13,9 +14,8 @@ import netscape.javascript.JSObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -40,15 +40,16 @@ public class LCMSWebview extends JFXPanel {
         this.delayAfterHTMLLoading = new ArrayList<>();
         taskList.runJFXLater(()-> {
             this.webView = new WebView();
-            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            boolean DarkMode = theme.equals("Dark");
+
+            boolean DarkMode = Colors.isDarkTheme();
             if (!DarkMode) {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles.css"))
+                );
             } else {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles-dark.css"))
+                );
             }
             setScene(new Scene(webView));
             final String htmlContent = getHTMLContent();

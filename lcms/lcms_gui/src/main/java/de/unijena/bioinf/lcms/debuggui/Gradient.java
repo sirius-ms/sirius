@@ -3,6 +3,8 @@ package de.unijena.bioinf.lcms.debuggui;
 import java.awt.*;
 
 /**
+ * DON'T USE THESE COLORS FOR SIRIUS WITHOUT ADJUSTING TO COLOR SCHEME
+ *
  *Taken from https://github.com/matthewbeckler/HeatMap/blob/master/Gradient.java
  * <p>
  * There are a number of defined gradient types (look at the static fields),
@@ -36,7 +38,7 @@ import java.awt.*;
  * @author J. Keller (jpaulkeller@gmail.com), Added transparency (alpha) support, data ordering bug fix.
  * @version 1.6
  */
-
+@Deprecated
 public class Gradient
 {
     /**

@@ -362,9 +362,18 @@ public class TreeVisualizationPanel extends JPanel implements
                             presetPropertyPrefix + setting,
                             propertyPrefix + setting, null));
 
+        //config uses the color name, not palette. If not exists, use default.
+        updateColorPalette();
         updateConfig();
         if (settings != null)
             settings.updateConfig();
+    }
+
+    protected void updateColorPalette() {
+        localConfig.set("colorScheme2",
+                TreeViewerBridge.get2ColorPaletteByNameOrDefault((String)localConfig.get("colorScheme2")));
+        localConfig.set("colorScheme3",
+                TreeViewerBridge.get3ColorPaletteByNameOrDefault((String)localConfig.get("colorScheme3")));
     }
 
     public void updateConfig() {

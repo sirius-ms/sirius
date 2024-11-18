@@ -24,21 +24,22 @@ import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.model.PageStructureCandidateFormula;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBean> {
 
@@ -52,6 +53,8 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
 
+    private final SiriusGui gui;
+
     @Getter
     private int size = 0;
     @Getter
@@ -63,6 +66,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         super(SpectralMatchBean.class);
         this.similarityStats = new DoubleListStats();
         this.sharedPeaksStats = new DoubleListStats();
+        this.gui = compoundList.getGui();
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
@@ -102,10 +106,11 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         reloadData();
     }
 
-    public SpectralMatchList(final InstanceBean instanceBean, final FingerprintCandidateBean candidateBean) {
+    public SpectralMatchList(final InstanceBean instanceBean, final FingerprintCandidateBean candidateBean, SiriusGui gui) {
         super(SpectralMatchBean.class);
         this.similarityStats = new DoubleListStats();
         this.sharedPeaksStats = new DoubleListStats();
+        this.gui = gui;
 
         this.instanceBean = instanceBean;
         this.fingerprintCandidateBean = candidateBean;
@@ -147,12 +152,17 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
 
                     List<SpectralMatchBean> beans;
                     int total;
+                    final int mcesThreshold = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? 2 : 0; //threshold for top structure hits
                     if (fingerprintCandidateBean != null) {
                         beans = loadAll ? fingerprintCandidateBean.getAllSpectralMatches() : fingerprintCandidateBean.getTopSpectralMatches();
                         total = fingerprintCandidateBean.getNumberOfSpectralMatches();
+                        //flag library hits with top structure candidates. Theoretically, in this case, all library hits should have the same structure and either all match or not
+                        flagLibraryMatchesIfFingerprintCandidateIsBestStructureHit(fingerprintCandidateBean, beans, mcesThreshold);
                     } else if (instanceBean != null) {
                         beans = loadAll ? instanceBean.getAllSpectralMatches() : instanceBean.getTopSpectralMatches();
                         total = instanceBean.getNumberOfSpectralMatches();
+                        //flag library hits with top structure candidates
+                        flagLibraryMatchesOfAllBestStructureHits(instanceBean, beans, mcesThreshold);
                     } else {
                         beans = List.of();
                         total = 0;
@@ -175,7 +185,6 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                     });
 
                     checkForInterruption();
-
                     refillElementsEDT(instanceBean, beans);
                     return true;
                 }
@@ -185,8 +194,45 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         }
     }
 
-    protected Function<SpectralMatchBean, Boolean> getBestFunc() {
-        return c -> c.getMatch().getSimilarity() >= similarityStats.getMax();
+    private void flagLibraryMatchesIfFingerprintCandidateIsBestStructureHit(FingerprintCandidateBean fingerprintCandidateBean, List<SpectralMatchBean> beans, int mcesThreshold) {
+        String inchiKey = fingerprintCandidateBean.getCandidate().getInchiKey();
+        double mces = Optional.ofNullable(fingerprintCandidateBean.getCandidate().getMcesDistToTopHit()).orElse(Double.MAX_VALUE);
+        beans.forEach(bean -> {
+            bean.setMatchesTopStructureHit(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getCandidateInChiKey()));
+        });
     }
 
+    private void flagLibraryMatchesOfAllBestStructureHits(InstanceBean instanceBean, List<SpectralMatchBean> beans, int mcesThreshold) {
+        int[] pageNum = new int[]{0};
+        final int pageSize = 10; //if sorted, 99% of the hits should be in the first top 10 structures.
+        Map<String, Double> structureCandidateInchiKeyToMCES = new HashMap<>();
+        boolean[] hasNext = new boolean[]{loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize)};
+        beans.forEach(bean -> {
+            Double mces = structureCandidateInchiKeyToMCES.get(bean.getMatch().getCandidateInChiKey());
+            while (mces == null && hasNext[0]) {
+                //loading additional structure candidates only as required
+                hasNext[0] = loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize);
+            }
+            bean.setMatchesTopStructureHit(mces != null && mces<= mcesThreshold);
+        });
+    }
+
+    /**
+     *
+     * @param structureCandidates
+     * @param instanceBean
+     * @param pageNum
+     * @param pageSize
+     * @return false if no further candidates are available
+     */
+    private boolean loadNextPage(Map<String, Double> structureCandidates, InstanceBean instanceBean, int pageNum, int pageSize) {
+        PageStructureCandidateFormula page = instanceBean.getStructureCandidatesPage(pageNum, pageSize, false);
+        if (page == null || page.getContent() == null || page.getContent().isEmpty()) return false;
+
+        page.getContent().stream().filter(c -> Objects.nonNull(c.getInchiKey())).forEach( c -> {
+            structureCandidates.put(c.getInchiKey(), Optional.ofNullable(c.getMcesDistToTopHit()).orElse(Double.MAX_VALUE));
+        });
+
+        return true;
+    }
 }

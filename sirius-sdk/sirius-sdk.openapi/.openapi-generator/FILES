@@ -82,6 +82,7 @@ docs/PeakAnnotation.md
 docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
+docs/ProjectType.md
 docs/ProjectsApi.md
 docs/QuantificationTable.md
 docs/Run.md
@@ -215,6 +216,7 @@ src/main/java/io/sirius/ms/sdk/model/PeakAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/ProjectChangeEvent.java
 src/main/java/io/sirius/ms/sdk/model/ProjectInfo.java
 src/main/java/io/sirius/ms/sdk/model/ProjectInfoOptField.java
+src/main/java/io/sirius/ms/sdk/model/ProjectType.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationTable.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
