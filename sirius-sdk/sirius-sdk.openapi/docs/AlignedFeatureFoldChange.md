@@ -33,10 +33,6 @@
 |---- | -----|
 | APEX_INTENSITY | &quot;APEX_INTENSITY&quot; |
 | AREA_UNDER_CURVE | &quot;AREA_UNDER_CURVE&quot; |
-| APEX_MASS | &quot;APEX_MASS&quot; |
-| AVERAGE_MASS | &quot;AVERAGE_MASS&quot; |
-| APEX_RT | &quot;APEX_RT&quot; |
-| FULL_WIDTH_HALF_MAX | &quot;FULL_WIDTH_HALF_MAX&quot; |
 
 
 

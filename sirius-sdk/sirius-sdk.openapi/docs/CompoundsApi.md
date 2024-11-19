@@ -5,17 +5,22 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features. |
-| [**computeFoldChange**](CompoundsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/foldchange/compute | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs |
+| [**addGroup1**](CompoundsApi.md#addGroup1) | **PUT** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Group tags in the project |
+| [**addTags1**](CompoundsApi.md#addTags1) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | Tags with the same category name will be overwritten |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
-| [**deleteFoldChange**](CompoundsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/foldchange | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change |
+| [**deleteGroup1**](CompoundsApi.md#deleteGroup1) | **DELETE** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space |
+| [**deleteTags1**](CompoundsApi.md#deleteTags1) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
 | [**getCompoundTraces**](CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces |  |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
 | [**getCompoundsPaged**](CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space. |
-| [**getFoldChange**](CompoundsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange/{objectId} | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object |
+| [**getGroupByName1**](CompoundsApi.md#getGroupByName1) | **GET** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space |
+| [**getGroups1**](CompoundsApi.md#getGroups1) | **GET** /api/projects/{projectId}/compounds/groups | **EXPERIMENTAL** Get all tag category groups in the given project-space |
+| [**getGroupsByType1**](CompoundsApi.md#getGroupsByType1) | **GET** /api/projects/{projectId}/compounds/groups/type/{groupType} | **EXPERIMENTAL** Get tag groups by type in the given project-space |
 | [**getQuantification**](CompoundsApi.md#getQuantification) | **GET** /api/projects/{projectId}/compounds/quantification | Returns the full quantification table. |
 | [**getQuantificationRow**](CompoundsApi.md#getQuantificationRow) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quantification | Returns a single quantification table row for the given feature. |
-| [**listFoldChange**](CompoundsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/foldchange | &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space |
+| [**objectsByGroup1**](CompoundsApi.md#objectsByGroup1) | **GET** /api/projects/{projectId}/compounds/grouped | **EXPERIMENTAL** Get compounds (group of ion identities) by tag group |
+| [**objectsByTag1**](CompoundsApi.md#objectsByTag1) | **GET** /api/projects/{projectId}/compounds/tagged | **EXPERIMENTAL** Get compounds (group of ion identities) by tag |
 
 
 
@@ -93,13 +98,13 @@ No authorization required
 | **200** | the Compounds that have been imported with specified optional fields |  -  |
 
 
-## computeFoldChange
+## addGroup1
 
-> Job computeFoldChange(projectId, left, right, aggregation, quantification, optFields)
+> TagGroup addGroup1(projectId, groupName, filter, type)
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
+**EXPERIMENTAL** Group tags in the project
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+**EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -117,17 +122,15 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to compute the fold change in.
-        String left = "left_example"; // String | name of the left tag group.
-        String right = "right_example"; // String | name of the right tag group.
-        String aggregation = "AVG"; // String | aggregation type.
-        String quantification = "APEX_INTENSITY"; // String | quantification type.
-        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
+        String projectId = "projectId_example"; // String | project-space to add to.
+        String groupName = "groupName_example"; // String | name of the new group
+        String filter = "filter_example"; // String | filter query to create the group
+        String type = "type_example"; // String | type of the group
         try {
-            Job result = apiInstance.computeFoldChange(projectId, left, right, aggregation, quantification, optFields);
+            TagGroup result = apiInstance.addGroup1(projectId, groupName, filter, type);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#computeFoldChange");
+            System.err.println("Exception when calling CompoundsApi#addGroup1");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -142,16 +145,14 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to compute the fold change in. | |
-| **left** | **String**| name of the left tag group. | |
-| **right** | **String**| name of the right tag group. | |
-| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
-| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
+| **projectId** | **String**| project-space to add to. | |
+| **groupName** | **String**| name of the new group | |
+| **filter** | **String**| filter query to create the group | |
+| **type** | **String**| type of the group | |
 
 ### Return type
 
-[**Job**](Job.md)
+[**TagGroup**](TagGroup.md)
 
 ### Authorization
 
@@ -166,7 +167,77 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | the tag group that was added |  -  |
+
+
+## addTags1
+
+> List&lt;Tag&gt; addTags1(projectId, compoundId, tag)
+
+Tags with the same category name will be overwritten
+
+Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        String compoundId = "compoundId_example"; // String | compound (group of ion identities) to add tags to.
+        List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
+        try {
+            List<Tag> result = apiInstance.addTags1(projectId, compoundId, tag);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#addTags1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **compoundId** | **String**| compound (group of ion identities) to add tags to. | |
+| **tag** | [**List&lt;Tag&gt;**](Tag.md)| tags to add. | |
+
+### Return type
+
+[**List&lt;Tag&gt;**](Tag.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tags that have been added |  -  |
 
 
 ## deleteCompound
@@ -236,13 +307,13 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## deleteFoldChange
+## deleteGroup1
 
-> deleteFoldChange(projectId, left, right, aggregation, quantification)
+> deleteGroup1(projectId, groupName)
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
+**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -261,14 +332,11 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        String left = "left_example"; // String | name of the left group.
-        String right = "right_example"; // String | name of the right group.
-        String aggregation = "AVG"; // String | aggregation type.
-        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        String groupName = "groupName_example"; // String | name of group to delete.
         try {
-            apiInstance.deleteFoldChange(projectId, left, right, aggregation, quantification);
+            apiInstance.deleteGroup1(projectId, groupName);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#deleteFoldChange");
+            System.err.println("Exception when calling CompoundsApi#deleteGroup1");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -284,10 +352,76 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **left** | **String**| name of the left group. | |
-| **right** | **String**| name of the right group. | |
-| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+| **groupName** | **String**| name of group to delete. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## deleteTags1
+
+> deleteTags1(projectId, compoundId, categoryName)
+
+**EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
+
+**EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String compoundId = "compoundId_example"; // String | compound (group of ion identities) to delete tag from.
+        String categoryName = "categoryName_example"; // String | category name of the tag to delete.
+        try {
+            apiInstance.deleteTags1(projectId, compoundId, categoryName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#deleteTags1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **compoundId** | **String**| compound (group of ion identities) to delete tag from. | |
+| **categoryName** | **String**| category name of the tag to delete. | |
 
 ### Return type
 
@@ -595,13 +729,13 @@ No authorization required
 | **200** | Compounds with additional optional fields (if specified). |  -  |
 
 
-## getFoldChange
+## getGroupByName1
 
-> List&lt;CompoundFoldChange&gt; getFoldChange(projectId, objectId, page, size, sort)
+> TagGroup getGroupByName1(projectId, groupName)
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
+**EXPERIMENTAL** Get tag group by name in the given project-space
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+**EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -620,15 +754,12 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String objectId = "objectId_example"; // String | id of the object the fold changes are assigned to.
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        String groupName = "groupName_example"; // String | name of the group
         try {
-            List<CompoundFoldChange> result = apiInstance.getFoldChange(projectId, objectId, page, size, sort);
+            TagGroup result = apiInstance.getGroupByName1(projectId, groupName);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#getFoldChange");
+            System.err.println("Exception when calling CompoundsApi#getGroupByName1");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -644,14 +775,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **objectId** | **String**| id of the object the fold changes are assigned to. | |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **groupName** | **String**| name of the group | |
 
 ### Return type
 
-[**List&lt;CompoundFoldChange&gt;**](CompoundFoldChange.md)
+[**TagGroup**](TagGroup.md)
 
 ### Authorization
 
@@ -666,7 +794,141 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | fold changes |  -  |
+| **200** | Tag group. |  -  |
+
+
+## getGroups1
+
+> List&lt;TagGroup&gt; getGroups1(projectId)
+
+**EXPERIMENTAL** Get all tag category groups in the given project-space
+
+**EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        try {
+            List<TagGroup> result = apiInstance.getGroups1(projectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#getGroups1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+
+### Return type
+
+[**List&lt;TagGroup&gt;**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag category groups. |  -  |
+
+
+## getGroupsByType1
+
+> List&lt;TagGroup&gt; getGroupsByType1(projectId, groupType)
+
+**EXPERIMENTAL** Get tag groups by type in the given project-space
+
+**EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String groupType = "groupType_example"; // String | type of the group
+        try {
+            List<TagGroup> result = apiInstance.getGroupsByType1(projectId, groupType);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#getGroupsByType1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **groupType** | **String**| type of the group | |
+
+### Return type
+
+[**List&lt;TagGroup&gt;**](TagGroup.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag groups. |  -  |
 
 
 ## getQuantification
@@ -715,7 +977,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
@@ -785,7 +1047,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **compoundId** | **String**| compound which should be read out | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX] |
+| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
@@ -807,13 +1069,13 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## listFoldChange
+## objectsByGroup1
 
-> PageCompoundFoldChange listFoldChange(projectId, page, size, sort)
+> PageCompound objectsByGroup1(projectId, group, page, size, sort, optFields)
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
+**EXPERIMENTAL** Get compounds (group of ion identities) by tag group
 
-&lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+**EXPERIMENTAL** Get compounds (group of ion identities) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
 
 ### Example
 
@@ -831,15 +1093,17 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String group = "group_example"; // String | tag group name.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageCompoundFoldChange result = apiInstance.listFoldChange(projectId, page, size, sort);
+            PageCompound result = apiInstance.objectsByGroup1(projectId, group, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#listFoldChange");
+            System.err.println("Exception when calling CompoundsApi#objectsByGroup1");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -854,14 +1118,16 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
+| **projectId** | **String**| project-space to delete from. | |
+| **group** | **String**| tag group name. | |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
 
-[**PageCompoundFoldChange**](PageCompoundFoldChange.md)
+[**PageCompound**](PageCompound.md)
 
 ### Authorization
 
@@ -876,5 +1142,81 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | fold changes. |  -  |
+| **200** | tagged compounds (group of ion identities) |  -  |
+
+
+## objectsByTag1
+
+> PageCompound objectsByTag1(projectId, filter, page, size, sort, optFields)
+
+**EXPERIMENTAL** Get compounds (group of ion identities) by tag
+
+**EXPERIMENTAL** Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project space to get compounds (group of ion identities) from.
+        String filter = ""; // String | tag filter.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            PageCompound result = apiInstance.objectsByTag1(projectId, filter, page, size, sort, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#objectsByTag1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project space to get compounds (group of ion identities) from. | |
+| **filter** | **String**| tag filter. | [optional] [default to ] |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**PageCompound**](PageCompound.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | tagged compounds (group of ion identities) |  -  |
 

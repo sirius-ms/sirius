@@ -42,7 +42,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     Class<T> getTarget();
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Compute the fold change between two groups of runs.
+     * **EXPERIMENTAL** Compute the fold change between two groups of runs.
      *
      * The runs need to be tagged and grouped.
      *
@@ -68,8 +68,10 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
         return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), left, right, aggregation, quantification, getTarget(), removeNone(optFields));
     }
 
+    // TODO fold change table
+
     /**
-     * <strong>(EXPERIMENTAL)</strong> List all fold changes in the project space.
+     * **EXPERIMENTAL** Page of all fold changes in the project space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -77,7 +79,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
      * @param pageable  pageable.
      * @return fold changes.
      */
-    @GetMapping(value = "/foldchange", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/foldchange/page", produces = MediaType.APPLICATION_JSON_VALUE)
     default Page<F> listFoldChange(
             @PathVariable String projectId,
             @ParameterObject Pageable pageable
@@ -86,26 +88,24 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> List all fold changes that are associated with an object.
+     * **EXPERIMENTAL** List all fold changes that are associated with an object.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId project-space to read from.
      * @param objectId  id of the object the fold changes are assigned to.
-     * @param pageable  pageable.
      * @return fold changes
      */
     @GetMapping(value = "/foldchange/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     default List<F> getFoldChange(
             @PathVariable String projectId,
-            @PathVariable String objectId,
-            @ParameterObject Pageable pageable
+            @PathVariable String objectId
     ) {
         return getProjectsProvider().getProjectOrThrow(projectId).getFoldChanges(getTarget(), objectId);
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Delete fold change.
+     * **EXPERIMENTAL** Delete fold change.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *

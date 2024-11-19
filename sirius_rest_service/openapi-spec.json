@@ -13,20 +13,8 @@
   ],
   "tags": [
     {
-      "name": "Tag categories (EXPERIMENTAL)",
-      "description": "This API allows accessing tag categories.All Endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
-    },
-    {
-      "name": "EXPERIMENTAL",
-      "description": "All Endpoints are experimental and not part of the stable API specification. This endpoints can change at any time, even in minor updates."
-    },
-    {
       "name": "Info",
       "description": "Status und Information"
-    },
-    {
-      "name": "Runs (EXPERIMENTAL)",
-      "description": "This API allows accessing LC/MS runs.All Endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
     {
       "name": "Jobs",
@@ -35,6 +23,30 @@
     {
       "name": "Compounds",
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
+    },
+    {
+      "name": "Compound Statistics",
+      "description": "**EXPERIMENTAL** This compound based API allows allows computing and accessing statistics for compounds (also known as a group of ion identities). All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
+    },
+    {
+      "name": "Feature Statistics",
+      "description": "**EXPERIMENTAL** This feature based API allows computing and accessing statistics for features (aligned over runs).All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
+    },
+    {
+      "name": "Gui",
+      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+    },
+    {
+      "name": "Projects",
+      "description": "Manage SIRIUS projects."
+    },
+    {
+      "name": "Tag Categories",
+      "description": "**EXPERIMENTAL** This API allows accessing tag categories. All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
+    },
+    {
+      "name": "Runs",
+      "description": "**EXPERIMENTAL** This API allows accessing LC/MS runs. All endpoints are experimental and not part of the stable API specification. These endpoints can change at any time, even in minor updates."
     },
     {
       "name": "Login and Account",
@@ -53,16 +65,8 @@
       "description": "Manage structure and spectral databases that can be used by various computational methods."
     },
     {
-      "name": "Gui",
-      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
-    },
-    {
       "name": "Features",
       "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
-    },
-    {
-      "name": "Projects",
-      "description": "Manage SIRIUS projects."
     }
   ],
   "paths": {
@@ -241,13 +245,13 @@
         }
       }
     },
-    "/api/projects/{projectId}/runs/tags/{objectId}": {
+    "/api/projects/{projectId}/runs/tags/{runId}": {
       "put": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Add tags to an object in the project",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Add tags to an object in the project. Tags with the same category name will be overwritten.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Add tags to a run in the project",
+        "description": "**EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "addTags",
         "parameters": [
           {
@@ -260,9 +264,9 @@
             }
           },
           {
-            "name": "objectId",
+            "name": "runId",
             "in": "path",
-            "description": "object to tag.",
+            "description": "run to add tags to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -303,10 +307,10 @@
     "/api/projects/{projectId}/runs/groups/{groupName}": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag group by name in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag group by name in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get tag group by name in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag group by name in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "getGroupByName",
         "parameters": [
           {
@@ -343,10 +347,10 @@
       },
       "put": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Group tags in the project",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Group tags in the project",
+        "description": "**EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "addGroup",
         "parameters": [
           {
@@ -401,10 +405,10 @@
       },
       "delete": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag groups with the given name from the specified project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag groups with the given name from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "deleteGroup",
         "parameters": [
           {
@@ -497,13 +501,72 @@
         "deprecated": true
       }
     },
-    "/api/projects/{projectId}/compounds/foldchange/compute": {
+    "/api/projects/{projectId}/compounds/tags/{compoundId}": {
       "put": {
         "tags": [
           "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Compute the fold change between two groups of runs",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Compute the fold change between two groups of runs.\n\n The runs need to be tagged and grouped.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "Tags with the same category name will be overwritten",
+        "description": "Tags with the same category name will be overwritten.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "addTags_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "description": "compound (group of ion identities) to add tags to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags to add.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tags that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/statistics/foldchange/compute": {
+      "put": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Compute the fold change between two groups of runs",
+        "description": "**EXPERIMENTAL** Compute the fold change between two groups of runs.\n\n The runs need to be tagged and grouped.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "computeFoldChange",
         "parameters": [
           {
@@ -559,11 +622,7 @@
               "default": "APEX_INTENSITY",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           },
@@ -597,284 +656,13 @@
         }
       }
     },
-    "/api/projects/{projectId}/categories": {
+    "/api/projects/{projectId}/compounds/groups/{groupName}": {
       "get": {
         "tags": [
-          "Tag categories (EXPERIMENTAL)"
+          "Compounds"
         ],
-        "summary": "Get all tag categories in the given project-space.",
-        "description": "Get all tag categories in the given project-space.",
-        "operationId": "getCategories",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag categories.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TagCategory"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Tag categories (EXPERIMENTAL)"
-        ],
-        "summary": "Add tag categories to the project.",
-        "description": "Add tag categories to the project. Category names must not exist in the project.",
-        "operationId": "addCategories",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to add to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "the tag categories to be added",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/TagCategoryImport"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the tag categories that have been added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TagCategory"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/categories/{categoryName}": {
-      "get": {
-        "tags": [
-          "Tag categories (EXPERIMENTAL)"
-        ],
-        "summary": "Get tag category by name in the given project-space.",
-        "description": "Get tag category by name in the given project-space.",
-        "operationId": "getCategoryByName",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "name of the category",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag category.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagCategory"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Tag categories (EXPERIMENTAL)"
-        ],
-        "summary": "Add a possible value to the tag category in the project.",
-        "description": "Add a possible value to the tag category in the project.",
-        "operationId": "addPossibleValuesToCategory",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to add to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "the tag category to add to",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the tag categories that have been added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagCategory"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Tag categories (EXPERIMENTAL)"
-        ],
-        "summary": "Delete tag categories with the given name from the specified project-space.",
-        "description": "Delete tag categories with the given name from the specified project-space.",
-        "operationId": "deleteCategories",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to delete from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "name of category to delete.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/tags/{objectId}": {
-      "put": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Add tags to an object in the project",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Add tags to an object in the project. Tags with the same category name will be overwritten.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "addTags_1",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to add to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "objectId",
-            "in": "path",
-            "description": "object to tag.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "tags to add.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Tag"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the tags that have been added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Tag"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/groups/{groupName}": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag group by name in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag group by name in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get tag group by name in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag group by name in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "getGroupByName_1",
         "parameters": [
           {
@@ -911,10 +699,10 @@
       },
       "put": {
         "tags": [
-          "Features"
+          "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Group tags in the project",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Group tags in the project",
+        "description": "**EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "addGroup_1",
         "parameters": [
           {
@@ -969,10 +757,10 @@
       },
       "delete": {
         "tags": [
-          "Features"
+          "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag groups with the given name from the specified project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag groups with the given name from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "deleteGroup_1",
         "parameters": [
           {
@@ -1001,13 +789,284 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/foldchange/compute": {
+    "/api/projects/{projectId}/categories": {
+      "get": {
+        "tags": [
+          "Tag Categories"
+        ],
+        "summary": "**EXPERIMENTAL** Get all tag categories in the given project-space.",
+        "description": "**EXPERIMENTAL** Get all tag categories in the given project-space.",
+        "operationId": "getCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tag Categories"
+        ],
+        "summary": "**EXPERIMENTAL** Add tag categories to the project.",
+        "description": "**EXPERIMENTAL** Add tag categories to the project. Category names must not exist in the project.",
+        "operationId": "addCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the tag categories to be added",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TagCategoryImport"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tag categories that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/categories/{categoryName}": {
+      "get": {
+        "tags": [
+          "Tag Categories"
+        ],
+        "summary": "**EXPERIMENTAL** Get tag category by name in the given project-space.",
+        "description": "**EXPERIMENTAL** Get tag category by name in the given project-space.",
+        "operationId": "getCategoryByName",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of the category",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategory"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tag Categories"
+        ],
+        "summary": "**EXPERIMENTAL** Add a possible value to the tag category in the project.",
+        "description": "**EXPERIMENTAL** Add a possible value to the tag category in the project.",
+        "operationId": "addPossibleValuesToCategory",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "the tag category to add to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tag categories that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategory"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tag Categories"
+        ],
+        "summary": "**EXPERIMENTAL** Delete tag categories with the given name from the specified project-space.",
+        "description": "**EXPERIMENTAL** Delete tag categories with the given name from the specified project-space.",
+        "operationId": "deleteCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of category to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}": {
       "put": {
         "tags": [
           "Features"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Compute the fold change between two groups of runs",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Compute the fold change between two groups of runs.\n\n The runs need to be tagged and grouped.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project",
+        "description": "**EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "addTags_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "run to add tags to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags to add.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tags that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchange/compute": {
+      "put": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Compute the fold change between two groups of runs",
+        "description": "**EXPERIMENTAL** Compute the fold change between two groups of runs.\n\n The runs need to be tagged and grouped.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "computeFoldChange_1",
         "parameters": [
           {
@@ -1063,11 +1122,7 @@
               "default": "APEX_INTENSITY",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           },
@@ -1097,6 +1152,139 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/groups/{groupName}": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "**EXPERIMENTAL** Get tag group by name in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag group by name in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getGroupByName_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagGroup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "**EXPERIMENTAL** Group tags in the project",
+        "description": "**EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "addGroup_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of the new group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "filter query to create the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "type of the group",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the tag group that was added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagGroup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteGroup_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupName",
+            "in": "path",
+            "description": "name of group to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -2980,10 +3168,10 @@
     "/api/projects/{projectId}/runs/{runId}": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "Get run with the given identifier from the specified project-space.",
-        "description": "Get run with the given identifier from the specified project-space.",
+        "summary": "**EXPERIMENTAL** Get run with the given identifier from the specified project-space.",
+        "description": "**EXPERIMENTAL** Get run with the given identifier from the specified project-space.",
         "operationId": "getRun",
         "parameters": [
           {
@@ -3035,16 +3223,16 @@
     "/api/projects/{projectId}/runs/tagged": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get runs by tag",
+        "description": "**EXPERIMENTAL** Get runs by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "objectsByTag",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "project space to get objects from.",
+            "description": "project space to get runs from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3110,7 +3298,7 @@
         ],
         "responses": {
           "200": {
-            "description": "tagged objects",
+            "description": "tagged runs",
             "content": {
               "application/json": {
                 "schema": {
@@ -3125,10 +3313,10 @@
     "/api/projects/{projectId}/runs/page": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "Get all available runs in the given project-space.",
-        "description": "Get all available runs in the given project-space.",
+        "summary": "**EXPERIMENTAL** Get all available runs in the given project-space.",
+        "description": "**EXPERIMENTAL** Get all available runs in the given project-space.",
         "operationId": "getRunsPaged",
         "parameters": [
           {
@@ -3205,10 +3393,10 @@
     "/api/projects/{projectId}/runs/groups": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get all tag category groups in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get all tag category groups in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get all tag category groups in the given project-space",
+        "description": "**EXPERIMENTAL** Get all tag category groups in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "getGroups",
         "parameters": [
           {
@@ -3241,10 +3429,10 @@
     "/api/projects/{projectId}/runs/groups/type/{groupType}": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag groups by type in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag groups by type in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get tag groups by type in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag groups by type in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "getGroupsByType",
         "parameters": [
           {
@@ -3286,10 +3474,10 @@
     "/api/projects/{projectId}/runs/grouped": {
       "get": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag group",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag group.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Get runs by tag group",
+        "description": "**EXPERIMENTAL** Get runs by tag group.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "objectsByGroup",
         "parameters": [
           {
@@ -3360,7 +3548,7 @@
         ],
         "responses": {
           "200": {
-            "description": "tagged objects",
+            "description": "tagged runs",
             "content": {
               "application/json": {
                 "schema": {
@@ -3865,11 +4053,7 @@
               "default": "APEX_HEIGHT",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           }
@@ -3881,6 +4065,208 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QuantificationTable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/tagged": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "**EXPERIMENTAL** Get compounds (group of ion identities) by tag",
+        "description": "**EXPERIMENTAL** Get compounds (group of ion identities) by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "objectsByTag_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project space to get compounds (group of ion identities) from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "tag filter.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "tagged compounds (group of ion identities)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/statistics/foldchange/{compoundId}": {
+      "get": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)",
+        "description": "**EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "description": "id of the compound (group of ion identities) the fold changes are assigned to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CompoundFoldChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/statistics/foldchange/page": {
+      "get": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Page of all fold changes in the project space",
+        "description": "**EXPERIMENTAL** Page of all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "listFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompoundFoldChange"
                 }
               }
             }
@@ -3916,11 +4302,7 @@
               "default": "APEX_HEIGHT",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           }
@@ -4031,14 +4413,50 @@
         }
       }
     },
-    "/api/projects/{projectId}/compounds/foldchange": {
+    "/api/projects/{projectId}/compounds/groups": {
       "get": {
         "tags": [
           "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes in the project space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "listFoldChange",
+        "summary": "**EXPERIMENTAL** Get all tag category groups in the given project-space",
+        "description": "**EXPERIMENTAL** Get all tag category groups in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getGroups_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag category groups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagGroup"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/groups/type/{groupType}": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "**EXPERIMENTAL** Get tag groups by type in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag groups by type in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getGroupsByType_1",
         "parameters": [
           {
             "name": "projectId",
@@ -4050,60 +4468,40 @@
             }
           },
           {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
+            "name": "groupType",
+            "in": "path",
+            "description": "type of the group",
+            "required": true,
             "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "fold changes.",
+            "description": "Tag groups.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageCompoundFoldChange"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagGroup"
+                  }
                 }
               }
             }
           }
         }
-      },
-      "delete": {
+      }
+    },
+    "/api/projects/{projectId}/compounds/grouped": {
+      "get": {
         "tags": [
           "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete fold change",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "deleteFoldChange",
+        "summary": "**EXPERIMENTAL** Get compounds (group of ion identities) by tag group",
+        "description": "**EXPERIMENTAL** Get compounds (group of ion identities) by tag group.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "objectsByGroup_1",
         "parameters": [
           {
             "name": "projectId",
@@ -4115,87 +4513,9 @@
             }
           },
           {
-            "name": "left",
+            "name": "group",
             "in": "query",
-            "description": "name of the left group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "right",
-            "in": "query",
-            "description": "name of the right group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "AVG",
-              "enum": [
-                "AVG",
-                "MIN",
-                "MAX",
-                "MEDIAN"
-              ]
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "APEX_INTENSITY",
-              "enum": [
-                "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/compounds/foldchange/{objectId}": {
-      "get": {
-        "tags": [
-          "Compounds"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes that are associated with an object",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes that are associated with an object.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "getFoldChange",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "objectId",
-            "in": "path",
-            "description": "id of the object the fold changes are assigned to.",
+            "description": "tag group name.",
             "required": true,
             "schema": {
               "type": "string"
@@ -4234,18 +4554,28 @@
                 "type": "string"
               }
             }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "fold changes",
+            "description": "tagged compounds (group of ion identities)",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CompoundFoldChange"
-                  }
+                  "$ref": "#/components/schemas/PageCompound"
                 }
               }
             }
@@ -4296,10 +4626,10 @@
     "/api/projects/{projectId}/categories/type/{categoryType}": {
       "get": {
         "tags": [
-          "Tag categories (EXPERIMENTAL)"
+          "Tag Categories"
         ],
-        "summary": "Get tag categories by type in the given project-space.",
-        "description": "Get tag categories by type in the given project-space.",
+        "summary": "**EXPERIMENTAL** Get tag categories by type in the given project-space.",
+        "description": "**EXPERIMENTAL** Get tag categories by type in the given project-space.",
         "operationId": "getCategoriesByType",
         "parameters": [
           {
@@ -4854,11 +5184,7 @@
               "default": "APEX_HEIGHT",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           }
@@ -4880,10 +5206,10 @@
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report": {
       "get": {
         "tags": [
-          "EXPERIMENTAL"
+          "Features"
         ],
-        "summary": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
-        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.\n\n EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.",
+        "summary": "**EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space",
+        "description": "**EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "getAlignedFeaturesQuality",
         "parameters": [
           {
@@ -6407,14 +6733,14 @@
         "tags": [
           "Features"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "objectsByTag_1",
+        "summary": "**EXPERIMENTAL** Get features (aligned over runs) by tag",
+        "description": "**EXPERIMENTAL** Get features (aligned over runs) by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name. Possible field names are:\u003c/p\u003e\n\n \u003cul\u003e\n   \u003cli\u003e\u003cstrong\u003ecategory\u003c/strong\u003e - category name\u003c/li\u003e\n   \u003cli\u003e\u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003ecategory:my_category\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etext:\u0026quot;new york\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etext:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003einteger\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003einteger:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003e(category:hello || category:world) \u0026amp;\u0026amp; text:\u0026quot;new york\u0026quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real\u0026lt;\u003d3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date\u0026lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "objectsByTag_2",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "project space to get objects from.",
+            "description": "project space to get features (aligned over runs) from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -6480,11 +6806,123 @@
         ],
         "responses": {
           "200": {
-            "description": "tagged objects",
+            "description": "tagged features (aligned over runs)",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchange/{alignedFeatureId}": {
+      "get": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs)",
+        "description": "**EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs).\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "id of the feature (aligend over runs) the fold changes are assigned to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlignedFeatureFoldChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchange/page": {
+      "get": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Page of all fold changes in the project space",
+        "description": "**EXPERIMENTAL** Page of all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "listFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeatureFoldChange"
                 }
               }
             }
@@ -6520,11 +6958,7 @@
               "default": "APEX_HEIGHT",
               "enum": [
                 "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
+                "AREA_UNDER_CURVE"
               ]
             }
           }
@@ -6628,9 +7062,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get all tag category groups in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get all tag category groups in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "getGroups_1",
+        "summary": "**EXPERIMENTAL** Get all tag category groups in the given project-space",
+        "description": "**EXPERIMENTAL** Get all tag category groups in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getGroups_2",
         "parameters": [
           {
             "name": "projectId",
@@ -6664,9 +7098,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag groups by type in the given project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get tag groups by type in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "getGroupsByType_1",
+        "summary": "**EXPERIMENTAL** Get tag groups by type in the given project-space",
+        "description": "**EXPERIMENTAL** Get tag groups by type in the given project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getGroupsByType_2",
         "parameters": [
           {
             "name": "projectId",
@@ -6709,9 +7143,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag group",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Get objects by tag group.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "objectsByGroup_1",
+        "summary": "**EXPERIMENTAL** Get features (aligned over runs) by tag group",
+        "description": "**EXPERIMENTAL** Get features (aligned over runs) by tag group.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "objectsByGroup_2",
         "parameters": [
           {
             "name": "projectId",
@@ -6781,233 +7215,11 @@
         ],
         "responses": {
           "200": {
-            "description": "tagged objects",
+            "description": "tagged features (aligned over runs)",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageAlignedFeature"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/foldchange": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes in the project space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "listFoldChange_1",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "fold changes.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageAlignedFeatureFoldChange"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete fold change",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "deleteFoldChange_1",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to delete from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "left",
-            "in": "query",
-            "description": "name of the left group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "right",
-            "in": "query",
-            "description": "name of the right group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "AVG",
-              "enum": [
-                "AVG",
-                "MIN",
-                "MAX",
-                "MEDIAN"
-              ]
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "APEX_INTENSITY",
-              "enum": [
-                "APEX_INTENSITY",
-                "AREA_UNDER_CURVE",
-                "APEX_MASS",
-                "AVERAGE_MASS",
-                "APEX_RT",
-                "FULL_WIDTH_HALF_MAX"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/foldchange/{objectId}": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes that are associated with an object",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e List all fold changes that are associated with an object.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "getFoldChange_1",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "objectId",
-            "in": "path",
-            "description": "id of the object the fold changes are assigned to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "fold changes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AlignedFeatureFoldChange"
-                  }
                 }
               }
             }
@@ -7419,13 +7631,13 @@
         }
       }
     },
-    "/api/projects/{projectId}/runs/tags/{objectId}/{categoryName}": {
+    "/api/projects/{projectId}/runs/tags/{runId}/{categoryName}": {
       "delete": {
         "tags": [
-          "Runs (EXPERIMENTAL)"
+          "Runs"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag with the given category from the object with the specified ID in the specified project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag with the given category from the object with the specified ID in the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "deleteTags",
         "parameters": [
           {
@@ -7438,9 +7650,9 @@
             }
           },
           {
-            "name": "objectId",
+            "name": "runId",
             "in": "path",
-            "description": "object to delete tag from.",
+            "description": "run to delete tag from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -7463,13 +7675,13 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/tags/{objectId}/{categoryName}": {
+    "/api/projects/{projectId}/compounds/tags/{compoundId}/{categoryName}": {
       "delete": {
         "tags": [
-          "Features"
+          "Compounds"
         ],
-        "summary": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag with the given category from the object with the specified ID in the specified project-space",
-        "description": "\u003cstrong\u003e(EXPERIMENTAL)\u003c/strong\u003e Delete tag with the given category from the object with the specified ID in the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "summary": "**EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
         "operationId": "deleteTags_1",
         "parameters": [
           {
@@ -7482,9 +7694,9 @@
             }
           },
           {
-            "name": "objectId",
+            "name": "compoundId",
             "in": "path",
-            "description": "object to delete tag from.",
+            "description": "compound (group of ion identities) to delete tag from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -7497,6 +7709,198 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/compounds/statistics/foldchange": {
+      "delete": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Delete fold change",
+        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{categoryName}": {
+      "delete": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "**EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space",
+        "description": "**EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteTags_2",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) to delete tag from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "category name of the tag to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchange": {
+      "delete": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Delete fold change",
+        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
             }
           }
         ],
@@ -10176,11 +10580,7 @@
             "type": "string",
             "enum": [
               "APEX_INTENSITY",
-              "AREA_UNDER_CURVE",
-              "APEX_MASS",
-              "AVERAGE_MASS",
-              "APEX_RT",
-              "FULL_WIDTH_HALF_MAX"
+              "AREA_UNDER_CURVE"
             ]
           },
           "rowType": {
@@ -10310,11 +10710,7 @@
             "type": "string",
             "enum": [
               "APEX_INTENSITY",
-              "AREA_UNDER_CURVE",
-              "APEX_MASS",
-              "AVERAGE_MASS",
-              "APEX_RT",
-              "FULL_WIDTH_HALF_MAX"
+              "AREA_UNDER_CURVE"
             ]
           },
           "foldChange": {
@@ -10833,11 +11229,7 @@
             "type": "string",
             "enum": [
               "APEX_INTENSITY",
-              "AREA_UNDER_CURVE",
-              "APEX_MASS",
-              "AVERAGE_MASS",
-              "APEX_RT",
-              "FULL_WIDTH_HALF_MAX"
+              "AREA_UNDER_CURVE"
             ]
           },
           "foldChange": {

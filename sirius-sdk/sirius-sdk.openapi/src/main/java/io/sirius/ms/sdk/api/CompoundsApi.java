@@ -4,15 +4,13 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
 import io.sirius.ms.sdk.model.Compound;
-import io.sirius.ms.sdk.model.CompoundFoldChange;
 import io.sirius.ms.sdk.model.CompoundImport;
 import io.sirius.ms.sdk.model.CompoundOptField;
 import io.sirius.ms.sdk.model.InstrumentProfile;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.PageCompound;
-import io.sirius.ms.sdk.model.PageCompoundFoldChange;
 import io.sirius.ms.sdk.model.QuantificationTable;
+import io.sirius.ms.sdk.model.Tag;
+import io.sirius.ms.sdk.model.TagGroup;
 import io.sirius.ms.sdk.model.TraceSet;
 
 import java.util.HashMap;
@@ -158,47 +156,47 @@ public class CompoundsApi {
         return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
-     * @param optFields job opt fields.
-     * @return Job
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeFoldChangeRequestCreation(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec addGroup1RequestCreation(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'left' is set
-        if (left == null) {
-            throw new WebClientResponseException("Missing the required parameter 'left' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'right' is set
-        if (right == null) {
-            throw new WebClientResponseException("Missing the required parameter 'right' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'filter' is set
+        if (filter == null) {
+            throw new WebClientResponseException("Missing the required parameter 'filter' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'type' is set
+        if (type == null) {
+            throw new WebClientResponseException("Missing the required parameter 'type' when calling addGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
+        pathParams.put("groupName", groupName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -209,61 +207,148 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/foldchange/compute", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/groups/{groupName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
-     * @param optFields job opt fields.
-     * @return Job
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeFoldChange(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
+    public TagGroup addGroup1(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return addGroup1RequestCreation(projectId, groupName, filter, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
-     * @param optFields job opt fields.
-     * @return ResponseEntity&lt;Job&gt;
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
+     * @return ResponseEntity&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeFoldChangeWithHttpInfo(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
+    public ResponseEntity<TagGroup> addGroup1WithHttpInfo(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return addGroup1RequestCreation(projectId, groupName, filter, type).toEntity(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
-     * @param optFields job opt fields.
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tag group that was added
+     * @param projectId project-space to add to.
+     * @param groupName name of the new group
+     * @param filter filter query to create the group
+     * @param type type of the group
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeFoldChangeWithResponseSpec(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields);
+    public ResponseSpec addGroup1WithResponseSpec(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
+        return addGroup1RequestCreation(projectId, groupName, filter, type);
+    }
+    /**
+     * Tags with the same category name will be overwritten
+     * Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param compoundId compound (group of ion identities) to add tags to.
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addTags1RequestCreation(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+        Object postBody = tag;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'compoundId' is set
+        if (compoundId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'tag' is set
+        if (tag == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("compoundId", compoundId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/tags/{compoundId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Tags with the same category name will be overwritten
+     * Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param compoundId compound (group of ion identities) to add tags to.
+     * @param tag tags to add.
+     * @return List&lt;Tag&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Tag> addTags1(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTags1RequestCreation(projectId, compoundId, tag).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Tags with the same category name will be overwritten
+     * Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param compoundId compound (group of ion identities) to add tags to.
+     * @param tag tags to add.
+     * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Tag>> addTags1WithHttpInfo(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return addTags1RequestCreation(projectId, compoundId, tag).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Tags with the same category name will be overwritten
+     * Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - the tags that have been added
+     * @param projectId project-space to add to.
+     * @param compoundId compound (group of ion identities) to add tags to.
+     * @param tag tags to add.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addTags1WithResponseSpec(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
+        return addTags1RequestCreation(projectId, compoundId, tag);
     }
     /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
@@ -344,45 +429,34 @@ public class CompoundsApi {
         return deleteCompoundRequestCreation(projectId, compoundId);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteFoldChangeRequestCreation(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    private ResponseSpec deleteGroup1RequestCreation(String projectId, String groupName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'left' is set
-        if (left == null) {
-            throw new WebClientResponseException("Missing the required parameter 'left' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'right' is set
-        if (right == null) {
-            throw new WebClientResponseException("Missing the required parameter 'right' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling deleteGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
+        pathParams.put("groupName", groupName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
-        
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -391,55 +465,133 @@ public class CompoundsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/foldchange", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/groups/{groupName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteFoldChange(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public void deleteGroup1(String projectId, String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).bodyToMono(localVarReturnType).block();
+        deleteGroup1RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param groupName name of group to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteFoldChangeWithHttpInfo(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteGroup1WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).toEntity(localVarReturnType).block();
+        return deleteGroup1RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param groupName name of group to delete.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteFoldChangeWithResponseSpec(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
-        return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification);
+    public ResponseSpec deleteGroup1WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+        return deleteGroup1RequestCreation(projectId, groupName);
+    }
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param compoundId compound (group of ion identities) to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteTags1RequestCreation(String projectId, String compoundId, String categoryName) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'compoundId' is set
+        if (compoundId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'categoryName' is set
+        if (categoryName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling deleteTags1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("compoundId", compoundId);
+        pathParams.put("categoryName", categoryName);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/tags/{compoundId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param compoundId compound (group of ion identities) to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteTags1(String projectId, String compoundId, String categoryName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteTags1RequestCreation(projectId, compoundId, categoryName).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param compoundId compound (group of ion identities) to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteTags1WithHttpInfo(String projectId, String compoundId, String categoryName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteTags1RequestCreation(projectId, compoundId, categoryName).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param compoundId compound (group of ion identities) to delete tag from.
+     * @param categoryName category name of the tag to delete.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteTags1WithResponseSpec(String projectId, String compoundId, String categoryName) throws WebClientResponseException {
+        return deleteTags1RequestCreation(projectId, compoundId, categoryName);
     }
     /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
@@ -810,42 +962,35 @@ public class CompoundsApi {
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
-     * @param objectId id of the object the fold changes are assigned to.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return List&lt;CompoundFoldChange&gt;
+     * @param groupName name of the group
+     * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFoldChangeRequestCreation(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+    private ResponseSpec getGroupByName1RequestCreation(String projectId, String groupName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupByName1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'objectId' is set
-        if (objectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling getFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling getGroupByName1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
-        pathParams.put("objectId", objectId);
+        pathParams.put("groupName", groupName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -855,58 +1000,206 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/foldchange/{objectId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/groups/{groupName}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
-     * @param objectId id of the object the fold changes are assigned to.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return List&lt;CompoundFoldChange&gt;
+     * @param groupName name of the group
+     * @return TagGroup
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<CompoundFoldChange> getFoldChange(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return getFoldChangeRequestCreation(projectId, objectId, page, size, sort).bodyToFlux(localVarReturnType).collectList().block();
+    public TagGroup getGroupByName1(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupByName1RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
-     * @param objectId id of the object the fold changes are assigned to.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return ResponseEntity&lt;List&lt;CompoundFoldChange&gt;&gt;
+     * @param groupName name of the group
+     * @return ResponseEntity&lt;TagGroup&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<CompoundFoldChange>> getFoldChangeWithHttpInfo(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return getFoldChangeRequestCreation(projectId, objectId, page, size, sort).toEntityList(localVarReturnType).block();
+    public ResponseEntity<TagGroup> getGroupByName1WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupByName1RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes that are associated with an object.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
-     * @param objectId id of the object the fold changes are assigned to.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param groupName name of the group
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFoldChangeWithResponseSpec(String projectId, String objectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        return getFoldChangeRequestCreation(projectId, objectId, page, size, sort);
+    public ResponseSpec getGroupByName1WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
+        return getGroupByName1RequestCreation(projectId, groupName);
+    }
+    /**
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGroups1RequestCreation(String projectId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroups1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/groups", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<TagGroup> getGroups1(String projectId) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroups1RequestCreation(projectId).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<TagGroup>> getGroups1WithHttpInfo(String projectId) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroups1RequestCreation(projectId).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag category groups.
+     * @param projectId project-space to read from.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGroups1WithResponseSpec(String projectId) throws WebClientResponseException {
+        return getGroups1RequestCreation(projectId);
+    }
+    /**
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGroupsByType1RequestCreation(String projectId, String groupType) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupsByType1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupType' is set
+        if (groupType == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupType' when calling getGroupsByType1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("groupType", groupType);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/groups/type/{groupType}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return List&lt;TagGroup&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<TagGroup> getGroupsByType1(String projectId, String groupType) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupsByType1RequestCreation(projectId, groupType).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<TagGroup>> getGroupsByType1WithHttpInfo(String projectId, String groupType) throws WebClientResponseException {
+        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
+        return getGroupsByType1RequestCreation(projectId, groupType).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - Tag groups.
+     * @param projectId project-space to read from.
+     * @param groupType type of the group
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGroupsByType1WithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
+        return getGroupsByType1RequestCreation(projectId, groupType);
     }
     /**
      * Returns the full quantification table.
@@ -1078,21 +1371,27 @@ public class CompoundsApi {
         return getQuantificationRowRequestCreation(projectId, compoundId, type);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageCompoundFoldChange
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec listFoldChangeRequestCreation(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+    private ResponseSpec objectsByGroup1RequestCreation(String projectId, String group, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling listFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'group' is set
+        if (group == null) {
+            throw new WebClientResponseException("Missing the required parameter 'group' when calling objectsByGroup1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -1104,9 +1403,11 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "group", group));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -1117,54 +1418,160 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/foldchange", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/grouped", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageCompoundFoldChange
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageCompoundFoldChange listFoldChange(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return listFoldChangeRequestCreation(projectId, page, size, sort).bodyToMono(localVarReturnType).block();
+    public PageCompound objectsByGroup1(String projectId, String group, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return ResponseEntity&lt;PageCompoundFoldChange&gt;
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PageCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageCompoundFoldChange> listFoldChangeWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return listFoldChangeRequestCreation(projectId, page, size, sort).toEntity(localVarReturnType).block();
+    public ResponseEntity<PageCompound> objectsByGroup1WithHttpInfo(String projectId, String group, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; List all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param group tag group name.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec listFoldChangeWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        return listFoldChangeRequestCreation(projectId, page, size, sort);
+    public ResponseSpec objectsByGroup1WithResponseSpec(String projectId, String group, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        return objectsByGroup1RequestCreation(projectId, group, page, size, sort, optFields);
+    }
+    /**
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageCompound
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec objectsByTag1RequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByTag1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PageCompound
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PageCompound objectsByTag1(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PageCompound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PageCompound> objectsByTag1WithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec objectsByTag1WithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+        return objectsByTag1RequestCreation(projectId, filter, page, size, sort, optFields);
     }
 }

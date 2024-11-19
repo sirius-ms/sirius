@@ -43,7 +43,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
 
     /**
      *
-     * <strong>(EXPERIMENTAL)</strong> Get objects by tag.
+     * **EXPERIMENTAL** Get objects by tag.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -91,14 +91,16 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
         return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTag(getTagTarget(), filter, pageable, optFields);
     }
 
+    // TODO get tags for object? or add tags opt field to aligned features or compounds?
+
     /**
      *
-     * <strong>(EXPERIMENTAL)</strong> Add tags to an object in the project. Tags with the same category name will be overwritten.
+     * Tags with the same category name will be overwritten.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
      * @param projectId  project-space to add to.
-     * @param objectId   object to tag.
+     * @param objectId   object to add tags to.
      * @param tags       tags to add.
      * @return the tags that have been added
      */
@@ -108,7 +110,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Delete tag with the given category from the object with the specified ID in the specified project-space.
+     * **EXPERIMENTAL** Delete tag with the given category from the object with the specified ID in the specified project-space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -122,7 +124,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Get objects by tag group.
+     * **EXPERIMENTAL** Get objects by tag group.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -142,7 +144,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Get all tag category groups in the given project-space.
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -155,7 +157,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Get tag groups by type in the given project-space.
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -169,7 +171,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Get tag group by name in the given project-space.
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
@@ -185,7 +187,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     /**
      *
      *
-     * <strong>(EXPERIMENTAL)</strong> Group tags in the project. The group name must not exist in the project.
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.
      *
      * <p>
      * See {@code /tagged} for filter syntax.
@@ -210,7 +212,7 @@ public interface TagController<T, O extends Enum<O>> extends ProjectProvidingCon
     }
 
     /**
-     * <strong>(EXPERIMENTAL)</strong> Delete tag groups with the given name from the specified project-space.
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *

@@ -33,8 +33,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/categories")
-@Tag(name = "Tag categories (EXPERIMENTAL)", description = "This API allows accessing tag categories." +
-        "All Endpoints are experimental and not part of the stable API specification. " +
+@Tag(name = "Tag Categories", description = "**EXPERIMENTAL** This API allows accessing tag categories. " +
+        "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
 public class CategoryController {
 
@@ -46,7 +46,7 @@ public class CategoryController {
     }
 
     /**
-     * Get all tag categories in the given project-space.
+     * **EXPERIMENTAL** Get all tag categories in the given project-space.
      *
      * @param projectId project-space to read from.
      * @return Tag categories.
@@ -57,7 +57,7 @@ public class CategoryController {
     }
 
     /**
-     * Get tag categories by type in the given project-space.
+     * **EXPERIMENTAL** Get tag categories by type in the given project-space.
      *
      * @param projectId    project-space to read from.
      * @param categoryType type of the category
@@ -69,7 +69,7 @@ public class CategoryController {
     }
 
     /**
-     * Get tag category by name in the given project-space.
+     * **EXPERIMENTAL** Get tag category by name in the given project-space.
      *
      * @param projectId    project-space to read from.
      * @param categoryName name of the category
@@ -81,7 +81,7 @@ public class CategoryController {
     }
 
     /**
-     * Add tag categories to the project. Category names must not exist in the project.
+     * **EXPERIMENTAL** Add tag categories to the project. Category names must not exist in the project.
      *
      * @param projectId  project-space to add to.
      * @param categories the tag categories to be added
@@ -96,7 +96,7 @@ public class CategoryController {
     }
 
     /**
-     * Add a possible value to the tag category in the project.
+     * **EXPERIMENTAL** Add a possible value to the tag category in the project.
      *
      * @param projectId    project-space to add to.
      * @param categoryName the tag category to add to
@@ -112,7 +112,7 @@ public class CategoryController {
     }
 
     /**
-     * Delete tag categories with the given name from the specified project-space.
+     * **EXPERIMENTAL** Delete tag categories with the given name from the specified project-space.
      *
      * @param projectId     project-space to delete from.
      * @param categoryName  name of category to delete.
