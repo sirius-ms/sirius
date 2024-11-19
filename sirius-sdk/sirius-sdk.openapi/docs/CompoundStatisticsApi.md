@@ -7,6 +7,7 @@ All URIs are relative to *http://localhost:8888*
 | [**computeFoldChange**](CompoundStatisticsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs |
 | [**deleteFoldChange**](CompoundStatisticsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Delete fold change |
 | [**getFoldChange**](CompoundStatisticsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/{compoundId} | **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities) |
+| [**getFoldChangeTable**](CompoundStatisticsApi.md#getFoldChangeTable) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space |
 | [**listFoldChange**](CompoundStatisticsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space |
 
 
@@ -226,6 +227,76 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | fold changes |  -  |
+
+
+## getFoldChangeTable
+
+> StatisticsTable getFoldChangeTable(projectId, aggregation, quantification)
+
+**EXPERIMENTAL** Get table of all fold changes in the project space
+
+**EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundStatisticsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundStatisticsApi apiInstance = new CompoundStatisticsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String aggregation = "AVG"; // String | aggregation type.
+        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        try {
+            StatisticsTable result = apiInstance.getFoldChangeTable(projectId, aggregation, quantification);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundStatisticsApi#getFoldChangeTable");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
+| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+
+### Return type
+
+[**StatisticsTable**](StatisticsTable.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | table of fold changes. |  -  |
 
 
 ## listFoldChange

@@ -4162,6 +4162,141 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/statistics/foldchange": {
+      "get": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Get table of all fold changes in the project space",
+        "description": "**EXPERIMENTAL** Get table of all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getFoldChangeTable",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "table of fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTable"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Delete fold change",
+        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteFoldChange",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/statistics/foldchange/{compoundId}": {
       "get": {
         "tags": [
@@ -6818,6 +6953,141 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchange": {
+      "get": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Get table of all fold changes in the project space",
+        "description": "**EXPERIMENTAL** Get table of all fold changes in the project space.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "getFoldChangeTable_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "table of fold changes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatisticsTable"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "**EXPERIMENTAL** Delete fold change",
+        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "deleteFoldChange_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "left",
+            "in": "query",
+            "description": "name of the left group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "right",
+            "in": "query",
+            "description": "name of the right group.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aggregation",
+            "in": "query",
+            "description": "aggregation type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "AVG",
+              "enum": [
+                "AVG",
+                "MIN",
+                "MAX",
+                "MEDIAN"
+              ]
+            }
+          },
+          {
+            "name": "quantification",
+            "in": "query",
+            "description": "quantification type.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_INTENSITY",
+              "enum": [
+                "APEX_INTENSITY",
+                "AREA_UNDER_CURVE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/statistics/foldchange/{alignedFeatureId}": {
       "get": {
         "tags": [
@@ -7719,80 +7989,6 @@
         }
       }
     },
-    "/api/projects/{projectId}/compounds/statistics/foldchange": {
-      "delete": {
-        "tags": [
-          "Compound Statistics"
-        ],
-        "summary": "**EXPERIMENTAL** Delete fold change",
-        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "deleteFoldChange",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to delete from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "left",
-            "in": "query",
-            "description": "name of the left group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "right",
-            "in": "query",
-            "description": "name of the right group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "AVG",
-              "enum": [
-                "AVG",
-                "MIN",
-                "MAX",
-                "MEDIAN"
-              ]
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "APEX_INTENSITY",
-              "enum": [
-                "APEX_INTENSITY",
-                "AREA_UNDER_CURVE"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{categoryName}": {
       "delete": {
         "tags": [
@@ -7827,80 +8023,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/statistics/foldchange": {
-      "delete": {
-        "tags": [
-          "Feature Statistics"
-        ],
-        "summary": "**EXPERIMENTAL** Delete fold change",
-        "description": "**EXPERIMENTAL** Delete fold change.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "deleteFoldChange_1",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to delete from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "left",
-            "in": "query",
-            "description": "name of the left group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "right",
-            "in": "query",
-            "description": "name of the right group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "AVG",
-              "enum": [
-                "AVG",
-                "MIN",
-                "MAX",
-                "MEDIAN"
-              ]
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "APEX_INTENSITY",
-              "enum": [
-                "APEX_INTENSITY",
-                "AREA_UNDER_CURVE"
-              ]
             }
           }
         ],
@@ -10685,6 +10807,75 @@
           },
           "empty": {
             "type": "boolean"
+          }
+        }
+      },
+      "StatisticsTable": {
+        "type": "object",
+        "properties": {
+          "statisticsType": {
+            "type": "string",
+            "enum": [
+              "FOLD_CHANGE"
+            ]
+          },
+          "aggregationType": {
+            "type": "string",
+            "enum": [
+              "AVG",
+              "MIN",
+              "MAX",
+              "MEDIAN"
+            ]
+          },
+          "quantificationType": {
+            "type": "string",
+            "enum": [
+              "APEX_INTENSITY",
+              "AREA_UNDER_CURVE"
+            ]
+          },
+          "rowType": {
+            "type": "string",
+            "enum": [
+              "FEATURES",
+              "COMPOUNDS"
+            ]
+          },
+          "rowIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "columnNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnLeftGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "columnRightGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
           }
         }
       },
