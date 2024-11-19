@@ -90,15 +90,7 @@ public class CompoundFoldChange {
   public enum QuantificationEnum {
     APEX_INTENSITY("APEX_INTENSITY"),
     
-    AREA_UNDER_CURVE("AREA_UNDER_CURVE"),
-    
-    APEX_MASS("APEX_MASS"),
-    
-    AVERAGE_MASS("AVERAGE_MASS"),
-    
-    APEX_RT("APEX_RT"),
-    
-    FULL_WIDTH_HALF_MAX("FULL_WIDTH_HALF_MAX");
+    AREA_UNDER_CURVE("AREA_UNDER_CURVE");
 
     private String value;
 

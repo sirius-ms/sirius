@@ -30,15 +30,15 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class RunsExperimentalApi {
+public class RunsApi {
     private ApiClient apiClient;
 
-    public RunsExperimentalApi() {
+    public RunsApi() {
         this(new ApiClient());
     }
 
     @Autowired
-    public RunsExperimentalApi(ApiClient apiClient) {
+    public RunsApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }
 
@@ -51,8 +51,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -107,8 +107,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -123,8 +123,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -139,8 +139,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Group tags in the project
+     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -153,24 +153,24 @@ public class RunsExperimentalApi {
         return addGroupRequestCreation(projectId, groupName, filter, type);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Add tags to a run in the project
+     * **EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param objectId object to tag.
+     * @param runId run to add tags to.
      * @param tag tags to add.
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+    private ResponseSpec addTagsRequestCreation(String projectId, String runId, List<Tag> tag) throws WebClientResponseException {
         Object postBody = tag;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'objectId' is set
-        if (objectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'runId' is set
+        if (runId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'runId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'tag' is set
         if (tag == null) {
@@ -180,7 +180,7 @@ public class RunsExperimentalApi {
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
-        pathParams.put("objectId", objectId);
+        pathParams.put("runId", runId);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
@@ -199,55 +199,55 @@ public class RunsExperimentalApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{runId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Add tags to a run in the project
+     * **EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param objectId object to tag.
+     * @param runId run to add tags to.
      * @param tag tags to add.
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> addTags(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+    public List<Tag> addTags(String projectId, String runId, List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTagsRequestCreation(projectId, objectId, tag).bodyToFlux(localVarReturnType).collectList().block();
+        return addTagsRequestCreation(projectId, runId, tag).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Add tags to a run in the project
+     * **EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param objectId object to tag.
+     * @param runId run to add tags to.
      * @param tag tags to add.
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> addTagsWithHttpInfo(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> addTagsWithHttpInfo(String projectId, String runId, List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTagsRequestCreation(projectId, objectId, tag).toEntityList(localVarReturnType).block();
+        return addTagsRequestCreation(projectId, runId, tag).toEntityList(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Add tags to an object in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Add tags to a run in the project
+     * **EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param objectId object to tag.
+     * @param runId run to add tags to.
      * @param tag tags to add.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
-        return addTagsRequestCreation(projectId, objectId, tag);
+    public ResponseSpec addTagsWithResponseSpec(String projectId, String runId, List<Tag> tag) throws WebClientResponseException {
+        return addTagsRequestCreation(projectId, runId, tag);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
@@ -286,8 +286,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
@@ -299,8 +299,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
@@ -312,8 +312,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param groupName name of group to delete.
@@ -324,23 +324,23 @@ public class RunsExperimentalApi {
         return deleteGroupRequestCreation(projectId, groupName);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tag from.
+     * @param runId run to delete tag from.
      * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteTagsRequestCreation(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+    private ResponseSpec deleteTagsRequestCreation(String projectId, String runId, String categoryName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'objectId' is set
-        if (objectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'runId' is set
+        if (runId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'runId' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'categoryName' is set
         if (categoryName == null) {
@@ -350,7 +350,7 @@ public class RunsExperimentalApi {
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
-        pathParams.put("objectId", objectId);
+        pathParams.put("runId", runId);
         pathParams.put("categoryName", categoryName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
@@ -366,53 +366,53 @@ public class RunsExperimentalApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{runId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tag from.
+     * @param runId run to delete tag from.
      * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteTags(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+    public void deleteTags(String projectId, String runId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteTagsRequestCreation(projectId, objectId, categoryName).bodyToMono(localVarReturnType).block();
+        deleteTagsRequestCreation(projectId, runId, categoryName).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tag from.
+     * @param runId run to delete tag from.
      * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteTagsWithHttpInfo(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteTagsWithHttpInfo(String projectId, String runId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteTagsRequestCreation(projectId, objectId, categoryName).toEntity(localVarReturnType).block();
+        return deleteTagsRequestCreation(projectId, runId, categoryName).toEntity(localVarReturnType).block();
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Delete tag with the given category from the object with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
+     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tag from.
+     * @param runId run to delete tag from.
      * @param categoryName category name of the tag to delete.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteTagsWithResponseSpec(String projectId, String objectId, String categoryName) throws WebClientResponseException {
-        return deleteTagsRequestCreation(projectId, objectId, categoryName);
+    public ResponseSpec deleteTagsWithResponseSpec(String projectId, String runId, String categoryName) throws WebClientResponseException {
+        return deleteTagsRequestCreation(projectId, runId, categoryName);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
      * @param groupName name of the group
@@ -454,8 +454,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
      * @param groupName name of the group
@@ -468,8 +468,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
      * @param groupName name of the group
@@ -482,8 +482,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag group by name in the given project-space
+     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag group.
      * @param projectId project-space to read from.
      * @param groupName name of the group
@@ -494,8 +494,8 @@ public class RunsExperimentalApi {
         return getGroupByNameRequestCreation(projectId, groupName);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag category groups.
      * @param projectId project-space to read from.
      * @return List&lt;TagGroup&gt;
@@ -531,8 +531,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag category groups.
      * @param projectId project-space to read from.
      * @return List&lt;TagGroup&gt;
@@ -544,8 +544,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag category groups.
      * @param projectId project-space to read from.
      * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
@@ -557,8 +557,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space
+     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag category groups.
      * @param projectId project-space to read from.
      * @return ResponseSpec
@@ -568,8 +568,8 @@ public class RunsExperimentalApi {
         return getGroupsRequestCreation(projectId);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag groups.
      * @param projectId project-space to read from.
      * @param groupType type of the group
@@ -611,8 +611,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag groups.
      * @param projectId project-space to read from.
      * @param groupType type of the group
@@ -625,8 +625,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag groups.
      * @param projectId project-space to read from.
      * @param groupType type of the group
@@ -639,8 +639,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space
+     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
      * <p><b>200</b> - Tag groups.
      * @param projectId project-space to read from.
      * @param groupType type of the group
@@ -651,8 +651,8 @@ public class RunsExperimentalApi {
         return getGroupsByTypeRequestCreation(projectId, groupType);
     }
     /**
-     * Get run with the given identifier from the specified project-space.
-     * Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
      * <p><b>200</b> - Run with tags (if specified).
      * @param projectId project-space to read from.
      * @param runId identifier of run to access.
@@ -697,8 +697,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get run with the given identifier from the specified project-space.
-     * Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
      * <p><b>200</b> - Run with tags (if specified).
      * @param projectId project-space to read from.
      * @param runId identifier of run to access.
@@ -712,8 +712,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get run with the given identifier from the specified project-space.
-     * Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
      * <p><b>200</b> - Run with tags (if specified).
      * @param projectId project-space to read from.
      * @param runId identifier of run to access.
@@ -727,8 +727,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get run with the given identifier from the specified project-space.
-     * Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
+     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
      * <p><b>200</b> - Run with tags (if specified).
      * @param projectId project-space to read from.
      * @param runId identifier of run to access.
@@ -740,8 +740,8 @@ public class RunsExperimentalApi {
         return getRunRequestCreation(projectId, runId, optFields);
     }
     /**
-     * Get all available runs in the given project-space.
-     * Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
      * <p><b>200</b> - Runs with tags (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -786,8 +786,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get all available runs in the given project-space.
-     * Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
      * <p><b>200</b> - Runs with tags (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -803,8 +803,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get all available runs in the given project-space.
-     * Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
      * <p><b>200</b> - Runs with tags (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -820,8 +820,8 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * Get all available runs in the given project-space.
-     * Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * **EXPERIMENTAL** Get all available runs in the given project-space.
      * <p><b>200</b> - Runs with tags (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -835,9 +835,9 @@ public class RunsExperimentalApi {
         return getRunsPagedRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
+     * **EXPERIMENTAL** Get runs by tag group
+     * **EXPERIMENTAL** Get runs by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
      * @param projectId project-space to delete from.
      * @param group tag group name.
      * @param page Zero-based page index (0..N)
@@ -887,9 +887,9 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
+     * **EXPERIMENTAL** Get runs by tag group
+     * **EXPERIMENTAL** Get runs by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
      * @param projectId project-space to delete from.
      * @param group tag group name.
      * @param page Zero-based page index (0..N)
@@ -905,9 +905,9 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
+     * **EXPERIMENTAL** Get runs by tag group
+     * **EXPERIMENTAL** Get runs by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
      * @param projectId project-space to delete from.
      * @param group tag group name.
      * @param page Zero-based page index (0..N)
@@ -923,9 +923,9 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
+     * **EXPERIMENTAL** Get runs by tag group
+     * **EXPERIMENTAL** Get runs by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
      * @param projectId project-space to delete from.
      * @param group tag group name.
      * @param page Zero-based page index (0..N)
@@ -939,10 +939,10 @@ public class RunsExperimentalApi {
         return objectsByGroupRequestCreation(projectId, group, page, size, sort, optFields);
     }
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
-     * @param projectId project space to get objects from.
+     * **EXPERIMENTAL** Get runs by tag
+     * **EXPERIMENTAL** Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
+     * @param projectId project space to get runs from.
      * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -987,10 +987,10 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
-     * @param projectId project space to get objects from.
+     * **EXPERIMENTAL** Get runs by tag
+     * **EXPERIMENTAL** Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
+     * @param projectId project space to get runs from.
      * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1005,10 +1005,10 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
-     * @param projectId project space to get objects from.
+     * **EXPERIMENTAL** Get runs by tag
+     * **EXPERIMENTAL** Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
+     * @param projectId project space to get runs from.
      * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
@@ -1023,10 +1023,10 @@ public class RunsExperimentalApi {
     }
 
     /**
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag
-     * &lt;strong&gt;(EXPERIMENTAL)&lt;/strong&gt; Get objects by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged objects
-     * @param projectId project space to get objects from.
+     * **EXPERIMENTAL** Get runs by tag
+     * **EXPERIMENTAL** Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - tagged runs
+     * @param projectId project space to get runs from.
      * @param filter tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned

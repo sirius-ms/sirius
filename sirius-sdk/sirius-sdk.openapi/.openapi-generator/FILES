@@ -25,6 +25,7 @@ docs/CompoundClasses.md
 docs/CompoundFoldChange.md
 docs/CompoundImport.md
 docs/CompoundOptField.md
+docs/CompoundStatisticsApi.md
 docs/CompoundsApi.md
 docs/ComputedSubtools.md
 docs/ConfidenceMode.md
@@ -37,9 +38,9 @@ docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/DataQuality.md
 docs/Deviation.md
-docs/ExperimentalApi.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
+docs/FeatureStatisticsApi.md
 docs/FeaturesApi.md
 docs/FingerprintPrediction.md
 docs/FormulaCandidate.md
@@ -87,7 +88,7 @@ docs/ProjectsApi.md
 docs/QuantificationTable.md
 docs/Run.md
 docs/RunOptField.md
-docs/RunsExperimentalApi.md
+docs/RunsApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -108,7 +109,7 @@ docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
 docs/Tag.md
-docs/TagCategoriesExperimentalApi.md
+docs/TagCategoriesApi.md
 docs/TagCategory.md
 docs/TagCategoryImport.md
 docs/TagGroup.md
@@ -121,17 +122,18 @@ docs/Zodiac.md
 docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
 src/main/java/io/sirius/ms/sdk/api/ActuatorApi.java
+src/main/java/io/sirius/ms/sdk/api/CompoundStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
-src/main/java/io/sirius/ms/sdk/api/ExperimentalApi.java
+src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
 src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
 src/main/java/io/sirius/ms/sdk/api/ProjectsApi.java
-src/main/java/io/sirius/ms/sdk/api/RunsExperimentalApi.java
+src/main/java/io/sirius/ms/sdk/api/RunsApi.java
 src/main/java/io/sirius/ms/sdk/api/SearchableDatabasesApi.java
-src/main/java/io/sirius/ms/sdk/api/TagCategoriesExperimentalApi.java
+src/main/java/io/sirius/ms/sdk/api/TagCategoriesApi.java
 src/main/java/io/sirius/ms/sdk/client/ApiClient.java
 src/main/java/io/sirius/ms/sdk/client/RFC3339DateFormat.java
 src/main/java/io/sirius/ms/sdk/client/ServerConfiguration.java
@@ -250,3 +252,7 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
+src/test/java/io/sirius/ms/sdk/api/CompoundStatisticsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/FeatureStatisticsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/RunsApiTest.java
+src/test/java/io/sirius/ms/sdk/api/TagCategoriesApiTest.java

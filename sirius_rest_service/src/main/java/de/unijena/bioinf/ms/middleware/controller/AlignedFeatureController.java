@@ -38,6 +38,7 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
@@ -59,16 +60,15 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeatureController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange>, TagController<AlignedFeature, AlignedFeature.OptField> {
+public class AlignedFeatureController implements TagController<AlignedFeature, AlignedFeature.OptField> {
 
-    private final ComputeService computeService;
+    @Getter
     private final ProjectsProvider<?> projectsProvider;
     private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
 
     @Autowired
-    public AlignedFeatureController(ComputeService computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
-        this.computeService = computeService;
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
         this.globalConfig = globalConfig;
@@ -819,23 +819,119 @@ public class AlignedFeatureController implements StatisticsController<AlignedFea
     }
 
     @Override
-    public ProjectsProvider<?> getProjectsProvider() {
-        return projectsProvider;
-    }
-
-    @Override
-    public ComputeService getComputeService() {
-        return computeService;
-    }
-
-    @Override
-    public Class<AlignedFeature> getTarget() {
-        return AlignedFeature.class;
-    }
-
-    @Override
     public Class<AlignedFeature> getTagTarget() {
         return AlignedFeature.class;
     }
+
+    /**
+     *
+     * **EXPERIMENTAL** Get features (aligned over runs) by tag.
+     *
+     * <h2>Supported filter syntax</h2>
+     *
+     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * by a field name. Possible field names are:</p>
+     *
+     * <ul>
+     *   <li><strong>category</strong> - category name</li>
+     *   <li><strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value</li>
+     * </ul>
+     *
+     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
+     *
+     * <p>A clause may be:</p>
+     * <ul>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code category:my_category}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
+     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code integer:[* TO 3] }</li>
+     * </ul>
+     *
+     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The syntax allows to build complex filter queries such as:</p>
+     *
+     * <p>{@code (category:hello || category:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId    project space to get features (aligned over runs) from.
+     * @param filter       tag filter.
+     * @param pageable     pageable.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged features (aligned over runs)
+     */
+    @Override
+    public Page<AlignedFeature> objectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+        return TagController.super.objectsByTag(projectId, filter, pageable, optFields);
+    }
+
+    /**
+     *
+     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId  project-space to add to.
+     * @param alignedFeatureId      run to add tags to.
+     * @param tags       tags to add.
+     * @return the tags that have been added
+     */
+    @PutMapping(value = "/tags/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
+        return TagController.super.addTags(projectId, alignedFeatureId, tags);
+    }
+
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId        project-space to delete from.
+     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
+     * @param categoryName     category name of the tag to delete.
+     */
+    @Override
+    @DeleteMapping(value = "/tags/{alignedFeatureId}/{categoryName}")
+    public void deleteTags(String projectId, String alignedFeatureId, String categoryName) {
+        TagController.super.deleteTags(projectId, alignedFeatureId, categoryName);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId project-space to delete from.
+     * @param group     tag group name.
+     * @param pageable  pageable.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged features (aligned over runs)
+     */
+    @Override
+    public Page<AlignedFeature> objectsByGroup(String projectId, String group, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+        return TagController.super.objectsByGroup(projectId, group, pageable, optFields);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQuality quality information of the respective feature.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/quality-report", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AlignedFeatureQuality getAlignedFeaturesQuality(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId);
+    }
+
 }
 
