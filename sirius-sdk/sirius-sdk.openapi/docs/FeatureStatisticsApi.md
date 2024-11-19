@@ -7,6 +7,7 @@ All URIs are relative to *http://localhost:8888*
 | [**computeFoldChange1**](FeatureStatisticsApi.md#computeFoldChange1) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs |
 | [**deleteFoldChange1**](FeatureStatisticsApi.md#deleteFoldChange1) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Delete fold change |
 | [**getFoldChange1**](FeatureStatisticsApi.md#getFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/{alignedFeatureId} | **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs) |
+| [**getFoldChangeTable1**](FeatureStatisticsApi.md#getFoldChangeTable1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space |
 | [**listFoldChange1**](FeatureStatisticsApi.md#listFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space |
 
 
@@ -226,6 +227,76 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | fold changes |  -  |
+
+
+## getFoldChangeTable1
+
+> StatisticsTable getFoldChangeTable1(projectId, aggregation, quantification)
+
+**EXPERIMENTAL** Get table of all fold changes in the project space
+
+**EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeatureStatisticsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeatureStatisticsApi apiInstance = new FeatureStatisticsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String aggregation = "AVG"; // String | aggregation type.
+        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        try {
+            StatisticsTable result = apiInstance.getFoldChangeTable1(projectId, aggregation, quantification);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeatureStatisticsApi#getFoldChangeTable1");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
+| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+
+### Return type
+
+[**StatisticsTable**](StatisticsTable.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | table of fold changes. |  -  |
 
 
 ## listFoldChange1

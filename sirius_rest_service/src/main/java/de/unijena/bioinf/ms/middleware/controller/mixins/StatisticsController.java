@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller.mixins;
 
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,24 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
         return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), left, right, aggregation, quantification, getTarget(), removeNone(optFields));
     }
 
-    // TODO fold change table
+    /**
+     * **EXPERIMENTAL** Get table of all fold changes in the project space.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId project-space to read from.
+     * @param aggregation    aggregation type.
+     * @param quantification quantification type.
+     * @return table of fold changes.
+     */
+    @GetMapping(value = "/foldchange", produces = MediaType.APPLICATION_JSON_VALUE)
+    default StatisticsTable getFoldChangeTable(
+            @PathVariable String projectId,
+            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification
+    ) {
+        return getProjectsProvider().getProjectOrThrow(projectId).getFoldChangeTable(getTarget(), aggregation, quantification);
+    }
 
     /**
      * **EXPERIMENTAL** Page of all fold changes in the project space.

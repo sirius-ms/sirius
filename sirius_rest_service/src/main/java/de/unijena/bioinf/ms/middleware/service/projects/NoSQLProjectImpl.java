@@ -43,6 +43,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
@@ -1835,6 +1836,57 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationType quantification) {
+        StatisticsTable table = StatisticsTable.builder()
+                .statisticsType(StatisticsTable.StatisticsType.FOLD_CHANGE)
+                .quantificationType(quantification)
+                .aggregationType(aggregation)
+                .build();
+
+        if (AlignedFeature.class.equals(target)) {
+            table.setRowType(StatisticsTable.RowType.FEATURES);
+            fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class, aggregation, quantification);
+        } else if (Compound.class.equals(target)) {
+            table.setRowType(StatisticsTable.RowType.COMPOUNDS);
+            fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class, aggregation, quantification);
+        } else {
+            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+        }
+        return table;
+    }
+
+    private <F extends de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange> void fillFoldChangeTable(StatisticsTable table, Class<F> fcClass, AggregationType aggregation, QuantificationType quantification) throws IOException {
+        List<F> foldChanges = storage().findStr(Filter.and(
+                Filter.where("aggregation").eq(aggregation.toString()),
+                Filter.where("quantification").eq(quantification.toString())
+        ), fcClass).sorted(Comparator.comparingLong(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange::getForeignId)).toList();
+
+        Set<Pair<String, String>> pairSet = new HashSet<>();
+        for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges) {
+            pairSet.add(Pair.of(fc.getLeftGroup(), fc.getRightGroup()));
+        }
+        List<Pair<String, String>> pairs = new ArrayList<>(pairSet);
+
+        LongList rowIds = new LongArrayList();
+        List<double[]> values = new ArrayList<>();
+        for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges) {
+            if (rowIds.isEmpty() || fc.getForeignId() != rowIds.getLast()) {
+                rowIds.add(fc.getForeignId());
+                values.add(new double[pairSet.size()]);
+            }
+            int index = pairs.indexOf(Pair.of(fc.getLeftGroup(), fc.getRightGroup()));
+            values.getLast()[index] = fc.getFoldChange();
+        }
+
+        table.setColumnNames(pairs.stream().map(pair -> pair.getLeft() + " / " + pair.getRight()).toArray(String[]::new));
+        table.setColumnLeftGroups(pairs.stream().map(Pair::getLeft).toArray(String[]::new));
+        table.setColumnRightGroups(pairs.stream().map(Pair::getRight).toArray(String[]::new));
+        table.setRowIds(rowIds.toLongArray());
+        table.setValues(values.toArray(double[][]::new));
+    }
+
+    @SneakyThrows
+    @Override
     @SuppressWarnings("unchecked")
     public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
         List<F> objects;
@@ -1905,8 +1957,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     Filter.and(
                             Filter.where("leftGroup").eq(left),
                             Filter.where("rightGroup").eq(right),
-                            Filter.where("aggregation").eq(aggregation),
-                            Filter.where("quantification").eq(quantification)
+                            Filter.where("aggregation").eq(aggregation.toString()),
+                            Filter.where("quantification").eq(quantification.toString())
                     ),
                     de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class
             );
@@ -1915,8 +1967,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     Filter.and(
                             Filter.where("leftGroup").eq(left),
                             Filter.where("rightGroup").eq(right),
-                            Filter.where("aggregation").eq(aggregation),
-                            Filter.where("quantification").eq(quantification)
+                            Filter.where("aggregation").eq(aggregation.toString()),
+                            Filter.where("quantification").eq(quantification.toString())
                     ),
                     de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class
             );

@@ -101,6 +101,7 @@ docs/SpectralLibraryMatchSummary.md
 docs/SpectralLibrarySearch.md
 docs/SpectralMatchingType.md
 docs/SpectrumAnnotation.md
+docs/StatisticsTable.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -233,6 +234,7 @@ src/main/java/io/sirius/ms/sdk/model/SpectralLibraryMatchSummary.java
 src/main/java/io/sirius/ms/sdk/model/SpectralLibrarySearch.java
 src/main/java/io/sirius/ms/sdk/model/SpectralMatchingType.java
 src/main/java/io/sirius/ms/sdk/model/SpectrumAnnotation.java
+src/main/java/io/sirius/ms/sdk/model/StatisticsTable.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidate.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateFormula.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateOptField.java
@@ -252,7 +254,3 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
-src/test/java/io/sirius/ms/sdk/api/CompoundStatisticsApiTest.java
-src/test/java/io/sirius/ms/sdk/api/FeatureStatisticsApiTest.java
-src/test/java/io/sirius/ms/sdk/api/RunsApiTest.java
-src/test/java/io/sirius/ms/sdk/api/TagCategoriesApiTest.java

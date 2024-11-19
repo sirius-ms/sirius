@@ -6,6 +6,7 @@ import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.PageAlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.StatisticsTable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -337,6 +338,91 @@ public class FeatureStatisticsApi {
      */
     public ResponseSpec getFoldChange1WithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
         return getFoldChange1RequestCreation(projectId, alignedFeatureId);
+    }
+    /**
+     * **EXPERIMENTAL** Get table of all fold changes in the project space
+     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - table of fold changes.
+     * @param projectId project-space to read from.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @return StatisticsTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFoldChangeTable1RequestCreation(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChangeTable1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/statistics/foldchange", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get table of all fold changes in the project space
+     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - table of fold changes.
+     * @param projectId project-space to read from.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @return StatisticsTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public StatisticsTable getFoldChangeTable1(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
+        return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get table of all fold changes in the project space
+     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - table of fold changes.
+     * @param projectId project-space to read from.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @return ResponseEntity&lt;StatisticsTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<StatisticsTable> getFoldChangeTable1WithHttpInfo(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
+        return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Get table of all fold changes in the project space
+     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - table of fold changes.
+     * @param projectId project-space to read from.
+     * @param aggregation aggregation type.
+     * @param quantification quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFoldChangeTable1WithResponseSpec(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+        return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification);
     }
     /**
      * **EXPERIMENTAL** Page of all fold changes in the project space

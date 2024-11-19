@@ -17,7 +17,6 @@ public class QuantificationTable {
 
     @Schema(enumAsRef = false, name = "RowType", nullable = false)
     public enum RowType {
-        // the only supported row type at the moment
         FEATURES, COMPOUNDS
     }
 
