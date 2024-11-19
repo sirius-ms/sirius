@@ -24,5 +24,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
 public enum QuantificationType {
-    APEX_INTENSITY, AREA_UNDER_CURVE, APEX_MASS, AVERAGE_MASS, APEX_RT, FULL_WIDTH_HALF_MAX
+    APEX_INTENSITY, AREA_UNDER_CURVE
 }
