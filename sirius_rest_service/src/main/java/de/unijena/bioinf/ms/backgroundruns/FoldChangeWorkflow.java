@@ -254,17 +254,6 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                                         rightFeatures.add(f);
                                     }
                                 });
-
-//                                psm.getProject().fetchFeatures(af);
-//                                if (af.getFeatures().isPresent()) {
-//                                    for (Feature f : af.getFeatures().get()) {
-//                                        if (leftRuns.contains(f.getRunId())) {
-//                                            leftFeatures.add(f);
-//                                        } else if (rightRuns.contains(f.getRunId())) {
-//                                            rightFeatures.add(f);
-//                                        }
-//                                    }
-//                                }
                                 updateProgress(total.get(), progress.addAndGet(1));
                                 if (leftFeatures.isEmpty() || rightFeatures.isEmpty()) {
                                     continue;
@@ -298,10 +287,6 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     return features.stream().mapToDouble(feature -> switch (quantification) {
                         case APEX_INTENSITY -> feature.getApexIntensity();
                         case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
-                        case APEX_MASS -> feature.getApexMass();
-                        case AVERAGE_MASS -> feature.getAverageMass();
-                        case APEX_RT -> feature.getRetentionTime().getMiddleTime();
-                        case FULL_WIDTH_HALF_MAX -> feature.getFwhm();
                     });
                 }
 
