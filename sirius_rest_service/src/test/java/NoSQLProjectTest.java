@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
@@ -445,7 +446,79 @@ public class NoSQLProjectTest {
             Assert.assertEquals(FoldChange.AlignedFeatureFoldChange.class, fc.getFirst().getClass());
             Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), ((FoldChange.AlignedFeatureFoldChange) fc.getFirst()).getAlignedFeatureId());
 
+
+            AlignedFeatures af2 = AlignedFeatures.builder().name("af2").build();
+            ps.getStorage().insert(af2);
+
+            Feature f21 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(3.0).runId(runs.get(0).getRunId()).build();
+            Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
+            ps.getStorage().insertAll(List.of(f21, f22));
+
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+
+            StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantificationType.APEX_INTENSITY);
+            StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantificationType.APEX_INTENSITY);
+            StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantificationType.APEX_INTENSITY);
+
+            Assert.assertEquals(AggregationType.AVG, table1.getAggregationType());
+            Assert.assertEquals(AggregationType.MAX, table2.getAggregationType());
+            Assert.assertEquals(AggregationType.MIN, table3.getAggregationType());
+
+            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table1.getQuantificationType());
+            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table2.getQuantificationType());
+            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table3.getQuantificationType());
+
+            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table1.getRowType());
+            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table2.getRowType());
+            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table3.getRowType());
+
+            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table1.getStatisticsType());
+            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table2.getStatisticsType());
+            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table3.getStatisticsType());
+
+            Assert.assertEquals(1, table1.getColumnNames().length);
+            Assert.assertEquals("sample / blank", table1.getColumnNames()[0]);
+            Assert.assertEquals(1, table1.getColumnLeftGroups().length);
+            Assert.assertEquals("sample", table1.getColumnLeftGroups()[0]);
+            Assert.assertEquals(1, table1.getColumnRightGroups().length);
+            Assert.assertEquals("blank", table1.getColumnRightGroups()[0]);
+
+            Assert.assertEquals(1, table2.getColumnNames().length);
+            Assert.assertEquals("sample / blank", table2.getColumnNames()[0]);
+            Assert.assertEquals(1, table2.getColumnLeftGroups().length);
+            Assert.assertEquals("sample", table2.getColumnLeftGroups()[0]);
+            Assert.assertEquals(1, table2.getColumnRightGroups().length);
+            Assert.assertEquals("blank", table2.getColumnRightGroups()[0]);
+
+            Assert.assertEquals(0, table3.getColumnNames().length);
+            Assert.assertEquals(0, table3.getColumnLeftGroups().length);
+            Assert.assertEquals(0, table3.getColumnRightGroups().length);
+
+            Assert.assertEquals(2, table1.getRowIds().length);
+            Assert.assertTrue(Arrays.binarySearch(table1.getRowIds(), af.getAlignedFeatureId()) >= 0);
+            Assert.assertTrue(Arrays.binarySearch(table1.getRowIds(), af2.getAlignedFeatureId()) >= 0);
+
+            double[] vals = Arrays.stream(table1.getValues()).mapToDouble(col -> {
+                Assert.assertEquals(1, col.length);
+                return col[0];
+            }).toArray();
+            Assert.assertEquals(2, vals.length);
+            Assert.assertTrue(Arrays.binarySearch(vals, 2.0) >= 0);
+            Assert.assertTrue(Arrays.binarySearch(vals, 3.0) >= 0);
+
+            vals = Arrays.stream(table2.getValues()).mapToDouble(col -> {
+                Assert.assertEquals(1, col.length);
+                return col[0];
+            }).toArray();
+            Assert.assertEquals(2, vals.length);
+            Assert.assertTrue(Arrays.binarySearch(vals, 2.0) >= 0);
+            Assert.assertTrue(Arrays.binarySearch(vals, 3.0) >= 0);
+
+            Assert.assertEquals(0, table3.getValues().length);
+
             project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY);
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY);
             fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
             Assert.assertEquals(0, fc.size());
         }

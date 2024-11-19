@@ -119,6 +119,7 @@ Class | Method | HTTP request | Description
 *CompoundStatisticsApi* | [**computeFoldChange**](docs/CompoundStatisticsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs
 *CompoundStatisticsApi* | [**deleteFoldChange**](docs/CompoundStatisticsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Delete fold change
 *CompoundStatisticsApi* | [**getFoldChange**](docs/CompoundStatisticsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/{compoundId} | **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
+*CompoundStatisticsApi* | [**getFoldChangeTable**](docs/CompoundStatisticsApi.md#getFoldChangeTable) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**listFoldChange**](docs/CompoundStatisticsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**addGroup1**](docs/CompoundsApi.md#addGroup1) | **PUT** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
@@ -140,6 +141,7 @@ Class | Method | HTTP request | Description
 *FeatureStatisticsApi* | [**computeFoldChange1**](docs/FeatureStatisticsApi.md#computeFoldChange1) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs
 *FeatureStatisticsApi* | [**deleteFoldChange1**](docs/FeatureStatisticsApi.md#deleteFoldChange1) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Delete fold change
 *FeatureStatisticsApi* | [**getFoldChange1**](docs/FeatureStatisticsApi.md#getFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/{alignedFeatureId} | **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs)
+*FeatureStatisticsApi* | [**getFoldChangeTable1**](docs/FeatureStatisticsApi.md#getFoldChangeTable1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space
 *FeatureStatisticsApi* | [**listFoldChange1**](docs/FeatureStatisticsApi.md#listFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**addGroup2**](docs/FeaturesApi.md#addGroup2) | **PUT** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
@@ -353,6 +355,7 @@ Class | Method | HTTP request | Description
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
+ - [StatisticsTable](docs/StatisticsTable.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)

@@ -53,6 +53,7 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
@@ -341,6 +342,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public void deleteTagGroup(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationType quantification) {
         throw new UnsupportedOperationException();
     }
 
