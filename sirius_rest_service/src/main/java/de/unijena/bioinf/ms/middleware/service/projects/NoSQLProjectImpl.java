@@ -262,10 +262,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 row[i] = switch (table.getQuantificationType()) {
                     case APEX_INTENSITY -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
                     case AREA_UNDER_CURVE -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).average().orElse(Double.NaN);
-                    case APEX_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexMass).average().orElse(Double.NaN);
-                    case AVERAGE_MASS -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAverageMass).average().orElse(Double.NaN);
-                    case APEX_RT -> features.get(table.getColumnIds()[i]).stream().mapToDouble(f -> f.getRetentionTime().getMiddleTime()).average().orElse(Double.NaN);
-                    case FULL_WIDTH_HALF_MAX -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getFwhm).average().orElse(Double.NaN);
                 };
             } else {
                 row[i] = Double.NaN;
