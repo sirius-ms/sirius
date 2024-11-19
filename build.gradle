@@ -47,7 +47,7 @@ ext {
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
     //version for external libraries
-    jjobs_version = '0.9.36'
+    jjobs_version = '0.9.37'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
     lombok_version = '1.18.34'
