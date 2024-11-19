@@ -64,7 +64,11 @@ public class SiriusClient implements AutoCloseable {
 
     protected final CompoundsApi compounds;
 
+    protected final CompoundStatisticsApi compoundStatistics;
+
     protected final FeaturesApi features;
+
+    protected final FeatureStatisticsApi featureStatistics;
 
     protected final JobsApi jobs;
 
@@ -74,7 +78,11 @@ public class SiriusClient implements AutoCloseable {
 
     protected final ProjectsApi projects;
 
+    protected final RunsApi runs;
+
     protected final SearchableDatabasesApi databases;
+
+    protected final TagCategoriesApi tagCategories;
 
     protected final InfoApi infos;
 
@@ -100,12 +108,16 @@ public class SiriusClient implements AutoCloseable {
         apiClient.setBasePath(this.basePath);
 
         compounds = new CompoundsApi(apiClient);
+        compoundStatistics = new CompoundStatisticsApi(apiClient);
         features = new FeaturesApi(apiClient);
+        featureStatistics = new FeatureStatisticsApi(apiClient);
         jobs = new JobsApi(apiClient);
         gui = new GuiApi(apiClient);
         account = new LoginAndAccountApi(apiClient);
         projects = new ProjectsApi(apiClient);
+        runs = new RunsApi(apiClient);
         databases = new SearchableDatabasesApi(apiClient);
+        tagCategories = new TagCategoriesApi(apiClient);
         infos = new InfoApi(apiClient);
     }
 
@@ -246,8 +258,16 @@ public class SiriusClient implements AutoCloseable {
         return compounds;
     }
 
+    public CompoundStatisticsApi compoundStatistics() {
+        return compoundStatistics;
+    }
+
     public FeaturesApi features() {
         return features;
+    }
+
+    public FeatureStatisticsApi featureStatistics() {
+        return featureStatistics;
     }
 
     public JobsApi jobs() {
@@ -266,8 +286,16 @@ public class SiriusClient implements AutoCloseable {
         return projects;
     }
 
+    public RunsApi runs() {
+        return runs;
+    }
+
     public SearchableDatabasesApi databases() {
         return databases;
+    }
+
+    public TagCategoriesApi categories() {
+        return tagCategories;
     }
 
     public InfoApi infos() {
