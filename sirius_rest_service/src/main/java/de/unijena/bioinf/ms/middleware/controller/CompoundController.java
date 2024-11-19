@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
@@ -33,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Getter;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -55,15 +57,14 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
         + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
         + "corresponding annotation results (which are usually computed on a per-feature basis)")
-public class CompoundController implements StatisticsController<Compound, FoldChange.CompoundFoldChange> {
+public class CompoundController implements TagController<Compound, Compound.OptField> {
 
-    private final ComputeService computeService;
+    @Getter
     private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
 
     @Autowired
-    public CompoundController(ComputeService computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
-        this.computeService = computeService;
+    public CompoundController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
         this.projectsProvider = projectsProvider;
         this.globalConfig = globalConfig;
     }
@@ -187,18 +188,102 @@ public class CompoundController implements StatisticsController<Compound, FoldCh
     }
 
     @Override
-    public ProjectsProvider<?> getProjectsProvider() {
-        return projectsProvider;
-    }
-
-    @Override
-    public ComputeService getComputeService() {
-        return computeService;
-    }
-
-    @Override
-    public Class<Compound> getTarget() {
+    public Class<Compound> getTagTarget() {
         return Compound.class;
+    }
+
+    /**
+     *
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.
+     *
+     * <h2>Supported filter syntax</h2>
+     *
+     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * by a field name. Possible field names are:</p>
+     *
+     * <ul>
+     *   <li><strong>category</strong> - category name</li>
+     *   <li><strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value</li>
+     * </ul>
+     *
+     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
+     *
+     * <p>A clause may be:</p>
+     * <ul>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code category:my_category}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
+     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code integer:[* TO 3] }</li>
+     * </ul>
+     *
+     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The syntax allows to build complex filter queries such as:</p>
+     *
+     * <p>{@code (category:hello || category:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId    project space to get compounds (group of ion identities) from.
+     * @param filter       tag filter.
+     * @param pageable     pageable.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged compounds (group of ion identities)
+     */
+    @Override
+    public Page<Compound> objectsByTag(String projectId, String filter, Pageable pageable, EnumSet<Compound.OptField> optFields) {
+        return TagController.super.objectsByTag(projectId, filter, pageable, optFields);
+    }
+
+    /**
+     *
+     * Tags with the same category name will be overwritten.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId  project-space to add to.
+     * @param compoundId compound (group of ion identities) to add tags to.
+     * @param tags       tags to add.
+     * @return the tags that have been added
+     */
+    @PutMapping(value = "/tags/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Override
+    public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String compoundId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
+        return TagController.super.addTags(projectId, compoundId, tags);
+    }
+
+    /**
+     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId     project-space to delete from.
+     * @param compoundId    compound (group of ion identities) to delete tag from.
+     * @param categoryName  category name of the tag to delete.
+     */
+    @DeleteMapping(value = "/tags/{compoundId}/{categoryName}")
+    @Override
+    public void deleteTags(String projectId, String compoundId, String categoryName) {
+        TagController.super.deleteTags(projectId, compoundId, categoryName);
+    }
+
+    /**
+     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId project-space to delete from.
+     * @param group     tag group name.
+     * @param pageable  pageable.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged compounds (group of ion identities)
+     */
+    @Override
+    public Page<Compound> objectsByGroup(String projectId, String group, Pageable pageable, EnumSet<Compound.OptField> optFields) {
+        return TagController.super.objectsByGroup(projectId, group, pageable, optFields);
     }
 
 }
