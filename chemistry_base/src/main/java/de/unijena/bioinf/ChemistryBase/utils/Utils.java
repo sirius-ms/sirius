@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -114,4 +116,29 @@ public class Utils {
 
         return pairs;
     }
+
+    public static boolean isNullOrEmpty(@Nullable final Collection<?> c) {
+        return c == null || c.isEmpty();
+    }
+
+    public static boolean isNullOrEmpty(@Nullable final Map<?, ?> m) {
+        return m == null || m.isEmpty();
+    }
+
+    public static boolean isNullOrEmpty(@Nullable final CharSequence s) {
+        return s == null || s.isEmpty();
+    }
+
+    public static boolean isNullOrEmpty(@Nullable final String s) {
+        return s == null || s.isEmpty();
+    }
+
+    public static boolean isNullOrBlank(@Nullable final String s) {
+        return s == null || s.isBlank();
+    }
+
+    public static <T> boolean isNullOrEmpty(@Nullable final T[] s) {
+        return s == null || s.length == 0;
+    }
+
 }
