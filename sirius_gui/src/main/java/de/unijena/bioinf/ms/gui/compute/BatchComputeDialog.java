@@ -655,7 +655,8 @@ public class BatchComputeDialog extends JDialog {
         presetUnfreeze();
         try {
             JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
-            if (presetName.equals(DEFAULT_PRESET_DISPLAY_NAME)) {
+            boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
+            if (defaultSelected) {
                 preset = defaultPreset;
             } else {
                 preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
@@ -672,7 +673,7 @@ public class BatchComputeDialog extends JDialog {
 
             Map<String, String> configMap = preset.getConfigMap();
 
-            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
+            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
             boolean fpEnabled = preset.getFingerprintPredictionParams() != null && preset.getFingerprintPredictionParams().isEnabled();
