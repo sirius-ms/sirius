@@ -861,19 +861,24 @@ public class Spectrums {
         if (spectrum.isEmpty())
             return Spectrums.empty();
 
-        PeaklistSpectrum<P> spec = new PeaklistSpectrum<>(spectrum);
-        spec.peaks.sort(getPeakMassComparator());
+        PeaklistSpectrum<P> specMzSorted = new PeaklistSpectrum<>(spectrum);
+        if (!(spectrum instanceof OrderedSpectrum)) specMzSorted.peaks.sort(getPeakMassComparator());
 
         MutableSpectrum<Peak> buffer = new SimpleMutableSpectrum();
 
         int lowestMassPeakIndex = 0;
-        double massRight = spec.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
+        double massRight = specMzSorted.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
 
-        final TreeSet<Peak> windowPeaks = new TreeSet<>(Comparator.comparing(Peak::getIntensity));
-        windowPeaks.add(spectrum.getPeakAt(lowestMassPeakIndex));
+        final TreeSet<Peak> windowPeaks = new TreeSet<>(
+                Comparator.comparing(Peak::getIntensity)
+                        .thenComparing(Peak::getMass)
+                        .thenComparing(System::identityHashCode)
+        );
 
-        for (int i = 1; i < spec.size(); i++) {
-            Peak currentPeak = spectrum.getPeakAt(i);
+        windowPeaks.add(specMzSorted.getPeakAt(lowestMassPeakIndex));
+
+        for (int i = 1; i < specMzSorted.size(); i++) {
+            Peak currentPeak = specMzSorted.getPeakAt(i);
             if (currentPeak.getMass() <= massRight){
                 if (windowPeaks.size() < numberOfPeaksPerMassWindow) {
                     windowPeaks.add(currentPeak);
@@ -882,12 +887,12 @@ public class Spectrums {
                     windowPeaks.add(currentPeak);
                 }
             } else {
-                P lowestMassPeak = spec.getPeakAt(lowestMassPeakIndex);
+                P lowestMassPeak = specMzSorted.getPeakAt(lowestMassPeakIndex);
                 if (windowPeaks.remove(lowestMassPeak))
                     buffer.addPeak(lowestMassPeak);
 
                 lowestMassPeakIndex++;
-                massRight = spec.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
+                massRight = specMzSorted.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
                 // run current peak again with new mass window
                 i--;
             }
@@ -914,10 +919,10 @@ public class Spectrums {
         if (spectrum.size() <= numberOfPeaksToKeep)
             return new SimpleSpectrum(spectrum);
 
-        final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
+        final Spectrum<? extends Peak> specIntensitySorted = getIntensityOrderedSpectrum(spectrum);
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
         for (int i = 0; i < numberOfPeaksToKeep; i++)
-            buffer.addPeak(spec.getMzAt(i), spec.getIntensityAt(i));
+            buffer.addPeak(specIntensitySorted.getMzAt(i), specIntensitySorted.getIntensityAt(i));
 
         return new SimpleSpectrum(buffer);
     }
