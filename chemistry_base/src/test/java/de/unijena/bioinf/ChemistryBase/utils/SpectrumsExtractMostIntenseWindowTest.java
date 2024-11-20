@@ -76,4 +76,53 @@ public class SpectrumsExtractMostIntenseWindowTest {
         assertEquals(100.0, result.getIntensityAt(0));
     }
 
+    @Test
+    void testExtractMostIntensivePeaks_MultiplePeaksWithinWindow_NotSorted() {
+        SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum();
+        spectrum.addPeak(10.0, 100.0);
+        spectrum.addPeak(100.0, 200.0);
+        spectrum.addPeak(101.0, 200.0);
+        spectrum.addPeak(99.0, 200.0);
+        spectrum.addPeak(10.05, 110.0);
+        spectrum.addPeak(10.1, 90.0);
+
+        SimpleSpectrum result = Spectrums.extractMostIntensivePeaks(spectrum, 2, 0.1);
+
+        assertEquals(5, result.size());
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 10.05));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 10.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 99.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 100.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 101.0));
+    }
+
+    @Test
+    void testExtractMostIntensivePeaks_MultiplePeaksWithinWindowCloseBy_NotSorted_SameIntensities() {
+        SimpleMutableSpectrum spectrum = new SimpleMutableSpectrum();
+        spectrum.addPeak(10.0, 10.0);
+        spectrum.addPeak(100.0, 200.0);
+        spectrum.addPeak(101.0, 200.0);
+        spectrum.addPeak(99.0, 200.0);
+        spectrum.addPeak(102.0, 200.0);
+        spectrum.addPeak(97.0, 200.0);
+        spectrum.addPeak(103.0, 200.0);
+        spectrum.addPeak(98.0, 200.0);
+        spectrum.addPeak(107.0, 200.0);
+        spectrum.addPeak(105.0, 200.0);
+        spectrum.addPeak(96.0, 200.0);
+        spectrum.addPeak(104.0, 200.0);
+        spectrum.addPeak(106.0, 200.0);
+
+        SimpleSpectrum result = Spectrums.extractMostIntensivePeaks(spectrum, 3, 5.1);
+
+        assertEquals(7, result.size());
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 10.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 96.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 97.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 98.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 102.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 103.0));
+        assertTrue(result.stream().anyMatch(peak -> peak.getMass() == 104.0));
+    }
+
 }
