@@ -188,11 +188,6 @@ allprojects {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
         }
-        maven {
-            // only used for spectral hashs (Splash)
-            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
-            allowInsecureProtocol = true
-        }
         //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
         // but currently Gitlab CI/CD workers refuse to connect to it.
         maven {
