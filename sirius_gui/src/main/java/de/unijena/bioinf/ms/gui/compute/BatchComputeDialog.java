@@ -127,7 +127,7 @@ public class BatchComputeDialog extends JDialog {
                 csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
                 msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
-                if (compoundsToProcess.size() > 1 && ms2) {
+                if (!singleCompound() && ms2) {
                     zodiacConfigs.addEnableChangeListener((s, enabled) -> {
                         if (enabled) {
                             if (new QuestionDialog(mf(), "Low number of Compounds",
@@ -183,8 +183,7 @@ public class BatchComputeDialog extends JDialog {
                 recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
                 lsouthPanel.add(recomputeBox);
 
-                //checkConnectionToUrl by default when just one experiment is selected
-                if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
+                if (singleCompound()) recomputeBox.setSelected(true);
 
                 JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
                 final String SHOW_ADVANCED = "Show advanced settings";
@@ -256,6 +255,10 @@ public class BatchComputeDialog extends JDialog {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private boolean singleCompound() {
+        return compoundsToProcess.size() == 1;
     }
 
     @Override
@@ -341,11 +344,9 @@ public class BatchComputeDialog extends JDialog {
         if (warnNoMethodIsSelected()) return;
         if (warnNoAdductSelected()) return;
 
-        if (this.recomputeBox.isSelected()) {
-            if (this.compoundsToProcess.size() > 1) {
-                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY, ReturnValue.Success);
-                this.recomputeBox.setSelected(questionDialog.isSuccess());
-            }
+        if (this.recomputeBox.isSelected() && !singleCompound()) {
+            QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY, ReturnValue.Success);
+            this.recomputeBox.setSelected(questionDialog.isSuccess());
         }
 
 
@@ -575,10 +576,20 @@ public class BatchComputeDialog extends JDialog {
 
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
-        savePreset.setToolTipText("Update current preset with selected parameters");
+        if (singleCompound()) {
+            savePreset.setToolTipText("Cannot save presets in single compound mode");
+        } else {
+            savePreset.setToolTipText("Update current preset with selected parameters");
+        }
+
 
         JButton saveAsPreset = new JButton("Save as");
-        saveAsPreset.setToolTipText("Save current selection as a new preset");
+        if (singleCompound()) {
+            saveAsPreset.setToolTipText("Cannot save presets in single compound mode");
+            saveAsPreset.setEnabled(false);
+        } else {
+            saveAsPreset.setToolTipText("Save current selection as a new preset");
+        }
 
         JButton removePreset = new JButton("Remove");
         removePreset.setEnabled(false);
@@ -593,7 +604,7 @@ public class BatchComputeDialog extends JDialog {
                 activatePreset(presetName);
 
                 boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-                savePreset.setEnabled(!defaultSelected && !presetFrozen);
+                savePreset.setEnabled(!defaultSelected && !presetFrozen && !singleCompound());
                 removePreset.setEnabled(!defaultSelected);
             }
         });
