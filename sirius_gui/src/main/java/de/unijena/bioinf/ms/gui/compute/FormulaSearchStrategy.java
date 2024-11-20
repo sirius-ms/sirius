@@ -403,7 +403,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
                             + ".\nIf no elements can be detected the following fallback is used: " + formulaSettings.getFallbackAlphabet().toString(",")
                             + ".\nAdditionally, the following default elements are always used: " + getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
                 } else {
-                    setDefaultElements(Collections.EMPTY_SET, elementFilterEnforcedTextBox);
+                    setDefaultElements(Set.of(), elementFilterEnforcedTextBox);
                 }
             } else {
                 setDefaultElements(allAutoDetectableElements, elementFilterEnforcedTextBox);
@@ -613,8 +613,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             elementFilterForDatabase.setSelected(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
         }
 
+        providedFormulaListModel.removeAllElements();
         if (s == Strategy.PROVIDED) {
-            providedFormulaListModel.removeAllElements();
             for (String c : preset.get("CandidateFormulas").split(",")) {
                 providedFormulaListModel.addElement(c);
             }
