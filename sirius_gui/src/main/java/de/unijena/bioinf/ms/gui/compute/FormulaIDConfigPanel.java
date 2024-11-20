@@ -240,7 +240,10 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         addAdvancedComponent(control);
     }
 
-    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(PrecursorIonType[] fallbackAdducts, PrecursorIonType[] enforcedAdducts) {
+    /**
+     * @return set of all selectable adducts, set of all selected adducts
+     */
+    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> selectionCandidates, boolean forceSelection) {
         Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
@@ -249,18 +252,26 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         Set<PrecursorIonType> selectedAdducts = new HashSet<>(detectedAdductsNoMulti);
 
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
-            PeriodicTable.getInstance().getPositiveAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
+            PeriodicTable.getInstance().getPositiveAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged())
+                    .forEach(possibleAdducts::add);
             if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownPositive())) {
-                Arrays.stream(fallbackAdducts).filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                Arrays.stream(enforcedAdducts).filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                selectionCandidates.stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+            }
+            if (forceSelection) {
+                selectionCandidates.stream().filter(PrecursorIonType::isPositive).forEach(selectedAdducts::add);
+                possibleAdducts.addAll(selectedAdducts);
             }
         }
 
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
-            PeriodicTable.getInstance().getNegativeAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
+            PeriodicTable.getInstance().getNegativeAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged())
+                    .forEach(possibleAdducts::add);
             if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownNegative())) {
-                Arrays.stream(fallbackAdducts).filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                Arrays.stream(enforcedAdducts).filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                selectionCandidates.stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+            }
+            if (forceSelection) {
+                selectionCandidates.stream().filter(PrecursorIonType::isNegative).forEach(selectedAdducts::add);
+                possibleAdducts.addAll(selectedAdducts);
             }
         }
 
@@ -302,8 +313,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         return formulaSearchStrategy.getFormulaSearchDBs();
     }
 
-    @Override
-    public void applyValuesFromPreset(Map<String, String> preset) {
+    public void applyValuesFromPreset(Map<String, String> preset, boolean defaultPreset) {
         String profileString = preset.get("AlgorithmProfile");
         Instrument instrument = Arrays.stream(Instrument.values()).filter(i -> i.profile.equalsIgnoreCase(profileString)).findFirst()
                 .orElseThrow(() -> new UnsupportedOperationException("Could not parse algorithm profile " + profileString));
@@ -331,15 +341,24 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
         enforceElGordo.setSelected(Boolean.parseBoolean(preset.get("EnforceElGordoFormula")));
 
+        Set<PrecursorIonType> fallbackAdducts;
+        Set<PrecursorIonType> enforcedAdducts;
         try {
-            PrecursorIonType[] fallbackAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.fallback"));
-            PrecursorIonType[] enforcedAdducts = ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.enforced"));
-            Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, enforcedAdducts);
-            refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
-            enforceAdducts.setSelected(preset.get("AdductSettings.fallback").equals(preset.get("AdductSettings.enforced")));
+            fallbackAdducts = Arrays.stream(ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.fallback")))
+                    .collect(Collectors.toSet());
+            enforcedAdducts = Arrays.stream(ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.enforced")))
+                    .collect(Collectors.toSet());
         } catch (Exception e) {
             throw new UnsupportedOperationException("Could not parse adducts: " + e.getMessage());
         }
+
+        enforceAdducts.setSelected(fallbackAdducts.equals(enforcedAdducts));
+        if (!fallbackAdducts.equals(enforcedAdducts) && !enforcedAdducts.isEmpty()) {
+            throw new UnsupportedOperationException("Enforced adducts differ from fallback adducts");
+        }
+
+        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, !defaultPreset);
+        refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
 
         treeTimeout.setValue(Integer.parseInt(preset.get("Timeout.secondsPerTree")));
         comoundTimeout.setValue(Integer.parseInt(preset.get("Timeout.secondsPerInstance")));
