@@ -152,7 +152,7 @@ allprojects {
             name "sirius-ms-maven-public"
             url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
         }
-        //this is just needed to load non-public test data.
+        //this is just needed to load non-public test for acceptance testing.
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -187,11 +187,6 @@ allprojects {
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
-        }
-        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
-        // but currently Gitlab CI/CD workers refuse to connect to it.
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
     }
 
