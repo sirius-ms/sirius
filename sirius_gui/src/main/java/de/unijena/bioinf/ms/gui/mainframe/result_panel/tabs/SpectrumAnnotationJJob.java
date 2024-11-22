@@ -204,7 +204,7 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
 
         de.unijena.bioinf.ChemistryBase.ms.Deviation dev = ftree.getMassErrorTo(precursorRoot, spectrum.getPrecursorMz());
         specAnno.massDeviationMz(dev.getAbsolute()).massDeviationPpm(dev.getPpm());
-        if (dev.getAbsolute()<1) {
+        if (dev.getAbsolute()>1) {
             logWarn("Wrong fragmentation tree fragment selected for precursor m/z. {} for m/z {}", precursorRoot, spectrum.getPrecursorMz());
         }
 
