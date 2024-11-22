@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.*;
@@ -675,6 +677,8 @@ public class BatchComputeDialog extends JDialog {
                 String hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
                         .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
+                        .filter(e -> !(e.getKey().equals("AdductSettings.detectable")
+                                && adductsEqual(e.getValue(), defaultPreset.getConfigMap().get(e.getKey()))))
                         .map(e -> e.getKey() + " = " + e.getValue())
                         .collect(Collectors.joining("\n"));
                 if (!hiddenParameters.isEmpty()) {
@@ -703,6 +707,18 @@ public class BatchComputeDialog extends JDialog {
                     "Cannot load preset",
                     JOptionPane.WARNING_MESSAGE));
             presetFreeze();
+        }
+    }
+
+    private boolean adductsEqual(String adducts1, String adducts2) {
+        try {
+            PrecursorIonType[] a1 = ParameterConfig.convertToCollection(PrecursorIonType.class, adducts1);
+            PrecursorIonType[] a2 = ParameterConfig.convertToCollection(PrecursorIonType.class, adducts2);
+            Arrays.sort(a1);
+            Arrays.sort(a2);
+            return Arrays.equals(a1, a2);
+        } catch (Exception e) {
+            return false;
         }
     }
 
