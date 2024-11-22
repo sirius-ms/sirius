@@ -119,7 +119,7 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                             }
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException(new Exception("Cannot parse file '" + currentResource.getFilename() + "'", e));  // Nesting because JJob will unwrap the cause
+                        throw new RuntimeException(new Exception("Cannot parse file '" + currentResource.getFilename() + "':\n" + e.getMessage(), e));  // Nesting because JJob will unwrap the cause
                     }
                 } else {
                     return;
