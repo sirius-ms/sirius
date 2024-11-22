@@ -485,4 +485,15 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
             adduct = ImplicitAdduct.none();
         return Deviation.fromMeasurementAndReference(referenceMass, fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass()));
     }
+
+    /**
+     *
+     * return exact m/z of the fragment peak based on the fragment formula, ionization and implicit adduct
+     */
+    public double getExactMass(Fragment fragment) {
+        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
+        if (adduct == null)
+            adduct = ImplicitAdduct.none();
+        return fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass());
+    }
 }
