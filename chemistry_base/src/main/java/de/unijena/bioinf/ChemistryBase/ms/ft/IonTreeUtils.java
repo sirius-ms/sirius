@@ -173,6 +173,19 @@ public class IonTreeUtils {
         return tree;
     }
 
+    public static Fragment getMeasuredIonRoot(FTree tree) {
+        final LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
+        return l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
+    }
+
+    // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
+    private static Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
+        if (root.isLeaf()) return root;
+        final LossType ano = lossAno.get(root.getOutgoingEdge(0), LossType::regular);
+        if (!ano.isInSource()) return root; //only insource losses add another root fragment above the precursor. Adduct losses only modify the MF.
+        return getMeasuredIonRoot(lossAno, root.getChildren(0));
+    }
+
     /**
      *
      * @param tree
