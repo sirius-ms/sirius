@@ -252,6 +252,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         reading = true;
                     } else if (reading && line.startsWith("END IONS")) {
                         lastErrorFeatureId = null;
+                        checkSpecIntegrity(spec);
                         return spec;
                     } else if (reading) {
                         if (Character.isDigit(line.charAt(0))) {
@@ -277,7 +278,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if (e instanceof MultipleChargeException || e instanceof MultimereException) {
                         LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage());
                     } else {
-                        LoggerFactory.getLogger(this.getClass()).error("Compound " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
+                        LoggerFactory.getLogger(this.getClass()).error("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage(), e);
                     }
 
                     if (reading) {
@@ -303,6 +304,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 }
             }
             return null;
+        }
+
+        private void checkSpecIntegrity(MgfSpec spec) {
+            if (spec.ionType == null) throw new RuntimeException("Ion type is not defined");
         }
     }
 
