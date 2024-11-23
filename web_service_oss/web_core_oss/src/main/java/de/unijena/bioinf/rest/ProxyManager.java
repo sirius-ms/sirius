@@ -271,9 +271,9 @@ public class ProxyManager {
 
 
     public static Optional<ConnectionError> checkExternal(OkHttpClient proxy) {
-        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external", null, "https://www.google.de/");
+        String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external", null, "https://github.com/");
         return checkConnectionToUrl(proxy, url)
-                .map(e -> e.withNewMessage(1, "Could not connect to the Internet: " + url,
+                .map(e -> e.withNewMessage(1, "Could not connect to the Internet. Tried: " + url,
                         ConnectionError.Klass.INTERNET));
     }
 
