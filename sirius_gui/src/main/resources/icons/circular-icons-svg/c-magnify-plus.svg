@@ -1,59 +1,10 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   width="64px"
-   height="64px"
-   viewBox="0 0 64 64"
-   version="1.1"
-   id="svg27611"
-   sodipodi:docname="c-magnify-plus.svg"
-   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-  <sodipodi:namedview
-     id="namedview27613"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="5.3774218"
-     inkscape:cx="-18.689254"
-     inkscape:cy="38.680246"
-     inkscape:window-width="1532"
-     inkscape:window-height="694"
-     inkscape:window-x="0"
-     inkscape:window-y="39"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg27611" />
-  <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
-  <path
-     d="M 32,64 C 49.673112,64 64,49.673112 64,32 64,14.326888 49.673112,0 32,0 14.326888,0 0,14.326888 0,32 0,49.673112 14.326888,64 32,64 Z"
-     id="Oval-1"
-     fill="#1191bb"
-     sketch:type="MSShapeGroup"
-     style="fill-rule:evenodd;stroke:none;stroke-width:1;fill:#4da6bf;fill-opacity:1" />
-  <title
-     id="title27600">c-magnify-minus</title>
-  <path
-     id="path28517"
-     style="color:#000000;fill:#ffffff;stroke-linejoin:round;stroke-miterlimit:8.5;-inkscape-stroke:none;paint-order:markers fill stroke;fill-opacity:1"
-     d="M 26.314453 13.46875 C 19.182535 13.46875 13.369141 19.282145 13.369141 26.414062 C 13.369141 33.545981 19.182535 39.359375 26.314453 39.359375 C 28.822585 39.359375 31.165856 38.636992 33.152344 37.394531 L 45.558594 49.787109 L 49.792969 45.546875 L 37.369141 33.138672 C 38.567742 31.177017 39.259766 28.873797 39.259766 26.414062 C 39.259766 19.282145 33.446371 13.46875 26.314453 13.46875 z M 26.314453 16.46875 C 31.825055 16.46875 36.259766 20.903462 36.259766 26.414062 C 36.259766 31.924664 31.825055 36.359375 26.314453 36.359375 C 20.803853 36.359375 16.369141 31.924664 16.369141 26.414062 C 16.369141 20.903462 20.803853 16.46875 26.314453 16.46875 z " />
-  <desc
-     id="desc27602">Created with Sketch.</desc>
-  <path
-     style="color:#000000;fill:#ffffff;stroke-linejoin:round;stroke-miterlimit:8.5;-inkscape-stroke:none;paint-order:markers fill stroke;fill-opacity:1"
-     d="m 19.926758,24.914062 v 3 h 12.775391 v -3 z"
-     id="path28582" />
-  <defs
-     id="defs27604" />
-  <path
-     style="color:#000000;fill:#ffffff;fill-opacity:1;stroke-linejoin:round;stroke-miterlimit:8.5;-inkscape-stroke:none;paint-order:markers fill stroke"
-     d="m 27.814453,20.026367 h -3 v 12.77539 h 3 z"
-     id="path29821" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg27611" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <path id="Oval-1" d="m32 64c17.673 0 32-14.327 32-32s-14.327-32-32-32-32 14.327-32 32 14.327 32 32 32z" fill="#4da6bf" fill-rule="evenodd"/>
+ <title id="title27600">c-magnify-minus</title>
+ <path id="path28517" d="m26.314 13.469c-7.1319 0-12.945 5.8134-12.945 12.945 0 7.1319 5.8134 12.945 12.945 12.945 2.5081 0 4.8514-0.72238 6.8379-1.9648l12.406 12.393 4.2344-4.2402-12.424-12.408c1.1986-1.9617 1.8906-4.2649 1.8906-6.7246 0-7.1319-5.8134-12.945-12.945-12.945zm0 3c5.5106 0 9.9453 4.4347 9.9453 9.9453 0 5.5106-4.4347 9.9453-9.9453 9.9453-5.5106 0-9.9453-4.4347-9.9453-9.9453 0-5.5106 4.4347-9.9453 9.9453-9.9453z" color="#000000" fill="#fff" stroke-linejoin="round" stroke-miterlimit="8.5" style="-inkscape-stroke:none;paint-order:markers fill stroke"/>
+ <desc id="desc27602">Created with Sketch.</desc>
+ <path id="path28582" d="m19.927 24.914v3h12.775v-3z" color="#000000" fill="#fff" stroke-linejoin="round" stroke-miterlimit="8.5" style="-inkscape-stroke:none;paint-order:markers fill stroke"/>
+ <path id="path29821" d="m27.814 20.026h-3v12.775h3z" color="#000000" fill="#fff" stroke-linejoin="round" stroke-miterlimit="8.5" style="-inkscape-stroke:none;paint-order:markers fill stroke"/>
 </svg>
