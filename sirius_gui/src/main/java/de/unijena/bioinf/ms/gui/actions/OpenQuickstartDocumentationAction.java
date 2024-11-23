@@ -25,10 +25,10 @@ import javax.swing.*;
 import java.awt.*;
 
 
-public class OpenOnlineDocumentationAction extends OpenInDocsAction {
-    public OpenOnlineDocumentationAction(Frame popupOwner) {
-        super("Docu", popupOwner);
-        putValue(Action.LARGE_ICON_KEY, Icons.HELP.derive(32,32));
-        putValue(Action.SHORT_DESCRIPTION,"Open online documentation.");
+public class OpenQuickstartDocumentationAction extends OpenInDocsAction {
+    public OpenQuickstartDocumentationAction(Frame popupOwner) {
+        super("Quick Start", "quick-start", popupOwner);
+        putValue(Action.LARGE_ICON_KEY, Icons.ROCKET.derive(32,32));
+        putValue(Action.SHORT_DESCRIPTION,"Open quick-start guide.");
     }
 }

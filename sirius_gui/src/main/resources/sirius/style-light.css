@@ -56,3 +56,7 @@ a:active {
 .error {
     color: $TEXT_ERROR;
 }
+
+.good {
+    color: $TEXT_GOOD;
+}

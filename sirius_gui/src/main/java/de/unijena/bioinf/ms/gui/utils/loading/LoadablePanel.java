@@ -1,14 +1,13 @@
 package de.unijena.bioinf.ms.gui.utils.loading;
 
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,39 +15,70 @@ public class LoadablePanel extends JPanel implements Loadable {
 
     protected final AtomicInteger loadingCounter = new AtomicInteger(0);
     private final SiriusCardLayout centerCards = new SiriusCardLayout();
-
-   /* public LoadablePanel(@NotNull JComponent content) {
-        this(content, "Loading...");
+    //todo transparent overlay instead of card layout would be cool
+    //todo maybe add some error state card?
+    //todo the spinner progress panel supports progress support. Connect to ProgressJJob and RunInBackgroundAndLoad logic.
+    public LoadablePanel() {
+        this(null);
+    }
+    public LoadablePanel(@Nullable JComponent content) {
+        setLayout(centerCards);
+        setOpaque(false);
+        if (content != null)
+            add("content", content);
+        add("load", GuiUtils.newSpinnerProgressPanel());
     }
 
-    public LoadablePanel(@NotNull JComponent content, @Nullable String loadingMessage) {
-        this(content, Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
-    }*/
-
-    //todo maybe add some error state card?
-    public LoadablePanel(@NotNull JComponent content/*, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage*/) {
-        setLayout(centerCards);
+    public void setContentPanel(@NotNull JComponent content){
+        for (int i = 0; i < getComponents().length; i++) {
+             if ("content".equals(getComponents()[i].getName())){
+                 remove(i);
+                 break;
+             }
+        }
         add("content", content);
-        add("load", GuiUtils.newSpinnerProgressPanel());
     }
 
     public boolean setLoading(boolean loading, boolean absolute) {
         AtomicBoolean result = new AtomicBoolean(false);
-            Jobs.runEDTLater(() -> {
-                result.set(loadingCounter.updateAndGet(current -> {
-                    if (absolute)
-                        return loading ? 1 : 0;
-                    else
-                        return Math.max(0, loading ? current + 1 : current - 1);
-                }) > 0);
-                String cardName = result.get() ? "load" : "content";
-                if (!centerCards.isCardActive(cardName))
-                    centerCards.show(this, cardName);
-            });
+        Jobs.runEDTLater(() -> {
+            result.set(loadingCounter.updateAndGet(current -> {
+                if (absolute)
+                    return loading ? 1 : 0;
+                else
+                    return Math.max(0, loading ? current + 1 : current - 1);
+            }) > 0);
+            String cardName = result.get() ? "load" : "content";
+            if (!centerCards.isCardActive(cardName))
+                centerCards.show(this, cardName);
+        });
         return result.get();
     }
 
     protected JComponent getContent() {
         return (JComponent) getComponent(0);
+    }
+
+
+    public TinyBackgroundJJob<Boolean> runInBackgroundAndLoad(final Runnable task) {
+        return Jobs.runInBackground(() -> {
+            setLoading(true, true);
+            try {
+                task.run();
+            }finally {
+                setLoading(false, true);
+            }
+        });
+    }
+
+    public <T> TinyBackgroundJJob<T> runInBackgroundAndLoad(final Callable<T> task) {
+        return Jobs.runInBackground(() -> {
+            setLoading(true, true);
+            try {
+                return task.call();
+            }finally {
+                setLoading(false, true);
+            }
+        });
     }
 }

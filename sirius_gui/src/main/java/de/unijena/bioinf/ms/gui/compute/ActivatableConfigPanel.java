@@ -77,6 +77,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         activationButton.setPreferredSize(new Dimension(110, 60));
         activationButton.setMaximumSize(new Dimension(110, 60));
         activationButton.setMinimumSize(new Dimension(110, 60));
+        activationButton.setBackground(this.getBackground());
+        activationButton.setRolloverEnabled(true);
         if (toolDescription != null)
             this.toolDescription = new String[]{toolDescription};
         else if (content instanceof SubToolConfigPanel)

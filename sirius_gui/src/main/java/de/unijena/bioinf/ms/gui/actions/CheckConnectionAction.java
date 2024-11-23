@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
+import de.unijena.bioinf.ms.gui.net.ConnectionDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.Nullable;
@@ -56,11 +56,7 @@ public class CheckConnectionAction extends AbstractGuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            ConnectionCheck r = checkConnectionAndLoad(gui);
-            if (r != null) {
-                setIcon(r);
-                ConnectionDialog.of(gui, r);
-            }
+            ConnectionDialog.of(gui);
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);
         }
@@ -76,11 +72,11 @@ public class CheckConnectionAction extends AbstractGuiAction {
 
         if (check != null) {
             if (isConnected(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES.derive(32,32));
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES.derive(32, 32));
             else if (isWarningOnly(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN.derive(32,32));
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN.derive(32, 32));
             else
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO.derive(32,32));
+                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO.derive(32, 32));
         }
     }
 }

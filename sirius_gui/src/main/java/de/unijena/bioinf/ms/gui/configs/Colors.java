@@ -27,7 +27,7 @@ import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  * @author Marcus Ludwig
  */
 @Slf4j
@@ -50,16 +50,14 @@ public class Colors {
 
     //--------------------------------------------
 
+    public final static Color CUSTOM_BLUE = Color.decode("#4da6bf");
+    public final static Color CUSTOM_LIGHT_BLUE = Color.decode("#b3d9e5");
 
-    private final static Color CUSTOM_BLUE = Color.decode("#4da6bf");
-    private final static Color CUSTOM_LIGHT_BLUE = Color.decode("#b3d9e5");
+    public final static Color CUSTOM_GREEN = Color.decode("#68da58");
+    public final static Color CUSTOM_YELLOW = Color.decode("#feff66");
+    public final static Color CUSTOM_PINK = Color.decode("#ef4384");
 
-    private final static Color CUSTOM_GREEN = Color.decode("#68da58");
-    private final static Color CUSTOM_YELLOW = Color.decode("#feff66");
-    private final static Color CUSTOM_PINK = Color.decode("#ef4384");
-
-    private final static Color CUSTOM_ORANGE = Color.decode("#ffc14c");
-
+    public final static Color CUSTOM_ORANGE = Color.decode("#ffc14c");
 
 //------------------
 
@@ -226,6 +224,7 @@ public class Colors {
 
     public final static Color TEXT_WARN = CUSTOM_PINK; //CUSTOM_ORANGE; (orange not good in light theme)
     public final static Color TEXT_ERROR = CUSTOM_PINK;
+    public final static Color TEXT_GOOD = CUSTOM_GREEN;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
     public final static Color TEXT_LINK_VISITED = CUSTOM_PINK;
     public final static Color TEXT_LINK_ACTIVE = GOOD_IS_GREEN_VIBRANT;
