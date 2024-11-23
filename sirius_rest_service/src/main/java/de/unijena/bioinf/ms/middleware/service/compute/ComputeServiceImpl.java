@@ -335,12 +335,10 @@ public class ComputeServiceImpl implements ComputeService {
 
     @Override
     public synchronized void destroy() {
-        System.out.println("Destroy Compute Service...");
         backgroundRuns.forEach((pid, br) -> {
             if (br.hasActiveComputations())
                 log.info("Cancelling running Background Jobs...");
             br.cancelAllRuns();
         });
-        System.out.println("Destroy Compute Service DONE");
     }
 }

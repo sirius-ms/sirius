@@ -19,11 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
+import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.ConnectionError;
@@ -31,9 +33,12 @@ import io.sirius.ms.sdk.model.Subscription;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,10 +48,18 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.toLinks;
 import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum;
 import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum.*;
 
-public class ConnectionCheckPanel extends TwoColumnPanel {
-    public static final String READ_MORE_LICENSING =
-            "<br> <a href=\"" + PropertyManager.getProperty("de.unijena.bioinf.sirius.docu.url") + "/account-and-license/\">" +
-                    "Read more</a> about account and licensing.";
+public class ConnectionCheckPanel extends LoadablePanel implements PropertyChangeListener {
+    public static final String READ_MORE_LICENSING = "<br> <a href=\""
+            + PropertyManager.getProperty("de.unijena.bioinf.sirius.docu.url") + "/account-and-license/\">"
+            + "Read more</a> about account and licensing.";
+
+    private static String addLinkToLoginError(@Nullable String errorMessage) {
+        if (errorMessage == null)
+            return errorMessage;
+        if (errorMessage.contains("create one"))
+            return errorMessage.replace("create one", "<a href=\"" + UserPortal.signUpURL() + "\">create one</a>");
+        return errorMessage;
+    }
 
 
     private static final String NO_ACTIVE_SUB_MSG = "<No active subscription>";
@@ -57,33 +70,57 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authLicense = new BooleanJlabel();
-    private final JDialog owner;
+    private final @Nullable JDialog owner;
     private final SiriusGui gui;
 
     JLabel authLabel = new JLabel("Authenticated ?  ");
-    JPanel resultPanel = null;
+    JLabel activeSubLabel = new JLabel("Subscription active: ?  ");
+    JLabel webServiceConnectionLabel = new JLabel("Connection to SIRIUS web service ?  ");
 
-    public ConnectionCheckPanel(@NotNull JDialog owner, @NotNull SiriusGui gui, @NotNull ConnectionCheck check) {
-        super(GridBagConstraints.WEST, GridBagConstraints.EAST);
+    private JPanel resultPanel = null;
+    private JXTitledSeparator subInfoSeparator = null;
+    private JLabel subInfoLabel = null;
+
+    private final TwoColumnPanel main;
+    private boolean noLoginButtons;
+
+    public ConnectionCheckPanel(@NotNull SiriusGui gui, @Nullable ConnectionCheck check) {
+        this(gui, check, false);
+    }
+    public ConnectionCheckPanel(@NotNull SiriusGui gui, @Nullable ConnectionCheck check, boolean noLoginButtons) {
+        this(null, gui, check, noLoginButtons);
+    }
+    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull SiriusGui gui, @Nullable ConnectionCheck check) {
+        this(owner, gui, check, false);
+    }
+    public ConnectionCheckPanel(@Nullable JDialog owner, @NotNull SiriusGui gui, @Nullable ConnectionCheck check, boolean noLoginButtons) {
+        super();
         this.owner = owner;
         this.gui = gui;
+        this.noLoginButtons = noLoginButtons;
+        this.main = new TwoColumnPanel(GridBagConstraints.WEST, GridBagConstraints.EAST);
+        this.main.setOpaque(false);
+        setContentPanel(main);
+        setOpaque(false);
 
-        Optional<Subscription> sub = Optional.ofNullable(check.getLicenseInfo().getSubscription());
+        main.add(new JXTitledSeparator("Connection check"), 15, false);
+        main.add(new JLabel("Connection to the Internet (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external") + ")  "), internet, 5, false);
+        main.add(new JLabel("Connection to Login Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ")  "), authServer, 5, false);
+        main.add(new JLabel("Connection to License Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ")  "), licenseServer, 5, false);
 
-        add(new JXTitledSeparator("Connection check:"), 15, false);
-        add(new JLabel("Connection to the Internet (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external") + ")  "), internet, 5, false);
-        add(new JLabel("Connection to Login Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ")  "), authServer, 5, false);
-        add(new JLabel("Connection to License Server (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ")  "), licenseServer, 5, false);
+        main.add(authLabel, auth, 5, false);
+        main.add(activeSubLabel, authLicense, 5, false);
+        main.add(webServiceConnectionLabel, fingerID, 5, false);
 
-        add(authLabel, auth, 5, false);
-        add(new JLabel("Subscription active: (" + sub.map(Subscription::getSid).orElse(NO_ACTIVE_SUB_MSG) + ")"), authLicense, 5, false);
+        main.addVerticalGlue();
 
-
-        add(new JLabel("Connection to SIRIUS web service (" + sub.map(Subscription::getServiceUrl).orElse(NO_ACTIVE_SUB_MSG) + ")  "), fingerID, 5, false);
-
-        addVerticalGlue();
-
-        refreshPanel(check);
+        if (check == null){
+            setLoading(true);
+            runInBackgroundAndLoad(() -> refreshPanel(gui.getConnectionMonitor().checkConnection()));
+        }else {
+            refreshPanel(check);
+            setLoading(false, true);
+        }
     }
 
     public void refreshPanel(@NotNull ConnectionCheck check) {
@@ -93,14 +130,12 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         String userEmail = check.getLicenseInfo().getUserEmail();
         Set<ErrorKlassEnum> errorTypes = check.getErrors().stream().map(ConnectionError::getErrorKlass).collect(Collectors.toSet());
 
-        internet.setState(!errorTypes.contains( INTERNET));
-        authServer.setState(!errorTypes.contains( LOGIN_SERVER));
-        licenseServer.setState(!errorTypes.contains( LICENSE_SERVER));
-        auth.setState(userEmail != null && !errorTypes.contains( LOGIN));
-        authLicense.setState(check.getLicenseInfo().getSubscription() != null && !errorTypes.contains( LICENSE));
-        fingerID.setState(!errorTypes.contains( APP_SERVER));
-//        fingerID_WebAPI.setState(state > 6 || state <= 0);
-
+        internet.setState(!errorTypes.contains(INTERNET));
+        authServer.setState(!errorTypes.contains(LOGIN_SERVER));
+        licenseServer.setState(!errorTypes.contains(LICENSE_SERVER));
+        auth.setState(userEmail != null && !errorTypes.contains(LOGIN));
+        authLicense.setState(check.getLicenseInfo().getSubscription() != null && !errorTypes.contains(LICENSE));
+        fingerID.setState(!errorTypes.contains(APP_SERVER));
 
         if (auth.isTrue()) {
             authLabel.setText(userEmail != null ? "Authenticated as '" + userEmail + "'  " : "Authenticated ?  ");
@@ -108,21 +143,34 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             authLabel.setText("Not authenticated! (Or cannot verify token)  ");
         }
 
+        activeSubLabel.setText("Subscription active: (" + sub.map(Subscription::getSid).orElse(NO_ACTIVE_SUB_MSG) + ")");
+        webServiceConnectionLabel.setText("Connection to SIRIUS web service (" + sub.map(Subscription::getServiceUrl).orElse(NO_ACTIVE_SUB_MSG) + ")  ");
 
+        //remove old states
         if (resultPanel != null)
-            remove(resultPanel);
+            main.remove(resultPanel);
+        if (subInfoSeparator != null)
+            main.remove(subInfoSeparator);
+        if (subInfoLabel != null)
+            main.remove(subInfoLabel);
 
+        //create new states
         resultPanel = createResultPanel(check);
-
-        add(resultPanel, 15, true);
-
-        add(new JXTitledSeparator("Subscription"), 15, false);
-        add(new JLabel("<html>Licensed to:  <b>" + licensee + "</b>"
+        resultPanel.setOpaque(false);
+        subInfoSeparator = new JXTitledSeparator("Subscription");
+        subInfoSeparator.setOpaque(false);
+        subInfoLabel = new JLabel("<html>Licensed to:  <b>" + licensee + "</b>"
                 + (description != null ? " (" + description + ")" : "")
-                + "</html>"), 5, false);
+                + "</html>");
+        subInfoLabel.setOpaque(false);
 
-        revalidate();
-        repaint();
+        //add new states
+        main.add(resultPanel, 15, true);
+        main.add(subInfoSeparator, 15, false);
+        main.add(subInfoLabel, 5, false);
+
+        main.revalidate();
+        main.repaint();
     }
 
 
@@ -135,7 +183,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
         if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(ConnectionError.ErrorTypeEnum.WARNING)).findAny().isEmpty()) {
             //case 0 NO ERROR
-            resultPanel.add(new JLabel("<html>Connection to SIRIUS web services successfully established!</html>"), 5, false);
+            addHTMLTextPanel(resultPanel, styleGoodMessage("Connection to SIRIUS web services successfully established!"));
         } else {
             ConnectionError err = errors.getFirst();
             ErrorKlassEnum mainError = err.getErrorKlass();
@@ -152,9 +200,9 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             switch (mainError) {
                 case INTERNET :
                     addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() + "<br><b> Could not establish an internet connection.</b><br>" +
-                            "Please check whether your computer is connected to the internet. " +
-                            "All features depending on the SIRIUS web services won't work without internet connection.<br>" +
+                            styleErrorMessage(
+                            "Could not connect to the Internet. Please check whether your computer is connected to the internet. " +
+                            "All features depending on the SIRIUS web services won't work without internet connection." +
                             "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err))
                     );
                     break;
@@ -175,19 +223,21 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                     );
                     break;
                 case TOKEN:
-                addHTMLTextPanel(resultPanel,
-                        styleErrorMessage(err.getSiriusMessage() +
-                        "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>"
-                        + addHtmlErrorText(err))
-                );
-                resultPanel.add(new JButton(ActionUtils.deriveFrom(
-                        evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                        SiriusActions.SIGN_OUT.getInstance(gui, true))));
+                    addHTMLTextPanel(resultPanel,
+                            styleErrorMessage(err.getSiriusMessage() +
+                            "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>"
+                            + addHtmlErrorText(err))
+                    );
+                    if (!noLoginButtons)
+                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                            evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                            SiriusActions.SIGN_OUT.getInstance(gui, true))));
                 case LOGIN:
                     addHTMLTextPanel(resultPanel,
-                            styleWarningMessage(err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err))
+                            styleWarningMessage(addLinkToLoginError(err.getSiriusMessage()) + READ_MORE_LICENSING + addHtmlErrorText(err))
                     );
-                    resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                    if (!noLoginButtons)
+                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                             SiriusActions.SIGN_IN.getInstance(gui, true))));
                     break;
@@ -213,7 +263,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             "<li>The SIRIUS web service is temporary not available.</li>" +
                             "<li>The service cannot be reached because of your network configuration.</li>" +
                             "<li>Our Service is no longer available for your current SIRIUS version. <br>" +
-                            "Please <a href=https://bio.informatik.uni-jena.de/software/sirius/>download</a> " +
+                            "Please <a href=https://github.com/sirius-ms/sirius/releases/latest>download</a> " +
                             "the latest version of SIRIUS</li>" +
                             "</ol>" + addHtmlErrorText(err))
                     );
@@ -238,6 +288,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         return WebviewHTMLTextJPanel.styleWarningColor(errorMessage);
     }
 
+    private String styleGoodMessage(String errorMessage) {
+        return WebviewHTMLTextJPanel.styleGoodColor(errorMessage);
+    }
+
     private static String addHtmlErrorText(ConnectionError e){
         if (e == null || e.getServerResponseErrorCode() == null && e.getServerResponseErrorMessage() == null)
             return "";
@@ -255,10 +309,16 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     }
 
     public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text, int height) {
-        WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel(text);
-        htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, height));
+        WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel(text, getBackground());
+        htmlPanel.setPreferredSize(new Dimension(main.getPreferredSize().width, height));
         resultPanel.add(htmlPanel);
         htmlPanel.load();
         return htmlPanel;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt instanceof ConnectionMonitor.ConnectionStateEvent cEvt)
+            refreshPanel(cEvt.getConnectionCheck());
     }
 }
