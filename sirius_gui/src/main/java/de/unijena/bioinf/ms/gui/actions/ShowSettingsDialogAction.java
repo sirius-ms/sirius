@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.SettingsDialog;
+import de.unijena.bioinf.ms.gui.settings.SettingsDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

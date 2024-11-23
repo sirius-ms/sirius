@@ -45,7 +45,7 @@ public class ShowAccountDialog extends AbstractGuiAction {
 
     public ShowAccountDialog(SiriusGui gui) {
         super("Account", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32,32));
+        putValue(Action.LARGE_ICON_KEY, Icons.USER_NOT_LOGGED_IN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 
         this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
@@ -77,7 +77,7 @@ public class ShowAccountDialog extends AbstractGuiAction {
                     LoggerFactory.getLogger(getClass()).warn("Could not load User image from token. Using placeholder instead.");
                 }
             } else {
-                putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32,32));
+                putValue(Action.LARGE_ICON_KEY, Icons.USER_NOT_LOGGED_IN.derive(32,32));
             }
         }
     }

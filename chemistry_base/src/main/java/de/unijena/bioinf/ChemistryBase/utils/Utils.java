@@ -141,4 +141,28 @@ public class Utils {
         return s == null || s.length == 0;
     }
 
+    public static boolean notNullOrEmpty(@Nullable final Collection<?> c) {
+        return !isNullOrEmpty(c);
+    }
+
+    public static boolean notNullOrEmpty(@Nullable final Map<?, ?> m) {
+        return !isNullOrEmpty(m);
+    }
+
+    public static boolean notNullOrEmpty(@Nullable final CharSequence s) {
+        return !isNullOrEmpty(s);
+    }
+
+    public static boolean notNullOrEmpty(@Nullable final String s) {
+        return !isNullOrEmpty(s);
+    }
+
+    public static boolean notNullOrBlank(@Nullable final String s) {
+        return !isNullOrBlank(s);
+    }
+
+    public static <T> boolean notNullOrEmpty(@Nullable final T[] s) {
+        return !isNullOrEmpty(s);
+    }
+
 }

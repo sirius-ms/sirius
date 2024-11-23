@@ -17,10 +17,11 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.update;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.DoNotShowAgainDialog;
 import io.sirius.ms.sdk.model.Info;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,7 @@ public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener
     }
 
 
-    private static String createMessage(Info version) {
+    public static String createMessage(Info version) {
         StringBuilder message = new StringBuilder();
         message.append("<html>A new version (<b>").append(version.getLatestSiriusVersion()).append("</b>) of SIRIUS is available! <br><br>Upgrade to the latest <b>SIRIUS</b>")
                 .append(" to receive the newest features and fixes.<br> Your current version is: <b>")

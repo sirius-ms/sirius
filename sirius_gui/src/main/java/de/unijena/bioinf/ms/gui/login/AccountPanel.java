@@ -27,11 +27,12 @@ import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.Tokens;
 import org.apache.commons.lang3.SystemUtils;
@@ -43,7 +44,7 @@ import java.awt.*;
 import java.net.URL;
 
 
-public class AccountPanel extends JPanel {
+public class AccountPanel extends LoadablePanel {
     private final AuthService service;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, create, changeSub, registerExplorer;
@@ -52,19 +53,32 @@ public class AccountPanel extends JPanel {
     private SiriusGui gui;
 
     public AccountPanel(SiriusGui gui, AuthService service) {
-        super(new BorderLayout());
+        super();
         this.service = service;
         this.gui = gui;
+
+        JPanel content = new JPanel(new BorderLayout());
+        content.setMinimumSize(new Dimension(500, 180));
+        content.setOpaque(false);
+        setContentPanel(content);
+
         TwoColumnPanel center = new TwoColumnPanel();
+        center.setOpaque(false);
 
         userIconLabel = new JLabel();
         userInfoLabel = new JLabel();
 
         JPanel iconPanel = new JPanel(new BorderLayout());
+        iconPanel.setOpaque(false);
+
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
         refresh = new ToolbarButton(Icons.REFRESH.derive(32,32));
+        refresh.setBorderPainted(false);
+        refresh.setBackground(getBackground());
+
+
         refresh.addActionListener(e ->
-                Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
+                runInBackgroundAndLoad(() -> {
                     try {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             ApplicationCore.WEB_API.changeActiveSubscription(null);
@@ -82,15 +96,18 @@ public class AccountPanel extends JPanel {
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));
         refresh.setToolTipText(
-                GuiUtils.formatToolTip("Refresh access_token (also reloads account an license information)."));
+                GuiUtils.formatToolTip("Refresh access token (also reloads account an license information)."));
 
         Box right = Box.createHorizontalBox();
         right.add(Box.createHorizontalGlue());
         right.add(refresh);
 
-        center.add(iconPanel, TwoColumnPanel.of(userInfoLabel, right));
+        TwoColumnPanel infoPanel = TwoColumnPanel.of(userInfoLabel, right);
+        infoPanel.setOpaque(false);
+
+        center.add(iconPanel, infoPanel);
         center.addVerticalGlue();
-        add(center, BorderLayout.CENTER);
+        content.add(center, BorderLayout.CENTER);
 
 
         //south
@@ -106,49 +123,62 @@ public class AccountPanel extends JPanel {
             buttons.add(registerExplorer);
         buttons.add(changeSub);
         buttons.add(login);
-        add(buttons, BorderLayout.SOUTH);
+        content.add(buttons, BorderLayout.SOUTH);
 
         reloadChanges();
     }
 
-    private DecodedJWT getLogin() {
-        return Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), "Checking Login",
-                () -> service.getToken().map(AuthService.Token::getDecodedIdToken).orElse(null)).getResult();
+    @Override
+    public void setBackground(Color bg) {
+        super.setBackground(bg);
+        if (refresh != null)
+            refresh.setBackground(bg);
     }
 
-
     public void reloadChanges() {
-        DecodedJWT userInfo = getLogin();
-        if (userInfo == null) {
-            userIconLabel.setIcon(Icons.USER.derive(128,128));
-            userInfoLabel.setText("Please log in!");
-            create.setAction(SiriusActions.SIGN_UP.getInstance(gui, true));
-            login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
-            refresh.setEnabled(false);
-            changeSub.setEnabled(false);
-            registerExplorer.setEnabled(false);
-        } else {
-            refresh.setEnabled(true);
-            changeSub.setEnabled(true);
-            registerExplorer.setEnabled(true);
-            try {
-                Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
-                image = Icons.makeEllipse(image);
-                image = Icons.scaledInstance(image, 128, 128);
+        runInBackgroundAndLoad(() -> {
+            DecodedJWT userInfo = service.getToken().map(AuthService.Token::getDecodedIdToken).orElse(null);
+            if (userInfo == null) {
+                userIconLabel.setIcon(Icons.USER_NOT_LOGGED_IN.derive(128,128));
+                userInfoLabel.setText("Please log in!");
+                create.setAction(SiriusActions.SIGN_UP.getInstance(gui, true));
+                login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
+                login.setBackground(Colors.CUSTOM_GREEN);
+                login.setForeground(Color.WHITE);
+                login.setFont(login.getFont().deriveFont(Font.BOLD));
 
-                userIconLabel.setIcon(new ImageIcon(image));
-            } catch (Throwable e) {
-                LoggerFactory.getLogger(getClass()).warn("Could not load profile image: " + e.getMessage());
-                userIconLabel.setIcon(Icons.USER_GREEN.derive(128,128));
+                refresh.setEnabled(false);
+
+                changeSub.setEnabled(false);
+                registerExplorer.setEnabled(false);
+            } else {
+                refresh.setEnabled(true);
+                changeSub.setEnabled(true);
+                registerExplorer.setEnabled(true);
+                try {
+                    Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
+                    image = Icons.makeEllipse(image);
+                    image = Icons.scaledInstance(image, 128, 128);
+
+                    userIconLabel.setIcon(new ImageIcon(image));
+                } catch (Throwable e) {
+                    LoggerFactory.getLogger(getClass()).warn("Could not load profile image: {}", e.getMessage());
+                    userIconLabel.setIcon(Icons.USER_GREEN.derive(128,128));
+                }
+                userInfoLabel.setText("<html>Logged in as:<br><b>"
+                        + userInfo.getClaim("email").asString() + "</b>"
+                        + "<br>"
+                        + "(" + userInfo.getClaim("sub").asString() + ")"
+                        + "</html>");
+                create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(gui, true));
+                login.setAction(SiriusActions.SIGN_OUT.getInstance(gui, true));
+                login.setBackground(UIManager.getLookAndFeel().getDefaults().getColor("Button.background"));
+                login.setForeground(UIManager.getLookAndFeel().getDefaults().getColor("Button.foreground"));
+                login.setFont(login.getFont().deriveFont(Font.PLAIN));
+
             }
-            userInfoLabel.setText("<html>Logged in as:<br><b>"
-                    + userInfo.getClaim("email").asString() + "</b>"
-                    + "<br>"
-                    + "(" + userInfo.getClaim("sub").asString() + ")"
-                    + "</html>");
-            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(gui, true));
-            login.setAction(SiriusActions.SIGN_OUT.getInstance(gui, true));
-        }
+        });
+
     }
 
     public String name() {
