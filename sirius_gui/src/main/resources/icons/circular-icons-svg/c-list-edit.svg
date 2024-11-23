@@ -1,81 +1,18 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   width="64px"
-   height="64px"
-   viewBox="0 0 64 64"
-   version="1.1"
-   id="svg30597"
-   sodipodi:docname="c-list-edit.svg"
-   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-  <sodipodi:namedview
-     id="namedview30599"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="3.6875"
-     inkscape:cx="-1.220339"
-     inkscape:cy="32"
-     inkscape:window-width="1710"
-     inkscape:window-height="982"
-     inkscape:window-x="0"
-     inkscape:window-y="39"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg30597" />
-  <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
-  <title
-     id="title30582">c-edit</title>
-  <desc
-     id="desc30584">Created with Sketch.</desc>
-  <defs
-     id="defs30586" />
-  <g
-     id="Rectangle-60-+-Rectangle-60-+-Rectangle-60"
-     sketch:type="MSLayerGroup"
-     transform="matrix(1.0416667,1.0416667,-1.0416667,1.0416667,44.5,6.9999992)"
-     fill="#ffffff"
-     style="fill:#4da6bf;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1">
-    <rect
-       id="Rectangle-60"
-       sketch:type="MSShapeGroup"
-       x="9.9475983e-14"
-       y="7"
-       width="12"
-       height="23"
-       style="fill:#4da6bf;fill-opacity:1" />
-    <path
-       d="M 6,42 12,32 H 0 Z"
-       id="path30590"
-       sketch:type="MSShapeGroup"
-       style="fill:#4da6bf;fill-opacity:1" />
-    <rect
-       id="rect30592"
-       sketch:type="MSShapeGroup"
-       x="1.4210855e-14"
-       y="-3.5527137e-15"
-       width="12"
-       height="4"
-       style="fill:#4da6bf;fill-opacity:1" />
-  </g>
-  <metadata
-     id="metadata30718">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:title>c-edit</dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg30597" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title30582">c-edit</title>
+ <desc id="desc30584">Created with Sketch.</desc>
+ <g id="Rectangle-60-+-Rectangle-60-+-Rectangle-60" transform="matrix(1.0417 1.0417 -1.0417 1.0417 44.5 7)" fill="#4da6bf" fill-rule="evenodd">
+  <rect id="Rectangle-60" x="9.9476e-14" y="7" width="12" height="23"/>
+  <path id="path30590" d="m6 42 6-10h-12z"/>
+  <rect id="rect30592" x="1.4211e-14" y="-3.5527e-15" width="12" height="4"/>
+ </g>
+ <metadata id="metadata30718">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:title>c-edit</dc:title>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
 </svg>
