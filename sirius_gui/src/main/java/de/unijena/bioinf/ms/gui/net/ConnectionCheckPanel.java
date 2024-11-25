@@ -98,9 +98,8 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         this.owner = owner;
         this.gui = gui;
         this.noLoginButtons = noLoginButtons;
-        this.main = new TwoColumnPanel(GridBagConstraints.WEST, GridBagConstraints.EAST);
+        this.main = setAndGetContentPanel(new TwoColumnPanel(GridBagConstraints.WEST, GridBagConstraints.EAST));
         this.main.setOpaque(false);
-        setContentPanel(main);
         setOpaque(false);
 
         main.add(new JXTitledSeparator("Connection check"), 15, false);
@@ -229,17 +228,13 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                             + addHtmlErrorText(err))
                     );
                     if (!noLoginButtons)
-                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
-                            evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.SIGN_OUT.getInstance(gui, true))));
+                        resultPanel.add(new JButton(SiriusActions.SIGN_OUT.getInstance(gui, true)));
                 case LOGIN:
                     addHTMLTextPanel(resultPanel,
                             styleWarningMessage(addLinkToLoginError(err.getSiriusMessage()) + READ_MORE_LICENSING + addHtmlErrorText(err))
                     );
                     if (!noLoginButtons)
-                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
-                            evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.SIGN_IN.getInstance(gui, true))));
+                        resultPanel.add(new JButton(SiriusActions.SIGN_IN.getInstance(gui, true)));
                     break;
                 case LICENSE:
                     addHTMLTextPanel(resultPanel,
