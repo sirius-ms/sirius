@@ -123,14 +123,14 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
             Info info = gui.getSiriusClient().infos().getInfo(true, true);
             if (info != null && info.getLatestSiriusVersion() != null) {
                 if (info.isUpdateAvailable()) {
-                    setContentPanel(updateAvailableContent(info));
+                    setAndGetContentPanel(updateAvailableContent(info));
                 } else {
-                    setContentPanel(upToDateContent());
+                    setAndGetContentPanel(upToDateContent());
                 }
                 return;
             }
         }
-        setContentPanel(noUpdateInformationContent());
+        setAndGetContentPanel(noUpdateInformationContent());
     }
 
     @Override

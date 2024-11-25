@@ -57,10 +57,9 @@ public class AccountPanel extends LoadablePanel {
         this.service = service;
         this.gui = gui;
 
-        JPanel content = new JPanel(new BorderLayout());
+        JPanel content = setAndGetContentPanel(new JPanel(new BorderLayout()));;
         content.setMinimumSize(new Dimension(500, 180));
         content.setOpaque(false);
-        setContentPanel(content);
 
         TwoColumnPanel center = new TwoColumnPanel();
         center.setOpaque(false);
