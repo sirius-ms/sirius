@@ -29,7 +29,7 @@ public class LoadablePanel extends JPanel implements Loadable {
         add("load", GuiUtils.newSpinnerProgressPanel());
     }
 
-    public void setContentPanel(@NotNull JComponent content){
+    public <C extends JComponent> C setAndGetContentPanel(@NotNull C content){
         for (int i = 0; i < getComponents().length; i++) {
              if ("content".equals(getComponents()[i].getName())){
                  remove(i);
@@ -37,6 +37,7 @@ public class LoadablePanel extends JPanel implements Loadable {
              }
         }
         add("content", content);
+        return content;
     }
 
     public boolean setLoading(boolean loading, boolean absolute) {
@@ -59,7 +60,7 @@ public class LoadablePanel extends JPanel implements Loadable {
         return (JComponent) getComponent(0);
     }
 
-
+//todo add changable laoding test.
     public TinyBackgroundJJob<Boolean> runInBackgroundAndLoad(final Runnable task) {
         return Jobs.runInBackground(() -> {
             setLoading(true, true);
