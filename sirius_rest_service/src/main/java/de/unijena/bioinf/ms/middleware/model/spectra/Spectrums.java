@@ -197,6 +197,9 @@ public class Spectrums {
         return spectrum;
     }
 
+    /*
+    duplicate code in SpectrumAnnotationJJob.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private static void setPeakAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable InsilicoFragmentationResult structureAnno) {
         List<AnnotatedPeak> peaks = spectrum.getPeaks();
 
@@ -207,6 +210,9 @@ public class Spectrums {
         }
     }
 
+    /*
+    duplicate code in SpectrumAnnotationJJob.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private static void setPeakAnnotations(@NotNull FTree ftree, @Nullable InsilicoFragmentationResult structureAnno, Fragment f, List<AnnotatedPeak> peaks) {
         int vertexId = f.getVertexId();
         PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
@@ -243,6 +249,9 @@ public class Spectrums {
         peaks.get(f.getPeakId()).setPeakAnnotation(peakAnno.build());
     }
 
+    /*
+    duplicate code in SpectrumAnnotationJJob.setSpectrumAnnotation (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private static void setSpectrumAnnotation(AnnotatedSpectrum spectrum, @Nullable FTree ftree,
                                               @Nullable InsilicoFragmentationResult structureAnno,
                                               @Nullable String candidateSmiles
@@ -272,6 +281,9 @@ public class Spectrums {
         spectrum.setSpectrumAnnotation(specAnno.build());
     }
 
+    /*
+    duplicate code in SpectrumAnnotationJJob.annotateSubstructure (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private static void annotateSubstructure(PeakAnnotation.PeakAnnotationBuilder peakAnno, MolecularFormula fragmentFormula, CombinatorialFragment subStructureAnno, CombinatorialSubtree subtree) {
         CombinatorialNode node = subtree.getNode(subStructureAnno.getBitSet());
         int[] bondIdx = subStructureAnno.bonds().stream().mapToInt(Integer::intValue).sorted().toArray();
