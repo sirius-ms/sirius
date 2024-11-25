@@ -100,6 +100,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         return as;
     }
 
+    /*
+    duplicate code in Spectrums.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void setPeakAnnotations(@NotNull AnnotatedSpectrum spectrum,
                                     @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments,
                                     @Nullable InsilicoFragmentationResult structureAnno, boolean isMergedMs2) throws InterruptedException {
@@ -113,6 +116,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         }
     }
 
+    /*
+    duplicate code in Spectrums.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void setPeakAnnotations(@NotNull FTree ftree, @Nullable InsilicoFragmentationResult structureAnno, Fragment f, List<AnnotatedPeak> peaks, boolean isMergedMs2) throws InterruptedException {
         int vertexId = f.getVertexId();
         PeakAnnotation peakAnno = new PeakAnnotation();
@@ -158,6 +164,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         peaks.get(f.getPeakId()).setPeakAnnotation(peakAnno);
     }
 
+    /*
+    duplicate code in Spectrums.annotateSubstructure (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void annotateSubstructure(PeakAnnotation peakAnno, MolecularFormula fragmentFormula, CombinatorialFragment subStructureAnno, CombinatorialSubtree subtree) throws InterruptedException {
         CombinatorialNode node = subtree.getNode(subStructureAnno.getBitSet());
         checkForInterruption();
@@ -186,6 +195,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
     }
 
 
+    /*
+    Spectrums.setSpectrumAnnotation (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void setSpectrumAnnotation(@NotNull AnnotatedSpectrum spectrum, @Nullable FTree ftree,
                                        @Nullable InsilicoFragmentationResult structureAnno,
                                        @Nullable String candidateSmiles
