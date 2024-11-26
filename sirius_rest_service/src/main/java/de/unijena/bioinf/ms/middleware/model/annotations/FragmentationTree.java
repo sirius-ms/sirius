@@ -52,38 +52,41 @@ public class FragmentationTree {
     PrecursorIonType adduct;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {
+        //should be already be resolved. Just to be safe.
+        FTree resolvedTree = IonTreeUtils.isUnresolved(sourceTree) ? new IonTreeUtils().treeToNeutralTree(sourceTree) : sourceTree;
+
         final List<LossEdge> lossEdges = new ArrayList<>();
         final Int2IntMap fragmentIdToIndex = new Int2IntOpenHashMap();
         final AtomicInteger idx = new AtomicInteger(0);
 
         FragmentationTreeBuilder treeBuilder = FragmentationTree.builder()
-                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(sourceTree))
-                .adduct(sourceTree.getAnnotation(PrecursorIonType.class).orElseThrow())
-                .treeScore(sourceTree.getTreeWeight())
+                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(resolvedTree))
+                .adduct(resolvedTree.getAnnotation(PrecursorIonType.class).orElseThrow())
+                .treeScore(resolvedTree.getTreeWeight())
 
-                .fragments(sourceTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
+                .fragments(resolvedTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
                     final FragmentNode fn = new FragmentNode();
                     fn.setFragmentId(f.getVertexId());
                     fn.setMolecularFormula(f.getFormula().toString());
-                    fn.setAdduct(sourceTree.getAdduct(f).toString());
+                    fn.setAdduct(resolvedTree.getAdduct(f).toString());
 
                     {
-                        final FragmentAnnotation<Peak> peakInfo = sourceTree.getFragmentAnnotationOrThrow(Peak.class);
+                        final FragmentAnnotation<Peak> peakInfo = resolvedTree.getFragmentAnnotationOrThrow(Peak.class);
                         fn.setMz(peakInfo.get(f).getMass());
                         fn.setIntensity(peakInfo.get(f).getIntensity());
                     }
 
                     {
-                        final FragmentAnnotation<AnnotatedPeak> anoPeak = sourceTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+                        final FragmentAnnotation<AnnotatedPeak> anoPeak = resolvedTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
                         if (anoPeak.get(f).isMeasured()) {
-                            Deviation dev = sourceTree.getMassError(f);
+                            Deviation dev = resolvedTree.getMassError(f);
                             fn.setMassDeviationDa(dev.getAbsolute());
                             fn.setMassDeviationPpm(dev.getPpm());
                         }
                     }
 
                     {
-                        final FragmentAnnotation<Score> scores = sourceTree.getFragmentAnnotationOrThrow(Score.class);
+                        final FragmentAnnotation<Score> scores = resolvedTree.getFragmentAnnotationOrThrow(Score.class);
                         if (scores.get(f) != null) fn.setScore(scores.get(f).sum());
                     }
 
@@ -92,7 +95,7 @@ public class FragmentationTree {
                 }).toList());
 
 
-        for (Loss l : sourceTree.losses()) {
+        for (Loss l : resolvedTree.losses()) {
             LossEdge loss = LossEdge.builder()
                     .sourceFragmentIdx(fragmentIdToIndex.get(l.getSource().getVertexId()))
                     .targetFragmentIdx(fragmentIdToIndex.get(l.getTarget().getVertexId()))
