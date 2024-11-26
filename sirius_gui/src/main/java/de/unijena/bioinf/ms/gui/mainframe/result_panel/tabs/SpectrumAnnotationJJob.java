@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -61,6 +62,8 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         AnnotatedMsMsData annotatedMsMsData = null;
         try {
             checkForInterruption();
+            //warn if tree is unresolved but has adduct.
+            if (IonTreeUtils.isUnresolved(ftree) && !ftree.getAnnotation(PrecursorIonType.class, PrecursorIonType::unknownPositive).getAdduct().isEmpty()) logWarn("Fragmentation tree is not resolved. Adducts of peak annotations may be not correctly derived.");
             annotatedMsMsData = new AnnotatedMsMsData();
             final InsilicoFragmentationResult structureAnno = smiles == null ? null :
                     submitSubJob(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, smiles)
@@ -124,7 +127,7 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         PeakAnnotation peakAnno = new PeakAnnotation();
         if (f.getFormula() != null && f.getIonization() != null) {
             peakAnno.molecularFormula(f.getFormula().toString())
-                    .ionization(f.getIonization().toString())
+                    .adduct(ftree.getAdduct(f).toString())
                     .exactMass(ftree.getExactMass(f))
                     .fragmentId(vertexId);
         }
@@ -208,9 +211,12 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         SpectrumAnnotation specAnno = new SpectrumAnnotation();
 
         Fragment precursorRoot = IonTreeUtils.getMeasuredIonRoot(ftree);
-        if (precursorRoot.getFormula() != null && precursorRoot.getIonization() != null) {
-            specAnno.molecularFormula(precursorRoot.getFormula().toString())
-                    .ionization(precursorRoot.getIonization().toString()) //todo should this be really an ionization and not the PrecursorIonType? In this case we need to make sure to used the correctly resolved formula or the precursor ion
+        MolecularFormula compoundFormula = IonTreeUtils.getCompoundMolecularFormula(ftree);
+        PrecursorIonType ionType = ftree.getAnnotation(PrecursorIonType.class,
+                () -> precursorRoot.getIonization() != null ? PrecursorIonType.getPrecursorIonType(precursorRoot.getIonization()) : null);
+        if (compoundFormula != null && ionType != null) {
+            specAnno.molecularFormula(compoundFormula.toString())
+                    .adduct(ionType.toString())
                     .exactMass(ftree.getExactMass(precursorRoot));
         }
 
