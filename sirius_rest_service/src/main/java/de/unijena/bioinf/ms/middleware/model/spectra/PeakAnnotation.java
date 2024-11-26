@@ -40,13 +40,13 @@ public class PeakAnnotation {
     private String molecularFormula;
 
     /**
-     * Ionization that has been annotated to this peak
+     * Adduct that has been annotated to this peak
      */
     @Schema(nullable = true)
-    private String ionization;
+    private String adduct;
 
     /**
-     * Exact mass of the annotated molecular formula and ionization
+     * Exact mass of the annotated molecular formula and adduct
      */
     @Schema(nullable = true)
     private Double exactMass;
