@@ -36,10 +36,10 @@ public class SpectrumAnnotation {
     private String molecularFormula;
 
     /**
-     * Ionization that has been annotated to this spectrum
+     * Adduct that has been annotated to this spectrum
      */
     @Schema(nullable = true)
-    private String ionization;
+    private String adduct;
 
     /**
      * Exact mass based on the annotated molecular formula and ionization

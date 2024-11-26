@@ -218,7 +218,7 @@ public class Spectrums {
         PeakAnnotation.PeakAnnotationBuilder peakAnno = PeakAnnotation.builder();
         if (f.getFormula() != null && f.getIonization() != null) {
             peakAnno.molecularFormula(f.getFormula().toString())
-                    .ionization(f.getIonization().toString())
+                    .adduct(ftree.getAdduct(f).toString())
                     .exactMass(ftree.getExactMass(f))
                     .fragmentId(vertexId);
         }
@@ -262,9 +262,12 @@ public class Spectrums {
         SpectrumAnnotation.SpectrumAnnotationBuilder specAnno = SpectrumAnnotation.builder();
 
         Fragment precursorRoot = IonTreeUtils.getMeasuredIonRoot(ftree);
+        MolecularFormula compoundFormula = IonTreeUtils.getCompoundMolecularFormula(ftree);
+        PrecursorIonType ionType = ftree.getAnnotation(PrecursorIonType.class,
+                () -> precursorRoot.getIonization() != null ? PrecursorIonType.getPrecursorIonType(precursorRoot.getIonization()) : null);
         if (precursorRoot.getFormula() != null && precursorRoot.getIonization() != null) {
-            specAnno.molecularFormula(precursorRoot.getFormula().toString())
-                    .ionization(precursorRoot.getIonization().toString()) //todo should this be really an ionization and not the PrecursorIonType? In this case we need to make sure to used the correctly resolved formula or the precursor ion
+            specAnno.molecularFormula(compoundFormula.toString())
+                    .adduct(ionType.toString())
                     .exactMass(ftree.getExactMass(precursorRoot));
         }
 
@@ -352,8 +355,7 @@ public class Spectrums {
 
     @JsonIgnore
     private static BasicSpectrum simulateIsotopePattern(@NotNull FTree tree, Spectrum<?> isotopePattern) {
-        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
-        final MolecularFormula formula = tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
+        final MolecularFormula formula = IonTreeUtils.getPrecursorFormula(tree);
         final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max);
         gen.setMinimalProbabilityThreshold(Math.min(0.005, de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getMinimalIntensity(isotopePattern)));
         gen.setMaximalNumberOfPeaks(Math.max(4, isotopePattern.size()));

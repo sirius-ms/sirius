@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -37,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges
  * Root fragment has index 0;
+ * Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation
  */
 @Getter
 @Setter
@@ -45,6 +48,8 @@ public class FragmentationTree {
     protected List<FragmentNode> fragments;
     protected List<LossEdge> losses;
     Double treeScore;
+    MolecularFormula molecularFormula;
+    PrecursorIonType adduct;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {
         final List<LossEdge> lossEdges = new ArrayList<>();
@@ -52,13 +57,15 @@ public class FragmentationTree {
         final AtomicInteger idx = new AtomicInteger(0);
 
         FragmentationTreeBuilder treeBuilder = FragmentationTree.builder()
+                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(sourceTree))
+                .adduct(sourceTree.getAnnotation(PrecursorIonType.class).orElseThrow())
                 .treeScore(sourceTree.getTreeWeight())
 
                 .fragments(sourceTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
                     final FragmentNode fn = new FragmentNode();
                     fn.setFragmentId(f.getVertexId());
                     fn.setMolecularFormula(f.getFormula().toString());
-                    fn.setIonType(f.getIonization().toString());
+                    fn.setAdduct(sourceTree.getAdduct(f).toString());
 
                     {
                         final FragmentAnnotation<Peak> peakInfo = sourceTree.getFragmentAnnotationOrThrow(Peak.class);
@@ -77,7 +84,7 @@ public class FragmentationTree {
 
                     {
                         final FragmentAnnotation<Score> scores = sourceTree.getFragmentAnnotationOrThrow(Score.class);
-                        fn.setScore(scores.get(f).sum());
+                        if (scores.get(f) != null) fn.setScore(scores.get(f).sum());
                     }
 
                     fragmentIdToIndex.put(fn.getFragmentId(), idx.getAndIncrement());
