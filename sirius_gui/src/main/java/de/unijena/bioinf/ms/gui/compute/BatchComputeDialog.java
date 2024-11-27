@@ -21,6 +21,9 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -593,11 +596,15 @@ public class BatchComputeDialog extends JDialog {
             saveAsPreset.setToolTipText("Save current selection as a new preset");
         }
 
+        JButton viewPreset = new JButton("View");
+        viewPreset.addActionListener(e -> viewPresetDialog());
+
         JButton removePreset = new JButton("Remove");
         removePreset.setEnabled(false);
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
+        panel.add(viewPreset);
         panel.add(removePreset);
 
         presetDropdown.addItemListener(event -> {
@@ -743,5 +750,29 @@ public class BatchComputeDialog extends JDialog {
 
         recomputeBox.setEnabled(true);
         showCommand.setEnabled(true);
+    }
+
+    private void viewPresetDialog() {
+        try {
+            String json = toJson(preset);
+            String presetName = (String) presetDropdown.getSelectedItem();
+
+            JTextArea textArea = new JTextArea(json);
+            textArea.setEditable(false);
+            textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new Dimension(600, 600));
+
+            JOptionPane.showMessageDialog(this, scrollPane, "Preset source: " + presetName, JOptionPane.PLAIN_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String toJson(Object obj) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
+        return objectMapper.writeValueAsString(obj);
     }
 }
