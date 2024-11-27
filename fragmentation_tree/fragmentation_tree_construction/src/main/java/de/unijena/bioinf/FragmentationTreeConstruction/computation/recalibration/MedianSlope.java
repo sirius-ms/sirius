@@ -87,7 +87,7 @@ public class MedianSlope extends AbstractRecalibrationStrategy {
         // for each mass range of 100 Da choose the most intensive peaks
         final SimpleSpectrum massOrderedSpectrum = new SimpleSpectrum(measured);
         final double highestMass = massOrderedSpectrum.getMzAt(massOrderedSpectrum.size() - 1);
-        final ArrayList<Integer>[] chosenPeaks = new ArrayList[(int) Math.ceil(highestMass / 100)];
+        final ArrayList<Integer>[] chosenPeaks = new ArrayList[(int)(highestMass / 100) + 1];
         for (int k = 0; k < chosenPeaks.length; ++k) chosenPeaks[k] = new ArrayList<Integer>();
         for (int k = 0; k < massOrderedSpectrum.size(); ++k) {
             final int bin = (int) Math.floor(massOrderedSpectrum.getMzAt(k) / 100);
