@@ -811,6 +811,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
                     da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
             builder.detectedAdducts(da);
+        } else {
+            builder.detectedAdducts(new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts());
         }
         return builder.build();
     }
