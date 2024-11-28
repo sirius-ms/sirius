@@ -147,12 +147,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 max.addNamed("Max RT (in sec)", maxRtSpinner);
                 ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
 
-                minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
-                maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
-                min.addNamed("Min confidence", minConfidenceSpinner);
-                max.addNamed("Max confidence", maxConfidenceSpinner);
-                ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
-
                 inputParameters.add(box);
             }
 
@@ -172,6 +166,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
                 inputParameters.add(adductOptions);
             }
+
+            inputParameters.addVerticalGlue();
         }
 
         {
@@ -218,6 +214,29 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         resultParameters.setLayout(new BoxLayout(resultParameters, BoxLayout.Y_AXIS));
         resultParameters.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
         centerTab.addTab("Results", resultParameters);
+
+        // Confidence score filter
+        {
+            resultParameters.add(Box.createVerticalStrut(9));
+            resultParameters.add(new JXTitledSeparator("Confidence score"));
+
+            TwoColumnPanel min = new TwoColumnPanel();
+            TwoColumnPanel max = new TwoColumnPanel();
+
+            Box box = Box.createHorizontalBox();
+            box.add(min);
+            box.add(Box.createHorizontalGlue());
+            box.add(max);
+
+            minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+            maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+            min.addNamed("Min confidence", minConfidenceSpinner);
+            max.addNamed("Max confidence", maxConfidenceSpinner);
+            ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
+
+            resultParameters.add(box);
+
+        }
 
         // Element filter
         {
