@@ -157,8 +157,18 @@ public class Utils {
         return !isNullOrEmpty(s);
     }
 
+    @NotNull
+    public static String notNullOrEmpty(@Nullable final String s, @NotNull String fallback) {
+        return notNullOrEmpty(s) ? s : fallback;
+    }
+
     public static boolean notNullOrBlank(@Nullable final String s) {
         return !isNullOrBlank(s);
+    }
+
+    @NotNull
+    public static String notNullOrBlank(@Nullable final String s, @NotNull String fallback) {
+        return notNullOrBlank(s) ? s : fallback;
     }
 
     public static <T> boolean notNullOrEmpty(@Nullable final T[] s) {

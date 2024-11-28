@@ -389,18 +389,8 @@ public final class BackgroundRuns {
 
                 logInfo("Start Computation...");
                 computation.run();
-                logInfo("Computation DONE!");
-                return true;
-            } finally {
-                logInfo("Flushing Results to disk in background...");
-                psm.flush();
-                logInfo("Results flushed!");
-            }
-        }
 
-        @Override
-        protected void cleanup() {
-            try {
+                logInfo("Computation DONE!");
                 if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
                     withWriteLock(() -> instances.forEach(i -> computingInstances.remove(i.getId())));
@@ -419,6 +409,18 @@ public final class BackgroundRuns {
                     affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
                     logInfo("Imported compounds collected...");
                 }
+
+                return true;
+            } finally {
+                logInfo("Flushing Results to disk in background...");
+                psm.flush();
+                logInfo("Results flushed!");
+            }
+        }
+
+        @Override
+        protected void cleanup() {
+            try {
                 logInfo("Freeing up memory...");
                 computation = null;
                 System.gc(); //hint for the gc to collect som trash after computations
