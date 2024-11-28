@@ -20,6 +20,11 @@
 
 package de.unijena.bioinf.ms.gui.utils.loading;
 
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+
+import java.util.concurrent.Callable;
+
 @FunctionalInterface
 public interface Loadable {
     boolean setLoading(boolean loading, boolean absolute);
@@ -39,4 +44,29 @@ public interface Loadable {
     default boolean disableLoading() {
         return setLoading(false, true);
     }
+
+
+    //todo add support for determined loading.
+    default TinyBackgroundJJob<Boolean> runInBackgroundAndLoad(final Runnable task) {
+        return Jobs.runInBackground(() -> {
+            setLoading(true, true);
+            try {
+                task.run();
+            }finally {
+                setLoading(false, true);
+            }
+        });
+    }
+
+    default <T> TinyBackgroundJJob<T> runInBackgroundAndLoad(final Callable<T> task) {
+        return Jobs.runInBackground(() -> {
+            setLoading(true, true);
+            try {
+                return task.call();
+            }finally {
+                setLoading(false, true);
+            }
+        });
+    }
+
 }

@@ -149,7 +149,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void decoradeMainFrame() {
-        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
+        Jobs.runEDTLater(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
         // create models for views
         compoundList = new CompoundList(gui);
