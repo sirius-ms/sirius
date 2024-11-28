@@ -42,8 +42,10 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -54,7 +56,7 @@ public class LCMSProcessing {
     /**
      * Creates temporary databases to store traces and spectra
      */
-    private final LCMSStorageFactory storageFactory = LCMSStorage.temporaryStorage();
+    private final LCMSStorageFactory storageFactory;
 
     /**
      * Calculates noise thresholds from raw Spectra
@@ -120,8 +122,13 @@ public class LCMSProcessing {
             new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
+        this(siriusDatabaseAdapter, saveFeatureIds, null);
+    }
+
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, @Nullable Path tmpDir) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
         this.saveFeatureIds = saveFeatureIds;
+        this.storageFactory = LCMSStorage.temporaryStorage(tmpDir == null ? null : tmpDir.toFile());
     }
 
     /**

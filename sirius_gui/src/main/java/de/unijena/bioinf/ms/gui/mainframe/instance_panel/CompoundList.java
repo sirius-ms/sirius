@@ -148,7 +148,8 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        fireFilterChanged();
+        compoundFilterModel.updateAdducts(sortedSource);
+        compoundFilterModel.fireUpdateCompleted();
     }
 
     private void colorByActiveFilter() {
@@ -224,6 +225,15 @@ public class CompoundList {
         compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
     }
 
+
+    /**
+     * Updates the  available filter options in the filter model.
+     * Does not cause global re-filtering
+     */
+    public void updateFilter(@NotNull java.util.List<InstanceBean> instances) {
+        compoundFilterModel.updateAdducts(instances);
+        updateTogglesByActiveFilter();
+    }
     public void resetFilter() {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
         compoundFilterModel.resetFilter();
@@ -234,18 +244,11 @@ public class CompoundList {
         updateTogglesByActiveFilter();
     }
 
-    public void fireFilterChanged() {
-        compoundFilterModel.updateAdducts(sortedSource);
-        compoundFilterModel.fireUpdateCompleted();
-    }
-
     private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
         //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
             l.fullListChanged(event.copy(), compountListSelectionModel, compoundList.size());
         }
-        compoundFilterModel.updateAdducts(event.getSourceList());
-        updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {

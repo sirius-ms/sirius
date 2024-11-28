@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.utils;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
@@ -33,7 +32,6 @@ import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
-import raven.swing.spinner.SpinnerProgress;
 
 import javax.swing.*;
 import java.awt.*;
@@ -262,38 +260,5 @@ public class GuiUtils {
             box.setSelectedItem(defaultSelection);
 
         return box;
-    }
-
-    public static JPanel newSpinnerProgressPanel() {
-        return newSpinnerProgressPanel("Loading...");
-    }
-
-    public static JPanel newSpinnerProgressPanel(@Nullable String loadingMessage) {
-        return newSpinnerProgressPanel(null, loadingMessage);
-    }
-
-    public static JPanel newSpinnerProgressPanel(@Nullable FlatSVGIcon filterIcon, @Nullable String loadingMessage) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(false);
-
-        SpinnerProgress spinner = filterIcon == null ? new SpinnerProgress() : new SpinnerProgress(filterIcon);
-        spinner.setStringPainted(false);
-        spinner.setIndeterminate(true);
-        spinner.setPreferredSize(new Dimension(128, 128));
-        spinner.setOpaque(false);
-
-        JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
-        if (label != null)
-            label.setOpaque(false);
-
-        // Create a wrapper panel to hold the fixed-size panel
-        JPanel wrapperPanel = new JPanel(new GridBagLayout());
-        wrapperPanel.add(spinner); // Add fixed-size panel to the center of the wrapper
-        wrapperPanel.setOpaque(false);
-
-        panel.add(wrapperPanel, BorderLayout.CENTER);
-        if (label != null)
-            panel.add(label, BorderLayout.SOUTH);
-        return panel;
     }
 }
