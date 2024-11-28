@@ -203,7 +203,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     protected Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> getRenderScoreFunc() {
-       return sre -> sre.getZodiacScore().map(s -> new FormulaListTextCellRenderer.RenderScore(s, "Zodiac"))
+       return sre -> sre.getZodiacScore().map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
                 .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScore().
                         map(s -> Math.exp(s - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d)
                         .orElse(Double.NaN), "SIRIUS"));
