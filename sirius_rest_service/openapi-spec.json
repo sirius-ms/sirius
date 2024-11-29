@@ -6576,6 +6576,7 @@
             "$ref": "#/components/schemas/SpectrumAnnotation"
           }
         },
+        "description": "Spectrum model with peak annotations based on the fragmentation tree and Epimetheus substructure annotations.\n Molecular formula and adduct of the spectrum are identical to the ones of the corresponding molecular formula candidate and FragmentationTree.\n Fragment molecular formulas and adducts correspond to the FragmentationTree\u0027s FragmentNodes",
         "nullable": true
       },
       "BinaryFingerprint": {
@@ -7043,10 +7044,12 @@
           },
           "molecularFormula": {
             "type": "string",
+            "description": "neutral molecular formula of the fragment without adduct",
             "nullable": true
           },
-          "ionType": {
+          "adduct": {
             "type": "string",
+            "description": "This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree FragmentationTree}s adduct,\n this adduct may not include any in-source loss.",
             "nullable": true
           },
           "massDeviationDa": {
@@ -7094,9 +7097,15 @@
           "treeScore": {
             "type": "number",
             "format": "double"
+          },
+          "molecularFormula": {
+            "type": "string"
+          },
+          "adduct": {
+            "type": "string"
           }
         },
-        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;",
+        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
         "nullable": true
       },
       "IsotopePatternAnnotation": {
@@ -7229,14 +7238,14 @@
             "description": "Molecular formula that has been annotated to this peak",
             "nullable": true
           },
-          "ionization": {
+          "adduct": {
             "type": "string",
-            "description": "Ionization that has been annotated to this peak",
+            "description": "Adduct that has been annotated to this peak",
             "nullable": true
           },
           "exactMass": {
             "type": "number",
-            "description": "Exact mass of the annotated molecular formula and ionization",
+            "description": "Exact mass of the annotated molecular formula and adduct",
             "format": "double",
             "nullable": true
           },
@@ -7382,9 +7391,9 @@
             "description": "Molecular formula that has been annotated to this spectrum",
             "nullable": true
           },
-          "ionization": {
+          "adduct": {
             "type": "string",
-            "description": "Ionization that has been annotated to this spectrum",
+            "description": "Adduct that has been annotated to this spectrum",
             "nullable": true
           },
           "exactMass": {

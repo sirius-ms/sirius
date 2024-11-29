@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -48,8 +47,8 @@ public class FragmentationTree {
     protected List<FragmentNode> fragments;
     protected List<LossEdge> losses;
     Double treeScore;
-    MolecularFormula molecularFormula;
-    PrecursorIonType adduct;
+    String molecularFormula;
+    String adduct;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {
         //should be already be resolved. Just to be safe.
@@ -60,8 +59,8 @@ public class FragmentationTree {
         final AtomicInteger idx = new AtomicInteger(0);
 
         FragmentationTreeBuilder treeBuilder = FragmentationTree.builder()
-                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(resolvedTree))
-                .adduct(resolvedTree.getAnnotation(PrecursorIonType.class).orElseThrow())
+                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(resolvedTree).toString())
+                .adduct(resolvedTree.getAnnotation(PrecursorIonType.class).map(PrecursorIonType::toString).orElse(null))
                 .treeScore(resolvedTree.getTreeWeight())
 
                 .fragments(resolvedTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
