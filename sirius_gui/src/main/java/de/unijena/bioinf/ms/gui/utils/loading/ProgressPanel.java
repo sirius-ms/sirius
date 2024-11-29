@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.utils.loading;
 
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,7 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class ProgressPanel<P extends JProgressBar> extends JPanel {
-    protected static final String DEFAULT_PROGRESS_STRING = "Loading...";
+    public static final String DEFAULT_PROGRESS_STRING = "Loading...";
     @Getter
     @NotNull
     protected final P progressBar;
