@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PeakAnnotation.JSON_PROPERTY_FRAGMENT_ID,
   PeakAnnotation.JSON_PROPERTY_MOLECULAR_FORMULA,
-  PeakAnnotation.JSON_PROPERTY_IONIZATION,
+  PeakAnnotation.JSON_PROPERTY_ADDUCT,
   PeakAnnotation.JSON_PROPERTY_EXACT_MASS,
   PeakAnnotation.JSON_PROPERTY_MASS_DEVIATION_MZ,
   PeakAnnotation.JSON_PROPERTY_MASS_DEVIATION_PPM,
@@ -54,8 +54,8 @@ public class PeakAnnotation {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   private String molecularFormula;
 
-  public static final String JSON_PROPERTY_IONIZATION = "ionization";
-  private String ionization;
+  public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  private String adduct;
 
   public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
   private Double exactMass;
@@ -143,29 +143,29 @@ public class PeakAnnotation {
     this.molecularFormula = molecularFormula;
   }
 
-  public PeakAnnotation ionization(String ionization) {
+  public PeakAnnotation adduct(String adduct) {
     
-    this.ionization = ionization;
+    this.adduct = adduct;
     return this;
   }
 
    /**
-   * Ionization that has been annotated to this peak
-   * @return ionization
+   * Adduct that has been annotated to this peak
+   * @return adduct
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IONIZATION)
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getIonization() {
-    return ionization;
+  public String getAdduct() {
+    return adduct;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IONIZATION)
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIonization(String ionization) {
-    this.ionization = ionization;
+  public void setAdduct(String adduct) {
+    this.adduct = adduct;
   }
 
   public PeakAnnotation exactMass(Double exactMass) {
@@ -175,7 +175,7 @@ public class PeakAnnotation {
   }
 
    /**
-   * Exact mass of the annotated molecular formula and ionization
+   * Exact mass of the annotated molecular formula and adduct
    * @return exactMass
   **/
   @jakarta.annotation.Nullable
@@ -478,7 +478,7 @@ public class PeakAnnotation {
     PeakAnnotation peakAnnotation = (PeakAnnotation) o;
     return Objects.equals(this.fragmentId, peakAnnotation.fragmentId) &&
         Objects.equals(this.molecularFormula, peakAnnotation.molecularFormula) &&
-        Objects.equals(this.ionization, peakAnnotation.ionization) &&
+        Objects.equals(this.adduct, peakAnnotation.adduct) &&
         Objects.equals(this.exactMass, peakAnnotation.exactMass) &&
         Objects.equals(this.massDeviationMz, peakAnnotation.massDeviationMz) &&
         Objects.equals(this.massDeviationPpm, peakAnnotation.massDeviationPpm) &&
@@ -494,7 +494,7 @@ public class PeakAnnotation {
 
   @Override
   public int hashCode() {
-    return Objects.hash(fragmentId, molecularFormula, ionization, exactMass, massDeviationMz, massDeviationPpm, recalibratedMassDeviationMz, recalibratedMassDeviationPpm, parentPeak, substructureAtoms, substructureBonds, substructureBondsCut, substructureScore, hydrogenRearrangements);
+    return Objects.hash(fragmentId, molecularFormula, adduct, exactMass, massDeviationMz, massDeviationPpm, recalibratedMassDeviationMz, recalibratedMassDeviationPpm, parentPeak, substructureAtoms, substructureBonds, substructureBondsCut, substructureScore, hydrogenRearrangements);
   }
 
   @Override
@@ -503,7 +503,7 @@ public class PeakAnnotation {
     sb.append("class PeakAnnotation {\n");
     sb.append("    fragmentId: ").append(toIndentedString(fragmentId)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
-    sb.append("    ionization: ").append(toIndentedString(ionization)).append("\n");
+    sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    massDeviationMz: ").append(toIndentedString(massDeviationMz)).append("\n");
     sb.append("    massDeviationPpm: ").append(toIndentedString(massDeviationPpm)).append("\n");
