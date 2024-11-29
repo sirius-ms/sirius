@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -68,7 +69,7 @@ public class BatchComputeDialog extends JDialog {
 
 
     // main parts
-    private Box mainPanel;
+    private Box centerPanel;
     private JCheckBox recomputeBox;
 
     // tool configurations
@@ -85,30 +86,37 @@ public class BatchComputeDialog extends JDialog {
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
+    LoadablePanel loadableWrapper;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
         gui.getConnectionMonitor().checkConnectionInBackground();
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
-        final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
-        ActFormulaIDConfigPanel tmp = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView); //needs to be created outside the loading job because it also starts background job that might cause a deadlock otherwise
-        Jobs.runInBackgroundAndLoad(this, "Initializing Compute Dialog...", () -> {
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setLayout(new BorderLayout());
 
-            mainPanel = Box.createVerticalBox();
-            mainPanel.setBorder(BorderFactory.createEmptyBorder());
-            final JScrollPane mainSP = new JScrollPane(mainPanel);
+        setLayout(new BorderLayout());
+        final JPanel main = new JPanel(new BorderLayout());
+        loadableWrapper = new LoadablePanel(main,"Initializing...");
+        loadableWrapper.setLoading(true,true);
+
+        add(loadableWrapper, BorderLayout.CENTER);
+
+        loadableWrapper.runInBackgroundAndLoad(() -> {
+            final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+            centerPanel = Box.createVerticalBox();
+            centerPanel.setBorder(BorderFactory.createEmptyBorder());
+            final JScrollPane mainSP = new JScrollPane(centerPanel);
             mainSP.setBorder(BorderFactory.createEtchedBorder());
             mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
             mainSP.getVerticalScrollBar().setUnitIncrement(16);
-            add(mainSP, BorderLayout.CENTER);
+            main.add(mainSP, BorderLayout.CENTER);
 
             {
                 // make subtool config panels
-                formulaIDConfigPanel = tmp;
+                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);;
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
@@ -229,7 +237,7 @@ public class BatchComputeDialog extends JDialog {
                 southPanel.add(csouthPanel);
                 southPanel.add(rsouthPanel);
 
-                this.add(southPanel, BorderLayout.SOUTH);
+                main.add(southPanel, BorderLayout.SOUTH);
             }
 
             //finalize panel build
@@ -241,6 +249,7 @@ public class BatchComputeDialog extends JDialog {
             checkResult = gui.getConnectionMonitor().getCurrentCheckResult();
         });
 
+        setPreferredSize(new Dimension(1125, 970));
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
@@ -291,7 +300,7 @@ public class BatchComputeDialog extends JDialog {
         JPanel flowContainer = new JPanel(flowLayout);
         flowContainer.setBorder(BorderFactory.createEmptyBorder());
         addConfigPanelToRow(header, configPanel, flowContainer);
-        mainPanel.add(flowContainer);
+        centerPanel.add(flowContainer);
         return flowContainer;
     }
 
