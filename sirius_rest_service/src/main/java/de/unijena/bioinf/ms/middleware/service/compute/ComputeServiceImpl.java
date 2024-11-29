@@ -186,8 +186,8 @@ public class ComputeServiceImpl implements ComputeService {
 
         try {
             List<String> commandList = jobSubmission.asCommand();
-            BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, instances);
-            registerServerJobEventListener(run, psmI.getProjectId());
+            BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, instances,
+                    job -> registerServerJobEventListener(job, psmI.getProjectId()));
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -205,12 +205,13 @@ public class ComputeServiceImpl implements ComputeService {
             if (alignedFeatureIds != null) {
                 List<Instance> instances = new ArrayList<>();
                 alignedFeatureIds.forEach(id -> instances.add(loadInstance(project, id)));
-                run = backgroundRuns(project).runCommand(commandList, instances);
+                run = backgroundRuns(project).runCommand(commandList, instances,
+                        j -> registerServerJobEventListener(j, project.getProjectId()));
             } else {
-                run = backgroundRuns(project).runCommand(commandList, project.getProjectSpaceManager());
+                run = backgroundRuns(project).runCommand(commandList, project.getProjectSpaceManager(),
+                        j -> registerServerJobEventListener(j, project.getProjectId()));
             }
 
-            registerServerJobEventListener(run, project.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -253,18 +254,17 @@ public class ComputeServiceImpl implements ComputeService {
     }
 
     private BackgroundRuns.BackgroundRunJob createAndSubmitMsDataImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runImportMsData(importSubmission);
-        registerServerJobEventListener(run, project.getProjectId());
-        registerServerImportEventListener(run, project.getProjectId());
-        return run;
+        return backgroundRuns(project).runImportMsData(importSubmission, job -> {
+            registerServerJobEventListener(job, project.getProjectId());
+            registerServerImportEventListener(job, project.getProjectId());
+        });
     }
 
     private BackgroundRuns.BackgroundRunJob createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
-                .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
-        registerServerJobEventListener(run, project.getProjectId());
-        registerServerImportEventListener(run, project.getProjectId());
-        return run;
+        return backgroundRuns(project).runImportPeakData(importSubmission, job -> {
+                    registerServerJobEventListener(job, project.getProjectId());
+                    registerServerImportEventListener(job, project.getProjectId());
+                });
     }
 
     @Override
@@ -275,8 +275,8 @@ public class ComputeServiceImpl implements ComputeService {
         if (instances == null)
             instances = project.getProjectSpaceManager();
         try {
-            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), instances);
-            registerServerJobEventListener(run, project.getProjectId());
+            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), instances,
+                    j -> registerServerJobEventListener(j, project.getProjectId()));
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
