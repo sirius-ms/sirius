@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -247,21 +248,32 @@ public final class BackgroundRuns {
         PCS.removePropertyChangeListener(listener);
     }
 
-    public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
-        return submitRunAndLockInstances(makeBackgroundRun(command, instances));
+    public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances,
+                                       @Nullable Consumer<BackgroundRunJob> jobDecorator) throws IOException {
+        BackgroundRunJob run = makeBackgroundRun(command, instances);
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
     }
 
-    public BackgroundRunJob runImportMsData(AbstractImportSubmission submission) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing"));
-    }
-
-    public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
+    public BackgroundRunJob runImportMsData(@NotNull AbstractImportSubmission<?> submission,
+                                            @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import"));
+        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing");
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
+    }
+
+    public BackgroundRunJob runImportPeakData(@NotNull AbstractImportSubmission<?> submission,
+                                              @Nullable Consumer<BackgroundRunJob> jobDecorator
+    ) {
+        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import");
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
     }
 
     private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
