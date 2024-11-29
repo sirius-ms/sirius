@@ -38,8 +38,8 @@ import java.util.List;
 
 /**
  * Spectrum model with peak annotations based on the fragmentation tree and Epimetheus substructure annotations.
- * Molecular formula and adduct of the spectrum are identical to the ones of the corresponding molecular formula candidate and {@link de.unijena.bioinf.ms.middleware.model.annotations.FragmentationTree}.
- * Fragement molecular formulas and adducts correspond to the FragmentationTree's {@link de.unijena.bioinf.ms.middleware.model.annotations.FragmentNode}s
+ * Molecular formula and adduct of the spectrum are identical to the ones of the corresponding molecular formula candidate and FragmentationTree.
+ * Fragment molecular formulas and adducts correspond to the FragmentationTree's FragmentNodes
  */
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
