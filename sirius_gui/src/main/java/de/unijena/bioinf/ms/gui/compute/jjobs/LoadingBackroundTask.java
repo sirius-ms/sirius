@@ -113,7 +113,7 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle(title);
 
-        progressPanel = new JProgressBarPanel(indeterminateProgress);
+        progressPanel = new JProgressBarPanel(title, indeterminateProgress);
         progressPanel.setBackground(Colors.BACKGROUND);
         progressPanel.setOpaque(true);
 
