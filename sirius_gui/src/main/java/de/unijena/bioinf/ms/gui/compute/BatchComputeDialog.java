@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -99,6 +100,7 @@ public class BatchComputeDialog extends JDialog {
     private JComboBox<String> presetDropdown;
     private JobSubmission preset;
     private boolean presetFrozen;
+    private MessageBanner presetCannotBeLoaded;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
@@ -111,8 +113,10 @@ public class BatchComputeDialog extends JDialog {
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             setLayout(new BorderLayout());
 
-            JPanel presetPanel = makePresetPanel();
-            add(presetPanel, BorderLayout.NORTH);
+            JPanel northPanel = new JPanel(new BorderLayout());
+            northPanel.add(makeBanners(), BorderLayout.NORTH);
+            northPanel.add(makePresetPanel(), BorderLayout.CENTER);
+            add(northPanel, BorderLayout.NORTH);
 
             mainPanel = Box.createVerticalBox();
             mainPanel.setBorder(BorderFactory.createEmptyBorder());
@@ -572,6 +576,15 @@ public class BatchComputeDialog extends JDialog {
         return !configPanel.getContent().getSelectedAdducts().isEmpty();
     }
 
+    private JPanel makeBanners() {
+        presetCannotBeLoaded = new MessageBanner("Preset cannot be loaded", MessageBanner.BannerType.INFO);
+        presetCannotBeLoaded.setVisible(false);
+
+        JPanel bannerPanel = new JPanel(new BorderLayout());
+        bannerPanel.add(presetCannotBeLoaded, BorderLayout.NORTH);
+        return bannerPanel;
+    }
+
     private JPanel makePresetPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.add(new JLabel("Preset"));
@@ -738,6 +751,7 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetFreeze() {
         presetFrozen = true;
+        presetCannotBeLoaded.setVisible(true);
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> {
                     if (panel.isToolSelected()) {
@@ -752,6 +766,7 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetUnfreeze() {
         presetFrozen = false;
+        presetCannotBeLoaded.setVisible(false);
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
 
