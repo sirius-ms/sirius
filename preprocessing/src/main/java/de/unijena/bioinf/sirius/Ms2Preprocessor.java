@@ -81,6 +81,8 @@ public class Ms2Preprocessor extends Ms1Preprocessor {
         for (ProcessedPeak peak : mergedPeaks) {
             maxIntensity = Math.max(peak.getRelativeIntensity(), maxIntensity);
         }
+
+        if (maxIntensity <=0) return; //the spectrum is likely artificial with just the precursor peak from MS1-only data.
         for (int k = 0; k < mergedPeaks.size(); ++k) {
             final ProcessedPeak peak = mergedPeaks.get(k);
             peak.setRelativeIntensity(peak.getRelativeIntensity()/maxIntensity);
