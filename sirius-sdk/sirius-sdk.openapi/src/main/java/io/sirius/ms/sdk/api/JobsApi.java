@@ -959,7 +959,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
         
         final String[] localVarAccepts = { 
-            "text/plain"
+            "text/plain", "application/problem+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
