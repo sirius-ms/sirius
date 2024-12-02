@@ -32,10 +32,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
@@ -577,7 +574,7 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private JPanel makeBanners() {
-        presetCannotBeLoaded = new MessageBanner("Cannot load preset", MessageBanner.BannerType.INFO);
+        presetCannotBeLoaded = new MessageBanner("Preset sets hidden parameters: You can start a computation with this preset, but cannot edit the parameters.", MessageBanner.BannerType.INFO);
         presetCannotBeLoaded.setVisible(false);
 
         JPanel bannerPanel = new JPanel(new BorderLayout());
@@ -658,10 +655,7 @@ public class BatchComputeDialog extends JDialog {
                     reloadPresets();
                     presetDropdown.setSelectedItem(createdPresetName);
                 } catch (Exception ex) {
-                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
-                            ex.getMessage(),
-                            null,
-                            JOptionPane.ERROR_MESSAGE));
+                    Jobs.runEDTLater(() -> new StacktraceDialog(this, ex.getMessage(), ex));
                 }
             }
         });
@@ -706,7 +700,7 @@ public class BatchComputeDialog extends JDialog {
                 if (!hiddenParameters.isEmpty()) {
                     hiddenParameters.addFirst("Preset sets hidden parameters:\n");
                     hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
-                    SwingUtilities.invokeLater(() -> new WarningDialog(this, "Cannot load preset", GuiUtils.formatToolTip(hiddenParameters),
+                    Jobs.runEDTLater(() -> new InfoDialog(this, "Preset sets hidden parameters", GuiUtils.formatToolTip(hiddenParameters),
                             DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
                     presetFreeze();
                     return;
@@ -729,10 +723,11 @@ public class BatchComputeDialog extends JDialog {
 
             recomputeBox.setSelected(Boolean.parseBoolean(configMap.get("RecomputeResults")));
         } catch (Exception e) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+            Jobs.runEDTLater(() -> new WarningDialog(this,
+                    "Error When loading preset",
                     "The preset cannot be loaded:\n" + e.getMessage() + "\n\nYou can start a computation with this preset, but cannot edit the parameters.",
-                    "Cannot load preset",
-                    JOptionPane.WARNING_MESSAGE));
+                    null
+            ));
             presetFreeze();
         }
     }
