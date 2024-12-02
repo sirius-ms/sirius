@@ -21,18 +21,23 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import io.sirius.ms.sdk.model.*;
@@ -47,6 +52,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +92,11 @@ public class BatchComputeDialog extends JDialog {
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
-    LoadablePanel loadableWrapper;
+    private final JPanel main;
+    private final LoadablePanel loadableWrapper;
+
+    private PropertyChangeListener connectionListener;
+    private MessageBanner messageBanner;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
@@ -94,29 +104,29 @@ public class BatchComputeDialog extends JDialog {
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
 
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        final JPanel main = new JPanel(new BorderLayout());
-        loadableWrapper = new LoadablePanel(main,"Initializing...");
-        loadableWrapper.setLoading(true,true);
+        main = new JPanel(new BorderLayout());
+        loadableWrapper = new LoadablePanel(main, "Initializing...");
+        loadableWrapper.setLoading(true, true);
 
         add(loadableWrapper, BorderLayout.CENTER);
 
+        centerPanel = Box.createVerticalBox();
+        centerPanel.setBorder(BorderFactory.createEmptyBorder());
+        final JScrollPane mainSP = new JScrollPane(centerPanel);
+        mainSP.setBorder(BorderFactory.createEtchedBorder());
+        mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainSP.getVerticalScrollBar().setUnitIncrement(16);
+        main.add(mainSP, BorderLayout.CENTER);
+
+
         loadableWrapper.runInBackgroundAndLoad(() -> {
-            final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-            centerPanel = Box.createVerticalBox();
-            centerPanel.setBorder(BorderFactory.createEmptyBorder());
-            final JScrollPane mainSP = new JScrollPane(centerPanel);
-            mainSP.setBorder(BorderFactory.createEtchedBorder());
-            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            mainSP.getVerticalScrollBar().setUnitIncrement(16);
-            main.add(mainSP, BorderLayout.CENTER);
-
+            final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> Utils.notNullOrEmpty(inst.getMsData().getMs2Spectra()));
             {
                 // make subtool config panels
-                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);;
+                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
@@ -240,25 +250,58 @@ public class BatchComputeDialog extends JDialog {
                 main.add(southPanel, BorderLayout.SOUTH);
             }
 
-            //finalize panel build
-            setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
-            if (getMaximumSize().width < getPreferredSize().width)
-                mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
             configureActions();
 
             checkResult = gui.getConnectionMonitor().getCurrentCheckResult();
+            if (ConnectionChecks.isInternet(checkResult) && !ConnectionChecks.isLoggedIn(checkResult)) {
+                SiriusActions.SIGN_IN.getInstance(gui, true).actionPerformed(null);
+                checkResult = gui.getConnectionMonitor().checkConnection();
+            }
+
+            updateMessageBanner(checkResult);
+
+            connectionListener = evt -> {
+                if (evt instanceof ConnectionMonitor.ConnectionStateEvent stateEvent) {
+                    Jobs.runEDTLater(() -> {
+                        updateMessageBanner(stateEvent.getConnectionCheck());
+                        pack();
+                        repaint();
+                    });
+                }
+            };
+            gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         });
 
-        setPreferredSize(new Dimension(1125, 970));
+        setPreferredSize(new Dimension(1125, 1000));
+        //finalize panel build
+        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        if (getMaximumSize().width < getPreferredSize().width)
+            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private void updateMessageBanner(ConnectionCheck checkResult) {
+        if (messageBanner != null)
+            main.remove(messageBanner);
+        if (ConnectionChecks.isInternet(checkResult) && !ConnectionChecks.isLoggedIn(checkResult)) {
+            messageBanner = new MessageBanner("Not logged in! Most of the tools will not be available without being logged in. Please log in!", MessageBanner.BannerType.WARNING);
+            main.add(messageBanner, BorderLayout.NORTH);
+        } else if (!ConnectionChecks.isInternet(checkResult)) {
+            messageBanner = new MessageBanner("No Connection! There is an issue with the server connection. Please check 'Webservice' for details.", MessageBanner.BannerType.ERROR);
+            main.add(messageBanner, BorderLayout.NORTH);
+        }
+
     }
 
     @Override
     public void dispose() {
         try {
             super.dispose();
+            if (connectionListener != null)
+                gui.getConnectionMonitor().removePropertyChangeListener(connectionListener);
         } finally {
             formulaIDConfigPanel.destroy(); //Sirius configs
             zodiacConfigs.destroy(); //Zodiac configs
