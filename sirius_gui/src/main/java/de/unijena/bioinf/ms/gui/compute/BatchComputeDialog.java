@@ -71,6 +71,7 @@ public class BatchComputeDialog extends JDialog {
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
+    public static final String DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS = "de.unijena.bioinf.sirius.computeDialog.preset.hiddenParameters.dontAskAgain";
 
     public static final String DEFAULT_PRESET_DISPLAY_NAME = "default";
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
@@ -682,15 +683,20 @@ public class BatchComputeDialog extends JDialog {
             } else {
                 preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
-                String hiddenParameters = preset.getConfigMap().entrySet().stream()
+                List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
                         .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
                         .filter(e -> !(e.getKey().equals("AdductSettings.detectable")
                                 && adductsEqual(e.getValue(), defaultPreset.getConfigMap().get(e.getKey()))))
-                        .map(e -> e.getKey() + " = " + e.getValue())
-                        .collect(Collectors.joining("\n"));
+                        .map(e -> e.getKey() + " = " + e.getValue() + "\n")
+                        .collect(Collectors.toCollection(ArrayList::new));
                 if (!hiddenParameters.isEmpty()) {
-                    throw new UnsupportedOperationException("Preset sets hidden parameters:\n" + hiddenParameters);
+                    hiddenParameters.addFirst("Preset sets hidden parameters:\n");
+                    hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
+                    SwingUtilities.invokeLater(() -> new WarningDialog(this, "Cannot load preset", GuiUtils.formatToolTip(hiddenParameters),
+                            DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
+                    presetFreeze();
+                    return;
                 }
             }
 
