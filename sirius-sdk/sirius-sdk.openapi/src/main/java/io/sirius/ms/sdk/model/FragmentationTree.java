@@ -29,12 +29,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges  Root fragment has index 0;
+ * Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges  Root fragment has index 0;  Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation
  */
 @JsonPropertyOrder({
   FragmentationTree.JSON_PROPERTY_FRAGMENTS,
   FragmentationTree.JSON_PROPERTY_LOSSES,
-  FragmentationTree.JSON_PROPERTY_TREE_SCORE
+  FragmentationTree.JSON_PROPERTY_TREE_SCORE,
+  FragmentationTree.JSON_PROPERTY_MOLECULAR_FORMULA,
+  FragmentationTree.JSON_PROPERTY_ADDUCT
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FragmentationTree {
@@ -46,6 +48,12 @@ public class FragmentationTree {
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
   private Double treeScore;
+
+  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  private String molecularFormula;
+
+  public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  private String adduct;
 
   public FragmentationTree() {
   }
@@ -141,6 +149,56 @@ public class FragmentationTree {
     this.treeScore = treeScore;
   }
 
+  public FragmentationTree molecularFormula(String molecularFormula) {
+    
+    this.molecularFormula = molecularFormula;
+    return this;
+  }
+
+   /**
+   * Get molecularFormula
+   * @return molecularFormula
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getMolecularFormula() {
+    return molecularFormula;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMolecularFormula(String molecularFormula) {
+    this.molecularFormula = molecularFormula;
+  }
+
+  public FragmentationTree adduct(String adduct) {
+    
+    this.adduct = adduct;
+    return this;
+  }
+
+   /**
+   * Get adduct
+   * @return adduct
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getAdduct() {
+    return adduct;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAdduct(String adduct) {
+    this.adduct = adduct;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -152,12 +210,14 @@ public class FragmentationTree {
     FragmentationTree fragmentationTree = (FragmentationTree) o;
     return Objects.equals(this.fragments, fragmentationTree.fragments) &&
         Objects.equals(this.losses, fragmentationTree.losses) &&
-        Objects.equals(this.treeScore, fragmentationTree.treeScore);
+        Objects.equals(this.treeScore, fragmentationTree.treeScore) &&
+        Objects.equals(this.molecularFormula, fragmentationTree.molecularFormula) &&
+        Objects.equals(this.adduct, fragmentationTree.adduct);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(fragments, losses, treeScore);
+    return Objects.hash(fragments, losses, treeScore, molecularFormula, adduct);
   }
 
   @Override
@@ -167,6 +227,8 @@ public class FragmentationTree {
     sb.append("    fragments: ").append(toIndentedString(fragments)).append("\n");
     sb.append("    losses: ").append(toIndentedString(losses)).append("\n");
     sb.append("    treeScore: ").append(toIndentedString(treeScore)).append("\n");
+    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
+    sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("}");
     return sb.toString();
   }
