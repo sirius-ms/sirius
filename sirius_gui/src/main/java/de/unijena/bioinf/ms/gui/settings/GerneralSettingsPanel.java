@@ -86,7 +86,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         confidenceDisplayMode = GuiUtils.makeParameterComboBoxFromDescriptiveValues(ConfidenceDisplayMode.values());
 
         try {
-            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.valueOf(props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode")));
+            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.valueOf(props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode", "APPROXIMATE")));
         } catch (IllegalArgumentException e) {
             confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.APPROXIMATE);
         }
