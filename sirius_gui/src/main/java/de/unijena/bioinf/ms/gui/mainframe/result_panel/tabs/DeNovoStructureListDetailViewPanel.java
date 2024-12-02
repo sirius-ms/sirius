@@ -58,7 +58,7 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
 
     protected class DeNovoCandidateListDetailView extends CandidateListDetailView {
         public DeNovoCandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
-            super(resultPanel, sourceList, gui);
+            super(resultPanel, sourceList, gui, true);
         }
 
         @Override
