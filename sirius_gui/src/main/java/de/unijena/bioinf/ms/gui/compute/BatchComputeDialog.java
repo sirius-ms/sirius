@@ -655,7 +655,10 @@ public class BatchComputeDialog extends JDialog {
                     reloadPresets();
                     presetDropdown.setSelectedItem(createdPresetName);
                 } catch (Exception ex) {
-                    Jobs.runEDTLater(() -> new StacktraceDialog(this, ex.getMessage(), ex));
+                    gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
+                            err -> Jobs.runEDTLater(() -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE)),
+                            () -> Jobs.runEDTLater(() -> new StacktraceDialog(this, ex.getMessage(), ex))
+                    );
                 }
             }
         });
