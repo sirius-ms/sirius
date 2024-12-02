@@ -43,11 +43,13 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -64,6 +66,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
@@ -86,16 +89,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     /**
      *
-     * @param resultPanel
-     * @param sourceList
-     * @param gui
-     * @param isDeNovoSearchView true if this list is used as part of the "De novo"-structure genration panel. False, if used as part of the CSI structure database search panel.
+     * @param hasResults function to validate whether results are available. If the function return false NOT_COMPUTED state is shown.
      */
-    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, boolean isDeNovoSearchView) {
+    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> hasResults) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            if (instanceBean == null || (!isDeNovoSearchView && !instanceBean.getComputedTools().isStructureSearch()) || (isDeNovoSearchView && !instanceBean.getComputedTools().isDeNovoSearch()))
+            if (instanceBean == null || !hasResults.apply(instanceBean))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
