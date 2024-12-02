@@ -82,20 +82,11 @@ public class FTJsonWriter {
         generator.useDefaultPrettyPrinter();
         generator.writeStartObject();
 
-        final PrecursorIonType generalIonType = tree.getAnnotationOrNull(PrecursorIonType.class);
-        final FragmentAnnotation<PrecursorIonType> ionPerFragment = tree.getFragmentAnnotationOrNull(PrecursorIonType.class);
         final FragmentAnnotation<AnnotatedPeak> anoPeak = tree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
-        if (generalIonType != null) {
-            final MolecularFormula formula = tree.getRoot().getFormula();
-            final PrecursorIonType fragmentIon = getFragmentIon(ionPerFragment, tree.getRoot(), generalIonType);
-            final MolecularFormula neutral = fragmentIon.measuredNeutralMoleculeToNeutralMolecule(formula);
-            generator.writeStringField("molecularFormula", neutral.toString());
-            generator.writeStringField("root", formula.toString());
-        } else {
-            final String f = tree.getRoot().getFormula().toString();
-            generator.writeStringField("molecularFormula", f);
-            generator.writeStringField("root", f);
-        }
+
+        generator.writeStringField("molecularFormula", IonTreeUtils.getCompoundMolecularFormula(tree).toString());
+        generator.writeStringField("root", tree.getRoot().getFormula().toString());
+
         generator.writeFieldName("annotations");
         generator.writeStartObject();
 
@@ -219,10 +210,4 @@ public class FTJsonWriter {
             writeSimpleEntity(generator,doc,x.get(i));
         }
     }
-
-    private PrecursorIonType getFragmentIon(FragmentAnnotation<PrecursorIonType> ionPerFragment, Fragment vertex, PrecursorIonType generalIonType) {
-        if (ionPerFragment==null || ionPerFragment.get(vertex)==null) return generalIonType;
-        else return ionPerFragment.get(vertex);
-    }
-
 }
