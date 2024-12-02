@@ -212,6 +212,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //top annotation corresponds to the best hit selected by sirius. so just check ID
         return sre -> Optional.ofNullable(sre)
                 .map(FormulaResultBean::getParentInstance)
+                .filter(ib -> ib.getStructureAnnotation().isPresent())
                 .flatMap(InstanceBean::getFormulaAnnotation)
                 .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
                 .orElse(false);
