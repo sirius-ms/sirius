@@ -577,7 +577,7 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private JPanel makeBanners() {
-        presetCannotBeLoaded = new MessageBanner("Preset cannot be loaded", MessageBanner.BannerType.INFO);
+        presetCannotBeLoaded = new MessageBanner("Cannot load preset", MessageBanner.BannerType.INFO);
         presetCannotBeLoaded.setVisible(false);
 
         JPanel bannerPanel = new JPanel(new BorderLayout());
