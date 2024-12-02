@@ -56,8 +56,8 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec deleteJobRequestCreation(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -101,8 +101,8 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void deleteJob(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -116,8 +116,8 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> deleteJobWithHttpInfo(String projectId, String jobId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -131,8 +131,8 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete job from
      * @param jobId of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -213,8 +213,8 @@ public class JobsApi {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec deleteJobsRequestCreation(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -252,8 +252,8 @@ public class JobsApi {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void deleteJobs(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -266,8 +266,8 @@ public class JobsApi {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> deleteJobsWithHttpInfo(String projectId, Boolean cancelIfRunning, Boolean awaitDeletion) throws WebClientResponseException {
@@ -280,8 +280,8 @@ public class JobsApi {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      * <p><b>202</b> - Accepted
      * @param projectId project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -293,10 +293,11 @@ public class JobsApi {
      * Request default job configuration
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDefaultJobConfigRequestCreation(Boolean includeConfigMap) throws WebClientResponseException {
+    private ResponseSpec getDefaultJobConfigRequestCreation(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -307,6 +308,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -326,12 +328,13 @@ public class JobsApi {
      * Request default job configuration
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getDefaultJobConfig(Boolean includeConfigMap) throws WebClientResponseException {
+    public JobSubmission getDefaultJobConfig(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getDefaultJobConfigRequestCreation(includeConfigMap).bodyToMono(localVarReturnType).block();
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -339,12 +342,13 @@ public class JobsApi {
      * Request default job configuration
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(Boolean includeConfigMap) throws WebClientResponseException {
+    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getDefaultJobConfigRequestCreation(includeConfigMap).toEntity(localVarReturnType).block();
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -352,11 +356,12 @@ public class JobsApi {
      * Request default job configuration
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDefaultJobConfigWithResponseSpec(Boolean includeConfigMap) throws WebClientResponseException {
-        return getDefaultJobConfigRequestCreation(includeConfigMap);
+    public ResponseSpec getDefaultJobConfigWithResponseSpec(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap);
     }
     /**
      * Get job information and its current state and progress (if available).
@@ -452,11 +457,12 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobConfigRequestCreation(String name, Boolean includeConfigMap) throws WebClientResponseException {
+    private ResponseSpec getJobConfigRequestCreation(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -473,6 +479,7 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -492,13 +499,14 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getJobConfig(String name, Boolean includeConfigMap) throws WebClientResponseException {
+    public JobSubmission getJobConfig(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigRequestCreation(name, includeConfigMap).bodyToMono(localVarReturnType).block();
+        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -506,13 +514,14 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getJobConfigWithHttpInfo(String name, Boolean includeConfigMap) throws WebClientResponseException {
+    public ResponseEntity<JobSubmission> getJobConfigWithHttpInfo(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigRequestCreation(name, includeConfigMap).toEntity(localVarReturnType).block();
+        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -520,18 +529,83 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobConfigWithResponseSpec(String name, Boolean includeConfigMap) throws WebClientResponseException {
-        return getJobConfigRequestCreation(name, includeConfigMap);
+    public ResponseSpec getJobConfigWithResponseSpec(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap);
+    }
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getJobConfigNamesRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return apiClient.invokeAPI("/api/job-config-names", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return List&lt;String&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<String> getJobConfigNames() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return ResponseEntity&lt;List&lt;String&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<String>> getJobConfigNamesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<List<String>> localVarReturnType = new ParameterizedTypeReference<List<String>>() {};
+        return getJobConfigNamesRequestCreation().toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Get all (non-default) job configuration names
+     * Get all (non-default) job configuration names
+     * <p><b>200</b> - OK
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getJobConfigNamesWithResponseSpec() throws WebClientResponseException {
+        return getJobConfigNamesRequestCreation();
     }
     /**
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -564,7 +638,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -577,7 +651,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseEntity&lt;List&lt;JobSubmission&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -590,7 +664,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

@@ -176,7 +176,7 @@ public class CompoundsApiTest {
         assertEquals(284.0715, newCompound.getNeutralMass(), 0.001);
 
         // Get Default Job Submission
-        JobSubmission submission = jobsApi.getDefaultJobConfig(true);
+        JobSubmission submission = jobsApi.getDefaultJobConfig(true, false);
         submission.setZodiacParams(new Zodiac().enabled(false));
         submission.setRecompute(true);
         submission.setCompoundIds(List.of(newCompound.getCompoundId()));
