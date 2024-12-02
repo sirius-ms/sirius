@@ -286,7 +286,7 @@ public class BatchComputeDialog extends JDialog {
             gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         });
 
-        setPreferredSize(new Dimension(1125, 1000));
+        setPreferredSize(new Dimension(1125, 1024));
         //finalize panel build
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         if (getMaximumSize().width < getPreferredSize().width)
