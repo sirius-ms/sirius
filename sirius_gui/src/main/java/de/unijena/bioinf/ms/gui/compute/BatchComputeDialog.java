@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOption
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -760,6 +761,7 @@ public class BatchComputeDialog extends JDialog {
             JTextArea textArea = new JTextArea(json);
             textArea.setEditable(false);
             textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+            textArea.setBackground(Colors.BACKGROUND);
 
             JScrollPane scrollPane = new JScrollPane(textArea);
             scrollPane.setPreferredSize(new Dimension(600, 600));
