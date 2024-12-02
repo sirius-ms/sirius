@@ -84,11 +84,18 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private final ResultPanel resultPanel;
     private final SiriusGui gui;
 
-    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
+    /**
+     *
+     * @param resultPanel
+     * @param sourceList
+     * @param gui
+     * @param isDeNovoSearchView true if this list is used as part of the "De novo"-structure genration panel. False, if used as part of the CSI structure database search panel.
+     */
+    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, boolean isDeNovoSearchView) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            if (instanceBean == null || !instanceBean.getComputedTools().isStructureSearch())
+            if (instanceBean == null || (!isDeNovoSearchView && !instanceBean.getComputedTools().isStructureSearch()) || (isDeNovoSearchView && !instanceBean.getComputedTools().isDeNovoSearch()))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);

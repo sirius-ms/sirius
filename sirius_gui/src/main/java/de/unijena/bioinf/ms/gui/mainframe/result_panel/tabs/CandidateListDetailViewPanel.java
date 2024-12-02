@@ -50,7 +50,7 @@ public class CandidateListDetailViewPanel extends JPanel implements PanelDescrip
 
     public CandidateListDetailViewPanel(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(new BorderLayout());
-        list = new CandidateListDetailView(resultPanel, sourceList, gui);
+        list = new CandidateListDetailView(resultPanel, sourceList, gui, false);
         add(list, BorderLayout.CENTER);
     }
 
