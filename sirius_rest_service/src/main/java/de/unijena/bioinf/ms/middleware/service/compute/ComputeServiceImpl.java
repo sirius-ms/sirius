@@ -222,7 +222,7 @@ public class ComputeServiceImpl implements ComputeService {
 
     @Override
     public ImportResult importPreprocessedData(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
-        return awaitImportAndExtractResult(createAndSubmitMsDataImportJob(project, importSubmission));
+        return awaitImportAndExtractResult(createAndSubmitPeakListImportJob(project, importSubmission));
     }
 
     @Override
