@@ -49,7 +49,7 @@ public class JobsApiTest {
             "false, true"
     })
     public void testDeleteJob(boolean cancelIfRunning, boolean awaitDeletion) {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false);
         defJs.setFormulaIdParams(new Sirius().enabled(false));
         defJs.setZodiacParams(new Zodiac().enabled(false));
         defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(false));
@@ -72,7 +72,7 @@ public class JobsApiTest {
 
     @Test
     public void testDeleteJobConfig() {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false);
         String name = null;
         try {
             name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
@@ -86,14 +86,14 @@ public class JobsApiTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testGetDefaultJobConfig(boolean includeConfigMap) {
-        JobSubmission defJs = instance.getDefaultJobConfig(includeConfigMap);
+        JobSubmission defJs = instance.getDefaultJobConfig(includeConfigMap, false);
         assertNotNull(defJs);
         assertEquals(defJs.getConfigMap() != null && !defJs.getConfigMap().isEmpty(), includeConfigMap);
     }
 
     @Test
     public void testGetJob() throws InterruptedException {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false);
         defJs.setFormulaIdParams(new Sirius().enabled(true));
         defJs.setZodiacParams(new Zodiac().enabled(false));
         defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
@@ -119,7 +119,7 @@ public class JobsApiTest {
     public void testGetJobConfig(boolean includeConfigMap) {
         String name = null;
         try {
-            JobSubmission defJs = instance.getDefaultJobConfig(true);
+            JobSubmission defJs = instance.getDefaultJobConfig(true, false);
             defJs.setFormulaIdParams(new Sirius().enabled(false));
             defJs.setZodiacParams(new Zodiac().enabled(false));
             defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(false));
@@ -128,7 +128,7 @@ public class JobsApiTest {
             name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
             assertNotNull(name);
 
-            JobSubmission jc = instance.getJobConfig(name, includeConfigMap);
+            JobSubmission jc = instance.getJobConfig(name, includeConfigMap, false);
             assertNotNull(jc);
             assertEquals(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty(), includeConfigMap);
 
@@ -147,7 +147,7 @@ public class JobsApiTest {
     public void testGetJobConfigs(boolean includeConfigMap) {
         String name = null;
         try {
-            JobSubmission defJs = instance.getDefaultJobConfig(true);
+            JobSubmission defJs = instance.getDefaultJobConfig(true, false);
             name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
             assertNotNull(name);
 
@@ -165,7 +165,7 @@ public class JobsApiTest {
             "true, true, true, true"
     })
     public void testStartJob(boolean includeProgress, boolean includeCommand, boolean includeAffectedCompounds, boolean configMap) throws InterruptedException {
-        JobSubmission submission = instance.getDefaultJobConfig(configMap);
+        JobSubmission submission = instance.getDefaultJobConfig(configMap, false);
         submission.setZodiacParams(new Zodiac().enabled(false));
         submission.setRecompute(true);
 
@@ -188,7 +188,7 @@ public class JobsApiTest {
     })
     public void testStartJobFromConfig(boolean includeProgress, boolean includeCommand, boolean includeAffectedCompounds, boolean configMap) throws InterruptedException {
         // Creating job submission with parameters
-        JobSubmission submission = instance.getDefaultJobConfig(configMap);
+        JobSubmission submission = instance.getDefaultJobConfig(configMap, false);
         submission.getFormulaIdParams().setEnabled(true);
         submission.getZodiacParams().setEnabled(false);
         submission.getStructureDbSearchParams().setEnabled(false);
@@ -200,7 +200,7 @@ public class JobsApiTest {
         String configName = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true);
 
         // Check if storing worked
-        JobSubmission config = instance.getJobConfig(configName, null);
+        JobSubmission config = instance.getJobConfig(configName, null, false);
         assertNotNull(config);
 
         // Retrieving aligned features for the project

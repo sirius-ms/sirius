@@ -27,15 +27,6 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
     public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
         super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
                 Icons.FINGER.derive(32,32), true, FingerprintAndCanopusConfigPanel::new);
-    }
-
-    @Override
-    protected void setComponentsEnabled(final boolean enabled) {
-        super.setComponentsEnabled(enabled);
-    }
-
-    @Override
-    protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, "Can't connect to prediction server!");
+        notConnectedMessage = "Can't connect to prediction server!";
     }
 }

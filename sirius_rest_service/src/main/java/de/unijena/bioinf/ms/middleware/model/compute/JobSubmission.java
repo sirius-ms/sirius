@@ -210,6 +210,13 @@ public class JobSubmission extends AbstractSubmission {
         return combined;
     }
 
+    /**
+     * Merges the result of {@link #asCombinedConfigMap()} into the config map if this JobSubmission.
+     */
+    @JsonIgnore
+    public void mergeCombinedConfigMap() {
+        setConfigMap(asCombinedConfigMap());
+    }
 
     @JsonIgnore
     private Map<String, String> asConfigMap() {
