@@ -27,6 +27,24 @@ import java.util.function.Supplier;
 
 public class WarningDialog extends DoNotShowAgainDialog {
 
+    public WarningDialog(JDialog owner, String warning, String propertyKey) {
+        this(owner, "", warning, propertyKey);
+    }
+
+    public WarningDialog(JDialog owner, String title, String warning, String propertyKey) {
+        this(owner, title, () -> warning, propertyKey);
+    }
+
+    public WarningDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey) {
+        this(owner, title, messageProvider, propertyKey, true);
+    }
+
+    protected WarningDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
+        super(owner, title, messageProvider, propertyKey);
+        if (propertyKey != null && PropertyManager.getBoolean(propertyKey, false))
+            return;
+        setVisible(setVisible);
+    }
 
     public WarningDialog(Window owner, String warning) {
         this(owner, warning, null);

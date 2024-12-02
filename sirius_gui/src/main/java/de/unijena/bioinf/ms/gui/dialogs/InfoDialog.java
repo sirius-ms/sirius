@@ -24,12 +24,33 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 public class InfoDialog extends WarningDialog {
-    public InfoDialog(Window owner, String warning) {
-        super(owner, warning);
+
+    public InfoDialog(JDialog owner, String info) {
+        super(owner, info);
     }
 
-    public InfoDialog(Window owner, String warning, String propertyKey) {
-        super(owner, warning, propertyKey);
+    public InfoDialog(JDialog owner, String info, String propertyKey) {
+        super(owner, info, propertyKey);
+    }
+
+    public InfoDialog(JDialog owner, String title, String info, String propertyKey) {
+        super(owner, title, info, propertyKey);
+    }
+
+    public InfoDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey) {
+        super(owner, title, messageProvider, propertyKey);
+    }
+
+    protected InfoDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
+        super(owner, title, messageProvider, propertyKey, setVisible);
+    }
+
+    public InfoDialog(Window owner, String info) {
+        super(owner, info);
+    }
+
+    public InfoDialog(Window owner, String info, String propertyKey) {
+        super(owner, info, propertyKey);
     }
 
     public InfoDialog(Window owner, String title, String warning, String propertyKey) {
