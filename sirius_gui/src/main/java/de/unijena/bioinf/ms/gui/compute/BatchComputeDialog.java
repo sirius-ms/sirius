@@ -710,10 +710,16 @@ public class BatchComputeDialog extends JDialog {
             if (defaultSelected) {
                 preset = defaultPreset;
             } else {
+
+                // If custom DBs change, preset will have an outdated list that causes a warning,
+                // they will be all selected anyway, so we can ignore it
+                Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
+
                 preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
+                        .filter(e -> !ignoredHiddenParameters.contains(e.getKey()))
                         .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
                         .filter(e -> !(e.getKey().equals("AdductSettings.detectable")
                                 && adductsEqual(e.getValue(), defaultPreset.getConfigMap().get(e.getKey()))))
