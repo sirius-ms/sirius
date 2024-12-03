@@ -832,7 +832,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: text/plain
+- **Accept**: text/plain, application/problem+json
 
 
 ### HTTP response details
