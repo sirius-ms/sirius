@@ -40,6 +40,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.SiriusSDKErrorResponse;
 import io.sirius.ms.sdk.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -655,10 +656,10 @@ public class BatchComputeDialog extends JDialog {
                     reloadPresets();
                     presetDropdown.setSelectedItem(createdPresetName);
                 } catch (Exception ex) {
-                    gui.getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
-                            err -> Jobs.runEDTLater(() -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE)),
-                            () -> Jobs.runEDTLater(() -> new StacktraceDialog(this, ex.getMessage(), ex))
-                    );
+                    String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
+                            .map(SiriusSDKErrorResponse::getMessage)
+                            .orElse(ex.getMessage());
+                    Jobs.runEDTLater(() -> new StacktraceDialog(this, errorMessage, ex));
                 }
             }
         });
