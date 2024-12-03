@@ -192,8 +192,6 @@ public class BatchComputeDialog extends JDialog {
                 recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
                 lsouthPanel.add(recomputeBox);
 
-                if (singleCompound()) recomputeBox.setSelected(true);
-
                 JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
                 final String SHOW_ADVANCED = "Show advanced settings";
                 final String HIDE_ADVANCED = "Hide advanced settings";
@@ -725,7 +723,7 @@ public class BatchComputeDialog extends JDialog {
             csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
             msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
 
-            recomputeBox.setSelected(Boolean.parseBoolean(configMap.get("RecomputeResults")));
+            recomputeBox.setSelected(singleCompound() || Boolean.parseBoolean(configMap.get("RecomputeResults")));
         } catch (Exception e) {
             Jobs.runEDTLater(() -> new WarningDialog(this,
                     "Error When loading preset",
