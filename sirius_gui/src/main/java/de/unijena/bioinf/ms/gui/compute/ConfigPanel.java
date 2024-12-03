@@ -115,6 +115,6 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
      * @throws UnsupportedOperationException if the parameter values are not compatible with the UI or if this panel does not support setting values from a preset
      */
     public void applyValuesFromPreset(Map<String, String> preset) {
-        throw new UnsupportedOperationException("Setting values from preset is not supported for this panel");
+        throw new UnsupportedOperationException("Setting values from preset is not supported for this panel.");
     }
 }

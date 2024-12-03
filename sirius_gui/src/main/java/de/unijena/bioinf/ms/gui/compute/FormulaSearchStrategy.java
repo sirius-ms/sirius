@@ -593,7 +593,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         Strategy s = getStrategyFromPreset(preset);
 
         if (((DefaultComboBoxModel<Strategy>)strategyBox.getModel()).getIndexOf(s) == -1) {
-            throw new UnsupportedOperationException("Strategy from the preset " + s + " is not available for the data");
+            throw new UnsupportedOperationException("Strategy from the preset " + s + " is not available for the data.");
         }
         strategyBox.setSelectedItem(s);
 
@@ -649,6 +649,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         }
 
-        throw new UnsupportedOperationException("Formula search strategy could not be determined from the parameters");
+        throw new UnsupportedOperationException("Formula search strategy could not be determined from the parameters.");
     }
 }
