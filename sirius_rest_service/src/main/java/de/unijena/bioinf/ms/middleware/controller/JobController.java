@@ -314,7 +314,7 @@ public class JobController {
      * @param jobConfig to add
      * @return Probably modified name of the config (to ensure filesystem path compatibility).
      */
-    @PostMapping(value = "/job-configs/{name}", produces = MediaType.TEXT_PLAIN_VALUE) //this needs to be text because some SDKs consider a string field as invalid json.
+    @PostMapping(value = "/job-configs/{name}", produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_PROBLEM_JSON_VALUE}) //this needs to be text because some SDKs consider a string field as invalid json.
     @ResponseStatus(HttpStatus.OK)
     public String saveJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
         name = name.replaceAll("\\W+", "_");
@@ -325,8 +325,9 @@ public class JobController {
         if (!overrideExisting && Files.exists(config))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job-config with name '" + name + "' already exists. Try again with 'overrideExisting' if you wish to replace it.");
 
-        // remove compoundIds since they are not permitted in a template config
+        // remove compounds since they are not permitted in a template config
         jobConfig.setCompoundIds(null);
+        jobConfig.setAlignedFeatureIds(null);
 
         try (OutputStream s = Files.newOutputStream(config)) {
             new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(s, jobConfig);
