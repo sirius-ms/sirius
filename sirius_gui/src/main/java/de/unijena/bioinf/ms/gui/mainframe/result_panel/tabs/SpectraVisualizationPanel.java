@@ -25,8 +25,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
@@ -55,6 +55,8 @@ import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.AnnotatedSpectrum;
+import io.sirius.ms.sdk.model.BasicSpectrum;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
@@ -85,6 +87,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrEmpty;
@@ -251,9 +254,11 @@ public class SpectraVisualizationPanel extends JPanel implements
                     spectrum = msData.getMs1Spectra().getFirst();
 
                 if (spectrum != null) {
+                    spectrum = normalize(spectrum, Normalization.Max);
+
                     if (mode.equals(MS1_DISPLAY)) {
                         //match already extracted pattern to highlight peaks, remove patter from result
-                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
+                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? normalize(isotopePatternAnnotation.getIsotopePattern(), Normalization.Max) : null);
                         if (ob.getSpectra().size() > 1 && ob.getPeakMatches().size() > 1) {
                             ob.getSpectra().remove(1);
                             ob.getPeakMatches().remove(1);
@@ -261,7 +266,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                         jsonSpectra = ob;
                     } else if (mode.equals(MS1_MIRROR_DISPLAY)) {
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
-                            jsonSpectra = matchSpectra(spectrum, isotopePatternAnnotation.getSimulatedPattern());
+                            jsonSpectra = matchSpectra(spectrum, normalize(isotopePatternAnnotation.getSimulatedPattern(), Normalization.Max));
                         } else {
                             showError("No isotope pattern available!");
                             LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Cannot show mirror plot!");
@@ -325,6 +330,22 @@ public class SpectraVisualizationPanel extends JPanel implements
             showError("Error when creating data json!");
             LoggerFactory.getLogger(getClass()).error("Error when creating data Json!", e);
         }
+    }
+
+    // TODO remove after API has normalization parameter
+    private BasicSpectrum normalize(BasicSpectrum spectrum, Normalization normalization) {
+        SimpleMutableSpectrum mutable = new SimpleMutableSpectrum(spectrum.getPeaks().size());
+        spectrum.getPeaks().stream()
+                .filter(peak -> peak.getMz() != null && peak.getIntensity() != null)
+                .forEach(peak -> mutable.addPeak(peak.getMz(), peak.getIntensity()));
+        spectrum.setAbsIntensityFactor(Spectrums.normalize(mutable, Normalization.Max));
+        spectrum.setPeaks(IntStream.range(0, mutable.size()).mapToObj(i -> {
+            SimplePeak peak = new SimplePeak();
+            peak.setMz(mutable.getMzAt(i));
+            peak.setIntensity(mutable.getIntensityAt(i));
+            return peak;
+        }).toList());
+        return spectrum;
     }
 
     private SpectraViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum, @Nullable BasicSpectrum pattern) {
