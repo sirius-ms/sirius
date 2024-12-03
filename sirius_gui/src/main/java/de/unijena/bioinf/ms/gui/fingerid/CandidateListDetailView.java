@@ -89,13 +89,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     /**
      *
-     * @param hasResults function to validate whether results are available. If the function return false NOT_COMPUTED state is shown.
+     * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
      */
-    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> hasResults) {
+    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> wasComputed) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            if (instanceBean == null || !hasResults.apply(instanceBean))
+            if (instanceBean == null || !wasComputed.apply(instanceBean))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
