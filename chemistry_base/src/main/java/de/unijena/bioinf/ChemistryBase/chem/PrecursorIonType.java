@@ -467,6 +467,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
             .thenComparing(p -> !p.getInSourceFragmentation().isEmpty())
             .thenComparing(p -> p.getAdduct().getMass())
             .thenComparing(p -> p.getInSourceFragmentation().getMass())
-            .thenComparing(PrecursorIonType::toString);
+            .thenComparing(p -> p.getIonization().getAtoms())
+            .thenComparing(PrecursorIonType::toString); //final tiebreaker to always get a reproducible order. Should only happen if we have two different string representations for the same PrecursorIonType.
 
 }
