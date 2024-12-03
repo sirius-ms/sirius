@@ -55,7 +55,7 @@ public abstract class FCandidate<FID> implements Annotated<DataAnnotation> {
     public abstract Double getZodiacScore();
 
     public FormulaScore getRankingScore(boolean hasZodiacResult){
-        if (hasZodiacResult) return getZodiacScore()==null ? new ZodiacScore(Double.NEGATIVE_INFINITY) : new ZodiacScore(getZodiacScore());
+        if (hasZodiacResult) return getZodiacScore()==null ? ZodiacScore.NA(ZodiacScore.class) : new ZodiacScore(getZodiacScore());
 
         else return new SiriusScore(getSiriusScore());
 
