@@ -287,7 +287,8 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
             } else {
                 boolean found = findCorrectPeakInInputFragmentationSpectrum(f, spectrum, peak, annotatedFormulas, this::checkForInterruption);
                 if (!found) {
-                    logWarn("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the input MS2 spectrum.", f.getFormula());
+                    //can still be normal behaviour. The fragment peak might be indeed only contained in a subset of all MS2 spectra
+                    logDebug("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the input MS2 spectrum. Could be that fragment is just not contained in this particular spectrum.", f.getFormula());
                 }
             }
         }
@@ -296,6 +297,7 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
     }
 
     public static boolean findCorrectPeakInInputFragmentationSpectrum(Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, InterruptionCheck interruptionCheck) throws InterruptedException {
+        //the FTree store spectrum indices for the original peaks. However, at this stage I rather don't want to make assumptions on the order of the spectra in MSData. Hence, we check all original peaks (from different spectra).
         for (Peak p : peak.getOriginalPeaks()) {
             interruptionCheck.check();
             int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, p.getMass());
