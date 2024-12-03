@@ -324,7 +324,8 @@ public class Spectrums {
             try {
                 boolean found = SpectrumAnnotationJJob.findCorrectPeakInInputFragmentationSpectrum(f, spectrum, peak, annotatedFormulas, () -> {});
                 if (!found) {
-                    LoggerFactory.getLogger(Spectrums.class).warn("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the input MS2 spectrum.", f.getFormula());
+                    //can still be normal behaviour. The fragment peak might be indeed only contained in a subset of all MS2 spectra
+                    LoggerFactory.getLogger(Spectrums.class).debug("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the input MS2 spectrum. Could be that fragment is just not contained in this particular spectrum.", f.getFormula());
                 }
             } catch (InterruptedException e) {
                 LoggerFactory.getLogger(Spectrums.class).error("Annotating spectrum peak was interrupted.", e);
