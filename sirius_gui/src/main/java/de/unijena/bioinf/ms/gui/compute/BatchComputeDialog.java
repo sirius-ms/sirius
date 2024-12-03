@@ -98,7 +98,8 @@ public class BatchComputeDialog extends JDialog {
     private JComboBox<String> presetDropdown;
     private JobSubmission preset;
     private boolean presetFrozen;
-    private MessageBanner presetCannotBeLoaded;
+    private MessageBanner presetInfoBanner;
+    private MessageBanner presetWarningBanner;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
@@ -573,12 +574,31 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private JPanel makeBanners() {
-        presetCannotBeLoaded = new MessageBanner("Preset sets hidden parameters: You can start a computation with this preset, but cannot edit the parameters.", MessageBanner.BannerType.INFO);
-        presetCannotBeLoaded.setVisible(false);
+        presetInfoBanner = new MessageBanner("", MessageBanner.BannerType.INFO);
+        presetInfoBanner.setVisible(false);
+
+        presetWarningBanner = new MessageBanner("", MessageBanner.BannerType.WARNING);
+        presetWarningBanner.setVisible(false);
 
         JPanel bannerPanel = new JPanel(new BorderLayout());
-        bannerPanel.add(presetCannotBeLoaded, BorderLayout.NORTH);
+        bannerPanel.add(presetInfoBanner, BorderLayout.NORTH);
+        bannerPanel.add(presetWarningBanner, BorderLayout.CENTER);
         return bannerPanel;
+    }
+
+    private void showPresetInfoBanner(String message) {
+        presetInfoBanner.setText(message + " You can start a computation with this preset, but cannot edit the parameters.");
+        presetInfoBanner.setVisible(true);
+    }
+
+    private void showPresetWarningBanner(String message) {
+        presetWarningBanner.setText(message + " Computation with this preset might crash.");
+        presetWarningBanner.setVisible(true);
+    }
+
+    private void hidePresetBanners() {
+        presetInfoBanner.setVisible(false);
+        presetWarningBanner.setVisible(false);
     }
 
     private JPanel makePresetPanel() {
@@ -700,10 +720,12 @@ public class BatchComputeDialog extends JDialog {
                         .map(e -> e.getKey() + " = " + e.getValue() + "\n")
                         .collect(Collectors.toCollection(ArrayList::new));
                 if (!hiddenParameters.isEmpty()) {
-                    hiddenParameters.addFirst("Preset sets hidden parameters:\n");
+                    hiddenParameters.addFirst("Preset sets parameters that are not visible in the compute dialog:\n");
                     hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
-                    Jobs.runEDTLater(() -> new InfoDialog(this, "Preset sets hidden parameters", GuiUtils.formatToolTip(hiddenParameters),
+                    Jobs.runEDTLater(() -> new InfoDialog(this,
+                            GuiUtils.formatToolTip(hiddenParameters),
                             DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
+                    showPresetInfoBanner("Preset sets parameters that are not visible in the compute dialog.");
                     presetFreeze();
                     return;
                 }
@@ -717,19 +739,26 @@ public class BatchComputeDialog extends JDialog {
             boolean fpEnabled = preset.getFingerprintPredictionParams() != null && preset.getFingerprintPredictionParams().isEnabled();
             boolean canopusEnabled = preset.getCanopusParams() != null && preset.getCanopusParams().isEnabled();
             if (fpEnabled != canopusEnabled) {
-                throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously");
+                throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously.");
             }
             fingerprintAndCanopusConfigPanel.applyValuesFromPreset(fpEnabled, configMap);
             csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
             msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
 
             recomputeBox.setSelected(singleCompound() || Boolean.parseBoolean(configMap.get("RecomputeResults")));
+        } catch (UnsupportedOperationException e) {
+            Jobs.runEDTLater(() -> new InfoDialog(this,
+                    "Preset is not compatible with the compute dialog:<br>" + e.getMessage() + "<br><br>You can start a computation with this preset, but cannot edit the parameters."
+            ));
+            showPresetInfoBanner(e.getMessage());
+            presetFreeze();
         } catch (Exception e) {
             Jobs.runEDTLater(() -> new WarningDialog(this,
-                    "Error When loading preset",
-                    "The preset cannot be loaded:\n" + e.getMessage() + "\n\nYou can start a computation with this preset, but cannot edit the parameters.",
+                    "Error loading preset",
+                    "The preset cannot be loaded:<br>" + e.getMessage() + "<br><br>Computation with this preset might crash.",
                     null
             ));
+            showPresetWarningBanner(e.getMessage());
             presetFreeze();
         }
     }
@@ -748,7 +777,6 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetFreeze() {
         presetFrozen = true;
-        presetCannotBeLoaded.setVisible(true);
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> {
                     if (panel.isToolSelected()) {
@@ -763,7 +791,7 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetUnfreeze() {
         presetFrozen = false;
-        presetCannotBeLoaded.setVisible(false);
+        hidePresetBanners();
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
 
