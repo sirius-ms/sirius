@@ -737,6 +737,11 @@ public class BatchComputeDialog extends JDialog {
                 }
             }
 
+            // all parameters of the presets are part of the configmap, ensured via `moveParametersToConfigMap`.
+            // however user might save a simple preset without config map (e.g. using api).
+            // Missing values in the map will fallback to default during computation.
+            // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
+            // his is the same as falling back to default, but we can fill the gui panel correctly.
             final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
