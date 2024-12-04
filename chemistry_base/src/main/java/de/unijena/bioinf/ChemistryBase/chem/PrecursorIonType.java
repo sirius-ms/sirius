@@ -462,12 +462,12 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
             .thenComparing(p -> !p.getModification().isEmpty())
             .thenComparing(p -> !p.isPlainProtonationOrDeprotonation())
             .thenComparing(PrecursorIonType::isIntrinsicalCharged)
+            .thenComparing(p -> p.getIonization().getAtoms())
             .thenComparing(p -> !p.getAdduct().equals(MolecularFormula.parseOrNull("H3N")))
             .thenComparing(p -> !p.getAdduct().isEmpty())
             .thenComparing(p -> !p.getInSourceFragmentation().isEmpty())
             .thenComparing(p -> p.getAdduct().getMass())
             .thenComparing(p -> p.getInSourceFragmentation().getMass())
-            .thenComparing(p -> p.getIonization().getAtoms())
             .thenComparing(PrecursorIonType::toString); //final tiebreaker to always get a reproducible order. Should only happen if we have two different string representations for the same PrecursorIonType.
 
 }
