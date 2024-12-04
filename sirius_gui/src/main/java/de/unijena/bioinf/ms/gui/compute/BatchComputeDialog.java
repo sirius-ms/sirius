@@ -737,7 +737,8 @@ public class BatchComputeDialog extends JDialog {
                 }
             }
 
-            Map<String, String> configMap = preset.getConfigMap();
+            final Map<String, String> configMap = new HashMap<>(defaultPreset.getConfigMap());
+            configMap.putAll(preset.getConfigMap());
 
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
