@@ -50,14 +50,16 @@ public class Colors {
 
     //--------------------------------------------
 
-    public final static Color CUSTOM_BLUE = Color.decode("#4da6bf");
-    public final static Color CUSTOM_LIGHT_BLUE = Color.decode("#b3d9e5");
 
-    public final static Color CUSTOM_GREEN = Color.decode("#68da58");
-    public final static Color CUSTOM_YELLOW = Color.decode("#feff66");
-    public final static Color CUSTOM_PINK = Color.decode("#ef4384");
+    private final static Color CUSTOM_BLUE = Color.decode("#4da6bf");
+    private final static Color CUSTOM_LIGHT_BLUE = Color.decode("#b3d9e5");
 
-    public final static Color CUSTOM_ORANGE = Color.decode("#ffc14c");
+    private final static Color CUSTOM_GREEN = Color.decode("#68da58"); // quality icon green
+    private final static Color CUSTOM_YELLOW = Color.decode("#feff66"); // quality icon yellow
+    private final static Color CUSTOM_ORANGE = Color.decode("#ffc14c");
+    private final static Color CUSTOM_PINK = Color.decode("#f570a1"); // quality icon pink
+
+
 
 //------------------
 
@@ -222,11 +224,16 @@ public class Colors {
     public final static Color EXPANSIVE_SEARCH_WARNING_TEXT = Color.WHITE;
     public final static Color EXPANSIVE_SEARCH_WARNING = Menu.BUTTON_HIGHLIGHT_PINK;
 
-    public final static Color TEXT_WARN = CUSTOM_PINK; //CUSTOM_ORANGE; (orange not good in light theme)
-    public final static Color TEXT_ERROR = CUSTOM_PINK;
-    public final static Color TEXT_GOOD = CUSTOM_GREEN;
+
+    public final static Color GOOD = CUSTOM_GREEN;
+    public final static Color INFO = CUSTOM_LIGHT_BLUE;
+    public final static Color WARN = CUSTOM_YELLOW.brighter();
+    public final static Color ERROR = CUSTOM_PINK;
+
+    public final static Color TEXT_WARN = CUSTOM_BLUE; //CUSTOM_ORANGE; (orange not good in light theme)
+    public final static Color TEXT_ERROR = Menu.BUTTON_HIGHLIGHT_PINK;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
-    public final static Color TEXT_LINK_VISITED = CUSTOM_PINK;
+    public final static Color TEXT_LINK_VISITED = CUSTOM_LIGHT_BLUE;
     public final static Color TEXT_LINK_ACTIVE = GOOD_IS_GREEN_VIBRANT;
     public final static Color TEXT_LINK_HOVER = CUSTOM_LIGHT_BLUE;
 
@@ -278,12 +285,6 @@ public class Colors {
         public final static Color BEST_HIT_TEXT = Color.BLACK;
 
         public final static Color ALTERNATING_CELL_ROW_TEXT_COLOR = (THEME == Theme.LIGHT ? Themes.Light.ALTERNATING_CELL_ROW_TEXT_COLOR : Themes.Dark.ALTERNATING_CELL_ROW_TEXT_COLOR);
-    }
-
-    public static class Quality {
-        public final static Color GOOD = CUSTOM_GREEN;
-        public final static Color DECENT = CUSTOM_YELLOW;
-        public final static Color BAD = CUSTOM_PINK;
     }
 
     public static class FormulasView {
