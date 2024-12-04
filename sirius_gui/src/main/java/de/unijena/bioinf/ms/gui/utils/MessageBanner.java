@@ -10,12 +10,12 @@ public class MessageBanner extends JLabel {
         super(message);
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
         setOpaque(true);
-
+        setForeground(Colors.Themes.Light.FOREGROUND);
         switch (bannerType) {
-            case GOOD -> setBackground(Colors.GOOD_IS_GREEN_PALE); //todo change to text green later
-            case INFO -> setBackground(Colors.TEXT_LINK);
-            case WARNING -> setBackground(Colors.TEXT_WARN);
-            case ERROR -> setBackground(Colors.TEXT_ERROR);
+            case GOOD -> setBackground(Colors.GOOD);
+            case INFO -> setBackground(Colors.INFO);
+            case WARNING -> setBackground(Colors.WARN);
+            case ERROR -> setBackground(Colors.ERROR);
         }
     }
 }
