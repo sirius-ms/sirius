@@ -737,14 +737,15 @@ public class BatchComputeDialog extends JDialog {
                 }
             }
 
-            final Map<String, String> configMap = new HashMap<>(defaultPreset.getConfigMap());
-            configMap.putAll(preset.getConfigMap());
+            final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
+            if (preset.getConfigMap() != null)
+                configMap.putAll(preset.getConfigMap());
 
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
-            boolean fpEnabled = preset.getFingerprintPredictionParams() != null && preset.getFingerprintPredictionParams().isEnabled();
-            boolean canopusEnabled = preset.getCanopusParams() != null && preset.getCanopusParams().isEnabled();
+            boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
+            boolean canopusEnabled = preset.getCanopusParams() != null && Boolean.TRUE.equals(preset.getCanopusParams().isEnabled());
             if (fpEnabled != canopusEnabled) {
                 throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously.");
             }
