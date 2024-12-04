@@ -316,7 +316,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     public void applyValuesFromPreset(Map<String, String> preset, boolean defaultPreset) {
         String profileString = preset.get("AlgorithmProfile");
         Instrument instrument = Arrays.stream(Instrument.values()).filter(i -> i.profile.equalsIgnoreCase(profileString)).findFirst()
-                .orElseThrow(() -> new UnsupportedOperationException("Could not parse algorithm profile " + profileString));
+                .orElseThrow(() -> new RuntimeException("Could not parse algorithm profile " + profileString + "."));
         profileSelector.setSelectedItem(instrument);
 
         isotopeSettingsFilter.setSelected(Boolean.parseBoolean(preset.get("IsotopeSettings.filter")));
@@ -325,7 +325,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         try {
             ms2IsotpeSetting.setSelectedItem(Strategy.valueOf(isotopeMs2Setting));
         } catch (IllegalArgumentException e) {
-            throw new UnsupportedOperationException("Could not parse MS/MS isotope scorer " + isotopeMs2Setting);
+            throw new RuntimeException("Could not parse MS/MS isotope scorer " + isotopeMs2Setting + ".");
         }
 
         if (preset.get("MS2MassDeviation.allowedMassDeviation").equals(preset.get("SpectralMatchingMassDeviation.allowedPeakDeviation"))
@@ -333,7 +333,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             Deviation d = Deviation.fromString(preset.get("MS2MassDeviation.allowedMassDeviation"));
             ppmSpinner.setValue(d.getPpm());
         } else {
-            throw new UnsupportedOperationException("Properties MS2MassDeviation.allowedMassDeviation, SpectralMatchingMassDeviation.allowedPeakDeviation, SpectralMatchingMassDeviation.allowedPrecursorDeviation should all have the same value");
+            throw new UnsupportedOperationException("Properties MS2MassDeviation.allowedMassDeviation, SpectralMatchingMassDeviation.allowedPeakDeviation, SpectralMatchingMassDeviation.allowedPrecursorDeviation should all have the same value.");
         }
 
         candidatesSpinner.setValue(Integer.parseInt(preset.get("NumberOfCandidates")));
@@ -349,12 +349,12 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             enforcedAdducts = Arrays.stream(ParameterConfig.convertToCollection(PrecursorIonType.class, preset.get("AdductSettings.enforced")))
                     .collect(Collectors.toSet());
         } catch (Exception e) {
-            throw new UnsupportedOperationException("Could not parse adducts: " + e.getMessage());
+            throw new RuntimeException("Could not parse adducts: " + e.getMessage());
         }
 
         enforceAdducts.setSelected(fallbackAdducts.equals(enforcedAdducts));
         if (!fallbackAdducts.equals(enforcedAdducts) && !enforcedAdducts.isEmpty()) {
-            throw new UnsupportedOperationException("Enforced adducts differ from fallback adducts");
+            throw new UnsupportedOperationException("Enforced adducts differ from fallback adducts.");
         }
 
         Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, !defaultPreset);

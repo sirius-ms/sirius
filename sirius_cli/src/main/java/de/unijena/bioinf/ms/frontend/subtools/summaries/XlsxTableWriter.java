@@ -127,7 +127,7 @@ public class XlsxTableWriter implements SummaryTableWriter {
 
     private void createQualityStyles() {
         //these should be the same colors as specified in de.unijena.bioinf.ms.gui.configs.Colors. But there is no dependency.
-        XSSFColor customPink = new XSSFColor(java.awt.Color.decode("#ef4384"), null);
+        XSSFColor customPink = new XSSFColor(java.awt.Color.decode("#f570a1"), null);
         XSSFColor customYellow = new XSSFColor(java.awt.Color.decode("#feff66"), null);
         XSSFColor customGreen = new XSSFColor(java.awt.Color.decode("#68da58"), null);
 
