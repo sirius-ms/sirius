@@ -54,8 +54,11 @@ public abstract class FCandidate<FID> implements Annotated<DataAnnotation> {
     public abstract Double getTreeScore();
     public abstract Double getZodiacScore();
 
-    public FormulaScore getRankingScore(){
-        return getZodiacScore() == null ? new SiriusScore(getSiriusScore()) : new ZodiacScore(getZodiacScore());
+    public FormulaScore getRankingScore(boolean hasZodiacResult){
+        if (hasZodiacResult) return getZodiacScore()==null ? ZodiacScore.NA(ZodiacScore.class) : new ZodiacScore(getZodiacScore());
+
+        else return new SiriusScore(getSiriusScore());
+
     }
 
     public FingerIdResult asFingerIdResult(){
@@ -65,7 +68,7 @@ public abstract class FCandidate<FID> implements Annotated<DataAnnotation> {
         return fr;
     }
 
-    public SScored<FTree, FormulaScore> asScoredFtree(){
-        return new SScored<>(getAnnotationOrThrow(FTree.class), getRankingScore());
+    public SScored<FTree, FormulaScore> asScoredFtree(boolean zodiacPresent){
+        return new SScored<>(getAnnotationOrThrow(FTree.class), getRankingScore(zodiacPresent));
     }
 }
