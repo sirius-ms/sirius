@@ -587,12 +587,12 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private void showPresetInfoBanner(String message) {
-        presetInfoBanner.setText(message + " You can start a computation with this preset, but cannot edit the parameters.");
+        presetInfoBanner.setText(message + ". You can start a computation with this preset, but cannot edit the parameters.");
         presetInfoBanner.setVisible(true);
     }
 
     private void showPresetWarningBanner(String message) {
-        presetWarningBanner.setText(message + " Computation with this preset might crash.");
+        presetWarningBanner.setText(message + ". Computation with this preset might not work as expected.");
         presetWarningBanner.setVisible(true);
     }
 
@@ -761,7 +761,7 @@ public class BatchComputeDialog extends JDialog {
         } catch (Exception e) {
             Jobs.runEDTLater(() -> new WarningDialog(this,
                     "Error loading preset",
-                    "The preset cannot be loaded:<br>" + e.getMessage() + "<br><br>Computation with this preset might crash.",
+                    "The preset cannot be loaded:<br>" + e.getMessage() + "<br><br>Computation with this preset might not work as expected..",
                     null
             ));
             showPresetWarningBanner(e.getMessage());
