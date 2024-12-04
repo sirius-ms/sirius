@@ -37,11 +37,11 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
     }
 
     private JPanel upToDateContent() {
-        return textContent("SIRIUS is up to date!", Colors.GOOD_IS_GREEN_VIBRANT);
+        return textContent("SIRIUS is up to date!", Colors.GOOD);
     }
 
     private JPanel noUpdateInformationContent() {
-        return textContent("Update server unreachable!", Colors.CUSTOM_PINK);
+        return textContent("Update server unreachable!", Colors.TEXT_ERROR);
     }
 
     private JPanel textContent(@NotNull String text, @NotNull Color textColor) {
@@ -61,7 +61,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
         content.setOpaque(false);
         JLabel l = new JLabel("<html>SIRIUS <b>v" + info.getLatestSiriusVersion() + "</b> is available!</html>");
         l.setFont(Fonts.FONT_MEDIUM.deriveFont(24f));
-        l.setForeground(Colors.CUSTOM_ORANGE);
+        l.setForeground(Colors.TEXT_WARN);
         l.setOpaque(false);
         content.add(l, "alignx left, aligny center");
 

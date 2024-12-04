@@ -142,7 +142,7 @@ public class AccountPanel extends LoadablePanel {
                 userInfoLabel.setText("Please log in!");
                 create.setAction(SiriusActions.SIGN_UP.getInstance(gui, true));
                 login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
-                login.setBackground(Colors.CUSTOM_GREEN);
+                login.setBackground(Colors.GOOD);
                 login.setForeground(Color.WHITE);
                 login.setFont(login.getFont().deriveFont(Font.BOLD));
 
