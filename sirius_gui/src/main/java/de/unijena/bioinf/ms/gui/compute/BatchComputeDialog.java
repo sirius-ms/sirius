@@ -45,6 +45,7 @@ import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.sdk.SiriusSDKErrorResponse;
 import io.sirius.ms.sdk.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -107,8 +108,8 @@ public class BatchComputeDialog extends JDialog {
     private JComboBox<String> presetDropdown;
     private JobSubmission preset;
     private boolean presetFrozen;
-
-    private MessageBanner presetMessage;
+    private MessageBanner presetInfoBanner;
+    private MessageBanner presetWarningBanner;
     private MessageBanner connectionMessage;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
@@ -621,16 +622,35 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private JPanel makeBanners() {
-        presetMessage = new MessageBanner("Preset sets hidden parameters: You can start a computation with this preset, but cannot edit the parameters.", MessageBanner.BannerType.INFO);
-        presetMessage.setVisible(false);
+        presetInfoBanner = new MessageBanner("", MessageBanner.BannerType.INFO);
+        presetInfoBanner.setVisible(false);
+
+        presetWarningBanner = new MessageBanner("", MessageBanner.BannerType.WARNING);
+        presetWarningBanner.setVisible(false);
 
         connectionMessage = new MessageBanner();
         connectionMessage.setVisible(false);
 
         JPanel bannerPanel = new JPanel(new BorderLayout());
         bannerPanel.add(connectionMessage, BorderLayout.NORTH);
-        bannerPanel.add(presetMessage, BorderLayout.SOUTH);
+        bannerPanel.add(presetInfoBanner, BorderLayout.CENTER);
+        bannerPanel.add(presetWarningBanner, BorderLayout.SOUTH);
         return bannerPanel;
+    }
+
+    private void showPresetInfoBanner(String message) {
+        presetInfoBanner.setText(message + ". You can start a computation with this preset, but cannot edit the parameters.");
+        presetInfoBanner.setVisible(true);
+    }
+
+    private void showPresetWarningBanner(String message) {
+        presetWarningBanner.setText(message + ". Computation with this preset might not work as expected.");
+        presetWarningBanner.setVisible(true);
+    }
+
+    private void hidePresetBanners() {
+        presetInfoBanner.setVisible(false);
+        presetWarningBanner.setVisible(false);
     }
 
     private JPanel makePresetPanel() {
@@ -706,7 +726,10 @@ public class BatchComputeDialog extends JDialog {
                     reloadPresets();
                     presetDropdown.setSelectedItem(createdPresetName);
                 } catch (Exception ex) {
-                    Jobs.runEDTLater(() -> new StacktraceDialog(this, ex.getMessage(), ex));
+                    String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
+                            .map(SiriusSDKErrorResponse::getMessage)
+                            .orElse(ex.getMessage());
+                    Jobs.runEDTLater(() -> new StacktraceDialog(this, errorMessage, ex));
                 }
             }
         });
@@ -739,46 +762,68 @@ public class BatchComputeDialog extends JDialog {
             if (defaultSelected) {
                 preset = defaultPreset;
             } else {
+
+                // If custom DBs change, preset will have an outdated list that causes a warning,
+                // they will be all selected anyway, so we can ignore it
+                Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
+
                 preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
+                        .filter(e -> !ignoredHiddenParameters.contains(e.getKey()))
                         .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
                         .filter(e -> !(e.getKey().equals("AdductSettings.detectable")
                                 && adductsEqual(e.getValue(), defaultPreset.getConfigMap().get(e.getKey()))))
                         .map(e -> e.getKey() + " = " + e.getValue() + "\n")
                         .collect(Collectors.toCollection(ArrayList::new));
                 if (!hiddenParameters.isEmpty()) {
-                    hiddenParameters.addFirst("Preset sets hidden parameters:\n");
+                    hiddenParameters.addFirst("Preset sets parameters that are not visible in the compute dialog:\n");
                     hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
-                    Jobs.runEDTLater(() -> new InfoDialog(this, "Preset sets hidden parameters", GuiUtils.formatToolTip(hiddenParameters),
+                    Jobs.runEDTLater(() -> new InfoDialog(this,
+                            GuiUtils.formatToolTip(hiddenParameters),
                             DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
+                    showPresetInfoBanner("Preset sets parameters that are not visible in the compute dialog.");
                     presetFreeze();
                     return;
                 }
             }
 
-            Map<String, String> configMap = preset.getConfigMap();
+            // all parameters of the presets are part of the configmap, ensured via `moveParametersToConfigMap`.
+            // however user might save a simple preset without config map (e.g. using api).
+            // Missing values in the map will fallback to default during computation.
+            // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
+            // his is the same as falling back to default, but we can fill the gui panel correctly.
+            final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
+            if (preset.getConfigMap() != null)
+                configMap.putAll(preset.getConfigMap());
 
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
-            boolean fpEnabled = preset.getFingerprintPredictionParams() != null && preset.getFingerprintPredictionParams().isEnabled();
-            boolean canopusEnabled = preset.getCanopusParams() != null && preset.getCanopusParams().isEnabled();
+            boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
+            boolean canopusEnabled = preset.getCanopusParams() != null && Boolean.TRUE.equals(preset.getCanopusParams().isEnabled());
             if (fpEnabled != canopusEnabled) {
-                throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously");
+                throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously.");
             }
             fingerprintAndCanopusConfigPanel.applyValuesFromPreset(fpEnabled, configMap);
             csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
             msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
 
-            recomputeBox.setSelected(Boolean.parseBoolean(configMap.get("RecomputeResults")));
+            recomputeBox.setSelected(isSingleCompound() || Boolean.parseBoolean(configMap.get("RecomputeResults")));
+        } catch (UnsupportedOperationException e) {
+            Jobs.runEDTLater(() -> new InfoDialog(this,
+                    "Preset is not compatible with the compute dialog:<br>" + e.getMessage() + "<br><br>You can start a computation with this preset, but cannot edit the parameters."
+            ));
+            showPresetInfoBanner(e.getMessage());
+            presetFreeze();
         } catch (Exception e) {
             Jobs.runEDTLater(() -> new WarningDialog(this,
-                    "Error When loading preset",
-                    "The preset cannot be loaded:\n" + e.getMessage() + "\n\nYou can start a computation with this preset, but cannot edit the parameters.",
+                    "Error loading preset",
+                    "The preset cannot be loaded:<br>" + e.getMessage() + "<br><br>Computation with this preset might not work as expected..",
                     null
             ));
+            showPresetWarningBanner(e.getMessage());
             presetFreeze();
         }
     }
@@ -797,7 +842,6 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetFreeze() {
         presetFrozen = true;
-        presetMessage.setVisible(true);
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> {
                     if (panel.isToolSelected()) {
@@ -812,7 +856,7 @@ public class BatchComputeDialog extends JDialog {
 
     private void presetUnfreeze() {
         presetFrozen = false;
-        presetMessage.setVisible(false);
+        hidePresetBanners();
         Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
                 .forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
 
