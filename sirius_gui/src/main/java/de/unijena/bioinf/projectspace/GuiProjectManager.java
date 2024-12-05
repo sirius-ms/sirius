@@ -185,7 +185,6 @@ public class GuiProjectManager implements Closeable {
                             }
                         } finally {
                             siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false,true);
-                            System.out.println("Loaded imported data in: " + w);
                         }
                     }
                 }

@@ -180,16 +180,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         landingPanelSwitcher.add("landing", landingPage);
         landingPanelSwitcher.add("results", resultPanelContainer);
 
-        compoundList.getSortedSource().addListEventListener(new ListEventListener<InstanceBean>() {
-            @Override
-            public void listChanged(ListEvent<InstanceBean> listEvent) {
-                if (listEvent.getSourceList().isEmpty())
-                    layout.show(landingPanelSwitcher, "doc");
-                else
-                    layout.show(landingPanelSwitcher, "results");
-            }
+        compoundList.getSortedSource().addListEventListener(listEvent -> {
+            if (listEvent.getSourceList().isEmpty())
+                layout.show(landingPanelSwitcher, "landing");
+            else
+                layout.show(landingPanelSwitcher, "results");
         });
-        layout.show(landingPanelSwitcher, compoundList.getFullSize() < 1 ? "doc" : "results");
+        layout.show(landingPanelSwitcher, compoundList.getFullSize() < 1 ? "landing" : "results");
 
         // toolbar
         toolbar = new SiriusToolbar(gui);
