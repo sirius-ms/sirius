@@ -554,7 +554,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             startIndexOfTraces = Math.min(startIndexOfTraces, f.getTraceRef().getScanIndexOffsetOfTrace());
         }
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
-        int maximumIndex = mergedAxis.getRetentionTimes().length;
+        int maximumIndex = 0;
         ArrayList<TraceSet.Trace> traces = new ArrayList<>();
         for (int k = 0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
@@ -562,7 +562,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             TraceRef r = f.getTraceRef();
             MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace == null) continue;
-            maximumIndex = Math.min(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
+            maximumIndex = Math.max(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
             TraceSet.Trace trace = new TraceSet.Trace();
             trace.setMz(f.getAverageMass());
             trace.setId(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0));
