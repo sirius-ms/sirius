@@ -200,7 +200,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                 case INTERNET :
                     addHTMLTextPanel(resultPanel,
                             styleErrorMessage(
-                            "Could not connect to the Internet. Please check whether your computer is connected to the internet. " +
+                            "Could not connect to the internet. Please check whether your computer is connected to the internet. " +
                             "All features depending on the SIRIUS web services won't work without internet connection." +
                             "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err))
                     );
