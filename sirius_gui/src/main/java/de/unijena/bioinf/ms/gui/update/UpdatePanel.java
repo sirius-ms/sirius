@@ -37,7 +37,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
     }
 
     private JPanel upToDateContent() {
-        return textContent("SIRIUS is up to date!", Colors.GOOD);
+        return textContent("SIRIUS is up to date!", Colors.TEXT_GOOD);
     }
 
     private JPanel noUpdateInformationContent() {
