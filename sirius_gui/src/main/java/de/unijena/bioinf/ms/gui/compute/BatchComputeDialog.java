@@ -778,12 +778,12 @@ public class BatchComputeDialog extends JDialog {
                         .map(e -> e.getKey() + " = " + e.getValue() + "\n")
                         .collect(Collectors.toCollection(ArrayList::new));
                 if (!hiddenParameters.isEmpty()) {
-                    hiddenParameters.addFirst("Preset sets parameters that are not visible in the compute dialog:\n");
+                    hiddenParameters.addFirst("Preset specifies parameters that are not visible in the compute dialog:\n");
                     hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
                     Jobs.runEDTLater(() -> new InfoDialog(this,
                             GuiUtils.formatToolTip(hiddenParameters),
                             DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
-                    showPresetInfoBanner("Preset sets parameters that are not visible in the compute dialog.");
+                    showPresetInfoBanner("Preset specifies parameters that are not visible in the compute dialog.");
                     presetFreeze();
                     return;
                 }
@@ -793,7 +793,7 @@ public class BatchComputeDialog extends JDialog {
             // however user might save a simple preset without config map (e.g. using api).
             // Missing values in the map will fallback to default during computation.
             // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
-            // his is the same as falling back to default, but we can fill the gui panel correctly.
+            // This is the same as falling back to default, but we can fill the gui panel correctly.
             final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());

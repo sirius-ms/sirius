@@ -40,7 +40,7 @@ public abstract class OpenInDocsAction extends AbstractAction {
             try {
                 GuiUtils.openURL(popupOwner, uri, "Open Online Documentation", true);
             } catch (IOException er) {
-                LoggerFactory.getLogger(getClass()).error("Could not 'Online Documentation' in system browser, Try internal browser as fallback.", er);
+                LoggerFactory.getLogger(getClass()).error("Could not open 'Online Documentation' in system browser, Try internal browser as fallback.", er);
                 try {
                     GuiUtils.openURL(popupOwner, uri, "Open Online Documentation (internal)", false);
                 } catch (IOException ex2) {
