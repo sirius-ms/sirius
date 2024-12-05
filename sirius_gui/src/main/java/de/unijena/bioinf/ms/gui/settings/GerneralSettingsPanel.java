@@ -103,9 +103,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         add(new JLabel("Molecular structures display color"), molecularStructuresDisplayColors);
 
         showSpectraMatchPanel = new JCheckBox();
-        showSpectraMatchPanel.setToolTipText("If true a result tab showing all spectra matches for selected features will be visible after restart.");
+        showSpectraMatchPanel.setToolTipText("Show a result tab with all spectral library matches for selected features.");
         showSpectraMatchPanel.setSelected(gui.getProperties().isShowSpectraMatchPanel());
-        addNamed("Show spectra match Tab", showSpectraMatchPanel);
+        addNamed("Show \"Library Matches\" tab", showSpectraMatchPanel);
 
 
         add(new JXTitledSeparator("ILP solver"));
