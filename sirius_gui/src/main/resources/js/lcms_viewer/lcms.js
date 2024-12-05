@@ -103,10 +103,10 @@ class LiquidChromatographyPlot {
             comparisonFunction = (u,v)=>v.relativeMainFeatureIntensity-u.relativeMainFeatureIntensity;
         }
 
-        if (this.order == "ALPHABETICALLY_MAIN_FIRST") { //this is for adduct view, to ensure that correlated traces are sorted behind main feature
+        if (this.order == "ALPHABETICALLY_SELECTED_FIRST") { //this is for adduct view, to ensure that correlated traces are sorted behind main feature
             comparisonFunction = (u, v) => {
-                if (u.label.startsWith("[MAIN]") && !v.label.startsWith("[MAIN]")) return -1;
-                if (!u.label.startsWith("[MAIN]") && v.label.startsWith("[MAIN]")) return 1;
+                if (u.hasSelectedFeature() && !v.hasSelectedFeature()) return -1;
+                if (!u.hasSelectedFeature() && v.hasSelectedFeature()) return 1;
                 return u.label.localeCompare(v.label);
             };
         }
@@ -557,6 +557,13 @@ class Trace {
         return this.json.merged===true;
     }
 
+    /*
+    it "adduct view" (LCCompoundData) a selected feature's isotope pattern plus correlated features are shown
+    if true this trace contains the selected feature or its isotope feature
+     */
+    hasSelectedFeature() {
+        return this.json.label.includes("[SELECTED]")
+    }
 }
 
 class DataPoint {
