@@ -463,7 +463,7 @@ class LCCompoundData extends AbstractLiquidChromatographyData {
         }
         this.finishDefinition();
         if (this.specialTrace) {
-            for (var l=0; l < this.specialTrace.featureAnnotations.lenth; ++l) {
+            for (var l=0; l < this.specialTrace.featureAnnotations.length; ++l) {
                 this.addFocusFeature(this.specialTrace.featureAnnotations[l]);
             }
         }
@@ -504,7 +504,7 @@ class Trace {
         ];
         this.ms2Annotations = [];
         this.featureAnnotations = [];
-        this.mainFeatureId = -1;
+        this.mainFeatureIdx = -1;
         if (json.annotations) {
             for (var i=0; i < json.annotations.length; ++i) {
                 let a = json.annotations[i];
@@ -514,7 +514,7 @@ class Trace {
                     );
                     this.featureAnnotations.push(d);
                     if (d.isMainFeature()) {
-                        this.mainFeatureId = this.featureAnnotations.length-1;
+                        this.mainFeatureIdx = this.featureAnnotations.length-1;
                     }
                 } else if (a.type=="MS2") {
 
@@ -528,12 +528,12 @@ class Trace {
     }
 
     mainFeature() {
-        if (this.mainFeatureId>=0) return this.featureAnnotations[this.mainFeatureId];
+        if (this.mainFeatureIdx>=0) return this.featureAnnotations[this.mainFeatureIdx];
         else return null;
     }
 
     featureIntensity() {
-        if (this.mainFeatureId < 0) return 0.0;
+        if (this.mainFeatureIdx < 0) return 0.0;
         let feature = this.mainFeature();
         return this.data_[feature.apex].intensity;
     }
