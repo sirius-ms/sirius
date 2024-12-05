@@ -517,7 +517,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (f.getApexIntensity() == null) continue; // ignore features without lcms information
             String prefix = "[CORRELATED]";
             if (fid != null && fid == f.getAlignedFeatureId()) {
-                prefix = "[MAIN]";
+                prefix = "[SELECTED]";
             }
             String mainLabel;
             if (f.getDetectedAdducts() == null || f.getDetectedAdducts().getAllAdducts().isEmpty()) {
@@ -580,7 +580,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // add annotations
             ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
             // feature annotation
-            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, label,
+            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, "[MAIN]" + label, //this ensures that lcms view shows the intensity of this features
                     r.getApex() + shift, r.getStart() + shift, r.getEnd() + shift));
 
             trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
