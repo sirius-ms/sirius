@@ -42,6 +42,8 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Vector;
 
+import static de.unijena.bioinf.ms.gui.properties.GuiProperties.*;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -55,6 +57,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> themeBox;
 
     final FileChooserPanel db;
+    final JCheckBox showSpectraMatchPanel;
     final JComboBox<String> solver;
     final JComboBox<ConfidenceDisplayMode> confidenceDisplayMode;
     final JComboBox<MolecularStructuresDisplayColors> molecularStructuresDisplayColors;
@@ -86,7 +89,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         confidenceDisplayMode = GuiUtils.makeParameterComboBoxFromDescriptiveValues(ConfidenceDisplayMode.values());
 
         try {
-            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.valueOf(props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode", "APPROXIMATE")));
+            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.valueOf(props.getProperty(CONFIDENCE_DISPLAY_MODE_KEY, "APPROXIMATE")));
         } catch (IllegalArgumentException e) {
             confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.APPROXIMATE);
         }
@@ -98,6 +101,12 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         molecularStructuresDisplayColors = GuiUtils.makeParameterComboBoxFromDescriptiveValues(MolecularStructuresDisplayColors.values());
         molecularStructuresDisplayColors.setSelectedItem(gui.getProperties().getMolecularStructureDisplayColors());
         add(new JLabel("Molecular structures display color"), molecularStructuresDisplayColors);
+
+        showSpectraMatchPanel = new JCheckBox();
+        showSpectraMatchPanel.setToolTipText("Show a result tab with all spectral library matches for selected features.");
+        showSpectraMatchPanel.setSelected(gui.getProperties().isShowSpectraMatchPanel());
+        addNamed("Show \"Library Matches\" tab", showSpectraMatchPanel);
+
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
@@ -154,23 +163,23 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
             props.setProperty("de.unijena.bioinf.sirius.ui.theme", selectedTheme);
             restartRequired = true;
         }
+
+        props.setProperty(SHOW_SPECTRA_MATCH_PANEL_KEY, String.valueOf(showSpectraMatchPanel.isSelected()));
+        gui.getProperties().setShowSpectraMatchPanel(showSpectraMatchPanel.isSelected());
+
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
 
-        props.setProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode", ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
+        props.setProperty(CONFIDENCE_DISPLAY_MODE_KEY, ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
         gui.getProperties().setConfidenceDisplayMode((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem());
 
-        props.setProperty("de.unijena.bioinf.sirius.ui.molecularStructuresDisplayColors",((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem()).name());
+        props.setProperty(MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY,((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem()).name());
         gui.getProperties().setMolecularStructureDisplayColors((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem());
 
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            //todo do we need to invalidate chache somehow
-            /*Jobs.runInBackgroundAndLoad(MF, () -> {
-                System.out.println("WaRN Check if we have to do something???");
-            });*/
         } else {
-            LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
+            LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory ({}). Directory not Changed!", dir);
         }
         if (scaling != (int) scalingSpinner.getValue()) {
             props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
