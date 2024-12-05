@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import io.sirius.ms.sdk.model.CanopusPrediction;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,7 @@ public class ResultPanel extends JTabbedPane {
     private LCMSViewerPanel lcmsTab;
     private final CandidateListDetailViewPanel structuresTab;
     private final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
+    @Getter
     private final EpimetheusPanel structureAnnoTab;
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
