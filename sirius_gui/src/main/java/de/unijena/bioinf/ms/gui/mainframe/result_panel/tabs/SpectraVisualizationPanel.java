@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -50,6 +51,7 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
+import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -61,6 +63,7 @@ import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -80,8 +83,8 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -137,6 +140,10 @@ public class SpectraVisualizationPanel extends JPanel implements
 
     public WebViewSpectraViewer browser;
     final JToolBar toolBar;
+
+    private final JPanel browserPanel;
+    private final JScrollPane compoundDetailsScroll;
+    private final WebViewJPanel compoundDetails;
 
     private final boolean ms2MirrorEnabled;
     private SpectralSimilarity[] similarities;
@@ -200,7 +207,20 @@ public class SpectraVisualizationPanel extends JPanel implements
         Pair<JPanel, JLabel> error = GuiUtils.newEmptyResultsPanelWithLabel(null);
         this.errorLabel = error.right();
 
-        this.centerCardPanel.add("browser", this.browser);
+        this.compoundDetails = new WebViewJPanel();
+        this.compoundDetails.queueTaskInJFXThread(() -> compoundDetails.webView.setMaxWidth(300));
+        this.compoundDetails.setPreferredSize(new Dimension(300, 400));
+
+        this.compoundDetailsScroll = new JScrollPane(this.compoundDetails);
+        this.compoundDetailsScroll.setBorder(BorderFactory.createEmptyBorder());
+        this.compoundDetailsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        this.compoundDetailsScroll.setVisible(false);
+
+        this.browserPanel = new JPanel(new BorderLayout());
+        this.browserPanel.add(browser);
+        this.browserPanel.add(compoundDetailsScroll, BorderLayout.EAST);
+
+        this.centerCardPanel.add("browser", this.browserPanel);
         this.centerCardPanel.add("error", error.left());
         showBrowser();
 
@@ -313,6 +333,10 @@ public class SpectraVisualizationPanel extends JPanel implements
                 return;
             }
 
+            Jobs.runEDTLater(() -> {
+                this.compoundDetailsScroll.setVisible(mode.equals(MS2_MIRROR_DISPLAY) && selectedMatchBean != null);
+                this.browserPanel.revalidate();
+            });
             if (jsonSpectra != null) {
                 String svg = null;
                 String diff = null;
@@ -322,8 +346,12 @@ public class SpectraVisualizationPanel extends JPanel implements
                 }
                 if (mode.equals(MS1_MIRROR_DISPLAY))
                     diff = "difference";
-                if (mode.equals(MS2_MIRROR_DISPLAY))
+                if (mode.equals(MS2_MIRROR_DISPLAY)) {
                     diff = "normal";
+                    if (selectedMatchBean != null) {
+                        this.compoundDetails.load(makeMolDescription(selectedMatchBean));
+                    }
+                }
                 browser.loadData(jsonSpectra, svg, diff, showMzTopK);
             }
         } catch (JsonProcessingException e) {
@@ -362,7 +390,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         SpectraViewContainer.PeakMatch[] peakMatchesSpectrum = new SpectraViewContainer.PeakMatch[spectrum.getPeaks().size()];
         SpectraViewContainer.PeakMatch[] peakMatchesPattern = new SpectraViewContainer.PeakMatch[pattern.getPeaks().size()];
 
-        WrapperSpectrum<io.sirius.ms.sdk.model.SimplePeak> pat = WrapperSpectrum.
+        WrapperSpectrum<SimplePeak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
 
         int i = 0;
@@ -394,6 +422,69 @@ public class SpectraVisualizationPanel extends JPanel implements
             LoggerFactory.getLogger(SpectraVisualizationPanel.class).error("Error when creating Structure SVG from smiles!", e);
             return null;
         }
+    }
+
+    @SneakyThrows
+    private static String makeMolDescription(SpectralMatchBean bean) {
+        SpectralLibraryMatch match = bean.getMatch();
+        MolDescBuilder builder = new MolDescBuilder("<html><body><div><h3>Compound</h3><p>")
+                .descLine("Formula", match.getMolecularFormula(), "<br>")
+                .descLine("SMILES", match.getSmiles(), "<br>")
+                .descLine("InChI key", match.getCandidateInChiKey(), "<br>");
+
+        try {
+            builder.descLine("InChI", InChISMILESUtils.getInchiFromSmiles(match.getSmiles(), true).in2D, "");
+        } catch (Exception ignored) {}
+
+        builder.descLine("</p><h3>Spectrum</h3><p>");
+
+        if (match.getReferenceSpectrum() != null) {
+            builder.descLine("Name", match.getReferenceSpectrum().getName(), "<br>")
+                    .descLine("Instrument", match.getReferenceSpectrum().getInstrument(), "<br>")
+                    .descLine("MS level", match.getReferenceSpectrum().getMsLevel(), "<br>")
+                    .descLine("Precursor m/z", match.getReferenceSpectrum().getPrecursorMz(), "<br>")
+                    .descLine("Collision energy", match.getReferenceSpectrum().getCollisionEnergy(), "<br>");
+        }
+
+        builder.descLine("Ionization", match.getAdduct(), "<br>")
+                .descLine("SPLASH", match.getSplash(), "</p>");
+
+        if (match.getDbName() != null && !match.getDbName().isBlank() && match.getDbId() != null && !match.getDbId().isBlank()) {
+            builder.descLine("<h3>Database</h3><p>")
+                    .descLine("Database", match.getDbName(), "<br>")
+                    .descLine("ID", match.getDbId(), "</p>");
+        }
+
+        return builder.toString();
+    }
+
+    private static class MolDescBuilder {
+
+        private final StringBuilder builder;
+
+        public MolDescBuilder(String line) {
+            builder = new StringBuilder(line);
+        }
+
+        public MolDescBuilder descLine(String key, Object value, String end) {
+            if (value != null) {
+                String val = value.toString();
+                if (!val.isBlank()) {
+                    builder.append(key).append(": ").append(val).append(end);
+                }
+            }
+            return this;
+        }
+
+        public MolDescBuilder descLine(String line) {
+            builder.append(line);
+            return this;
+        }
+
+        public String toString() {
+            return builder.toString();
+        }
+
     }
 
     private volatile JJob<Void> backgroundLoader = null;

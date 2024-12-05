@@ -130,6 +130,14 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                                 .map(Splash::new).ifPresent(exp::annotate);
                         MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE).map(MsInstrumentation::getBestFittingInstrument).ifPresent(exp::annotate);
                         MSP.parseRetentionTime(fields).ifPresent(exp::annotate);
+
+                        Optional<String> instrument_type = MSP.getWithSynonyms(fields, MSP.INSTRUMENT_TYPE);
+                        Optional<String> instrument = MSP.getWithSynonyms(fields, MSP.INSTRUMENT);
+                        Optional<String> ce = MSP.getWithSynonyms(fields, MSP.COL_ENERGY);
+
+                        if (instrument_type.isPresent()) fields.put("instrument_type", instrument_type.get());
+                        if (instrument.isPresent()) fields.put("instrument", instrument.get());
+                        if (ce.isPresent()) fields.put("ce", ce.get());
                     }
 
                 if (clearSpectrum)
