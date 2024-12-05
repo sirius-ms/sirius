@@ -106,7 +106,21 @@ public class Spectrums {
         spec.setMsLevel(2);
         spec.setName(refSpec.getName());
         spec.setPrecursorMz(refSpec.getPrecursorMz());
-        spec.setCollisionEnergy(refSpec.getCollisionEnergy());
+        if (refSpec.getInstrumentation() != null) {
+            spec.setInstrument(refSpec.getInstrumentation().description());
+        } else if (refSpec.getInstrumentType() != null && refSpec.getInstrument() != null
+                && !refSpec.getInstrumentType().isBlank() && !refSpec.getInstrument().isBlank()) {
+            spec.setInstrument(refSpec.getInstrumentType() + " (" + refSpec.getInstrument() + ")");
+        } else if (refSpec.getInstrumentType() != null && !refSpec.getInstrumentType().isBlank()) {
+            spec.setInstrument(refSpec.getInstrumentType());
+        } else if (refSpec.getInstrument() != null && !refSpec.getInstrument().isBlank()) {
+            spec.setInstrument(refSpec.getInstrument());
+        }
+        if (refSpec.getCollisionEnergy() != null) {
+            spec.setCollisionEnergy(refSpec.getCollisionEnergy());
+        } else {
+            spec.setCollisionEnergyStr(refSpec.getCe());
+        }
         return spec;
     }
 

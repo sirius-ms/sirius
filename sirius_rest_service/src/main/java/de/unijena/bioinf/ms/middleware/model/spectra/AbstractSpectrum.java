@@ -64,6 +64,13 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     protected String collisionEnergy = null;
 
     /**
+     * Instrument information.
+     */
+    @Schema(nullable = true)
+    @Getter @Setter
+    protected String instrument;
+
+    /**
      * Precursor m/z of the MS/MS spectrum
      * Null for spectra where precursor m/z is not applicable
      */
