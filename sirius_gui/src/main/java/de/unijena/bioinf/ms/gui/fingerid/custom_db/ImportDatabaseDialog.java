@@ -77,6 +77,13 @@ class ImportDatabaseDialog extends JDialog {
         setVisible(true);
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (configPanel != null)
+            configPanel.destroy();
+    }
+
     protected void runImportJob() {
         try {
             if (configPanel.hasSpectraFiles() && new QuestionDialog(

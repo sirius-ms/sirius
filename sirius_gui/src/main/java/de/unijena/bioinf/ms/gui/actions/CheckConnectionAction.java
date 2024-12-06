@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
@@ -38,17 +40,12 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 /**
  * THREAD SAFE
  */
-public class CheckConnectionAction extends AbstractGuiAction {
+public class CheckConnectionAction extends AbstractGuiAction implements PropertyChangeListener {
 
     protected CheckConnectionAction(SiriusGui gui) {
         super("Webservice", gui);
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
-
-        this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
-            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
-            Jobs.runEDTLater(() -> setIcon(check));
-        });
-
+        gui.getConnectionMonitor().addConnectionStateListener(this);
         Jobs.runInBackground(() -> setIcon(this.gui.getConnectionMonitor().checkConnection()));
     }
 
@@ -68,15 +65,22 @@ public class CheckConnectionAction extends AbstractGuiAction {
                 () -> gui.getConnectionMonitor().checkConnection()).getResult();
     }
 
-    protected synchronized void setIcon(final @Nullable ConnectionCheck check) {
+    protected void setIcon(final @Nullable ConnectionCheck check) {
+        Jobs.runEDTLater(() -> {
+            if (check != null) {
+                if (isConnected(check))
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_YES.derive(32, 32));
+                else if (isWarningOnly(check))
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN.derive(32, 32));
+                else
+                    putValue(Action.LARGE_ICON_KEY, Icons.NET_NO.derive(32, 32));
+            }
+        });
 
-        if (check != null) {
-            if (isConnected(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_YES.derive(32, 32));
-            else if (isWarningOnly(check))
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN.derive(32, 32));
-            else
-                putValue(Action.LARGE_ICON_KEY, Icons.NET_NO.derive(32, 32));
-        }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        setIcon(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
     }
 }

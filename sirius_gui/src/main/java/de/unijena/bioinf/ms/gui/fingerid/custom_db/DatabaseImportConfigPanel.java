@@ -30,6 +30,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -91,6 +92,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private final SiriusGui gui;
 
+    private final PropertyChangeListener connectionListener;
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
         super(CustomDBOptions.class);
         this.gui = gui;
@@ -100,12 +102,18 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         add(createCompoundsBox(), BorderLayout.CENTER);
         add(createImportButton(), BorderLayout.SOUTH);
 
-
-        gui.getConnectionMonitor().addConnectionStateListener(evt -> {
+        connectionListener = evt -> {
             ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setLoggedIn(check);
-        });
+        };
+
+        gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         Jobs.runInBackground(() -> setLoggedIn(gui.getConnectionMonitor().checkConnection()));
+    }
+
+    public void destroy(){
+        if (connectionListener != null)
+            gui.getConnectionMonitor().removePropertyChangeListener(connectionListener);
     }
 
     private synchronized void setLoggedIn(ConnectionCheck check) {
