@@ -80,6 +80,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Getter
     private FilterableCompoundListPanel filterableCompoundListPanel;
+    private LandingPage landingPage;
 
     public void ensureCompoundIsVisible(int index){
         compoundListView.ensureIndexIsVisible(index);
@@ -134,6 +135,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         this.gui = gui;
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (landingPage != null)
+            landingPage.unregisterListeners();
+    }
+
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
         if (Taskbar.isTaskbarSupported()) {
@@ -175,7 +183,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         SiriusCardLayout layout = new SiriusCardLayout();
         JPanel landingPanelSwitcher = new JPanel(layout);
-        LandingPage landingPage = new LandingPage(gui, ApplicationCore.WEB_API.getAuthService());
+        landingPage = new LandingPage(gui, ApplicationCore.WEB_API.getAuthService());
 
         landingPanelSwitcher.add("landing", landingPage);
         landingPanelSwitcher.add("results", resultPanelContainer);
