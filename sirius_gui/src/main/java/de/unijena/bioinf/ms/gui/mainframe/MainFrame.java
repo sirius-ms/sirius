@@ -20,12 +20,11 @@
 package de.unijena.bioinf.ms.gui.mainframe;
 
 import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.AbstractGuiAction;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
 import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
@@ -140,6 +139,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
         super.dispose();
         if (landingPage != null)
             landingPage.unregisterListeners();
+        if (globalActions != null)
+            for (Object key : globalActions.allKeys()) {
+                Action action = globalActions.get(key);
+                if (action instanceof AbstractGuiAction guiAction)
+                    guiAction.destroy();
+            }
     }
 
     //if we want to add taskbar stuff we can configure this here
