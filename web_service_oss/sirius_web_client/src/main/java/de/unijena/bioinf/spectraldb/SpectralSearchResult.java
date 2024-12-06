@@ -93,8 +93,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String smiles;
 
         /**
-         * This in the inchikey of the corresponding structure candidate
+         * This is the inchikey of the corresponding structure candidate
          */
         private String candidateInChiKey;
+
     }
 }

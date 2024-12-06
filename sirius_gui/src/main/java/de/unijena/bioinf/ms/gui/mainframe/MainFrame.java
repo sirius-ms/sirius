@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.AbstractGuiAction;
@@ -32,16 +33,12 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import io.sirius.ms.sdk.model.ProjectInfo;
@@ -65,7 +62,6 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 public class MainFrame extends JFrame implements DropTargetListener {
-
     public static final CookieManager cookieGuard = new CookieManager();
 
     static {
@@ -96,15 +92,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compoundList.getCompoundListSelectionModel();
     }
-
-
-    // right side panel
-    private FormulaList formulaList;
-    private StructureList databaseStructureList;
-    private StructureList combinedStructureListSubstructureView;
-    private StructureList combinedStructureListDeNovoView;
-    private SpectralMatchList spectralMatchList;
-
 
     @Getter
     private ResultPanel resultsPanel;
@@ -164,26 +151,20 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrame() {
         Jobs.runEDTLater(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
-        // create models for views
-        compoundList = new CompoundList(gui);
-        formulaList = new FormulaList(compoundList);
-        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
-        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        spectralMatchList = new SpectralMatchList(compoundList);
-
-
-        //CREATE VIEWS
-        // results Panel
         ProjectInfo projectInfo = getGui().applySiriusClient((c,pid) ->
                 c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE)));
 
-        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
+        // Global feature list.
+        compoundList = new CompoundList(gui);
+
+        //CREATE VIEWS
+        // results Panel
+        resultsPanel = new ResultPanel(compoundList, gui);
         resultsPanel.showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(projectInfo.getType()));
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
-        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
+        if (SiriusProperties.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
         SiriusCardLayout layout = new SiriusCardLayout();

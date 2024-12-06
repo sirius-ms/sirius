@@ -224,7 +224,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
                 int i = 0;
-                for (FingerprintCandidateBean fpc : resultPanel.structureAnnoTab.getCandidateTable().getFilteredSource()) {
+                for (FingerprintCandidateBean fpc : resultPanel.getStructureAnnoTab().getCandidateTable().getFilteredSource()) {
                     if (fpc.getInChiKey().equals(c.getInChiKey()))
                         return i;
                     i++;
@@ -234,8 +234,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             //select correct compound in annotated spectrum view.
             Jobs.runEDTLater(() -> {
-                resultPanel.setSelectedComponent(resultPanel.structureAnnoTab);
-                resultPanel.structureAnnoTab.getCandidateTable().getTable()
+                resultPanel.setSelectedComponent(resultPanel.getStructureAnnoTab());
+                resultPanel.getStructureAnnoTab().getCandidateTable().getTable()
                         .changeSelection(idx, 0, false, false);
             });
         }
