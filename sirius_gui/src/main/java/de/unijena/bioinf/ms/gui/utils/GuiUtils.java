@@ -195,18 +195,21 @@ public class GuiUtils {
         }
     }
 
-    public static void openURL(@NotNull Frame owner, URI url) throws IOException {
+    public static void openURL(@NotNull Window owner, URI url) throws IOException {
         openURL(owner, url, true);
     }
 
-    public static void openURL(@NotNull Frame owner, URI url, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@NotNull Window owner, URI url, boolean useSystemBrowser) throws IOException {
         openURL(owner, url, null, useSystemBrowser);
     }
 
 
-    public static void openURL(@NotNull Frame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@Nullable Window owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
         if (url == null)
-            new ExceptionDialog(owner, "Cannot open empty URL!");
+            if (owner instanceof JDialog dialog)
+                new ExceptionDialog(dialog, "Cannot open empty URL!");
+            else
+                new ExceptionDialog((Frame) owner, "Cannot open empty URL!");
 
         if (useSystemBrowser) {
             if (Desktop.isDesktopSupported()) {
@@ -218,7 +221,10 @@ public class GuiUtils {
             }
         }
 
-        new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
+        if (owner instanceof JDialog dialog)
+            new WebViewBrowserDialog(dialog, title == null ? "SIRIUS WebView" : title, url);
+        else
+            new WebViewBrowserDialog((Frame) owner, title == null ? "SIRIUS WebView" : title, url);
     }
 
     /**

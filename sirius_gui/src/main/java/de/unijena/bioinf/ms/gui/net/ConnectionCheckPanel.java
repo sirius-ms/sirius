@@ -23,7 +23,9 @@ import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ActionUtils;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
+import de.unijena.bioinf.ms.gui.utils.HyperlinkJTextPane;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
@@ -100,7 +102,6 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         this.noLoginButtons = noLoginButtons;
         this.main = setAndGetContentPanel(new TwoColumnPanel(GridBagConstraints.WEST, GridBagConstraints.EAST));
         this.main.setOpaque(false);
-        setOpaque(false);
 
         main.add(new JXTitledSeparator("Connection check"), 15, false);
         main.add(new JLabel("Connection to the Internet (" + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.external") + ")  "), internet, 5, false);
@@ -110,8 +111,6 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         main.add(authLabel, auth, 5, false);
         main.add(activeSubLabel, authLicense, 5, false);
         main.add(webServiceConnectionLabel, fingerID, 5, false);
-
-        main.addVerticalGlue();
 
         if (check == null){
             setLoading(true);
@@ -168,21 +167,23 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         main.add(subInfoSeparator, 15, false);
         main.add(subInfoLabel, 5, false);
 
-        main.revalidate();
-        main.repaint();
+        revalidate();
+        repaint();
     }
 
 
     private JPanel createResultPanel(@NotNull ConnectionCheck check) {
-        TwoColumnPanel resultPanel = new TwoColumnPanel();
+        JPanel resultPanel = new JPanel(new BorderLayout());
+        resultPanel.setOpaque(false);
         resultPanel.setBorder(BorderFactory.createEmptyBorder());
-        resultPanel.add(new JXTitledSeparator("Description"), 15, false);
+
+        resultPanel.add(new JXTitledSeparator("Description"), BorderLayout.NORTH);
 
         final List<ConnectionError> errors = check.getErrors();
 
         if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(ConnectionError.ErrorTypeEnum.WARNING)).findAny().isEmpty()) {
             //case 0 NO ERROR
-            addHTMLTextPanel(resultPanel, styleGoodMessage("Connection to SIRIUS web services successfully established!"));
+            resultPanel.add(makeHTMLTextPanel("Connection to SIRIUS web services successfully established!", Colors.TEXT_GOOD), BorderLayout.CENTER);
         } else {
             ConnectionError err = errors.getFirst();
             ErrorKlassEnum mainError = err.getErrorKlass();
@@ -198,61 +199,60 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
             }
             switch (mainError) {
                 case INTERNET :
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(
+                    resultPanel.add(makeHTMLTextPanel(
                             "Could not connect to the internet. Please check whether your computer is connected to the internet. " +
                             "All features depending on the SIRIUS web services won't work without internet connection." +
-                            "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err))
-                    );
+                            "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
                     break;
                 case LOGIN_SERVER:
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() + "<br>" +
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ". <br>" +
                             "Either our Authentication/Login server is temporary not available " +
-                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err))
-                    );
+                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
                     break;
                 case LICENSE_SERVER:
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() + "<br>" +
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ". <br>" +
                             "Either our Licensing server is temporary not available, " +
-                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err))
-                    );
+                            "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
                     break;
                 case TOKEN:
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() +
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() +
                             "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>"
-                            + addHtmlErrorText(err))
-                    );
+                            + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
                     if (!noLoginButtons)
-                        resultPanel.add(new JButton(SiriusActions.SIGN_OUT.getInstance(gui, true)));
+                        resultPanel.add(new JButton(SiriusActions.SIGN_OUT.getInstance(gui, true)), BorderLayout.SOUTH);
                 case LOGIN:
-                    addHTMLTextPanel(resultPanel,
-                            styleWarningMessage(addLinkToLoginError(err.getSiriusMessage()) + READ_MORE_LICENSING + addHtmlErrorText(err))
-                    );
+                    resultPanel.add(makeHTMLTextPanel(
+                            addLinkToLoginError(err.getSiriusMessage()) + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
+                    ), BorderLayout.CENTER);
                     if (!noLoginButtons)
-                        resultPanel.add(new JButton(SiriusActions.SIGN_IN.getInstance(gui, true)));
+                        resultPanel.add(new JButton(SiriusActions.SIGN_IN.getInstance(gui, true)), BorderLayout.SOUTH);
                     break;
                 case LICENSE:
-                    addHTMLTextPanel(resultPanel,
-                            styleWarningMessage(err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err))
-                    );
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
+                    ), BorderLayout.CENTER);
                     break;
                 case TERMS:
-                    addHTMLTextPanel(resultPanel,
-                            styleWarningMessage(err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
-                            " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:")
-                    );
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
+                            " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:", Colors.TEXT_WARN
+                    ), BorderLayout.CENTER);
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
-                            SiriusActions.ACCEPT_TERMS.getInstance(gui, true))));
+                            SiriusActions.ACCEPT_TERMS.getInstance(gui, true))), BorderLayout.SOUTH);
                     break;
                 case APP_SERVER:
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() + "<br>" +
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + "<br>" +
                             "Could not connect to the SIRIUS web service (REST API). <br><br>" + "<b>Possible reasons:</b><br>" +
                             "<ol>" +
                             "<li>The SIRIUS web service is temporary not available.</li>" +
@@ -260,31 +260,19 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                             "<li>Our Service is no longer available for your current SIRIUS version. <br>" +
                             "Please <a href=https://github.com/sirius-ms/sirius/releases/latest>download</a> " +
                             "the latest version of SIRIUS</li>" +
-                            "</ol>" + addHtmlErrorText(err))
-                    );
+                            "</ol>" + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
 
 
                     break;
                 default:
-                    addHTMLTextPanel(resultPanel,
-                            styleErrorMessage(err.getSiriusMessage() + "<br><b>An Unexpected Network Error has occurred! " +
-                            "Please submit a bug report.</b>" + addHtmlErrorText(err))
-                    );
+                    resultPanel.add(makeHTMLTextPanel(
+                            err.getSiriusMessage() + "<br><b>An Unexpected Network Error has occurred! " +
+                            "Please submit a bug report.</b>" + addHtmlErrorText(err), Colors.TEXT_ERROR
+                    ), BorderLayout.CENTER);
             }
         }
         return resultPanel;
-    }
-
-    private String styleErrorMessage(String errorMessage) {
-        return WebviewHTMLTextJPanel.styleErrorColor(errorMessage);
-    }
-
-    private String styleWarningMessage(String errorMessage) {
-        return WebviewHTMLTextJPanel.styleWarningColor(errorMessage);
-    }
-
-    private String styleGoodMessage(String errorMessage) {
-        return WebviewHTMLTextJPanel.styleGoodColor(errorMessage);
     }
 
     private static String addHtmlErrorText(ConnectionError e){
@@ -299,16 +287,19 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
             detail.append("Response Message: ").append(e.getServerResponseErrorMessage());
         return  detail.toString();
     }
-    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text) {
-        return addHTMLTextPanel(resultPanel, text, 100);
-    }
+    public JComponent makeHTMLTextPanel(@NotNull String text, Color fontColor) {
+        HyperlinkJTextPane htmlPanel = new HyperlinkJTextPane(text);
+        htmlPanel.setBackground(getBackground());
+        htmlPanel.setForeground(fontColor);
 
-    public WebviewHTMLTextJPanel addHTMLTextPanel(@NotNull JPanel resultPanel, @NotNull String text, int height) {
-        WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel(text, getBackground());
-        htmlPanel.setPreferredSize(new Dimension(main.getPreferredSize().width, height));
-        resultPanel.add(htmlPanel);
-        htmlPanel.load();
-        return htmlPanel;
+        //enable scrolling if text is too long
+        JScrollPane sp = new JScrollPane(htmlPanel);
+        sp.setOpaque(false);
+        sp.setBorder(BorderFactory.createEmptyBorder(5,0,5,0));
+        sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sp.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        return sp;
     }
 
     @Override
