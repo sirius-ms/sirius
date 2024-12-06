@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -41,10 +42,12 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
 
 
-public class AccountPanel extends LoadablePanel {
+public class AccountPanel extends LoadablePanel implements PropertyChangeListener {
     private final AuthService service;
     private JLabel userIconLabel, userInfoLabel;
     private JButton login, create, changeSub, registerExplorer;
@@ -182,5 +185,11 @@ public class AccountPanel extends LoadablePanel {
 
     public String name() {
         return "Account";
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt instanceof ConnectionMonitor.ConnectionStateEvent)
+            reloadChanges();
     }
 }
