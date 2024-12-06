@@ -7,15 +7,23 @@ import javax.swing.*;
 public class MessageBanner extends JLabel {
     public enum BannerType {GOOD, INFO, WARNING, ERROR}
     public MessageBanner() {
-        this(null, BannerType.INFO);
+        this(true);
+    }
+
+    public MessageBanner(boolean visible) {
+        this(null, BannerType.INFO, visible);
     }
 
     public MessageBanner(String message, BannerType bannerType) {
+        this(message, bannerType, true);
+    }
+    public MessageBanner(String message, BannerType bannerType, boolean visible) {
         super(message);
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
         setOpaque(true);
         setForeground(Colors.Themes.Light.FOREGROUND);
         setBannerType(bannerType);
+        setVisible(visible);
     }
 
     public void update(String message, BannerType bannerType) {
