@@ -118,8 +118,8 @@ public class Colors {
 
             public static class LCMSVIEW {
                 //for adduct/isotope view
-                public final static Color MAIN_FEATURE_COLOR = Color.decode("#000000");
-                public final static Color ADDUCT_FEATURE_COLOR = Color.decode("#666666");
+                public final static Color SELECTED_FEATURE_TRACE_COLOR = Color.decode("#000000");
+                public final static Color CORRELATED_FEATURE_TRACE_COLOR = Color.decode("#666666");
             }
 
             public static class StructuresView {
@@ -192,8 +192,8 @@ public class Colors {
 
             public static class LCMSVIEW {
                 //for adduct/isotope view
-                public final static Color MAIN_FEATURE_COLOR = FOREGROUND_DATA;
-                public final static Color ADDUCT_FEATURE_COLOR = Color.decode("#cccccc");
+                public final static Color SELECTED_FEATURE_TRACE_COLOR = FOREGROUND_DATA;
+                public final static Color CORRELATED_FEATURE_TRACE_COLOR = Color.decode("#cccccc");
             }
 
             public static class StructuresView {
@@ -400,8 +400,8 @@ public class Colors {
         };
 
         //for adduct/isotope view
-        public final static Color MAIN_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.MAIN_FEATURE_COLOR : Themes.Dark.LCMSVIEW.MAIN_FEATURE_COLOR);
-        public final static Color ADDUCT_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.ADDUCT_FEATURE_COLOR : Themes.Dark.LCMSVIEW.ADDUCT_FEATURE_COLOR);
+        public final static Color SELECTED_FEATURE_TRACE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR : Themes.Dark.LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR);
+        public final static Color CORRELATED_FEATURE_TRACE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.CORRELATED_FEATURE_TRACE_COLOR : Themes.Dark.LCMSVIEW.CORRELATED_FEATURE_TRACE_COLOR);
 
         public final static String ISOTOPE_DASH_STYLE = "5,3"; //not a Color, but style
 
