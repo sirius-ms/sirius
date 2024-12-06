@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.login.AccountPanel;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.update.UpdatePanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
@@ -145,6 +146,12 @@ public class LandingPage extends JPanel implements PropertyChangeListener {
     private AccountPanel accountPanel(SiriusGui gui, AuthService service) {
         AccountPanel accountPanel = new AccountPanel(gui, service);
         accountPanel.setBackground(getBackground());
+        gui.getConnectionMonitor().addConnectionStateListener((evt) -> {
+            //in case user logs out using another SIRIUS project window.
+            if (evt instanceof ConnectionMonitor.ConnectionStateEvent) {
+                    accountPanel.reloadChanges();
+            }
+        });
         return accountPanel;
     }
     private JComponent h1Logo() {
