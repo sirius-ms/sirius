@@ -48,6 +48,9 @@ dependencies {
     implementation 'raven.swing:spinner-progress:1.0.0'
 
     api "org.apache.commons:commons-text:$commons_text_version"
+
+    implementation 'com.miglayout:miglayout:3.7.4'
+
     if (excludeJFX)
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
             compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"

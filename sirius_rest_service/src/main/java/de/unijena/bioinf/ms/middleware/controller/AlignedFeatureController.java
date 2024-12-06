@@ -24,10 +24,12 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,12 +60,14 @@ public class AlignedFeatureController {
     private final ProjectsProvider<?> projectsProvider;
     private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
+    private final EventService<?> eventService;
 
     @Autowired
-    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig, EventService<?> eventService) {
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
         this.globalConfig = globalConfig;
+        this.eventService = eventService;
     }
 
     /**
@@ -122,7 +126,14 @@ public class AlignedFeatureController {
                                                    @RequestParam(required = false) InstrumentProfile profile,
                                                    @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
+        List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
+
+        // Prepare and Send SSE Event
+        List<String> fids = importedFeatures.stream().map(AlignedFeature::getAlignedFeatureId).toList();
+        List<String> cids = importedFeatures.stream().map(AlignedFeature::getCompoundId).distinct().toList();
+        eventService.sendEvent(ServerEvents.newImportEvent(cids, fids, projectId));
+
+        return importedFeatures;
     }
 
 

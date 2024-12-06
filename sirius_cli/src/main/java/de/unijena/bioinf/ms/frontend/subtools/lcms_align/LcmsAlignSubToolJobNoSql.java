@@ -154,7 +154,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         setProjectTypeOrThrow(ps);
 
-        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds);
+        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent());
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
 
         try {

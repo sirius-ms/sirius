@@ -21,7 +21,9 @@
 package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,17 +31,19 @@ import java.io.InputStreamReader;
 public class WebviewHTMLTextJPanel extends WebViewJPanel{
     private final String html;
     public WebviewHTMLTextJPanel(String htmlText) {
+        this(htmlText, Colors.BACKGROUND);
+    }
+    public WebviewHTMLTextJPanel(String htmlText, Color background) {
         super("/sirius/style-light.css","/sirius/style-dark.css");
         final StringBuilder buf = new StringBuilder();
         try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(WebviewHTMLTextJPanel.class.getResourceAsStream("/sirius/text.html")))) {
             String line;
             while ((line = br.readLine()) != null) buf.append(line).append('\n');
-            html = buf.toString().replace("#TEXT#", htmlText);
+            html = buf.toString().replace("#BACKGROUND#", "#"+Integer.toHexString(background.getRGB()).substring(2)).replace("#TEXT#", htmlText);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
     }
-
 
     public void load() {
        load(html);
@@ -51,5 +55,9 @@ public class WebviewHTMLTextJPanel extends WebViewJPanel{
 
     public static String styleErrorColor(String text) {
         return "<span class='error'>"+text+"</span>";
+    }
+
+    public static String styleGoodColor(String text) {
+        return "<span class='good'>"+text+"</span>";
     }
 }

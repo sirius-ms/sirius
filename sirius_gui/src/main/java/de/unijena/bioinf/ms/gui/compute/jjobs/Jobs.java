@@ -34,6 +34,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
+import static de.unijena.bioinf.ms.gui.utils.loading.ProgressPanel.DEFAULT_PROGRESS_STRING;
+
 
 /**
  * Central access point for Background jobs from the GUI
@@ -72,7 +74,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Dialog owner, final Runnable task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Dialog owner, final String title, final Runnable task) {
@@ -80,7 +82,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, Callable<T> task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, Callable<T> task) {
@@ -88,7 +90,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, ProgressJJob<T> task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(final Dialog owner, String title, ProgressJJob<T> task) {
@@ -96,7 +98,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final Runnable task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static LoadingBackroundTask<Boolean> runInBackgroundAndLoad(final Window owner, final String title, final Runnable task) {
@@ -104,7 +106,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, Callable<T> task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, Callable<T> task) {
@@ -112,7 +114,7 @@ public class Jobs { //todo convert to nonstatic class
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, ProgressJJob<T> task) {
-        return runInBackgroundAndLoad(owner, "Please wait", task);
+        return runInBackgroundAndLoad(owner, DEFAULT_PROGRESS_STRING, task);
     }
 
     public static <T> LoadingBackroundTask<T> runInBackgroundAndLoad(Window owner, String title, ProgressJJob<T> task) {

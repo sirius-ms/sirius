@@ -19,12 +19,12 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
@@ -70,7 +70,7 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     @Override
-    public synchronized void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e) {
         JFileChooser chooser = new JFileChooser(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
@@ -90,7 +90,7 @@ public class ImportAction extends AbstractGuiAction {
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles, Window popupOwner) {
+    public void importOneExperimentPerLocation(@NotNull final List<File> inputFiles, Window popupOwner) {
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing Files...", false,
                 InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
@@ -98,7 +98,7 @@ public class ImportAction extends AbstractGuiAction {
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
+    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
         StopWatch watch = new StopWatch();
         watch.start();
 
@@ -135,7 +135,7 @@ public class ImportAction extends AbstractGuiAction {
                             input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import, find & align...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import, find & align...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
 
                 task.awaitResult();
@@ -150,7 +150,7 @@ public class ImportAction extends AbstractGuiAction {
                             true,
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import MS data...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
                 task.awaitResult();
             }

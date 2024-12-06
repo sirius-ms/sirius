@@ -172,7 +172,7 @@ public class ProjectController {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
         sub.setLcmsParameters(parameters);
-        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub);
+        return computeService.importMsRunData(projectsProvider.getProjectOrThrow(projectId), sub);
     }
 
 
@@ -237,7 +237,7 @@ public class ProjectController {
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
         sub.setLcmsParameters(parameters);
-        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub);
+        return computeService.importMsRunData(projectsProvider.getProjectOrThrow(projectId), sub);
     }
 
 
@@ -278,10 +278,11 @@ public class ProjectController {
                                                @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).importPreprocessedData(
-                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
-                ignoreFormulas, allowMs1Only
-        );
+        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+        sub.setInputSources(List.of(inputFiles));
+        sub.setIgnoreFormulas(ignoreFormulas);
+        sub.setAllowMs1OnlyData(allowMs1Only);
+        return computeService.importPreprocessedData(projectsProvider.getProjectOrThrow(projectId), sub);
     }
 
     /**
@@ -338,10 +339,11 @@ public class ProjectController {
                                                @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).importPreprocessedData(
-                Arrays.stream(localFilePaths).map(Path::of).map(PathInputResource::new).collect(Collectors.toList()),
-                ignoreFormulas, allowMs1Only
-        );
+        ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
+        sub.setInputSources(List.of(localFilePaths));
+        sub.setIgnoreFormulas(ignoreFormulas);
+        sub.setAllowMs1OnlyData(allowMs1Only);
+        return computeService.importPreprocessedData(projectsProvider.getProjectOrThrow(projectId), sub);
     }
 
 
