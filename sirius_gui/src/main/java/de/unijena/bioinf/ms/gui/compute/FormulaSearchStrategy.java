@@ -19,6 +19,7 @@ import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -110,6 +111,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected DefaultListModel<String> providedFormulaListModel;
     protected JTextField elementFilterEnforcedTextBox;
     protected JTextField elementFilterDetectableElementsTextBox;
+    protected LoadablePanel loadable;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -141,7 +143,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.put(Strategy.PROVIDED, new ArrayList<>());
         strategyBox = isMs2 ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values()) : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO, Strategy.DATABASE, Strategy.PROVIDED});
 
-        createPanel();
+        this.setLayout(new BorderLayout());
+        this.loadable = createLoadablePanel();
+        this.add(loadable, BorderLayout.CENTER);
+
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
     }
@@ -150,16 +155,17 @@ public class FormulaSearchStrategy extends ConfigPanel {
         return searchDBList;
     }
 
-    private void createPanel() {
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+    private LoadablePanel createLoadablePanel() {
+        final JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
 
         final JPanel formulaSearchStrategySelection = new JPanel();
         formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
         formulaSearchStrategySelection.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
         formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
 
-        add(formulaSearchStrategySelection);
-        add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
+        content.add(formulaSearchStrategySelection);
+        content.add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
 
         JPanel strategyCardContainer = new JPanel();
         strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
@@ -182,16 +188,18 @@ public class FormulaSearchStrategy extends ConfigPanel {
         elementFilterPanel = createElementFilterPanel();
         strategyCardContainer.add(elementFilterPanel);
 
-        add(strategyCardContainer);
+        content.add(strategyCardContainer);
 
         hideAllStrategySpecific();
         showStrategySpecific(strategy, true);
 
         addStrategyChangeListener(s -> {
             showStrategySpecific(strategy, false);
-            strategy = s; //upate current strategy
+            strategy = s; //update current strategy
             showStrategySpecific(strategy, true);
         });
+
+        return new LoadablePanel(content);
     }
 
     private void showStrategySpecific(Strategy s, boolean show) {
@@ -504,7 +512,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
      * only used in single mode, not in batch mode
      */
     private void detectElementsAndLoad(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
-        Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> detectElements(ec, autoDetectable, formulaConstraintsTextBox)).getResult();
+        loadable.runInBackgroundAndLoad(/*"Detecting Elements...", */() -> detectElements(ec, autoDetectable, formulaConstraintsTextBox));
     }
 
     private void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
@@ -522,8 +530,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
             pi.getAnnotation(FormulaConstraints.class).
                     ifPresentOrElse(c -> formulaConstraintsTextBox.setText(c.toString(",")),
-                            () -> new ExceptionDialog(owner, notWorkingMessage)
-                    );
+                            () -> Jobs.runEDTLater(() -> new ExceptionDialog(owner, notWorkingMessage)));
         }
     }
 

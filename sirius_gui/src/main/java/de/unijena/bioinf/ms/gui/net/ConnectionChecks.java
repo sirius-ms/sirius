@@ -52,7 +52,9 @@ public class ConnectionChecks {
         return errors.isEmpty();
     }
 
-    public static boolean isInternet(@NotNull ConnectionCheck check) {
+    public static boolean isInternet(ConnectionCheck check) {
+        if (check == null)
+            return false;
         return isInternet(check.getErrors());
     }
 

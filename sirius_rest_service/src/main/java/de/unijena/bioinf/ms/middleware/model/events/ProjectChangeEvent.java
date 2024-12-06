@@ -58,7 +58,7 @@ public class ProjectChangeEvent {
     private Type eventType;
 
     /**
-     * Project on which the change has happened (is allways given).
+     * Project on which the change has happened (is always given).
      * If no other `id` is given this indicates that the whole project has been changed
      * (e.g. PROJECT_OPENED, PROJECT_MOVED, PROJECT_CLOSED).
      */

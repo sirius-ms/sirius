@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.h2.mvstore.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.File;
@@ -26,15 +27,13 @@ import java.util.*;
 @Slf4j
 public abstract class LCMSStorage implements Closeable {
 
-    private static Deviation DEFAULT_DEVIATION = new Deviation(10);
-
-    public static LCMSStorageFactory temporaryStorage() {
+    public static LCMSStorageFactory temporaryStorage(@Nullable File tmpDir) {
         return new LCMSStorageFactory() {
             final LinkedList<MVTraceStorage> storages = new LinkedList<>();
 
             @Override
             public synchronized LCMSStorage createNewStorage() throws IOException {
-                final File tempFile = File.createTempFile("sirius", ".mvstore");
+                final File tempFile = File.createTempFile("sirius-tmp_", ".mvstore", tmpDir);
                 tempFile.deleteOnExit();
                 MVTraceStorage store = new MVTraceStorage(tempFile.getAbsolutePath(), true);
                 storages.add(store);

@@ -17,20 +17,24 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.net;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
+import de.unijena.bioinf.ms.gui.settings.SettingsDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Marcus Ludwig
@@ -43,30 +47,36 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     private static ConnectionDialog instance;
 
     private final SiriusGui gui;
+    private ConnectionCheckPanel connectionCheck;
 
-    public static synchronized ConnectionDialog of(SiriusGui gui, @NotNull ConnectionCheck check) {
+    public static synchronized ConnectionDialog of(SiriusGui gui) {
+        return of(gui, null);
+    }
+
+    public static synchronized ConnectionDialog of(SiriusGui gui, @Nullable ConnectionCheck check) {
         if (instance != null)
             instance.dispose();
         instance = new ConnectionDialog(gui, check);
         return instance;
     }
 
-    private ConnectionDialog(@NotNull SiriusGui gui, @NotNull ConnectionCheck check) {
+    private ConnectionDialog(@NotNull SiriusGui gui, @Nullable ConnectionCheck check) {
         super(gui.getMainFrame(), name, ModalityType.APPLICATION_MODAL);
         this.gui = gui;
         initDialog(check);
     }
 
-    private void initDialog(@NotNull ConnectionCheck check) {
+    private void initDialog(@Nullable ConnectionCheck check) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET.derive(64,64));
         add(header, BorderLayout.NORTH);
 
-        ConnectionCheckPanel connectionCheck = new ConnectionCheckPanel(this, gui, check);
+        connectionCheck = new ConnectionCheckPanel(this, gui, check);
+        connectionCheck.setBackground(getBackground());
+        gui.getConnectionMonitor().addConnectionStateListener(connectionCheck);
         add(connectionCheck, BorderLayout.CENTER);
-
 
         //south
         network = new JButton("Network Settings");
@@ -88,10 +98,10 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
         add(buttons, BorderLayout.SOUTH);
 
 
-        setMinimumSize(new Dimension(350, getPreferredSize().height));
+        pack();
+        setMinimumSize(new Dimension(525,575));
         setResizable(false);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
     }
@@ -100,6 +110,8 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     public void dispose() {
         if (instance == this)
             instance = null;
+        if (connectionCheck != null)
+            gui.getConnectionMonitor().removePropertyChangeListener(connectionCheck);
         super.dispose();
     }
 

@@ -250,6 +250,7 @@ Class | Method | HTTP request | Description
  - [ConsensusCriterionCSI](docs/ConsensusCriterionCSI.md)
  - [ConsensusCriterionDeNovo](docs/ConsensusCriterionDeNovo.md)
  - [DBLink](docs/DBLink.md)
+ - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)

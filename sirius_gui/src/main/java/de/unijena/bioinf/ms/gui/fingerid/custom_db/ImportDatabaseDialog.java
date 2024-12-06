@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -75,6 +75,13 @@ class ImportDatabaseDialog extends JDialog {
         pack();
         setLocationRelativeTo(getOwner());
         setVisible(true);
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (configPanel != null)
+            configPanel.destroy();
     }
 
     protected void runImportJob() {

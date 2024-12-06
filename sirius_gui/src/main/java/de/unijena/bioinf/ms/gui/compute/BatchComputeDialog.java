@@ -25,18 +25,23 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.*;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
+import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -51,6 +56,7 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.awt.event.ItemEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -76,7 +82,7 @@ public class BatchComputeDialog extends JDialog {
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
     // main parts
-    private Box mainPanel;
+    private Box centerPanel;
     private JCheckBox recomputeBox;
     private JButton showCommand;
 
@@ -94,41 +100,52 @@ public class BatchComputeDialog extends JDialog {
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
+    private final JPanel main;
+    private final LoadablePanel loadableWrapper;
+
+    private PropertyChangeListener connectionListener;
 
     private JComboBox<String> presetDropdown;
     private JobSubmission preset;
     private boolean presetFrozen;
     private MessageBanner presetInfoBanner;
     private MessageBanner presetWarningBanner;
+    private MessageBanner connectionMessage;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
         gui.getConnectionMonitor().checkConnectionInBackground();
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
-        final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
-        ActFormulaIDConfigPanel tmp = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView); //needs to be created outside the loading job because it also starts background job that might cause a deadlock otherwise
-        Jobs.runInBackgroundAndLoad(this, "Initializing Compute Dialog...", () -> {
-            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-            setLayout(new BorderLayout());
 
-            JPanel northPanel = new JPanel(new BorderLayout());
-            northPanel.add(makeBanners(), BorderLayout.NORTH);
-            northPanel.add(makePresetPanel(), BorderLayout.CENTER);
-            add(northPanel, BorderLayout.NORTH);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
+        main = new JPanel(new BorderLayout());
+        loadableWrapper = new LoadablePanel(main, "Initializing...");
+        loadableWrapper.setLoading(true, true);
 
-            mainPanel = Box.createVerticalBox();
-            mainPanel.setBorder(BorderFactory.createEmptyBorder());
-            final JScrollPane mainSP = new JScrollPane(mainPanel);
-            mainSP.setBorder(BorderFactory.createEtchedBorder());
-            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            mainSP.getVerticalScrollBar().setUnitIncrement(16);
-            add(mainSP, BorderLayout.CENTER);
+        add(loadableWrapper, BorderLayout.CENTER);
 
+        centerPanel = Box.createVerticalBox();
+        centerPanel.setBorder(BorderFactory.createEmptyBorder());
+        final JScrollPane mainSP = new JScrollPane(centerPanel);
+        mainSP.setBorder(BorderFactory.createEtchedBorder());
+        mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainSP.getVerticalScrollBar().setUnitIncrement(16);
+        main.add(mainSP, BorderLayout.CENTER);
+
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.add(makeBanners(), BorderLayout.NORTH);
+        northPanel.add(makePresetPanel(), BorderLayout.CENTER);
+        add(northPanel, BorderLayout.NORTH);
+        main.add(northPanel, BorderLayout.NORTH);
+
+        loadableWrapper.runInBackgroundAndLoad(() -> {
+            final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> Utils.notNullOrEmpty(inst.getMsData().getMs2Spectra()));
             {
                 // make subtool config panels
-                formulaIDConfigPanel = tmp;
+                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
@@ -137,7 +154,7 @@ public class BatchComputeDialog extends JDialog {
                 csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
                 msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
-                if (!singleCompound() && ms2) {
+                if (!isSingleCompound() && ms2) {
                     zodiacConfigs.addEnableChangeListener((s, enabled) -> {
                         if (enabled) {
                             if (new QuestionDialog(mf(), "Low number of Compounds",
@@ -193,6 +210,8 @@ public class BatchComputeDialog extends JDialog {
                 recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
                 lsouthPanel.add(recomputeBox);
 
+                if (isSingleCompound()) recomputeBox.setSelected(true);
+
                 JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
                 final String SHOW_ADVANCED = "Show advanced settings";
                 final String HIDE_ADVANCED = "Hide advanced settings";
@@ -246,26 +265,39 @@ public class BatchComputeDialog extends JDialog {
                 southPanel.add(csouthPanel);
                 southPanel.add(rsouthPanel);
 
-                this.add(southPanel, BorderLayout.SOUTH);
+                main.add(southPanel, BorderLayout.SOUTH);
             }
 
-            activatePreset(DEFAULT_PRESET_DISPLAY_NAME);
 
-            //finalize panel build
-            setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
-            if (getMaximumSize().width < getPreferredSize().width)
-                mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             configureActions();
 
             checkResult = gui.getConnectionMonitor().getCurrentCheckResult();
+            if (ConnectionChecks.isInternet(checkResult) && !ConnectionChecks.isLoggedIn(checkResult)) {
+                SiriusActions.SIGN_IN.getInstance(gui, true).actionPerformed(null);
+                checkResult = gui.getConnectionMonitor().checkConnection();
+            }
+
+            activatePreset(DEFAULT_PRESET_DISPLAY_NAME);
+            updateConnectionBanner(checkResult);
+
+            connectionListener = evt -> {
+                if (evt instanceof ConnectionMonitor.ConnectionStateEvent stateEvent)
+                    Jobs.runEDTLater(() -> updateConnectionBanner(stateEvent.getConnectionCheck()));
+            };
+            gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         });
 
+        setPreferredSize(new Dimension(1125, 1024));
+        //finalize panel build
+        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        if (getMaximumSize().width < getPreferredSize().width)
+            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
     }
 
-    private boolean singleCompound() {
+    private boolean isSingleCompound() {
         return compoundsToProcess.size() == 1;
     }
 
@@ -273,6 +305,8 @@ public class BatchComputeDialog extends JDialog {
     public void dispose() {
         try {
             super.dispose();
+            if (connectionListener != null)
+                gui.getConnectionMonitor().removePropertyChangeListener(connectionListener);
         } finally {
             formulaIDConfigPanel.destroy(); //Sirius configs
             zodiacConfigs.destroy(); //Zodiac configs
@@ -314,7 +348,7 @@ public class BatchComputeDialog extends JDialog {
         JPanel flowContainer = new JPanel(flowLayout);
         flowContainer.setBorder(BorderFactory.createEmptyBorder());
         addConfigPanelToRow(header, configPanel, flowContainer);
-        mainPanel.add(flowContainer);
+        centerPanel.add(flowContainer);
         return flowContainer;
     }
 
@@ -352,7 +386,7 @@ public class BatchComputeDialog extends JDialog {
         if (warnNoMethodIsSelected()) return;
         if (warnNoAdductSelected()) return;
 
-        if (this.recomputeBox.isSelected() && !singleCompound()) {
+        if (this.recomputeBox.isSelected() && !isSingleCompound()) {
             QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY, ReturnValue.Success);
             this.recomputeBox.setSelected(questionDialog.isSuccess());
         }
@@ -573,6 +607,20 @@ public class BatchComputeDialog extends JDialog {
         return !configPanel.getContent().getSelectedAdducts().isEmpty();
     }
 
+    private void updateConnectionBanner(ConnectionCheck checkResult) {
+        if (connectionMessage != null)
+            connectionMessage.setVisible(false);
+
+        if (ConnectionChecks.isInternet(checkResult) && !ConnectionChecks.isLoggedIn(checkResult)) {
+            connectionMessage.update("Not logged in! Most of the tools will not be available without being logged in. Please log in!",
+                    MessageBanner.BannerType.WARNING, true);
+        } else if (!ConnectionChecks.isInternet(checkResult)) {
+            connectionMessage.update("No Connection! There is an issue with the server connection. Please check 'Webservice' for details.",
+                    MessageBanner.BannerType.ERROR, true);
+        }
+
+    }
+
     private JPanel makeBanners() {
         presetInfoBanner = new MessageBanner("", MessageBanner.BannerType.INFO);
         presetInfoBanner.setVisible(false);
@@ -580,9 +628,13 @@ public class BatchComputeDialog extends JDialog {
         presetWarningBanner = new MessageBanner("", MessageBanner.BannerType.WARNING);
         presetWarningBanner.setVisible(false);
 
+        connectionMessage = new MessageBanner();
+        connectionMessage.setVisible(false);
+
         JPanel bannerPanel = new JPanel(new BorderLayout());
-        bannerPanel.add(presetInfoBanner, BorderLayout.NORTH);
-        bannerPanel.add(presetWarningBanner, BorderLayout.CENTER);
+        bannerPanel.add(connectionMessage, BorderLayout.NORTH);
+        bannerPanel.add(presetInfoBanner, BorderLayout.CENTER);
+        bannerPanel.add(presetWarningBanner, BorderLayout.SOUTH);
         return bannerPanel;
     }
 
@@ -612,7 +664,7 @@ public class BatchComputeDialog extends JDialog {
 
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
-        if (singleCompound()) {
+        if (isSingleCompound()) {
             savePreset.setToolTipText("Cannot save presets in single compound mode");
         } else {
             savePreset.setToolTipText("Update current preset with selected parameters");
@@ -620,7 +672,7 @@ public class BatchComputeDialog extends JDialog {
 
 
         JButton saveAsPreset = new JButton("Save as");
-        if (singleCompound()) {
+        if (isSingleCompound()) {
             saveAsPreset.setToolTipText("Cannot save presets in single compound mode");
             saveAsPreset.setEnabled(false);
         } else {
@@ -644,7 +696,7 @@ public class BatchComputeDialog extends JDialog {
                 activatePreset(presetName);
 
                 boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-                savePreset.setEnabled(!defaultSelected && !presetFrozen && !singleCompound());
+                savePreset.setEnabled(!defaultSelected && !presetFrozen && !isSingleCompound());
                 removePreset.setEnabled(!defaultSelected);
             }
         });
@@ -726,12 +778,12 @@ public class BatchComputeDialog extends JDialog {
                         .map(e -> e.getKey() + " = " + e.getValue() + "\n")
                         .collect(Collectors.toCollection(ArrayList::new));
                 if (!hiddenParameters.isEmpty()) {
-                    hiddenParameters.addFirst("Preset sets parameters that are not visible in the compute dialog:\n");
+                    hiddenParameters.addFirst("Preset specifies parameters that are not visible in the compute dialog:\n");
                     hiddenParameters.add("\nYou can start a computation with this preset, but cannot edit the parameters.");
                     Jobs.runEDTLater(() -> new InfoDialog(this,
                             GuiUtils.formatToolTip(hiddenParameters),
                             DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS));
-                    showPresetInfoBanner("Preset sets parameters that are not visible in the compute dialog.");
+                    showPresetInfoBanner("Preset specifies parameters that are not visible in the compute dialog.");
                     presetFreeze();
                     return;
                 }
@@ -741,7 +793,7 @@ public class BatchComputeDialog extends JDialog {
             // however user might save a simple preset without config map (e.g. using api).
             // Missing values in the map will fallback to default during computation.
             // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
-            // his is the same as falling back to default, but we can fill the gui panel correctly.
+            // This is the same as falling back to default, but we can fill the gui panel correctly.
             final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
@@ -758,7 +810,7 @@ public class BatchComputeDialog extends JDialog {
             csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
             msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
 
-            recomputeBox.setSelected(singleCompound() || Boolean.parseBoolean(configMap.get("RecomputeResults")));
+            recomputeBox.setSelected(isSingleCompound() || Boolean.parseBoolean(configMap.get("RecomputeResults")));
         } catch (UnsupportedOperationException e) {
             Jobs.runEDTLater(() -> new InfoDialog(this,
                     "Preset is not compatible with the compute dialog:<br>" + e.getMessage() + "<br><br>You can start a computation with this preset, but cannot edit the parameters."

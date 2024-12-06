@@ -35,7 +35,7 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;

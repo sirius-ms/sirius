@@ -35,55 +35,63 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URI;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowAccountDialog extends AbstractGuiAction {
+public class ShowAccountDialog extends AbstractGuiAction implements PropertyChangeListener {
 
     public ShowAccountDialog(SiriusGui gui) {
         super("Account", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32,32));
+        putValue(Action.LARGE_ICON_KEY, Icons.USER_NOT_LOGGED_IN.derive(32, 32));
         putValue(Action.SHORT_DESCRIPTION, "Show user account information and settings.");
 
-        this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
-            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
-            setIcon(check);
-        });
+        gui.getConnectionMonitor().addConnectionStateListener(this);
 
         Jobs.runInBackground(() -> setIcon(this.gui.getConnectionMonitor().checkConnection()));
     }
 
-    protected synchronized void setIcon(final @Nullable ConnectionCheck check) {
-        if (check != null) {
-            if (ConnectionChecks.isLoggedIn(check)) {
-                URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()
-                        .flatMap(Tokens::getUserImage).orElse(null);
+    private void setIcon(final @Nullable ConnectionCheck check) {
+        Jobs.runEDTLater(() -> {
+            if (check != null) {
+                if (ConnectionChecks.isLoggedIn(check)) {
+                    URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()
+                            .flatMap(Tokens::getUserImage).orElse(null);
 
-                if (imageURI == null) {
-                    putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32,32)); //bad login
-                    return;
-                }
+                    if (imageURI == null) {
+                        putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32, 32)); //bad login
+                        return;
+                    }
 
-                try {
-                    Image image = ImageIO.read(imageURI.toURL());
-                    image = Icons.makeEllipse(image);
-                    image = Icons.scaledInstance(image, 32, 32);
-                    putValue(Action.LARGE_ICON_KEY, new ImageIcon(image));
-                } catch (IOException e) {
-                    putValue(Action.LARGE_ICON_KEY, Icons.USER_GREEN.derive(32,32)); //login is fine but image is broken
-                    LoggerFactory.getLogger(getClass()).warn("Could not load User image from token. Using placeholder instead.");
+                    try {
+                        Image image = ImageIO.read(imageURI.toURL());
+                        image = Icons.makeEllipse(image);
+                        image = Icons.scaledInstance(image, 32, 32);
+                        putValue(Action.LARGE_ICON_KEY, new ImageIcon(image));
+                    } catch (IOException e) {
+                        putValue(Action.LARGE_ICON_KEY, Icons.USER_GREEN.derive(32, 32)); //login is fine but image is broken
+                        LoggerFactory.getLogger(getClass()).warn("Could not load User image from token. Using placeholder instead.");
+                    }
+                } else {
+                    putValue(Action.LARGE_ICON_KEY, Icons.USER_NOT_LOGGED_IN.derive(32, 32));
                 }
-            } else {
-                putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32,32));
             }
-        }
+        });
+
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         new AccountDialog(gui, ApplicationCore.WEB_API.getAuthService());
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+        setIcon(check);
     }
 }
