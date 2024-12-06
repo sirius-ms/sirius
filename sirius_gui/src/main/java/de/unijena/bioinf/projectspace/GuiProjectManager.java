@@ -72,18 +72,10 @@ public class GuiProjectManager implements Closeable {
     private final BlockingQueue<DataImportEvent> debouncedEvents = new LinkedBlockingDeque<>();
     private final JJob<Void> debounceExec;
 
-    private ProjectType type;
-
     public GuiProjectManager(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull GuiProperties properties, SiriusGui siriusGui) {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
-
-        type = getClient().projects().getProjectSpace(projectId, List.of(ProjectInfoOptField.NONE)).getType();
-        if (type != null){
-            siriusGui.getMainFrame().getResultsPanel()
-                    .showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
-        }
 
         List<InstanceBean> tmp = siriusClient.features()
                 .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
