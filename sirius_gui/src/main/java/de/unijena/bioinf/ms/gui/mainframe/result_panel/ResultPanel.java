@@ -25,11 +25,14 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import io.sirius.ms.sdk.model.CanopusPrediction;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,60 +45,109 @@ public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
-    public final SpectralMatchingPanel spectralMatchingPanel;
+    private final CompoundList compoundList;
+    private final SiriusGui gui;
 
-    public final FormulaOverviewPanel formulasTab;
+    private final FormulaOverviewPanel formulasTab;
+    private LCMSViewerPanel lcmsTab;
+    private final CandidateListDetailViewPanel structuresTab;
+    private final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
+    @Getter
+    private final EpimetheusPanel structureAnnoTab;
+    private final FingerprintPanel fingerprintTab;
+    private final CompoundClassPanel canopusTab;
+    private SpectralMatchingPanel spectralMatchingTab;
 
-    public final LCMSViewerPanel lcmsTab;
+    private StructureList databaseStructureList;
+    private StructureList combinedStructureListSubstructureView;
+    private StructureList combinedStructureListDeNovoView;
+    private FormulaList siriusResultElements;
+    private SpectralMatchList spectralMatchList;
+    private CompoundClassList compoundClassList;
+    private FingerprintList fingerprintList;
 
-    public final CandidateListDetailViewPanel structuresTab;
-    public final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
-    public final EpimetheusPanel structureAnnoTab;
-    public final FingerprintPanel fpTab;
-    public final CompoundClassPanel canopusTab;
 
-    public ResultPanel(final StructureList databaseStructureList, final StructureList combinedStructureListSubstructureView, final StructureList combinedStructureListDeNovoView, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
+    public ResultPanel(@NotNull CompoundList compoundList, @NotNull SiriusGui gui) {
         super();
+        this.gui = gui;
+        this.compoundList = compoundList;
 
-        spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
+        // formula list tabs
+        siriusResultElements = new FormulaList(compoundList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
-
-        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
-
-        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
-        structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
-        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
-        FingerprintPanel fpTabTmp;
-        try {
-            fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            fpTabTmp = null;
-        }
-
-        fpTab = fpTabTmp;
-        canopusTab = new CompoundClassPanel(
-                new CompoundClassList(siriusResultElements, sre ->
-                        sre.getCanopusPrediction()
-                                .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
-                                .flatMap(List::stream).map(CompoundClassBean::new).toList()), siriusResultElements
-        );
-
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
-        addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
+
+        // fingerprint tab
+        fingerprintList = null;
+        try {
+            fingerprintList = new FingerprintList(siriusResultElements, gui);
+        } catch (IOException e) {
+            logger.error("Error when loading FingerprintList. Fingerprint tab will not be available.", e);
+        }
+        fingerprintTab = fingerprintList == null ? null : new FingerprintPanel(fingerprintList);
+        if (fingerprintList != null)
+            addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fingerprintTab), fingerprintTab.getDescription());
+
+
+        // canopus tab
+        compoundClassList = new CompoundClassList(siriusResultElements,
+                sre -> sre.getCanopusPrediction()
+                        .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
+                        .flatMap(List::stream).map(CompoundClassBean::new).toList());
+        canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements);
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
+
+        // structure db search tab
+        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
+        structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
+
+
+        // combined denovo structure db search tabs
+        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
         addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
+
+
+        // substructure annotation tab
+        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
+
+        // global spectra match search list
+        gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
+                showSpectralMatchingTab((Boolean) evt.getNewValue()));
+        showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
 
         setSelectedIndex(indexOfTab("Formulas"));
     }
 
+    private void showSpectralMatchingTab(boolean show) {
+        String name = "Library Matches";
+        int idx = indexOfTab(name);
+        if (show && idx < 0) {
+            if (spectralMatchList == null) {
+                spectralMatchList = new SpectralMatchList(compoundList);
+                spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
+            }
+            // add to last position
+            addTab(name, null, spectralMatchingTab, spectralMatchingTab.getDescription());
+            return;
+        }
+
+        if (!show && idx >= 0) {
+            removeTabAt(idx);
+        }
+    }
+
+
     private void addLcmsTab() {
+        if (lcmsTab == null)
+            lcmsTab = new LCMSViewerPanel(siriusResultElements);
+
         insertTab("LC-MS", null, lcmsTab, lcmsTab.getDescription(), 0);
     }
 
@@ -105,7 +157,7 @@ public class ResultPanel extends JTabbedPane {
             addLcmsTab();
             return;
         }
-        if (!show && idx >= 0){
+        if (!show && idx >= 0) {
             removeTabAt(idx);
         }
     }

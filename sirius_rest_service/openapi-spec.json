@@ -6337,6 +6337,11 @@
             "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
             "nullable": true
           },
+          "instrument": {
+            "type": "string",
+            "description": "Instrument information.",
+            "nullable": true
+          },
           "precursorMz": {
             "type": "number",
             "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
@@ -6622,6 +6627,11 @@
           "collisionEnergy": {
             "type": "string",
             "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
+            "nullable": true
+          },
+          "instrument": {
+            "type": "string",
+            "description": "Instrument information.",
             "nullable": true
           },
           "precursorMz": {

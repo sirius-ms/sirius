@@ -23,8 +23,9 @@ package de.unijena.bioinf.ms.gui.spectral_matching;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import io.sirius.ms.sdk.model.BasicSpectrum;
-
 import java.util.function.Function;
+
+import static java.util.Objects.requireNonNullElse;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
 
@@ -77,9 +78,8 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 7 -> baseObject.getMatch().getAdduct();
             case 8 -> baseObject.getReference()
                     .map(BasicSpectrum::getCollisionEnergy)
-                    .map(CollisionEnergy::fromStringOrNull)
+                    .map(ce -> requireNonNullElse(CollisionEnergy.fromStringOrNull(ce), ce))
                     .orElse(CollisionEnergy.none());
-//            case 8 -> "N/A"; //do we want to add this info to the nightsky api model?
             case 9 -> baseObject.getMatch().getDbName();
             case 10 -> baseObject.getDBLink();
             case 11 -> isBest.apply(baseObject);
