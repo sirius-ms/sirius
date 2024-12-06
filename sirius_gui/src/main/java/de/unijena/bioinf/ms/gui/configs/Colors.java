@@ -27,7 +27,7 @@ import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  * @author Marcus Ludwig
  */
 @Slf4j
@@ -232,6 +232,7 @@ public class Colors {
 
     public final static Color TEXT_WARN = CUSTOM_BLUE; //CUSTOM_ORANGE; (orange not good in light theme)
     public final static Color TEXT_ERROR = Menu.BUTTON_HIGHLIGHT_PINK;
+    public final static Color TEXT_GOOD = CUSTOM_GREEN;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
     public final static Color TEXT_LINK_VISITED = CUSTOM_LIGHT_BLUE;
     public final static Color TEXT_LINK_ACTIVE = GOOD_IS_GREEN_VIBRANT;
@@ -285,6 +286,12 @@ public class Colors {
         public final static Color BEST_HIT_TEXT = Color.BLACK;
 
         public final static Color ALTERNATING_CELL_ROW_TEXT_COLOR = (THEME == Theme.LIGHT ? Themes.Light.ALTERNATING_CELL_ROW_TEXT_COLOR : Themes.Dark.ALTERNATING_CELL_ROW_TEXT_COLOR);
+    }
+
+    public static class Quality {
+        public final static Color GOOD = CUSTOM_GREEN;
+        public final static Color DECENT = CUSTOM_YELLOW;
+        public final static Color BAD = CUSTOM_PINK;
     }
 
     public static class FormulasView {

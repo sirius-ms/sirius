@@ -17,18 +17,16 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.settings.AdductSettingsPanel;
-import de.unijena.bioinf.ms.gui.settings.GerneralSettingsPanel;
-import de.unijena.bioinf.ms.gui.settings.NetworkSettingsPanel;
-import de.unijena.bioinf.ms.gui.settings.SettingsPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;

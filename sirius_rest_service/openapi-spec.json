@@ -5397,6 +5397,31 @@
           }
         }
       },
+      "DataImportEvent": {
+        "required": [
+          "importedCompoundIds",
+          "importedFeatureIds"
+        ],
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "importedCompoundIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "importedFeatureIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "BackgroundComputationsStateEvent": {
         "required": [
           "affectedJobs",

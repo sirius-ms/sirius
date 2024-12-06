@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -35,9 +36,10 @@ import java.awt.event.ActionEvent;
  */
 public class ShowJobsDialogAction extends AbstractGuiAction {
 
+    private final static FlatSVGIcon FB_LOADER_STOP = Icons.FB_LOADER_STOP_64.derive(.5f);
     public ShowJobsDialogAction(SiriusGui gui) {
         super("Jobs", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
+        putValue(Action.LARGE_ICON_KEY, FB_LOADER_STOP);
         putValue(Action.SHORT_DESCRIPTION, "Show background jobs and their status");
 
         gui.acceptSiriusClient((client, pid) ->
@@ -52,11 +54,11 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
 
     public void setComputing(boolean compute) {
         if (compute) {
-            if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_STOP_32))
+            if (getValue(Action.LARGE_ICON_KEY).equals(FB_LOADER_STOP))
                 Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_RUN_32));
         } else {
             if (getValue(Action.LARGE_ICON_KEY).equals(Icons.FB_LOADER_RUN_32))
-                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32));
+                Jobs.runEDTLater(() -> putValue(Action.LARGE_ICON_KEY, FB_LOADER_STOP));
         }
     }
 

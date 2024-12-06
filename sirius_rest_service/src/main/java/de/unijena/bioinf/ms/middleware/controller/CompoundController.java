@@ -24,10 +24,11 @@ import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
+import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +57,13 @@ public class CompoundController {
 
     private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
+    private final EventService<?> eventService;
 
     @Autowired
-    public CompoundController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
+    public CompoundController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig, EventService<?> eventService) {
         this.projectsProvider = projectsProvider;
         this.globalConfig = globalConfig;
+        this.eventService = eventService;
     }
 
     /**
@@ -110,7 +113,14 @@ public class CompoundController {
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
+        List<Compound> importedCompounds = projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
+
+        // Prepare and Send SSE Event
+        List<String> fids = importedCompounds.stream().flatMap(c -> c.getFeatures().stream()).map(AlignedFeature::getAlignedFeatureId).toList();
+        List<String> cids = importedCompounds.stream().map(Compound::getCompoundId).distinct().toList();
+        eventService.sendEvent(ServerEvents.newImportEvent(cids, fids, projectId));
+
+        return importedCompounds;
     }
 
     /**
