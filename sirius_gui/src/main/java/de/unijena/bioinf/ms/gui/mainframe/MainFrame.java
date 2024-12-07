@@ -41,9 +41,6 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import io.sirius.ms.sdk.model.ProjectInfo;
-import io.sirius.ms.sdk.model.ProjectInfoOptField;
-import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -55,7 +52,6 @@ import java.io.File;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -151,16 +147,12 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public void decoradeMainFrame() {
         Jobs.runEDTLater(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
-        ProjectInfo projectInfo = getGui().applySiriusClient((c,pid) ->
-                c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE)));
-
         // Global feature list.
         compoundList = new CompoundList(gui);
 
-        //CREATE VIEWS
+        //CREATE RESULT VIEWS
         // results Panel
         resultsPanel = new ResultPanel(compoundList, gui);
-        resultsPanel.showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(projectInfo.getType()));
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
