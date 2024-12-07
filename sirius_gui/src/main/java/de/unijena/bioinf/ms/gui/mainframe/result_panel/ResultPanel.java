@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
+import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
@@ -30,7 +31,11 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.CanopusPrediction;
+import io.sirius.ms.sdk.model.ProjectInfo;
+import io.sirius.ms.sdk.model.ProjectInfoOptField;
+import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -38,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,14 +72,31 @@ public class ResultPanel extends JTabbedPane {
     private CompoundClassList compoundClassList;
     private FingerprintList fingerprintList;
 
+    private ProjectType type;
 
     public ResultPanel(@NotNull CompoundList compoundList, @NotNull SiriusGui gui) {
         super();
         this.gui = gui;
-        this.compoundList = compoundList;
+        //these are the two base lists for all views.
+        this.compoundList = compoundList; //feature level list (InstanceBean)
+        this.siriusResultElements = new FormulaList(compoundList); // formula result level list.
 
-        // formula list tabs
-        siriusResultElements = new FormulaList(compoundList);
+        //lcms tab
+        //Not need to clean up the listener since compoundlist will be invalidated together with ResultPanel
+        compoundList.getSortedSource().addListEventListener(evt -> {
+            if (type == null && !evt.getSourceList().isEmpty()) {
+                type = gui.applySiriusClient((c, pid) ->
+                        c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE))).getType();
+                showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
+            }
+        });
+        //Check for first time if project has already a type.
+        this.type = gui.applySiriusClient((c, pid) ->
+                c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE))).getType();
+        showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
+
+
+        // formulas tabs
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
@@ -121,8 +144,6 @@ public class ResultPanel extends JTabbedPane {
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
                 showSpectralMatchingTab((Boolean) evt.getNewValue()));
         showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
-
-        setSelectedIndex(indexOfTab("Formulas"));
     }
 
     private void showSpectralMatchingTab(boolean show) {
@@ -155,6 +176,7 @@ public class ResultPanel extends JTabbedPane {
         int idx = indexOfTab("LC-MS");
         if (show && idx < 0) {
             addLcmsTab();
+            setSelectedIndex(0);
             return;
         }
         if (!show && idx >= 0) {
