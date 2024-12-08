@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.util.Objects;
 
 /**
  * THREAD SAFE
@@ -89,7 +90,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     @Nullable
-    public synchronized ConnectionCheck getCurrentCheckResult(){
+    public synchronized ConnectionCheck getCurrentCheckResult() {
         if (checkResult == null)
             if (checkJob != null)
                 return checkJob.getResult();
@@ -115,9 +116,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         this.checkResult = checkResult;
 
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
-        firePropertyChange(new ConnectionStateEvent(old, checkResult));
+        fireNullAsEqualPropertyChange(new ConnectionStateEvent(old, checkResult));
     }
 
+    protected void fireNullAsEqualPropertyChange(PropertyChangeEvent evt) {
+        if (!Objects.equals(evt.getOldValue(), evt.getNewValue()))
+            firePropertyChange(evt);
+    }
 
     public void addConnectionUpdateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionUpdateEvent.KEY, listener);

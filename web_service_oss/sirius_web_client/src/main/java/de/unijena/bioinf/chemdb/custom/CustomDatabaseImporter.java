@@ -191,11 +191,12 @@ public class CustomDatabaseImporter {
                             .build());
 
             //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
-            importStructuresFromSmileAndInChis(smiles, metaData.getCompoundId(), metaData.getCompoundName())
-                    .map(CustomDatabaseImporter.Molecule::getInchi)
-                    .map(InChI::key2D)
-                    .ifPresent(key -> specs.forEach(s -> s.setCandidateInChiKey(key)));
-
+            Optional<Molecule> molecule = importStructuresFromSmileAndInChis(smiles, metaData.getCompoundId(), metaData.getCompoundName());
+            if (molecule.isEmpty()) {
+                log.warn("Record {} from {} could not be mapped to a known structure. Skipping.", experiment.getName(), experiment.getSource());
+                continue;
+            }
+            specs.forEach(s -> s.setCandidateInChiKey(molecule.get().getInchi().key2D()));
             addToSpectraBuffer(specs);
         }
         if (!iterator.getParsingErrors().isEmpty()) {

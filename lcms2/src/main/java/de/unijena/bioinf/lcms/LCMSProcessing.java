@@ -28,8 +28,6 @@ import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
-import de.unijena.bioinf.lcms.utils.TrackFeatureToFile;
-import de.unijena.bioinf.lcms.utils.TrackFeatureToLog;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
@@ -43,8 +41,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.Range;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -58,7 +56,7 @@ public class LCMSProcessing {
     /**
      * Creates temporary databases to store traces and spectra
      */
-    @Getter @Setter private LCMSStorageFactory storageFactory = LCMSStorage.temporaryStorage();
+    private final LCMSStorageFactory storageFactory;
 
     /**
      * Calculates noise thresholds from raw Spectra
@@ -124,8 +122,13 @@ public class LCMSProcessing {
             new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
+        this(siriusDatabaseAdapter, saveFeatureIds, null);
+    }
+
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, @Nullable Path tmpDir) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
         this.saveFeatureIds = saveFeatureIds;
+        this.storageFactory = LCMSStorage.temporaryStorage(tmpDir == null ? null : tmpDir.toFile());
     }
 
     /**
@@ -444,5 +447,8 @@ public class LCMSProcessing {
         return MergedTrace.collect(merged, sampleByIdx, projectedTraces, isotopes);
     }
 
+    public void closeStorages(){
+        storageFactory.close();
+    }
 
 }

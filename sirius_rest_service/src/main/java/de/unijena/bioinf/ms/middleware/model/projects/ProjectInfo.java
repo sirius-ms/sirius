@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.projects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -50,6 +51,13 @@ public final class ProjectInfo {
      */
     @Schema(nullable = true)
     public final @Nullable String description;
+
+    /**
+     * Type of this project.
+     * NULL if project type has not yet been specified by importing data.
+     */
+    @Schema(nullable = true, enumAsRef = true)
+    public final @Nullable ProjectType type;
 
 
     //compatibilityCheck

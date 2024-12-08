@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg7613" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title7601">c-folder-close</title>
+ <desc id="desc7603">Created with Sketch.</desc>
+ <path id="Oval-1" d="m32 64c17.673 0 32-14.327 32-32s-14.327-32-32-32-32 14.327-32 32 14.327 32 32 32z" fill="#4da6bf" fill-rule="evenodd"/>
+ <path id="Rectangle-95" d="m42 29v-10h-28v26h0.4l9.6-16zm-25-14h8l3 4h-14zm8.5 16h26.5l-8 14h-26.5z" fill="#fff" fill-rule="evenodd"/>
+ <path id="Oval-179" d="m52 22c0-5.5228-4.4772-10-10-10v2c4.4183 0 8 3.5817 8 8z" fill="#fff" fill-rule="evenodd"/>
+ <path id="Rectangle-113" d="m42 9v8l-4.5-4z" fill="#fff" fill-rule="evenodd"/>
+</svg>

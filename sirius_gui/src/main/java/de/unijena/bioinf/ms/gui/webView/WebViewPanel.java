@@ -19,20 +19,24 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.FutureTask;
 
@@ -40,18 +44,18 @@ import java.util.concurrent.FutureTask;
   NOTE: first create new WebViewTreeViewer, then add all JS resources (addJS);
   finally load() (only once!)
 */
-public abstract class WebViewPanel extends JFXPanel{
+public abstract class WebViewPanel extends JFXPanel {
 
     //should be thread safe
     Queue<FutureTask<Void>> tasks = new ConcurrentLinkedQueue<>();
 
-    public void queueTaskInJFXThread(Runnable runnable){
+    public void queueTaskInJFXThread(Runnable runnable) {
         FutureTask<Void> task = new FutureTask<>(runnable, null);
         tasks.add(task);
         Jobs.runJFXLater(task);
     }
 
-    public void cancelTasks(){
+    public void cancelTasks() {
         for (FutureTask<Void> task : tasks)
             task.cancel(false);
         tasks.clear();
@@ -61,20 +65,19 @@ public abstract class WebViewPanel extends JFXPanel{
 
     private StringBuilder html_builder;
 
-    public WebViewPanel(){
+    public WebViewPanel() {
+        this("/js/styles.css", "/js/styles-dark.css");
+    }
+
+    public WebViewPanel(@NotNull String cssLightResource, @NotNull String cssDarkResource) {
         this.html_builder = new StringBuilder("<html><head></head><body>\n");
         queueTaskInJFXThread(() -> {
-                this.webView = new WebView();
-                final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-                final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-                if (!theme.equals("Dark")) {
-                    this.webView.getEngine().setUserStyleSheetLocation(
-                            getClass().getResource("/js/" + "styles.css").toExternalForm());
-                } else {
-                    this.webView.getEngine().setUserStyleSheetLocation(
-                            getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
-                }
-                this.setScene(new Scene(this.webView));
+            this.webView = new WebView();
+            this.webView.getEngine().setUserStyleSheetLocation(
+                    WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont(
+                            Colors.isDarkTheme() ? cssDarkResource : cssLightResource))
+            );
+            this.setScene(new Scene(this.webView));
         });
     }
 
@@ -91,37 +94,37 @@ public abstract class WebViewPanel extends JFXPanel{
 
     public void addJS(String resource_name) {
         String res_html;
-        try{
+        try {
             res_html = getJSResourceInHTML(getClass().getResourceAsStream(
                     "/js/" + resource_name));
-        } catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
             res_html = "";
         }
         this.html_builder.append(res_html);
     }
 
-    public void load(){
+    public void load() {
         load(Collections.emptyMap());
     }
 
-    public void load(Map<String, Object> bridges){
+    public void load(Map<String, Object> bridges) {
         this.html_builder.append("</body></html>");
         queueTaskInJFXThread(() -> {
-                this.webView.getEngine().setJavaScriptEnabled(true);
-                this.webView.getEngine().loadContent(html_builder.toString(),
-                                                     "text/html");
-                // wait for the engine to finish loading
-                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
-						if (newState == Worker.State.SUCCEEDED) {
-							JSObject win = (JSObject) getJSObject("window");
-							for (Map.Entry<String, Object> entry : bridges.entrySet())
-								win.setMember(entry.getKey(), entry.getValue());
-                            win.setMember("console", new Console());
-							executeJS("applySettings()");
-						}
-					});
-			});
+            this.webView.getEngine().setJavaScriptEnabled(true);
+            this.webView.getEngine().loadContent(html_builder.toString(),
+                    "text/html");
+            // wait for the engine to finish loading
+            webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+                if (newState == Worker.State.SUCCEEDED) {
+                    JSObject win = (JSObject) getJSObject("window");
+                    for (Map.Entry<String, Object> entry : bridges.entrySet())
+                        win.setMember(entry.getKey(), entry.getValue());
+                    win.setMember("console", new Console());
+                    executeJS("applySettings()");
+                }
+            });
+        });
     }
 
     public void executeJS(String js_code) {
@@ -129,7 +132,7 @@ public abstract class WebViewPanel extends JFXPanel{
     }
 
 
-    public void setJSArray(String name, Object[] newArray){
+    public void setJSArray(String name, Object[] newArray) {
         JSObject array = (JSObject) getJSObject(name);
         int arrayLength = (int) array.getMember("length");
         for (int i = 0; i < newArray.length; i++) {
@@ -137,15 +140,15 @@ public abstract class WebViewPanel extends JFXPanel{
         }
         if (newArray.length < arrayLength)
             // slice doesn't work for some reason
-            for (int i = 0; i < (arrayLength-newArray.length); i++)
+            for (int i = 0; i < (arrayLength - newArray.length); i++)
                 array.call("pop");
     }
 
-    public Object getJSObject(String name){
+    public Object getJSObject(String name) {
         return webView.getEngine().executeScript(name);
     }
 
-    public Object[] getJSArray(String name){
+    public Object[] getJSArray(String name) {
         // returns JSObject array as a *real* (JAVA) array
         JSObject jsArray = (JSObject) getJSObject(name);
         int jsArrayLength = (int) jsArray.getMember("length");
@@ -155,12 +158,12 @@ public abstract class WebViewPanel extends JFXPanel{
         return array;
     }
 
-    private String getJSResourceInHTML(InputStream stream) throws IOException{
+    private String getJSResourceInHTML(InputStream stream) throws IOException {
         // Resource files have to be read in manually
         StringBuilder raw_script = new StringBuilder("<script>");
         BufferedReader br = new BufferedReader(new InputStreamReader(stream));
         String line;
-        while((line = br.readLine()) != null){
+        while ((line = br.readLine()) != null) {
             raw_script.append(line + "\n");
         }
         br.close();
@@ -169,8 +172,8 @@ public abstract class WebViewPanel extends JFXPanel{
     }
 
     protected static class Console {
-	    public void log(Object msg) {
-	        if (msg instanceof JSObject) {
+        public void log(Object msg) {
+            if (msg instanceof JSObject) {
                 System.err.println(((JSObject) msg).call("toString"));
             } else {
                 System.err.println(msg);

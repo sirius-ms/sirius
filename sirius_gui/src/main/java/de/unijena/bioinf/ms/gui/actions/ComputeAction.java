@@ -40,8 +40,8 @@ public class ComputeAction extends AbstractGuiAction {
 
     public ComputeAction(SiriusGui gui) {
         super("Compute", gui);
-        putValue(Action.SMALL_ICON, Icons.RUN_16);
-        putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
+        putValue(Action.SMALL_ICON, Icons.RUN.derive(16,16));
+        putValue(Action.LARGE_ICON_KEY, Icons.RUN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
         setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));

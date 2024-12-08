@@ -104,6 +104,10 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
             fields.getField(AC_INSTRUMENT_TYPE.k()).map(MsInstrumentation::getBestFittingInstrument)
                     .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class, i));
 
+        fields.getField(AC_INSTRUMENT_TYPE.k()).ifPresent(it -> spectrum.additionalFields().put("instrument_type", it));
+        fields.getField(AC_INSTRUMENT.k()).ifPresent(i -> spectrum.additionalFields().put("instrument", i));
+        fields.getField(AC_MASS_SPECTROMETRY_COLLISION_ENERGY.k()).ifPresent(ce -> spectrum.additionalFields().put("ce", ce));
+
         if (clearSpectrum)
             spectrum.setAdditionalFields(new AdditionalFields());
 

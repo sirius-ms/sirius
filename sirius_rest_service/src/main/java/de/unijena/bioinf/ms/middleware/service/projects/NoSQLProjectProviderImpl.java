@@ -92,14 +92,14 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
     protected void registerEventListeners(@NotNull String id, @NotNull NoSQLProjectSpaceManager psm) {
         SiriusProjectDatabaseImpl<? extends Database<?>> project = psm.getProject();
 
-        // TODO project space listeners
-
-        project.getStorage().onInsert(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
+        //we handle feature creation by import methods since they might be added and modified multiple times.
+        /*project.getStorage().onInsert(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
                 createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_CREATED)
-        ));
-        project.getStorage().onUpdate(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
+        ));*/
+
+        /*project.getStorage().onUpdate(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
                 createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_UPDATED)
-        ));
+        ));*/
         project.getStorage().onRemove(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
                 createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_DELETED)
         ));

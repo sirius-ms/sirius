@@ -29,12 +29,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AnnotatedSpectrum
+ * Spectrum model with peak annotations based on the fragmentation tree and Epimetheus substructure annotations.  Molecular formula and adduct of the spectrum are identical to the ones of the corresponding molecular formula candidate and FragmentationTree.  Fragment molecular formulas and adducts correspond to the FragmentationTree&#39;s FragmentNodes
  */
 @JsonPropertyOrder({
   AnnotatedSpectrum.JSON_PROPERTY_NAME,
   AnnotatedSpectrum.JSON_PROPERTY_MS_LEVEL,
   AnnotatedSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
+  AnnotatedSpectrum.JSON_PROPERTY_INSTRUMENT,
   AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
@@ -51,6 +52,9 @@ public class AnnotatedSpectrum {
 
   public static final String JSON_PROPERTY_COLLISION_ENERGY = "collisionEnergy";
   private String collisionEnergy;
+
+  public static final String JSON_PROPERTY_INSTRUMENT = "instrument";
+  private String instrument;
 
   public static final String JSON_PROPERTY_PRECURSOR_MZ = "precursorMz";
   private Double precursorMz;
@@ -143,6 +147,31 @@ public class AnnotatedSpectrum {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCollisionEnergy(String collisionEnergy) {
     this.collisionEnergy = collisionEnergy;
+  }
+
+  public AnnotatedSpectrum instrument(String instrument) {
+    
+    this.instrument = instrument;
+    return this;
+  }
+
+   /**
+   * Instrument information.
+   * @return instrument
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getInstrument() {
+    return instrument;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setInstrument(String instrument) {
+    this.instrument = instrument;
   }
 
   public AnnotatedSpectrum precursorMz(Double precursorMz) {
@@ -290,6 +319,7 @@ public class AnnotatedSpectrum {
     return Objects.equals(this.name, annotatedSpectrum.name) &&
         Objects.equals(this.msLevel, annotatedSpectrum.msLevel) &&
         Objects.equals(this.collisionEnergy, annotatedSpectrum.collisionEnergy) &&
+        Objects.equals(this.instrument, annotatedSpectrum.instrument) &&
         Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
@@ -299,7 +329,7 @@ public class AnnotatedSpectrum {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, absIntensityFactor, spectrumAnnotation);
+    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, peaks, absIntensityFactor, spectrumAnnotation);
   }
 
   @Override
@@ -309,6 +339,7 @@ public class AnnotatedSpectrum {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    msLevel: ").append(toIndentedString(msLevel)).append("\n");
     sb.append("    collisionEnergy: ").append(toIndentedString(collisionEnergy)).append("\n");
+    sb.append("    instrument: ").append(toIndentedString(instrument)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
