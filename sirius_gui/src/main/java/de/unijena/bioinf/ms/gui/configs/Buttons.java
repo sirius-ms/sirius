@@ -31,23 +31,23 @@ import static de.unijena.bioinf.ms.gui.configs.Icons.*;
 public abstract class Buttons {
 
     public static JButton getExportButton24(String tootip) {
-        return new ToolbarButton(EXPORT_24, tootip);
+        return new ToolbarButton(EXPORT.derive(24,24), tootip);
     }
 
-    public static ToolbarButton getExportButton2(String tootip) {
-        return new ToolbarButton(EXPORT_20, tootip);
+    public static ToolbarButton getExportButton20(String tootip) {
+        return new ToolbarButton(EXPORT.derive(20,20), tootip);
     }
 
     public static ToolbarButton getZoomInButton24() {
-        return new ToolbarButton(Zoom_In_24, "Zoom in");
+        return new ToolbarButton(Zoom_In.derive(24,24), "Zoom in");
     }
 
     public static ToolbarButton getZoomOutButton24() {
-        return new ToolbarButton(Zoom_Out_24, "Zoom out");
+        return new ToolbarButton(Zoom_Out.derive(24,24), "Zoom out");
     }
 
     public static ToolbarButton getEditButton16(String tootip) {
-        return new ToolbarButton(LIST_EDIT_16, tootip);
+        return new ToolbarButton(LIST_EDIT.derive(16,16), tootip);
     }
 
     public static ToolbarButton getEditButton16() {
@@ -55,7 +55,7 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getAddButton16(String tootip) {
-        return new ToolbarButton(LIST_ADD_16, tootip);
+        return new ToolbarButton(LIST_ADD.derive(16,16), tootip);
     }
 
     public static ToolbarButton getAddButton16() {
@@ -67,14 +67,14 @@ public abstract class Buttons {
     }
 
     public static ToolbarButton getRemoveButton16(String tootip) {
-        return new ToolbarButton(LIST_REMOVE_16, tootip);
+        return new ToolbarButton(LIST_REMOVE.derive(16,16), tootip);
     }
 
     public static ToolbarButton getFileChooserButton16() {
-        return new ToolbarButton(CHOOSE_FILE_16, "choose file/dir");
+        return new ToolbarButton(FOLDER_FILE.derive(16,16), "choose file/dir");
     }
 
     public static ToolbarButton getFileChooserButton16(String tootip) {
-        return new ToolbarButton(CHOOSE_FILE_16, tootip);
+        return new ToolbarButton(FOLDER_FILE.derive(16,16), tootip);
     }
 }

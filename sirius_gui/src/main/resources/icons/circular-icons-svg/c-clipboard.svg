@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg12096" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title12078">c-clipboard</title>
+ <desc id="desc12080">Created with Sketch.</desc>
+ <path id="Oval-1" d="m32 64c17.673 0 32-14.327 32-32s-14.327-32-32-32-32 14.327-32 32 14.327 32 32 32z" fill="#4da6bf" fill-rule="evenodd"/>
+ <path id="Rectangle-146" d="m24 13h16v4h-16zm5-4h6v4h-6z" fill="#fff" fill-rule="evenodd"/>
+ <path id="Rectangle-143" d="m42 17v-2h4v34h-28v-34h4v2h-2v30h24v-30z" fill="#fff" fill-rule="evenodd"/>
+ <rect id="Rectangle-148" x="24" y="22" width="16" height="2" fill="#fff" fill-rule="evenodd"/>
+ <rect id="rect12088" x="24" y="28" width="14" height="2" fill="#fff" fill-rule="evenodd"/>
+ <rect id="rect12090" x="24" y="34" width="16" height="2" fill="#fff" fill-rule="evenodd"/>
+ <rect id="rect12092" x="24" y="40" width="14" height="2" fill="#fff" fill-rule="evenodd"/>
+</svg>

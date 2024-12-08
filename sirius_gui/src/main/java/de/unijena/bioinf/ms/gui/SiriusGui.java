@@ -20,19 +20,15 @@
 
 package de.unijena.bioinf.ms.gui;
 
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.UpdateDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import io.sirius.ms.sdk.SiriusClient;
-import io.sirius.ms.sdk.model.Info;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
+import io.sirius.ms.sdk.SiriusClient;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -43,7 +39,6 @@ import java.util.function.BiFunction;
  * - Background Computations
  */
 public class SiriusGui {
-    private static final AtomicBoolean FIRST_START = new AtomicBoolean(true);
     static {
         GuiUtils.initUI();
         //debug console
@@ -76,15 +71,6 @@ public class SiriusGui {
         projectManager = new GuiProjectManager(projectId, this.siriusClient, properties, this);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
-
-        if (FIRST_START.getAndSet(false)) {
-            Jobs.runInBackground(() -> {
-                Info info = this.siriusClient.infos().getInfo(true, true);
-                if (info != null && info.isUpdateAvailable() != null && info.isUpdateAvailable())
-                    if (!UpdateDialog.isDontAskMe())
-                        Jobs.runEDTLater(() -> new UpdateDialog(mainFrame, info));
-            });
-        }
         //todo nightsky: GUI standablone mode with external SIRIUS Service
     }
 

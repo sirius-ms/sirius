@@ -638,7 +638,7 @@
           {
             "name": "cancelIfRunning",
             "in": "query",
-            "description": "If true job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
+            "description": "If true, job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -648,7 +648,7 @@
           {
             "name": "awaitDeletion",
             "in": "query",
-            "description": "If true request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
+            "description": "If true, request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1723,7 +1723,18 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output",
+            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
+            "required": false,
+            "deprecated": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "moveParametersToConfigMap",
+            "in": "query",
+            "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -1787,6 +1798,11 @@
             "description": "Probably modified name of the config (to ensure filesystem path compatibility).",
             "content": {
               "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/problem+json": {
                 "schema": {
                   "type": "string"
                 }
@@ -2298,7 +2314,7 @@
           {
             "name": "cancelIfRunning",
             "in": "query",
-            "description": "If true job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
+            "description": "If true, job will be canceled if it is not finished. Otherwise,\n                        deletion will fail for running jobs or request will block until job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -2308,7 +2324,7 @@
           {
             "name": "awaitDeletion",
             "in": "query",
-            "description": "If true request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
+            "description": "If true, request will block until deletion succeeded or failed.\n                        If the job is still running the request will wait until the job has finished.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -4912,8 +4928,9 @@
           {
             "name": "includeConfigMap",
             "in": "query",
-            "description": "if true the generic configmap will be part of the output",
+            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
@@ -4929,6 +4946,31 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/JobSubmission"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/job-config-names": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get all (non-default) job configuration names",
+        "description": "Get all (non-default) job configuration names",
+        "operationId": "getJobConfigNames",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 }
               }
@@ -5015,6 +5057,16 @@
             "name": "includeConfigMap",
             "in": "query",
             "description": "if true, generic configmap with-defaults will be included",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "moveParametersToConfigMap",
+            "in": "query",
+            "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -5345,6 +5397,31 @@
           }
         }
       },
+      "DataImportEvent": {
+        "required": [
+          "importedCompoundIds",
+          "importedFeatureIds"
+        ],
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "nullable": true
+          },
+          "importedCompoundIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "importedFeatureIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "BackgroundComputationsStateEvent": {
         "required": [
           "affectedJobs",
@@ -5399,6 +5476,9 @@
             "description": "Description of this project.",
             "nullable": true
           },
+          "type": {
+            "$ref": "#/components/schemas/ProjectType"
+          },
           "compatible": {
             "type": "boolean",
             "description": "Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.\n If true project is up-to-date and there are no restrictions regarding usage.\n If false project is incompatible and therefore \"read only\" until the incompatible results have been removed. See updateProject endpoint for further information\n If NULL the information has not been requested.",
@@ -5423,6 +5503,16 @@
             "nullable": true
           }
         }
+      },
+      "ProjectType": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "DIRECT_IMPORT",
+          "PEAKLISTS",
+          "ALIGNED_RUNS",
+          "UNALIGNED_RUNS"
+        ]
       },
       "SearchableDatabaseParameters": {
         "type": "object",
@@ -6247,6 +6337,11 @@
             "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
             "nullable": true
           },
+          "instrument": {
+            "type": "string",
+            "description": "Instrument information.",
+            "nullable": true
+          },
           "precursorMz": {
             "type": "number",
             "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
@@ -6534,6 +6629,11 @@
             "description": "Collision energy used for MS/MS spectra\n Null for spectra where collision energy is not applicable",
             "nullable": true
           },
+          "instrument": {
+            "type": "string",
+            "description": "Instrument information.",
+            "nullable": true
+          },
           "precursorMz": {
             "type": "number",
             "description": "Precursor m/z of the MS/MS spectrum\n Null for spectra where precursor m/z is not applicable",
@@ -6563,6 +6663,7 @@
             "$ref": "#/components/schemas/SpectrumAnnotation"
           }
         },
+        "description": "Spectrum model with peak annotations based on the fragmentation tree and Epimetheus substructure annotations.\n Molecular formula and adduct of the spectrum are identical to the ones of the corresponding molecular formula candidate and FragmentationTree.\n Fragment molecular formulas and adducts correspond to the FragmentationTree\u0027s FragmentNodes",
         "nullable": true
       },
       "BinaryFingerprint": {
@@ -7030,10 +7131,12 @@
           },
           "molecularFormula": {
             "type": "string",
+            "description": "neutral molecular formula of the fragment without adduct",
             "nullable": true
           },
-          "ionType": {
+          "adduct": {
             "type": "string",
+            "description": "This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree FragmentationTree}s adduct,\n this adduct may not include any in-source loss.",
             "nullable": true
           },
           "massDeviationDa": {
@@ -7081,9 +7184,15 @@
           "treeScore": {
             "type": "number",
             "format": "double"
+          },
+          "molecularFormula": {
+            "type": "string"
+          },
+          "adduct": {
+            "type": "string"
           }
         },
-        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;",
+        "description": "Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges\n Root fragment has index 0;\n Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation",
         "nullable": true
       },
       "IsotopePatternAnnotation": {
@@ -7216,14 +7325,14 @@
             "description": "Molecular formula that has been annotated to this peak",
             "nullable": true
           },
-          "ionization": {
+          "adduct": {
             "type": "string",
-            "description": "Ionization that has been annotated to this peak",
+            "description": "Adduct that has been annotated to this peak",
             "nullable": true
           },
           "exactMass": {
             "type": "number",
-            "description": "Exact mass of the annotated molecular formula and ionization",
+            "description": "Exact mass of the annotated molecular formula and adduct",
             "format": "double",
             "nullable": true
           },
@@ -7369,9 +7478,9 @@
             "description": "Molecular formula that has been annotated to this spectrum",
             "nullable": true
           },
-          "ionization": {
+          "adduct": {
             "type": "string",
-            "description": "Ionization that has been annotated to this spectrum",
+            "description": "Adduct that has been annotated to this spectrum",
             "nullable": true
           },
           "exactMass": {
