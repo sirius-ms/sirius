@@ -41,5 +41,5 @@
 package io.sirius.ms.sse;
 
 public enum DataEventType {
-        JOB, PROJECT, BACKGROUND_COMPUTATIONS_STATE, GUI_STATE
+        JOB, PROJECT, BACKGROUND_COMPUTATIONS_STATE, GUI_STATE, DATA_IMPORT
 }

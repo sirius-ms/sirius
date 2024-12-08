@@ -26,6 +26,7 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
@@ -41,9 +42,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatchBean, InstanceBean, SpectralMatchList> {
 
@@ -75,14 +78,39 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
             }
         });
 
-        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
+        final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(SpectralMatchBean::isMatchesTopStructureHit);
         ActionTable<SpectralMatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
 
+        Comparator<SpectralMatchBean> ceComparator = Comparator.comparing(
+                specMatch -> specMatch.getReference()
+                        .map(BasicSpectrum::getCollisionEnergy)
+                        .map(CollisionEnergy::fromStringOrNull)
+                        .orElse(CollisionEnergy.none()),
+                CollisionEnergy.getMinEnergyComparator());
+
+        Comparator<?> dbLinkComparator = Comparator.comparing((SpectralMatchBean b) -> b.getDBLink().toString());
+
+        table.comparatorChooser.getComparatorsForColumn(8).clear();
+        table.comparatorChooser.getComparatorsForColumn(8).add(ceComparator);
+
+        table.comparatorChooser.getComparatorsForColumn(10).clear();
+        table.comparatorChooser.getComparatorsForColumn(10).add(dbLinkComparator);
+
         table.setSelectionModel(filteredSelectionModel);
-        final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
+
+        Function<Object, String> toString = v -> {
+            if (v ==null)
+                return "N/A";
+            if (v instanceof CollisionEnergy ce)
+                return ce.equals(CollisionEnergy.none()) ? "N/A" : ce.toString(2);
+            return v.toString();
+        };
+        final SiriusResultTableCellRenderer defaultRenderer =
+                new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), null, toString, null);
+
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
-        table.getColumnModel().getColumn(4).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
 
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer,
                 dbLink -> {
@@ -100,7 +128,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         return null;
                     }
                 }, DBLink::getId);
-        linkRenderer.registerToTable(table, 9);
+        linkRenderer.registerToTable(table, 10);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
@@ -124,7 +152,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         int total = source.getTotalSize();
         BiFunction<Integer, Integer, String> toolTipText = (s, t) -> s < t ? "Load " + (t - s) + " more reference spectr" + (t - s > 1 ? "a." : "um.") : "Load more reference spectra.";
 
-        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, toolTipText.apply(size, total));
+        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL.derive(24,24), toolTipText.apply(size, total));
         loadAll.setEnabled(source.getSize() < source.getTotalSize());
         source.addSizeChangedListener((s, t) -> {
             loadAll.setToolTipText(toolTipText.apply(s, t));

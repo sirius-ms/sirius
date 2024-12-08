@@ -32,7 +32,6 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
@@ -49,8 +48,7 @@ public class FTreeMetricsHelper {
         this.tree = tree;
         this.fragmentScoring = tree.getOrCreateFragmentAnnotation(Score.class);
         this.lossScoring = tree.getOrCreateLossAnnotation(Score.class);
-        final LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
-        this.measuredIonRoot = l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
+        this.measuredIonRoot = IonTreeUtils.getMeasuredIonRoot(tree);
     }
 
     public Optional<TreeStatistics> asTreeStats() {
@@ -88,14 +86,6 @@ public class FTreeMetricsHelper {
     public double getIsotopeMs1Score() {
             Score score = fragmentScoring.get(measuredIonRoot);
             return score.get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
-    }
-
-    // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
-    private Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
-        if (root.isLeaf()) return root;
-        final LossType ano = lossAno.get(root.getOutgoingEdge(0), LossType::regular);
-        if (ano.isRegular()) return root;
-        return getMeasuredIonRoot(lossAno, root.getChildren(0));
     }
 
     public double getBeautificationPenalty() {

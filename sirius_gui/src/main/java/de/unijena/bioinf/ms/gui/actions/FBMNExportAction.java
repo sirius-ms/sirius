@@ -39,7 +39,7 @@ public class FBMNExportAction extends AbstractGuiAction {
 
     public FBMNExportAction(SiriusGui gui) {
         super("FBMN Export", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FBMN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
         initListeners();
     }

@@ -35,7 +35,7 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
@@ -43,11 +43,13 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -64,13 +66,10 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
-    public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
-    public static final Color INVERT_HIGHLIGHTED_COLOR2 = new Color(255, 197, 0, 192);
-    public static final Color PRIMARY_HIGHLIGHTED_COLOR = new Color(0, 100, 255, 128);
-    public static final Color SECONDARY_HIGHLIGHTED_COLOR = new Color(100, 100, 255, 64).brighter();
     protected JList<FingerprintCandidateBean> candidateList;
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
@@ -86,12 +85,17 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     private final ResultPanel resultPanel;
+    private final SiriusGui gui;
 
-    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
+    /**
+     *
+     * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
+     */
+    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> wasComputed) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            if (instanceBean == null || !instanceBean.getComputedTools().isStructureSearch())
+            if (instanceBean == null || !wasComputed.apply(instanceBean))
                 showCenterCard(ActionList.ViewState.NOT_COMPUTED);
             else if (resultElements.isEmpty())
                 showCenterCard(ActionList.ViewState.EMPTY);
@@ -102,6 +106,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         this.resultPanel = resultPanel;
+        this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
         candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui, getSource().getBestFunc()));
@@ -146,7 +151,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected JToolBar getToolBar() {
         JToolBar tb = super.getToolBar();
 
-        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "Filter by selected molecular property (square)");
+        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MOLECULAR_PROPERTY.derive(24,24), "Filter by selected molecular property (square)");
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");
@@ -219,7 +224,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             final int idx = Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
                 int i = 0;
-                for (FingerprintCandidateBean fpc : resultPanel.structureAnnoTab.getCandidateTable().getFilteredSource()) {
+                for (FingerprintCandidateBean fpc : resultPanel.getStructureAnnoTab().getCandidateTable().getFilteredSource()) {
                     if (fpc.getInChiKey().equals(c.getInChiKey()))
                         return i;
                     i++;
@@ -229,8 +234,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             //select correct compound in annotated spectrum view.
             Jobs.runEDTLater(() -> {
-                resultPanel.setSelectedComponent(resultPanel.structureAnnoTab);
-                resultPanel.structureAnnoTab.getCandidateTable().getTable()
+                resultPanel.setSelectedComponent(resultPanel.getStructureAnnoTab());
+                resultPanel.getStructureAnnoTab().getCandidateTable().getTable()
                         .changeSelection(idx, 0, false, false);
             });
         }
@@ -272,7 +277,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
 
             for (DatabaseLabel l : candidate.labels) {
-                if (l.rect.contains(point.x, point.y)) {
+                if (l.contains(point)) {
                     clickOnDBLabel(l, candidate);
                     break;
                 }
@@ -287,7 +292,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
         Jobs.runEDTLater(() -> new SpectralMatchingDialog(
                 (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean)
+                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean, gui)
         ).setVisible(true));
     }
 

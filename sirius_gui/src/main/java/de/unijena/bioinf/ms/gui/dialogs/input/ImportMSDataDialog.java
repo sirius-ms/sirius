@@ -126,9 +126,6 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
     @Override
     protected Icon makeDialogIcon() {
-        return Icons.DOCS_32;
+        return Icons.DOCS.derive(32,32);
     }
-
-
-
 }

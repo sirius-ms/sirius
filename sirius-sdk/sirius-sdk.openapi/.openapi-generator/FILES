@@ -33,6 +33,7 @@ docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
+docs/DataImportEvent.md
 docs/DataQuality.md
 docs/Deviation.md
 docs/ExperimentalApi.md
@@ -77,6 +78,7 @@ docs/PeakAnnotation.md
 docs/ProjectChangeEvent.md
 docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
+docs/ProjectType.md
 docs/ProjectsApi.md
 docs/QuantificationTable.md
 docs/SearchableDatabase.md
@@ -157,6 +159,7 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusAnnotationsDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
+src/main/java/io/sirius/ms/sdk/model/DataImportEvent.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
@@ -195,6 +198,7 @@ src/main/java/io/sirius/ms/sdk/model/PeakAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/ProjectChangeEvent.java
 src/main/java/io/sirius/ms/sdk/model/ProjectInfo.java
 src/main/java/io/sirius/ms/sdk/model/ProjectInfoOptField.java
+src/main/java/io/sirius/ms/sdk/model/ProjectType.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationTable.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabase.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java

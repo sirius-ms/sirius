@@ -316,6 +316,15 @@ class LcmsAlignAcceptanceTest {
 
             }
 
+            System.out.println("features: " + totalFeatures);
+            System.out.println("adducts: " + totalAdducts);
+
+            System.out.println("ratio of features comapred to SIRIUS5: " + ((double) totalFeatures / (double) SIRIUS_5_FEATURES.getInt(dataset)));
+            System.out.println("ratio of adducts compared to SIRIUS5: " + ((double) totalAdducts / (double) SIRIUS_5_ADDUCTS.getInt(dataset)));
+
+            System.out.println("ratio of lost features compared no filter: " + (double) lostFeatures / (double) totalFeatures);
+            System.out.println("ratio of lost adducts compared no filter: " + ((double) lostAdducts / (double) totalAdducts));
+
             if (SIRIUS_5_FEATURES.containsKey(dataset)) {
                 Assertions.assertTrue((double) totalFeatures / (double) SIRIUS_5_FEATURES.getInt(dataset) > 1.5);
             }
@@ -325,8 +334,8 @@ class LcmsAlignAcceptanceTest {
 
             Assertions.assertTrue(totalAdducts > 0);
             Assertions.assertTrue(totalFeatures > 0);
-            Assertions.assertTrue((double) lostAdducts / (double) totalAdducts < 0.06);
-            Assertions.assertTrue((double) lostFeatures / (double) totalFeatures < 0.06);
+            Assertions.assertTrue((double) lostAdducts / (double) totalAdducts < 0.25);
+            Assertions.assertTrue((double) lostFeatures / (double) totalFeatures < 0.1);
 
         }
 

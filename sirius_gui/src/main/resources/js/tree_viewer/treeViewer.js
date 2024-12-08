@@ -24,37 +24,34 @@ var lastRightClickTime = null;     // for distinguishing double right click (->r
 // use innerWidth/Height (for renderers other than WebView)
 var window_use_inner = false;
 // theming
-var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
+var styles = {'elegant': {'node-rect': {'stroke' : 'black',
+                                            'stroke-width': 0.5,
+                                            'stroke-dasharray': ''
+                              },
                           'node-rect-hovered': {'stroke': 'black',
                                                 'stroke-width': 2,
                                                 'stroke-dasharray': '7,7'},
                           'node-rect-selected': {'stroke': 'black',
                                                 'stroke-width': 4,
-                                                'stroke-dasharray': '7,7'},
+                                                'stroke-dasharray': '7,7'
+                          },
                           'link-line': {'stroke-width': 2},
                           'link-text': {'fill': 'black'},
                           'link-text-bg': {'stroke': 'black', 'fill': 'white'}},
-              'elegant-dark': {'node-rect': {'stroke' : 'transparent'},
+              'elegant-dark': {'node-rect': {'stroke' : 'black',
+                                            'stroke-width': 0.5,
+                                            'stroke-dasharray': ''
+                                },
                                'node-rect-hovered': {'stroke': 'black',
                                                      'stroke-width': 2,
                                                      'stroke-dasharray': '7,7'},
                                'node-rect-selected': {'stroke': 'black',
                                                      'stroke-width': 4,
-                                                     'stroke-dasharray': '7,7'},
-                               'link-line': {'stroke': '#bbb', 'stroke-width': 2},
-                               'link-text': {'fill': '#bbb'},
-                               'link-text-bg': {'stroke': '#bbb', 'fill': '#3c3f41'}},
-              'classic': {'node-rect': {'stroke' : 'black',
-                                        'stroke-width': 1},
-                          'node-rect-hovered': {'stroke': 'black',
-                                                'stroke-width': 2,
-                                                'stroke-dasharray': ''},
-                          'node-rect-selected': {'stroke': 'black',
-                                                'stroke-width': 4,
-                                                'stroke-dasharray': ''},
-                          'link-line': {'stroke-width': 1},
-                          'link-text': {'fill': 'black'},
-                          'link-text-bg': {'stroke': 'black', 'fill': 'white'}}};
+                                                     'stroke-dasharray': '7,7'
+                               },
+                               'link-line': {'stroke': '#fafafa', 'stroke-width': 2},
+                               'link-text': {'fill': '#fafafa'},
+                               'link-text-bg': {'stroke': '#fafafa', 'fill': '#3c3f41'}}};
 var theme = 'elegant';
 var common_losses = [];
 
@@ -387,7 +384,7 @@ function formatAnnot(id, value) {
         case 'ion':
             return value;
         case 'mz':
-            return parseFloat(value).toFixed(4) + ' Da';
+            return parseFloat(value).toFixed(4) + ' m/z';
         case 'massDeviation':
             // example: '-5.479016320565768 ppm (-0.0035791853184719002 m/z)'
             var number = parseFloat(value.split(' ')[0]);
@@ -408,6 +405,12 @@ function formatAnnot(id, value) {
 
 // returns annotation color depending on type of annotation and value
 function getAnnotColor(id, value) {
+    var colorRange = eval("['#ffc14c', '#000000', '#a879d2']") //this is the color scheme for pos/neg coloring, but with black in the middle. Annotating mass deviations using getAnnotColor() seems to be an edge case. Still needs to be updated if Colors class changes.
+    var twoSideColorScheme = d3.scaleLinear()
+        .domain([0, 0.5, 1])
+        .range(colorRange)
+        .interpolate(d3.interpolateRgb);
+
     if (value) {
         value = parseFloat(value);
         var min, max;
@@ -419,7 +422,7 @@ function getAnnotColor(id, value) {
             max = md_ppm_max;
         } else
             return 'black';
-        return interpolateBuBlRd(parseFloat(value) / Math.max(min, max) / 2 + 0.5);
+        return twoSideColorScheme(parseFloat(value) / Math.max(Math.abs(min), Math.abs(max)) / 2 + 0.5);
     } else return "white";
 }
 
@@ -913,35 +916,26 @@ function colorCode(variant, scheme) {
     if (typeof (scheme) == "string") {
         // Java, when executing this function, can not pass the function
         // objects, so it will have to use strings
-        switch (scheme) {
-        case 'blues':
-            scheme_fn = d3.interpolateBlues;
+        const numColors = scheme.split(",").length; //expected format ['#ffc14c', '#ffffff', '#a879d2']
+        switch (numColors) {
+        case 2:
+            var colorRange  = eval(scheme)
+            scheme_fn = d3.interpolateRgb(colorRange[0], colorRange[1])
             break;
-        case 'greens':
-            scheme_fn = d3.interpolateGreens;
-            break;
-        case 'reds':
-            scheme_fn = d3.interpolateReds;
-            break;
-        case 'viridis':
-            scheme_fn = d3.interpolateViridis;
-            break;
-        case 'red to blue':
-            scheme_fn = d3.interpolateRdBu;
-            break;
-        case 'brown to turquoise':
-            scheme_fn = d3.interpolateBrBG;
+        case 3:
+            var colorRange = eval(scheme)
+            scheme_fn = d3.scaleLinear()
+                    .domain([0, 0.5, 1])
+                    .range(colorRange)
+                    .interpolate(d3.interpolateRgb);
             break;
         }
     } else if (typeof (scheme) == 'function')
         scheme_fn = scheme;
     var orig_scheme_fn = scheme_fn;
-    // adapt color grading to avoid colors too light/dark
     scheme_fn = function(x){
         if (isNaN(x)) x = 0;
-        var scale = (orig_scheme_fn == d3.interpolateViridis) ? 0.6 : 0.5;
-        var offset = (orig_scheme_fn == d3.interpolateViridis) ? 0.4 : 0.15;
-        return orig_scheme_fn(x * scale + offset);
+        return orig_scheme_fn(x);
     };
     // select respective maximum
     switch (variant) {

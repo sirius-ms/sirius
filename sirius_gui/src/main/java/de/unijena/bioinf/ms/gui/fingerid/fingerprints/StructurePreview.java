@@ -21,9 +21,11 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.ExtendedConnectivityProperty;
 import de.unijena.bioinf.ChemistryBase.fp.SubstructureProperty;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
@@ -31,6 +33,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.color.IAtomColorer;
+import org.openscience.cdk.renderer.color.UniColor;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -45,11 +49,12 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class StructurePreview extends JPanel implements Runnable {
+public class StructurePreview extends JPanel implements Runnable, PropertyChangeListenerEDT {
 
     protected static Logger logger = LoggerFactory.getLogger(StructurePreview.class);
     protected final FingerprintVisualization[] visualizations;
@@ -62,10 +67,12 @@ public class StructurePreview extends JPanel implements Runnable {
     protected volatile boolean shutdown = false;
 
     public StructurePreview(FingerprintList table) {
-        this(table.visualizations);
+        this(table.visualizations, table.gui);
     }
 
-    public StructurePreview(FingerprintVisualization[] visualizations) {
+    public StructurePreview(FingerprintVisualization[] visualizations, SiriusGui gui) {
+        gui.getProperties().addPropertyChangeListener("molecularStructuresDisplayColors", this);
+
         setBackground(Colors.BACKGROUND);
         this.visualizations = visualizations;
         this.entry = null;
@@ -77,14 +84,13 @@ public class StructurePreview extends JPanel implements Runnable {
 
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
-        generators.add(new StandardGenerator(Fonts.FONT_BOLD.deriveFont(13f)));
+        generators.add(new StandardGenerator(Fonts.FONT_MEDIUM.deriveFont(13f)));
         // setup the renderer
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
-                StandardGenerator.HighlightStyle.OuterGlow);
-        renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new ThemedAtomColors());
+                StandardGenerator.HighlightStyle.Colored);
+        setAtomColoring(gui.getProperties().getMolecularStructureDisplayColors());
 
         setPreferredSize(new Dimension(0, 220));
     }
@@ -225,16 +231,14 @@ public class StructurePreview extends JPanel implements Runnable {
         if (queryTool.matches(molecule)) {
             final List<Integer> inds = queryTool.getMatchingAtoms().get(0);
             if (inds.isEmpty()) {
-                hightlightAll(molecule);
                 return;
             }
             final HashSet<IAtom> atoms = new HashSet<>(inds.size());
             for (int i : inds) {
                 atoms.add(molecule.getAtom(i));
             }
-            highlightAtomsAndBonds(molecule, atoms);
+            colorBackgroundAtomsAndBonds(molecule, atoms);
         } else {
-            hightlightAll(molecule);
         }
     }
 
@@ -246,35 +250,40 @@ public class StructurePreview extends JPanel implements Runnable {
             for (int i : inds) {
                 atoms.add(molecule.getAtom(i));
             }
-            highlightAtomsAndBonds(molecule, atoms);
+            colorBackgroundAtomsAndBonds(molecule, atoms);
         }
     }
 
-    private void highlightAtomsAndBonds(IAtomContainer molecule, HashSet<IAtom> atoms) {
-        // reduce glow effect when ALL atoms of the molecule are highlighted
-        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
-        if (atoms.size() == molecule.getAtomCount()) {
-            highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
-        }
+    private void colorBackgroundAtomsAndBonds(IAtomContainer molecule, HashSet<IAtom> atoms) {
+        //put unselected atoms to background by "highlighting" with unobtrusive color
+        for (IAtom atom : molecule.atoms()) {
+            if (atoms.contains(atom)) continue;
 
-        for (IAtom atom : atoms) {
-            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
+            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.MolecularStructures.BACKGROUND_STRUCTURE);
             for (IBond b : molecule.getConnectedBondsList(atom)) {
-                if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, highlightColor);
+                if (!atoms.contains(b.getAtom(0)) || !atoms.contains(b.getAtom(1))) {
+                    b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.MolecularStructures.BACKGROUND_STRUCTURE);
                 }
             }
         }
     }
 
-    private void hightlightAll(IAtomContainer molecule) {
-        Color highlightColor = CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR;
-        highlightColor = new Color(highlightColor.getRed(), highlightColor.getGreen(), highlightColor.getBlue(), (int)(highlightColor.getAlpha()*0.33));
-        for (IAtom atom : molecule.atoms()) {
-            atom.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+    @Override
+    public void propertyChangeInEDT(PropertyChangeEvent propertyChangeEvent) {
+        if (propertyChangeEvent.getNewValue() instanceof MolecularStructuresDisplayColors mode) {
+            setAtomColoring(mode);
+            repaint();
         }
-        for (IBond bond : molecule.bonds()) {
-            bond.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+    }
+
+    private void setAtomColoring(MolecularStructuresDisplayColors mode) {
+        if (mode == MolecularStructuresDisplayColors.MONOCHROME) {
+            Color chosenColor = Colors.FOREGROUND_DATA;
+            IAtomColorer atomColorer = new UniColor(chosenColor);
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, atomColorer);
+        } else {
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
+                    new ThemedAtomColors(Colors.MolecularStructures.SELECTED_SUBSTRUCTURE));
         }
     }
 }

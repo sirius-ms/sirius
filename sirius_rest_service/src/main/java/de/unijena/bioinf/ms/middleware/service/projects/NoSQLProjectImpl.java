@@ -50,9 +50,11 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -93,6 +95,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 
@@ -514,7 +517,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (f.getApexIntensity() == null) continue; // ignore features without lcms information
             String prefix = "[CORRELATED]";
             if (fid != null && fid == f.getAlignedFeatureId()) {
-                prefix = "[MAIN]";
+                prefix = "[SELECTED]";
             }
             String mainLabel;
             if (f.getDetectedAdducts() == null || f.getDetectedAdducts().getAllAdducts().isEmpty()) {
@@ -551,7 +554,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             startIndexOfTraces = Math.min(startIndexOfTraces, f.getTraceRef().getScanIndexOffsetOfTrace());
         }
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
-        int maximumIndex = mergedAxis.getRetentionTimes().length;
+        int maximumIndex = 0;
         ArrayList<TraceSet.Trace> traces = new ArrayList<>();
         for (int k = 0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
@@ -559,7 +562,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             TraceRef r = f.getTraceRef();
             MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace == null) continue;
-            maximumIndex = Math.min(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
+            maximumIndex = Math.max(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
             TraceSet.Trace trace = new TraceSet.Trace();
             trace.setMz(f.getAverageMass());
             trace.setId(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0));
@@ -577,7 +580,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // add annotations
             ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
             // feature annotation
-            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, label,
+            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, "[MAIN]" + label, //this ensures that lcms view shows the intensity of this features
                     r.getApex() + shift, r.getStart() + shift, r.getEnd() + shift));
 
             trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
@@ -808,6 +811,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
                     da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
             builder.detectedAdducts(da);
+        } else {
+            builder.detectedAdducts(new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts());
         }
         return builder.build();
     }
@@ -1019,9 +1024,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return new PageImpl<>(compounds, pageable, total);
     }
 
+    private void setProjectTypeOrThrow(SiriusProjectDocumentDatabase<? extends Database<?>> ps) {
+        Optional<ProjectType> psType = ps.findProjectType();
+        if (psType.isPresent()) {
+            switch (psType.get()) {
+                case ALIGNED_RUNS:
+                case UNALIGNED_RUNS: {
+                    ProjectTypeException reason = new ProjectTypeException("Project contains data from MS runs (.mzml, .mzxml) that have been preprocessed in SIRIUS. Additional data cannot be added to such project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, psType.get());
+                    throw new ResponseStatusException(BAD_REQUEST, reason.getMessage(), reason);
+                }
+            }
+        }else {
+            ps.upsertProjectType(ProjectType.DIRECT_IMPORT);
+        }
+    }
+
     @SneakyThrows
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();

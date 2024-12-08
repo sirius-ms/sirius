@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.AbstractGuiAction;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
 import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
@@ -31,14 +33,12 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import lombok.Getter;
@@ -58,7 +58,6 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 public class MainFrame extends JFrame implements DropTargetListener {
-
     public static final CookieManager cookieGuard = new CookieManager();
 
     static {
@@ -72,6 +71,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Getter
     private FilterableCompoundListPanel filterableCompoundListPanel;
+    private LandingPage landingPage;
 
     public void ensureCompoundIsVisible(int index){
         compoundListView.ensureIndexIsVisible(index);
@@ -88,15 +88,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compoundList.getCompoundListSelectionModel();
     }
-
-
-    // right side panel
-    private FormulaList formulaList;
-    private StructureList databaseStructureList;
-    private StructureList combinedStructureListSubstructureView;
-    private StructureList combinedStructureListDeNovoView;
-    private SpectralMatchList spectralMatchList;
-
 
     @Getter
     private ResultPanel resultsPanel;
@@ -126,6 +117,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
         this.gui = gui;
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (landingPage != null)
+            landingPage.unregisterListeners();
+        if (globalActions != null)
+            for (Object key : globalActions.allKeys()) {
+                Action action = globalActions.get(key);
+                if (action instanceof AbstractGuiAction guiAction)
+                    guiAction.destroy();
+            }
+    }
+
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
         if (Taskbar.isTaskbarSupported()) {
@@ -141,25 +145,34 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void decoradeMainFrame() {
-        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
+        Jobs.runEDTLater(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
-        // create models for views
+        // Global feature list.
         compoundList = new CompoundList(gui);
-        formulaList = new FormulaList(compoundList);
-        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
-        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        spectralMatchList = new SpectralMatchList(compoundList);
 
-
-        //CREATE VIEWS
+        //CREATE RESULT VIEWS
         // results Panel
-        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
+        resultsPanel = new ResultPanel(compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
-        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
+        if (SiriusProperties.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
+
+        SiriusCardLayout layout = new SiriusCardLayout();
+        JPanel landingPanelSwitcher = new JPanel(layout);
+        landingPage = new LandingPage(gui, ApplicationCore.WEB_API.getAuthService());
+
+        landingPanelSwitcher.add("landing", landingPage);
+        landingPanelSwitcher.add("results", resultPanelContainer);
+
+        compoundList.getSortedSource().addListEventListener(listEvent -> {
+            if (listEvent.getSourceList().isEmpty())
+                layout.show(landingPanelSwitcher, "landing");
+            else
+                layout.show(landingPanelSwitcher, "results");
+        });
+        layout.show(landingPanelSwitcher, compoundList.getFullSize() < 1 ? "landing" : "results");
 
         // toolbar
         toolbar = new SiriusToolbar(gui);
@@ -178,7 +191,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(filterableCompoundListPanel);
-        mainPanel.setRightComponent(resultPanelContainer);
+        mainPanel.setRightComponent(landingPanelSwitcher);
         add(toolbar, BorderLayout.NORTH);
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();

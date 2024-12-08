@@ -19,16 +19,18 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
@@ -44,7 +46,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * @author Markus Fleischauer
@@ -53,8 +56,8 @@ public class ImportAction extends AbstractGuiAction {
 
     public ImportAction(SiriusGui gui) {
         super("Import", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.DOCS_32);
-        putValue(Action.SMALL_ICON, Icons.BATCH_DOC_16);
+        putValue(Action.LARGE_ICON_KEY, Icons.DOCS.derive(32,32));
+        putValue(Action.SMALL_ICON, Icons.DOCS.derive(16,16));
         putValue(Action.SHORT_DESCRIPTION, "<html>" +
                 "<p>Import measurements of:</p>" +
                 "<ul style=\"list-style-type:none;\">" +
@@ -67,7 +70,7 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     @Override
-    public synchronized void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent e) {
         JFileChooser chooser = new JFileChooser(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
@@ -87,7 +90,7 @@ public class ImportAction extends AbstractGuiAction {
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final List<File> inputFiles, Window popupOwner) {
+    public void importOneExperimentPerLocation(@NotNull final List<File> inputFiles, Window popupOwner) {
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing Files...", false,
                 InstanceImporter.makeExpandFilesJJob(inputFiles)).getResult();
@@ -95,7 +98,7 @@ public class ImportAction extends AbstractGuiAction {
     }
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
-    public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
+    public void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
         StopWatch watch = new StopWatch();
         watch.start();
 
@@ -132,7 +135,7 @@ public class ImportAction extends AbstractGuiAction {
                             input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import, find & align...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import, find & align...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
 
                 task.awaitResult();
@@ -147,13 +150,17 @@ public class ImportAction extends AbstractGuiAction {
                             true,
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Import MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import MS data...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
                 task.awaitResult();
             }
 
-        } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
+        } catch (Exception e) {
+            String m = Objects.requireNonNullElse(e.getMessage(), "");
+            Stream.of("ProjectTypeException:", "ProjectStateException:").filter(m::contains).findFirst().ifPresentOrElse(
+                    extText -> Jobs.runEDTLater(() -> new WarningDialog(gui.getMainFrame(), extText, GuiUtils.formatAndStripToolTip(m.substring(m.lastIndexOf(extText) + extText.length()).split(" \\| ")[0]), null)),
+                    () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), e.getMessage(), e.getCause()))
+            );
         }
     }
 }

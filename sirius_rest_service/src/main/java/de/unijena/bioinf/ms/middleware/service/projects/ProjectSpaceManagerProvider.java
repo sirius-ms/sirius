@@ -113,7 +113,9 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     private ProjectInfo createProjectInfo(String projectId, PSM psm,
                                           @NotNull EnumSet<ProjectInfo.OptField> optFields) {
         ProjectInfo.ProjectInfoBuilder b = ProjectInfo.builder()
-                .projectId(projectId).location(psm.getLocation());
+                .projectId(projectId)
+                .location(psm.getLocation())
+                .type(psm.getType().orElse(null));
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countFeatures()).numOfCompounds(psm.countCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
@@ -278,9 +280,6 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     @Override
     public void destroy() {
-        System.out.println("Destroy Project Provider Service...");
         closeAll();
-        System.out.println("Destroy Project Provider Service DONE");
-
     }
 }
