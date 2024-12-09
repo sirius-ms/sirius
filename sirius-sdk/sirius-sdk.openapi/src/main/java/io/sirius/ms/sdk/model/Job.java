@@ -56,7 +56,7 @@ public class Job {
   private List<String> affectedAlignedFeatureIds;
 
   /**
-   * Effect this job has the affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
+   * Effect this job has. The affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
    */
   public enum JobEffectEnum {
     IMPORT("IMPORT"),
@@ -246,7 +246,7 @@ public class Job {
   }
 
    /**
-   * Effect this job has the affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
+   * Effect this job has. The affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
    * @return jobEffect
   **/
   @jakarta.annotation.Nullable

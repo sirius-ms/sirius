@@ -78,7 +78,7 @@ public class Job {
     List<String> affectedAlignedFeatureIds;
 
     /**
-     * Effect this job has the affected ids are added, removed or modified.
+     * Effect this job has. The affected ids are added, removed or modified.
      * Null if job does not affect features/compounds
      * Not available/null if affected Ids are not requested
      */
