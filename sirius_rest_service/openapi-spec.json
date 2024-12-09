@@ -6198,6 +6198,16 @@
               "type": "string",
               "nullable": true
             }
+          },
+          "jobEffect": {
+            "type": "string",
+            "description": "Effect this job has the affected ids are added, removed or modified.\n Null if job does not affect features/compounds\n Not available/null if affected Ids are not requested",
+            "nullable": true,
+            "enum": [
+              "IMPORT",
+              "COMPUTATION",
+              "DELETION"
+            ]
           }
         },
         "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."

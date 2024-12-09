@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
-import io.sirius.ms.sdk.model.MsData;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +132,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         this.formulaIDConfigPanel = formulaIDConfigPanel;
 
         //in single mode: does compound has MS1 data?
-        this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.getFirst().getMsData().getMergedMs1() != null || !ecs.getFirst().getMsData().getMs1Spectra().isEmpty());
+        this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && ecs.getFirst().hasMs1();
 
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
@@ -517,8 +516,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     private void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        MsData msData = ec.getMsData();
-        if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
+        if (ec.hasMs1()) {
             final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
             Ms2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), false);
             FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);

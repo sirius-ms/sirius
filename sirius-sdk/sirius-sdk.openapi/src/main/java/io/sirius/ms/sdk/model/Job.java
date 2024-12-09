@@ -35,7 +35,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Job.JSON_PROPERTY_COMMAND,
   Job.JSON_PROPERTY_PROGRESS,
   Job.JSON_PROPERTY_AFFECTED_COMPOUND_IDS,
-  Job.JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS
+  Job.JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS,
+  Job.JSON_PROPERTY_JOB_EFFECT
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Job {
@@ -53,6 +54,46 @@ public class Job {
 
   public static final String JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS = "affectedAlignedFeatureIds";
   private List<String> affectedAlignedFeatureIds;
+
+  /**
+   * Effect this job has the affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
+   */
+  public enum JobEffectEnum {
+    IMPORT("IMPORT"),
+    
+    COMPUTATION("COMPUTATION"),
+    
+    DELETION("DELETION");
+
+    private String value;
+
+    JobEffectEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static JobEffectEnum fromValue(String value) {
+      for (JobEffectEnum b : JobEffectEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      return null;
+    }
+  }
+
+  public static final String JSON_PROPERTY_JOB_EFFECT = "jobEffect";
+  private JobEffectEnum jobEffect;
 
   public Job() {
   }
@@ -198,6 +239,31 @@ public class Job {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
   }
 
+  public Job jobEffect(JobEffectEnum jobEffect) {
+    
+    this.jobEffect = jobEffect;
+    return this;
+  }
+
+   /**
+   * Effect this job has the affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
+   * @return jobEffect
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public JobEffectEnum getJobEffect() {
+    return jobEffect;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setJobEffect(JobEffectEnum jobEffect) {
+    this.jobEffect = jobEffect;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -211,12 +277,13 @@ public class Job {
         Objects.equals(this.command, job.command) &&
         Objects.equals(this.progress, job.progress) &&
         Objects.equals(this.affectedCompoundIds, job.affectedCompoundIds) &&
-        Objects.equals(this.affectedAlignedFeatureIds, job.affectedAlignedFeatureIds);
+        Objects.equals(this.affectedAlignedFeatureIds, job.affectedAlignedFeatureIds) &&
+        Objects.equals(this.jobEffect, job.jobEffect);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, command, progress, affectedCompoundIds, affectedAlignedFeatureIds);
+    return Objects.hash(id, command, progress, affectedCompoundIds, affectedAlignedFeatureIds, jobEffect);
   }
 
   @Override
@@ -228,6 +295,7 @@ public class Job {
     sb.append("    progress: ").append(toIndentedString(progress)).append("\n");
     sb.append("    affectedCompoundIds: ").append(toIndentedString(affectedCompoundIds)).append("\n");
     sb.append("    affectedAlignedFeatureIds: ").append(toIndentedString(affectedAlignedFeatureIds)).append("\n");
+    sb.append("    jobEffect: ").append(toIndentedString(jobEffect)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -44,6 +45,7 @@ public class Job {
      * Unique identifier to access the job via the API
      */
     String id;
+
     /**
      * Command string of the executed Task
      */
@@ -74,4 +76,13 @@ public class Job {
     @Nullable
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     List<String> affectedAlignedFeatureIds;
+
+    /**
+     * Effect this job has the affected ids are added, removed or modified.
+     * Null if job does not affect features/compounds
+     * Not available/null if affected Ids are not requested
+     */
+    @NotNull
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    JobEffect jobEffect;
 }

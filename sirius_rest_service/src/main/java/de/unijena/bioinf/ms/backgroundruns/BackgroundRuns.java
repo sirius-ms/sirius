@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.backgroundruns;
 import com.googlecode.concurentlocks.ReadWriteUpdateLock;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -33,6 +32,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.JobEffect;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
@@ -260,7 +260,7 @@ public final class BackgroundRuns {
                                             @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
         Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
-        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing");
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
         return submitRunAndLockInstances(run);
@@ -270,7 +270,7 @@ public final class BackgroundRuns {
                                               @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
         Workflow computation = new ImportPeaksFomResourceWorkflow(psm, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
-        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import");
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
         return submitRunAndLockInstances(run);
@@ -288,7 +288,8 @@ public final class BackgroundRuns {
                 RUN_COUNTER.incrementAndGet(),
                 command.stream().collect(Collectors.joining(" ")),
                 pr.asCommandLineList().stream().map(CommandLine::getCommandName).collect(Collectors.joining(" > ")),
-                "Computation"
+                "Computation",
+                JobEffect.COMPUTATION
         );
     }
 
@@ -327,6 +328,9 @@ public final class BackgroundRuns {
         protected final String command;
 
         @Getter
+        protected final JobEffect jobEffect;
+
+        @Getter
         protected final String description;
         protected final String prefix;
 
@@ -354,7 +358,9 @@ public final class BackgroundRuns {
             return affectedCompoundIds;
         }
 
-        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command, @Nullable String description, String prefix) {
+        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances,
+                                 int runId, String command, @Nullable String description,
+                                 String prefix, JobEffect jobEffect) {
             super(JobType.SCHEDULER);
             this.runId = runId;
             this.command = command;
@@ -362,6 +368,7 @@ public final class BackgroundRuns {
             this.instances = instances;
             this.description = description;
             this.prefix = (prefix == null || prefix.isBlank()) ? "BackgroundJob" : prefix;
+            this.jobEffect = jobEffect;
             extractIds(instances);
         }
 
