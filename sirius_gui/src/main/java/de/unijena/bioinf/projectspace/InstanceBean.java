@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -100,19 +101,21 @@ public class InstanceBean implements SiriusPCS {
 
     public InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @NotNull GuiProjectManager projectManager) {
         this.featureId = featureId;
-        this.sourceFeature = sourceFeature;
         this.projectManager = projectManager;
+        this.sourceFeature = sourceFeature;
 
-        if (sourceFeature != null)
-            assert sourceFeature.getAlignedFeatureId().equals(featureId);
+        if (this.sourceFeature == null)
+            //preload minimal information for compound list to prevent them from being loaded in EDT.
+            this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+
         this.listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
-                    if (getFeatureId().equals(pce.getFeaturedId())) {
-                        clearCache(pce);
+                if (evt.getNewValue() != null) {
+                    if (("project.updateInstance" + getFeatureId()).equals(evt.getPropertyName())) {
+                        clearCache(evt.getNewValue());
                     } else {
-                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", pce.getFeaturedId(), getFeatureId());
+                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", evt.getPropertyName(), getFeatureId());
                     }
                 }
             }
@@ -120,27 +123,29 @@ public class InstanceBean implements SiriusPCS {
         registerProjectSpaceListener();
     }
 
-    void clearCache(@Nullable ProjectChangeEvent pce) {
-        synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
+    private void clearCache(@NotNull Object evt) {
+        if (SwingUtilities.isEventDispatchThread())
+            log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
+        synchronized (InstanceBean.this) {
+            InstanceBean.this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
             InstanceBean.this.spectralMatchingCache = null;
-            InstanceBean.this.sourceFeature = null;
         }
-        if (pce != null && pce.getEventType() != null) {
+        if (evt instanceof BackgroundComputationsStateEvent pce) {
+            if (pcsEnabled.get())
+                pcs.firePropertyChange("instance.updated", null, pce);
+        } else if (evt instanceof ProjectChangeEvent pce && pce.getEventType() != null) {
             switch (pce.getEventType()) {
-                case FEATURE_UPDATED -> {
-                    synchronized (InstanceBean.this) {
-                        InstanceBean.this.msData = null;
-                    }
-                    if (pcsEnabled.get())
-                        pcs.firePropertyChange("instance.updated", null, pce);
-                }
                 case RESULT_CREATED -> {
                     if (pcsEnabled.get())
-                        pcs.firePropertyChange("instance.createFormulaResult", null, pce);
+                        pcs.firePropertyChange("instance.resultCreated", null, pce);
+                }
+                case RESULT_UPDATED -> {
+                    if (pcsEnabled.get())
+                        pcs.firePropertyChange("instance.resultUpdated", null, pce);
                 }
                 case RESULT_DELETED -> {
                     if (pcsEnabled.get())
-                        pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
+                        pcs.firePropertyChange("instance.resultDeleted", null, pce);
                 }
             }
         }
@@ -458,6 +463,15 @@ public class InstanceBean implements SiriusPCS {
         return msData;
     }
 
+
+    public Boolean hasMs1() {
+        return getSourceFeature().isHasMs1();
+    }
+
+   public Boolean hasMsMs() {
+        return getSourceFeature().isHasMsMs();
+    }
+
     private <R> R withSpectralMatchingCache(Function<SpectralMatchingCache, R> doWithCache) {
         //double-checked locking, msData must be volatile
         if (spectralMatchingCache == null) {
@@ -501,13 +515,14 @@ public class InstanceBean implements SiriusPCS {
         exp.setIonMass(getIonMass());
         exp.setFeatureId(getFeatureId());
         exp.setPrecursorIonType(getIonType());
-        exp.setMs1Spectra(getMsData().getMs1Spectra().stream()
+        MsData msdata = getMsData();
+        exp.setMs1Spectra(msdata.getMs1Spectra().stream()
                 .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity)))
                 .toList());
-        exp.setMs2Spectra(getMsData().getMs2Spectra().stream()
+        exp.setMs2Spectra(msdata.getMs2Spectra().stream()
                 .map(s -> new MutableMs2Spectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity), s.getPrecursorMz(), CollisionEnergy.fromStringOrNull(s.getCollisionEnergy()), 2))
                 .toList());
-        Optional.ofNullable(getMsData().getMergedMs1())
+        Optional.ofNullable(msdata.getMergedMs1())
                 .map(s -> new SimpleSpectrum(WrapperSpectrum.of(s.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity)))
                 .ifPresent(exp::setMergedMs1Spectrum);
         return exp;
