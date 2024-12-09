@@ -25,7 +25,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
@@ -142,7 +141,7 @@ public class BatchComputeDialog extends JDialog {
         main.add(northPanel, BorderLayout.NORTH);
 
         loadableWrapper.runInBackgroundAndLoad(() -> {
-            final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> Utils.notNullOrEmpty(inst.getMsData().getMs2Spectra()));
+            final boolean ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs);
             {
                 // make subtool config panels
                 formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
