@@ -5,3 +5,11 @@ dependencies {
     api project(":chemical_db_oss")
     api project(":chemical_db_oss:chemdb_nitrite_oss")
 }
+
+sourceSets{
+    main{
+        resources{
+            srcDirs = ["src/main/resources"]
+        }
+    }
+}

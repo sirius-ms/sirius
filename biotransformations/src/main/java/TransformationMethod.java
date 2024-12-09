@@ -1,7 +1,13 @@
-import biotransformer.transformation.Biotransformation;
-import org.openscience.cdk.interfaces.IAtomContainer;
+//package sirius.transformations;
 
 import java.util.List;
+
 public interface TransformationMethod {
-    List <Biotransformation> transform(List<IAtomContainer> inputs);
+    /**
+     * Berechnet Biotransformationsprodukte aus einer gegebenen Eingabemolekül-Struktur.
+     *
+     * @param inputMolecule Die Eingabemolekül-Struktur im SMILES- oder InChI-Format.
+     * @return Eine Liste von Biotransformationsprodukten als SMILES- oder InChI-Strings.
+     */
+    List<String> calculateTransformations(String inputMolecule);
 }
