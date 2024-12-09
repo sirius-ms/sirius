@@ -73,7 +73,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     private FilterableCompoundListPanel filterableCompoundListPanel;
     private LandingPage landingPage;
 
-    public void ensureCompoundIsVisible(int index){
+    public void ensureCompoundIsVisible(int index) {
         compoundListView.ensureIndexIsVisible(index);
     }
 
@@ -194,18 +194,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
         mainPanel.setRightComponent(landingPanelSwitcher);
         add(toolbar, BorderLayout.NORTH);
 
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
+        // set MainFrames initial size
+        Rectangle usableScreenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        setSize(new Dimension(
+                Math.min(usableScreenBounds.width, filterableCompoundListPanel.getPreferredSize().width + landingPage.getPreferredSize().width),
+                Math.min(usableScreenBounds.height, toolbar.getPreferredSize().height + 5 + landingPage.getPreferredSize().height)
+        ));
+
         setLocationRelativeTo(null); //init mainframe
         setVisible(true);
         toFront();
     }
 
-
-    //////////////////////////////////////////////////
-    ////////////////// drag and drop /////////////////
-    //////////////////////////////////////////////////
-
+    // region dragndrop
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         // TODO Auto-generated method stub
@@ -243,7 +244,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         List<Path> projectFiles = inputF.msInput.unknownFiles.keySet().stream().filter(p -> p.toString().endsWith(SIRIUS_PROJECT_SUFFIX)).toList();
         inputF.msInput.unknownFiles.clear();
-        if (!projectFiles.isEmpty()){
+        if (!projectFiles.isEmpty()) {
             Boolean replaceCurrent = projectFiles.size() == 1 ? null : false;
             ProjectOpenAction opener = (ProjectOpenAction) SiriusActions.LOAD_WS.getInstance(gui);
             projectFiles.forEach(f -> opener.openProject(f, replaceCurrent));
@@ -263,4 +264,5 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     .collect(Collectors.joining(", ")));
         }
     }
+    //endregion
 }
