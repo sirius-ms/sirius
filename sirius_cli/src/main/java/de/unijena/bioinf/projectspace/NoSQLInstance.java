@@ -478,6 +478,7 @@ public class NoSQLInstance implements Instance {
                                 .alignedFeatureId(id)
                                 .adduct(adduct)
                                 .molecularFormula(tree.getRoot().getFormula())
+                                .siriusScoreNormalized(scores.getSiriusScoreNormalized())
                                 .siriusScore(scores.getSiriusScore())
                                 .isotopeScore(scores.getIsotopeMs1Score())
                                 .treeScore(scores.getTreeScore())

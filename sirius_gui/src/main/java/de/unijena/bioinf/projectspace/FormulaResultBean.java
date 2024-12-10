@@ -237,8 +237,8 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         return Optional.ofNullable(getFormulaCandidate().getRank());
     }
 
-    public Optional<Double> getSiriusScore() {
-        return Optional.ofNullable(getFormulaCandidate().getSiriusScore());
+    public Optional<Double> getSiriusScoreNormalized() {
+        return Optional.ofNullable(getFormulaCandidate().getSiriusScoreNormalized());
     }
 
     public Optional<Double> getIsotopeScore() {

@@ -68,6 +68,14 @@ public class FormulaCandidate extends AlignedFeatureAnnotation implements Compar
      */
     @Nullable
     protected Integer formulaRank;
+
+    /**
+     * Normalized Sirius Score of the formula candidate.
+     * If NULL result is not available
+     */
+    @Nullable
+    protected Double siriusScoreNormalized;
+
     /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
