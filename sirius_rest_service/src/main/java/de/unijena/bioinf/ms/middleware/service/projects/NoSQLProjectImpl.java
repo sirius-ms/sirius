@@ -947,6 +947,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .molecularFormula(candidate.getMolecularFormula().toString())
                 .adduct(candidate.getAdduct().toString())
                 .rank(candidate.getFormulaRank())
+                .siriusScoreNormalized(candidate.getSiriusScoreNormalized())
                 .siriusScore(candidate.getSiriusScore())
                 .isotopeScore(candidate.getIsotopeScore())
                 .treeScore(candidate.getTreeScore())

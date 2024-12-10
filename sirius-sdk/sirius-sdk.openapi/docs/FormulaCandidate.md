@@ -12,6 +12,7 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 |**molecularFormula** | **String** | molecular formula of this formula candidate |  [optional] |
 |**adduct** | **String** | Adduct of this formula candidate |  [optional] |
 |**rank** | **Integer** |  |  [optional] |
+|**siriusScoreNormalized** | **Double** | Normalized Sirius Score of the formula candidate.  If NULL result is not available |  [optional] |
 |**siriusScore** | **Double** | Sirius Score (isotope + tree score) of the formula candidate.  If NULL result is not available |  [optional] |
 |**isotopeScore** | **Double** |  |  [optional] |
 |**treeScore** | **Double** |  |  [optional] |

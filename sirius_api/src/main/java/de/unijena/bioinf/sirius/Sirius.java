@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.sirius;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.chem.utils.biotransformation.BioTransformation;
@@ -643,6 +644,9 @@ public class Sirius {
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
                 List<IdentificationResult> r = createIdentificationResultsAndResolveAdducts(fr, instance);//postprocess results
+                // adds normalized scores to fragmentation trees.
+                FTreeMetricsHelper.computeNormalizedTreeScores(r.stream().map(SScored::getCandidate).toList());
+
                 return r;
             } catch (RuntimeException e) {
                 LoggerFactory.getLogger(Sirius.class).error("Error in instance " + experiment.getSourceString() + ": " + e.getMessage());

@@ -7060,6 +7060,12 @@
             "type": "integer",
             "format": "int32"
           },
+          "siriusScoreNormalized": {
+            "type": "number",
+            "description": "Normalized Sirius Score of the formula candidate.\n If NULL result is not available",
+            "format": "double",
+            "nullable": true
+          },
           "siriusScore": {
             "type": "number",
             "description": "Sirius Score (isotope + tree score) of the formula candidate.\n If NULL result is not available",
@@ -7653,10 +7659,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7866,10 +7872,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7945,10 +7951,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8161,10 +8167,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8207,10 +8213,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8326,10 +8332,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8372,10 +8378,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {

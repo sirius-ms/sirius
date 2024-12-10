@@ -31,8 +31,8 @@ import java.util.function.Function;
  *
  * @author Markus Fleischauer
  */
-public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    protected SiriusResultTableFormat(Function<FormulaResultBean, Boolean> isBest) {
+public class FormulaResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
+    protected FormulaResultTableFormat(Function<FormulaResultBean, Boolean> isBest) {
         super(isBest);
     }
 
@@ -52,7 +52,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             "Molecular Formula",
             "Adduct",
             "Zodiac Score",
-            "Sirius Score",
+            "Sirius Score (normalized)",
             "Isotope Score",
             "Tree Score",
             "Explained Peaks",
@@ -76,7 +76,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
         else if (column == col++) return result.getMolecularFormula();
         else if (column == col++) return result.getAdduct();
         else if (column == col++) return result.getZodiacScore().orElse(Double.NaN);
-        else if (column == col++) return result.getSiriusScore().orElse(Double.NaN);
+        else if (column == col++) return result.getSiriusScoreNormalized().orElse(Double.NaN);
         else if (column == col++) return result.getIsotopeScore().orElse(Double.NaN);
         else if (column == col++) return result.getTreeScore().orElse(Double.NaN);
         else if (column == col++) return result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);

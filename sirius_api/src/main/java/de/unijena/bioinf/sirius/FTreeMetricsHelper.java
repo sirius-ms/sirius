@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,6 +54,10 @@ public class FTreeMetricsHelper {
 
     public Optional<TreeStatistics> asTreeStats() {
         return tree.getAnnotation(TreeStatistics.class);
+    }
+
+    public double getSiriusScoreNormalized() {
+        return getSiriusScoreNormalized(tree);
     }
 
     public double getSiriusScore() {
@@ -128,6 +133,10 @@ public class FTreeMetricsHelper {
 
 
     // static helper methods
+    public static double getSiriusScoreNormalized(FTree tree) {
+        return tree.getTreeWeightNormalized();
+    }
+
     public static double getSiriusScore(FTree tree) {
         return tree.getTreeWeight();
     }
@@ -167,10 +176,6 @@ public class FTreeMetricsHelper {
         return (int)tree.getFragmentsWithoutRoot().stream().filter(x->peakAno.get(x).isMeasured() && (lossAno==null || lossAno.get(x.getIncomingEdge(), LossType::regular)!=LossType.insource())).count();
     }
 
-
-
-
-
     public static Set<FormulaScore> getScoresFromTree(@NotNull final FTree tree) {
         final FTreeMetricsHelper helper = new FTreeMetricsHelper(tree);
         final Set<FormulaScore> scores = new HashSet<>(3);
@@ -184,7 +189,16 @@ public class FTreeMetricsHelper {
             e.printStackTrace();
         }
 
-
         return scores;
+    }
+
+    public static void computeNormalizedTreeScores(List<FTree> trees){
+        if (trees == null || trees.isEmpty()) return;
+
+        double treeWeightMax = trees.stream().mapToDouble(FTree::getTreeWeight).max().orElse(Double.POSITIVE_INFINITY);
+        double treeWeightExpSum = trees.stream().mapToDouble(FTree::getTreeWeight)
+                .map(weight -> Math.exp(weight - treeWeightMax)).sum();
+
+        trees.forEach(tree -> tree.setTreeWeightNormalized(Math.exp(tree.getTreeWeight() - treeWeightMax) / treeWeightExpSum));
     }
 }
