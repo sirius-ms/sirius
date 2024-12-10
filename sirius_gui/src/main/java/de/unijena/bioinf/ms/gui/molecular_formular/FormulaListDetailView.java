@@ -48,14 +48,14 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
     private SortedList<FormulaResultBean> sortedSource;
-    private final SiriusResultTableFormat tableFormat;
+    private final FormulaResultTableFormat tableFormat;
 
     private final LoadablePanel loadingWrapper;
     public FormulaListDetailView(final FormulaList source) {
         super(source);
         //todo dirty hack until search field bug is fixed
         getNorth().remove(searchField);
-        tableFormat = new SiriusResultTableFormat(source.getBestFunc());
+        tableFormat = new FormulaResultTableFormat(source.getBestFunc());
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
@@ -75,7 +75,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 //        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
         table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
 //        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
         table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
         table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));

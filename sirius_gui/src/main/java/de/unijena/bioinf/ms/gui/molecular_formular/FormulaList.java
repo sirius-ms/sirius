@@ -45,8 +45,8 @@ import java.util.function.Function;
  * @author Markus Fleischauer
  */
 public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
-    public final FormulaScoreListStats zodiacScoreStats = new FormulaScoreListStats();
-    public final FormulaScoreListStats siriusScoreStats = new FormulaScoreListStats();
+    public final DoubleListStats zodiacScoreStats = new DoubleListStats();
+    public final DoubleListStats siriusScoreStats = new DoubleListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
@@ -158,7 +158,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
                 for (FormulaResultBean fc : candidates) {
                     zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
-                    sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                    sscores[i] = fc.getSiriusScoreNormalized().orElse(Double.NEGATIVE_INFINITY);
                     iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
                     tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
                     i++;
@@ -203,9 +203,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     }
 
     protected Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> getRenderScoreFunc() {
-       return sre -> sre.getZodiacScore().map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
-                .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScore().
-                        map(s -> Math.exp(s - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d)
+        return sre -> sre.getZodiacScore()
+                .map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
+                .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScoreNormalized()
+                        .map(s -> s * 100d)
                         .orElse(Double.NaN), "SIRIUS"));
     }
     protected Function<FormulaResultBean, Boolean> getBestFunc() {
