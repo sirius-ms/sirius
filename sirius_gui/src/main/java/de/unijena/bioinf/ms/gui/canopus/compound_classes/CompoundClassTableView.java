@@ -27,6 +27,7 @@ import ca.odell.glazedlists.gui.AbstractTableComparatorChooser;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.table.ActionTable;
 import de.unijena.bioinf.ms.gui.table.BarTableCellRenderer;
@@ -95,7 +96,8 @@ public class CompoundClassTableView extends ActionListDetailView<CompoundClassBe
             super(textComponent, (baseList, element) -> {
                 baseList.add(element.getSourceClass().getName());
                 baseList.add(element.getChemontIdentifier());
-                if (element.getParent()!=null) baseList.add(element.getParent().getChemontIdentifier());
+                if (!Utils.isNullOrBlank(element.getParentName()))
+                    baseList.add(element.getParentName());
                 baseList.add(element.getSourceClass().getDescription());
             });
         }
