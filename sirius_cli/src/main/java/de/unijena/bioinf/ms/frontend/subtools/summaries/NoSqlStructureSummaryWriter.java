@@ -39,6 +39,7 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
             "ConfidenceScoreApproximate",
             "CSI:FingerIDScore",
             "ZodiacScore",
+            "SiriusScoreNormalized",
             "SiriusScore",
             "molecularFormula",
             "adduct",
@@ -78,6 +79,7 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
         row.add(searchResult.getConfidenceApprox());
         row.add(match.getCsiScore());
         row.add(fc.getZodiacScore());
+        row.add(fc.getSiriusScoreNormalized());
         row.add(fc.getSiriusScore());
         row.add(fc.getMolecularFormula().toString());
         row.add(fc.getAdduct().toString());
