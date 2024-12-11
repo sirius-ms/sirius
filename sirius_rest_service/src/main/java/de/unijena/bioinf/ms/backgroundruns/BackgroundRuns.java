@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.backgroundruns;
 import com.googlecode.concurentlocks.ReadWriteUpdateLock;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -33,7 +32,6 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.ms.properties.ConfigType;
@@ -54,6 +52,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -250,21 +249,32 @@ public final class BackgroundRuns {
         PCS.removePropertyChangeListener(listener);
     }
 
-    public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
-        return submitRunAndLockInstances(makeBackgroundRun(command, instances));
+    public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances,
+                                       @Nullable Consumer<BackgroundRunJob> jobDecorator) throws IOException {
+        BackgroundRunJob run = makeBackgroundRun(command, instances);
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
     }
 
-    public BackgroundRunJob runImportMsData(AbstractImportSubmission submission) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing"));
-    }
-
-    public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
+    public BackgroundRunJob runImportMsData(@NotNull AbstractImportSubmission<?> submission,
+                                            @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import"));
+        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing", JobEffect.IMPORT);
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
+    }
+
+    public BackgroundRunJob runImportPeakData(@NotNull AbstractImportSubmission<?> submission,
+                                              @Nullable Consumer<BackgroundRunJob> jobDecorator
+    ) {
+        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
+        BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import", JobEffect.IMPORT);
+        if (jobDecorator != null)
+            jobDecorator.accept(run);
+        return submitRunAndLockInstances(run);
     }
 
     public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target) {
@@ -285,7 +295,8 @@ public final class BackgroundRuns {
                 RUN_COUNTER.incrementAndGet(),
                 command.stream().collect(Collectors.joining(" ")),
                 pr.asCommandLineList().stream().map(CommandLine::getCommandName).collect(Collectors.joining(" > ")),
-                "Computation"
+                "Computation",
+                JobEffect.COMPUTATION
         );
     }
 
@@ -324,6 +335,9 @@ public final class BackgroundRuns {
         protected final String command;
 
         @Getter
+        protected final JobEffect jobEffect;
+
+        @Getter
         protected final String description;
         protected final String prefix;
 
@@ -351,7 +365,9 @@ public final class BackgroundRuns {
             return affectedCompoundIds;
         }
 
-        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command, @Nullable String description, String prefix) {
+        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances,
+                                 int runId, String command, @Nullable String description,
+                                 String prefix, JobEffect jobEffect) {
             super(JobType.SCHEDULER);
             this.runId = runId;
             this.command = command;
@@ -359,6 +375,7 @@ public final class BackgroundRuns {
             this.instances = instances;
             this.description = description;
             this.prefix = (prefix == null || prefix.isBlank()) ? "BackgroundJob" : prefix;
+            this.jobEffect = jobEffect;
             extractIds(instances);
         }
 
@@ -398,18 +415,8 @@ public final class BackgroundRuns {
 
                 logInfo("Start Computation...");
                 computation.run();
-                logInfo("Computation DONE!");
-                return true;
-            } finally {
-                logInfo("Flushing Results to disk in background...");
-                psm.flush();
-                logInfo("Results flushed!");
-            }
-        }
 
-        @Override
-        protected void cleanup() {
-            try {
+                logInfo("Computation DONE!");
                 if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
                     withWriteLock(() -> instances.forEach(i -> computingInstances.remove(i.getId())));
@@ -428,6 +435,18 @@ public final class BackgroundRuns {
                     affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
                     logInfo("Imported compounds collected...");
                 }
+
+                return true;
+            } finally {
+                logInfo("Flushing Results to disk in background...");
+                psm.flush();
+                logInfo("Results flushed!");
+            }
+        }
+
+        @Override
+        protected void cleanup() {
+            try {
                 logInfo("Freeing up memory...");
                 computation = null;
                 System.gc(); //hint for the gc to collect som trash after computations

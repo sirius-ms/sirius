@@ -27,7 +27,7 @@ import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  * @author Marcus Ludwig
  */
 @Slf4j
@@ -54,11 +54,11 @@ public class Colors {
     private final static Color CUSTOM_BLUE = Color.decode("#4da6bf");
     private final static Color CUSTOM_LIGHT_BLUE = Color.decode("#b3d9e5");
 
-    private final static Color CUSTOM_GREEN = Color.decode("#68da58");
-    private final static Color CUSTOM_YELLOW = Color.decode("#feff66");
-    private final static Color CUSTOM_PINK = Color.decode("#ef4384");
-
+    private final static Color CUSTOM_GREEN = Color.decode("#68da58"); // quality icon green
+    private final static Color CUSTOM_YELLOW = Color.decode("#feff66"); // quality icon yellow
     private final static Color CUSTOM_ORANGE = Color.decode("#ffc14c");
+    private final static Color CUSTOM_PINK = Color.decode("#f570a1"); // quality icon pink
+
 
 
 //------------------
@@ -118,8 +118,8 @@ public class Colors {
 
             public static class LCMSVIEW {
                 //for adduct/isotope view
-                public final static Color MAIN_FEATURE_COLOR = Color.decode("#000000");
-                public final static Color ADDUCT_FEATURE_COLOR = Color.decode("#666666");
+                public final static Color SELECTED_FEATURE_TRACE_COLOR = Color.decode("#000000");
+                public final static Color CORRELATED_FEATURE_TRACE_COLOR = Color.decode("#666666");
             }
 
             public static class StructuresView {
@@ -192,8 +192,8 @@ public class Colors {
 
             public static class LCMSVIEW {
                 //for adduct/isotope view
-                public final static Color MAIN_FEATURE_COLOR = FOREGROUND_DATA;
-                public final static Color ADDUCT_FEATURE_COLOR = Color.decode("#cccccc");
+                public final static Color SELECTED_FEATURE_TRACE_COLOR = FOREGROUND_DATA;
+                public final static Color CORRELATED_FEATURE_TRACE_COLOR = Color.decode("#cccccc");
             }
 
             public static class StructuresView {
@@ -224,10 +224,17 @@ public class Colors {
     public final static Color EXPANSIVE_SEARCH_WARNING_TEXT = Color.WHITE;
     public final static Color EXPANSIVE_SEARCH_WARNING = Menu.BUTTON_HIGHLIGHT_PINK;
 
-    public final static Color TEXT_WARN = CUSTOM_PINK; //CUSTOM_ORANGE; (orange not good in light theme)
-    public final static Color TEXT_ERROR = CUSTOM_PINK;
+
+    public final static Color GOOD = CUSTOM_GREEN;
+    public final static Color INFO = CUSTOM_LIGHT_BLUE;
+    public final static Color WARN = CUSTOM_YELLOW.brighter();
+    public final static Color ERROR = CUSTOM_PINK;
+
+    public final static Color TEXT_WARN = CUSTOM_BLUE; //CUSTOM_ORANGE; (orange not good in light theme)
+    public final static Color TEXT_ERROR = Menu.BUTTON_HIGHLIGHT_PINK;
+    public final static Color TEXT_GOOD = CUSTOM_GREEN;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
-    public final static Color TEXT_LINK_VISITED = CUSTOM_PINK;
+    public final static Color TEXT_LINK_VISITED = CUSTOM_LIGHT_BLUE;
     public final static Color TEXT_LINK_ACTIVE = GOOD_IS_GREEN_VIBRANT;
     public final static Color TEXT_LINK_HOVER = CUSTOM_LIGHT_BLUE;
 
@@ -393,8 +400,8 @@ public class Colors {
         };
 
         //for adduct/isotope view
-        public final static Color MAIN_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.MAIN_FEATURE_COLOR : Themes.Dark.LCMSVIEW.MAIN_FEATURE_COLOR);
-        public final static Color ADDUCT_FEATURE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.ADDUCT_FEATURE_COLOR : Themes.Dark.LCMSVIEW.ADDUCT_FEATURE_COLOR);
+        public final static Color SELECTED_FEATURE_TRACE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR : Themes.Dark.LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR);
+        public final static Color CORRELATED_FEATURE_TRACE_COLOR = (THEME == Theme.LIGHT ? Themes.Light.LCMSVIEW.CORRELATED_FEATURE_TRACE_COLOR : Themes.Dark.LCMSVIEW.CORRELATED_FEATURE_TRACE_COLOR);
 
         public final static String ISOTOPE_DASH_STYLE = "5,3"; //not a Color, but style
 

@@ -25,9 +25,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -50,15 +51,19 @@ import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
+import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.AnnotatedSpectrum;
+import io.sirius.ms.sdk.model.BasicSpectrum;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -78,13 +83,14 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrEmpty;
@@ -134,6 +140,10 @@ public class SpectraVisualizationPanel extends JPanel implements
 
     public WebViewSpectraViewer browser;
     final JToolBar toolBar;
+
+    private final JPanel browserPanel;
+    private final JScrollPane compoundDetailsScroll;
+    private final WebViewJPanel compoundDetails;
 
     private final boolean ms2MirrorEnabled;
     private SpectralSimilarity[] similarities;
@@ -197,7 +207,20 @@ public class SpectraVisualizationPanel extends JPanel implements
         Pair<JPanel, JLabel> error = GuiUtils.newEmptyResultsPanelWithLabel(null);
         this.errorLabel = error.right();
 
-        this.centerCardPanel.add("browser", this.browser);
+        this.compoundDetails = new WebViewJPanel();
+        this.compoundDetails.queueTaskInJFXThread(() -> compoundDetails.webView.setMaxWidth(300));
+        this.compoundDetails.setPreferredSize(new Dimension(300, 400));
+
+        this.compoundDetailsScroll = new JScrollPane(this.compoundDetails);
+        this.compoundDetailsScroll.setBorder(BorderFactory.createEmptyBorder());
+        this.compoundDetailsScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        this.compoundDetailsScroll.setVisible(false);
+
+        this.browserPanel = new JPanel(new BorderLayout());
+        this.browserPanel.add(browser);
+        this.browserPanel.add(compoundDetailsScroll, BorderLayout.EAST);
+
+        this.centerCardPanel.add("browser", this.browserPanel);
         this.centerCardPanel.add("error", error.left());
         showBrowser();
 
@@ -234,6 +257,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         try {
             showBrowser();
             browser.clear();
+            compoundDetails.load("");
             String mode = (String) modesBox.getSelectedItem();
             if (mode == null)
                 return;
@@ -251,9 +275,11 @@ public class SpectraVisualizationPanel extends JPanel implements
                     spectrum = msData.getMs1Spectra().getFirst();
 
                 if (spectrum != null) {
+                    spectrum = normalize(spectrum, Normalization.Max);
+
                     if (mode.equals(MS1_DISPLAY)) {
                         //match already extracted pattern to highlight peaks, remove patter from result
-                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
+                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? normalize(isotopePatternAnnotation.getIsotopePattern(), Normalization.Max) : null);
                         if (ob.getSpectra().size() > 1 && ob.getPeakMatches().size() > 1) {
                             ob.getSpectra().remove(1);
                             ob.getPeakMatches().remove(1);
@@ -261,7 +287,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                         jsonSpectra = ob;
                     } else if (mode.equals(MS1_MIRROR_DISPLAY)) {
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
-                            jsonSpectra = matchSpectra(spectrum, isotopePatternAnnotation.getSimulatedPattern());
+                            jsonSpectra = matchSpectra(spectrum, normalize(isotopePatternAnnotation.getSimulatedPattern(), Normalization.Max));
                         } else {
                             showError("No isotope pattern available!");
                             LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Cannot show mirror plot!");
@@ -308,6 +334,10 @@ public class SpectraVisualizationPanel extends JPanel implements
                 return;
             }
 
+            Jobs.runEDTLater(() -> {
+                this.compoundDetailsScroll.setVisible(mode.equals(MS2_MIRROR_DISPLAY) && selectedMatchBean != null);
+                this.browserPanel.revalidate();
+            });
             if (jsonSpectra != null) {
                 String svg = null;
                 String diff = null;
@@ -317,14 +347,34 @@ public class SpectraVisualizationPanel extends JPanel implements
                 }
                 if (mode.equals(MS1_MIRROR_DISPLAY))
                     diff = "difference";
-                if (mode.equals(MS2_MIRROR_DISPLAY))
+                if (mode.equals(MS2_MIRROR_DISPLAY)) {
                     diff = "normal";
+                    if (selectedMatchBean != null) {
+                        this.compoundDetails.load(makeMolDescription(selectedMatchBean));
+                    }
+                }
                 browser.loadData(jsonSpectra, svg, diff, showMzTopK);
             }
         } catch (JsonProcessingException e) {
             showError("Error when creating data json!");
             LoggerFactory.getLogger(getClass()).error("Error when creating data Json!", e);
         }
+    }
+
+    // TODO remove after API has normalization parameter
+    private BasicSpectrum normalize(BasicSpectrum spectrum, Normalization normalization) {
+        SimpleMutableSpectrum mutable = new SimpleMutableSpectrum(spectrum.getPeaks().size());
+        spectrum.getPeaks().stream()
+                .filter(peak -> peak.getMz() != null && peak.getIntensity() != null)
+                .forEach(peak -> mutable.addPeak(peak.getMz(), peak.getIntensity()));
+        spectrum.setAbsIntensityFactor(Spectrums.normalize(mutable, Normalization.Max));
+        spectrum.setPeaks(IntStream.range(0, mutable.size()).mapToObj(i -> {
+            SimplePeak peak = new SimplePeak();
+            peak.setMz(mutable.getMzAt(i));
+            peak.setIntensity(mutable.getIntensityAt(i));
+            return peak;
+        }).toList());
+        return spectrum;
     }
 
     private SpectraViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum, @Nullable BasicSpectrum pattern) {
@@ -341,7 +391,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         SpectraViewContainer.PeakMatch[] peakMatchesSpectrum = new SpectraViewContainer.PeakMatch[spectrum.getPeaks().size()];
         SpectraViewContainer.PeakMatch[] peakMatchesPattern = new SpectraViewContainer.PeakMatch[pattern.getPeaks().size()];
 
-        WrapperSpectrum<io.sirius.ms.sdk.model.SimplePeak> pat = WrapperSpectrum.
+        WrapperSpectrum<SimplePeak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
 
         int i = 0;
@@ -373,6 +423,69 @@ public class SpectraVisualizationPanel extends JPanel implements
             LoggerFactory.getLogger(SpectraVisualizationPanel.class).error("Error when creating Structure SVG from smiles!", e);
             return null;
         }
+    }
+
+    @SneakyThrows
+    private static String makeMolDescription(SpectralMatchBean bean) {
+        SpectralLibraryMatch match = bean.getMatch();
+        MolDescBuilder builder = new MolDescBuilder("<html><body><div><h3>Compound</h3><p>")
+                .descLine("Formula", match.getMolecularFormula(), "<br>")
+                .descLine("SMILES", match.getSmiles(), "<br>")
+                .descLine("InChI key", match.getCandidateInChiKey(), "<br>");
+
+        try {
+            builder.descLine("InChI", InChISMILESUtils.getInchiFromSmiles(match.getSmiles(), true).in2D, "");
+        } catch (Exception ignored) {}
+
+        builder.descLine("</p><h3>Spectrum</h3><p>");
+
+        if (match.getReferenceSpectrum() != null) {
+            builder.descLine("Name", match.getReferenceSpectrum().getName(), "<br>")
+                    .descLine("Instrument", match.getReferenceSpectrum().getInstrument(), "<br>")
+                    .descLine("MS level", match.getReferenceSpectrum().getMsLevel(), "<br>")
+                    .descLine("Precursor m/z", match.getReferenceSpectrum().getPrecursorMz(), "<br>")
+                    .descLine("Collision energy", match.getReferenceSpectrum().getCollisionEnergy(), "<br>");
+        }
+
+        builder.descLine("Ionization", match.getAdduct(), "<br>")
+                .descLine("SPLASH", match.getSplash(), "</p>");
+
+        if (match.getDbName() != null && !match.getDbName().isBlank() && match.getDbId() != null && !match.getDbId().isBlank()) {
+            builder.descLine("<h3>Database</h3><p>")
+                    .descLine("Database", match.getDbName(), "<br>")
+                    .descLine("ID", match.getDbId(), "</p>");
+        }
+
+        return builder.toString();
+    }
+
+    private static class MolDescBuilder {
+
+        private final StringBuilder builder;
+
+        public MolDescBuilder(String line) {
+            builder = new StringBuilder(line);
+        }
+
+        public MolDescBuilder descLine(String key, Object value, String end) {
+            if (value != null) {
+                String val = value.toString();
+                if (!val.isBlank()) {
+                    builder.append(key).append(": ").append(val).append(end);
+                }
+            }
+            return this;
+        }
+
+        public MolDescBuilder descLine(String line) {
+            builder.append(line);
+            return this;
+        }
+
+        public String toString() {
+            return builder.toString();
+        }
+
     }
 
     private volatile JJob<Void> backgroundLoader = null;
@@ -424,6 +537,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                                     clearData();
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                     browser.clear();
+                                    compoundDetails.load("");
                                     center.disableLoading();
                                     return null;
                                 }
@@ -532,6 +646,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                                         clearData();
                                         Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                         browser.clear();
+                                        compoundDetails.load("");
                                     }
                                 }
                                 center.disableLoading();

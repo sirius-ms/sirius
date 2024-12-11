@@ -87,9 +87,13 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
         double precursorMz = exp.getIonMass();
+        boolean isPositive = exp.getPrecursorIonType().isPositive();
 
         final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
-                .lookupSpectra(precursorMz, precursorDev, true, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs), this::checkForInterruption);
+                .lookupSpectraStr(precursorMz, precursorDev, true, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs)
+                        .filter(s -> s.getPrecursorIonType().isPositive() == isPositive) //todo we might want to filter this by an indexed database field in the future but this need db schema conversion to be written first.
+                        .toList()
+                , this::checkForInterruption);
         SpectraMatchingJJob job = new SpectraMatchingJJob(references, exp);
         job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
         SpectralSearchResult result = submitJob(job).awaitResult();

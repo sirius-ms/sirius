@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.gui.mainframe;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.AbstractGuiAction;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
 import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
@@ -31,19 +33,14 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import io.sirius.ms.sdk.model.ProjectInfo;
-import io.sirius.ms.sdk.model.ProjectInfoOptField;
-import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -55,14 +52,12 @@ import java.io.File;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 public class MainFrame extends JFrame implements DropTargetListener {
-
     public static final CookieManager cookieGuard = new CookieManager();
 
     static {
@@ -76,8 +71,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Getter
     private FilterableCompoundListPanel filterableCompoundListPanel;
+    private LandingPage landingPage;
 
-    public void ensureCompoundIsVisible(int index){
+    public void ensureCompoundIsVisible(int index) {
         compoundListView.ensureIndexIsVisible(index);
     }
 
@@ -92,15 +88,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compoundList.getCompoundListSelectionModel();
     }
-
-
-    // right side panel
-    private FormulaList formulaList;
-    private StructureList databaseStructureList;
-    private StructureList combinedStructureListSubstructureView;
-    private StructureList combinedStructureListDeNovoView;
-    private SpectralMatchList spectralMatchList;
-
 
     @Getter
     private ResultPanel resultsPanel;
@@ -130,6 +117,19 @@ public class MainFrame extends JFrame implements DropTargetListener {
         this.gui = gui;
     }
 
+    @Override
+    public void dispose() {
+        super.dispose();
+        if (landingPage != null)
+            landingPage.unregisterListeners();
+        if (globalActions != null)
+            for (Object key : globalActions.allKeys()) {
+                Action action = globalActions.get(key);
+                if (action instanceof AbstractGuiAction guiAction)
+                    guiAction.destroy();
+            }
+    }
+
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
         if (Taskbar.isTaskbarSupported()) {
@@ -145,29 +145,34 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
     public void decoradeMainFrame() {
-        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
+        Jobs.runEDTLater(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
-        // create models for views
+        // Global feature list.
         compoundList = new CompoundList(gui);
-        formulaList = new FormulaList(compoundList);
-        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
-        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        spectralMatchList = new SpectralMatchList(compoundList);
 
-
-        //CREATE VIEWS
+        //CREATE RESULT VIEWS
         // results Panel
-        ProjectInfo projectInfo = getGui().applySiriusClient((c,pid) ->
-                c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE)));
-
-        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
-        resultsPanel.showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(projectInfo.getType()));
+        resultsPanel = new ResultPanel(compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
-        if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
+        if (SiriusProperties.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
             resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
+
+        SiriusCardLayout layout = new SiriusCardLayout();
+        JPanel landingPanelSwitcher = new JPanel(layout);
+        landingPage = new LandingPage(gui, ApplicationCore.WEB_API.getAuthService());
+
+        landingPanelSwitcher.add("landing", landingPage);
+        landingPanelSwitcher.add("results", resultPanelContainer);
+
+        compoundList.getSortedSource().addListEventListener(listEvent -> {
+            if (listEvent.getSourceList().isEmpty())
+                layout.show(landingPanelSwitcher, "landing");
+            else
+                layout.show(landingPanelSwitcher, "results");
+        });
+        layout.show(landingPanelSwitcher, compoundList.getFullSize() < 1 ? "landing" : "results");
 
         // toolbar
         toolbar = new SiriusToolbar(gui);
@@ -186,21 +191,22 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         //BUILD the MainFrame (GUI)
         mainPanel.setLeftComponent(filterableCompoundListPanel);
-        mainPanel.setRightComponent(resultPanelContainer);
+        mainPanel.setRightComponent(landingPanelSwitcher);
         add(toolbar, BorderLayout.NORTH);
 
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
+        // set MainFrames initial size
+        Rectangle usableScreenBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        setSize(new Dimension(
+                Math.min(usableScreenBounds.width, filterableCompoundListPanel.getPreferredSize().width + landingPage.getPreferredSize().width),
+                Math.min(usableScreenBounds.height, toolbar.getPreferredSize().height + 5 + landingPage.getPreferredSize().height)
+        ));
+
         setLocationRelativeTo(null); //init mainframe
         setVisible(true);
         toFront();
     }
 
-
-    //////////////////////////////////////////////////
-    ////////////////// drag and drop /////////////////
-    //////////////////////////////////////////////////
-
+    // region dragndrop
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
         // TODO Auto-generated method stub
@@ -238,7 +244,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
         List<Path> projectFiles = inputF.msInput.unknownFiles.keySet().stream().filter(p -> p.toString().endsWith(SIRIUS_PROJECT_SUFFIX)).toList();
         inputF.msInput.unknownFiles.clear();
-        if (!projectFiles.isEmpty()){
+        if (!projectFiles.isEmpty()) {
             Boolean replaceCurrent = projectFiles.size() == 1 ? null : false;
             ProjectOpenAction opener = (ProjectOpenAction) SiriusActions.LOAD_WS.getInstance(gui);
             projectFiles.forEach(f -> opener.openProject(f, replaceCurrent));
@@ -258,4 +264,5 @@ public class MainFrame extends JFrame implements DropTargetListener {
                     .collect(Collectors.joining(", ")));
         }
     }
+    //endregion
 }

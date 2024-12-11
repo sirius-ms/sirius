@@ -39,13 +39,48 @@ import java.io.IOException;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class Icons {
-    //loaders
-    public static final ImageIcon FP_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/fp-binary-sirius.gif"));
+    //landing page + external
+    public static final FlatSVGIcon SIRIUS_WELCOME_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/sirius-welcome-bg.svg"));
+    public static final FlatSVGIcon SIRIUS_WELCOME_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/sirius-welcome-white.svg"));
+    public static final FlatSVGIcon SIRIUS_WELCOME = new FlatSVGIcon(Colors.isLightTheme() ? SIRIUS_WELCOME_DARK : SIRIUS_WELCOME_LIGHT);
 
+    public static final FlatSVGIcon DOWNLOAD_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/download-dark.svg"));
+    public static final FlatSVGIcon DOWNLOAD_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/download-white.svg"));
+    public static FlatSVGIcon DOWNLOAD = Colors.isLightTheme() ? DOWNLOAD_DARK : DOWNLOAD_LIGHT;
+
+    public static final FlatSVGIcon BUG2_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/bug2-dark.svg"));
+    public static final FlatSVGIcon BUG2_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/bug2-white.svg"));
+    public static FlatSVGIcon BUG2 = Colors.isLightTheme() ? BUG2_DARK : BUG2_LIGHT;
+
+    public static final FlatSVGIcon ROCKET_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/rocket-dark.svg"));
+    public static final FlatSVGIcon ROCKET_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/rocket-white.svg"));
+    public static FlatSVGIcon ROCKET = Colors.isLightTheme() ? ROCKET_DARK : ROCKET_LIGHT;
+
+    public static final FlatSVGIcon DOCU_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/docu-dark.svg"));
+    public static final FlatSVGIcon DOCU_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/docu-white.svg"));
+    public static FlatSVGIcon DOCU = Colors.isLightTheme() ? DOCU_DARK : DOCU_LIGHT;
+
+    public static final FlatSVGIcon MATRIX_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/matrix-dark.svg"));
+    public static final FlatSVGIcon MATRIX_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/matrix-white.svg"));
+    public static FlatSVGIcon MATRIX = Colors.isLightTheme() ? MATRIX_DARK : MATRIX_LIGHT;
+
+    public static final FlatSVGIcon GITHUB_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/github-dark.svg"));
+    public static final FlatSVGIcon GITHUB_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/github-white.svg"));
+    public static FlatSVGIcon GITHUB = Colors.isLightTheme() ? GITHUB_DARK : GITHUB_LIGHT;
+
+    public static final FlatSVGIcon YT_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/yt-dark.svg"));
+    public static final FlatSVGIcon YT_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/landing-page/yt-white.svg"));
+    public static FlatSVGIcon YT = Colors.isLightTheme() ? YT_DARK : YT_LIGHT;
+
+    //loaders
     public static final ImageIcon FB_LOADER_RUN_32 = new ImageIcon(MainFrame.class.getResource("/icons/fb_loader@0.5x.gif"));
-    public static final ImageIcon FB_LOADER_STOP_32 = new ImageIcon(MainFrame.class.getResource("/icons/fb_loader@0.5x.png"));
+    public static final FlatSVGIcon FB_LOADER_STOP_64 = new FlatSVGIcon(MainFrame.class.getResource("/icons/fb_loader.svg"));
 
     //ICONS
+    public static final FlatSVGIcon SIRIUS_WORDMARK_DARK = new FlatSVGIcon(MainFrame.class.getResource("/icons/sirius-wordmark-bg.svg"));
+    public static final FlatSVGIcon SIRIUS_WORDMARK_LIGHT = new FlatSVGIcon(MainFrame.class.getResource("/icons/sirius-wordmark-white.svg"));
+    public static final FlatSVGIcon SIRIUS_WORDMARK = new FlatSVGIcon(Colors.isLightTheme() ? SIRIUS_WORDMARK_DARK : SIRIUS_WORDMARK_LIGHT);
+
     public static final FlatSVGIcon NO = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-no.svg"));
     public static final FlatSVGIcon YES = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-yes.svg"));
 
@@ -77,6 +112,7 @@ public abstract class Icons {
     public static final FlatSVGIcon BUG = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-bug.svg"));
     public static final FlatSVGIcon KEY = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-key.svg"));
     public static final FlatSVGIcon USER = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-user.svg"));
+    public static final FlatSVGIcon USER_NOT_LOGGED_IN = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-user-no-login.svg"));
     public static final FlatSVGIcon USER_GREEN = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-user_green.svg"));
     public static final FlatSVGIcon HELP = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-question_blue.svg"));
     public static final FlatSVGIcon INFO = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-information.svg"));

@@ -17,11 +17,10 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.spectral_matching;
 
 
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
@@ -106,5 +107,14 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         JTextField textField = new JTextField(value, columns);
         parameterBindings.put(parameterKey, textField::getText);
         return textField;
+    }
+
+    /**
+     * Changes widget values to the values from the provided preset
+     * @param preset config map with values for all parameters
+     * @throws UnsupportedOperationException if the parameter values are not compatible with the UI or if this panel does not support setting values from a preset
+     */
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        throw new UnsupportedOperationException("Setting values from preset is not supported for this panel.");
     }
 }

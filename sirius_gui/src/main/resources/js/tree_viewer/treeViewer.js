@@ -384,7 +384,7 @@ function formatAnnot(id, value) {
         case 'ion':
             return value;
         case 'mz':
-            return parseFloat(value).toFixed(4) + ' Da';
+            return parseFloat(value).toFixed(4) + ' m/z';
         case 'massDeviation':
             // example: '-5.479016320565768 ppm (-0.0035791853184719002 m/z)'
             var number = parseFloat(value.split(' ')[0]);

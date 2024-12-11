@@ -200,6 +200,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
+*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | Get all (non-default) job configuration names
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
@@ -299,6 +300,7 @@ Class | Method | HTTP request | Description
  - [ConsensusCriterionCSI](docs/ConsensusCriterionCSI.md)
  - [ConsensusCriterionDeNovo](docs/ConsensusCriterionDeNovo.md)
  - [DBLink](docs/DBLink.md)
+ - [DataImportEvent](docs/DataImportEvent.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
