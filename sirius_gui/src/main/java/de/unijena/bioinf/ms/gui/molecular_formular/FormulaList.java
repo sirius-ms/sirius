@@ -30,12 +30,12 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
+import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
+import lombok.Getter;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -45,6 +45,11 @@ import java.util.function.Function;
  * @author Markus Fleischauer
  */
 public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
+    // this is to be backward compatible with SIRIUS < 6.1 projects where no normalized scores is available.
+    // In that case we use the old, less precise score normalization in the frontend.
+    @Deprecated
+    private final Object2DoubleMap<String> idToOldNormalizedScore = new Object2DoubleOpenHashMap<>();
+
     public final DoubleListStats zodiacScoreStats = new DoubleListStats();
     public final DoubleListStats siriusScoreStats = new DoubleListStats();
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
@@ -114,7 +119,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     //refreshing selection
                     if (!elementList.isEmpty()) {
                         final AtomicInteger index = new AtomicInteger(0);
-                        final Function<FormulaResultBean, Boolean> f = getBestFunc();
+                        final Function<FormulaResultBean, Boolean> f = getBestHitFunction();
                         for (FormulaResultBean resultBean : elementList) {
                             if (f.apply(resultBean))
                                 break;
@@ -145,7 +150,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     private void intiResultList(List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
         Jobs.runEDTAndWait(() -> {
-            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners); // todo can this be called outside ui thread
+            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
+            idToOldNormalizedScore.clear();
             if (candidates != null && !candidates.isEmpty()) { //refill case
                 elementListSelectionModel.clearSelection();
 
@@ -158,11 +164,15 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
                 for (FormulaResultBean fc : candidates) {
                     zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
-                    sscores[i] = fc.getSiriusScoreNormalized().orElse(Double.NEGATIVE_INFINITY);
+                    sscores[i] = fc.getSiriusScoreNormalized().orElse(0d);
                     iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
                     tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
                     i++;
                 }
+
+                if (Arrays.stream(sscores).allMatch(score -> Double.compare(score, 0d) == 0))
+                    computeOldNormalizedScoresAsFallback(candidates, sscores);
+
                 refillElements(candidates);
 
                 this.zodiacScoreStats.update(zscores);
@@ -192,6 +202,24 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         });
     }
 
+    @Deprecated
+    private void computeOldNormalizedScoresAsFallback(List<FormulaResultBean> formulaCandidates, double[] sscores) {
+        System.out.println("Missing Normalized SiriusScores detected. Computing them in GUI. This is likely caused by old project spaces.");
+        double maxSiriusScore = formulaCandidates.stream().flatMap(sb -> sb.getSiriusScore().stream())
+                .mapToDouble(Double::doubleValue).max().orElse(Double.POSITIVE_INFINITY);
+        double sumSiriusScoreExp = formulaCandidates.stream()
+                .flatMap(sb -> sb.getSiriusScore().stream())
+                .mapToDouble(Double::doubleValue)
+                .map(score -> Math.exp(score - maxSiriusScore)).sum();
+
+        int i = 0;
+        for (FormulaResultBean formulaCandidate : formulaCandidates){
+            sscores[i] = Math.exp(formulaCandidate.getSiriusScore().get() - maxSiriusScore) / sumSiriusScoreExp;
+            idToOldNormalizedScore.put(formulaCandidate.getFormulaId(), sscores[i]);
+            i++;
+        }
+    }
+
     public List<FormulaResultBean> getSelectedValues() {
         List<FormulaResultBean> selected = new ArrayList<>();
         for (int i = elementListSelectionModel.getMinSelectionIndex(); i <= elementListSelectionModel.getMaxSelectionIndex(); i++) {
@@ -202,20 +230,25 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         return selected;
     }
 
-    protected Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> getRenderScoreFunc() {
-        return sre -> sre.getZodiacScore()
-                .map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
-                .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScoreNormalized()
-                        .map(s -> s * 100d)
-                        .orElse(Double.NaN), "SIRIUS"));
-    }
-    protected Function<FormulaResultBean, Boolean> getBestFunc() {
-        //top annotation corresponds to the best hit selected by sirius. so just check ID
-        return sre -> Optional.ofNullable(sre)
-                .map(FormulaResultBean::getParentInstance)
-                .filter(ib -> ib.getStructureAnnotation().isPresent())
-                .flatMap(InstanceBean::getFormulaAnnotation)
-                .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
-                .orElse(false);
-    }
+    @Deprecated
+    @Getter
+    private final Function<FormulaResultBean, Double> fallBackNormalizedSiriusScoreFunction =
+            sre -> idToOldNormalizedScore.getOrDefault(sre.getFormulaId(), Double.NaN);
+
+    @Getter
+    private final Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> renderScoreFunction =
+            sre -> sre.getZodiacScore()
+                    .map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
+                    .orElseGet(() -> new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScoreNormalized()
+                            .map(s -> s * 100d)
+                            .orElseGet(() -> fallBackNormalizedSiriusScoreFunction.apply(sre)), "SIRIUS"));
+
+    @Getter
+    private final Function<FormulaResultBean, Boolean> bestHitFunction =
+            sre -> Optional.ofNullable(sre)
+                    .map(FormulaResultBean::getParentInstance)
+                    .filter(ib -> ib.getStructureAnnotation().isPresent())
+                    .flatMap(InstanceBean::getFormulaAnnotation)
+                    .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
+                    .orElse(false);
 }

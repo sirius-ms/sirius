@@ -27,13 +27,16 @@ import de.unijena.bioinf.projectspace.FormulaResultBean;
 import java.util.function.Function;
 
 /**
- * Display issues in a tabular form.
+ * Display FomulaResultBean in a tabular form.
  *
  * @author Markus Fleischauer
  */
 public class FormulaResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    protected FormulaResultTableFormat(Function<FormulaResultBean, Boolean> isBest) {
+    private final Function<FormulaResultBean, Double> fallBackNormalizedSiriusScoreFunction;
+
+    protected FormulaResultTableFormat(Function<FormulaResultBean, Boolean> isBest, Function<FormulaResultBean, Double> fallBackNormalizedSiriusScoreFunction) {
         super(isBest);
+        this.fallBackNormalizedSiriusScoreFunction = fallBackNormalizedSiriusScoreFunction;
     }
 
     @Override
@@ -48,7 +51,6 @@ public class FormulaResultTableFormat extends SiriusTableFormat<FormulaResultBea
 
     protected static String[] columns = new String[]{
             "Rank",
-//            "Precursor Formula",
             "Molecular Formula",
             "Adduct",
             "Zodiac Score",
@@ -72,11 +74,10 @@ public class FormulaResultTableFormat extends SiriusTableFormat<FormulaResultBea
     public Object getColumnValue(FormulaResultBean result, int column) {
         int col = 0;
         if (column == col++) return result.getRank().orElse(null);
-//        else if (column == col++) result.getPrecursorFormula();
         else if (column == col++) return result.getMolecularFormula();
         else if (column == col++) return result.getAdduct();
         else if (column == col++) return result.getZodiacScore().orElse(Double.NaN);
-        else if (column == col++) return result.getSiriusScoreNormalized().orElse(Double.NaN);
+        else if (column == col++) return result.getSiriusScoreNormalized().orElseGet(() -> fallBackNormalizedSiriusScoreFunction.apply(result));
         else if (column == col++) return result.getIsotopeScore().orElse(Double.NaN);
         else if (column == col++) return result.getTreeScore().orElse(Double.NaN);
         else if (column == col++) return result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
