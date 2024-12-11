@@ -42,13 +42,6 @@ public class FTree extends AbstractFragmentationGraph implements ResultAnnotatio
     protected double treeWeight;
 
     /**
-     * Normalized version of the treeWeight
-     */
-    @Setter
-    @Getter
-    protected double treeWeightNormalized;
-
-    /**
      * Due to a very bad design decision, we cannot assign scores to fragments. Thus, we have to store
      * the score of the root separately.
      */

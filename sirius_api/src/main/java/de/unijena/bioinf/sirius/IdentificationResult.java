@@ -29,6 +29,10 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 
 //this is basically just a scored tree
 public final class IdentificationResult extends SScored<FTree, FormulaScore> implements Cloneable {
+    /*
+    normalized SIRIUS score. This is stored in the IdentificationResult after tree computations to assign it to the FormulaCandidate
+     */
+    private double normalizedScore = Double.NaN;
 
     public IdentificationResult(IdentificationResult ir) {
         this(ir.getCandidate(), ir.getScoreObject());
@@ -36,6 +40,14 @@ public final class IdentificationResult extends SScored<FTree, FormulaScore> imp
 
     public IdentificationResult(FTree tree, FormulaScore score) {
         super(tree, score);
+    }
+
+    void setNormalizedScore(double normalizedScore) {
+        this.normalizedScore = normalizedScore;
+    }
+
+    public double getNormalizedScore() {
+        return normalizedScore;
     }
 
     public MolecularFormula getMolecularFormula() {

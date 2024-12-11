@@ -50,6 +50,7 @@ import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -467,18 +468,19 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public void saveSiriusResult(List<FTree> treesSortedByScore) {
+    public void saveSiriusResult(List<IdentificationResult> idResultsSortedByScore) {
         try {
             final AtomicInteger rank = new AtomicInteger(1);
-            final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream()
-                    .map(tree -> {
+            final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = idResultsSortedByScore.stream()
+                    .map(r -> {
+                        FTree tree = r.getTree();
                         PrecursorIonType adduct = tree.getAnnotationOrThrow(PrecursorIonType.class);
                         FTreeMetricsHelper scores = new FTreeMetricsHelper(tree);
                         FormulaCandidate fc = FormulaCandidate.builder()
                                 .alignedFeatureId(id)
                                 .adduct(adduct)
                                 .molecularFormula(tree.getRoot().getFormula())
-                                .siriusScoreNormalized(scores.getSiriusScoreNormalized())
+                                .siriusScoreNormalized(r.getNormalizedScore())
                                 .siriusScore(scores.getSiriusScore())
                                 .isotopeScore(scores.getIsotopeMs1Score())
                                 .treeScore(scores.getTreeScore())

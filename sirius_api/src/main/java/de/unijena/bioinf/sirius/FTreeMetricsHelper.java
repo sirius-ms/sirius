@@ -56,10 +56,6 @@ public class FTreeMetricsHelper {
         return tree.getAnnotation(TreeStatistics.class);
     }
 
-    public double getSiriusScoreNormalized() {
-        return getSiriusScoreNormalized(tree);
-    }
-
     public double getSiriusScore() {
         return getSiriusScore(tree);
     }
@@ -133,9 +129,6 @@ public class FTreeMetricsHelper {
 
 
     // static helper methods
-    public static double getSiriusScoreNormalized(FTree tree) {
-        return tree.getTreeWeightNormalized();
-    }
 
     public static double getSiriusScore(FTree tree) {
         return tree.getTreeWeight();
@@ -192,13 +185,14 @@ public class FTreeMetricsHelper {
         return scores;
     }
 
-    public static void computeNormalizedTreeScores(List<FTree> trees){
-        if (trees == null || trees.isEmpty()) return;
+    public static void computeNormalizedSiriusScores(List<IdentificationResult> idResults, double maxTreeWeight, double remainingCandidatesTreeWeightExpSumEstimate) {
+        if (idResults == null || idResults.isEmpty()) return;
 
-        double treeWeightMax = trees.stream().mapToDouble(FTree::getTreeWeight).max().orElse(Double.POSITIVE_INFINITY);
-        double treeWeightExpSum = trees.stream().mapToDouble(FTree::getTreeWeight)
-                .map(weight -> Math.exp(weight - treeWeightMax)).sum();
+        assert maxTreeWeight == idResults.stream().mapToDouble(r -> r.getTree().getTreeWeight()).max().orElse(0);
 
-        trees.forEach(tree -> tree.setTreeWeightNormalized(Math.exp(tree.getTreeWeight() - treeWeightMax) / treeWeightExpSum));
+        double resultsTreeWeightExpSumEstimate = idResults.stream().mapToDouble(r ->Math.exp(r.getTree().getTreeWeight() - maxTreeWeight)).sum();
+
+        final double normalizationFactor = resultsTreeWeightExpSumEstimate + remainingCandidatesTreeWeightExpSumEstimate;
+        idResults.forEach(r -> r.setNormalizedScore(Math.exp(r.getTree().getTreeWeight() - maxTreeWeight) / normalizationFactor));
     }
 }
