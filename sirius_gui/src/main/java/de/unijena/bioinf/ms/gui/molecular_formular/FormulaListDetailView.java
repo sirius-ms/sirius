@@ -71,10 +71,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         selectionConnection = new ConnectedSelection<>(source.getElementListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
-        //todo re-enable threshold marker
-//        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, AbstractBarTableCellRenderer.PercentageMode.MULTIPLY_PROBABILITIES));
-//        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
+        table.getColumnModel().getColumn(3).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tableFormat.highlightColumnIndex()));
         table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.siriusScoreStats, AbstractBarTableCellRenderer.PercentageMode.MULTIPLY_PROBABILITIES));
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
         table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
