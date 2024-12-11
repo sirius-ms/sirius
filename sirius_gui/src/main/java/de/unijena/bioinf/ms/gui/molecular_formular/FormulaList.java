@@ -242,7 +242,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     .map(s -> new FormulaListTextCellRenderer.RenderScore(s * 100d, "Zodiac"))
                     .orElseGet(() -> new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScoreNormalized()
                             .map(s -> s * 100d)
-                            .orElseGet(() -> fallBackNormalizedSiriusScoreFunction.apply(sre)), "SIRIUS"));
+                            .orElseGet(() -> fallBackNormalizedSiriusScoreFunction.apply(sre) * 100d), "SIRIUS"));
 
     @Getter
     private final Function<FormulaResultBean, Boolean> bestHitFunction =
