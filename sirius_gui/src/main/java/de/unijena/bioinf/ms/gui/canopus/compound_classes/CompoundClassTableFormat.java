@@ -20,10 +20,9 @@
 package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import ca.odell.glazedlists.gui.TableFormat;
-import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import io.sirius.ms.sdk.model.CompoundClass;
 
-import java.util.Optional;
+import java.util.Objects;
 
 public class CompoundClassTableFormat implements TableFormat<CompoundClassBean> {
     protected static String[] columns = new String[]{
@@ -32,6 +31,7 @@ public class CompoundClassTableFormat implements TableFormat<CompoundClassBean> 
             "Posterior Probability",
             "Description",
             "ID",
+            "Level",
             "Parent"
     };
 
@@ -53,9 +53,10 @@ public class CompoundClassTableFormat implements TableFormat<CompoundClassBean> 
         if (column == col++) return cc.getName();
         if (column == col++) return cc.getProbability();
         if (column == col++) return cc.getDescription();
-        if (column == col++) return Optional.ofNullable(compoundClass.getChemontIdentifier()).orElse("N/A");
-        final ClassyfireProperty parent = compoundClass.getParent();
-        if (column == col++) return parent!=null ? parent.getName() : "";
+        if (column == col++) return Objects.requireNonNullElse(compoundClass.getChemontIdentifier(), "N/A");
+        if (column == col++) return compoundClass.getLevel();
+        if (column == col++) return cc.getParentName();
+
         return null;
     }
 }
