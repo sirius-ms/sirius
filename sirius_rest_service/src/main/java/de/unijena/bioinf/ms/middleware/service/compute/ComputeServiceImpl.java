@@ -273,7 +273,7 @@ public class ComputeServiceImpl implements ComputeService {
     @Override
     public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target, @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChange(left, right, aggregation, quantification, target);
-        registerServerEventListener(run, project.getProjectId());
+        registerServerJobEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);
     }
 
