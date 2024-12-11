@@ -179,7 +179,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         if (results.length > 0) {
             final UnconsideredCandidatesUpperBound it = new UnconsideredCandidatesUpperBound(
                     pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() - results.length,
-                    results[results.length - 1].score);
+                    results[results.length - 1].tree.getTreeWeight());
             for (ExactResult result : results) result.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, it);
         }
 
