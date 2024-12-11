@@ -206,7 +206,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
     @Deprecated
     private void computeOldNormalizedScoresAsFallback(List<FormulaResultBean> formulaCandidates, double[] sscores) {
-        System.out.println("Missing Normalized SiriusScores detected. Computing them in GUI. This is likely caused by old project spaces.");
         double maxSiriusScore = formulaCandidates.stream().flatMap(sb -> sb.getSiriusScore().stream())
                 .mapToDouble(Double::doubleValue).max().orElse(Double.POSITIVE_INFINITY);
         double sumSiriusScoreExp = formulaCandidates.stream()
