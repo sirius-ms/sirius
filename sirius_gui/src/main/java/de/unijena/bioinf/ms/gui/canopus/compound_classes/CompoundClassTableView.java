@@ -62,7 +62,7 @@ public class CompoundClassTableView extends ActionListDetailView<CompoundClassBe
         // set small width for index column
         actionTable.getColumnModel().getColumn(0).setMaxWidth(50);
         // display color bar for posterior probability
-        actionTable.getColumnModel().getColumn(2).setCellRenderer(new BarTableCellRenderer(-1, 0, 1, true));
+        actionTable.getColumnModel().getColumn(2).setCellRenderer(BarTableCellRenderer.newProbabilityBar(-1));
         // display color bar for f1 score
 //        actionTable.getColumnModel().getColumn(7).setCellRenderer(new BarTableCellRenderer(-1,0,1,false));
     }

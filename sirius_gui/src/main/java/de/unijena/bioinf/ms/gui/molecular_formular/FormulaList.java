@@ -50,12 +50,12 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     @Deprecated
     private final Object2DoubleMap<String> idToOldNormalizedScore = new Object2DoubleOpenHashMap<>();
 
-    public final DoubleListStats zodiacScoreStats = new DoubleListStats();
-    public final DoubleListStats siriusScoreStats = new DoubleListStats();
+    public final DoubleListStats zodiacScoreStats = new DoubleListStats(0d, 1d);
+    public final DoubleListStats siriusScoreStats = new DoubleListStats(0d, 1d);
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
-    public final DoubleListStats explainedPeaks = new DoubleListStats();
-    public final DoubleListStats explainedIntensity = new DoubleListStats();
+    public final DoubleListStats explainedPeaks = new DoubleListStats(0d, null);
+    public final DoubleListStats explainedIntensity = new DoubleListStats(0d, 1d);
 
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
@@ -214,7 +214,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 .map(score -> Math.exp(score - maxSiriusScore)).sum();
 
         int i = 0;
-        for (FormulaResultBean formulaCandidate : formulaCandidates){
+        for (FormulaResultBean formulaCandidate : formulaCandidates) {
             sscores[i] = Math.exp(formulaCandidate.getSiriusScore().get() - maxSiriusScore) / sumSiriusScoreExp;
             idToOldNormalizedScore.put(formulaCandidate.getFormulaId(), sscores[i]);
             i++;

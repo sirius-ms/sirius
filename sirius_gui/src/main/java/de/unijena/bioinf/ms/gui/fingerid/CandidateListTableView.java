@@ -67,8 +67,8 @@ public class CandidateListTableView extends CandidateListView {
 
         table.getTableHeader().setDefaultRenderer(new CandidateListTableHeaderRenderer());
 
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
-        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED, false, null));
+        table.getColumnModel().getColumn(6).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tf.highlightColumnIndex()));
         table.getColumnModel().getColumn(10).setCellRenderer(new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize())));
         table.getColumnModel().getColumn(11).setCellRenderer(new SiriusResultTableCellRenderer(tf.highlightColumnIndex(), Fonts.FONT_DEJAVU_SANS.deriveFont((float) table.getFont().getSize())));
         //todo nightsky: add pubmed link feature!

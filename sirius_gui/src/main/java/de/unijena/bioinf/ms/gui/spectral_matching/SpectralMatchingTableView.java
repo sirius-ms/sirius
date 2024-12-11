@@ -110,7 +110,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
-        table.getColumnModel().getColumn(5).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tf.highlightColumnIndex()));
 
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer,
                 dbLink -> {
