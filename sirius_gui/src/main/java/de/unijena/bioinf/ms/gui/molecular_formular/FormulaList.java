@@ -50,12 +50,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     @Deprecated
     private final Object2DoubleMap<String> idToOldNormalizedScore = new Object2DoubleOpenHashMap<>();
 
-    public final DoubleListStats zodiacScoreStats = new DoubleListStats(0d, 1d);
     public final DoubleListStats siriusScoreStats = new DoubleListStats(0d, 1d);
     public final DoubleListStats isotopeScoreStats = new DoubleListStats();
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats(0d, null);
-    public final DoubleListStats explainedIntensity = new DoubleListStats(0d, 1d);
 
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
@@ -157,18 +155,17 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             if (candidates != null && !candidates.isEmpty()) { //refill case
                 elementListSelectionModel.clearSelection();
 
-                double[] zscores = new double[candidates.size()];
                 double[] sscores = new double[candidates.size()];
                 double[] iScores = new double[candidates.size()];
                 double[] tScores = new double[candidates.size()];
+                double[] expPeaks = new double[candidates.size()];
+
                 int i = 0;
-
-
                 for (FormulaResultBean fc : candidates) {
-                    zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
                     sscores[i] = fc.getSiriusScoreNormalized().orElse(0d);
                     iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
                     tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                    expPeaks[i] = fc.getNumOfExplainedPeaks().orElse(0);
                     i++;
                 }
 
@@ -177,18 +174,12 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
 
                 refillElements(candidates);
 
-                this.zodiacScoreStats.update(zscores);
                 this.siriusScoreStats.update(sscores);
                 this.isotopeScoreStats.update(iScores);
                 this.treeScoreStats.update(tScores);
+                this.explainedPeaks.update(expPeaks);
 
-                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                        .setScoreSum(this.explainedIntensity.getMax());
-
-                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(candidates.get(0).getNumOfExplainablePeaks().orElseThrow())
-                        .setScoreSum(this.explainedPeaks.getMax());
             } else { //clear case
-
                 if (!elementList.isEmpty()) {
                     elementListSelectionModel.clearSelection();
                     refillElements(null);
@@ -196,10 +187,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     // to have notification even if the list is already empty
                     readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
                 }
-                zodiacScoreStats.update(new double[0]);
                 siriusScoreStats.update(new double[0]);
                 isotopeScoreStats.update(new double[0]);
                 treeScoreStats.update(new double[0]);
+                explainedPeaks.update(new double[0]);
             }
         });
     }
