@@ -132,8 +132,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                         Jobs.runEDTAndWait(() -> {
                             if (index.get() < elementList.size())
                                 elementListSelectionModel.setSelectionInterval(index.get(), index.get());
-                            else
+                            else if (elementList.isEmpty())
                                 elementListSelectionModel.clearSelection();
+                            else
+                                elementListSelectionModel.setSelectionInterval(0, 0); //select first element if no best hit found.
                         });
                     } else {
                         //last change to interrupt before propagating change to edt
