@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 import ca.odell.glazedlists.swing.DefaultEventListModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.JListDropImage;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -54,7 +55,7 @@ public class CompoundListView extends JScrollPane {
                 if (e.getClickCount() == 2) {
                     // Double-click detected
                     int index = compoundListView.locationToIndex(e.getPoint());
-                    compoundListView.setSelectedIndex(index);
+                    Jobs.runEDTLater(() -> compoundListView.setSelectedIndex(index));
                     SiriusActions.COMPUTE.getInstance(gui, true)
                             .actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
                 }
@@ -71,13 +72,12 @@ public class CompoundListView extends JScrollPane {
                             break;
                         }
                     }
-                    if (select) {
-                        compoundListView.setSelectedIndex(indx);
-                    }
 
-                    if (e.isPopupTrigger()) {
+                    if (select)
+                        Jobs.runEDTLater(() -> compoundListView.setSelectedIndex(indx));
+
+                    if (e.isPopupTrigger())
                         expPopMenu.show(e.getComponent(), e.getX(), e.getY());
-                    }
                 }
             }
 
