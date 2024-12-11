@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -89,10 +90,18 @@ public class ComputeServiceImpl implements ComputeService {
             br.cancelAllRuns();
     }
 
-    private void registerServerEventListener(BackgroundRuns.BackgroundRunJob run, String projectId) {
+    private void registerServerJobEventListener(BackgroundRuns.BackgroundRunJob run, String projectId) {
         run.addJobProgressListener(evt ->
                 eventService.sendEvent(ServerEvents.newJobEvent(
                         extractJobId(run, EnumSet.of(Job.OptField.progress)), projectId)));
+    }
+
+    private void registerServerImportEventListener(BackgroundRuns.BackgroundRunJob run, String projectId) {
+        run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
+            JJob.JobState s = ((JobStateEvent) evt).getNewValue();
+            if (s.ordinal() > JJob.JobState.RUNNING.ordinal())
+                eventService.sendEvent(ServerEvents.newImportEvent(extractJobId(run, EnumSet.of(Job.OptField.affectedIds)),projectId));
+        });
     }
 
     @Nullable
@@ -131,6 +140,7 @@ public class ComputeServiceImpl implements ComputeService {
         if (optFields.contains(Job.OptField.affectedIds)) {
             id.setAffectedAlignedFeatureIds(extractAffectedAlignedFeaturesIds(runJob));
             id.setAffectedCompoundIds(extractAffectedCompoundIds(runJob));
+            id.setJobEffect(runJob.getJobEffect());
         }
 
         return id;
@@ -179,8 +189,8 @@ public class ComputeServiceImpl implements ComputeService {
 
         try {
             List<String> commandList = jobSubmission.asCommand();
-            BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, instances);
-            registerServerEventListener(run, psmI.getProjectId());
+            BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, instances,
+                    job -> registerServerJobEventListener(job, psmI.getProjectId()));
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -198,12 +208,13 @@ public class ComputeServiceImpl implements ComputeService {
             if (alignedFeatureIds != null) {
                 List<Instance> instances = new ArrayList<>();
                 alignedFeatureIds.forEach(id -> instances.add(loadInstance(project, id)));
-                run = backgroundRuns(project).runCommand(commandList, instances);
+                run = backgroundRuns(project).runCommand(commandList, instances,
+                        j -> registerServerJobEventListener(j, project.getProjectId()));
             } else {
-                run = backgroundRuns(project).runCommand(commandList, project.getProjectSpaceManager());
+                run = backgroundRuns(project).runCommand(commandList, project.getProjectSpaceManager(),
+                        j -> registerServerJobEventListener(j, project.getProjectId()));
             }
 
-            registerServerEventListener(run, project.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -211,21 +222,52 @@ public class ComputeServiceImpl implements ComputeService {
         }
     }
 
+
     @Override
-    public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, AbstractImportSubmission importSubmission,
+    public ImportResult importPreprocessedData(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
+        return awaitImportAndExtractResult(createAndSubmitPeakListImportJob(project, importSubmission));
+    }
+
+    @Override
+    public ImportResult importMsRunData(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
+        return awaitImportAndExtractResult(createAndSubmitMsDataImportJob(project, importSubmission));
+    }
+
+    private ImportResult awaitImportAndExtractResult(BackgroundRuns.BackgroundRunJob run){
+        run.takeResult();
+        Job jobInfo = extractJobId(run, EnumSet.of(Job.OptField.affectedIds));
+        return ImportResult.builder()
+                .affectedAlignedFeatureIds(jobInfo.getAffectedAlignedFeatureIds())
+                .affectedCompoundIds(jobInfo.getAffectedCompoundIds())
+                .build();
+    }
+
+    @Override
+    public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission,
                                               @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runImportMsData(importSubmission);
-        registerServerEventListener(run, project.getProjectId());
+        BackgroundRuns.BackgroundRunJob run = createAndSubmitMsDataImportJob(project, importSubmission);
         return extractJobId(run, optFields);
     }
 
     @Override
-    public Job createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission importSubmission,
+    public Job createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission,
                                                 @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
-                .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
-        registerServerEventListener(run, project.getProjectId());
+        BackgroundRuns.BackgroundRunJob run = createAndSubmitPeakListImportJob(project, importSubmission);
         return extractJobId(run, optFields);
+    }
+
+    private BackgroundRuns.BackgroundRunJob createAndSubmitMsDataImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
+        return backgroundRuns(project).runImportMsData(importSubmission, job -> {
+            registerServerJobEventListener(job, project.getProjectId());
+            registerServerImportEventListener(job, project.getProjectId());
+        });
+    }
+
+    private BackgroundRuns.BackgroundRunJob createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
+        return backgroundRuns(project).runImportPeakData(importSubmission, job -> {
+                    registerServerJobEventListener(job, project.getProjectId());
+                    registerServerImportEventListener(job, project.getProjectId());
+                });
     }
 
     @Override
@@ -243,8 +285,8 @@ public class ComputeServiceImpl implements ComputeService {
         if (instances == null)
             instances = project.getProjectSpaceManager();
         try {
-            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), instances);
-            registerServerEventListener(run, project.getProjectId());
+            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), instances,
+                    j -> registerServerJobEventListener(j, project.getProjectId()));
             return extractJobId(run, optFields);
         } catch (Exception e) {
             log.error("Cannot create Job Command!", e);
@@ -344,12 +386,10 @@ public class ComputeServiceImpl implements ComputeService {
 
     @Override
     public synchronized void destroy() {
-        System.out.println("Destroy Compute Service...");
         backgroundRuns.forEach((pid, br) -> {
             if (br.hasActiveComputations())
                 log.info("Cancelling running Background Jobs...");
             br.cancelAllRuns();
         });
-        System.out.println("Destroy Compute Service DONE");
     }
 }

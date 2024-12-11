@@ -21,7 +21,11 @@
 package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.middleware.model.compute.*;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
@@ -41,10 +45,14 @@ public interface ComputeService extends DisposableBean {
     Job createAndSubmitJob(@NotNull Project<?> psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds,
                            @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitMsDataImportJob(@NotNull Project<?> psm, AbstractImportSubmission importSubmission,
+    ImportResult importPreprocessedData(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission);
+
+    ImportResult importMsRunData(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission);
+
+    Job createAndSubmitMsDataImportJob(@NotNull Project<?> psm, AbstractImportSubmission<?> importSubmission,
                                        @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission importSubmission,
+    Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission<?> importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target,

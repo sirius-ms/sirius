@@ -46,7 +46,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     }
 
     enum AdductOrder implements Order {
-        ALPHABETICALLY_MAIN_FIRST;
+        ALPHABETICALLY_SELECTED_FIRST;
     }
 
     enum ViewType {
@@ -211,7 +211,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
 
         spec = ColoredTraceSet.buildTrace(spec, viewType);
-        lcmsWebview.setInstance(spec, viewType == ViewType.ALIGNMENT ? order : AdductOrder.ALPHABETICALLY_MAIN_FIRST, viewType, currentInstance.getFeatureId());
+        lcmsWebview.setInstance(spec, viewType == ViewType.ALIGNMENT ? order : AdductOrder.ALPHABETICALLY_SELECTED_FIRST, viewType, currentInstance.getFeatureId());
     }
 
     public void setActiveIndex(int id) {
@@ -245,9 +245,9 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
                         .traces(traceSet.getTraces().stream().map(t -> {
                             String label = t.getLabel().toUpperCase();
                             boolean isIsotope = label.contains("ISOTOPE");
-                            boolean isAdduct = label.contains("[CORRELATED]");
+                            boolean isCorrelated = label.contains("[CORRELATED]");
                             return ColoredTrace.buildTrace(t,
-                                    isAdduct ? Colors.LCMSVIEW.ADDUCT_FEATURE_COLOR : Colors.LCMSVIEW.MAIN_FEATURE_COLOR,
+                                    isCorrelated ? Colors.LCMSVIEW.CORRELATED_FEATURE_TRACE_COLOR : Colors.LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR,
                                     isIsotope ? Colors.LCMSVIEW.ISOTOPE_DASH_STYLE : null);
                         }).collect(Collectors.toUnmodifiableList())));
             }

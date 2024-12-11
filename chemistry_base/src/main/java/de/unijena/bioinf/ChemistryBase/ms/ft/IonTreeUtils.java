@@ -176,6 +176,43 @@ public class IonTreeUtils {
     /**
      *
      * @param tree
+     * @return true if the tree is unresolved or its type is not known.
+     */
+    public static boolean isUnresolved(FTree tree) {
+        return tree.getAnnotation(Type.class, () -> Type.RAW) == Type.RAW;
+    }
+
+    public static MolecularFormula getCompoundMolecularFormula(FTree tree) {
+        Type type = tree.getAnnotationOrNull(Type.class);
+        if (type == Type.RESOLVED || type == Type.IONIZED) return tree.getRoot().getFormula();
+
+        PrecursorIonType ionType = tree.getAnnotationOrNull(PrecursorIonType.class);
+        return ionType != null ? ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()) : tree.getRoot().getFormula();
+    }
+
+    public static MolecularFormula getPrecursorFormula(FTree tree) {
+        Fragment precursorRoot = getMeasuredIonRoot(tree);
+        PrecursorIonType adduct = tree.getAdduct(precursorRoot);
+
+        return adduct.neutralMoleculeToMeasuredNeutralMolecule(precursorRoot.getFormula());
+    }
+
+    public static Fragment getMeasuredIonRoot(FTree tree) {
+        final LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
+        return l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
+    }
+
+    // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
+    private static Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
+        if (root.isLeaf()) return root;
+        final LossType ano = lossAno.get(root.getOutgoingEdge(0), LossType::regular);
+        if (!ano.isInSource()) return root; //only insource losses add another root fragment above the precursor. Adduct losses only modify the MF.
+        return getMeasuredIonRoot(lossAno, root.getChildren(0));
+    }
+
+    /**
+     *
+     * @param tree
      * @param iontype
      * @param adduct
      * @param preserveOriginalTreeScore reducing the tree may remove nodes. If true, the total tree score is preserved by adding an adductSubstitution to the parent node of removed tree nodes.

@@ -107,7 +107,6 @@ public class CollisionEnergy implements Serializable {
                 return null;
             return fromString(value);
         } catch (Exception e) {
-            LoggerFactory.getLogger(CollisionEnergy.class).error("Could not parse Collision Energy '{}'. Error: {}. Try ignoring...", value, e.getMessage());
             return null;
         }
     }

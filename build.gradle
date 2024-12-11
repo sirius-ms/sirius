@@ -47,7 +47,7 @@ ext {
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
     //version for external libraries
-    jjobs_version = '0.9.37'
+    jjobs_version = '0.10.0'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
     lombok_version = '1.18.34'
@@ -57,7 +57,7 @@ ext {
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     cdk_version = "2.9"
-    jetbrains_version = "24.1.0"
+    jetbrains_version = "26.0.1"
     okhttp_version = "4.12.0"
     trove_version = '3.1.0' //DEPRECATED -> user fast util instead
     fastutil_version = '8.5.12' //replaces trove
@@ -152,7 +152,7 @@ allprojects {
             name "sirius-ms-maven-public"
             url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
         }
-        //this is just needed to load non-public test data.
+        //this is just needed to load non-public test for acceptance testing.
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -187,11 +187,6 @@ allprojects {
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
-        }
-        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
-        // but currently Gitlab CI/CD workers refuse to connect to it.
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
     }
 

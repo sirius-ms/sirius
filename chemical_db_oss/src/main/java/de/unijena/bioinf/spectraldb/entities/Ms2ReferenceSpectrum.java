@@ -70,12 +70,33 @@ public class Ms2ReferenceSpectrum {
 
     private int msLevel = 0;
 
+    /**
+     * Collision energy in standard SIRIUS format.
+     */
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.CollisionEnergyDeserializer.class)
     private CollisionEnergy collisionEnergy;
 
+    /**
+     * Collision energy from the source file.
+     */
+    private String ce;
+
+    /**
+     * Instrument type in standard SIRIUS format.
+     */
     @JsonDeserialize(using = SimpleSerializers.MSInstrumentationDeserializer.class)
     private MsInstrumentation instrumentation;
+
+    /**
+     * Instrument type from the source file.
+     */
+    private String instrumentType;
+
+    /**
+     * Instrument from the source file.
+     */
+    private String instrument;
 
     /**
      * Molecular formula of the measured compound. Must match candidateInChiKey and smiles
@@ -85,7 +106,11 @@ public class Ms2ReferenceSpectrum {
     @JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
     private MolecularFormula formula;
 
+    /**
+     * Name of the spectrum.
+     */
     private String name;
+
     /**
      * This is the representation of the structure that produced this spectrum.
      */

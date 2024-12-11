@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_NAME,
   BasicSpectrum.JSON_PROPERTY_MS_LEVEL,
   BasicSpectrum.JSON_PROPERTY_COLLISION_ENERGY,
+  BasicSpectrum.JSON_PROPERTY_INSTRUMENT,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
   BasicSpectrum.JSON_PROPERTY_PEAKS,
@@ -49,6 +50,9 @@ public class BasicSpectrum {
 
   public static final String JSON_PROPERTY_COLLISION_ENERGY = "collisionEnergy";
   private String collisionEnergy;
+
+  public static final String JSON_PROPERTY_INSTRUMENT = "instrument";
+  private String instrument;
 
   public static final String JSON_PROPERTY_PRECURSOR_MZ = "precursorMz";
   private Double precursorMz;
@@ -138,6 +142,31 @@ public class BasicSpectrum {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setCollisionEnergy(String collisionEnergy) {
     this.collisionEnergy = collisionEnergy;
+  }
+
+  public BasicSpectrum instrument(String instrument) {
+    
+    this.instrument = instrument;
+    return this;
+  }
+
+   /**
+   * Instrument information.
+   * @return instrument
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getInstrument() {
+    return instrument;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_INSTRUMENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setInstrument(String instrument) {
+    this.instrument = instrument;
   }
 
   public BasicSpectrum precursorMz(Double precursorMz) {
@@ -260,6 +289,7 @@ public class BasicSpectrum {
     return Objects.equals(this.name, basicSpectrum.name) &&
         Objects.equals(this.msLevel, basicSpectrum.msLevel) &&
         Objects.equals(this.collisionEnergy, basicSpectrum.collisionEnergy) &&
+        Objects.equals(this.instrument, basicSpectrum.instrument) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
         Objects.equals(this.peaks, basicSpectrum.peaks) &&
@@ -268,7 +298,7 @@ public class BasicSpectrum {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, precursorMz, scanNumber, peaks, absIntensityFactor);
+    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, peaks, absIntensityFactor);
   }
 
   @Override
@@ -278,6 +308,7 @@ public class BasicSpectrum {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    msLevel: ").append(toIndentedString(msLevel)).append("\n");
     sb.append("    collisionEnergy: ").append(toIndentedString(collisionEnergy)).append("\n");
+    sb.append("    instrument: ").append(toIndentedString(instrument)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");

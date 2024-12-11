@@ -6,9 +6,9 @@ import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.sirius.ms.sdk.model.SearchableDatabase;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -21,7 +21,8 @@ import java.util.function.Supplier;
 
 public class StructureSearchStrategy extends JPanel {
 
-    protected JCheckboxListPanel<SearchableDatabase> searchDBList;
+    @Getter
+    protected DBSelectionListPanel searchDBList;
     protected SiriusGui gui;
     public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
 
@@ -76,7 +77,7 @@ public class StructureSearchStrategy extends JPanel {
     }
 
 
-    private JCheckboxListPanel<SearchableDatabase> createDatabasePanel(Supplier<Boolean> isPubchemAsFallbackSelected) {
+    private DBSelectionListPanel createDatabasePanel(Supplier<Boolean> isPubchemAsFallbackSelected) {
         DBSelectionListPanel dbList = DBSelectionListPanel.newInstance("Search DBs", gui.getSiriusClient(), getPubChemIfFallback(isPubchemAsFallbackSelected));
         GuiUtils.assignParameterToolTip(dbList, "StructureSearchDB");
         return dbList;
@@ -92,10 +93,6 @@ public class StructureSearchStrategy extends JPanel {
 
     private SearchableDatabase getPubChem(){
         return gui.getSiriusClient().databases().getDatabase(DataSource.PUBCHEM.name(), false);
-    }
-
-    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
-        return searchDBList;
     }
 
     public List<SearchableDatabase> getStructureSearchDBs() {

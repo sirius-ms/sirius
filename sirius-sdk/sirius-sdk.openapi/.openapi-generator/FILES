@@ -36,6 +36,7 @@ docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
+docs/DataImportEvent.md
 docs/DataQuality.md
 docs/Deviation.md
 docs/FeatureAnnotations.md
@@ -178,6 +179,7 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusAnnotationsDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
+src/main/java/io/sirius/ms/sdk/model/DataImportEvent.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
 src/main/java/io/sirius/ms/sdk/model/Deviation.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java

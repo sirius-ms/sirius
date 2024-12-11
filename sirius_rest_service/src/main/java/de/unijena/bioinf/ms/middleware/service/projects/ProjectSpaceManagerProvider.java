@@ -280,9 +280,6 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     @Override
     public void destroy() {
-        System.out.println("Destroy Project Provider Service...");
         closeAll();
-        System.out.println("Destroy Project Provider Service DONE");
-
     }
 }

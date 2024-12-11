@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
+import java.beans.PropertyChangeListener;
 
 public abstract class AbstractGuiAction extends AbstractAction {
     protected final MainFrame mainFrame;
@@ -44,5 +45,13 @@ public abstract class AbstractGuiAction extends AbstractAction {
         super(name, icon);
         this.gui = gui;
         this.mainFrame = this.gui.getMainFrame();
+    }
+
+    /**
+     * For cleaning up resources such as listeners;
+     */
+    public void destroy(){
+        if (this instanceof PropertyChangeListener c)
+            this.gui.getConnectionMonitor().removePropertyChangeListener(c);
     }
 }

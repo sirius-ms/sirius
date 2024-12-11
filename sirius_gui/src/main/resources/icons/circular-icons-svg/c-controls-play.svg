@@ -1,55 +1,8 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   width="64px"
-   height="64px"
-   viewBox="0 0 64 64"
-   version="1.1"
-   id="svg15158"
-   sodipodi:docname="c-controls-play.svg"
-   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-  <sodipodi:namedview
-     id="namedview15160"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="2.6565699"
-     inkscape:cx="-48.558857"
-     inkscape:cy="30.490445"
-     inkscape:window-width="1710"
-     inkscape:window-height="982"
-     inkscape:window-x="0"
-     inkscape:window-y="39"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg15158" />
-  <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
-  <title
-     id="title15148">c-controls-play</title>
-  <desc
-     id="desc15150">Created with Sketch.</desc>
-  <defs
-     id="defs15152" />
-  <circle
-     id="Oval-1"
-     fill="#00bf2f"
-     sketch:type="MSShapeGroup"
-     cx="32"
-     cy="32"
-     r="32"
-     style="fill-rule:evenodd;stroke:none;stroke-width:1;fill:#8ee481;fill-opacity:1" />
-  <path
-     d="M 26,12 V 52 L 47.666667,32 Z"
-     id="Path"
-     fill="#ffffff"
-     sketch:type="MSShapeGroup"
-     style="fill-rule:evenodd;stroke:none;stroke-width:1.66667" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg15158" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title15148">c-controls-play</title>
+ <desc id="desc15150">Created with Sketch.</desc>
+ <circle id="Oval-1" cx="32" cy="32" r="32" fill="#8ee481" fill-rule="evenodd"/>
+ <path id="Path" d="m26 12v40l21.667-20z" fill="#fff" fill-rule="evenodd"/>
 </svg>

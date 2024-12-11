@@ -30,6 +30,7 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import it.unimi.dsi.fastutil.Pair;
 import org.apache.commons.lang3.Range;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -297,7 +298,7 @@ public class Spectrums {
     public static <P extends Peak, S extends Spectrum<P>>
     Spectrum<P> getIntensityOrderedSpectrum(S spectrum) {
         final PeaklistSpectrum<P> wrapper = new PeaklistSpectrum<>(spectrum);
-        Collections.sort(wrapper.peaks, getPeakIntensityComparatorReversed());
+        wrapper.peaks.sort(getPeakIntensityComparatorReversed());
         return wrapper;
     }
 
@@ -840,30 +841,92 @@ public class Spectrums {
 
     }
 
-    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
-        if (spectrum.isEmpty()) return Spectrums.empty();
-        final Spectrum<? extends Peak> spec = getIntensityOrderedSpectrum(spectrum);
-        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
-        for (int k=0; k < spec.size(); ++k) {
-            // only insert k in buffer, if there are no more than numberOfPeaksPerMassWindow peaks closeby
-            final double mz = spec.getMzAt(k);
-            final double wa = mz - slidingWindowWidth/2d, wb = mz + slidingWindowWidth/2d;
+    /**
+     * Extracts the most intensive peaks from a spectrum using a sliding window approach.
+     *
+     * The method iterates over the spectrum, maintaining a sliding window of width 'slidingWindowWidth'.
+     * For each window, it keeps track of the 'numberOfPeaksPerMassWindow' most intense peaks encountered.
+     *
+     * @param spectrum              The input spectrum. If null, null will be returned.
+     * @param numberOfPeaksPerMassWindow The maximum number of peaks to keep within each sliding window. Must be >= 1.
+     * @param slidingWindowWidth    The width of the sliding window in mass units.
+     * @return A new {@link SimpleSpectrum} containing the extracted peaks, or null if the input spectrum is null.
+     * @throws IllegalArgumentException If 'numberOfPeaksPerMassWindow' is less than 1.
+     */
+    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(@Nullable S spectrum, int numberOfPeaksPerMassWindow, double slidingWindowWidth) {
+        if (numberOfPeaksPerMassWindow < 1)
+            throw new IllegalArgumentException("NumberOfPeaksPerMassWindow must be >=1");
+        if (spectrum == null)
+            return null;
+        if (spectrum.isEmpty())
+            return Spectrums.empty();
 
-            int count = 0;
-            for (int i=0; i < buffer.size(); ++i) {
-                final double mz2 = buffer.getMzAt(i);
-                if (mz2 >= wa && mz2 <= wb) {
-                    if (++count >= numberOfPeaksPerMassWindow)
-                        break;
+        PeaklistSpectrum<P> specMzSorted = new PeaklistSpectrum<>(spectrum);
+        if (!(spectrum instanceof OrderedSpectrum)) specMzSorted.peaks.sort(getPeakMassComparator());
+
+        MutableSpectrum<Peak> buffer = new SimpleMutableSpectrum();
+
+        int lowestMassPeakIndex = 0;
+        double massRight = specMzSorted.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
+
+        final TreeSet<Peak> windowPeaks = new TreeSet<>(
+                Comparator.comparing(Peak::getIntensity)
+                        .thenComparing(Peak::getMass)
+                        .thenComparing(System::identityHashCode)
+        );
+
+        windowPeaks.add(specMzSorted.getPeakAt(lowestMassPeakIndex));
+
+        for (int i = 1; i < specMzSorted.size(); i++) {
+            Peak currentPeak = specMzSorted.getPeakAt(i);
+            if (currentPeak.getMass() <= massRight){
+                if (windowPeaks.size() < numberOfPeaksPerMassWindow) {
+                    windowPeaks.add(currentPeak);
+                }else if (windowPeaks.getFirst().getIntensity() < currentPeak.getIntensity()){
+                    windowPeaks.removeFirst();
+                    windowPeaks.add(currentPeak);
                 }
-            }
-            if (count < numberOfPeaksPerMassWindow) {
-                buffer.addPeak(spec.getMzAt(k),spec.getIntensityAt(k));
+            } else {
+                P lowestMassPeak = specMzSorted.getPeakAt(lowestMassPeakIndex);
+                if (windowPeaks.remove(lowestMassPeak))
+                    buffer.addPeak(lowestMassPeak);
+
+                lowestMassPeakIndex++;
+                massRight = specMzSorted.getMzAt(lowestMassPeakIndex) + slidingWindowWidth;
+                // run current peak again with new mass window
+                i--;
             }
         }
 
+        for (Peak peak : windowPeaks)
+            buffer.addPeak(peak);
+
         return new SimpleSpectrum(buffer);
     }
+
+    /**
+     * Extracts the 'numberOfPeaksToKeep' most intense peaks from a spectrum.
+     *
+     * @param spectrum            The input spectrum. If null, null will be returned.
+     * @param numberOfPeaksToKeep Number of peaks to keep after extraction (top 'numberOfPeaksToKeep' most intense peaks)
+     * @return A new {@link SimpleSpectrum} that contains the 'numberOfPeaksToKeep' most intense peaks, or null if the input spectrum is null.
+     */
+    public static <P extends Peak,S extends Spectrum<P>> SimpleSpectrum extractMostIntensivePeaks(@Nullable S spectrum, int numberOfPeaksToKeep) {
+        if (spectrum == null)
+            return null;
+        if (spectrum.isEmpty())
+            return Spectrums.empty();
+        if (spectrum.size() <= numberOfPeaksToKeep)
+            return new SimpleSpectrum(spectrum);
+
+        final Spectrum<? extends Peak> specIntensitySorted = getIntensityOrderedSpectrum(spectrum);
+        final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum();
+        for (int i = 0; i < numberOfPeaksToKeep; i++)
+            buffer.addPeak(specIntensitySorted.getMzAt(i), specIntensitySorted.getIntensityAt(i));
+
+        return new SimpleSpectrum(buffer);
+    }
+
 
     public interface Transformation<P1 extends Peak, P2 extends Peak> {
         P2 transform(P1 input);

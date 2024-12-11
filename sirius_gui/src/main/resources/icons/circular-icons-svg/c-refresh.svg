@@ -1,69 +1,13 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg
-   width="64px"
-   height="64px"
-   viewBox="0 0 64 64"
-   version="1.1"
-   id="svg51219"
-   sodipodi:docname="c-refresh.svg"
-   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-  <sodipodi:namedview
-     id="namedview51221"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     showgrid="false"
-     inkscape:zoom="3.6875"
-     inkscape:cx="0.81355932"
-     inkscape:cy="32.949153"
-     inkscape:window-width="1448"
-     inkscape:window-height="667"
-     inkscape:window-x="0"
-     inkscape:window-y="39"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="c-refresh" />
-  <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
-  <title
-     id="title51207">c-refresh</title>
-  <desc
-     id="desc51209">Created with Sketch.</desc>
-  <defs
-     id="defs51211" />
-  <g
-     id="Page-1"
-     stroke="none"
-     stroke-width="1"
-     fill="none"
-     fill-rule="evenodd"
-     sketch:type="MSPage">
-    <g
-       id="c-refresh"
-       sketch:type="MSArtboardGroup">
-      <path
-         d="M32,64 C49.673112,64 64,49.673112 64,32 C64,14.326888 49.673112,0 32,0 C14.326888,0 0,14.326888 0,32 C0,49.673112 14.326888,64 32,64 Z"
-         id="Oval-1"
-         fill="#1191BB"
-         sketch:type="MSShapeGroup"
-         style="fill:#4da6bf;fill-opacity:1" />
-      <path
-         d="M52,32 C52,20.954305 43.045695,12 32,12 C20.954305,12 12,20.954305 12,32 C12,39.3724577 15.9890581,45.8132209 21.9265346,49.2816499 C18.1544208,44.8009484 16,37.3756552 16,32 C16,23.163444 24.5,18 32,18 C41.5,18 43,26.5 43,32 C43,38 41,39.5 34,44 C32.8987222,44.7079643 34.8716597,49.3513343 35.4424618,51.7048519 C44.8477579,50.0731889 52,41.8718423 52,32 Z"
-         id="path51214"
-         fill="#FFFFFF"
-         sketch:type="MSShapeGroup" />
-      <path
-         d="M31,40 L44,53 L31,53 L31,40 Z"
-         id="Rectangle-171"
-         fill="#FFFFFF"
-         sketch:type="MSShapeGroup" />
-    </g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg51219" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title51207">c-refresh</title>
+ <desc id="desc51209">Created with Sketch.</desc>
+ <g id="Page-1" fill="none" fill-rule="evenodd">
+  <g id="c-refresh">
+   <path id="Oval-1" d="m32 64c17.673 0 32-14.327 32-32s-14.327-32-32-32-32 14.327-32 32 14.327 32 32 32z" fill="#4da6bf"/>
+   <path id="path51214" d="m52 32c0-11.046-8.9543-20-20-20s-20 8.9543-20 20c0 7.3725 3.9891 13.813 9.9265 17.282-3.7721-4.4807-5.9265-11.906-5.9265-17.282 0-8.8366 8.5-14 16-14 9.5 0 11 8.5 11 14 0 6-2 7.5-9 12-1.1013 0.70796 0.87166 5.3513 1.4425 7.7049 9.4053-1.6317 16.558-9.833 16.558-19.705z" fill="#fff"/>
+   <path id="Rectangle-171" d="m31 40 13 13h-13v-13z" fill="#fff"/>
   </g>
+ </g>
 </svg>

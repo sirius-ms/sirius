@@ -154,7 +154,7 @@ public class JobController {
                                   @RequestParam(required = false) @Nullable Boolean recompute,
                                   @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) {
-        final JobSubmission js = getJobConfig(jobConfigName, true);
+        final JobSubmission js = getJobConfig(jobConfigName, true, false);
         js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
@@ -185,9 +185,9 @@ public class JobController {
      * * Delete ALL jobs. Specify how to behave for running jobs.
      *
      * @param projectId       project-space to delete jobs from
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     * @param awaitDeletion   If true, request will block until deletion succeeded or failed.
      *                        If the job is still running the request will wait until the job has finished.
      */
 
@@ -207,9 +207,9 @@ public class JobController {
      *
      * @param projectId       project-space to delete job from
      * @param jobId           of the job to be deleted
-     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     * @param cancelIfRunning If true, job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.
-     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     * @param awaitDeletion   If true, request will block until deletion succeeded or failed.
      *                        If the job is still running the request will wait until the job has finished.
      */
     @DeleteMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -226,75 +226,85 @@ public class JobController {
      * Request default job configuration
      *
      * @param includeConfigMap if true, generic configmap with-defaults will be included
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return {@link JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
-        return JobSubmission.createDefaultInstance(includeConfigMap);
+    public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
+                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
+        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap);
+        if (moveParametersToConfigMap) {
+            js.mergeCombinedConfigMap();
+        }
+        if (!includeConfigMap) {
+            js.setConfigMap(null);
+        }
+        return js;
     }
 
     /**
      * Request all available job configurations
      *
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return list of available {@link JobSubmission}s
      */
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public List<JobSubmission> getJobConfigs(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public List<JobSubmission> getJobConfigs(@Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
         try {
-            List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile).map(config -> {
-                try (InputStream inputStream = Files.newInputStream(config)) {
-                    return mapper.readValue(inputStream, JobSubmission.class);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }).collect(Collectors.toList()));
+            List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
+                    .map(this::readFromFile).collect(Collectors.toList()));
 
             if (!includeConfigMap) js.forEach(j -> j.setConfigMap(null));
 
             return js;
-        } catch (RuntimeException e) {
-            if (e.getCause() instanceof IOException) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when parsing job-config files.", e.getCause());
-            } else {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error.", e.getCause());
-            }
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.", e);
         }
     }
 
+    /**
+     * Get all (non-default) job configuration names
+     */
+    @GetMapping(value = "/job-config-names", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<String> getJobConfigNames() {
+        try {
+            return FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
+                    .map(p -> p.getFileName().toString())
+                    .map(f -> f.replaceFirst("\\.json$", ""))
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.", e);
+        }
+    }
 
     /**
      * Request job configuration with given name.
      *
      * @param name             name of the job-config to return
-     * @param includeConfigMap if true the generic configmap will be part of the output
+     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return {@link JobSubmission} for given name.
      */
     @GetMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public JobSubmission getJobConfig(@PathVariable @NotNull String name, @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
-        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap);
+    public JobSubmission getJobConfig(@PathVariable @NotNull String name,
+                                      @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
+                                      @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
+        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
-        if (Files.notExists(config) || !Files.isRegularFile(config))
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job-config with name '" + name + "' does not exist.");
 
-        try (InputStream s = Files.newInputStream(config)) {
-            JobSubmission js = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                    .readValue(s, JobSubmission.class);
-            if (!includeConfigMap) js.setConfigMap(null);
-            return js;
-
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when reading job-config file '" + config + "'.", e);
-
+        JobSubmission js = readFromFile(config);
+        if (moveParametersToConfigMap) {
+            js.mergeCombinedConfigMap();
         }
+        if (!includeConfigMap) {
+            js.setConfigMap(null);
+        }
+        return js;
     }
 
     /**
@@ -304,7 +314,7 @@ public class JobController {
      * @param jobConfig to add
      * @return Probably modified name of the config (to ensure filesystem path compatibility).
      */
-    @PostMapping(value = "/job-configs/{name}", produces = MediaType.TEXT_PLAIN_VALUE) //this needs to be text because some SDKs consider a string field as invalid json.
+    @PostMapping(value = "/job-configs/{name}", produces = {MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_PROBLEM_JSON_VALUE}) //this needs to be text because some SDKs consider a string field as invalid json.
     @ResponseStatus(HttpStatus.OK)
     public String saveJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
         name = name.replaceAll("\\W+", "_");
@@ -315,8 +325,9 @@ public class JobController {
         if (!overrideExisting && Files.exists(config))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job-config with name '" + name + "' already exists. Try again with 'overrideExisting' if you wish to replace it.");
 
-        // remove compoundIds since they are not permitted in a template config
+        // remove compounds since they are not permitted in a template config
         jobConfig.setCompoundIds(null);
+        jobConfig.setAlignedFeatureIds(null);
 
         try (OutputStream s = Files.newOutputStream(config)) {
             new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(s, jobConfig);
@@ -335,5 +346,17 @@ public class JobController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void deleteJobConfig(@PathVariable String name) throws IOException {
         Files.deleteIfExists(Workspace.runConfigDir.resolve(name + ".json"));
+    }
+
+    private JobSubmission readFromFile(Path path) {
+        if (Files.notExists(path) || !Files.isRegularFile(path))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job-config '" + path + "' does not exist.");
+
+        try (InputStream s = Files.newInputStream(path)) {
+            return new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .readValue(s, JobSubmission.class);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when reading job-config file '" + path + "'.", e);
+        }
     }
 }

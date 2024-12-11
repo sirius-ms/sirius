@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
@@ -52,21 +53,23 @@ import java.util.List;
 public class UserLoginDialog extends JDialog {
     private final JTextField username = new JTextField();
     private final JPasswordField password = new JPasswordField();
-    private final AuthService service;
 
     private boolean performedLogin = false;
     private final JCheckBox boxAcceptTerms = new JCheckBox();
     Action signInAction;
     Action cancelAction;
 
-    public UserLoginDialog(SiriusGui gui, AuthService service) {
+    private final LoadablePanel loadablePanel;
+
+    public UserLoginDialog(@NotNull SiriusGui gui, @NotNull AuthService service) {
         super(gui.getMainFrame(), true);
-        this.service = service;
         setTitle("Login");
-        setLayout(new BorderLayout());
+        final JPanel content = new JPanel(new BorderLayout());
+        loadablePanel = new LoadablePanel(content);
+        add(loadablePanel);
 
         //============= NORTH =================
-        add(new DialogHeader(Icons.KEY.derive(64,64)), BorderLayout.NORTH);
+        content.add(new DialogHeader(Icons.KEY.derive(64,64)), BorderLayout.NORTH);
 
 
         //============= SOUTH =================
@@ -83,7 +86,7 @@ public class UserLoginDialog extends JDialog {
         signInAction = new AbstractAction("Log in") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Jobs.runInBackgroundAndLoad(UserLoginDialog.this, "Logging in...", () -> {
+                loadablePanel.runInBackgroundAndLoad(/*"Logging in...",*/ () -> {
                     try {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             service.login(username.getText(), new String(password.getPassword()));
@@ -122,7 +125,7 @@ public class UserLoginDialog extends JDialog {
         buttons.add(cancel);
         buttons.add(login);
 
-        add(buttons, BorderLayout.SOUTH);
+        content.add(buttons, BorderLayout.SOUTH);
 
         //============= CENTER =================
         TwoColumnPanel center = new TwoColumnPanel();
@@ -135,7 +138,7 @@ public class UserLoginDialog extends JDialog {
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))
             addTermsPanel(center);
 
-        add(center, BorderLayout.CENTER);
+        content.add(center, BorderLayout.CENTER);
 
 
         configureActions();

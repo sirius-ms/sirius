@@ -135,7 +135,7 @@ g.highlight_atom path { fill: $MolecularStructures.SELECTED_SUBSTRUCTURE; }
     LCMS-Viewer
 */
 .lcmaincurve {
-    stroke: $LCMSVIEW.MAIN_FEATURE_COLOR;
+    stroke: $LCMSVIEW.SELECTED_FEATURE_TRACE_COLOR;
     stroke-width: 3px;
 }
 
