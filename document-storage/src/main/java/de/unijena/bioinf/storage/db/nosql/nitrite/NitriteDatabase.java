@@ -140,6 +140,7 @@ public class NitriteDatabase implements Database<Document> {
 
         return Nitrite.builder().loadModule(storeModule)
                 .loadModule(new JacksonMapperModule(module))
+                .schemaVersion(meta.getSchemaVersion())
                 .openOrCreate();
     }
 
