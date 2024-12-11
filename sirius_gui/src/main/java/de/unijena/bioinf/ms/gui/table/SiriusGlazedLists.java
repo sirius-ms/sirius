@@ -23,8 +23,6 @@ package de.unijena.bioinf.ms.gui.table;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventAssembler;
-import it.unimi.dsi.fastutil.Pair;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -47,36 +45,6 @@ public class SiriusGlazedLists {
             eventAssembler.commitEvent();
         } finally {
             list.getReadWriteLock().writeLock().unlock();
-        }
-    }
-
-    public static <E> boolean multiAddRemove(@NotNull EventList<E> baseList, @NotNull List<Pair<E, Boolean>> elementsAddOrRemove) {
-        try {
-            baseList.getReadWriteLock().writeLock().lock();
-                Set<E> toAdd = new LinkedHashSet<>();
-                Set<E> toRemove = new LinkedHashSet<>();
-
-                elementsAddOrRemove.forEach(p -> {
-                    if (p.value()){
-                        toAdd.add(p.key());
-                        toRemove.remove(p.key());
-                    }else {
-                        toAdd.remove(p.key());
-                        toRemove.add(p.key());
-                    }
-                });
-
-                if (toAdd.isEmpty() && toRemove.isEmpty())
-                    return true;
-
-                if (!toAdd.isEmpty())
-                    baseList.addAll(toAdd);
-                if (!toRemove.isEmpty())
-                    baseList.removeAll(toRemove);
-
-                return true;
-        } finally {
-            baseList.getReadWriteLock().writeLock().unlock();
         }
     }
 

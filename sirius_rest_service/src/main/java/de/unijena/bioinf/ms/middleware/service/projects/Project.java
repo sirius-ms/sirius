@@ -77,35 +77,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                 @NotNull EnumSet<Compound.OptField> optFields,
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
-    default ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
-
-        importTask.run();
-
-        return ImportResult.builder()
-                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getId)
-                        .collect(Collectors.toList()))
-                .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundId)
-                        .filter(Optional::isPresent)
-                        .flatMap(Optional::stream)
-                        .distinct().collect(Collectors.toList()))
-                .build();
-    }
-
-    default ImportResult importMsRunData(AbstractImportSubmission submission) {
-        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), submission, true);
-
-        importTask.run();
-        return ImportResult.builder()
-                .affectedAlignedFeatureIds(importTask.getImportedFeatureIds().longStream()
-                        .mapToObj(String::valueOf).collect(Collectors.toList()))
-                .affectedCompoundIds(importTask.getImportedCompoundIds().longStream()
-                        .mapToObj(String::valueOf).collect(Collectors.toList()))
-                .build();
-    }
-
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),
                 EnumSet.of(AlignedFeature.OptField.topAnnotations));

@@ -127,7 +127,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 ec.getGUIName(),
                 ec.getQuality() != null ? ec.getQuality().name() : "",
                 ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or ")),
-                ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " Da" : "",
+                ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " m/z" : "",
                 ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
                 gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? "Confidence Approximate" : "Confidence Exact",
                 ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).map(confScore -> confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString()).orElse(""))
@@ -200,7 +200,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or "));
         double focD = ec.getIonMass();
-        String focMass = focD > 0 ? numberFormatMass.format(focD) + " Da" : "";
+        String focMass = focD > 0 ? numberFormatMass.format(focD) + " m/z" : "";
         String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("");
 

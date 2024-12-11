@@ -41,7 +41,8 @@ public class MSData {
     private long alignedFeatureId;
 
     /**
-     * MSn spectra merge among features form multiple aligned MS runs
+     * MSn spectra merge among features from multiple aligned MS runs.
+     * different fragmentation energies are kept separately
      */
     private List<MergedMSnSpectrum> msnSpectra;
 

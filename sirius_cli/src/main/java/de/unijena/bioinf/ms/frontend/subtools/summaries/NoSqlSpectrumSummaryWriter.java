@@ -87,8 +87,13 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
         else
             row.add(reference.getMsLevel());
 
-        if (reference == null || reference.getCollisionEnergy() == null)
+        if (reference == null)
             row.add("N/A");
+        else if (reference.getCollisionEnergy() == null)
+            if (reference.getCe() == null)
+                row.add("N/A");
+            else
+                row.add(reference.getCe());
         else
             row.add(reference.getCollisionEnergy().toString());
 
