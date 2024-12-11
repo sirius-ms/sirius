@@ -55,7 +55,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         super(source);
         //todo dirty hack until search field bug is fixed
         getNorth().remove(searchField);
-        tableFormat = new FormulaResultTableFormat(source.getBestFunc());
+        tableFormat = new FormulaResultTableFormat(source.getBestHitFunction(), source.getFallBackNormalizedSiriusScoreFunction());
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 

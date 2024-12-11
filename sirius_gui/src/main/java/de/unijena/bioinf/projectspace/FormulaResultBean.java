@@ -228,7 +228,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         if (PrecursorIonType.fromString(ionType).isIonizationUnknown()) {
             return mf.toString();
         } else {
-            return mf.toString() + " " + niceName;
+            return mf + " " + niceName;
         }
     }
 
@@ -239,6 +239,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     public Optional<Double> getSiriusScoreNormalized() {
         return Optional.ofNullable(getFormulaCandidate().getSiriusScoreNormalized());
+    }
+
+    public Optional<Double> getSiriusScore() {
+        return Optional.ofNullable(getFormulaCandidate().getSiriusScore());
     }
 
     public Optional<Double> getIsotopeScore() {
