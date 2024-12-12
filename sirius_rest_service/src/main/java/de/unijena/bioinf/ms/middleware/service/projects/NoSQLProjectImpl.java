@@ -1465,7 +1465,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (dataOpt.isEmpty())
             return null;
         StringWriter writer = new StringWriter();
-        FingerIdData.write(writer, dataOpt.get()); //sneaky throws because it's a string writer and no real io.
+        FingerIdData.write(writer, dataOpt.get(), true); //sneaky throws because it's a string writer and no real io.
         return writer.toString();
     }
 
