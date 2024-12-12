@@ -172,19 +172,19 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
         checkForInterruption();
 
-        final ExactResult[] results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic, useHeuristicOny);
+        final ExactResultsWithMetaInfo results = estimateTreeSizeAndRecalibration(decompositions, useHeuristic, useHeuristicOny);
 
         checkForInterruption();
 
-        if (results.length > 0) {
+        if (results.results.length > 0) {
             final UnconsideredCandidatesUpperBound it = new UnconsideredCandidatesUpperBound(
-                    pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() - results.length,
-                    results[results.length - 1].score);
-            for (ExactResult result : results) result.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, it);
+                    pinput.getAnnotationOrThrow(DecompositionList.class).getDecompositions().size() - results.results.length,
+                    results.results[results.results.length - 1].tree.getTreeWeight());
+            for (ExactResult result : results.results) result.tree.setAnnotation(UnconsideredCandidatesUpperBound.class, it);
         }
 
-        final List<FTree> trees = Arrays.stream(results).map(r -> r.tree).collect(Collectors.toList());
-        return new FinalResult(trees);
+        final List<FTree> trees = Arrays.stream(results.results).map(r -> r.tree).collect(Collectors.toList());
+        return new FinalResult(trees, results.maxTreeWeight, results.remainingCandidatesTreeWeightExpSumEstimate);
     }
 
     protected void recalculateScore(ProcessedInput input, FTree tree, String prefix) {
@@ -199,7 +199,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 
     }
 
-    public ExactResult[] estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic, boolean useHeuristicOnly) throws ExecutionException, InterruptedException {
+    public ExactResultsWithMetaInfo estimateTreeSizeAndRecalibration(List<Decomposition> decompositions, boolean useHeuristic, boolean useHeuristicOnly) throws ExecutionException, InterruptedException {
         if (useHeuristicOnly)
             useHeuristic = true;
 
@@ -287,10 +287,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             jobs.forEach(this::submitSubJob);
             LoggerFactory.getLogger(FasterTreeComputationInstance.class).debug("Recalibration is disabled!");
             checkForInterruption();
-            return extractTopResults(jobs.stream()
+            List<ExactResult> annotatedResults = jobs.stream()
                     .map(JJob::takeResult).sorted(Collections.reverseOrder())
-                    .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas)
-                    .toArray(ExactResult[]::new);
+                    .collect(Collectors.toList());
+            return calculateRemainingCandidatesScoreSum(
+                    extractTopResults(annotatedResults, numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas).toArray(ExactResult[]::new),
+                    annotatedResults, results);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
         for (ExactResult r : topResults) {
@@ -301,11 +303,11 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             submitSubJob(recalibrationJob);
             recalibrationJobs.add(recalibrationJob);
         }
-        final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream()
+        final List<ExactResult> allRecalibrated = recalibrationJobs.stream()
                 .map(JJob::takeResult)
                 .sorted(Collections.reverseOrder())
-                .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas)
-                .toArray(ExactResult[]::new);
+                .collect(Collectors.toList());
+        final ExactResult[] recalibrated = extractTopResults(allRecalibrated, numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas).toArray(ExactResult[]::new);
         final double[] originalScores = new double[recalibrated.length];
         for (int k = 0; k < recalibrated.length; ++k) originalScores[k] = recalibrated[k].score;
         final ExactJob[] beautify = new ExactJob[recalibrated.length];
@@ -357,7 +359,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             }
         }
 
-        return recalibrated;
+        return calculateRemainingCandidatesScoreSum(recalibrated, allRecalibrated, results);
     }
 
     private void revertTreeSizeIncrease(ExactResult[] exact, double orig) {
@@ -427,6 +429,30 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         }
 
         return returnList;
+    }
+
+    /**
+     * calculates the parameters for the normalized SIRIUS score
+     * @param finalResults the final array of ExactResult after recalibration, beautification and selection
+     * @param extendedResults the slightly bigger list with results used in the previous step before the final trees were calculated
+     * @param allResults results for all decompositions. Many results have been calculated using the heuristic.
+     * @return
+     */
+    private ExactResultsWithMetaInfo calculateRemainingCandidatesScoreSum(ExactResult[] finalResults, List<ExactResult> extendedResults,  List<ExactResult> allResults) {
+        //finalResults are usually not that many. <<100
+        double maxTreeWeigth = Arrays.stream(finalResults).mapToDouble(r->r.tree.getTreeWeight()).max().orElse(0d);
+        Map<Decomposition, ExactResult> finalMap = Arrays.stream(finalResults).collect(Collectors.toMap(r -> r.decomposition, r->r));
+
+        Map<Decomposition, ExactResult> extendedMap = extendedResults.stream().collect(Collectors.toMap(r -> r.decomposition, r->r));
+
+        //all the exp sums of the candidates that are NOT part of the finalResults. We do not use the total sum since the number of results still changes when resolving adducts.
+        double remainingScoresExpSum = allResults.stream().filter(r->!finalMap.containsKey(r.decomposition)).mapToDouble(r -> {
+            ExactResult extResult = extendedMap.get(r.decomposition);
+            double treeWeight =  (extResult != null ? extResult.tree.getTreeWeight() : r.tree.getTreeWeight());
+            return Math.exp(treeWeight - maxTreeWeigth);
+        }).sum();
+
+        return new ExactResultsWithMetaInfo(finalResults, maxTreeWeigth, remainingScoresExpSum);
     }
 
     @NotNull
@@ -646,15 +672,14 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
     public final static class FinalResult {
         protected final boolean canceledDueToLowScore;
         protected final List<FTree> results;
+        public final double remainingCandidatesTreeWeightExpSumEstimate;
+        public final double maxTreeWeight;
 
-        public FinalResult(List<FTree> results) {
+        public FinalResult(List<FTree> results, double maxTreeWeight, double remainingCandidatesTreeWeightExpSumEstimate) {
             this.canceledDueToLowScore = false;
             this.results = results;
-        }
-
-        public FinalResult() {
-            this.canceledDueToLowScore = true;
-            this.results = null;
+            this.remainingCandidatesTreeWeightExpSumEstimate = remainingCandidatesTreeWeightExpSumEstimate;
+            this.maxTreeWeight = maxTreeWeight;
         }
 
         public List<FTree> getResults() {
@@ -718,6 +743,22 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             final int a = Double.compare(score, o.score);
             if (a != 0) return a;
             return decomposition.getCandidate().compareTo(o.decomposition.getCandidate());
+        }
+    }
+
+    protected final static class ExactResultsWithMetaInfo {
+        protected final ExactResult[] results;
+
+        protected final double maxTreeWeight;
+        /*
+        this is used to calculate the normalized SIRIUS score
+         */
+        protected final double remainingCandidatesTreeWeightExpSumEstimate;
+
+        public ExactResultsWithMetaInfo(ExactResult[] results, double maxTreeWeight, double remainingCandidatesTreeWeightExpSumEstimate) {
+            this.results = results;
+            this.maxTreeWeight = maxTreeWeight;
+            this.remainingCandidatesTreeWeightExpSumEstimate = remainingCandidatesTreeWeightExpSumEstimate;
         }
     }
 }

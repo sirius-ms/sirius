@@ -43,6 +43,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -667,8 +668,8 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public synchronized void saveSiriusResult(List<FTree> treesSortedByScore) {
-        treesSortedByScore.forEach(this::newFormulaResultWithUniqueId);
+    public synchronized void saveSiriusResult(List<IdentificationResult> idResultsSortedByScore) {
+        idResultsSortedByScore.stream().map(IdentificationResult::getTree).forEach(this::newFormulaResultWithUniqueId);
     }
 
     @Override
