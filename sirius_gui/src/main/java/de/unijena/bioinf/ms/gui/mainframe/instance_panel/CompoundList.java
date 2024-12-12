@@ -137,8 +137,11 @@ public class CompoundList {
                 l.setLoading(true, true);
 
             if (!e.getValueIsAdjusting()) {
+                //we only enable listener for first selected because this is the one where results are visible.
                 compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                compountListSelectionModel.getSelected().forEach(InstanceBean::enableProjectSpaceListener);
+                compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+                if (!compountListSelectionModel.isSelectionEmpty())
+                    compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
                 notifyListenerSelectionChange(e);
             }
         });
