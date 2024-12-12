@@ -18,51 +18,59 @@
  */
 
 package de.unijena.bioinf.ms.gui.table;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 25.01.17.
- */
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import lombok.Setter;
 
 import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCellRenderer {
+    //View modes
+    protected final PercentageMode percentageMode;
+    protected final boolean printMaxValue;
+
+
     protected Color[] colors = {Colors.FormulasView.SCORE_BAR, Colors.FormulasView.SCORE_BAR, Colors.FormulasView.SCORE_BAR}; //it is now one-color-only. Keep it as gradient for simplicity and easier updating
     protected float[] fractions = {.1f, .5f, 1f};
     protected float[] fractionsTwoWay = {.3f, 1f};
 
-    private double percentageValue;
-    protected final boolean percentage;
-    protected final boolean printValues;
+    public enum PercentageMode {
+        DEACTIVATED,
+        NO_TRANFORMATION,
+        MULTIPLY_PROBABILITIES,
+        NORMALIZE_TO_MAXIMUM,
+        NORMALIZE_TO_SUM
+    }
 
+    private double percentageValue;
     private boolean selected;
 
     private String max;
     private float thresh;
     private float toFill;
+    @Setter
     private boolean twoWayBar = false;
-    private float twoWayBarThresh = 0.5f;
 
     public AbstractBarTableCellRenderer() {
-        this(-1, false, false, null);
+        this(-1, PercentageMode.DEACTIVATED, false, null);
     }
 
-    public AbstractBarTableCellRenderer(int highlightColumn, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
+    public AbstractBarTableCellRenderer(int highlightColumn, PercentageMode percentageMode, boolean printMaxValue, NumberFormat lableFormat) {
         super(highlightColumn, lableFormat);
-        this.percentage = percentage;
-        this.printValues = printMaxValue;
+        this.percentageMode = percentageMode;
+        this.printMaxValue = printMaxValue;
     }
 
     protected abstract double getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
 
     protected abstract double getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
+
+    protected abstract double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column);
 
     //override this method if want a threshold line
     protected double getThresh(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -75,7 +83,13 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
     }
 
     protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return percentage ? (value / getMax(table, isSelected, hasFocus, row, column) * 100d) : Double.NaN;
+        return switch (percentageMode) {
+            case NO_TRANFORMATION -> value;
+            case MULTIPLY_PROBABILITIES -> value * 100d;
+            case NORMALIZE_TO_MAXIMUM -> value / getMax(table, isSelected, hasFocus, row, column) * 100d;
+            case NORMALIZE_TO_SUM -> value / getSum(table, isSelected, hasFocus, row, column) * 100d;
+            default -> Double.NaN;
+        };
     }
 
 
@@ -147,24 +161,16 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
                 v = "N/A";
             }else {
                 v = nf.format(percentageValue) + "%";
-                if (printValues)
+                if (printMaxValue)
                     v = v + " (" + value + "/" + max + ")";
             }
-        } else if (printValues) {
+        } else if (printMaxValue) {
             maxWord = g2d.getFontMetrics().stringWidth(max + "/" + max);
             v = value + "/" + max;
         }
 
 
         g2d.drawString(v, (getWidth() / 2) + (maxWord / 2) - (g2d.getFontMetrics().stringWidth(v)), (getHeight() - 4));
-    }
-
-    public void setTwoWayBar(boolean twoWayBar) {
-        this.twoWayBar = twoWayBar;
-    }
-
-    public void setTwoWayBarThresh(float twoWayBarThresh) {
-        this.twoWayBarThresh = twoWayBarThresh;
     }
 }
 
