@@ -37,7 +37,7 @@ public class FormulaListCompactView extends ActionListView<FormulaList> {
     public FormulaListCompactView(FormulaList source) {
         super(source);
         list = new JList<>(new DefaultEventListModel<>(source.getElementList()));
-        list.setCellRenderer(new FormulaListTextCellRenderer(source.getBestFunc(), source.getRenderScoreFunc()));
+        list.setCellRenderer(new FormulaListTextCellRenderer(source.getBestHitFunction(), source.getRenderScoreFunction()));
         list.setSelectionModel(source.getElementListSelectionModel());
         list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
         list.setVisibleRowCount(1);
