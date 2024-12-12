@@ -111,12 +111,15 @@ public class InstanceBean implements SiriusPCS {
         this.listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue() != null) {
-                    if (("project.updateInstance" + getFeatureId()).equals(evt.getPropertyName())) {
+                if (("project.updateInstance" + getFeatureId()).equals(evt.getPropertyName())) {
+                    if (evt.getNewValue() != null) {
                         clearCache(evt.getNewValue());
                     } else {
-                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", evt.getPropertyName(), getFeatureId());
+                        if (pcsEnabled.get()) //fire without invalidation, e.g. if some in memory updates happened.
+                            pcs.firePropertyChange("instance.updated", null, null);
                     }
+                } else {
+                    LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", evt.getPropertyName(), getFeatureId());
                 }
             }
         };

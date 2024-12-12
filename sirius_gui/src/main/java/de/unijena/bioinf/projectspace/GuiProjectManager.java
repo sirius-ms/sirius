@@ -20,6 +20,7 @@
 package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -116,7 +117,7 @@ public class GuiProjectManager implements Closeable {
             protected Void compute() throws Exception {
                 Object event;
                 while ((event = eventQueue.take()) != stopper) {
-                    if (event instanceof DataImportEvent importEvent){
+                    if (event instanceof DataImportEvent importEvent) {
                         //import job handling
                         List<String> idsToImport = importEvent.getImportedFeatureIds();
                         if (!idsToImport.isEmpty()) {
@@ -140,7 +141,7 @@ public class GuiProjectManager implements Closeable {
                                 siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false, true);
                             }
                         }
-                    }else if (event instanceof BackgroundComputationsStateEvent computeEvent) {
+                    } else if (event instanceof BackgroundComputationsStateEvent computeEvent) {
                         checkForInterruption();
                         // todo maybe handle batch delete like this in the future
                         { //compute jobs handling, just to updated compute state in gui without delay.
@@ -160,7 +161,11 @@ public class GuiProjectManager implements Closeable {
                                 } finally {
                                     INSTANCE_LIST.getReadWriteLock().readLock().unlock();
                                     // we just repaint since the compute state has no influence on sorting or filtering
-                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
+                                    DefaultEventSelectionModel<InstanceBean> m = siriusGui.getMainFrame().getCompoundListSelectionModel();
+                                    if (!m.isSelectionEmpty())
+                                        GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + m.getSelected().getFirst().getFeatureId(), null, null);
+                                    else
+                                        Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                                 }
                             }
                         }
