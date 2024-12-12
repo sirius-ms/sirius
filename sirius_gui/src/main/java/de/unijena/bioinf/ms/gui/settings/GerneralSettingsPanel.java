@@ -114,7 +114,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
                 new WarningDialog(gui.getMainFrame(),
                         "Activate spectral library results tab",
                         GuiUtils.formatToolTip(
-                                "SIRIUS automatically searches in your spectral libraries as part of the molecular formula annotation step." +
+                                "SIRIUS automatically searches in your spectral libraries as part of the molecular formula annotation step. " +
                                 "Library hits can be viewed via the \"Structures\" tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
                                 "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"Structures\" tab.", "",
                                 "NOTE: In SIRIUS, each spectral library is also a molecular structure database. ANY hit in this library can also be found via CSI:FingerID structure database search. " +
