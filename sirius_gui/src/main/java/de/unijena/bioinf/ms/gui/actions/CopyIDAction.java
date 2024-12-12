@@ -40,7 +40,7 @@ public class CopyIDAction extends AbstractGuiAction {
         super("Copy ID(s)", gui);
         putValue(Action.SHORT_DESCRIPTION, "Copy IDs of selected features");
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
+        setEnabled(!this.mainFrame.getCompoundListSelectionModel().isSelectionEmpty());
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -48,7 +48,7 @@ public class CopyIDAction extends AbstractGuiAction {
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
-                setEnabled(SiriusActions.notComputingOrEmpty(selected));
+                setEnabled(!selection.isSelectionEmpty());
             }
         });
     }
