@@ -90,7 +90,7 @@ ext {
     jakarta_annotation_version = "3.0.0"
 
 
-    spring_boot_version = "3.3.1"
+    spring_boot_version = "3.4.0"
     springdoc_version = "2.3.0"
 
     junit_version = '5.10.3'
