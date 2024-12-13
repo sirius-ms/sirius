@@ -62,6 +62,7 @@ openApiGenerate {
     generatorName.set("java")
     inputSpec.set("$rootDir/sirius_rest_service/openapi-spec.json")
     outputDir.set("$projectDir/sirius-sdk.openapi")
+    templateDir.set("$projectDir/templates")
     apiPackage.set("io.sirius.ms.sdk.api")
     invokerPackage.set("io.sirius.ms.sdk.client")
     modelPackage.set("io.sirius.ms.sdk.model")

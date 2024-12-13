@@ -2,7 +2,7 @@
 
 SIRIUS Nightsky API
 
-- API version: 2.1
+- API version: 3.0
 
 - Generator version: 7.6.0
 
@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>6.1.0-SNAPSHOT</version>
+  <version>3.0+sirius6.1.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:6.1.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.0+sirius6.1.0-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-6.1.0-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.0+sirius6.1.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
