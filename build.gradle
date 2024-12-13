@@ -91,7 +91,7 @@ ext {
 
 
     spring_boot_version = "3.4.0"
-    springdoc_version = "2.3.0"
+    springdoc_version = "2.6.0"
 
     junit_version = '5.10.3'
 

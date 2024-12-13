@@ -7,7 +7,7 @@ import io.sirius.ms.sdk.model.Compound;
 import io.sirius.ms.sdk.model.CompoundImport;
 import io.sirius.ms.sdk.model.CompoundOptField;
 import io.sirius.ms.sdk.model.InstrumentProfile;
-import io.sirius.ms.sdk.model.PageCompound;
+import io.sirius.ms.sdk.model.PagedModelCompound;
 import io.sirius.ms.sdk.model.TraceSet;
 
 import java.util.HashMap;
@@ -508,7 +508,7 @@ public class CompoundsApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
-     * @return PageCompound
+     * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getCompoundsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
@@ -542,7 +542,7 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/compounds/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -556,11 +556,11 @@ public class CompoundsApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
-     * @return PageCompound
+     * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+    public PagedModelCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
@@ -574,11 +574,11 @@ public class CompoundsApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
-     * @return ResponseEntity&lt;PageCompound&gt;
+     * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
+    public ResponseEntity<PagedModelCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
