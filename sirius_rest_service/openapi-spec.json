@@ -1252,15 +1252,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "parameters",
-            "in": "query",
-            "description": "Parameters for feature alignment and feature finding.",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/LcmsSubmissionParameters"
-            }
           }
         ],
         "requestBody": {
@@ -1276,6 +1267,9 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "parameters": {
+                    "$ref": "#/components/schemas/LcmsSubmissionParameters"
                   }
                 }
               }
@@ -1316,15 +1310,6 @@
             }
           },
           {
-            "name": "parameters",
-            "in": "query",
-            "description": "Parameters for feature alignment and feature finding.",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/LcmsSubmissionParameters"
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -1353,6 +1338,9 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "parameters": {
+                    "$ref": "#/components/schemas/LcmsSubmissionParameters"
                   }
                 }
               }
@@ -1797,12 +1785,12 @@
           "200": {
             "description": "Probably modified name of the config (to ensure filesystem path compatibility).",
             "content": {
-              "text/plain": {
+              "application/problem+json": {
                 "schema": {
                   "type": "string"
                 }
               },
-              "application/problem+json": {
+              "text/plain": {
                 "schema": {
                   "type": "string"
                 }
@@ -2149,12 +2137,12 @@
                   "type": "object"
                 }
               },
-              "application/vnd.spring-boot.actuator.v2+json": {
+              "application/json": {
                 "schema": {
                   "type": "object"
                 }
               },
-              "application/json": {
+              "application/vnd.spring-boot.actuator.v2+json": {
                 "schema": {
                   "type": "object"
                 }
@@ -2220,6 +2208,11 @@
             "description": "OK",
             "content": {
               "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/CSV": {
                 "schema": {
                   "type": "string"
                 }
@@ -2411,7 +2404,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageJob"
+                  "$ref": "#/components/schemas/PagedModelJob"
                 }
               }
             }
@@ -2489,6 +2482,11 @@
             "description": "OK",
             "content": {
               "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/CSV": {
                 "schema": {
                   "type": "string"
                 }
@@ -2729,7 +2727,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageCompound"
+                  "$ref": "#/components/schemas/PagedModelCompound"
                 }
               }
             }
@@ -2768,6 +2766,11 @@
             "description": "OK",
             "content": {
               "application/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/CSV": {
                 "schema": {
                   "type": "string"
                 }
@@ -3248,7 +3251,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageSpectralLibraryMatch"
+                  "$ref": "#/components/schemas/PagedModelSpectralLibraryMatch"
                 }
               }
             }
@@ -4065,7 +4068,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateScored"
+                  "$ref": "#/components/schemas/PagedModelStructureCandidateScored"
                 }
               }
             }
@@ -4230,7 +4233,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateScored"
+                  "$ref": "#/components/schemas/PagedModelStructureCandidateScored"
                 }
               }
             }
@@ -4534,7 +4537,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageFormulaCandidate"
+                  "$ref": "#/components/schemas/PagedModelFormulaCandidate"
                 }
               }
             }
@@ -4681,7 +4684,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
+                  "$ref": "#/components/schemas/PagedModelStructureCandidateFormula"
                 }
               }
             }
@@ -4828,7 +4831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
+                  "$ref": "#/components/schemas/PagedModelStructureCandidateFormula"
                 }
               }
             }
@@ -4908,7 +4911,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageAlignedFeature"
+                  "$ref": "#/components/schemas/PagedModelAlignedFeature"
                 }
               }
             }
@@ -5341,12 +5344,12 @@
                   "type": "object"
                 }
               },
-              "application/vnd.spring-boot.actuator.v2+json": {
+              "application/json": {
                 "schema": {
                   "type": "object"
                 }
               },
-              "application/json": {
+              "application/vnd.spring-boot.actuator.v2+json": {
                 "schema": {
                   "type": "object"
                 }
@@ -7666,89 +7669,38 @@
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
       },
-      "PageJob": {
+      "PageMetadata": {
         "type": "object",
         "properties": {
-          "totalPages": {
+          "size": {
             "type": "integer",
-            "format": "int32"
+            "format": "int64"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int64"
           },
           "totalElements": {
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
+          "totalPages": {
             "type": "integer",
-            "format": "int32"
-          },
+            "format": "int64"
+          }
+        }
+      },
+      "PagedModelJob": {
+        "type": "object",
+        "properties": {
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Job"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageableObject": {
-        "type": "object",
-        "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unpaged": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SortObject": {
-        "type": "object",
-        "properties": {
-          "empty": {
-            "type": "boolean"
-          },
-          "sorted": {
-            "type": "boolean"
-          },
-          "unsorted": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
@@ -7879,49 +7831,17 @@
           }
         }
       },
-      "PageCompound": {
+      "PagedModelCompound": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Compound"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
@@ -7958,49 +7878,17 @@
           }
         }
       },
-      "PageSpectralLibraryMatch": {
+      "PagedModelSpectralLibraryMatch": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
@@ -8174,95 +8062,31 @@
           "libraryMatches"
         ]
       },
-      "PageStructureCandidateScored": {
+      "PagedModelStructureCandidateScored": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StructureCandidateScored"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
-      "PageFormulaCandidate": {
+      "PagedModelFormulaCandidate": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FormulaCandidate"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
@@ -8339,95 +8163,31 @@
           }
         }
       },
-      "PageStructureCandidateFormula": {
+      "PagedModelStructureCandidateFormula": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StructureCandidateFormula"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },
-      "PageAlignedFeature": {
+      "PagedModelAlignedFeature": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
           "content": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
+          "page": {
+            "$ref": "#/components/schemas/PageMetadata"
           }
         }
       },

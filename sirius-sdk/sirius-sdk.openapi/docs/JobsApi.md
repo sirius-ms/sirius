@@ -633,7 +633,7 @@ No authorization required
 
 ## getJobsPaged
 
-> PageJob getJobsPaged(projectId, page, size, sort, optFields)
+> PagedModelJob getJobsPaged(projectId, page, size, sort, optFields)
 
 Get Page of jobs with information such as current state and progress (if available).
 
@@ -661,7 +661,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
+            PagedModelJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobsPaged");
@@ -687,7 +687,7 @@ public class Example {
 
 ### Return type
 
-[**PageJob**](PageJob.md)
+[**PagedModelJob**](PagedModelJob.md)
 
 ### Authorization
 
@@ -832,7 +832,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: text/plain, application/problem+json
+- **Accept**: application/problem+json, text/plain
 
 
 ### HTTP response details

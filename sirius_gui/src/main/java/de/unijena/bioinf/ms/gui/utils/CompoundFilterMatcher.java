@@ -139,7 +139,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (k == 0)
             return false;
 
-        final PageStructureCandidateFormula candidates = item.getStructureCandidatesPage(k, false);
+        final PagedModelStructureCandidateFormula candidates = item.getStructureCandidatesPage(k, false);
 
         if (candidates == null || candidates.getContent() == null || candidates.getContent().isEmpty())
             return false;

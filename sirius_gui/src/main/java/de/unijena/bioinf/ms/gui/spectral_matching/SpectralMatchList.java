@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.PageStructureCandidateFormula;
+import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import lombok.Getter;
 
 import java.util.*;
@@ -226,7 +226,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
      * @return false if no further candidates are available
      */
     private boolean loadNextPage(Map<String, Double> structureCandidates, InstanceBean instanceBean, int pageNum, int pageSize) {
-        PageStructureCandidateFormula page = instanceBean.getStructureCandidatesPage(pageNum, pageSize, false);
+        PagedModelStructureCandidateFormula page = instanceBean.getStructureCandidatesPage(pageNum, pageSize, false);
         if (page == null || page.getContent() == null || page.getContent().isEmpty()) return false;
 
         page.getContent().stream().filter(c -> Objects.nonNull(c.getInchiKey())).forEach( c -> {

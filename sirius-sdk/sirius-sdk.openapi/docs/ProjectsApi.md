@@ -288,7 +288,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -354,7 +354,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -420,7 +420,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -561,7 +561,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, parameters, inputFiles)
+> ImportResult importMsRunData(projectId, inputFiles, parameters)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -584,10 +584,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, parameters, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, inputFiles, parameters);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -606,8 +606,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
 
 ### Return type
 
@@ -631,7 +631,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, parameters, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, optFields, inputFiles, parameters)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -654,11 +654,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, parameters, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, optFields, inputFiles, parameters);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -677,9 +677,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
 
 ### Return type
 
