@@ -366,7 +366,7 @@ No authorization required
 
 ## getCompoundsPaged
 
-> PageCompound getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures)
+> PagedModelCompound getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures)
 
 Page of available compounds (group of ion identities) in the given project-space.
 
@@ -395,7 +395,7 @@ public class Example {
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            PageCompound result = apiInstance.getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures);
+            PagedModelCompound result = apiInstance.getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundsPaged");
@@ -422,7 +422,7 @@ public class Example {
 
 ### Return type
 
-[**PageCompound**](PageCompound.md)
+[**PagedModelCompound**](PagedModelCompound.md)
 
 ### Authorization
 

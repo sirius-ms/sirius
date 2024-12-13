@@ -6,7 +6,7 @@ import io.sirius.ms.sdk.model.CommandSubmission;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.JobSubmission;
-import io.sirius.ms.sdk.model.PageJob;
+import io.sirius.ms.sdk.model.PagedModelJob;
 
 import java.util.HashMap;
 import java.util.List;
@@ -760,7 +760,7 @@ public class JobsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageJob
+     * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getJobsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
@@ -793,7 +793,7 @@ public class JobsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
+        ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/jobs/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -806,11 +806,11 @@ public class JobsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageJob
+     * @return PagedModelJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageJob getJobsPaged(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
+    public PagedModelJob getJobsPaged(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
         return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -823,11 +823,11 @@ public class JobsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageJob&gt;
+     * @return ResponseEntity&lt;PagedModelJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageJob> getJobsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
+    public ResponseEntity<PagedModelJob> getJobsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelJob> localVarReturnType = new ParameterizedTypeReference<PagedModelJob>() {};
         return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -959,7 +959,7 @@ public class JobsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
         
         final String[] localVarAccepts = { 
-            "text/plain", "application/problem+json"
+            "application/problem+json", "text/plain"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 

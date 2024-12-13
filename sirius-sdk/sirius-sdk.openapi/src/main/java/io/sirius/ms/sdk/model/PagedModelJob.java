@@ -20,104 +20,88 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.PageMetadata;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * SortObject
+ * PagedModelJob
  */
 @JsonPropertyOrder({
-  SortObject.JSON_PROPERTY_EMPTY,
-  SortObject.JSON_PROPERTY_SORTED,
-  SortObject.JSON_PROPERTY_UNSORTED
+  PagedModelJob.JSON_PROPERTY_CONTENT,
+  PagedModelJob.JSON_PROPERTY_PAGE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class SortObject {
-  public static final String JSON_PROPERTY_EMPTY = "empty";
-  private Boolean empty;
+public class PagedModelJob {
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<Job> content = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_SORTED = "sorted";
-  private Boolean sorted;
+  public static final String JSON_PROPERTY_PAGE = "page";
+  private PageMetadata page;
 
-  public static final String JSON_PROPERTY_UNSORTED = "unsorted";
-  private Boolean unsorted;
-
-  public SortObject() {
+  public PagedModelJob() {
   }
 
-  public SortObject empty(Boolean empty) {
+  public PagedModelJob content(List<Job> content) {
     
-    this.empty = empty;
+    this.content = content;
+    return this;
+  }
+
+  public PagedModelJob addContentItem(Job contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
     return this;
   }
 
    /**
-   * Get empty
-   * @return empty
+   * Get content
+   * @return content
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isEmpty() {
-    return empty;
+  public List<Job> getContent() {
+    return content;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEmpty(Boolean empty) {
-    this.empty = empty;
+  public void setContent(List<Job> content) {
+    this.content = content;
   }
 
-  public SortObject sorted(Boolean sorted) {
+  public PagedModelJob page(PageMetadata page) {
     
-    this.sorted = sorted;
+    this.page = page;
     return this;
   }
 
    /**
-   * Get sorted
-   * @return sorted
+   * Get page
+   * @return page
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORTED)
+  @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isSorted() {
-    return sorted;
+  public PageMetadata getPage() {
+    return page;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_SORTED)
+  @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSorted(Boolean sorted) {
-    this.sorted = sorted;
-  }
-
-  public SortObject unsorted(Boolean unsorted) {
-    
-    this.unsorted = unsorted;
-    return this;
-  }
-
-   /**
-   * Get unsorted
-   * @return unsorted
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_UNSORTED)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isUnsorted() {
-    return unsorted;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_UNSORTED)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUnsorted(Boolean unsorted) {
-    this.unsorted = unsorted;
+  public void setPage(PageMetadata page) {
+    this.page = page;
   }
 
   @Override
@@ -128,24 +112,22 @@ public class SortObject {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SortObject sortObject = (SortObject) o;
-    return Objects.equals(this.empty, sortObject.empty) &&
-        Objects.equals(this.sorted, sortObject.sorted) &&
-        Objects.equals(this.unsorted, sortObject.unsorted);
+    PagedModelJob pagedModelJob = (PagedModelJob) o;
+    return Objects.equals(this.content, pagedModelJob.content) &&
+        Objects.equals(this.page, pagedModelJob.page);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(empty, sorted, unsorted);
+    return Objects.hash(content, page);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SortObject {\n");
-    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
-    sb.append("    sorted: ").append(toIndentedString(sorted)).append("\n");
-    sb.append("    unsorted: ").append(toIndentedString(unsorted)).append("\n");
+    sb.append("class PagedModelJob {\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
+    sb.append("    page: ").append(toIndentedString(page)).append("\n");
     sb.append("}");
     return sb.toString();
   }
