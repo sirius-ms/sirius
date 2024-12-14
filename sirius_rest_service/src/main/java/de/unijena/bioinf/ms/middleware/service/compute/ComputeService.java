@@ -55,6 +55,9 @@ public interface ComputeService extends DisposableBean {
     Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission<?> importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
+    Job createAndSubmitFoldChangeForBlankSubtractionJob(@NotNull Project<?> project, List<String> sampleRunIds, List<String> blankRunIds, List<String> controlRunIds,
+                                     @NotNull EnumSet<Job.OptField> optFields);
+
     Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target,
                                      @NotNull EnumSet<Job.OptField> optFields);
 

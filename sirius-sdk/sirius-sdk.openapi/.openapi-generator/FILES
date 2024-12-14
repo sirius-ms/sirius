@@ -27,6 +27,7 @@ docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundStatisticsApi.md
 docs/CompoundsApi.md
+docs/ComputeFoldChangeForBlankSubtractionRequest.md
 docs/ComputedSubtools.md
 docs/ConfidenceMode.md
 docs/ConnectionCheck.md
@@ -170,6 +171,7 @@ src/main/java/io/sirius/ms/sdk/model/CompoundClasses.java
 src/main/java/io/sirius/ms/sdk/model/CompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/CompoundImport.java
 src/main/java/io/sirius/ms/sdk/model/CompoundOptField.java
+src/main/java/io/sirius/ms/sdk/model/ComputeFoldChangeForBlankSubtractionRequest.java
 src/main/java/io/sirius/ms/sdk/model/ComputedSubtools.java
 src/main/java/io/sirius/ms/sdk/model/ConfidenceMode.java
 src/main/java/io/sirius/ms/sdk/model/ConnectionCheck.java

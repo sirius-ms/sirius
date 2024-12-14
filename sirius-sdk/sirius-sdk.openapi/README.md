@@ -237,6 +237,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
 *RunsApi* | [**addGroup**](docs/RunsApi.md#addGroup) | **PUT** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
 *RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | **EXPERIMENTAL** Add tags to a run in the project
+*RunsApi* | [**computeFoldChangeForBlankSubtraction**](docs/RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
 *RunsApi* | [**deleteGroup**](docs/RunsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
 *RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
 *RunsApi* | [**getGroupByName**](docs/RunsApi.md#getGroupByName) | **GET** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space
@@ -291,6 +292,7 @@ Class | Method | HTTP request | Description
  - [CompoundFoldChange](docs/CompoundFoldChange.md)
  - [CompoundImport](docs/CompoundImport.md)
  - [CompoundOptField](docs/CompoundOptField.md)
+ - [ComputeFoldChangeForBlankSubtractionRequest](docs/ComputeFoldChangeForBlankSubtractionRequest.md)
  - [ComputedSubtools](docs/ComputedSubtools.md)
  - [ConfidenceMode](docs/ConfidenceMode.md)
  - [ConnectionCheck](docs/ConnectionCheck.md)

@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**addGroup**](RunsApi.md#addGroup) | **PUT** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Group tags in the project |
 | [**addTags**](RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | **EXPERIMENTAL** Add tags to a run in the project |
+| [**computeFoldChangeForBlankSubtraction**](RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter |
 | [**deleteGroup**](RunsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space |
 | [**deleteTags**](RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space |
 | [**getGroupByName**](RunsApi.md#getGroupByName) | **GET** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space |
@@ -158,6 +159,76 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the tags that have been added |  -  |
+
+
+## computeFoldChangeForBlankSubtraction
+
+> Job computeFoldChangeForBlankSubtraction(projectId, computeFoldChangeForBlankSubtractionRequest, optFields)
+
+**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+
+**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to compute the fold change in.
+        ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest = new ComputeFoldChangeForBlankSubtractionRequest(); // ComputeFoldChangeForBlankSubtractionRequest | list of run IDs that are sample runs
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
+        try {
+            Job result = apiInstance.computeFoldChangeForBlankSubtraction(projectId, computeFoldChangeForBlankSubtractionRequest, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#computeFoldChangeForBlankSubtraction");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to compute the fold change in. | |
+| **computeFoldChangeForBlankSubtractionRequest** | [**ComputeFoldChangeForBlankSubtractionRequest**](ComputeFoldChangeForBlankSubtractionRequest.md)| list of run IDs that are sample runs | |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## deleteGroup

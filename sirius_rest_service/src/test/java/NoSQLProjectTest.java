@@ -433,7 +433,7 @@ public class NoSQLProjectTest {
             project.addTagGroup("sample", "category:sample AND text:sample", "type1");
             project.addTagGroup("blank", "category:sample AND text:blank", "type1");
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
             List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
             Assert.assertEquals(1, fc.size());
@@ -454,8 +454,8 @@ public class NoSQLProjectTest {
             Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
             ps.getStorage().insertAll(List.of(f21, f22));
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
             StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantificationType.APEX_INTENSITY);
             StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantificationType.APEX_INTENSITY);
