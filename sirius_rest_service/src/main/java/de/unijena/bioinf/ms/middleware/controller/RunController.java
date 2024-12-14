@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
+import de.unijena.bioinf.ms.middleware.model.statistics.SampleTypeFoldChangeRequest;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -103,22 +104,23 @@ public class RunController implements TagController<Run, Run.OptField> {
      *
      * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
      *
-     * @param projectId     project-space to compute the fold change in.
-     * @param sampleRunIds  list of run IDs that are sample runs
-     * @param blankRunIds   list of run IDs that are blank runs
-     * @param controlRunIds list of run IDs that are control runs
-     * @param optFields     job opt fields.
+     * @param projectId project-space to compute the fold change in.
+     * @param request   request with lists of run IDs that are sample, blank, and control runs
+     * @param optFields job opt fields.
      * @return
      */
     @PutMapping(value = "/blanksubtract/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
     public Job computeFoldChangeForBlankSubtraction(
             @PathVariable String projectId,
-            @RequestBody List<String> sampleRunIds,
-            @RequestBody List<String> blankRunIds,
-            @RequestBody List<String> controlRunIds,
+            @RequestBody @Valid SampleTypeFoldChangeRequest request,
             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
-        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(getProjectsProvider().getProjectOrThrow(projectId), sampleRunIds, blankRunIds, controlRunIds, removeNone(optFields));
+        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(
+                getProjectsProvider().getProjectOrThrow(projectId),
+                request.getSampleRunIds(),
+                request.getBlankRunIds(),
+                request.getControlRunIds(),
+                removeNone(optFields));
     }
 
     /**

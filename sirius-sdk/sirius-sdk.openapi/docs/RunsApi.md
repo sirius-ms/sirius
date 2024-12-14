@@ -163,7 +163,7 @@ No authorization required
 
 ## computeFoldChangeForBlankSubtraction
 
-> Job computeFoldChangeForBlankSubtraction(projectId, computeFoldChangeForBlankSubtractionRequest, optFields)
+> Job computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields)
 
 **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
 
@@ -186,10 +186,10 @@ public class Example {
 
         RunsApi apiInstance = new RunsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to compute the fold change in.
-        ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest = new ComputeFoldChangeForBlankSubtractionRequest(); // ComputeFoldChangeForBlankSubtractionRequest | list of run IDs that are sample runs
+        SampleTypeFoldChangeRequest sampleTypeFoldChangeRequest = new SampleTypeFoldChangeRequest(); // SampleTypeFoldChangeRequest | request with lists of run IDs that are sample, blank, and control runs
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
         try {
-            Job result = apiInstance.computeFoldChangeForBlankSubtraction(projectId, computeFoldChangeForBlankSubtractionRequest, optFields);
+            Job result = apiInstance.computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#computeFoldChangeForBlankSubtraction");
@@ -208,7 +208,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to compute the fold change in. | |
-| **computeFoldChangeForBlankSubtractionRequest** | [**ComputeFoldChangeForBlankSubtractionRequest**](ComputeFoldChangeForBlankSubtractionRequest.md)| list of run IDs that are sample runs | |
+| **sampleTypeFoldChangeRequest** | [**SampleTypeFoldChangeRequest**](SampleTypeFoldChangeRequest.md)| request with lists of run IDs that are sample, blank, and control runs | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
 
 ### Return type

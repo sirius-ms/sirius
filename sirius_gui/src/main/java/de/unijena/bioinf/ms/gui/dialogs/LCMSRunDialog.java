@@ -175,19 +175,18 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
 
             for (Map.Entry<String, String> entry : sampleTypes.entrySet()) {
                 switch (entry.getValue()) {
-                    case BlankSubtraction.SAMPLE: samples.add(entry.getValue()); break;
-                    case BlankSubtraction.BLANK: blanks.add(entry.getValue()); break;
-                    case BlankSubtraction.CTRL: controls.add(entry.getValue()); break;
+                    case BlankSubtraction.SAMPLE: samples.add(entry.getKey()); break;
+                    case BlankSubtraction.BLANK: blanks.add(entry.getKey()); break;
+                    case BlankSubtraction.CTRL: controls.add(entry.getKey()); break;
                     default: break;
                 }
             }
             gui.acceptSiriusClient((client, pid) -> {
-                ComputeFoldChangeForBlankSubtractionRequest request = new ComputeFoldChangeForBlankSubtractionRequest();
+                SampleTypeFoldChangeRequest request = new SampleTypeFoldChangeRequest();
                 request.setSampleRunIds(new ArrayList<>(samples));
                 request.setBlankRunIds(new ArrayList<>(blanks));
                 request.setControlRunIds(new ArrayList<>(controls));
 
-                // FIXME jackson error
                 Job job = client.runs().computeFoldChangeForBlankSubtraction(pid, request, List.of(JobOptField.PROGRESS));
             });
             // TODO show progress for workflow
