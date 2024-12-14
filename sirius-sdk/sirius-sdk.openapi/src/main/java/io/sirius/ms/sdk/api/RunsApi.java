@@ -2,6 +2,9 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
+import io.sirius.ms.sdk.model.ComputeFoldChangeForBlankSubtractionRequest;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.PageRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
@@ -244,6 +247,96 @@ public class RunsApi {
      */
     public ResponseSpec addTagsWithResponseSpec(String projectId, String runId, List<Tag> tag) throws WebClientResponseException {
         return addTagsRequestCreation(projectId, runId, tag);
+    }
+    /**
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param computeFoldChangeForBlankSubtractionRequest list of run IDs that are sample runs
+     * @param optFields job opt fields.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec computeFoldChangeForBlankSubtractionRequestCreation(String projectId, ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = computeFoldChangeForBlankSubtractionRequest;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeFoldChangeForBlankSubtraction", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'computeFoldChangeForBlankSubtractionRequest' is set
+        if (computeFoldChangeForBlankSubtractionRequest == null) {
+            throw new WebClientResponseException("Missing the required parameter 'computeFoldChangeForBlankSubtractionRequest' when calling computeFoldChangeForBlankSubtraction", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/blanksubtract/compute", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param computeFoldChangeForBlankSubtractionRequest list of run IDs that are sample runs
+     * @param optFields job opt fields.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job computeFoldChangeForBlankSubtraction(String projectId, ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return computeFoldChangeForBlankSubtractionRequestCreation(projectId, computeFoldChangeForBlankSubtractionRequest, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param computeFoldChangeForBlankSubtractionRequest list of run IDs that are sample runs
+     * @param optFields job opt fields.
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> computeFoldChangeForBlankSubtractionWithHttpInfo(String projectId, ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return computeFoldChangeForBlankSubtractionRequestCreation(projectId, computeFoldChangeForBlankSubtractionRequest, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * <p><b>200</b> - OK
+     * @param projectId project-space to compute the fold change in.
+     * @param computeFoldChangeForBlankSubtractionRequest list of run IDs that are sample runs
+     * @param optFields job opt fields.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec computeFoldChangeForBlankSubtractionWithResponseSpec(String projectId, ComputeFoldChangeForBlankSubtractionRequest computeFoldChangeForBlankSubtractionRequest, List<JobOptField> optFields) throws WebClientResponseException {
+        return computeFoldChangeForBlankSubtractionRequestCreation(projectId, computeFoldChangeForBlankSubtractionRequest, optFields);
     }
     /**
      * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space

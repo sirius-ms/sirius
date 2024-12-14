@@ -50,9 +50,7 @@ public class CompoundFoldChange {
     
     MIN("MIN"),
     
-    MAX("MAX"),
-    
-    MEDIAN("MEDIAN");
+    MAX("MAX");
 
     private String value;
 

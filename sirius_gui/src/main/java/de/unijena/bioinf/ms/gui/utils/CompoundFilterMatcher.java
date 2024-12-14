@@ -22,6 +22,7 @@ import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -36,10 +37,12 @@ import java.util.Set;
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
     private final GuiProperties properties;
+//    private final SiriusGui gui;
 
     public CompoundFilterMatcher(GuiProperties properties, CompoundFilterModel filterModel) {
         this.filterModel = filterModel;
         this.properties = properties;
+//        this.gui = gui;
     }
 
     @Override
@@ -92,6 +95,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
+        if (filterModel.getBlankSubtraction().isEnabled())
+            if (!matchesFoldChangeFilter(item, filterModel)) return false;
+
         if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
             AlignedFeatureQuality qualityReport = item.getQualityReport();
             if (qualityReport != null) { //always allow to pass the filter if now quality data is available
@@ -117,6 +123,10 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesDBFilter(item, filterModel)) return false;
 
         return true;
+    }
+
+    private boolean matchesFoldChangeFilter(InstanceBean item, CompoundFilterModel filterModel) {
+        return filterModel.getBlankSubtraction().matches(item);
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {

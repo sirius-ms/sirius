@@ -437,6 +437,85 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/blanksubtract/compute": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter",
+        "description": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "computeFoldChangeForBlankSubtraction",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to compute the fold change in.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "job opt fields.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "list of run IDs that are sample runs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sampleRunIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "blankRunIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "controlRunIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/copy": {
       "put": {
         "tags": [
@@ -607,8 +686,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -1107,8 +1185,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -4207,8 +4284,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -4286,8 +4362,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -6998,8 +7073,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -7077,8 +7151,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -10512,6 +10585,10 @@
             "type": "string",
             "description": "Informative, human-readable name of this run"
           },
+          "source": {
+            "type": "string",
+            "description": "Source location"
+          },
           "chromatography": {
             "type": "string",
             "nullable": true
@@ -10930,8 +11007,7 @@
             "enum": [
               "AVG",
               "MIN",
-              "MAX",
-              "MEDIAN"
+              "MAX"
             ]
           },
           "quantificationType": {
@@ -10999,8 +11075,7 @@
             "enum": [
               "AVG",
               "MIN",
-              "MAX",
-              "MEDIAN"
+              "MAX"
             ]
           },
           "quantification": {
@@ -11518,8 +11593,7 @@
             "enum": [
               "AVG",
               "MIN",
-              "MAX",
-              "MEDIAN"
+              "MAX"
             ]
           },
           "quantification": {

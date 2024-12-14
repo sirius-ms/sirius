@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.JobEffect;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
 import de.unijena.bioinf.ms.properties.ConfigType;
@@ -82,11 +83,13 @@ public final class BackgroundRuns {
     private final Set<String> computingInstances = new HashSet<>();
     //compute state lock end
 
+    private final Project<? extends ProjectSpaceManager> project;
     private final ProjectSpaceManager psm;
     private final InstanceBufferFactory<?> bufferfactory;
 
-    public BackgroundRuns(ProjectSpaceManager psm, InstanceBufferFactory<?> bufferFactory) {
-        this.psm = psm;
+    public BackgroundRuns(Project<? extends ProjectSpaceManager> project, InstanceBufferFactory<?> bufferFactory) {
+        this.project = project;
+        this.psm = project.getProjectSpaceManager();
         this.bufferfactory = bufferFactory;
     }
 
@@ -276,6 +279,12 @@ public final class BackgroundRuns {
         if (jobDecorator != null)
             jobDecorator.accept(run);
         return submitRunAndLockInstances(run);
+    }
+
+    public BackgroundRunJob runFoldChangesForBlankSubtraction(List<String> sampleRunIds, List<String> blankRunIds, List<String> ctrlRunIds) {
+        Workflow computation = new BlankSubtractionWorkflow(project, sampleRunIds, blankRunIds, ctrlRunIds);
+        return submitRunAndLockInstances(
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", null));
     }
 
     public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target) {

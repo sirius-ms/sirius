@@ -23,7 +23,6 @@
 | AVG | &quot;AVG&quot; |
 | MIN | &quot;MIN&quot; |
 | MAX | &quot;MAX&quot; |
-| MEDIAN | &quot;MEDIAN&quot; |
 
 
 
