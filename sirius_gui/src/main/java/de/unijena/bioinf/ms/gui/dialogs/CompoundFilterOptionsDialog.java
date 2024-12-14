@@ -183,17 +183,19 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             foldParameters.add(Box.createVerticalStrut(6));
             foldParameters.add(new JXTitledSeparator("Minimum Fold Change"));
 
-            blankSpinner = makeSpinner(2.0, 0.5, Double.POSITIVE_INFINITY, 1.0);
-            controlSpinner = makeSpinner(2.0, 0.5, Double.POSITIVE_INFINITY, 1.0);
+            blankSpinner = makeSpinner(filterModel.getBlankSubtraction().getBlankSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
+            controlSpinner = makeSpinner(filterModel.getBlankSubtraction().getCtrlSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
 
             blankFilter = new JCheckBox("sample/blank");
+            blankFilter.setSelected(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
             blankFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by blank feature intensity</html>");
 
             controlFilter = new JCheckBox("sample/control");
+            controlFilter.setSelected(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
             controlFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by control feature intensity</html>");
 
-            blankSpinner.setEnabled(false);
-            controlSpinner.setEnabled(false);
+            blankSpinner.setEnabled(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
+            controlSpinner.setEnabled(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
 
             blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected()));
             controlFilter.addChangeListener((e) -> controlSpinner.setEnabled(controlFilter.isSelected()));
