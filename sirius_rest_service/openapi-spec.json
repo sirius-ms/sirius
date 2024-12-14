@@ -472,31 +472,11 @@
           }
         ],
         "requestBody": {
-          "description": "list of run IDs that are sample runs",
+          "description": "request with lists of run IDs that are sample, blank, and control runs",
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "sampleRunIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "blankRunIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "controlRunIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                }
+                "$ref": "#/components/schemas/SampleTypeFoldChangeRequest"
               }
             }
           },
@@ -8368,6 +8348,29 @@
           },
           "groupType": {
             "type": "string"
+          }
+        }
+      },
+      "SampleTypeFoldChangeRequest": {
+        "type": "object",
+        "properties": {
+          "sampleRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blankRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "controlRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
