@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   Run.JSON_PROPERTY_RUN_ID,
   Run.JSON_PROPERTY_NAME,
+  Run.JSON_PROPERTY_SOURCE,
   Run.JSON_PROPERTY_CHROMATOGRAPHY,
   Run.JSON_PROPERTY_IONIZATION,
   Run.JSON_PROPERTY_FRAGMENTATION,
@@ -48,6 +49,9 @@ public class Run {
 
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
+
+  public static final String JSON_PROPERTY_SOURCE = "source";
+  private String source;
 
   public static final String JSON_PROPERTY_CHROMATOGRAPHY = "chromatography";
   private String chromatography;
@@ -115,6 +119,31 @@ public class Run {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setName(String name) {
     this.name = name;
+  }
+
+  public Run source(String source) {
+    
+    this.source = source;
+    return this;
+  }
+
+   /**
+   * Source location
+   * @return source
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SOURCE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getSource() {
+    return source;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SOURCE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSource(String source) {
+    this.source = source;
   }
 
   public Run chromatography(String chromatography) {
@@ -269,6 +298,7 @@ public class Run {
     Run run = (Run) o;
     return Objects.equals(this.runId, run.runId) &&
         Objects.equals(this.name, run.name) &&
+        Objects.equals(this.source, run.source) &&
         Objects.equals(this.chromatography, run.chromatography) &&
         Objects.equals(this.ionization, run.ionization) &&
         Objects.equals(this.fragmentation, run.fragmentation) &&
@@ -278,7 +308,7 @@ public class Run {
 
   @Override
   public int hashCode() {
-    return Objects.hash(runId, name, chromatography, ionization, fragmentation, massAnalyzers, tags);
+    return Objects.hash(runId, name, source, chromatography, ionization, fragmentation, massAnalyzers, tags);
   }
 
   @Override
@@ -287,6 +317,7 @@ public class Run {
     sb.append("class Run {\n");
     sb.append("    runId: ").append(toIndentedString(runId)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    source: ").append(toIndentedString(source)).append("\n");
     sb.append("    chromatography: ").append(toIndentedString(chromatography)).append("\n");
     sb.append("    ionization: ").append(toIndentedString(ionization)).append("\n");
     sb.append("    fragmentation: ").append(toIndentedString(fragmentation)).append("\n");
