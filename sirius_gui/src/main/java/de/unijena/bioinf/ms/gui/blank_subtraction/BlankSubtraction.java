@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.blank_subtraction;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -69,20 +68,20 @@ public class BlankSubtraction {
         return gui.applySiriusClient((client, pid) -> {
             List<AlignedFeatureFoldChange> foldChanges = client.featureStatistics().getFoldChange1(pid, bean.getFeatureId());
             for (AlignedFeatureFoldChange foldChange : foldChanges) {
-                if (Objects.equals(foldChange.getLeftGroup(), "sample type:sample") &&
+                if (Objects.equals(foldChange.getLeftGroup(), SAMPLE_GRP_NAME) &&
                         Objects.equals(foldChange.getAggregation(), AlignedFeatureFoldChange.AggregationEnum.AVG) &&
                         Objects.equals(foldChange.getQuantification(), AlignedFeatureFoldChange.QuantificationEnum.APEX_INTENSITY)
                 ) {
                     Double fc = foldChange.getFoldChange();
                     if (fc == null) fc = Double.POSITIVE_INFINITY;
-                    if (Objects.equals(foldChange.getRightGroup(), "sample type:blank") && blankSubtractionEnabled) {
+                    if (Objects.equals(foldChange.getRightGroup(), BLANK_GRP_NAME) && blankSubtractionEnabled) {
                         return fc >= blankSubtractionFoldChange;
-                    } else if (Objects.equals(foldChange.getRightGroup(), "sample type:control") && ctrlSubtractionEnabled) {
+                    } else if (Objects.equals(foldChange.getRightGroup(), CTRL_GRP_NAME) && ctrlSubtractionEnabled) {
                         return fc >= ctrlSubtractionFoldChange;
                     }
                 }
             }
-            return false;
+            return true;
         });
     }
 
