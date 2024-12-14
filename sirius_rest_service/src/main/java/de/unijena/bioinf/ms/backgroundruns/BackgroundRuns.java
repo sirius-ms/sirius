@@ -284,13 +284,13 @@ public final class BackgroundRuns {
     public BackgroundRunJob runFoldChangesForBlankSubtraction(List<String> sampleRunIds, List<String> blankRunIds, List<String> ctrlRunIds) {
         Workflow computation = new BlankSubtractionWorkflow(project, sampleRunIds, blankRunIds, ctrlRunIds);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", null));
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
 
     public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target) {
         Workflow computation = new FoldChangeWorkflow(psm, left, right, aggregation, quantification, target);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", null));
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
 
     private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
