@@ -27,7 +27,6 @@ docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundStatisticsApi.md
 docs/CompoundsApi.md
-docs/ComputeFoldChangeForBlankSubtractionRequest.md
 docs/ComputedSubtools.md
 docs/ConfidenceMode.md
 docs/ConnectionCheck.md
@@ -91,6 +90,7 @@ docs/QuantificationTable.md
 docs/Run.md
 docs/RunOptField.md
 docs/RunsApi.md
+docs/SampleTypeFoldChangeRequest.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -171,7 +171,6 @@ src/main/java/io/sirius/ms/sdk/model/CompoundClasses.java
 src/main/java/io/sirius/ms/sdk/model/CompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/CompoundImport.java
 src/main/java/io/sirius/ms/sdk/model/CompoundOptField.java
-src/main/java/io/sirius/ms/sdk/model/ComputeFoldChangeForBlankSubtractionRequest.java
 src/main/java/io/sirius/ms/sdk/model/ComputedSubtools.java
 src/main/java/io/sirius/ms/sdk/model/ConfidenceMode.java
 src/main/java/io/sirius/ms/sdk/model/ConnectionCheck.java
@@ -227,6 +226,7 @@ src/main/java/io/sirius/ms/sdk/model/ProjectType.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationTable.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
+src/main/java/io/sirius/ms/sdk/model/SampleTypeFoldChangeRequest.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabase.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
