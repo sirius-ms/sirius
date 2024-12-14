@@ -46,13 +46,13 @@ public class BlankSubtraction {
     public static final List<String> CATEGORY_VALUES = List.of(SAMPLE, BLANK, CTRL);
 
     public static final String SAMPLE_GRP_NAME = "sample runs";
-    public static final String SAMPLE_GRP_QUERY = "category:" + CATEGORY_NAME + " AND text:" + SAMPLE;
+    public static final String SAMPLE_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + SAMPLE;
 
     public static final String BLANK_GRP_NAME = "blank runs";
-    public static final String BLANK_GRP_QUERY = "category:" + CATEGORY_NAME + " AND text:" + BLANK;
+    public static final String BLANK_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + BLANK;
 
     public static final String CTRL_GRP_NAME = "control runs";
-    public static final String CTRL_GRP_QUERY = "category:" + CATEGORY_NAME + " AND text:" + CTRL;
+    public static final String CTRL_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + CTRL;
 
     private boolean blankSubtractionEnabled;
     private double blankSubtractionFoldChange;
