@@ -442,8 +442,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
         saveTextFilter();
 
-        filterModel.getBlankSubtraction().setBlankSubtractionEnabled(blankFilter.isEnabled());
-        filterModel.getBlankSubtraction().setCtrlSubtractionEnabled(controlFilter.isEnabled());
+        filterModel.getBlankSubtraction().setBlankSubtractionEnabled(blankFilter.isSelected());
+        filterModel.getBlankSubtraction().setCtrlSubtractionEnabled(controlFilter.isSelected());
         filterModel.getBlankSubtraction().setBlankSubtractionFoldChange((Double) blankSpinner.getValue());
         filterModel.getBlankSubtraction().setCtrlSubtractionFoldChange((Double) controlSpinner.getValue());
     }
