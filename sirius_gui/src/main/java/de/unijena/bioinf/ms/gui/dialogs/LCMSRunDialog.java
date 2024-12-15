@@ -33,8 +33,8 @@ import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.sdk.model.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +42,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Stream;
 
 
 public class LCMSRunDialog extends JDialog implements ActionListener {
@@ -53,7 +52,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
 
     private final Map<String, String> sampleTypes;
 
-    public LCMSRunDialog(Frame owner, SiriusGui gui) {
+    public LCMSRunDialog(Frame owner, SiriusGui gui, @Nullable List<Run> runs, boolean discardable) {
         super(owner, true);
         this.gui = gui;
 
@@ -130,20 +129,24 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
         TableComparatorChooser.install(table, sortedRuns, AbstractTableComparatorChooser.SINGLE_COLUMN);
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        Jobs.runEDTLater(() -> gui.acceptSiriusClient((client, pid) -> {
-            List<Run> runs = client.runs().getRunsPaged(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent();
-            if (runs != null) {
-                for (Run run : runs) {
+        Jobs.runEDTLater(() -> {
+            List<Run> runs1;
+            if (runs == null) {
+                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPaged(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+            } else {
+                runs1 = runs;
+            }
+            if (runs1 != null) {
+                for (Run run : runs1) {
                     if (run.getTags() != null && run.getTags().containsKey(BlankSubtraction.CATEGORY_NAME)) {
                         sampleTypes.put(run.getRunId(), run.getTags().get(BlankSubtraction.CATEGORY_NAME).getText());
                     } else {
                         sampleTypes.put(run.getRunId(), BlankSubtraction.SAMPLE);
                     }
                 }
-                runList.addAll(runs);
+                runList.addAll(runs1);
             }
-        }));
-
+        });
         //endregion
 
         //region SOUTH
@@ -155,7 +158,8 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(save);
-        buttons.add(discard);
+        if (discardable)
+            buttons.add(discard);
 
         add(buttons, BorderLayout.SOUTH);
 

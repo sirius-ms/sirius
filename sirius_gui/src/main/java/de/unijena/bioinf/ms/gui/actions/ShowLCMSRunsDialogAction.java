@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.AboutDialog;
 import de.unijena.bioinf.ms.gui.dialogs.LCMSRunDialog;
 
 import javax.swing.*;
@@ -38,6 +37,6 @@ public class ShowLCMSRunsDialogAction extends AbstractGuiAction {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        new LCMSRunDialog(mainFrame, gui);
+        new LCMSRunDialog(mainFrame, gui, null, true);
     }
 }
