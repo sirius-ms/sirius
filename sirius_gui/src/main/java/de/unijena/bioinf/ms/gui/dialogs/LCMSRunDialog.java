@@ -31,7 +31,9 @@ import ca.odell.glazedlists.swing.TableComparatorChooser;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.sdk.model.*;
 
 import javax.swing.*;
@@ -40,6 +42,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Stream;
 
 
 public class LCMSRunDialog extends JDialog implements ActionListener {
@@ -168,28 +171,40 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         this.dispose();
-        if (e.getSource() == save) {
-            Set<String> samples = new HashSet<>();
-            Set<String> blanks = new HashSet<>();
-            Set<String> controls = new HashSet<>();
+        try {
+            if (e.getSource() == save) {
+                Set<String> samples = new HashSet<>();
+                Set<String> blanks = new HashSet<>();
+                Set<String> controls = new HashSet<>();
 
-            for (Map.Entry<String, String> entry : sampleTypes.entrySet()) {
-                switch (entry.getValue()) {
-                    case BlankSubtraction.SAMPLE: samples.add(entry.getKey()); break;
-                    case BlankSubtraction.BLANK: blanks.add(entry.getKey()); break;
-                    case BlankSubtraction.CTRL: controls.add(entry.getKey()); break;
-                    default: break;
+                for (Map.Entry<String, String> entry : sampleTypes.entrySet()) {
+                    switch (entry.getValue()) {
+                        case BlankSubtraction.SAMPLE:
+                            samples.add(entry.getKey());
+                            break;
+                        case BlankSubtraction.BLANK:
+                            blanks.add(entry.getKey());
+                            break;
+                        case BlankSubtraction.CTRL:
+                            controls.add(entry.getKey());
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
-            gui.acceptSiriusClient((client, pid) -> {
-                SampleTypeFoldChangeRequest request = new SampleTypeFoldChangeRequest();
-                request.setSampleRunIds(new ArrayList<>(samples));
-                request.setBlankRunIds(new ArrayList<>(blanks));
-                request.setControlRunIds(new ArrayList<>(controls));
+                LoadingBackroundTask<Job> task = gui.applySiriusClient((client, pid) -> {
+                    SampleTypeFoldChangeRequest request = new SampleTypeFoldChangeRequest();
+                    request.setSampleRunIds(new ArrayList<>(samples));
+                    request.setBlankRunIds(new ArrayList<>(blanks));
+                    request.setControlRunIds(new ArrayList<>(controls));
 
-                Job job = client.runs().computeFoldChangeForBlankSubtraction(pid, request, List.of(JobOptField.PROGRESS));
-            });
-            // TODO show progress for workflow
+                    Job job = client.runs().computeFoldChangeForBlankSubtraction(pid, request, List.of(JobOptField.PROGRESS));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing fold changes...", new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+                task.awaitResult();
+            }
+        } catch (Exception exc) {
+            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause()));
         }
     }
 
