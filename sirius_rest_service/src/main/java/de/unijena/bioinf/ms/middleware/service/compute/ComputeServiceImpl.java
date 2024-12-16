@@ -138,6 +138,7 @@ public class ComputeServiceImpl implements ComputeService {
         if (optFields.contains(Job.OptField.affectedIds)) {
             id.setAffectedAlignedFeatureIds(extractAffectedAlignedFeaturesIds(runJob));
             id.setAffectedCompoundIds(extractAffectedCompoundIds(runJob));
+            id.setJobEffect(runJob.getJobEffect());
         }
 
         return id;

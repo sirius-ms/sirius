@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
-import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import io.sirius.ms.sdk.model.CompoundClass;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,15 +44,22 @@ public class CompoundClassBean implements SiriusPCS, Comparable<CompoundClassBea
         this.sourceClass = sourceClass;
     }
 
-
-    public ClassyfireProperty getParent() {
-        return null; //todo nightsky -> how do we find the parent, do we want to add it to sdk
-    }
-
     public String getChemontIdentifier() {
         if (getSourceClass().getId() == null)
             return null;
         return String.format(Locale.US, "CHEMONT:%07d", getSourceClass().getId());
+    }
+
+
+    @NotNull
+    public Level getLevel() {
+        return Level.from(getSourceClass());
+    }
+
+
+    @Nullable
+    public String getParentName() {
+        return getSourceClass().getParentName();
     }
 
     @Override
@@ -61,5 +68,34 @@ public class CompoundClassBean implements SiriusPCS, Comparable<CompoundClassBea
                 o.getSourceClass().getProbability(),
                 sourceClass.getProbability()
         );
+    }
+
+    @Getter
+    public static class Level implements Comparable<Level> {
+        private final String levelName;
+        private final int level;
+
+        public Level(String levelName, int level) {
+            this.levelName = levelName;
+            this.level = level;
+        }
+
+        public static Level from(CompoundClass compoundClass) {
+            if (compoundClass == null)
+                return new Level(null, 0);
+            return new Level(compoundClass.getLevel(), compoundClass.getLevelIndex());
+        }
+
+        @Override
+        public int compareTo(@NotNull CompoundClassBean.Level o) {
+            return Double.compare(level, o.level);
+        }
+
+        @Override
+        public String toString() {
+            if (level == 0)
+                return "";
+            return levelName;
+        }
     }
 }

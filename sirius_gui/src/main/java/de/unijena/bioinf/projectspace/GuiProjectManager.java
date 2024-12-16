@@ -20,10 +20,8 @@
 package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.FastPropertyChangeSupport;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
@@ -65,22 +63,23 @@ public class GuiProjectManager implements Closeable {
     private CanopusNpcData canopusNpcDataNeg;
 
     private final PropertyChangeListener projectListener;
-    private final PropertyChangeListener importListener;
     private final PropertyChangeListener computeListener;
+    private final PropertyChangeListener importListener;
+
     private final PropertyChangeListenerEDT confidenceModeListender;
 
-    private final BlockingQueue<DataImportEvent> debouncedEvents = new LinkedBlockingDeque<>();
-    private final JJob<Void> debounceExec;
+    private final BlockingQueue<Object> eventQueue = new LinkedBlockingDeque<>();
+    private final JJob<Void> eventExec;
 
     public GuiProjectManager(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull GuiProperties properties, SiriusGui siriusGui) {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
 
+        //todo can be parallelizec to import project opening performance
         List<InstanceBean> tmp = siriusClient.features()
                 .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                 .stream().map(f -> new InstanceBean(f, this)).toList();
-
 
         this.innerList = new ArrayList<>(tmp.size());
         this.INSTANCE_LIST = new BasicEventList<>(innerList);
@@ -93,18 +92,92 @@ public class GuiProjectManager implements Closeable {
         confidenceModeListender = (evt) -> SiriusGlazedLists.allUpdate(INSTANCE_LIST);
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
 
-        //fire events for data changes
-        projectListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
-                .ifPresent(pce -> {
-                    if (pce.getEventType() != null) {
-                        switch (pce.getEventType()) {
+        //handle events for import data changes
+        importListener = evt -> DataObjectEvents.
+                toDataObjectEventData(evt.getNewValue(), DataImportEvent.class)
+                .ifPresent(eventQueue::add);
+        enableImportListener();
+
+        //handle events for data changes
+        projectListener = evt -> DataObjectEvents.
+                toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
+                .ifPresent(eventQueue::add);
+        enableProjectListener();
+
+        //handle events for compute state changes
+        computeListener = evt -> DataObjectEvents
+                .toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class)
+                .ifPresent(eventQueue::add);
+        enableComputeListener();
+
+        eventExec = Jobs.runInBackground(new BasicJJob<>(JJob.JobType.TINY_BACKGROUND) {
+            private final static Object stopper = new Object();
+
+            @Override
+            protected Void compute() throws Exception {
+                Object event;
+                while ((event = eventQueue.take()) != stopper) {
+                    if (event instanceof DataImportEvent importEvent) {
+                        //import job handling
+                        List<String> idsToImport = importEvent.getImportedFeatureIds();
+                        if (!idsToImport.isEmpty()) {
+                            StopWatch w = new StopWatch();
+                            w.start();
+                            siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true, true);
+                            try {
+                                checkForInterruption();
+                                List<InstanceBean> instances = idsToImport.stream().map(id -> new InstanceBean(id, GuiProjectManager.this)).toList();
+                                checkForInterruption();
+                                //update adducts before adding instances so that the filter already works correctly during adding.
+                                siriusGui.getMainFrame().getCompoundList().updateFilter(Stream.concat(INSTANCE_LIST.stream(), instances.stream()).toList());
+                                checkForInterruption();
+                                INSTANCE_LIST.getReadWriteLock().writeLock().lock();
+                                try {
+                                    INSTANCE_LIST.addAll(instances);
+                                } finally {
+                                    INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
+                                }
+                            } finally {
+                                siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false, true);
+                            }
+                        }
+                    } else if (event instanceof BackgroundComputationsStateEvent computeEvent) {
+                        checkForInterruption();
+                        // todo maybe handle batch delete like this in the future
+                        { //compute jobs handling, just to updated compute state in gui without delay.
+                            Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs()
+                                    .stream()
+                                    .filter(j -> j.getJobEffect() == Job.JobEffectEnum.COMPUTATION)
+                                    .filter(j -> j.getAffectedAlignedFeatureIds() != null)
+                                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
+                                    .collect(Collectors.toMap(Pair::key, Pair::value));
+
+                            if (!idsToComputeState.isEmpty()) {
+                                INSTANCE_LIST.getReadWriteLock().readLock().lock();
+                                try {
+                                    INSTANCE_LIST.stream()
+                                            .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
+                                            .forEach(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())));
+                                } finally {
+                                    INSTANCE_LIST.getReadWriteLock().readLock().unlock();
+                                    // we just repaint since the compute state has no influence on sorting or filtering
+                                    DefaultEventSelectionModel<InstanceBean> m = siriusGui.getMainFrame().getCompoundListSelectionModel();
+                                    if (!m.isSelectionEmpty())
+                                        GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + m.getSelected().getFirst().getFeatureId(), null, null);
+                                    else
+                                        Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
+                                }
+                            }
+                        }
+                    } else if (event instanceof ProjectChangeEvent projectEvent) {
+                        switch (projectEvent.getEventType()) {
                             case FEATURE_DELETED -> Jobs.runEDTLater(() -> {
                                 INSTANCE_LIST.getReadWriteLock().writeLock().lock();
                                 try {
                                     Iterator<InstanceBean> iterator = INSTANCE_LIST.iterator();
                                     while (iterator.hasNext()) {
                                         InstanceBean inst = iterator.next();
-                                        if (inst.getFeatureId().equals(pce.getFeaturedId())){
+                                        if (inst.getFeatureId().equals(projectEvent.getFeaturedId())) {
                                             iterator.remove();
                                             inst.unregisterProjectSpaceListener();
                                             break;
@@ -115,68 +188,7 @@ public class GuiProjectManager implements Closeable {
                                 }
                             });
                             case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
-                                    pcs.firePropertyChange("project.updateInstance" + pce.getFeaturedId(), null, pce);
-                        }
-                    }
-                });
-        enableProjectListener();
-
-        //fire events for data changes
-        importListener = evt -> DataObjectEvents
-                .toDataObjectEventData(evt.getNewValue(), DataImportEvent.class)
-                .ifPresent(debouncedEvents::add);
-        enableImportListener();
-
-        computeListener = evt ->
-                DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class)
-                        .ifPresent(computeEvent -> {
-                            Jobs.runInBackground(() -> {
-                                Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs().stream()
-                                        .filter(j -> j.getAffectedAlignedFeatureIds() != null)
-                                        .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
-                                        .collect(Collectors.toMap(Pair::key, Pair::value));
-
-                                INSTANCE_LIST.getReadWriteLock().readLock().lock();
-                                try {
-                                    INSTANCE_LIST.stream()
-                                            .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
-                                            .forEach(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())));
-                                    // we just repaint since the compute state has no influence on sorting or filtering
-                                    siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint();
-                                } finally {
-                                    INSTANCE_LIST.getReadWriteLock().readLock().unlock();
-                                }
-                            });
-                        });
-        siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
-
-        debounceExec = Jobs.runInBackground(new BasicJJob<>(JJob.JobType.TINY_BACKGROUND) {
-            private final static DataImportEvent stopper = new DataImportEvent();
-
-            @Override
-            protected Void compute() throws Exception {
-                DataImportEvent event;
-                while ((event = debouncedEvents.take()) != stopper) {
-                    checkForInterruption();
-                    List<String> ids = event.getImportedFeatureIds();
-                    if (!ids.isEmpty()){
-                        StopWatch w = new StopWatch(); w.start();
-                        siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true,true);
-                        try {
-                            checkForInterruption();
-                            List<InstanceBean> instances = ids.stream().map(id -> new InstanceBean(getFeature(id, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS), GuiProjectManager.this)).toList();
-                            checkForInterruption();
-                            //update adducts before adding instances so that the filter already works correctly during adding.
-                            siriusGui.getMainFrame().getCompoundList().updateFilter(Stream.concat(INSTANCE_LIST.stream(), instances.stream()).toList());
-                            checkForInterruption();
-                            INSTANCE_LIST.getReadWriteLock().writeLock().lock();
-                            try {
-                                INSTANCE_LIST.addAll(instances);
-                            } finally {
-                                INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
-                            }
-                        } finally {
-                            siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false,true);
+                                    GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + projectEvent.getFeaturedId(), null, projectEvent);
                         }
                     }
                 }
@@ -186,9 +198,21 @@ public class GuiProjectManager implements Closeable {
             @Override
             public void cancel(boolean mayInterruptIfRunning) {
                 super.cancel(mayInterruptIfRunning);
-                debouncedEvents.add(stopper);
+                eventQueue.add(stopper);
             }
         });
+    }
+
+    public void disableImportListener() {
+        synchronized (importListener) {
+            siriusClient.removeEventListener(importListener);
+        }
+    }
+
+    public void enableImportListener() {
+        synchronized (importListener) {
+            siriusClient.addEventListener(importListener, projectId, DataEventType.DATA_IMPORT);
+        }
     }
 
     public void disableProjectListener() {
@@ -203,15 +227,15 @@ public class GuiProjectManager implements Closeable {
         }
     }
 
-    public void disableImportListener() {
-        synchronized (importListener) {
-            siriusClient.removeEventListener(importListener);
+    public void disableComputeListener() {
+        synchronized (computeListener) {
+            siriusClient.removeEventListener(computeListener);
         }
     }
 
-    public void enableImportListener() {
-        synchronized (importListener) {
-            siriusClient.addEventListener(importListener, projectId, DataEventType.DATA_IMPORT);
+    public void enableComputeListener() {
+        synchronized (computeListener) {
+            siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
         }
     }
 
@@ -242,11 +266,12 @@ public class GuiProjectManager implements Closeable {
 
     @Override
     public void close() {
-        disableProjectListener();
         disableImportListener();
+        disableProjectListener();
+        disableComputeListener();
         siriusClient.removeEventListener(computeListener);
         properties.removePropertyChangeListener(confidenceModeListender);
-        debounceExec.cancel();
+        eventExec.cancel();
     }
 
     public FingerIdData getFingerIdData(int charge) {

@@ -257,6 +257,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         try {
             showBrowser();
             browser.clear();
+            compoundDetails.load("");
             String mode = (String) modesBox.getSelectedItem();
             if (mode == null)
                 return;
@@ -536,6 +537,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                                     clearData();
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                     browser.clear();
+                                    compoundDetails.load("");
                                     center.disableLoading();
                                     return null;
                                 }
@@ -644,6 +646,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                                         clearData();
                                         Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                                         browser.clear();
+                                        compoundDetails.load("");
                                     }
                                 }
                                 center.disableLoading();

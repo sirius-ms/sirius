@@ -57,6 +57,13 @@ public class FormulaCandidate {
 
     protected Integer rank;
     /**
+     * Normalized Sirius Score of the formula candidate.
+     * If NULL result is not available
+     */
+    @Schema(nullable = true)
+    protected Double siriusScoreNormalized;
+
+    /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
      */

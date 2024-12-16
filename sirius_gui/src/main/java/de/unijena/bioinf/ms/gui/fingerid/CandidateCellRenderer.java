@@ -64,10 +64,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
 
-        headlineFont = nameFont.deriveFont(Map.of(
-                TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON,
-                TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD
-        ));
+        headlineFont = nameFont.deriveFont(Map.of(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON));
     }
 
     private final Function<FingerprintCandidateBean, Boolean> isBest;
