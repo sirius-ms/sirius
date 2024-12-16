@@ -41,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_MOLECULAR_FORMULA,
   FormulaCandidate.JSON_PROPERTY_ADDUCT,
   FormulaCandidate.JSON_PROPERTY_RANK,
+  FormulaCandidate.JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED,
   FormulaCandidate.JSON_PROPERTY_SIRIUS_SCORE,
   FormulaCandidate.JSON_PROPERTY_ISOTOPE_SCORE,
   FormulaCandidate.JSON_PROPERTY_TREE_SCORE,
@@ -70,6 +71,9 @@ public class FormulaCandidate {
 
   public static final String JSON_PROPERTY_RANK = "rank";
   private Integer rank;
+
+  public static final String JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED = "siriusScoreNormalized";
+  private Double siriusScoreNormalized;
 
   public static final String JSON_PROPERTY_SIRIUS_SCORE = "siriusScore";
   private Double siriusScore;
@@ -217,6 +221,31 @@ public class FormulaCandidate {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRank(Integer rank) {
     this.rank = rank;
+  }
+
+  public FormulaCandidate siriusScoreNormalized(Double siriusScoreNormalized) {
+    
+    this.siriusScoreNormalized = siriusScoreNormalized;
+    return this;
+  }
+
+   /**
+   * Normalized Sirius Score of the formula candidate.  If NULL result is not available
+   * @return siriusScoreNormalized
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getSiriusScoreNormalized() {
+    return siriusScoreNormalized;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SIRIUS_SCORE_NORMALIZED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSiriusScoreNormalized(Double siriusScoreNormalized) {
+    this.siriusScoreNormalized = siriusScoreNormalized;
   }
 
   public FormulaCandidate siriusScore(Double siriusScore) {
@@ -615,6 +644,7 @@ public class FormulaCandidate {
         Objects.equals(this.molecularFormula, formulaCandidate.molecularFormula) &&
         Objects.equals(this.adduct, formulaCandidate.adduct) &&
         Objects.equals(this.rank, formulaCandidate.rank) &&
+        Objects.equals(this.siriusScoreNormalized, formulaCandidate.siriusScoreNormalized) &&
         Objects.equals(this.siriusScore, formulaCandidate.siriusScore) &&
         Objects.equals(this.isotopeScore, formulaCandidate.isotopeScore) &&
         Objects.equals(this.treeScore, formulaCandidate.treeScore) &&
@@ -634,7 +664,7 @@ public class FormulaCandidate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, rank, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, fragmentationTree, annotatedSpectrum, isotopePatternAnnotation, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
+    return Objects.hash(formulaId, molecularFormula, adduct, rank, siriusScoreNormalized, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, fragmentationTree, annotatedSpectrum, isotopePatternAnnotation, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override
@@ -645,6 +675,7 @@ public class FormulaCandidate {
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
+    sb.append("    siriusScoreNormalized: ").append(toIndentedString(siriusScoreNormalized)).append("\n");
     sb.append("    siriusScore: ").append(toIndentedString(siriusScore)).append("\n");
     sb.append("    isotopeScore: ").append(toIndentedString(isotopeScore)).append("\n");
     sb.append("    treeScore: ").append(toIndentedString(treeScore)).append("\n");

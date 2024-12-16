@@ -82,7 +82,7 @@ ext {
     liblinear_version = "1.95"
     libsvm_version = "3.20"
 
-    swagger_version = "2.2.22"
+    swagger_version = "2.2.26"
 
     jaxb_version = "2.3.9"
     picocli_version = '4.7.5'
