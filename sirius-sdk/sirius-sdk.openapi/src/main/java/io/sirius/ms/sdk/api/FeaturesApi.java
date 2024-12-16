@@ -325,6 +325,89 @@ public class FeaturesApi {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
     }
     /**
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getAdductNetworkWithMergedTracesRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAdductNetworkWithMergedTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAdductNetworkWithMergedTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TraceSet getAdductNetworkWithMergedTraces(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return ResponseEntity&lt;TraceSet&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TraceSet> getAdductNetworkWithMergedTracesWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getAdductNetworkWithMergedTracesWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId);
+    }
+    /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
