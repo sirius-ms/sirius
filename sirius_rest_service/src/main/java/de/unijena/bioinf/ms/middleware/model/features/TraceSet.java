@@ -23,7 +23,7 @@ public class TraceSet {
         }
     }
 
-    @Schema(enumAsRef = false, name = "AnnotationType", nullable = false)
+    @Schema(name = "TraceAnnotationType")
     public enum AnnotationType {
         /**
          * describes the position of the feature
@@ -38,6 +38,7 @@ public class TraceSet {
     @Getter
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(name = "TraceAnnotation")
     public static class Annotation {
         private AnnotationType type;
         @Schema(nullable = true)

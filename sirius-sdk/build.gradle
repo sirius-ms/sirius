@@ -60,7 +60,7 @@ dependencies {
 
 openApiGenerate {
     generatorName.set("java")
-    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec.json")
+    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec-enums-as-ref.json")
     outputDir.set("$projectDir/sirius-sdk.openapi")
     templateDir.set("$projectDir/templates")
     apiPackage.set("io.sirius.ms.sdk.api")

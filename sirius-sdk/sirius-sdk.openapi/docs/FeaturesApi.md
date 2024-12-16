@@ -1630,7 +1630,7 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
-        String type = "APEX_HEIGHT"; // String | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_HEIGHT"); // QuantificationMeasure | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
         try {
             QuantificationTable result = apiInstance.getQuantification(projectId, alignedFeatureId, type);
             System.out.println(result);
@@ -1652,7 +1652,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature which intensities should be read out | |
-| **type** | **String**| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT] |
+| **type** | [**QuantificationMeasure**](.md)| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [enum: APEX_HEIGHT] |
 
 ### Return type
 

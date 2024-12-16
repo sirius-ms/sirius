@@ -178,7 +178,7 @@ public class JobsApiTest {
         assertEquals(job.getCommand() != null, includeCommand);
 
         job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
-        assertEquals(JobProgress.StateEnum.DONE, job.getProgress().getState());
+        assertEquals(JobState.DONE, job.getProgress().getState());
     }
 
     @ParameterizedTest
@@ -220,7 +220,7 @@ public class JobsApiTest {
 
         // Wait for the job to complete
         job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
-        assertEquals(JobProgress.StateEnum.DONE, job.getProgress().getState());
+        assertEquals(JobState.DONE, job.getProgress().getState());
     }
 
     // Helper function to generate optional fields list

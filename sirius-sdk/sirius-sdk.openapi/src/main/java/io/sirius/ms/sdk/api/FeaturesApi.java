@@ -21,6 +21,7 @@ import io.sirius.ms.sdk.model.PagedModelFormulaCandidate;
 import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
+import io.sirius.ms.sdk.model.QuantificationMeasure;
 import io.sirius.ms.sdk.model.QuantificationTable;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
@@ -2118,7 +2119,7 @@ public class FeaturesApi {
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationRequestCreation(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    private ResponseSpec getQuantificationRequestCreation(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2164,7 +2165,7 @@ public class FeaturesApi {
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTable getQuantification(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    public QuantificationTable getQuantification(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
         return getQuantificationRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
@@ -2179,7 +2180,7 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;QuantificationTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
         return getQuantificationRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
@@ -2194,7 +2195,7 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         return getQuantificationRequestCreation(projectId, alignedFeatureId, type);
     }
     /**

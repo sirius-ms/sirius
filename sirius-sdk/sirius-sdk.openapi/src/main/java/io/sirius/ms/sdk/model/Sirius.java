@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.InstrumentProfile;
+import io.sirius.ms.sdk.model.IsotopeMs2Strategy;
 import io.sirius.ms.sdk.model.Timeout;
 import io.sirius.ms.sdk.model.UseHeuristic;
 import java.util.ArrayList;
@@ -81,45 +82,8 @@ public class Sirius {
   public static final String JSON_PROPERTY_MASS_ACCURACY_M_S2PPM = "massAccuracyMS2ppm";
   private Double massAccuracyMS2ppm;
 
-  /**
-   * Specify how isotope patterns in MS/MS should be handled.  &lt;p&gt;  FILTER: When filtering is enabled, molecular formulas are excluded if their  theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.  &lt;p&gt;  SCORE: Use them for SCORING. To use this the instrument should produce clear MS/MS isotope patterns  &lt;p&gt;  IGNORE: Ignore that there might be isotope patterns in MS/MS
-   */
-  public enum IsotopeMs2SettingsEnum {
-    IGNORE("IGNORE"),
-    
-    FILTER("FILTER"),
-    
-    SCORE("SCORE");
-
-    private String value;
-
-    IsotopeMs2SettingsEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static IsotopeMs2SettingsEnum fromValue(String value) {
-      for (IsotopeMs2SettingsEnum b : IsotopeMs2SettingsEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
-
   public static final String JSON_PROPERTY_ISOTOPE_MS2_SETTINGS = "isotopeMs2Settings";
-  private IsotopeMs2SettingsEnum isotopeMs2Settings;
+  private IsotopeMs2Strategy isotopeMs2Settings;
 
   public static final String JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN = "filterByIsotopePattern";
   private Boolean filterByIsotopePattern;
@@ -291,28 +255,28 @@ public class Sirius {
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
   }
 
-  public Sirius isotopeMs2Settings(IsotopeMs2SettingsEnum isotopeMs2Settings) {
+  public Sirius isotopeMs2Settings(IsotopeMs2Strategy isotopeMs2Settings) {
     
     this.isotopeMs2Settings = isotopeMs2Settings;
     return this;
   }
 
    /**
-   * Specify how isotope patterns in MS/MS should be handled.  &lt;p&gt;  FILTER: When filtering is enabled, molecular formulas are excluded if their  theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.  &lt;p&gt;  SCORE: Use them for SCORING. To use this the instrument should produce clear MS/MS isotope patterns  &lt;p&gt;  IGNORE: Ignore that there might be isotope patterns in MS/MS
+   * Get isotopeMs2Settings
    * @return isotopeMs2Settings
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public IsotopeMs2SettingsEnum getIsotopeMs2Settings() {
+  public IsotopeMs2Strategy getIsotopeMs2Settings() {
     return isotopeMs2Settings;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ISOTOPE_MS2_SETTINGS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setIsotopeMs2Settings(IsotopeMs2SettingsEnum isotopeMs2Settings) {
+  public void setIsotopeMs2Settings(IsotopeMs2Strategy isotopeMs2Settings) {
     this.isotopeMs2Settings = isotopeMs2Settings;
   }
 

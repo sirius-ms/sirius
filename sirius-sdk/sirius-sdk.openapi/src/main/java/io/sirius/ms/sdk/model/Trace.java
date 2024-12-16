@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.Annotation;
+import io.sirius.ms.sdk.model.TraceAnnotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +70,7 @@ public class Trace {
   private List<Double> intensities = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
-  private List<Annotation> annotations = new ArrayList<>();
+  private List<TraceAnnotation> annotations = new ArrayList<>();
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
@@ -220,13 +220,13 @@ public class Trace {
     this.intensities = intensities;
   }
 
-  public Trace annotations(List<Annotation> annotations) {
+  public Trace annotations(List<TraceAnnotation> annotations) {
     
     this.annotations = annotations;
     return this;
   }
 
-  public Trace addAnnotationsItem(Annotation annotationsItem) {
+  public Trace addAnnotationsItem(TraceAnnotation annotationsItem) {
     if (this.annotations == null) {
       this.annotations = new ArrayList<>();
     }
@@ -242,14 +242,14 @@ public class Trace {
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Annotation> getAnnotations() {
+  public List<TraceAnnotation> getAnnotations() {
     return annotations;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnnotations(List<Annotation> annotations) {
+  public void setAnnotations(List<TraceAnnotation> annotations) {
     this.annotations = annotations;
   }
 

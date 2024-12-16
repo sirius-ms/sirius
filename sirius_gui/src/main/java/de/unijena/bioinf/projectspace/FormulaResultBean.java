@@ -100,7 +100,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
                     if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
-                        if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
+                        if (pce.getEventType() == ProjectEventType.RESULT_UPDATED) {
                             synchronized (FormulaResultBean.this) {
                                 FormulaResultBean.this.sourceCandidate = null;
                                 FormulaResultBean.this.canopusResults = null;

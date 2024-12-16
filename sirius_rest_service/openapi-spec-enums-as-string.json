@@ -83,7 +83,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ProjectInfoOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "compatibilityInfo",
+                  "sizeInformation"
+                ]
               },
               "default": []
             }
@@ -136,7 +142,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ProjectInfoOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "compatibilityInfo",
+                  "sizeInformation"
+                ]
               },
               "default": []
             }
@@ -189,7 +201,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ProjectInfoOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "compatibilityInfo",
+                  "sizeInformation"
+                ]
               },
               "default": []
             }
@@ -276,7 +294,13 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ProjectInfoOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "compatibilityInfo",
+                  "sizeInformation"
+                ]
               },
               "default": []
             }
@@ -538,7 +562,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": []
             }
@@ -585,7 +616,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "command",
@@ -689,7 +727,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -767,7 +812,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "command",
@@ -914,7 +966,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -1065,7 +1124,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -1198,7 +1264,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -1317,7 +1390,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -1453,7 +1533,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/CompoundOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "consensusAnnotations",
+                  "consensusAnnotationsDeNovo",
+                  "customAnnotations"
+                ]
               },
               "default": []
             }
@@ -1465,7 +1552,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -1510,7 +1605,12 @@
             "description": "profile describing the instrument used to measure the data. Used to merge spectra.",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/InstrumentProfile"
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "QTOF",
+                "ORBITRAP"
+              ]
             }
           },
           {
@@ -1521,7 +1621,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/CompoundOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "consensusAnnotations",
+                  "consensusAnnotationsDeNovo",
+                  "customAnnotations"
+                ]
               },
               "default": []
             }
@@ -1534,7 +1641,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -1597,7 +1712,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -1642,7 +1765,12 @@
             "description": "profile describing the instrument used to measure the data. Used to merge spectra.",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/InstrumentProfile"
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "QTOF",
+                "ORBITRAP"
+              ]
             }
           },
           {
@@ -1653,7 +1781,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -2001,7 +2137,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -2257,7 +2400,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": [
                 "progress"
@@ -2392,7 +2542,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/JobOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
               },
               "default": []
             }
@@ -2531,7 +2688,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/CompoundOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "consensusAnnotations",
+                  "consensusAnnotationsDeNovo",
+                  "customAnnotations"
+                ]
               },
               "default": []
             }
@@ -2543,7 +2707,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -2703,7 +2875,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/CompoundOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "consensusAnnotations",
+                  "consensusAnnotationsDeNovo",
+                  "customAnnotations"
+                ]
               },
               "default": []
             }
@@ -2715,7 +2894,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -2815,7 +3002,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -2983,7 +3178,12 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "referenceSpectrum"
+                ]
               },
               "default": []
             }
@@ -3048,7 +3248,12 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "referenceSpectrum"
+                ]
               },
               "default": []
             }
@@ -3239,7 +3444,12 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "referenceSpectrum"
+                ]
               },
               "default": []
             }
@@ -3433,7 +3643,19 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/FormulaCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "statistics",
+                  "fragmentationTree",
+                  "annotatedSpectrum",
+                  "isotopePattern",
+                  "lipidAnnotation",
+                  "predictedFingerprint",
+                  "compoundClasses",
+                  "canopusPredictions"
+                ]
               },
               "default": []
             }
@@ -3500,7 +3722,19 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/FormulaCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "statistics",
+                  "fragmentationTree",
+                  "annotatedSpectrum",
+                  "isotopePattern",
+                  "lipidAnnotation",
+                  "predictedFingerprint",
+                  "compoundClasses",
+                  "canopusPredictions"
+                ]
               },
               "default": []
             }
@@ -3955,7 +4189,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4056,7 +4297,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4120,7 +4368,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4221,7 +4476,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4525,7 +4787,19 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/FormulaCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "statistics",
+                  "fragmentationTree",
+                  "annotatedSpectrum",
+                  "isotopePattern",
+                  "lipidAnnotation",
+                  "predictedFingerprint",
+                  "compoundClasses",
+                  "canopusPredictions"
+                ]
               },
               "default": []
             }
@@ -4580,7 +4854,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4672,7 +4953,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4727,7 +5015,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4819,7 +5114,14 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "fingerprint",
+                  "dbLinks",
+                  "libraryMatches"
+                ]
               },
               "default": []
             }
@@ -4899,7 +5201,15 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AlignedFeatureOptField"
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools"
+                ]
               },
               "default": []
             }
@@ -5454,15 +5764,6 @@
           }
         }
       },
-      "ProjectInfoOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "compatibilityInfo",
-          "sizeInformation"
-        ]
-      },
       "ProjectInfo": {
         "type": "object",
         "properties": {
@@ -5480,7 +5781,15 @@
             "nullable": true
           },
           "type": {
-            "$ref": "#/components/schemas/ProjectType"
+            "type": "string",
+            "description": "Type of this project.\n NULL if project type has not yet been specified by importing data.",
+            "nullable": true,
+            "enum": [
+              "DIRECT_IMPORT",
+              "PEAKLISTS",
+              "ALIGNED_RUNS",
+              "UNALIGNED_RUNS"
+            ]
           },
           "compatible": {
             "type": "boolean",
@@ -5506,16 +5815,6 @@
             "nullable": true
           }
         }
-      },
-      "ProjectType": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "DIRECT_IMPORT",
-          "PEAKLISTS",
-          "ALIGNED_RUNS",
-          "UNALIGNED_RUNS"
-        ]
       },
       "SearchableDatabaseParameters": {
         "type": "object",
@@ -5729,15 +6028,6 @@
         "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.\n Needs results from FingerprintPrediction Tool",
         "nullable": true
       },
-      "ConfidenceMode": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "OFF",
-          "EXACT",
-          "APPROXIMATE"
-        ]
-      },
       "FingerprintPrediction": {
         "type": "object",
         "properties": {
@@ -5758,15 +6048,6 @@
         },
         "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool",
         "nullable": true
-      },
-      "InstrumentProfile": {
-        "type": "string",
-        "description": "Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.",
-        "nullable": true,
-        "enum": [
-          "QTOF",
-          "ORBITRAP"
-        ]
       },
       "JobSubmission": {
         "type": "object",
@@ -5878,7 +6159,13 @@
             "description": "tags whether the tool is enabled"
           },
           "profile": {
-            "$ref": "#/components/schemas/InstrumentProfile"
+            "type": "string",
+            "description": "Instrument specific profile for internal algorithms\n Just select what comes closest to the instrument that was used for measuring the data.",
+            "nullable": true,
+            "enum": [
+              "QTOF",
+              "ORBITRAP"
+            ]
           },
           "numberOfCandidates": {
             "type": "integer",
@@ -6018,20 +6305,18 @@
             "nullable": true
           },
           "scoring": {
-            "$ref": "#/components/schemas/SpectralMatchingType"
+            "type": "string",
+            "description": "Specify scoring method to match spectra\n INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.\n GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.\n MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.",
+            "nullable": true,
+            "enum": [
+              "INTENSITY",
+              "GAUSSIAN",
+              "MODIFIED_COSINE"
+            ]
           }
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",
         "nullable": true
-      },
-      "SpectralMatchingType": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "INTENSITY",
-          "GAUSSIAN",
-          "MODIFIED_COSINE"
-        ]
       },
       "StructureDbSearch": {
         "type": "object",
@@ -6055,7 +6340,14 @@
             "nullable": true
           },
           "expansiveSearchConfidenceMode": {
-            "$ref": "#/components/schemas/ConfidenceMode"
+            "type": "string",
+            "description": "Expansive search mode.\n Expansive search will expand the search space to whole PubChem in case no hit with reasonable confidence was\n found in one of the specified databases (structureSearchDBs).\n \u003cp\u003e\n Possible Values\n OFF - No expansive search is performed\n EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.\n APPROXIMATE - Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.",
+            "nullable": true,
+            "enum": [
+              "OFF",
+              "EXACT",
+              "APPROXIMATE"
+            ]
           }
         },
         "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool.\n Non-Null parameters in this Object well override their equivalent value in the config map.",
@@ -6158,16 +6450,6 @@
           }
         },
         "nullable": true
-      },
-      "JobOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "command",
-          "progress",
-          "affectedIds"
-        ]
       },
       "Job": {
         "type": "object",
@@ -6403,17 +6685,6 @@
           }
         }
       },
-      "DataQuality": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "NOT_APPLICABLE",
-          "LOWEST",
-          "BAD",
-          "DECENT",
-          "GOOD"
-        ]
-      },
       "FeatureImport": {
         "required": [
           "charge",
@@ -6464,7 +6735,16 @@
             "nullable": true
           },
           "dataQuality": {
-            "$ref": "#/components/schemas/DataQuality"
+            "type": "string",
+            "description": "A optional feature quality flag that can be used to filter features to be shown in the gui or to be considered for further analysis.",
+            "nullable": true,
+            "enum": [
+              "NOT_APPLICABLE",
+              "LOWEST",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
           },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
@@ -6500,27 +6780,6 @@
             "format": "double"
           }
         }
-      },
-      "CompoundOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "consensusAnnotations",
-          "consensusAnnotationsDeNovo",
-          "customAnnotations"
-        ]
-      },
-      "AlignedFeatureOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "msData",
-          "topAnnotations",
-          "topAnnotationsDeNovo",
-          "computedTools"
-        ]
       },
       "AlignedFeature": {
         "required": [
@@ -6575,7 +6834,16 @@
             "nullable": true
           },
           "quality": {
-            "$ref": "#/components/schemas/DataQuality"
+            "type": "string",
+            "description": "Quality of this feature.",
+            "nullable": true,
+            "enum": [
+              "NOT_APPLICABLE",
+              "LOWEST",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
           },
           "hasMs1": {
             "type": "boolean",
@@ -6773,7 +7041,13 @@
         "type": "object",
         "properties": {
           "type": {
-            "$ref": "#/components/schemas/CompoundClassType"
+            "type": "string",
+            "description": "Specifies the classification ontology the CompoundClass belongs to.",
+            "nullable": true,
+            "enum": [
+              "ClassyFire",
+              "NPC"
+            ]
           },
           "level": {
             "type": "string",
@@ -6826,15 +7100,6 @@
         },
         "description": "Predicted compound class with name, probability and id if available.\n (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to",
         "nullable": true
-      },
-      "CompoundClassType": {
-        "type": "string",
-        "description": "Defines compound class ontologies that are available.",
-        "nullable": true,
-        "enum": [
-          "ClassyFire",
-          "NPC"
-        ]
       },
       "CompoundClasses": {
         "type": "object",
@@ -6917,7 +7182,17 @@
             }
           },
           "selectionCriterion": {
-            "$ref": "#/components/schemas/ConsensusCriterionCSI"
+            "type": "string",
+            "description": "Null if this is a custom selection",
+            "nullable": true,
+            "enum": [
+              "MAJORITY_STRUCTURE",
+              "CONFIDENCE_STRUCTURE",
+              "SINGLETON_STRUCTURE",
+              "MAJORITY_FORMULA",
+              "TOP_FORMULA",
+              "SINGLETON_FORMULA"
+            ]
           },
           "csiFingerIdStructure": {
             "$ref": "#/components/schemas/StructureCandidate"
@@ -6958,31 +7233,17 @@
             }
           },
           "selectionCriterion": {
-            "$ref": "#/components/schemas/ConsensusCriterionDeNovo"
+            "type": "string",
+            "description": "Criterion that was used to select the consensus annotation.",
+            "nullable": true,
+            "enum": [
+              "MAJORITY_FORMULA",
+              "TOP_FORMULA",
+              "SINGLETON_FORMULA"
+            ]
           }
         },
         "nullable": true
-      },
-      "ConsensusCriterionCSI": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "MAJORITY_STRUCTURE",
-          "CONFIDENCE_STRUCTURE",
-          "SINGLETON_STRUCTURE",
-          "MAJORITY_FORMULA",
-          "TOP_FORMULA",
-          "SINGLETON_FORMULA"
-        ]
-      },
-      "ConsensusCriterionDeNovo": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "MAJORITY_FORMULA",
-          "TOP_FORMULA",
-          "SINGLETON_FORMULA"
-        ]
       },
       "DBLink": {
         "required": [
@@ -7038,7 +7299,14 @@
             "nullable": true
           },
           "expansiveSearchState": {
-            "$ref": "#/components/schemas/ConfidenceMode"
+            "type": "string",
+            "description": "Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input paramter)",
+            "nullable": true,
+            "enum": [
+              "OFF",
+              "EXACT",
+              "APPROXIMATE"
+            ]
           },
           "specifiedDatabases": {
             "type": "array",
@@ -7704,36 +7972,6 @@
           }
         }
       },
-      "Annotation": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "FEATURE",
-              "MS2"
-            ]
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "index": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "from": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "to": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
       "Axes": {
         "type": "object",
         "properties": {
@@ -7788,7 +8026,7 @@
           "annotations": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Annotation"
+              "$ref": "#/components/schemas/TraceAnnotation"
             }
           },
           "mz": {
@@ -7807,6 +8045,36 @@
             "type": "number",
             "description": "The noise level is estimated from the median noise in the surrounding scans. It can be used to\n calculate signal-to-noise ratios.",
             "format": "double"
+          }
+        }
+      },
+      "TraceAnnotation": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FEATURE",
+              "MS2"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -7844,14 +8112,6 @@
             "$ref": "#/components/schemas/PageMetadata"
           }
         }
-      },
-      "SpectralLibraryMatchOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "referenceSpectrum"
-        ]
       },
       "SpectralLibraryMatchSummary": {
         "required": [
@@ -7972,7 +8232,16 @@
             "description": "Id of the feature (aligned over runs) this quality information belongs to."
           },
           "overallQuality": {
-            "$ref": "#/components/schemas/DataQuality"
+            "type": "string",
+            "description": "Overall Quality",
+            "nullable": true,
+            "enum": [
+              "NOT_APPLICABLE",
+              "LOWEST",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
           },
           "categories": {
             "type": "object",
@@ -7990,24 +8259,40 @@
             "type": "string"
           },
           "overallQuality": {
-            "$ref": "#/components/schemas/DataQuality"
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "NOT_APPLICABLE",
+              "LOWEST",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Item"
+              "$ref": "#/components/schemas/QualityItem"
             }
           }
         }
       },
-      "Item": {
+      "QualityItem": {
         "type": "object",
         "properties": {
           "description": {
             "type": "string"
           },
           "quality": {
-            "$ref": "#/components/schemas/DataQuality"
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "NOT_APPLICABLE",
+              "LOWEST",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
           },
           "weight": {
             "type": "string",
@@ -8018,21 +8303,6 @@
             ]
           }
         }
-      },
-      "FormulaCandidateOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "statistics",
-          "fragmentationTree",
-          "annotatedSpectrum",
-          "isotopePattern",
-          "lipidAnnotation",
-          "predictedFingerprint",
-          "compoundClasses",
-          "canopusPredictions"
-        ]
       },
       "AnnotatedMsMsData": {
         "required": [
@@ -8051,16 +8321,6 @@
             }
           }
         }
-      },
-      "StructureCandidateOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "fingerprint",
-          "dbLinks",
-          "libraryMatches"
-        ]
       },
       "PagedModelStructureCandidateScored": {
         "type": "object",

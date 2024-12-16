@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.ProjectEventType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -46,57 +47,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ProjectChangeEvent {
-  /**
-   * Gets or Sets eventType
-   */
-  public enum EventTypeEnum {
-    PROJECT_OPENED("PROJECT_OPENED"),
-    
-    PROJECT_MOVED("PROJECT_MOVED"),
-    
-    PROJECT_CLOSED("PROJECT_CLOSED"),
-    
-    FEATURE_CREATED("FEATURE_CREATED"),
-    
-    FEATURE_UPDATED("FEATURE_UPDATED"),
-    
-    FEATURE_DELETED("FEATURE_DELETED"),
-    
-    RESULT_CREATED("RESULT_CREATED"),
-    
-    RESULT_UPDATED("RESULT_UPDATED"),
-    
-    RESULT_DELETED("RESULT_DELETED");
-
-    private String value;
-
-    EventTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static EventTypeEnum fromValue(String value) {
-      for (EventTypeEnum b : EventTypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_EVENT_TYPE = "eventType";
-  private EventTypeEnum eventType;
+  private ProjectEventType eventType;
 
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
   private String projectId;
@@ -116,7 +68,7 @@ public class ProjectChangeEvent {
   public ProjectChangeEvent() {
   }
 
-  public ProjectChangeEvent eventType(EventTypeEnum eventType) {
+  public ProjectChangeEvent eventType(ProjectEventType eventType) {
     
     this.eventType = eventType;
     return this;
@@ -130,14 +82,14 @@ public class ProjectChangeEvent {
   @JsonProperty(JSON_PROPERTY_EVENT_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public EventTypeEnum getEventType() {
+  public ProjectEventType getEventType() {
     return eventType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EVENT_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEventType(EventTypeEnum eventType) {
+  public void setEventType(ProjectEventType eventType) {
     this.eventType = eventType;
   }
 

@@ -31,69 +31,33 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.DataQuality;
+import io.sirius.ms.sdk.model.QualityWeight;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Item
+ * QualityItem
  */
 @JsonPropertyOrder({
-  Item.JSON_PROPERTY_DESCRIPTION,
-  Item.JSON_PROPERTY_QUALITY,
-  Item.JSON_PROPERTY_WEIGHT
+  QualityItem.JSON_PROPERTY_DESCRIPTION,
+  QualityItem.JSON_PROPERTY_QUALITY,
+  QualityItem.JSON_PROPERTY_WEIGHT
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class Item {
+public class QualityItem {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
 
   public static final String JSON_PROPERTY_QUALITY = "quality";
   private DataQuality quality;
 
-  /**
-   * Gets or Sets weight
-   */
-  public enum WeightEnum {
-    MINOR("MINOR"),
-    
-    MAJOR("MAJOR"),
-    
-    CRITICAL("CRITICAL");
-
-    private String value;
-
-    WeightEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static WeightEnum fromValue(String value) {
-      for (WeightEnum b : WeightEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_WEIGHT = "weight";
-  private WeightEnum weight;
+  private QualityWeight weight;
 
-  public Item() {
+  public QualityItem() {
   }
 
-  public Item description(String description) {
+  public QualityItem description(String description) {
     
     this.description = description;
     return this;
@@ -118,7 +82,7 @@ public class Item {
     this.description = description;
   }
 
-  public Item quality(DataQuality quality) {
+  public QualityItem quality(DataQuality quality) {
     
     this.quality = quality;
     return this;
@@ -143,7 +107,7 @@ public class Item {
     this.quality = quality;
   }
 
-  public Item weight(WeightEnum weight) {
+  public QualityItem weight(QualityWeight weight) {
     
     this.weight = weight;
     return this;
@@ -157,14 +121,14 @@ public class Item {
   @JsonProperty(JSON_PROPERTY_WEIGHT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public WeightEnum getWeight() {
+  public QualityWeight getWeight() {
     return weight;
   }
 
 
   @JsonProperty(JSON_PROPERTY_WEIGHT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setWeight(WeightEnum weight) {
+  public void setWeight(QualityWeight weight) {
     this.weight = weight;
   }
 
@@ -176,10 +140,10 @@ public class Item {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Item item = (Item) o;
-    return Objects.equals(this.description, item.description) &&
-        Objects.equals(this.quality, item.quality) &&
-        Objects.equals(this.weight, item.weight);
+    QualityItem qualityItem = (QualityItem) o;
+    return Objects.equals(this.description, qualityItem.description) &&
+        Objects.equals(this.quality, qualityItem.quality) &&
+        Objects.equals(this.weight, qualityItem.weight);
   }
 
   @Override
@@ -190,7 +154,7 @@ public class Item {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Item {\n");
+    sb.append("class QualityItem {\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    quality: ").append(toIndentedString(quality)).append("\n");
     sb.append("    weight: ").append(toIndentedString(weight)).append("\n");
