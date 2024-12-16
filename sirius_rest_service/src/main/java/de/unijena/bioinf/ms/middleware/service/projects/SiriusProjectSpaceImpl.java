@@ -137,6 +137,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
+    public Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
         Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.getProjectSpaceImpl()

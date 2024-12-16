@@ -194,7 +194,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         if (viewType==ViewType.ALIGNMENT) {
             spec = currentInstance.getClient().features().getTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId(), true).bodyToMono(TraceSet.class).onErrorComplete().block();
         } else {
-            spec = currentInstance.getSourceFeature().getCompoundId()==null ? null : currentInstance.getClient().compounds().getCompoundTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getSourceFeature().getCompoundId(), currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+            spec = currentInstance.getClient().features().getAdductNetworkWithMergedTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
         }
 
         try {
@@ -242,6 +242,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
                         .sampleId(traceSet.getSampleId())
                         .sampleName(traceSet.getSampleName())
                         .axes(traceSet.getAxes())
+                        .adductNetwork(traceSet.getAdductNetwork())
                         .traces(traceSet.getTraces().stream().map(t -> {
                             String label = t.getLabel().toUpperCase();
                             boolean isIsotope = label.contains("ISOTOPE");
