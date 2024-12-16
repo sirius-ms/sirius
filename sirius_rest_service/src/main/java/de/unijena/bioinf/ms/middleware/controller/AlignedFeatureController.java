@@ -49,6 +49,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
 @RestController
@@ -238,13 +239,13 @@ public class AlignedFeatureController {
 
     /**
      * Summarize matched reference spectra for the given 'alignedFeatureId'.
-     * If a 'candidateInChiKey' is provided, summarizes only matches for the database compound with the given InChI key.
+     * If a 'inchiKey' (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      *
      * @param projectId         project-space to read from.
      * @param alignedFeatureId  feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks    min threshold of shared peaks.
      * @param minSimilarity     min spectral similarity threshold.
-     * @param candidateInChiKey inchi key of the database compound.
+     * @param inchiKey 2D inchi key of the compound in the structure database.
      * @return Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/summary", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -253,20 +254,20 @@ public class AlignedFeatureController {
             @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "1") int minSharedPeaks,
             @RequestParam(defaultValue = "0.2") double minSimilarity,
-            @RequestParam(defaultValue = "") @Nullable String candidateInChiKey
+            @RequestParam(defaultValue = "") @Nullable String inchiKey
     ) {
         minSharedPeaks = Math.max(minSharedPeaks, 0);
         minSimilarity = Math.min(Math.max(minSimilarity, 0d), 1d);
-        if (candidateInChiKey == null || candidateInChiKey.isEmpty() || candidateInChiKey.isBlank()) {
+        if (isNullOrBlank(inchiKey)) {
             return projectsProvider.getProjectOrThrow(projectId).summarizeLibraryMatchesByFeatureId(alignedFeatureId, minSharedPeaks, minSimilarity);
         } else {
-            return projectsProvider.getProjectOrThrow(projectId).summarizeLibraryMatchesByFeatureIdAndInchi(alignedFeatureId, candidateInChiKey, minSharedPeaks, minSimilarity);
+            return projectsProvider.getProjectOrThrow(projectId).summarizeLibraryMatchesByFeatureIdAndInchi(alignedFeatureId, inchiKey, minSharedPeaks, minSimilarity);
         }
     }
 
     /**
      * Page of spectral library matches for the given 'alignedFeatureId'.
-     * If a 'candidateInChiKey' is provided, returns only matches for the database compound with the given InChI key.
+     * If a 'inchiKey' (2D) is provided, returns only matches for the database compound with the given InChI key.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -279,16 +280,16 @@ public class AlignedFeatureController {
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "1") int minSharedPeaks,
             @RequestParam(defaultValue = "0.2") double minSimilarity,
-            @RequestParam(defaultValue = "") @Nullable String candidateInChiKey,
+            @RequestParam(defaultValue = "") @Nullable String inchiKey,
             @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
         minSharedPeaks = Math.max(minSharedPeaks, 0);
         minSimilarity = Math.min(Math.max(minSimilarity, 0d), 1d);
         Page<SpectralLibraryMatch> matches;
-        if (candidateInChiKey == null || candidateInChiKey.isEmpty() || candidateInChiKey.isBlank()) {
+        if (isNullOrBlank(inchiKey)) {
             matches = projectsProvider.getProjectOrThrow(projectId).findLibraryMatchesByFeatureId(alignedFeatureId, minSharedPeaks, minSimilarity, pageable);
         } else {
-            matches = projectsProvider.getProjectOrThrow(projectId).findLibraryMatchesByFeatureIdAndInchi(alignedFeatureId, candidateInChiKey, minSharedPeaks, minSimilarity, pageable);
+            matches = projectsProvider.getProjectOrThrow(projectId).findLibraryMatchesByFeatureIdAndInchi(alignedFeatureId, inchiKey, minSharedPeaks, minSimilarity, pageable);
         }
 
         if (matches != null && optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
@@ -320,10 +321,10 @@ public class AlignedFeatureController {
             @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "1") int minSharedPeaks,
             @RequestParam(defaultValue = "0.2") double minSimilarity,
-            @RequestParam(defaultValue = "") @Nullable String candidateInChiKey,
+            @RequestParam(defaultValue = "") @Nullable String inchiKey,
             @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
-        return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, candidateInChiKey, optFields).stream().toList();
+        return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
     }
 
     /**

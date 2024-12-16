@@ -1818,7 +1818,7 @@ No authorization required
 
 ## getSpectralLibraryMatches
 
-> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
+> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields)
 
 List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
@@ -1844,10 +1844,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
         Integer minSharedPeaks = 1; // Integer | 
         Double minSimilarity = 0.2D; // Double | 
-        String candidateInChiKey = ""; // String | 
+        String inchiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatches");
@@ -1869,7 +1869,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
 | **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
 | **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**|  | [optional] [default to ] |
+| **inchiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -1894,11 +1894,11 @@ No authorization required
 
 ## getSpectralLibraryMatchesPaged
 
-> PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
+> PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields)
 
 Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
-Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
 
 ### Example
 
@@ -1923,10 +1923,10 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         Integer minSharedPeaks = 1; // Integer | 
         Double minSimilarity = 0.2D; // Double | 
-        String candidateInChiKey = ""; // String | 
+        String inchiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            PagedModelSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+            PagedModelSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesPaged");
@@ -1951,7 +1951,7 @@ public class Example {
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
 | **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
 | **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**|  | [optional] [default to ] |
+| **inchiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -1976,11 +1976,11 @@ No authorization required
 
 ## getSpectralLibraryMatchesSummary
 
-> SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey)
+> SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey)
 
 Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
 
-Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
 
 ### Example
 
@@ -2002,9 +2002,9 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
         Integer minSharedPeaks = 1; // Integer | min threshold of shared peaks.
         Double minSimilarity = 0.2D; // Double | min spectral similarity threshold.
-        String candidateInChiKey = ""; // String | inchi key of the database compound.
+        String inchiKey = ""; // String | 2D inchi key of the compound in the structure database.
         try {
-            SpectralLibraryMatchSummary result = apiInstance.getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey);
+            SpectralLibraryMatchSummary result = apiInstance.getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesSummary");
@@ -2026,7 +2026,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
 | **minSharedPeaks** | **Integer**| min threshold of shared peaks. | [optional] [default to 1] |
 | **minSimilarity** | **Double**| min spectral similarity threshold. | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**| inchi key of the database compound. | [optional] [default to ] |
+| **inchiKey** | **String**| 2D inchi key of the compound in the structure database. | [optional] [default to ] |
 
 ### Return type
 
