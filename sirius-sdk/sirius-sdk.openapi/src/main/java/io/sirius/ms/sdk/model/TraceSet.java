@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.AdductNetwork;
 import io.sirius.ms.sdk.model.Axes;
 import io.sirius.ms.sdk.model.Trace;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * TraceSet
  */
 @JsonPropertyOrder({
+  TraceSet.JSON_PROPERTY_ADDUCT_NETWORK,
   TraceSet.JSON_PROPERTY_SAMPLE_ID,
   TraceSet.JSON_PROPERTY_SAMPLE_NAME,
   TraceSet.JSON_PROPERTY_AXES,
@@ -39,6 +41,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TraceSet {
+  public static final String JSON_PROPERTY_ADDUCT_NETWORK = "adductNetwork";
+  private AdductNetwork adductNetwork;
+
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
   private Long sampleId;
 
@@ -52,6 +57,31 @@ public class TraceSet {
   private List<Trace> traces = new ArrayList<>();
 
   public TraceSet() {
+  }
+
+  public TraceSet adductNetwork(AdductNetwork adductNetwork) {
+    
+    this.adductNetwork = adductNetwork;
+    return this;
+  }
+
+   /**
+   * Get adductNetwork
+   * @return adductNetwork
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public AdductNetwork getAdductNetwork() {
+    return adductNetwork;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAdductNetwork(AdductNetwork adductNetwork) {
+    this.adductNetwork = adductNetwork;
   }
 
   public TraceSet sampleId(Long sampleId) {
@@ -171,7 +201,8 @@ public class TraceSet {
       return false;
     }
     TraceSet traceSet = (TraceSet) o;
-    return Objects.equals(this.sampleId, traceSet.sampleId) &&
+    return Objects.equals(this.adductNetwork, traceSet.adductNetwork) &&
+        Objects.equals(this.sampleId, traceSet.sampleId) &&
         Objects.equals(this.sampleName, traceSet.sampleName) &&
         Objects.equals(this.axes, traceSet.axes) &&
         Objects.equals(this.traces, traceSet.traces);
@@ -179,13 +210,14 @@ public class TraceSet {
 
   @Override
   public int hashCode() {
-    return Objects.hash(sampleId, sampleName, axes, traces);
+    return Objects.hash(adductNetwork, sampleId, sampleName, axes, traces);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class TraceSet {\n");
+    sb.append("    adductNetwork: ").append(toIndentedString(adductNetwork)).append("\n");
     sb.append("    sampleId: ").append(toIndentedString(sampleId)).append("\n");
     sb.append("    sampleName: ").append(toIndentedString(sampleName)).append("\n");
     sb.append("    axes: ").append(toIndentedString(axes)).append("\n");
