@@ -54,28 +54,7 @@ public class FingerIdPropertyBean extends MolecularPropertyBean<MolecularPropert
     }
 
     public String getFingerprintTypeName() {
-        switch (getFingerprintType()) {
-            case ECFP:
-                return "ECFP";
-            case KLEKOTA_ROTH:
-                return "Klekota Roth";
-            case MACCS:
-                return "MACCS";
-            case OPENBABEL:
-                return "Open Babel FP4";
-            case PUBCHEM:
-                return "PubChem";
-            case SUBSTRUCTURE:
-                return "CDK Substructure";
-            case BIOSMARTS:
-                return "custom made SMARTS";
-            case RINGSYSTEMS:
-                return "ring systems";
-            case INSILICO:
-                return "combinatorial fragmenter";
-            default:
-                return null;
-        }
+       return getFingerprintType().getDisplayName();
     }
 
 

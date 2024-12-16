@@ -6240,6 +6240,16 @@
               "type": "string",
               "nullable": true
             }
+          },
+          "jobEffect": {
+            "type": "string",
+            "description": "Effect this job has. The affected ids are added, removed or modified.\n Null if job does not affect features/compounds\n Not available/null if affected Ids are not requested",
+            "nullable": true,
+            "enum": [
+              "IMPORT",
+              "COMPUTATION",
+              "DELETION"
+            ]
           }
         },
         "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
@@ -6809,6 +6819,12 @@
             "description": "Name of the level this compound class belongs to",
             "nullable": true
           },
+          "levelIndex": {
+            "type": "integer",
+            "description": "Index of the level this compound class belongs to",
+            "format": "int32",
+            "nullable": true
+          },
           "name": {
             "type": "string",
             "description": "Name of the compound class.",
@@ -6822,7 +6838,8 @@
           "id": {
             "type": "integer",
             "description": "Unique id of the class. Might be undefined for certain classification ontologies.",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "probability": {
             "type": "number",
@@ -6833,6 +6850,17 @@
             "type": "integer",
             "description": "Absolute index of this property in the predicted vector/embedding",
             "format": "int32"
+          },
+          "parentId": {
+            "type": "integer",
+            "description": "Unique id of the parent class. Might be undefined for certain classification ontologies.",
+            "format": "int32",
+            "nullable": true
+          },
+          "parentName": {
+            "type": "string",
+            "description": "Name of the parent compound class.",
+            "nullable": true
           }
         },
         "description": "Predicted compound class with name, probability and id if available.\n (ClassyFire and NPC). This can be seen as the set of classes a feature most likely belongs to",
@@ -7091,6 +7119,12 @@
           "rank": {
             "type": "integer",
             "format": "int32"
+          },
+          "siriusScoreNormalized": {
+            "type": "number",
+            "description": "Normalized Sirius Score of the formula candidate.\n If NULL result is not available",
+            "format": "double",
+            "nullable": true
           },
           "siriusScore": {
             "type": "number",

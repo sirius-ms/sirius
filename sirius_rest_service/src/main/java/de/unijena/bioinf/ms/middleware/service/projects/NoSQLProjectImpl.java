@@ -1027,6 +1027,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .molecularFormula(candidate.getMolecularFormula().toString())
                 .adduct(candidate.getAdduct().toString())
                 .rank(candidate.getFormulaRank())
+                .siriusScoreNormalized(candidate.getSiriusScoreNormalized())
                 .siriusScore(candidate.getSiriusScore())
                 .isotopeScore(candidate.getIsotopeScore())
                 .treeScore(candidate.getTreeScore())
@@ -1544,7 +1545,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (dataOpt.isEmpty())
             return null;
         StringWriter writer = new StringWriter();
-        FingerIdData.write(writer, dataOpt.get()); //sneaky throws because it's a string writer and no real io.
+        FingerIdData.write(writer, dataOpt.get(), true); //sneaky throws because it's a string writer and no real io.
         return writer.toString();
     }
 

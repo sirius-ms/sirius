@@ -676,7 +676,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     public void writeFingerIdData(@NotNull Writer writer, int charge) {
         projectSpaceManager.getFingerIdData(charge).ifPresent(data -> {
             try {
-                FingerIdData.write(writer, data);
+                FingerIdData.write(writer, data, true);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting FingerIdData from project '" + projectId + "'. Message: " + e.getMessage());
