@@ -51,7 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_ADDUCT,
   SpectralLibraryMatch.JSON_PROPERTY_EXACT_MASS,
   SpectralLibraryMatch.JSON_PROPERTY_SMILES,
-  SpectralLibraryMatch.JSON_PROPERTY_CANDIDATE_IN_CHI_KEY,
+  SpectralLibraryMatch.JSON_PROPERTY_INCHI_KEY,
   SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
@@ -95,8 +95,8 @@ public class SpectralLibraryMatch {
   public static final String JSON_PROPERTY_SMILES = "smiles";
   private String smiles;
 
-  public static final String JSON_PROPERTY_CANDIDATE_IN_CHI_KEY = "candidateInChiKey";
-  private String candidateInChiKey;
+  public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
+  private String inchiKey;
 
   public static final String JSON_PROPERTY_REFERENCE_SPECTRUM = "referenceSpectrum";
   private BasicSpectrum referenceSpectrum;
@@ -429,29 +429,29 @@ public class SpectralLibraryMatch {
     this.smiles = smiles;
   }
 
-  public SpectralLibraryMatch candidateInChiKey(String candidateInChiKey) {
+  public SpectralLibraryMatch inchiKey(String inchiKey) {
     
-    this.candidateInChiKey = candidateInChiKey;
+    this.inchiKey = inchiKey;
     return this;
   }
 
    /**
-   * Get candidateInChiKey
-   * @return candidateInChiKey
+   * Get inchiKey
+   * @return inchiKey
   **/
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_CANDIDATE_IN_CHI_KEY)
+  @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getCandidateInChiKey() {
-    return candidateInChiKey;
+  public String getInchiKey() {
+    return inchiKey;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CANDIDATE_IN_CHI_KEY)
+  @JsonProperty(JSON_PROPERTY_INCHI_KEY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCandidateInChiKey(String candidateInChiKey) {
-    this.candidateInChiKey = candidateInChiKey;
+  public void setInchiKey(String inchiKey) {
+    this.inchiKey = inchiKey;
   }
 
   public SpectralLibraryMatch referenceSpectrum(BasicSpectrum referenceSpectrum) {
@@ -501,13 +501,13 @@ public class SpectralLibraryMatch {
         Objects.equals(this.adduct, spectralLibraryMatch.adduct) &&
         Objects.equals(this.exactMass, spectralLibraryMatch.exactMass) &&
         Objects.equals(this.smiles, spectralLibraryMatch.smiles) &&
-        Objects.equals(this.candidateInChiKey, spectralLibraryMatch.candidateInChiKey) &&
+        Objects.equals(this.inchiKey, spectralLibraryMatch.inchiKey) &&
         Objects.equals(this.referenceSpectrum, spectralLibraryMatch.referenceSpectrum);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, candidateInChiKey, referenceSpectrum);
+    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, inchiKey, referenceSpectrum);
   }
 
   @Override
@@ -527,7 +527,7 @@ public class SpectralLibraryMatch {
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
-    sb.append("    candidateInChiKey: ").append(toIndentedString(candidateInChiKey)).append("\n");
+    sb.append("    inchiKey: ").append(toIndentedString(inchiKey)).append("\n");
     sb.append("    referenceSpectrum: ").append(toIndentedString(referenceSpectrum)).append("\n");
     sb.append("}");
     return sb.toString();

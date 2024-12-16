@@ -198,7 +198,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         String inchiKey = fingerprintCandidateBean.getCandidate().getInchiKey();
         double mces = Optional.ofNullable(fingerprintCandidateBean.getCandidate().getMcesDistToTopHit()).orElse(Double.MAX_VALUE);
         beans.forEach(bean -> {
-            bean.setMatchesTopStructureHit(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getCandidateInChiKey()));
+            bean.setMatchesTopStructureHit(mces<= mcesThreshold && Objects.equals(inchiKey, bean.getMatch().getInchiKey()));
         });
     }
 
@@ -208,7 +208,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         Map<String, Double> structureCandidateInchiKeyToMCES = new HashMap<>();
         boolean[] hasNext = new boolean[]{loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize)};
         beans.forEach(bean -> {
-            Double mces = structureCandidateInchiKeyToMCES.get(bean.getMatch().getCandidateInChiKey());
+            Double mces = structureCandidateInchiKeyToMCES.get(bean.getMatch().getInchiKey());
             while (mces == null && hasNext[0]) {
                 //loading additional structure candidates only as required
                 hasNext[0] = loadNextPage(structureCandidateInchiKeyToMCES, instanceBean, pageNum[0]++, pageSize);
