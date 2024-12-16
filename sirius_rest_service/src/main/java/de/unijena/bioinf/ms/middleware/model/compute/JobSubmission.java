@@ -134,10 +134,13 @@ public class JobSubmission extends AbstractSubmission {
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-        //common default search dbs for spectra and structure. Formula only if db search is used.
-        List<String> searchDbs = Stream.concat(Stream.of(
+        //default search dbs for spectra and structure. Formula only if db search is used.
+        //for spectral library search we add all custom sources since users currently cannot set parameters for spectral library search
+        List<String> spectraSearchDbs = Stream.concat(Stream.of(
                         CustomDataSources.getSourceFromName(DataSource.BIO.name())),
                 CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList();
+        //for structure database search (CSI) we only use BIO so that results are (mostly) consistent for different users with different custom DBs
+        List<String> structureSearchDbs = Collections.singletonList(DataSource.BIO.name());
 
 
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
@@ -145,12 +148,12 @@ public class JobSubmission extends AbstractSubmission {
                 .enforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .detectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .recompute(false)
-                .spectraSearchParams(SpectralLibrarySearch.builderWithDefaults().spectraSearchDBs(searchDbs).build())
+                .spectraSearchParams(SpectralLibrarySearch.builderWithDefaults().spectraSearchDBs(spectraSearchDbs).build())
                 .formulaIdParams(Sirius.buildDefault())
                 .zodiacParams(Zodiac.buildDefault())
                 .fingerprintPredictionParams(FingerprintPrediction.buildDefault())
                 .canopusParams(Canopus.buildDefault())
-                .structureDbSearchParams(StructureDbSearch.builderWithDefaults().structureSearchDBs(searchDbs).build())
+                .structureDbSearchParams(StructureDbSearch.builderWithDefaults().structureSearchDBs(structureSearchDbs).build())
                 .msNovelistParams(MsNovelist.buildDefault());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
