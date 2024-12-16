@@ -30,58 +30,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.TraceAnnotationType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Annotation
+ * TraceAnnotation
  */
 @JsonPropertyOrder({
-  Annotation.JSON_PROPERTY_TYPE,
-  Annotation.JSON_PROPERTY_DESCRIPTION,
-  Annotation.JSON_PROPERTY_INDEX,
-  Annotation.JSON_PROPERTY_FROM,
-  Annotation.JSON_PROPERTY_TO
+  TraceAnnotation.JSON_PROPERTY_TYPE,
+  TraceAnnotation.JSON_PROPERTY_DESCRIPTION,
+  TraceAnnotation.JSON_PROPERTY_INDEX,
+  TraceAnnotation.JSON_PROPERTY_FROM,
+  TraceAnnotation.JSON_PROPERTY_TO
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class Annotation {
-  /**
-   * Gets or Sets type
-   */
-  public enum TypeEnum {
-    FEATURE("FEATURE"),
-    
-    MS2("MS2");
-
-    private String value;
-
-    TypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static TypeEnum fromValue(String value) {
-      for (TypeEnum b : TypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
+public class TraceAnnotation {
   public static final String JSON_PROPERTY_TYPE = "type";
-  private TypeEnum type;
+  private TraceAnnotationType type;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
@@ -95,10 +61,10 @@ public class Annotation {
   public static final String JSON_PROPERTY_TO = "to";
   private Integer to;
 
-  public Annotation() {
+  public TraceAnnotation() {
   }
 
-  public Annotation type(TypeEnum type) {
+  public TraceAnnotation type(TraceAnnotationType type) {
     
     this.type = type;
     return this;
@@ -112,18 +78,18 @@ public class Annotation {
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public TypeEnum getType() {
+  public TraceAnnotationType getType() {
     return type;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(TypeEnum type) {
+  public void setType(TraceAnnotationType type) {
     this.type = type;
   }
 
-  public Annotation description(String description) {
+  public TraceAnnotation description(String description) {
     
     this.description = description;
     return this;
@@ -148,7 +114,7 @@ public class Annotation {
     this.description = description;
   }
 
-  public Annotation index(Integer index) {
+  public TraceAnnotation index(Integer index) {
     
     this.index = index;
     return this;
@@ -173,7 +139,7 @@ public class Annotation {
     this.index = index;
   }
 
-  public Annotation from(Integer from) {
+  public TraceAnnotation from(Integer from) {
     
     this.from = from;
     return this;
@@ -198,7 +164,7 @@ public class Annotation {
     this.from = from;
   }
 
-  public Annotation to(Integer to) {
+  public TraceAnnotation to(Integer to) {
     
     this.to = to;
     return this;
@@ -231,12 +197,12 @@ public class Annotation {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Annotation annotation = (Annotation) o;
-    return Objects.equals(this.type, annotation.type) &&
-        Objects.equals(this.description, annotation.description) &&
-        Objects.equals(this.index, annotation.index) &&
-        Objects.equals(this.from, annotation.from) &&
-        Objects.equals(this.to, annotation.to);
+    TraceAnnotation traceAnnotation = (TraceAnnotation) o;
+    return Objects.equals(this.type, traceAnnotation.type) &&
+        Objects.equals(this.description, traceAnnotation.description) &&
+        Objects.equals(this.index, traceAnnotation.index) &&
+        Objects.equals(this.from, traceAnnotation.from) &&
+        Objects.equals(this.to, traceAnnotation.to);
   }
 
   @Override
@@ -247,7 +213,7 @@ public class Annotation {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Annotation {\n");
+    sb.append("class TraceAnnotation {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    index: ").append(toIndentedString(index)).append("\n");

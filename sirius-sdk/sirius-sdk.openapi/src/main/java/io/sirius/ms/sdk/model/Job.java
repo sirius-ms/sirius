@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.JobEffect;
 import io.sirius.ms.sdk.model.JobProgress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,45 +66,8 @@ public class Job {
   public static final String JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS = "affectedAlignedFeatureIds";
   private List<String> affectedAlignedFeatureIds;
 
-  /**
-   * Effect this job has. The affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
-   */
-  public enum JobEffectEnum {
-    IMPORT("IMPORT"),
-    
-    COMPUTATION("COMPUTATION"),
-    
-    DELETION("DELETION");
-
-    private String value;
-
-    JobEffectEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static JobEffectEnum fromValue(String value) {
-      for (JobEffectEnum b : JobEffectEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
-
   public static final String JSON_PROPERTY_JOB_EFFECT = "jobEffect";
-  private JobEffectEnum jobEffect;
+  private JobEffect jobEffect;
 
   public Job() {
   }
@@ -249,28 +213,28 @@ public class Job {
     this.affectedAlignedFeatureIds = affectedAlignedFeatureIds;
   }
 
-  public Job jobEffect(JobEffectEnum jobEffect) {
+  public Job jobEffect(JobEffect jobEffect) {
     
     this.jobEffect = jobEffect;
     return this;
   }
 
    /**
-   * Effect this job has. The affected ids are added, removed or modified.  Null if job does not affect features/compounds  Not available/null if affected Ids are not requested
+   * Get jobEffect
    * @return jobEffect
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public JobEffectEnum getJobEffect() {
+  public JobEffect getJobEffect() {
     return jobEffect;
   }
 
 
   @JsonProperty(JSON_PROPERTY_JOB_EFFECT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setJobEffect(JobEffectEnum jobEffect) {
+  public void setJobEffect(JobEffect jobEffect) {
     this.jobEffect = jobEffect;
   }
 

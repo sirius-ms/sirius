@@ -30,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.ConnectionErrorClass;
+import io.sirius.ms.sdk.model.ConnectionErrorType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -48,95 +50,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ConnectionError {
-  /**
-   * Gets or Sets errorType
-   */
-  public enum ErrorTypeEnum {
-    WARNING("WARNING"),
-    
-    ERROR("ERROR");
-
-    private String value;
-
-    ErrorTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static ErrorTypeEnum fromValue(String value) {
-      for (ErrorTypeEnum b : ErrorTypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_ERROR_TYPE = "errorType";
-  private ErrorTypeEnum errorType;
-
-  /**
-   * Gets or Sets errorKlass
-   */
-  public enum ErrorKlassEnum {
-    UNKNOWN("UNKNOWN"),
-    
-    INTERNET("INTERNET"),
-    
-    LOGIN_SERVER("LOGIN_SERVER"),
-    
-    LICENSE_SERVER("LICENSE_SERVER"),
-    
-    TOKEN("TOKEN"),
-    
-    LOGIN("LOGIN"),
-    
-    LICENSE("LICENSE"),
-    
-    TERMS("TERMS"),
-    
-    APP_SERVER("APP_SERVER");
-
-    private String value;
-
-    ErrorKlassEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static ErrorKlassEnum fromValue(String value) {
-      for (ErrorKlassEnum b : ErrorKlassEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
+  private ConnectionErrorType errorType;
 
   public static final String JSON_PROPERTY_ERROR_KLASS = "errorKlass";
-  private ErrorKlassEnum errorKlass;
+  private ConnectionErrorClass errorKlass;
 
   public static final String JSON_PROPERTY_SIRIUS_ERROR_CODE = "siriusErrorCode";
   private Integer siriusErrorCode;
@@ -159,7 +77,7 @@ public class ConnectionError {
   public ConnectionError() {
   }
 
-  public ConnectionError errorType(ErrorTypeEnum errorType) {
+  public ConnectionError errorType(ConnectionErrorType errorType) {
     
     this.errorType = errorType;
     return this;
@@ -173,18 +91,18 @@ public class ConnectionError {
   @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public ErrorTypeEnum getErrorType() {
+  public ConnectionErrorType getErrorType() {
     return errorType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ERROR_TYPE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setErrorType(ErrorTypeEnum errorType) {
+  public void setErrorType(ConnectionErrorType errorType) {
     this.errorType = errorType;
   }
 
-  public ConnectionError errorKlass(ErrorKlassEnum errorKlass) {
+  public ConnectionError errorKlass(ConnectionErrorClass errorKlass) {
     
     this.errorKlass = errorKlass;
     return this;
@@ -198,14 +116,14 @@ public class ConnectionError {
   @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public ErrorKlassEnum getErrorKlass() {
+  public ConnectionErrorClass getErrorKlass() {
     return errorKlass;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ERROR_KLASS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setErrorKlass(ErrorKlassEnum errorKlass) {
+  public void setErrorKlass(ConnectionErrorClass errorKlass) {
     this.errorKlass = errorKlass;
   }
 

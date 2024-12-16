@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.Solver;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -87,47 +88,8 @@ public class Info {
   public static final String JSON_PROPERTY_FINGERPRINT_ID = "fingerprintId";
   private String fingerprintId;
 
-  /**
-   * Gets or Sets availableILPSolvers
-   */
-  public enum AvailableILPSolversEnum {
-    GUROBI("GUROBI"),
-    
-    CPLEX("CPLEX"),
-    
-    GLPK("GLPK"),
-    
-    CLP("CLP");
-
-    private String value;
-
-    AvailableILPSolversEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static AvailableILPSolversEnum fromValue(String value) {
-      for (AvailableILPSolversEnum b : AvailableILPSolversEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS = "availableILPSolvers";
-  private List<AvailableILPSolversEnum> availableILPSolvers = new ArrayList<>();
+  private List<Solver> availableILPSolvers = new ArrayList<>();
 
   public static final String JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS = "supportedILPSolvers";
   private Map<String, String> supportedILPSolvers = new HashMap<>();
@@ -385,13 +347,13 @@ public class Info {
     this.fingerprintId = fingerprintId;
   }
 
-  public Info availableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
+  public Info availableILPSolvers(List<Solver> availableILPSolvers) {
     
     this.availableILPSolvers = availableILPSolvers;
     return this;
   }
 
-  public Info addAvailableILPSolversItem(AvailableILPSolversEnum availableILPSolversItem) {
+  public Info addAvailableILPSolversItem(Solver availableILPSolversItem) {
     if (this.availableILPSolvers == null) {
       this.availableILPSolvers = new ArrayList<>();
     }
@@ -407,14 +369,14 @@ public class Info {
   @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public List<AvailableILPSolversEnum> getAvailableILPSolvers() {
+  public List<Solver> getAvailableILPSolvers() {
     return availableILPSolvers;
   }
 
 
   @JsonProperty(JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAvailableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
+  public void setAvailableILPSolvers(List<Solver> availableILPSolvers) {
     this.availableILPSolvers = availableILPSolvers;
   }
 

@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.DataQuality;
-import io.sirius.ms.sdk.model.Item;
+import io.sirius.ms.sdk.model.QualityItem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +55,7 @@ public class Category {
   private DataQuality overallQuality;
 
   public static final String JSON_PROPERTY_ITEMS = "items";
-  private List<Item> items = new ArrayList<>();
+  private List<QualityItem> items = new ArrayList<>();
 
   public Category() {
   }
@@ -110,13 +110,13 @@ public class Category {
     this.overallQuality = overallQuality;
   }
 
-  public Category items(List<Item> items) {
+  public Category items(List<QualityItem> items) {
     
     this.items = items;
     return this;
   }
 
-  public Category addItemsItem(Item itemsItem) {
+  public Category addItemsItem(QualityItem itemsItem) {
     if (this.items == null) {
       this.items = new ArrayList<>();
     }
@@ -132,14 +132,14 @@ public class Category {
   @JsonProperty(JSON_PROPERTY_ITEMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Item> getItems() {
+  public List<QualityItem> getItems() {
     return items;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ITEMS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setItems(List<Item> items) {
+  public void setItems(List<QualityItem> items) {
     this.items = items;
   }
 

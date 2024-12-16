@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.JobState;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -49,55 +50,8 @@ public class JobProgress {
   public static final String JSON_PROPERTY_INDETERMINATE = "indeterminate";
   private Boolean indeterminate;
 
-  /**
-   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by user or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
-   */
-  public enum StateEnum {
-    WAITING("WAITING"),
-    
-    READY("READY"),
-    
-    QUEUED("QUEUED"),
-    
-    SUBMITTED("SUBMITTED"),
-    
-    RUNNING("RUNNING"),
-    
-    CANCELED("CANCELED"),
-    
-    FAILED("FAILED"),
-    
-    DONE("DONE");
-
-    private String value;
-
-    StateEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static StateEnum fromValue(String value) {
-      for (StateEnum b : StateEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_STATE = "state";
-  private StateEnum state;
+  private JobState state;
 
   public static final String JSON_PROPERTY_CURRENT_PROGRESS = "currentProgress";
   private Long currentProgress;
@@ -139,28 +93,28 @@ public class JobProgress {
     this.indeterminate = indeterminate;
   }
 
-  public JobProgress state(StateEnum state) {
+  public JobProgress state(JobState state) {
     
     this.state = state;
     return this;
   }
 
    /**
-   * Current state of the Jobs in the SIRIUS internal Job scheduler           WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)          READY: Ready for submission but not yet enqueued for submission to ExecutorService.          QUEUED: Enqueued for submission to ExecutorService.          SUBMITTED: Submitted and waiting to be executed.          RUNNING: Job is running.          CANCELED: Jobs is finished due to cancellation by user or dependent jobs.          FAILED: Job is finished but failed.          DONE: Job finished successfully.
+   * Get state
    * @return state
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public StateEnum getState() {
+  public JobState getState() {
     return state;
   }
 
 
   @JsonProperty(JSON_PROPERTY_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setState(StateEnum state) {
+  public void setState(JobState state) {
     this.state = state;
   }
 

@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
@@ -49,7 +49,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.PROJECT_OPENED;
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.PROJECT_OPENED;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
@@ -251,7 +251,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     protected abstract void registerEventListeners(@NotNull String id, @NotNull PSM psm);
     protected ServerEventImpl<ProjectChangeEvent> creatEvent(
             String projectId,
-            ProjectChangeEvent.Type eventType,
+            ProjectEventType eventType,
             FormulaResultId formulaResultId
     ) {
         CompoundContainerId compoundContainerId = formulaResultId.getParentId();
@@ -266,7 +266,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     protected ServerEventImpl<ProjectChangeEvent> creatEvent(
             String projectId,
-            ProjectChangeEvent.Type eventType,
+            ProjectEventType eventType,
             CompoundContainerId compoundContainerId
     ) {
         return ServerEvents.newProjectEvent(
