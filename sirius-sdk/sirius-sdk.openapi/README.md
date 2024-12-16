@@ -126,6 +126,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
+*FeaturesApi* | [**getAdductNetworkWithMergedTraces**](docs/FeaturesApi.md#getAdductNetworkWithMergedTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
 *FeaturesApi* | [**getAlignedFeaturesPaged**](docs/FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space.
@@ -220,6 +221,9 @@ Class | Method | HTTP request | Description
 
  - [AccountCredentials](docs/AccountCredentials.md)
  - [AccountInfo](docs/AccountInfo.md)
+ - [AdductEdge](docs/AdductEdge.md)
+ - [AdductNetwork](docs/AdductNetwork.md)
+ - [AdductNode](docs/AdductNode.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)

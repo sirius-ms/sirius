@@ -9,7 +9,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AdductManager {
 
@@ -30,7 +29,8 @@ public class AdductManager {
         this.losses = new HashSet<>();
         this.multimereIonTypes = new ArrayList<>();
         final AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-        add(settings.getDetectable(polarity));
+        add(settings.getDetectable(polarity), Set.of(MolecularFormula.parseOrThrow("H2O"), MolecularFormula.parseOrThrow("C2H3N"), MolecularFormula.parseOrThrow("CO2"), MolecularFormula.parseOrThrow("CH2O2"), MolecularFormula.parseOrThrow("C2H2"),
+                MolecularFormula.parseOrThrow("C6H12O6")));
     }
 
     private IntOpenHashSet initDecoys(int polarity) {
@@ -42,7 +42,7 @@ public class AdductManager {
         return set;
     }
 
-    private void add(Set<PrecursorIonType> ionTypes) {
+    public void add(Set<PrecursorIonType> ionTypes, Set<MolecularFormula> losses) {
         // split adducts into Adducts, Insource and Multimere
         Set<PrecursorIonType> adducts = new HashSet<>(), insource = new HashSet<>(), multimeres = new HashSet<>();
         for (PrecursorIonType ionType : ionTypes) {
@@ -52,8 +52,9 @@ public class AdductManager {
             else if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) adducts.add(ionType);
         }
         this.precursorTypes.addAll(adducts);
-        this.losses.addAll(insource.stream().map(PrecursorIonType::getInSourceFragmentation).collect(Collectors.toSet()));
-        precursorTypes.removeIf(x->this.losses.contains(x.getAdduct()));
+        this.precursorTypes.addAll(insource); // no longer treat insources and adducts differently
+        this.losses.addAll(losses);
+        //precursorTypes.removeIf(x->this.losses.contains(x.getAdduct()));
         this.multimereIonTypes.addAll(multimeres);
         buildMassDifferences();
     }
@@ -61,6 +62,14 @@ public class AdductManager {
 
     public void buildMassDifferences() {
         this.massDeltas = new MassMap<>(500);
+
+        for (MolecularFormula loss : losses) {
+            massDeltas.put(loss.getMass(), new LossRelationship(loss));
+            massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
+        }
+
+        final Deviation dev = new Deviation(5);
+
         for (PrecursorIonType left : precursorTypes) {
             for (PrecursorIonType right : precursorTypes) {
                 final double massDifference = right.getModificationMass() - left.getModificationMass();
@@ -68,10 +77,6 @@ public class AdductManager {
                     massDeltas.put(massDifference, new AdductRelationship(left, right));
                 }
             }
-        }
-        for (MolecularFormula loss : losses) {
-            massDeltas.put(loss.getMass(), new LossRelationship(loss));
-            massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
         }
 
         multimereDeltas = new MassMap<>(500);
@@ -88,6 +93,21 @@ public class AdductManager {
             return Optional.of(r);
         }
         return Optional.empty();
+    }
+
+    /**
+     * If one explanation is a loss, always return the loss. Other adduct types can be resolved later
+     */
+    public List<KnownMassDelta> retrieveMassDeltasWithNoAmbiguity(double massDifference, Deviation deviation) {
+        List<KnownMassDelta> deltas = massDeltas.retrieveAll(massDifference, deviation);
+        Optional<KnownMassDelta> loss = deltas.stream().filter(x->x instanceof LossRelationship).findFirst();
+        if (loss.isPresent()) {
+            deltas.removeIf(x->x instanceof AdductRelationship && ((AdductRelationship) x).left.getIonization().equals(((AdductRelationship) x).right.getIonization()));
+            for (int i=0; i < deltas.size(); ++i) {
+                if (deltas.get(i) instanceof LossRelationship) deltas.set(i, ((LossRelationship) deltas.get(i)).coveringAdduct());
+            }
+        }
+        return deltas;
     }
 
     public List<KnownMassDelta> retrieveMassDeltas(double massDifference, Deviation deviation) {

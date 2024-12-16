@@ -150,6 +150,35 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
                 if (bestAssignment>=0 && bestFit <= THRESHOLD) {
                     // assign query to this segment
                     queriesPerSegment[bestAssignment].add(querySpectrum[j]);
+                    continue;
+                }
+                // try again, this time with the merged trace
+                for (int i = 0; i < mergeSegments.length; ++i) {
+                    TraceSegment c = mergeSegments[i];
+                    if (c==null) continue;
+                    double distLeft = mapping.getRetentionTimeAt(c.leftEdge) - rt;
+                    double distRight = mapping.getRetentionTimeAt(c.rightEdge) - rt;
+                    if (distLeft<=0 && distRight>=0) {
+                        bestAssignment = i;
+                        bestFit=0;
+                        break;
+                    } else if (distLeft>0) { // ms2 is left from segment
+                        if (distLeft<bestFit) {
+                            bestFit=distLeft;
+                            bestAssignment=i;
+                        }
+                    } else if (distRight<0) { //ms2 is right from segment
+                        if (-distRight<bestFit) {
+                            bestFit = -distRight;
+                            bestAssignment=i;
+                        }
+
+                    }
+                }
+                if (bestAssignment>=0 && bestFit <= THRESHOLD) {
+                    // assign query to this segment
+                    //System.out.println("INstead of throwing away an MSMS, we assign it via its merged trace.");
+                    queriesPerSegment[bestAssignment].add(querySpectrum[j]);
                 }
             }
         }

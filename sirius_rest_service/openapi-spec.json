@@ -4836,6 +4836,48 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.",
+        "description": "Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.",
+        "operationId": "getAdductNetworkWithMergedTraces",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "one feature that is considered the main feature of the adduct network",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceSet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/page": {
       "get": {
         "tags": [
@@ -7643,10 +7685,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7715,6 +7757,83 @@
           },
           "unsorted": {
             "type": "boolean"
+          }
+        }
+      },
+      "AdductEdge": {
+        "type": "object",
+        "properties": {
+          "mzDelta": {
+            "type": "number",
+            "format": "double"
+          },
+          "annotation": {
+            "type": "string"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mergedCorrelation": {
+            "type": "number",
+            "format": "float"
+          },
+          "representativeCorrelation": {
+            "type": "number",
+            "format": "float"
+          },
+          "ms2cosine": {
+            "type": "number",
+            "format": "float"
+          },
+          "pvalue": {
+            "type": "number",
+            "format": "float"
+          },
+          "intensityRatioScore": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "AdductNetwork": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdductNode"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdductEdge"
+            }
+          }
+        }
+      },
+      "AdductNode": {
+        "type": "object",
+        "properties": {
+          "alignedFeatureId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mz": {
+            "type": "number",
+            "format": "double"
+          },
+          "adductAnnotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            }
           }
         }
       },
@@ -7827,6 +7946,9 @@
       "TraceSet": {
         "type": "object",
         "properties": {
+          "adductNetwork": {
+            "$ref": "#/components/schemas/AdductNetwork"
+          },
           "sampleId": {
             "type": "integer",
             "format": "int64"
@@ -7856,10 +7978,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7935,10 +8057,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8151,10 +8273,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8197,10 +8319,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8316,10 +8438,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8362,10 +8484,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {

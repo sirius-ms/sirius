@@ -784,6 +784,19 @@ public class AlignedFeatureController {
         else return traceSet.get();
     }
 
+    /**
+     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return
+     */
+    @GetMapping(value = "/{alignedFeatureId}/adducts", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TraceSet getAdductNetworkWithMergedTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
+        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetsForFeatureWithCorrelatedIons(alignedFeatureId);
+        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
+        else return traceSet.get();
+    }
+
     protected static String idString(String pid, String fid) {
         return "'" + pid + "/" + fid + "'";
     }

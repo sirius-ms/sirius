@@ -7,6 +7,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
+|**adductNetwork** | [**AdductNetwork**](AdductNetwork.md) |  |  [optional] |
 |**sampleId** | **Long** |  |  [optional] |
 |**sampleName** | **String** |  |  [optional] |
 |**axes** | [**Axes**](Axes.md) |  |  [optional] |

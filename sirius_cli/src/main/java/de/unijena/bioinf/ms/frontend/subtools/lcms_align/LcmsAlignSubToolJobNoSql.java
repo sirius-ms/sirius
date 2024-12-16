@@ -242,10 +242,21 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         .filter(f -> f.getApexIntensity() != null)
                         .filter(AbstractFeature::isRTInterval)
                         .toArray(AlignedFeatures[]::new);
-                AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation);
+                AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation, bac.getStatistics().getExpectedRetentionTimeDeviation());
                 network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-                network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
-                        (compound) -> groupFeaturesToCompound(ps.getStorage(), compound, importedCids));
+                //network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
+
+
+                network.assignNetworksAndAdductsToFeatures(
+                        SiriusJobs.getGlobalJobManager(),
+                        new OptimalAssignmentViaBeamSearch(),
+                        merged.getPolarity(),
+                        x->ps.getStorage().upsert(x),
+                        (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
+                        (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
+                );
+
                 importedCompoundIds = importedCids;
             }
 
