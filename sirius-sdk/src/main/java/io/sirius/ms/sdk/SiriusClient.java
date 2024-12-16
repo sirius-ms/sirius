@@ -26,6 +26,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.JobProgress;
+import io.sirius.ms.sdk.model.JobState;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvent;
 import io.sirius.ms.sse.FluxToFlowBroadcast;
@@ -137,7 +138,7 @@ public class SiriusClient implements AutoCloseable {
             interruptionCheck.check();
 
 
-        while (jobUpdate.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal()) {
+        while (jobUpdate.getProgress().getState().ordinal() <= JobState.RUNNING.ordinal()) {
             try {
                 Thread.sleep(waitTimeInSec); //todo do not busy wait
             } catch (InterruptedException e) {

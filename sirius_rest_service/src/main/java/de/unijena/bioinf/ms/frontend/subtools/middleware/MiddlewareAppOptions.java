@@ -103,6 +103,14 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         }
     }
 
+    @CommandLine.Option(names = {"--enums-as-ref"}, description = "Specify whether enums in the api model should be represented as object reference.", hidden = true, defaultValue = "false")
+    private void setEnumsAsRef(boolean enumsAsRef) {
+        if (enumsAsRef)
+            System.setProperty("enums-as-ref", String.valueOf(true));
+        else
+            System.getProperties().remove("enums-as-ref");
+    }
+
     public boolean isStartGui() {
         return guiSupport.startGui;
     }

@@ -38,3 +38,9 @@ settings.gradle
 build.gradle
 src/test/java/io/sirius/ms/sdk/model/**
 
+# manually modified classes. comment out if they need to be regenerated
+src/main/java/io/sirius/ms/sdk/model/SearchableDatabase.java
+src/main/java/io/sirius/ms/sdk/model/Trace.java
+src/main/java/io/sirius/ms/sdk/api/ActuatorApi.java
+
+

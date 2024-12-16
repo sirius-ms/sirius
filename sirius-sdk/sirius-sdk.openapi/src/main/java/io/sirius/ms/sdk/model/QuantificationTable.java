@@ -30,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.QuantificationColumnType;
+import io.sirius.ms.sdk.model.QuantificationMeasure;
+import io.sirius.ms.sdk.model.QuantificationRowType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,113 +54,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class QuantificationTable {
-  /**
-   * Gets or Sets quantificationType
-   */
-  public enum QuantificationTypeEnum {
-    APEX_HEIGHT("APEX_HEIGHT");
-
-    private String value;
-
-    QuantificationTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static QuantificationTypeEnum fromValue(String value) {
-      for (QuantificationTypeEnum b : QuantificationTypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_QUANTIFICATION_TYPE = "quantificationType";
-  private QuantificationTypeEnum quantificationType;
-
-  /**
-   * Gets or Sets rowType
-   */
-  public enum RowTypeEnum {
-    FEATURES("FEATURES");
-
-    private String value;
-
-    RowTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static RowTypeEnum fromValue(String value) {
-      for (RowTypeEnum b : RowTypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
+  private QuantificationMeasure quantificationType;
 
   public static final String JSON_PROPERTY_ROW_TYPE = "rowType";
-  private RowTypeEnum rowType;
-
-  /**
-   * Gets or Sets columnType
-   */
-  public enum ColumnTypeEnum {
-    SAMPLES("SAMPLES");
-
-    private String value;
-
-    ColumnTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static ColumnTypeEnum fromValue(String value) {
-      for (ColumnTypeEnum b : ColumnTypeEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
+  private QuantificationRowType rowType;
 
   public static final String JSON_PROPERTY_COLUMN_TYPE = "columnType";
-  private ColumnTypeEnum columnType;
+  private QuantificationColumnType columnType;
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
   private List<Long> rowIds;
@@ -177,7 +81,7 @@ public class QuantificationTable {
   public QuantificationTable() {
   }
 
-  public QuantificationTable quantificationType(QuantificationTypeEnum quantificationType) {
+  public QuantificationTable quantificationType(QuantificationMeasure quantificationType) {
     
     this.quantificationType = quantificationType;
     return this;
@@ -191,18 +95,18 @@ public class QuantificationTable {
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QuantificationTypeEnum getQuantificationType() {
+  public QuantificationMeasure getQuantificationType() {
     return quantificationType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantificationType(QuantificationTypeEnum quantificationType) {
+  public void setQuantificationType(QuantificationMeasure quantificationType) {
     this.quantificationType = quantificationType;
   }
 
-  public QuantificationTable rowType(RowTypeEnum rowType) {
+  public QuantificationTable rowType(QuantificationRowType rowType) {
     
     this.rowType = rowType;
     return this;
@@ -216,18 +120,18 @@ public class QuantificationTable {
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public RowTypeEnum getRowType() {
+  public QuantificationRowType getRowType() {
     return rowType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowType(RowTypeEnum rowType) {
+  public void setRowType(QuantificationRowType rowType) {
     this.rowType = rowType;
   }
 
-  public QuantificationTable columnType(ColumnTypeEnum columnType) {
+  public QuantificationTable columnType(QuantificationColumnType columnType) {
     
     this.columnType = columnType;
     return this;
@@ -241,14 +145,14 @@ public class QuantificationTable {
   @JsonProperty(JSON_PROPERTY_COLUMN_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public ColumnTypeEnum getColumnType() {
+  public QuantificationColumnType getColumnType() {
     return columnType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_COLUMN_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setColumnType(ColumnTypeEnum columnType) {
+  public void setColumnType(QuantificationColumnType columnType) {
     this.columnType = columnType;
   }
 

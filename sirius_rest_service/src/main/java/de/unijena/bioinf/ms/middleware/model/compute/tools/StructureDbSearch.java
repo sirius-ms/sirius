@@ -78,7 +78,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      * EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
      * APPROXIMATE - Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.
      */
-    @Schema(enumAsRef = true, nullable = true)
+    @Schema(nullable = true)
     ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 

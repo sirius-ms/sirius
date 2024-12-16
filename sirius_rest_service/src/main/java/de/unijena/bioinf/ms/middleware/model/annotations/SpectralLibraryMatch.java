@@ -38,7 +38,7 @@ import java.util.List;
 @Jacksonized
 public class SpectralLibraryMatch {
 
-    @Schema(enumAsRef = true, name = "SpectralLibraryMatchOptField", nullable = true)
+    @Schema(name = "SpectralLibraryMatchOptField", nullable = true)
     public enum OptField {none, referenceSpectrum}
 
     public final String specMatchId;
