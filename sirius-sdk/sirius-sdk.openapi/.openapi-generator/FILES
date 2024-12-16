@@ -238,7 +238,6 @@ src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
-src/main/java/io/sirius/ms/sdk/model/Trace.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationType.java
 src/main/java/io/sirius/ms/sdk/model/TraceSet.java

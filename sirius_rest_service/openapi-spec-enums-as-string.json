@@ -3163,7 +3163,7 @@
             }
           },
           {
-            "name": "candidateInChiKey",
+            "name": "inchiKey",
             "in": "query",
             "required": false,
             "schema": {
@@ -3279,7 +3279,7 @@
           "Features"
         ],
         "summary": "Summarize matched reference spectra for the given \u0027alignedFeatureId\u0027.",
-        "description": "Summarize matched reference spectra for the given \u0027alignedFeatureId\u0027.\n If a \u0027candidateInChiKey\u0027 is provided, summarizes only matches for the database compound with the given InChI key.",
+        "description": "Summarize matched reference spectra for the given \u0027alignedFeatureId\u0027.\n If a \u0027inchiKey\u0027 (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.",
         "operationId": "getSpectralLibraryMatchesSummary",
         "parameters": [
           {
@@ -3323,9 +3323,9 @@
             }
           },
           {
-            "name": "candidateInChiKey",
+            "name": "inchiKey",
             "in": "query",
-            "description": "inchi key of the database compound.",
+            "description": "2D inchi key of the compound in the structure database.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3353,7 +3353,7 @@
           "Features"
         ],
         "summary": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.",
-        "description": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.\n If a \u0027candidateInChiKey\u0027 is provided, returns only matches for the database compound with the given InChI key.",
+        "description": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.\n If a \u0027inchiKey\u0027 (2D) is provided, returns only matches for the database compound with the given InChI key.",
         "operationId": "getSpectralLibraryMatchesPaged",
         "parameters": [
           {
@@ -3429,7 +3429,7 @@
             }
           },
           {
-            "name": "candidateInChiKey",
+            "name": "inchiKey",
             "in": "query",
             "required": false,
             "schema": {
@@ -7715,7 +7715,7 @@
       },
       "SpectralLibraryMatch": {
         "required": [
-          "candidateInChiKey",
+          "inchiKey",
           "querySpectrumIndex",
           "similarity",
           "uuid"
@@ -7766,7 +7766,7 @@
           "smiles": {
             "type": "string"
           },
-          "candidateInChiKey": {
+          "inchiKey": {
             "type": "string"
           },
           "referenceSpectrum": {
