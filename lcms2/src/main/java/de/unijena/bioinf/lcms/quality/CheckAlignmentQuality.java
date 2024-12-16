@@ -9,12 +9,18 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class CheckAlignmentQuality implements FeatureQualityChecker{
     @Override
     public void addToReport(QualityReport report, MergedLCMSRun run, AlignedFeatures feature, TraceProvider provider) {
         // majors
         QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ALIGNMENT_QUALITY);
+
+        if (feature.getFeatures().isEmpty()) {
+            peakQuality.getItems().add(new QualityReport.Item("There are no aligned features.", DataQuality.LOWEST, QualityReport.Weight.CRITICAL));
+            return;
+        }
 
         // 1. number of alignments
         final int medianAl = Math.max((int)(run.getRuns().map(List::size).orElse(0) * 0.15), run.getSampleStats().getMedianNumberOfAlignments());
@@ -35,6 +41,30 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                     "feature alignment consists of " + actualNumber + " features.", DataQuality.GOOD, QualityReport.Weight.MAJOR
             ));
         }
+
+        // 2. retention time deviations
+        double retentionTimeDeviationsInSeconds = run.getSampleStats().getRetentionTimeDeviationsInSeconds();
+        final double w = feature.getRetentionTime().getMiddleTime();
+        final double std = feature.getFeatures().get().stream().mapToDouble(x->Math.abs(x.getRetentionTime().getMiddleTime()-w)).average().orElse(0d);
+        final double sigma = feature.getFeatures().get().stream().mapToDouble(x->Math.pow(x.getRetentionTime().getMiddleTime()-w,2)).average().orElse(0d) / (retentionTimeDeviationsInSeconds*retentionTimeDeviationsInSeconds);
+        if (sigma < 1) {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "low average retention time error of %.1f", std) , DataQuality.GOOD, QualityReport.Weight.MAJOR
+            ));
+        } else if (sigma < 4) {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "medium average retention time error of %.1f", std), DataQuality.DECENT, QualityReport.Weight.MAJOR
+            ));
+        } else if (sigma < 9) {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "high average retention time error of %.1f", std), DataQuality.BAD, QualityReport.Weight.MAJOR
+            ));
+        } else {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "very high average retention time error of %.1f", std), DataQuality.LOWEST, QualityReport.Weight.MAJOR
+            ));
+        }
+
 
         // minors
         // check if there is a minimum number of intensive features

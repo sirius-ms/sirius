@@ -2,6 +2,9 @@ README.md
 docs/AccountCredentials.md
 docs/AccountInfo.md
 docs/ActuatorApi.md
+docs/AdductEdge.md
+docs/AdductNetwork.md
+docs/AdductNode.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQuality.md
@@ -129,6 +132,9 @@ src/main/java/io/sirius/ms/sdk/client/auth/HttpBasicAuth.java
 src/main/java/io/sirius/ms/sdk/client/auth/HttpBearerAuth.java
 src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
+src/main/java/io/sirius/ms/sdk/model/AdductEdge.java
+src/main/java/io/sirius/ms/sdk/model/AdductNetwork.java
+src/main/java/io/sirius/ms/sdk/model/AdductNode.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQuality.java
@@ -226,5 +232,3 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
-src/test/java/io/sirius/ms/sdk/api/ExperimentalApiTest.java
-src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java

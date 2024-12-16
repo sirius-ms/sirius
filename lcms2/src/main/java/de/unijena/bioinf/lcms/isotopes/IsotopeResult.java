@@ -54,9 +54,10 @@ public class IsotopeResult {
     }
 
     public int getForNominalMass(double monoisotopicMz, int k) {
-        double m = monoisotopicMz+k;
+        double m = monoisotopicMz + (((double)k) / (charge==0?1:charge));
+        final double threshold = 0.8/(charge==0?1:charge);
         for (int i=0; i < isotopeMz.length; ++i) {
-            if (Math.abs(isotopeMz[i]-m)<0.5) {
+            if (Math.abs(isotopeMz[i]-m)<threshold) {
                 return i;
             }
         }
