@@ -5275,6 +5275,16 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeCustomDbsForStructureSearch",
+            "in": "query",
+            "description": "if true, default database selection of structure db search contains also all available custom DB.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
