@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.jetbrains.annotations.Nullable;
@@ -572,9 +573,11 @@ public class AlignedFeatureController {
      * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree in internal format.
      * <p>
-     * NOTE: This endpoint is likely to be removed in future versions of the API.
+     *
      */
-    @Deprecated
+    @Operation(
+            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
+    )
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(formulaId, alignedFeatureId);
@@ -746,6 +749,24 @@ public class AlignedFeatureController {
         return res;
     }
 
+    /**
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQuality quality information of the respective feature.
+     */
+    @Operation(
+            operationId = "getAlignedFeaturesQualityExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
+    )
+    @GetMapping(value = "/{alignedFeatureId}/quality-report", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AlignedFeatureQuality getAlignedFeaturesQuality(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId);
+    }
+
     /*
         LCMS Stuff
      */
@@ -753,11 +774,16 @@ public class AlignedFeatureController {
     /**
      * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all
      * samples it is contained in.
+     *
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return
+     * @return Quant table row for this feature
      */
+    @Operation(
+            operationId = "getQuantificationExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
+    )
     @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
     public QuantificationTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeature(alignedFeatureId, type);
@@ -776,8 +802,11 @@ public class AlignedFeatureController {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return
+     * @return Traces of the given feature.
      */
+    @Operation(
+            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
+    )
     @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll ) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId, includeAll);

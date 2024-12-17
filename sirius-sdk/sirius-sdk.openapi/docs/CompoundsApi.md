@@ -7,7 +7,7 @@ All URIs are relative to *http://localhost:8888*
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features. |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
-| [**getCompoundTraces**](CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces |  |
+| [**getCompoundTraces**](CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time |
 | [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
 | [**getCompoundsPaged**](CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space. |
 
@@ -230,7 +230,9 @@ No authorization required
 
 > TraceSet getCompoundTraces(projectId, compoundId, featureId)
 
+INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
 
+Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
 
 ### Example
 
@@ -248,8 +250,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | 
-        String compoundId = "compoundId_example"; // String | 
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String compoundId = "compoundId_example"; // String | compound which intensities should be read out
         String featureId = ""; // String | 
         try {
             TraceSet result = apiInstance.getCompoundTraces(projectId, compoundId, featureId);
@@ -270,8 +272,8 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**|  | |
-| **compoundId** | **String**|  | |
+| **projectId** | **String**| project-space to read from. | |
+| **compoundId** | **String**| compound which intensities should be read out | |
 | **featureId** | **String**|  | [optional] [default to ] |
 
 ### Return type
@@ -291,7 +293,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | Traces of the given compound. |  -  |
 
 
 ## getCompounds
