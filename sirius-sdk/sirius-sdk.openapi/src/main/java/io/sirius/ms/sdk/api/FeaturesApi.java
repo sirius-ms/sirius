@@ -2795,7 +2795,7 @@ public class FeaturesApi {
         return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey);
     }
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2805,23 +2805,23 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedMsDataRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'inchiKey' is set
         if (inchiKey == null) {
-            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2850,7 +2850,7 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2860,13 +2860,13 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getStructureAnnotatedMsData(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2876,13 +2876,13 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2892,11 +2892,11 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedMsDataWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
+    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
     }
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2907,23 +2907,23 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'inchiKey' is set
         if (inchiKey == null) {
-            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2954,7 +2954,7 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2965,13 +2965,13 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getStructureAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2982,13 +2982,13 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
@@ -2999,8 +2999,8 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
+    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
     }
     /**
      * List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
