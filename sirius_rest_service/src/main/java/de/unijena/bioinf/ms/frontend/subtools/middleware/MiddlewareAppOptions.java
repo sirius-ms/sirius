@@ -73,9 +73,21 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     }
 
-    public enum ApiDocMode{STABLE, BASIC, STABLE_ADVANCED, ADVANCED }
-    private final static String STABLE_EXCLUSIONS = "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job";
-    @CommandLine.Option(names = {"--api-doc-mode","--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
+    public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
+
+    private final static String STABLE_EXCLUSIONS =
+            "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree," +
+                    "/api/projects/*/jobs/run-command," +
+                    "/api/projects/*/import/ms-data-local-files-job," +
+                    "/api/projects/*/import/ms-local-data-files," +
+                    "/api/projects/*/import/preprocessed-local-data-files-job," +
+                    "/api/projects/*/import/preprocessed-local-data-files," +
+                    "/api/projects/*/copy," +
+
+                    "/api/databases/*/import/from-files-job," +
+                    "/api/databases/*/import/from-files";
+
+    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
             setApiDocMode(ApiDocMode.STABLE);

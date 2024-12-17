@@ -457,12 +457,11 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobConfigRequestCreation(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    private ResponseSpec getJobConfigRequestCreation(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -478,7 +477,6 @@ public class JobsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         
         final String[] localVarAccepts = { 
@@ -499,14 +497,13 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getJobConfig(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public JobSubmission getJobConfig(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
+        return getJobConfigRequestCreation(name, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -514,14 +511,13 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getJobConfigWithHttpInfo(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseEntity<JobSubmission> getJobConfigWithHttpInfo(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap).toEntity(localVarReturnType).block();
+        return getJobConfigRequestCreation(name, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -529,13 +525,12 @@ public class JobsApi {
      * Request job configuration with given name.
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobConfigWithResponseSpec(String name, Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
-        return getJobConfigRequestCreation(name, includeConfigMap, moveParametersToConfigMap);
+    public ResponseSpec getJobConfigWithResponseSpec(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        return getJobConfigRequestCreation(name, moveParametersToConfigMap);
     }
     /**
      * Get all (non-default) job configuration names
@@ -605,11 +600,10 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobConfigsRequestCreation(Boolean includeConfigMap) throws WebClientResponseException {
+    private ResponseSpec getJobConfigsRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -619,8 +613,6 @@ public class JobsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
-        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -638,38 +630,35 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return List&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<JobSubmission> getJobConfigs(Boolean includeConfigMap) throws WebClientResponseException {
+    public List<JobSubmission> getJobConfigs() throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigsRequestCreation(includeConfigMap).bodyToFlux(localVarReturnType).collectList().block();
+        return getJobConfigsRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseEntity&lt;List&lt;JobSubmission&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<JobSubmission>> getJobConfigsWithHttpInfo(Boolean includeConfigMap) throws WebClientResponseException {
+    public ResponseEntity<List<JobSubmission>> getJobConfigsWithHttpInfo() throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getJobConfigsRequestCreation(includeConfigMap).toEntityList(localVarReturnType).block();
+        return getJobConfigsRequestCreation().toEntityList(localVarReturnType).block();
     }
 
     /**
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobConfigsWithResponseSpec(Boolean includeConfigMap) throws WebClientResponseException {
-        return getJobConfigsRequestCreation(includeConfigMap);
+    public ResponseSpec getJobConfigsWithResponseSpec() throws WebClientResponseException {
+        return getJobConfigsRequestCreation();
     }
     /**
      * Get List of all available jobs with information such as current state and progress (if available).
@@ -1017,9 +1006,9 @@ public class JobsApi {
         return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting);
     }
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Start computation for given command and input.
-     * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1066,9 +1055,9 @@ public class JobsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Start computation for given command and input.
-     * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1081,9 +1070,9 @@ public class JobsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Start computation for given command and input.
-     * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1096,9 +1085,9 @@ public class JobsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Start computation for given command and input.
-     * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.

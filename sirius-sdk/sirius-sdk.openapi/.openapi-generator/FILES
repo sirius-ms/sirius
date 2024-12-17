@@ -37,7 +37,6 @@ docs/DBLink.md
 docs/DataImportEvent.md
 docs/DataQuality.md
 docs/Deviation.md
-docs/ExperimentalApi.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeaturesApi.md
@@ -120,7 +119,6 @@ docs/Zodiac.md
 docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
-src/main/java/io/sirius/ms/sdk/api/ExperimentalApi.java
 src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
@@ -245,5 +243,4 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
-src/test/java/io/sirius/ms/sdk/api/ExperimentalApiTest.java
 src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java
