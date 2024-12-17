@@ -33,31 +33,65 @@ public class LandingPage extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP));
         setBackground(Colors.BACKGROUND);
 
-        JPanel center = new JPanel(new MigLayout("align center center", "[left, 450]50[left,530]", "[top][top][top][top][top][top]"));
+        JPanel center = new JPanel(new MigLayout(
+                "align center center", // Layout constraints
+                "[left, 450]50[left, 530]", // Column constraints
+                "[top][top][top][top][top][top][top][top][top][top][top]" // Row constraints
+        ));
         center.setOpaque(false);
 
         center.add(h1Logo(), "gapbottom 35, wrap");
-        center.add(h2("Login and Account"));
-        center.add(h2("Webservice Connection"), "wrap");
 
+        JSeparator jsep;
+
+        //"Login and Account" heading in the first column
+        center.add(h2("Login and Account"), "cell 0 1, growx, wrap");
+        jsep = new JSeparator(SwingConstants.HORIZONTAL);
+        jsep.setMinimumSize(new Dimension(0, 2));
+        center.add(jsep, "cell 0 2, growx, wrap");
+
+        //"Webservice Connection"  heading in the second column
+        center.add(h2("Webservice Connection"), "cell 1 1, growx, wrap");
+        jsep = new JSeparator(SwingConstants.HORIZONTAL);
+        jsep.setMinimumSize(new Dimension(0, 2));
+        center.add(jsep, "cell 1 2, growx, wrap");
+
+        //"Login and Account" content
         accountPanel = accountPanel(gui, service);
-        center.add(accountPanel, "gapbottom push");
+        center.add(accountPanel, "cell 0 3, gapbottom push");
 
+        //"Webservice Connection" content
         connectionCheckPanel = connectionCheckPanel(gui);
-        center.add(connectionCheckPanel, "spany 3, wrap");
-        center.add(h2("Updates"), "gaptop 20, wrap");
+        center.add(connectionCheckPanel, "cell 1 3, spany 4, wrap");
 
+        //"Updates" heading
+        center.add(h2("Updates"), "cell 0 4, gaptop 20, growx, wrap");
+        jsep = new JSeparator(SwingConstants.HORIZONTAL);
+        jsep.setMinimumSize(new Dimension(0, 2));
+        center.add(jsep, "cell 0 5, growx, wrap");
+        //"Updates" content
         updatePanel = updatePanel(gui);
-        center.add(updatePanel, "alignx center, gapbottom push, wrap");
+        center.add(updatePanel, "cell 0 6, alignx center, gapbottom push, wrap");
 
-        center.add(h2("Get Started"), "gaptop 20");
-        center.add(h2("Community"), "gaptop 20, wrap");
+        //"Get Started" heading
+        center.add(h2("Get Started"), "cell 0 7, gaptop 20, growx, wrap");
+        jsep = new JSeparator(SwingConstants.HORIZONTAL);
+        jsep.setMinimumSize(new Dimension(0, 2));
+        center.add(jsep, "cell 0 8, growx, wrap");
 
-        center.add(quickStartButton(gui), "gaptop 10, split 3");
+        //"Community" heading
+        center.add(h2("Community"), "cell 1 7, gaptop 20, growx, wrap");
+        jsep = new JSeparator(SwingConstants.HORIZONTAL);
+        jsep.setMinimumSize(new Dimension(0, 2));
+        center.add(jsep, "cell 1 8, growx, wrap");
+
+        //"Get Started" content
+        center.add(quickStartButton(gui), "cell 0 9, gaptop 10, split 3");
         center.add(docuButton(gui), "gaptop 10, gapx 40");
         center.add(ytButton(gui), "gaptop 10, gapx 40");
 
-        center.add(matrixButton(gui), "gaptop 10, split 3");
+        //"Community" content
+        center.add(matrixButton(gui), "cell 1 9, gaptop 10, split 3");
         center.add(githubButton(gui), "gaptop 10, gapx 40");
         center.add(bugReportButton(gui), "gaptop 10, gapx 40, wrap");
 
