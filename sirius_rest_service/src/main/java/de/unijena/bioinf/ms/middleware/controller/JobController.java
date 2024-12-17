@@ -171,7 +171,7 @@ public class JobController {
      * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
      * @return Job of the command to be executed.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @Operation(
             summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
     )
