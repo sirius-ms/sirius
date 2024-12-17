@@ -756,7 +756,7 @@ public class BatchComputeDialog extends JDialog {
     private void activatePreset(String presetName) {
         presetUnfreeze();
         try {
-            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
+            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true,true, false));
             boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
             if (defaultSelected) {
                 preset = defaultPreset;
