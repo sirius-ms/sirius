@@ -114,9 +114,8 @@ public class JobsApiTest {
         assertNotNull(job.getAffectedCompoundIds());
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetJobConfig(boolean includeConfigMap) {
+    @Test
+    public void testGetJobConfig() {
         String name = null;
         try {
             JobSubmission defJs = instance.getDefaultJobConfig(true, false);
@@ -128,9 +127,9 @@ public class JobsApiTest {
             name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
             assertNotNull(name);
 
-            JobSubmission jc = instance.getJobConfig(name, includeConfigMap, false);
+            JobSubmission jc = instance.getJobConfig(name, false);
             assertNotNull(jc);
-            assertEquals(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty(), includeConfigMap);
+            assertTrue(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty());
 
             assertTrue(jc.getCanopusParams().isEnabled());
             assertFalse(jc.getFormulaIdParams().isEnabled());
@@ -142,16 +141,15 @@ public class JobsApiTest {
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetJobConfigs(boolean includeConfigMap) {
+    @Test
+    public void testGetJobConfigs() {
         String name = null;
         try {
             JobSubmission defJs = instance.getDefaultJobConfig(true, false);
             name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
             assertNotNull(name);
 
-            List<JobSubmission> response = instance.getJobConfigs(includeConfigMap);
+            List<JobSubmission> response = instance.getJobConfigs();
             assertNotNull(response);
             assertFalse(response.isEmpty());
         } finally {
@@ -200,7 +198,7 @@ public class JobsApiTest {
         String configName = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true);
 
         // Check if storing worked
-        JobSubmission config = instance.getJobConfig(configName, null, false);
+        JobSubmission config = instance.getJobConfig(configName, null);
         assertNotNull(config);
 
         // Retrieving aligned features for the project
