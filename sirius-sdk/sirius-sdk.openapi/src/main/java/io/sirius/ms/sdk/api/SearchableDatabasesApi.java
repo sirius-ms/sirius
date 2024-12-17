@@ -49,7 +49,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -88,7 +88,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -101,7 +101,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -114,7 +114,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter

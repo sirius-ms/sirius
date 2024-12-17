@@ -520,6 +520,10 @@ public class AlignedFeatureController {
      * @param spectrumIndex    index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
+    @Operation(
+            operationId = "getStructureAnnotatedSpectrumExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable."
+    )
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getStructureAnnotatedSpectrum(@PathVariable String projectId,
                                                            @PathVariable String alignedFeatureId,
@@ -548,6 +552,10 @@ public class AlignedFeatureController {
      * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
+    @Operation(
+            operationId = "getStructureAnnotatedMsDataExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable."
+    )
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedMsMsData getStructureAnnotatedMsData(@PathVariable String projectId,
                                                          @PathVariable String alignedFeatureId,

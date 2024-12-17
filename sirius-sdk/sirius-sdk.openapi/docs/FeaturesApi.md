@@ -33,8 +33,8 @@ All URIs are relative to *http://localhost:8888*
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesSummary**](FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;. |
-| [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
-| [**getStructureAnnotatedSpectrum**](FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
+| [**getStructureAnnotatedMsDataExperimental**](FeaturesApi.md#getStructureAnnotatedMsDataExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable. |
+| [**getStructureAnnotatedSpectrumExperimental**](FeaturesApi.md#getStructureAnnotatedSpectrumExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable. |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
@@ -2117,11 +2117,11 @@ No authorization required
 | **200** | Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs). |  -  |
 
 
-## getStructureAnnotatedMsData
+## getStructureAnnotatedMsDataExperimental
 
-> AnnotatedMsMsData getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey)
+> AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey)
 
-Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
 
 Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
 
@@ -2146,10 +2146,10 @@ public class Example {
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
         try {
-            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey);
+            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsData");
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsDataExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2189,11 +2189,11 @@ No authorization required
 | **200** | Fragmentation spectrum annotated with fragments and sub-structures. |  -  |
 
 
-## getStructureAnnotatedSpectrum
+## getStructureAnnotatedSpectrumExperimental
 
-> AnnotatedSpectrum getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex)
+> AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex)
 
-Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
 
 Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 
@@ -2219,10 +2219,10 @@ public class Example {
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
         Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
         try {
-            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
+            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrum");
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrumExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

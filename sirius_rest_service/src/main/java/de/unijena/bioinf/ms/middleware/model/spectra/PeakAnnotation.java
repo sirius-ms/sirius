@@ -85,7 +85,7 @@ public class PeakAnnotation {
      * Array/List of indices of the atoms of the structure candidate that are part of this fragments substructure
      * (highlighted atoms)
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private int[] substructureAtoms;
 
     /**
@@ -94,7 +94,7 @@ public class PeakAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private int[] substructureBonds;
 
     /**
@@ -103,7 +103,7 @@ public class PeakAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private int[] substructureBondsCut;
 
     /**
@@ -115,7 +115,7 @@ public class PeakAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private Float substructureScore;
 
     /**
@@ -123,7 +123,7 @@ public class PeakAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private Integer hydrogenRearrangements;
 
 

@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases |  |
+| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API. |
 | [**createDatabase**](SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} |  |
 | [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
@@ -20,7 +20,7 @@ All URIs are relative to *http://localhost:8888*
 
 > List&lt;SearchableDatabase&gt; addDatabases(requestBody)
 
-
+DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
 
 ### Example
 

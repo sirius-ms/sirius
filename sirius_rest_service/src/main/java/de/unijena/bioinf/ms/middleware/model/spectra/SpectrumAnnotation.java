@@ -67,7 +67,7 @@ public class SpectrumAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private String structureAnnotationSmiles;
 
     /**
@@ -75,6 +75,6 @@ public class SpectrumAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
     private Double structureAnnotationScore;
 }

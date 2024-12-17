@@ -180,12 +180,6 @@ public class Spectrums {
 
     }
 
-    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull List<? extends Ms2Spectrum<?>> msmsSpectra, @Nullable FTree ftree, @Nullable String candidateSmiles) {
-        //todo create fake experiment to annotate spectrum
-        return null;
-    }
-
-
     public static List<AnnotatedSpectrum> createMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         if (exp.getMs2Spectra() == null)
             return List.of();

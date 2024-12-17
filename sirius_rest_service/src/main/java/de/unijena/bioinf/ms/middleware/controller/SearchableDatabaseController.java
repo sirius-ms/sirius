@@ -91,8 +91,11 @@ public class SearchableDatabaseController {
         return chemDbService.update(databaseId, dbUpdate);
     }
 
+    @Deprecated(forRemoval = true)
+    @Operation(
+            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API."
+    )
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Deprecated
     public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToDatabases) {
         return chemDbService.add(pathToDatabases);
     }
