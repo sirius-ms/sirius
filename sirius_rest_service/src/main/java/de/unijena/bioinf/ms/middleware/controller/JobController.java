@@ -227,13 +227,15 @@ public class JobController {
      *
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return {@link JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
-                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
-        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap);
+                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap,
+                                             @RequestParam(required = false, defaultValue = "false") boolean includeCustomDbsForStructureSearch) {
+        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap, includeCustomDbsForStructureSearch);
         if (moveParametersToConfigMap) {
             js.mergeCombinedConfigMap();
         }
@@ -293,7 +295,7 @@ public class JobController {
     public JobSubmission getJobConfig(@PathVariable @NotNull String name,
                                       @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
                                       @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
-        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
+        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, false);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
 

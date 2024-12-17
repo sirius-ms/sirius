@@ -132,7 +132,7 @@ public class JobSubmission extends AbstractSubmission {
     @Schema(nullable = true)
     Map<String, String> configMap;
 
-    public static JobSubmission createDefaultInstance(boolean includeConfigMap) {
+    public static JobSubmission createDefaultInstance(boolean includeConfigMap, boolean includeCustomDbsForStructureSearch) {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         //default search dbs for spectra and structure. Formula only if db search is used.
         //for spectral library search we add all custom sources since users currently cannot set parameters for spectral library search
@@ -140,7 +140,7 @@ public class JobSubmission extends AbstractSubmission {
                         CustomDataSources.getSourceFromName(DataSource.BIO.name())),
                 CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList();
         //for structure database search (CSI) we only use BIO so that results are (mostly) consistent for different users with different custom DBs
-        List<String> structureSearchDbs = Collections.singletonList(DataSource.BIO.name());
+        List<String> structureSearchDbs = includeCustomDbsForStructureSearch ? spectraSearchDbs : Collections.singletonList(DataSource.BIO.name());
 
 
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
