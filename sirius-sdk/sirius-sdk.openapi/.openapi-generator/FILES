@@ -243,4 +243,3 @@ src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
-src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java
