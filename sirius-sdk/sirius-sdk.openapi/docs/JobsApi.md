@@ -16,7 +16,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
-| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input. |
+| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**startJob**](JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters. |
 | [**startJobFromConfig**](JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config. |
 
@@ -367,7 +367,7 @@ No authorization required
 
 ## getJobConfig
 
-> JobSubmission getJobConfig(name, includeConfigMap, moveParametersToConfigMap)
+> JobSubmission getJobConfig(name, moveParametersToConfigMap)
 
 Request job configuration with given name.
 
@@ -390,10 +390,9 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
-        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
         try {
-            JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap, moveParametersToConfigMap);
+            JobSubmission result = apiInstance.getJobConfig(name, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfig");
@@ -412,7 +411,6 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **name** | **String**| name of the job-config to return | |
-| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
 | **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
 
 ### Return type
@@ -499,7 +497,7 @@ No authorization required
 
 ## getJobConfigs
 
-> List&lt;JobSubmission&gt; getJobConfigs(includeConfigMap)
+> List&lt;JobSubmission&gt; getJobConfigs()
 
 Request all available job configurations
 
@@ -521,9 +519,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
-        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         try {
-            List<JobSubmission> result = apiInstance.getJobConfigs(includeConfigMap);
+            List<JobSubmission> result = apiInstance.getJobConfigs();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfigs");
@@ -538,10 +535,7 @@ public class Example {
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
+This endpoint does not need any parameter.
 
 ### Return type
 
@@ -845,7 +839,7 @@ No authorization required
 
 > Job startCommand(projectId, commandSubmission, optFields)
 
-Start computation for given command and input.
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 Start computation for given command and input.
 
@@ -908,7 +902,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |  -  |
+| **200** | Job of the command to be executed. |  -  |
 
 
 ## startJob

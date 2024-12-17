@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AlignedFeature;
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
+import io.sirius.ms.sdk.model.AlignedFeatureQuality;
 import io.sirius.ms.sdk.model.AnnotatedMsMsData;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.CanopusPrediction;
@@ -588,6 +589,89 @@ public class FeaturesApi {
      */
     public ResponseSpec getAlignedFeaturesPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, optFields);
+    }
+    /**
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQuality
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getAlignedFeaturesQualityExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeaturesQualityExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAlignedFeaturesQualityExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQuality
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public AlignedFeatureQuality getAlignedFeaturesQualityExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+        return getAlignedFeaturesQualityExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return ResponseEntity&lt;AlignedFeatureQuality&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<AlignedFeatureQuality> getAlignedFeaturesQualityExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+        return getAlignedFeaturesQualityExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getAlignedFeaturesQualityExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getAlignedFeaturesQualityExperimentalRequestCreation(projectId, alignedFeatureId);
     }
     /**
      * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
@@ -2110,24 +2194,24 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * Returns a single quantification table row for the given feature.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationRequestCreation(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantificationExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantificationExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantificationExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2156,60 +2240,58 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTable getQuantification(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+    public QuantificationTable getQuantificationExperimental(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+        return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return ResponseEntity&lt;QuantificationTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+    public ResponseEntity<QuantificationTable> getQuantificationExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
         ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+        return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
-        return getQuantificationRequestCreation(projectId, alignedFeatureId, type);
+    public ResponseSpec getQuantificationExperimentalWithResponseSpec(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+        return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type);
     }
     /**
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     * @deprecated
      */
-    @Deprecated
     private ResponseSpec getSiriusFragTreeRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
@@ -2250,9 +2332,9 @@ public class FeaturesApi {
     }
 
     /**
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2265,9 +2347,9 @@ public class FeaturesApi {
     }
 
     /**
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2280,9 +2362,9 @@ public class FeaturesApi {
     }
 
     /**
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -3325,9 +3407,9 @@ public class FeaturesApi {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * Returns the traces of the given feature.
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -3371,9 +3453,9 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns the traces of the given feature.
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -3386,9 +3468,9 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns the traces of the given feature.
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
@@ -3401,9 +3483,9 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns the traces of the given feature.
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.

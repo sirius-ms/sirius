@@ -13,10 +13,6 @@
   ],
   "tags": [
     {
-      "name": "EXPERIMENTAL",
-      "description": "All Endpoints are experimental and not part of the stable API specification. This endpoints can change at any time, even in minor updates."
-    },
-    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -256,7 +252,7 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Move an existing (opened) project-space to another location.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
         "description": "Move an existing (opened) project-space to another location.",
         "operationId": "copyProjectSpace",
         "parameters": [
@@ -308,7 +304,7 @@
         ],
         "responses": {
           "200": {
-            "description": "ProjectInfo of the newly created project if opened (copyProjectId !\u003d null) or the project info of\n the source project otherwise\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
+            "description": "ProjectInfo of the newly created project if opened (copyProjectId !\u003d null) or the project info of\n the source project otherwise\n \u003cp\u003e",
             "content": {
               "application/json": {
                 "schema": {
@@ -706,7 +702,7 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "Start computation for given command and input.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
         "description": "Start computation for given command and input.",
         "operationId": "startCommand",
         "parameters": [
@@ -755,7 +751,7 @@
         },
         "responses": {
           "200": {
-            "description": "Job of the command to be executed.\n\n DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+            "description": "Job of the command to be executed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -861,8 +857,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n ",
-        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.",
         "operationId": "importPreprocessedDataLocally",
         "parameters": [
           {
@@ -927,8 +923,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import ms/ms data from the given format into the specified project-space as background job",
-        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.",
         "operationId": "importPreprocessedDataAsJobLocally",
         "parameters": [
           {
@@ -1177,8 +1173,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n ",
-        "description": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.",
         "operationId": "importMsRunDataLocally",
         "parameters": [
           {
@@ -1234,8 +1230,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job",
-        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.",
+        "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
+        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.",
         "operationId": "importMsRunDataAsJobLocally",
         "parameters": [
           {
@@ -1845,17 +1841,6 @@
             }
           },
           {
-            "name": "includeConfigMap",
-            "in": "query",
-            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
-            "required": false,
-            "deprecated": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          },
-          {
             "name": "moveParametersToConfigMap",
             "in": "query",
             "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters",
@@ -2043,9 +2028,9 @@
         "tags": [
           "Searchable Databases"
         ],
-        "summary": "Start import of structure and spectra files into the specified database.",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "description": "Start import of structure and spectra files into the specified database.",
-        "operationId": "importIntoDatabase",
+        "operationId": "importIntoDatabaseExperimental",
         "parameters": [
           {
             "name": "databaseId",
@@ -2094,91 +2079,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/databases/{databaseId}/import/from-files-job": {
-      "post": {
-        "tags": [
-          "Searchable Databases"
-        ],
-        "summary": "Start import of structure and spectra files into the specified database.",
-        "description": "Start import of structure and spectra files into the specified database.",
-        "operationId": "importIntoDatabaseAsJob",
-        "parameters": [
-          {
-            "name": "databaseId",
-            "in": "path",
-            "description": "database to import into",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "bufferSize",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 1000
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "nullable": true,
-                "enum": [
-                  "none",
-                  "command",
-                  "progress",
-                  "affectedIds"
-                ]
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "files to be imported",
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "inputFiles": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Job of the import command to be executed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -2773,11 +2673,14 @@
         "tags": [
           "Compounds"
         ],
+        "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
+        "description": "Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention\n time axis. All the returned traces are \u0027projected\u0027, which means they refer not to the original retention time axis,\n but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.\n However, this also means that all traces can be directly compared against each other, as they all lie in the same\n retention time axis.",
         "operationId": "getCompoundTraces",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
+            "description": "project-space to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -2786,6 +2689,7 @@
           {
             "name": "compoundId",
             "in": "path",
+            "description": "compound which intensities should be read out",
             "required": true,
             "schema": {
               "type": "string"
@@ -2803,7 +2707,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Traces of the given compound.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3068,7 +2972,7 @@
         "tags": [
           "Features"
         ],
-        "summary": "Returns the traces of the given feature.",
+        "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
         "description": "Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention\n time axis. All the returned traces are \u0027projected\u0027, which means they refer not to the original retention time axis,\n but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.\n However, this also means that all traces can be directly compared against each other, as they all lie in the same\n retention time axis.\n By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,\n it also includes samples in which the same trace appears in.",
         "operationId": "getTraces",
         "parameters": [
@@ -3103,7 +3007,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Traces of the given feature.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3474,9 +3378,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "Returns a single quantification table row for the given feature.",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "description": "Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all\n samples it is contained in.",
-        "operationId": "getQuantification",
+        "operationId": "getQuantificationExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -3512,7 +3416,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Quant table row for this feature",
             "content": {
               "application/json": {
                 "schema": {
@@ -3527,11 +3431,11 @@
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report": {
       "get": {
         "tags": [
-          "EXPERIMENTAL"
+          "Features"
         ],
-        "summary": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
-        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.\n\n EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.",
-        "operationId": "getAlignedFeaturesQuality",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
+        "operationId": "getAlignedFeaturesQualityExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -3890,7 +3794,7 @@
         "tags": [
           "Features"
         ],
-        "summary": "Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS\u0027 internal format.",
+        "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
         "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS\u0027 internal format.",
         "operationId": "getSiriusFragTree",
         "parameters": [
@@ -3924,7 +3828,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Fragmentation Tree in internal format.\n \u003cp\u003e\n NOTE: This endpoint is likely to be removed in future versions of the API.",
+            "description": "Fragmentation Tree in internal format.\n \u003cp\u003e",
             "content": {
               "application/json": {
                 "schema": {
@@ -3933,8 +3837,7 @@
               }
             }
           }
-        },
-        "deprecated": true
+        }
       }
     },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation": {
@@ -5237,19 +5140,6 @@
         "summary": "Request all available job configurations",
         "description": "Request all available job configurations",
         "operationId": "getJobConfigs",
-        "parameters": [
-          {
-            "name": "includeConfigMap",
-            "in": "query",
-            "description": "if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release",
-            "required": false,
-            "deprecated": true,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "list of available {@link JobSubmission JobSubmission}s",

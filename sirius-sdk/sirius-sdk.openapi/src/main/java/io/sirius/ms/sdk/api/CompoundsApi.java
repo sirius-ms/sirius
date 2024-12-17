@@ -325,11 +325,11 @@ public class CompoundsApi {
         return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures);
     }
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param compoundId The compoundId parameter
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
+     * <p><b>200</b> - Traces of the given compound.
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -371,11 +371,11 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param compoundId The compoundId parameter
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
+     * <p><b>200</b> - Traces of the given compound.
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -386,11 +386,11 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param compoundId The compoundId parameter
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
+     * <p><b>200</b> - Traces of the given compound.
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
      * @return ResponseEntity&lt;TraceSet&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -401,11 +401,11 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param compoundId The compoundId parameter
+     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
+     * <p><b>200</b> - Traces of the given compound.
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
