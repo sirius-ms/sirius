@@ -229,7 +229,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     }
 
     protected boolean isBatchDialog() {
-        return ecs.size() > 1; //should never be 0
+        return ecs.size() != 1;
     }
 
     private void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
@@ -244,6 +244,13 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
      * @return set of all selectable adducts, set of all selected adducts
      */
     private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> selectionCandidates, boolean forceSelection) {
+
+        if (ecs.isEmpty()) {  // get adducts from settings
+            Set<PrecursorIonType> possible = PeriodicTable.getInstance().getAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toCollection(HashSet::new));
+            possible.addAll(selectionCandidates);
+            return Pair.of(possible,selectionCandidates);
+        }
+
         Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());

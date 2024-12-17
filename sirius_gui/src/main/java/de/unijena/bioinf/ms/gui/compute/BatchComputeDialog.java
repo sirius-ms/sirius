@@ -112,7 +112,7 @@ public class BatchComputeDialog extends JDialog {
     private MessageBanner connectionMessage;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
-        super(gui.getMainFrame(), "Compute", true);
+        super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
         gui.getConnectionMonitor().checkConnectionInBackground();
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
@@ -141,7 +141,7 @@ public class BatchComputeDialog extends JDialog {
         main.add(northPanel, BorderLayout.NORTH);
 
         loadableWrapper.runInBackgroundAndLoad(() -> {
-            final boolean ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs);
+            final boolean ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs) || compoundsToProcess.isEmpty();  // Empty compounds if the dialog is opened to edit presets, ms2 UI should be active
             {
                 // make subtool config panels
                 formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
@@ -231,6 +231,9 @@ public class BatchComputeDialog extends JDialog {
 
                 JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
                 JButton compute = new JButton("Compute");
+                if (compoundsToProcess.isEmpty()) {
+                    compute.setEnabled(false);
+                }
                 compute.addActionListener(e -> startComputing());
                 JButton abort = new JButton("Cancel");
                 abort.addActionListener(e -> dispose());
