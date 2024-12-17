@@ -294,10 +294,11 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDefaultJobConfigRequestCreation(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    private ResponseSpec getDefaultJobConfigRequestCreation(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -309,6 +310,7 @@ public class JobsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeConfigMap", includeConfigMap));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeCustomDbsForStructureSearch", includeCustomDbsForStructureSearch));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -329,12 +331,13 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getDefaultJobConfig(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public JobSubmission getDefaultJobConfig(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -343,12 +346,13 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+    public ResponseEntity<JobSubmission> getDefaultJobConfigWithHttpInfo(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
         ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
-        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap).toEntity(localVarReturnType).block();
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -357,11 +361,12 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDefaultJobConfigWithResponseSpec(Boolean includeConfigMap, Boolean moveParametersToConfigMap) throws WebClientResponseException {
-        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap);
+    public ResponseSpec getDefaultJobConfigWithResponseSpec(Boolean includeConfigMap, Boolean moveParametersToConfigMap, Boolean includeCustomDbsForStructureSearch) throws WebClientResponseException {
+        return getDefaultJobConfigRequestCreation(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
     }
     /**
      * Get job information and its current state and progress (if available).

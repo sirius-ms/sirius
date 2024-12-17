@@ -43,4 +43,8 @@ src/main/java/io/sirius/ms/sdk/model/SearchableDatabase.java
 src/main/java/io/sirius/ms/sdk/model/Trace.java
 src/main/java/io/sirius/ms/sdk/api/ActuatorApi.java
 
+# no GUI tests for now.
+src/test/java/io/sirius/ms/sdk/api/GuiApiTest.java
+src/test/java/io/sirius/ms/sdk/api/GuiAdvancedApiTest.java
+
 

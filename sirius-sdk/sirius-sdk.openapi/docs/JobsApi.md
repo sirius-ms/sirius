@@ -229,7 +229,7 @@ No authorization required
 
 ## getDefaultJobConfig
 
-> JobSubmission getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap)
+> JobSubmission getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch)
 
 Request default job configuration
 
@@ -253,8 +253,9 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true, generic configmap with-defaults will be included
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
+        Boolean includeCustomDbsForStructureSearch = false; // Boolean | if true, default database selection of structure db search contains also all available custom DB.
         try {
-            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
+            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getDefaultJobConfig");
@@ -274,6 +275,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **includeConfigMap** | **Boolean**| if true, generic configmap with-defaults will be included | [optional] [default to false] |
 | **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
+| **includeCustomDbsForStructureSearch** | **Boolean**| if true, default database selection of structure db search contains also all available custom DB. | [optional] [default to false] |
 
 ### Return type
 
