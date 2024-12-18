@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
@@ -44,7 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.*;
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 @Slf4j
@@ -122,7 +123,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
             String projectId,
             Long compoundId,
             Long featureId,
-            ProjectChangeEvent.Type eventType
+            ProjectEventType eventType
     ) {
         return ServerEvents.newProjectEvent(
                 ProjectChangeEvent.builder().eventType(eventType)
