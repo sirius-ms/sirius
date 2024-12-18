@@ -63,7 +63,7 @@ public class ActuatorApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/vnd.spring-boot.actuator.v3+json", "application/vnd.spring-boot.actuator.v2+json", "application/json"
+            "application/vnd.spring-boot.actuator.v3+json", "application/json", "application/vnd.spring-boot.actuator.v2+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -125,7 +125,7 @@ public class ActuatorApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "application/vnd.spring-boot.actuator.v3+json", "application/vnd.spring-boot.actuator.v2+json", "application/json"
+            "application/vnd.spring-boot.actuator.v3+json", "application/json", "application/vnd.spring-boot.actuator.v2+json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };

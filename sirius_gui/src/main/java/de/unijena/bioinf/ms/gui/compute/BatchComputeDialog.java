@@ -756,7 +756,7 @@ public class BatchComputeDialog extends JDialog {
     private void activatePreset(String presetName) {
         presetUnfreeze();
         try {
-            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
+            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true,true, false));
             boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
             if (defaultSelected) {
                 preset = defaultPreset;
@@ -766,7 +766,7 @@ public class BatchComputeDialog extends JDialog {
                 // they will be all selected anyway, so we can ignore it
                 Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
 
-                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
+                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true));
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))

@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.
  */
-@Schema(enumAsRef = true, nullable = true)
+@Schema(nullable = true)
 public enum GuiResultTab {
     FORMULAS,
     PREDICTED_FINGERPRINT,

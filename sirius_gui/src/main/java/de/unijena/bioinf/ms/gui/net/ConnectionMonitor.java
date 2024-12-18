@@ -24,8 +24,9 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.LicenseInfo;
 import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.ConnectionErrorClass;
+import io.sirius.ms.sdk.model.LicenseInfo;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,13 +186,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getNewValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getNewValue();
+        public ConnectionErrorClass getNewValue() {
+            return (ConnectionErrorClass) super.getNewValue();
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getOldValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getOldValue();
+        public ConnectionErrorClass getOldValue() {
+            return (ConnectionErrorClass) super.getOldValue();
         }
 
         public ConnectionCheck getConnectionCheck() {

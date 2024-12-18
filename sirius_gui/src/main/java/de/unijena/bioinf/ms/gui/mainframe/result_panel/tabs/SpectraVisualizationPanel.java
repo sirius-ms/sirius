@@ -431,7 +431,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         MolDescBuilder builder = new MolDescBuilder("<html><body><div><h3>Compound</h3><p>")
                 .descLine("Formula", match.getMolecularFormula(), "<br>")
                 .descLine("SMILES", match.getSmiles(), "<br>")
-                .descLine("InChI key", match.getCandidateInChiKey(), "<br>");
+                .descLine("InChI key", match.getInchiKey(), "<br>");
 
         try {
             builder.descLine("InChI", InChISMILESUtils.getInchiFromSmiles(match.getSmiles(), true).in2D, "");
@@ -558,10 +558,9 @@ public class SpectraVisualizationPanel extends JPanel implements
                                                     .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
                                                     .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
                                             checkForInterruption();
-        //
 
                                             String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
-                                                    .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
+                                                    .getSiriusFragTreeInternalWithResponseSpec(pid, fid, formulaCandidateId)
                                                     .bodyToMono(String.class).onErrorComplete().block());
 
                                             checkForInterruption();

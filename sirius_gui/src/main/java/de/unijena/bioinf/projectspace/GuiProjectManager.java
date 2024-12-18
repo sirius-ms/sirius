@@ -147,9 +147,9 @@ public class GuiProjectManager implements Closeable {
                         { //compute jobs handling, just to updated compute state in gui without delay.
                             Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs()
                                     .stream()
-                                    .filter(j -> j.getJobEffect() == Job.JobEffectEnum.COMPUTATION)
+                                    .filter(j -> j.getJobEffect() == JobEffect.COMPUTATION)
                                     .filter(j -> j.getAffectedAlignedFeatureIds() != null)
-                                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
+                                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= io.sirius.ms.sdk.model.JobState.RUNNING.ordinal())))
                                     .collect(Collectors.toMap(Pair::key, Pair::value));
 
                             if (!idsToComputeState.isEmpty()) {

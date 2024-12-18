@@ -2,7 +2,7 @@
 
 SIRIUS Nightsky API
 
-- API version: 2.1
+- API version: 3.0
 
 - Generator version: 7.6.0
 
@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>6.1.0-SNAPSHOT</version>
+  <version>3.0+sirius6.1.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:6.1.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.0+sirius6.1.0-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-6.1.0-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.0+sirius6.1.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -119,16 +119,16 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
-*CompoundsApi* | [**getCompoundTraces**](docs/CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | 
+*CompoundsApi* | [**getCompoundTracesExperimental**](docs/CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
-*ExperimentalApi* | [**getAlignedFeaturesQuality**](docs/ExperimentalApi.md#getAlignedFeaturesQuality) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
 *FeaturesApi* | [**getAlignedFeaturesPaged**](docs/FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space.
+*FeaturesApi* | [**getAlignedFeaturesQualityExperimental**](docs/FeaturesApi.md#getAlignedFeaturesQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getDeNovoStructureCandidates**](docs/FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
@@ -145,19 +145,19 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getIsotopePatternAnnotation**](docs/FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
 *FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
-*FeaturesApi* | [**getQuantification**](docs/FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature.
-*FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+*FeaturesApi* | [**getQuantificationExperimental**](docs/FeaturesApi.md#getQuantificationExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+*FeaturesApi* | [**getSiriusFragTreeInternal**](docs/FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
 *FeaturesApi* | [**getSpectralLibraryMatch**](docs/FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesPaged**](docs/FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesSummary**](docs/FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-*FeaturesApi* | [**getStructureAnnotatedMsData**](docs/FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-*FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+*FeaturesApi* | [**getStructureAnnotatedMsDataExperimental**](docs/FeaturesApi.md#getStructureAnnotatedMsDataExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
+*FeaturesApi* | [**getStructureAnnotatedSpectrumExperimental**](docs/FeaturesApi.md#getStructureAnnotatedSpectrumExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable.
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormulaPaged**](docs/FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesPaged**](docs/FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
-*FeaturesApi* | [**getTraces**](docs/FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | Returns the traces of the given feature.
+*FeaturesApi* | [**getTracesExperimental**](docs/FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
 *GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
@@ -175,7 +175,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**saveJobConfig**](docs/JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
-*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input.
+*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
 *JobsApi* | [**startJobFromConfig**](docs/JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config.
 *LoginAndAccountApi* | [**getAccountInfo**](docs/LoginAndAccountApi.md#getAccountInfo) | **GET** /api/account/ | Get information about the account currently logged in.
@@ -188,7 +188,7 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
 *ProjectsApi* | [**closeProjectSpace**](docs/ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application
-*ProjectsApi* | [**copyProjectSpace**](docs/ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | Move an existing (opened) project-space to another location.
+*ProjectsApi* | [**copyProjectSpace**](docs/ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 *ProjectsApi* | [**createProjectSpace**](docs/ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
 *ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
@@ -197,21 +197,20 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 *ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
-*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job
-*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
+*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 *ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
 *ProjectsApi* | [**importPreprocessedDataAsJob**](docs/ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job.
-*ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
-*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
+*ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
+*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
-*SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
-*SearchableDatabasesApi* | [**importIntoDatabaseAsJob**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database.
+*SearchableDatabasesApi* | [**importIntoDatabaseExperimental**](docs/SearchableDatabasesApi.md#importIntoDatabaseExperimental) | **POST** /api/databases/{databaseId}/import/from-files | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
 
@@ -222,11 +221,10 @@ Class | Method | HTTP request | Description
  - [AccountInfo](docs/AccountInfo.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
- - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)
+ - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
- - [Annotation](docs/Annotation.md)
  - [Axes](docs/Axes.md)
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
  - [BasicSpectrum](docs/BasicSpectrum.md)
@@ -245,6 +243,8 @@ Class | Method | HTTP request | Description
  - [ConfidenceMode](docs/ConfidenceMode.md)
  - [ConnectionCheck](docs/ConnectionCheck.md)
  - [ConnectionError](docs/ConnectionError.md)
+ - [ConnectionErrorClass](docs/ConnectionErrorClass.md)
+ - [ConnectionErrorType](docs/ConnectionErrorType.md)
  - [ConsensusAnnotationsCSI](docs/ConsensusAnnotationsCSI.md)
  - [ConsensusAnnotationsDeNovo](docs/ConsensusAnnotationsDeNovo.md)
  - [ConsensusCriterionCSI](docs/ConsensusCriterionCSI.md)
@@ -264,11 +264,13 @@ Class | Method | HTTP request | Description
  - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
  - [InstrumentProfile](docs/InstrumentProfile.md)
+ - [IsotopeMs2Strategy](docs/IsotopeMs2Strategy.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
- - [Item](docs/Item.md)
  - [Job](docs/Job.md)
+ - [JobEffect](docs/JobEffect.md)
  - [JobOptField](docs/JobOptField.md)
  - [JobProgress](docs/JobProgress.md)
+ - [JobState](docs/JobState.md)
  - [JobSubmission](docs/JobSubmission.md)
  - [LcmsSubmissionParameters](docs/LcmsSubmissionParameters.md)
  - [LicenseInfo](docs/LicenseInfo.md)
@@ -276,26 +278,32 @@ Class | Method | HTTP request | Description
  - [LossEdge](docs/LossEdge.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
- - [PageAlignedFeature](docs/PageAlignedFeature.md)
- - [PageCompound](docs/PageCompound.md)
- - [PageFormulaCandidate](docs/PageFormulaCandidate.md)
- - [PageJob](docs/PageJob.md)
- - [PageSpectralLibraryMatch](docs/PageSpectralLibraryMatch.md)
- - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
- - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)
- - [PageableObject](docs/PageableObject.md)
+ - [PageMetadata](docs/PageMetadata.md)
+ - [PagedModelAlignedFeature](docs/PagedModelAlignedFeature.md)
+ - [PagedModelCompound](docs/PagedModelCompound.md)
+ - [PagedModelFormulaCandidate](docs/PagedModelFormulaCandidate.md)
+ - [PagedModelJob](docs/PagedModelJob.md)
+ - [PagedModelSpectralLibraryMatch](docs/PagedModelSpectralLibraryMatch.md)
+ - [PagedModelStructureCandidateFormula](docs/PagedModelStructureCandidateFormula.md)
+ - [PagedModelStructureCandidateScored](docs/PagedModelStructureCandidateScored.md)
  - [ParentPeak](docs/ParentPeak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
+ - [ProjectEventType](docs/ProjectEventType.md)
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
  - [ProjectType](docs/ProjectType.md)
- - [QuantificationTable](docs/QuantificationTable.md)
+ - [QualityItem](docs/QualityItem.md)
+ - [QualityWeight](docs/QualityWeight.md)
+ - [QuantificationColumnType](docs/QuantificationColumnType.md)
+ - [QuantificationMeasure](docs/QuantificationMeasure.md)
+ - [QuantificationRowType](docs/QuantificationRowType.md)
+ - [QuantificationTableExperimental](docs/QuantificationTableExperimental.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
- - [SortObject](docs/SortObject.md)
+ - [Solver](docs/Solver.md)
  - [SpectralLibraryMatch](docs/SpectralLibraryMatch.md)
  - [SpectralLibraryMatchOptField](docs/SpectralLibraryMatchOptField.md)
  - [SpectralLibraryMatchSummary](docs/SpectralLibraryMatchSummary.md)
@@ -311,8 +319,10 @@ Class | Method | HTTP request | Description
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
- - [Trace](docs/Trace.md)
- - [TraceSet](docs/TraceSet.md)
+ - [TraceAnnotationExperimental](docs/TraceAnnotationExperimental.md)
+ - [TraceAnnotationTypeExperimental](docs/TraceAnnotationTypeExperimental.md)
+ - [TraceExperimental](docs/TraceExperimental.md)
+ - [TraceSetExperimental](docs/TraceSetExperimental.md)
  - [UseHeuristic](docs/UseHeuristic.md)
  - [Zodiac](docs/Zodiac.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)
