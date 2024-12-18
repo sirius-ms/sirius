@@ -332,7 +332,7 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getAdductNetworkWithMergedTracesRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
@@ -365,7 +365,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -375,11 +375,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getAdductNetworkWithMergedTraces(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+    public TraceSetExperimental getAdductNetworkWithMergedTraces(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
 
@@ -389,11 +389,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
-     * @return ResponseEntity&lt;TraceSet&gt;
+     * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getAdductNetworkWithMergedTracesWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
 
