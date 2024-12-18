@@ -28,11 +28,11 @@ import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.HyperlinkJTextPane;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.ConnectionErrorClass;
 import io.sirius.ms.sdk.model.Subscription;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.toLinks;
-import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum;
-import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum.*;
+import static io.sirius.ms.sdk.model.ConnectionErrorClass.*;
 
 public class ConnectionCheckPanel extends LoadablePanel implements PropertyChangeListener {
     public static final String READ_MORE_LICENSING = "<br> <a href=\""
@@ -126,7 +125,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         String licensee = sub.map(Subscription::getSubscriberName).orElse("N/A");
         String description = sub.map(Subscription::getName).orElse(null);
         String userEmail = check.getLicenseInfo().getUserEmail();
-        Set<ErrorKlassEnum> errorTypes = check.getErrors().stream().map(ConnectionError::getErrorKlass).collect(Collectors.toSet());
+        Set<ConnectionErrorClass> errorTypes = check.getErrors().stream().map(ConnectionError::getErrorKlass).collect(Collectors.toSet());
 
         internet.setState(!errorTypes.contains(INTERNET));
         authServer.setState(!errorTypes.contains(LOGIN_SERVER));
@@ -181,12 +180,12 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
         final List<ConnectionError> errors = check.getErrors();
 
-        if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(ConnectionError.ErrorTypeEnum.WARNING)).findAny().isEmpty()) {
+        if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(io.sirius.ms.sdk.model.ConnectionErrorType.WARNING)).findAny().isEmpty()) {
             //case 0 NO ERROR
             resultPanel.add(makeHTMLTextPanel("Connection to SIRIUS web services successfully established!", Colors.TEXT_GOOD), BorderLayout.CENTER);
         } else {
             ConnectionError err = errors.getFirst();
-            ErrorKlassEnum mainError = err.getErrorKlass();
+            ConnectionErrorClass mainError = err.getErrorKlass();
             //check if internet error is not just internet check unreachable
             if (mainError == INTERNET){
                 if (errors.size() > 1 &&

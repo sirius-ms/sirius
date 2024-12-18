@@ -90,10 +90,10 @@ ext {
     jakarta_annotation_version = "3.0.0"
 
 
-    spring_boot_version = "3.3.1"
-    springdoc_version = "2.3.0"
+    spring_boot_version = "3.4.0"
+    springdoc_version = "2.6.0"
 
-    junit_version = '5.10.3'
+    junit_version = '5.11.4'
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
