@@ -38,7 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.*;
 
 public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<SiriusProjectSpaceManager, SiriusProjectSpaceImpl> {
 
