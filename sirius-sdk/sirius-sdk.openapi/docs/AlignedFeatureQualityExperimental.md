@@ -2,6 +2,7 @@
 
 # AlignedFeatureQualityExperimental
 
+EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
 
 ## Properties
 
