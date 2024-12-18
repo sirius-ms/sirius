@@ -828,8 +828,11 @@ public class AlignedFeatureController {
      * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
-     * @return
      */
+    @Operation(
+            operationId = "getAdductNetworkWithMergedTracesExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
+    )
     @GetMapping(value = "/{alignedFeatureId}/adducts", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getAdductNetworkWithMergedTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetsForFeatureWithCorrelatedIons(alignedFeatureId);

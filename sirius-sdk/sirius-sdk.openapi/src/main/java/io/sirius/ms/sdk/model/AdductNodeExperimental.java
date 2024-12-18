@@ -36,15 +36,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AdductNode
+ * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
-  AdductNode.JSON_PROPERTY_ALIGNED_FEATURE_ID,
-  AdductNode.JSON_PROPERTY_MZ,
-  AdductNode.JSON_PROPERTY_ADDUCT_ANNOTATIONS
+  AdductNodeExperimental.JSON_PROPERTY_ALIGNED_FEATURE_ID,
+  AdductNodeExperimental.JSON_PROPERTY_MZ,
+  AdductNodeExperimental.JSON_PROPERTY_ADDUCT_ANNOTATIONS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class AdductNode {
+public class AdductNodeExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
   private Long alignedFeatureId;
 
@@ -54,10 +54,10 @@ public class AdductNode {
   public static final String JSON_PROPERTY_ADDUCT_ANNOTATIONS = "adductAnnotations";
   private Map<String, Double> adductAnnotations = new HashMap<>();
 
-  public AdductNode() {
+  public AdductNodeExperimental() {
   }
 
-  public AdductNode alignedFeatureId(Long alignedFeatureId) {
+  public AdductNodeExperimental alignedFeatureId(Long alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
@@ -82,7 +82,7 @@ public class AdductNode {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-  public AdductNode mz(Double mz) {
+  public AdductNodeExperimental mz(Double mz) {
     
     this.mz = mz;
     return this;
@@ -107,13 +107,13 @@ public class AdductNode {
     this.mz = mz;
   }
 
-  public AdductNode adductAnnotations(Map<String, Double> adductAnnotations) {
+  public AdductNodeExperimental adductAnnotations(Map<String, Double> adductAnnotations) {
     
     this.adductAnnotations = adductAnnotations;
     return this;
   }
 
-  public AdductNode putAdductAnnotationsItem(String key, Double adductAnnotationsItem) {
+  public AdductNodeExperimental putAdductAnnotationsItem(String key, Double adductAnnotationsItem) {
     if (this.adductAnnotations == null) {
       this.adductAnnotations = new HashMap<>();
     }
@@ -148,10 +148,10 @@ public class AdductNode {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AdductNode adductNode = (AdductNode) o;
-    return Objects.equals(this.alignedFeatureId, adductNode.alignedFeatureId) &&
-        Objects.equals(this.mz, adductNode.mz) &&
-        Objects.equals(this.adductAnnotations, adductNode.adductAnnotations);
+    AdductNodeExperimental adductNodeExperimental = (AdductNodeExperimental) o;
+    return Objects.equals(this.alignedFeatureId, adductNodeExperimental.alignedFeatureId) &&
+        Objects.equals(this.mz, adductNodeExperimental.mz) &&
+        Objects.equals(this.adductAnnotations, adductNodeExperimental.adductAnnotations);
   }
 
   @Override
@@ -162,7 +162,7 @@ public class AdductNode {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AdductNode {\n");
+    sb.append("class AdductNodeExperimental {\n");
     sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
     sb.append("    mz: ").append(toIndentedString(mz)).append("\n");
     sb.append("    adductAnnotations: ").append(toIndentedString(adductAnnotations)).append("\n");

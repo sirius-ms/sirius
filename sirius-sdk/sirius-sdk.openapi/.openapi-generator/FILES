@@ -2,9 +2,9 @@ README.md
 docs/AccountCredentials.md
 docs/AccountInfo.md
 docs/ActuatorApi.md
-docs/AdductEdge.md
-docs/AdductNetwork.md
-docs/AdductNode.md
+docs/AdductEdgeExperimental.md
+docs/AdductNetworkExperimental.md
+docs/AdductNodeExperimental.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQualityExperimental.md
@@ -140,9 +140,9 @@ src/main/java/io/sirius/ms/sdk/client/auth/HttpBasicAuth.java
 src/main/java/io/sirius/ms/sdk/client/auth/HttpBearerAuth.java
 src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
-src/main/java/io/sirius/ms/sdk/model/AdductEdge.java
-src/main/java/io/sirius/ms/sdk/model/AdductNetwork.java
-src/main/java/io/sirius/ms/sdk/model/AdductNode.java
+src/main/java/io/sirius/ms/sdk/model/AdductEdgeExperimental.java
+src/main/java/io/sirius/ms/sdk/model/AdductNetworkExperimental.java
+src/main/java/io/sirius/ms/sdk/model/AdductNodeExperimental.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQualityExperimental.java
@@ -244,7 +244,6 @@ src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationExperimental.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationTypeExperimental.java
-src/main/java/io/sirius/ms/sdk/model/TraceExperimental.java
 src/main/java/io/sirius/ms/sdk/model/TraceSetExperimental.java
 src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
