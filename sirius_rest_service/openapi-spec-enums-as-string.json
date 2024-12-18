@@ -5050,9 +5050,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "description": "Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.",
-        "operationId": "getAdductNetworkWithMergedTraces",
+        "operationId": "getAdductNetworkWithMergedTracesExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -7915,7 +7915,7 @@
           }
         }
       },
-      "AdductEdge": {
+      "AdductEdgeExperimental": {
         "type": "object",
         "properties": {
           "mzDelta": {
@@ -7953,26 +7953,28 @@
             "type": "number",
             "format": "float"
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
-      "AdductNetwork": {
+      "AdductNetworkExperimental": {
         "type": "object",
         "properties": {
           "nodes": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AdductNode"
+              "$ref": "#/components/schemas/AdductNodeExperimental"
             }
           },
           "edges": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AdductEdge"
+              "$ref": "#/components/schemas/AdductEdgeExperimental"
             }
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
-      "AdductNode": {
+      "AdductNodeExperimental": {
         "type": "object",
         "properties": {
           "alignedFeatureId": {
@@ -7990,7 +7992,8 @@
               "format": "double"
             }
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "Axes": {
         "type": "object",
@@ -8105,7 +8108,7 @@
         "type": "object",
         "properties": {
           "adductNetwork": {
-            "$ref": "#/components/schemas/AdductNetwork"
+            "$ref": "#/components/schemas/AdductNetworkExperimental"
           },
           "sampleId": {
             "type": "integer",

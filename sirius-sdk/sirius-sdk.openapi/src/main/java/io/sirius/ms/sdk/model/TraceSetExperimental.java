@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.AdductNetwork;
+import io.sirius.ms.sdk.model.AdductNetworkExperimental;
 import io.sirius.ms.sdk.model.Axes;
 import io.sirius.ms.sdk.model.TraceExperimental;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TraceSetExperimental {
   public static final String JSON_PROPERTY_ADDUCT_NETWORK = "adductNetwork";
-  private AdductNetwork adductNetwork;
+  private AdductNetworkExperimental adductNetwork;
 
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
   private Long sampleId;
@@ -69,7 +69,7 @@ public class TraceSetExperimental {
   public TraceSetExperimental() {
   }
 
-  public TraceSetExperimental adductNetwork(AdductNetwork adductNetwork) {
+  public TraceSetExperimental adductNetwork(AdductNetworkExperimental adductNetwork) {
     
     this.adductNetwork = adductNetwork;
     return this;
@@ -83,14 +83,14 @@ public class TraceSetExperimental {
   @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public AdductNetwork getAdductNetwork() {
+  public AdductNetworkExperimental getAdductNetwork() {
     return adductNetwork;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAdductNetwork(AdductNetwork adductNetwork) {
+  public void setAdductNetwork(AdductNetworkExperimental adductNetwork) {
     this.adductNetwork = adductNetwork;
   }
 

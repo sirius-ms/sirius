@@ -327,7 +327,7 @@ public class FeaturesApi {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
     }
     /**
-     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
@@ -335,15 +335,15 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAdductNetworkWithMergedTracesRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec getAdductNetworkWithMergedTracesExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAdductNetworkWithMergedTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAdductNetworkWithMergedTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAdductNetworkWithMergedTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAdductNetworkWithMergedTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -370,7 +370,7 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
@@ -378,13 +378,13 @@ public class FeaturesApi {
      * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSetExperimental getAdductNetworkWithMergedTraces(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
-        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
@@ -392,13 +392,13 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
-        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
@@ -406,8 +406,8 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAdductNetworkWithMergedTracesWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        return getAdductNetworkWithMergedTracesRequestCreation(projectId, alignedFeatureId);
+    public ResponseSpec getAdductNetworkWithMergedTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId);
     }
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.

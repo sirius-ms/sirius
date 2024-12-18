@@ -30,8 +30,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.AdductEdge;
-import io.sirius.ms.sdk.model.AdductNode;
+import io.sirius.ms.sdk.model.AdductEdgeExperimental;
+import io.sirius.ms.sdk.model.AdductNodeExperimental;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,30 +39,30 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AdductNetwork
+ * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
-  AdductNetwork.JSON_PROPERTY_NODES,
-  AdductNetwork.JSON_PROPERTY_EDGES
+  AdductNetworkExperimental.JSON_PROPERTY_NODES,
+  AdductNetworkExperimental.JSON_PROPERTY_EDGES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class AdductNetwork {
+public class AdductNetworkExperimental {
   public static final String JSON_PROPERTY_NODES = "nodes";
-  private List<AdductNode> nodes = new ArrayList<>();
+  private List<AdductNodeExperimental> nodes = new ArrayList<>();
 
   public static final String JSON_PROPERTY_EDGES = "edges";
-  private List<AdductEdge> edges = new ArrayList<>();
+  private List<AdductEdgeExperimental> edges = new ArrayList<>();
 
-  public AdductNetwork() {
+  public AdductNetworkExperimental() {
   }
 
-  public AdductNetwork nodes(List<AdductNode> nodes) {
+  public AdductNetworkExperimental nodes(List<AdductNodeExperimental> nodes) {
     
     this.nodes = nodes;
     return this;
   }
 
-  public AdductNetwork addNodesItem(AdductNode nodesItem) {
+  public AdductNetworkExperimental addNodesItem(AdductNodeExperimental nodesItem) {
     if (this.nodes == null) {
       this.nodes = new ArrayList<>();
     }
@@ -78,24 +78,24 @@ public class AdductNetwork {
   @JsonProperty(JSON_PROPERTY_NODES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<AdductNode> getNodes() {
+  public List<AdductNodeExperimental> getNodes() {
     return nodes;
   }
 
 
   @JsonProperty(JSON_PROPERTY_NODES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNodes(List<AdductNode> nodes) {
+  public void setNodes(List<AdductNodeExperimental> nodes) {
     this.nodes = nodes;
   }
 
-  public AdductNetwork edges(List<AdductEdge> edges) {
+  public AdductNetworkExperimental edges(List<AdductEdgeExperimental> edges) {
     
     this.edges = edges;
     return this;
   }
 
-  public AdductNetwork addEdgesItem(AdductEdge edgesItem) {
+  public AdductNetworkExperimental addEdgesItem(AdductEdgeExperimental edgesItem) {
     if (this.edges == null) {
       this.edges = new ArrayList<>();
     }
@@ -111,14 +111,14 @@ public class AdductNetwork {
   @JsonProperty(JSON_PROPERTY_EDGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<AdductEdge> getEdges() {
+  public List<AdductEdgeExperimental> getEdges() {
     return edges;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EDGES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEdges(List<AdductEdge> edges) {
+  public void setEdges(List<AdductEdgeExperimental> edges) {
     this.edges = edges;
   }
 
@@ -130,9 +130,9 @@ public class AdductNetwork {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AdductNetwork adductNetwork = (AdductNetwork) o;
-    return Objects.equals(this.nodes, adductNetwork.nodes) &&
-        Objects.equals(this.edges, adductNetwork.edges);
+    AdductNetworkExperimental adductNetworkExperimental = (AdductNetworkExperimental) o;
+    return Objects.equals(this.nodes, adductNetworkExperimental.nodes) &&
+        Objects.equals(this.edges, adductNetworkExperimental.edges);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class AdductNetwork {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AdductNetwork {\n");
+    sb.append("class AdductNetworkExperimental {\n");
     sb.append("    nodes: ").append(toIndentedString(nodes)).append("\n");
     sb.append("    edges: ").append(toIndentedString(edges)).append("\n");
     sb.append("}");

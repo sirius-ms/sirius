@@ -194,7 +194,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         if (viewType==ViewType.ALIGNMENT) {
             spec = currentInstance.getClient().features().getTracesExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId(), true).bodyToMono(TraceSetExperimental.class).onErrorComplete().block();
         } else {
-            spec = currentInstance.getClient().features().getAdductNetworkWithMergedTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSetExperimental.class).onErrorComplete().block();
+            spec = currentInstance.getClient().features().getAdductNetworkWithMergedTracesExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSetExperimental.class).onErrorComplete().block();
         }
 
         try {

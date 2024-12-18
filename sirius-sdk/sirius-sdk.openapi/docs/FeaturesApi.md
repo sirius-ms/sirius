@@ -7,7 +7,7 @@ All URIs are relative to *http://localhost:8888*
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
-| [**getAdductNetworkWithMergedTraces**](FeaturesApi.md#getAdductNetworkWithMergedTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | Returns the adduct network for a given aligned feature id together with all merged traces contained in the network. |
+| [**getAdductNetworkWithMergedTracesExperimental**](FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
 | [**getAlignedFeature**](FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAlignedFeatures**](FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space. |
 | [**getAlignedFeaturesPaged**](FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space. |
@@ -250,11 +250,11 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getAdductNetworkWithMergedTraces
+## getAdductNetworkWithMergedTracesExperimental
 
-> TraceSetExperimental getAdductNetworkWithMergedTraces(projectId, alignedFeatureId)
+> TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId)
 
-Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
 Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
 
@@ -277,10 +277,10 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | one feature that is considered the main feature of the adduct network
         try {
-            TraceSetExperimental result = apiInstance.getAdductNetworkWithMergedTraces(projectId, alignedFeatureId);
+            TraceSetExperimental result = apiInstance.getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getAdductNetworkWithMergedTraces");
+            System.err.println("Exception when calling FeaturesApi#getAdductNetworkWithMergedTracesExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

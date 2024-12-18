@@ -1,9 +1,6 @@
 package de.unijena.bioinf.ms.middleware.model.networks;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ms.persistence.model.core.networks.AdductEdge;
-import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +8,8 @@ import java.util.*;
 
 @Getter
 @Setter
+@Schema(name = "AdductNetworkExperimental",
+        description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 public class AdductNetwork {
 
     private ArrayList<AdductNode> nodes;
@@ -62,6 +61,8 @@ public class AdductNetwork {
 
     @Getter
     @Setter
+    @Schema(name = "AdductEdgeExperimental",
+            description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class AdductEdge {
 
         private double mzDelta;
@@ -76,6 +77,8 @@ public class AdductNetwork {
 
     @Getter
     @Setter
+    @Schema(name = "AdductNodeExperimental",
+            description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class AdductNode {
         long alignedFeatureId;
         private double mz;

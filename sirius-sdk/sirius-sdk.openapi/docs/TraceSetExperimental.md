@@ -8,7 +8,7 @@ EXPERIMENTAL: This schema is experimental and may be changed (or even removed) w
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**adductNetwork** | [**AdductNetwork**](AdductNetwork.md) |  |  [optional] |
+|**adductNetwork** | [**AdductNetworkExperimental**](AdductNetworkExperimental.md) |  |  [optional] |
 |**sampleId** | **Long** |  |  [optional] |
 |**sampleName** | **String** |  |  [optional] |
 |**axes** | [**Axes**](Axes.md) |  |  [optional] |

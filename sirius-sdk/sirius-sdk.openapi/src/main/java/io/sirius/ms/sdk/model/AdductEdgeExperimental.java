@@ -34,21 +34,21 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AdductEdge
+ * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
-  AdductEdge.JSON_PROPERTY_MZ_DELTA,
-  AdductEdge.JSON_PROPERTY_ANNOTATION,
-  AdductEdge.JSON_PROPERTY_FROM,
-  AdductEdge.JSON_PROPERTY_TO,
-  AdductEdge.JSON_PROPERTY_MERGED_CORRELATION,
-  AdductEdge.JSON_PROPERTY_REPRESENTATIVE_CORRELATION,
-  AdductEdge.JSON_PROPERTY_MS2COSINE,
-  AdductEdge.JSON_PROPERTY_PVALUE,
-  AdductEdge.JSON_PROPERTY_INTENSITY_RATIO_SCORE
+  AdductEdgeExperimental.JSON_PROPERTY_MZ_DELTA,
+  AdductEdgeExperimental.JSON_PROPERTY_ANNOTATION,
+  AdductEdgeExperimental.JSON_PROPERTY_FROM,
+  AdductEdgeExperimental.JSON_PROPERTY_TO,
+  AdductEdgeExperimental.JSON_PROPERTY_MERGED_CORRELATION,
+  AdductEdgeExperimental.JSON_PROPERTY_REPRESENTATIVE_CORRELATION,
+  AdductEdgeExperimental.JSON_PROPERTY_MS2COSINE,
+  AdductEdgeExperimental.JSON_PROPERTY_PVALUE,
+  AdductEdgeExperimental.JSON_PROPERTY_INTENSITY_RATIO_SCORE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class AdductEdge {
+public class AdductEdgeExperimental {
   public static final String JSON_PROPERTY_MZ_DELTA = "mzDelta";
   private Double mzDelta;
 
@@ -76,10 +76,10 @@ public class AdductEdge {
   public static final String JSON_PROPERTY_INTENSITY_RATIO_SCORE = "intensityRatioScore";
   private Float intensityRatioScore;
 
-  public AdductEdge() {
+  public AdductEdgeExperimental() {
   }
 
-  public AdductEdge mzDelta(Double mzDelta) {
+  public AdductEdgeExperimental mzDelta(Double mzDelta) {
     
     this.mzDelta = mzDelta;
     return this;
@@ -104,7 +104,7 @@ public class AdductEdge {
     this.mzDelta = mzDelta;
   }
 
-  public AdductEdge annotation(String annotation) {
+  public AdductEdgeExperimental annotation(String annotation) {
     
     this.annotation = annotation;
     return this;
@@ -129,7 +129,7 @@ public class AdductEdge {
     this.annotation = annotation;
   }
 
-  public AdductEdge from(Integer from) {
+  public AdductEdgeExperimental from(Integer from) {
     
     this.from = from;
     return this;
@@ -154,7 +154,7 @@ public class AdductEdge {
     this.from = from;
   }
 
-  public AdductEdge to(Integer to) {
+  public AdductEdgeExperimental to(Integer to) {
     
     this.to = to;
     return this;
@@ -179,7 +179,7 @@ public class AdductEdge {
     this.to = to;
   }
 
-  public AdductEdge mergedCorrelation(Float mergedCorrelation) {
+  public AdductEdgeExperimental mergedCorrelation(Float mergedCorrelation) {
     
     this.mergedCorrelation = mergedCorrelation;
     return this;
@@ -204,7 +204,7 @@ public class AdductEdge {
     this.mergedCorrelation = mergedCorrelation;
   }
 
-  public AdductEdge representativeCorrelation(Float representativeCorrelation) {
+  public AdductEdgeExperimental representativeCorrelation(Float representativeCorrelation) {
     
     this.representativeCorrelation = representativeCorrelation;
     return this;
@@ -229,7 +229,7 @@ public class AdductEdge {
     this.representativeCorrelation = representativeCorrelation;
   }
 
-  public AdductEdge ms2cosine(Float ms2cosine) {
+  public AdductEdgeExperimental ms2cosine(Float ms2cosine) {
     
     this.ms2cosine = ms2cosine;
     return this;
@@ -254,7 +254,7 @@ public class AdductEdge {
     this.ms2cosine = ms2cosine;
   }
 
-  public AdductEdge pvalue(Float pvalue) {
+  public AdductEdgeExperimental pvalue(Float pvalue) {
     
     this.pvalue = pvalue;
     return this;
@@ -279,7 +279,7 @@ public class AdductEdge {
     this.pvalue = pvalue;
   }
 
-  public AdductEdge intensityRatioScore(Float intensityRatioScore) {
+  public AdductEdgeExperimental intensityRatioScore(Float intensityRatioScore) {
     
     this.intensityRatioScore = intensityRatioScore;
     return this;
@@ -312,16 +312,16 @@ public class AdductEdge {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AdductEdge adductEdge = (AdductEdge) o;
-    return Objects.equals(this.mzDelta, adductEdge.mzDelta) &&
-        Objects.equals(this.annotation, adductEdge.annotation) &&
-        Objects.equals(this.from, adductEdge.from) &&
-        Objects.equals(this.to, adductEdge.to) &&
-        Objects.equals(this.mergedCorrelation, adductEdge.mergedCorrelation) &&
-        Objects.equals(this.representativeCorrelation, adductEdge.representativeCorrelation) &&
-        Objects.equals(this.ms2cosine, adductEdge.ms2cosine) &&
-        Objects.equals(this.pvalue, adductEdge.pvalue) &&
-        Objects.equals(this.intensityRatioScore, adductEdge.intensityRatioScore);
+    AdductEdgeExperimental adductEdgeExperimental = (AdductEdgeExperimental) o;
+    return Objects.equals(this.mzDelta, adductEdgeExperimental.mzDelta) &&
+        Objects.equals(this.annotation, adductEdgeExperimental.annotation) &&
+        Objects.equals(this.from, adductEdgeExperimental.from) &&
+        Objects.equals(this.to, adductEdgeExperimental.to) &&
+        Objects.equals(this.mergedCorrelation, adductEdgeExperimental.mergedCorrelation) &&
+        Objects.equals(this.representativeCorrelation, adductEdgeExperimental.representativeCorrelation) &&
+        Objects.equals(this.ms2cosine, adductEdgeExperimental.ms2cosine) &&
+        Objects.equals(this.pvalue, adductEdgeExperimental.pvalue) &&
+        Objects.equals(this.intensityRatioScore, adductEdgeExperimental.intensityRatioScore);
   }
 
   @Override
@@ -332,7 +332,7 @@ public class AdductEdge {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AdductEdge {\n");
+    sb.append("class AdductEdgeExperimental {\n");
     sb.append("    mzDelta: ").append(toIndentedString(mzDelta)).append("\n");
     sb.append("    annotation: ").append(toIndentedString(annotation)).append("\n");
     sb.append("    from: ").append(toIndentedString(from)).append("\n");
