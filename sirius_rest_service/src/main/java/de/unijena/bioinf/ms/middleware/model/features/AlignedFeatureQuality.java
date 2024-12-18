@@ -35,7 +35,7 @@ import java.util.LinkedHashMap;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "AlignedFeatureQualityExperimental",
-        title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+        description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 public class AlignedFeatureQuality {
     /**
      * Id of the feature (aligned over runs) this quality information belongs to.

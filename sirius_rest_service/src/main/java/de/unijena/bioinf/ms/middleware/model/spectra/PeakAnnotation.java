@@ -82,31 +82,39 @@ public class PeakAnnotation {
     private ParentPeak parentPeak;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Array/List of indices of the atoms of the structure candidate that are part of this fragments substructure
      * (highlighted atoms)
      */
-    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
+    @Schema(nullable = true)
     private int[] substructureAtoms;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Array/List of indices of the bonds of the structure candidate that are part of this fragments substructure
      * (highlighted bonds)
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
+    @Schema(nullable = true)
     private int[] substructureBonds;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments
      * substructure (highlighted cutted bonds).
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
+    @Schema(nullable = true)
     private int[] substructureBondsCut;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * This score roughly reflects the probability of this fragment forming.
      *
      * This is the score of the path from root to this node which has the maximal score or "profit".
@@ -115,15 +123,17 @@ public class PeakAnnotation {
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
+    @Schema(nullable = true)
     private Float substructureScore;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Number of hydrogens rearrangements needed to match the substructure to the fragment formula.
      *
      * Null if substructure annotation not available or not requested.
      */
-    @Schema(nullable = true, title = "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.")
+    @Schema(nullable = true)
     private Integer hydrogenRearrangements;
 
 

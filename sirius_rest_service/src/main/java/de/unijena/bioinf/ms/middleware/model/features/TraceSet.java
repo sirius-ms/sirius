@@ -11,7 +11,7 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(
         name = "TraceSetExperimental",
-        title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+        description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 public class TraceSet {
 
     @Getter
@@ -26,7 +26,7 @@ public class TraceSet {
     }
 
     @Schema(name = "TraceAnnotationTypeExperimental",
-            title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+            description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 
     public enum AnnotationType {
         /**
@@ -43,7 +43,7 @@ public class TraceSet {
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(name = "TraceAnnotationExperimental",
-            title =  "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+            description =  "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class Annotation {
         private AnnotationType type;
         @Schema(nullable = true)
@@ -76,7 +76,7 @@ public class TraceSet {
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(name = "TraceExperimental",
-            title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+            description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class Trace {
         private long id;
         @Schema(nullable = true)
