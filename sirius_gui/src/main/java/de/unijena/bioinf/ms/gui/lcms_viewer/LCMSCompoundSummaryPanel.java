@@ -14,9 +14,9 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
 import io.sirius.ms.sdk.model.Category;
-import io.sirius.ms.sdk.model.Item;
+import io.sirius.ms.sdk.model.QualityItem;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +24,7 @@ import java.util.List;
 
 public class LCMSCompoundSummaryPanel extends JPanel {
 
-    private AlignedFeatureQuality report;
+    private AlignedFeatureQualityExperimental report;
 
     public LCMSCompoundSummaryPanel() {
 
@@ -36,7 +36,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         setReport(null);
     }
 
-    public void setReport(AlignedFeatureQuality report) {
+    public void setReport(AlignedFeatureQualityExperimental report) {
         if (this.report!=report) {
             this.report = report;
             updateContent();
@@ -56,7 +56,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
 
 
     private void addSection(Category qualityCheckResult) {
-        List<Item> checkList = qualityCheckResult.getItems();
+        List<QualityItem> checkList = qualityCheckResult.getItems();
         DataQuality quality = DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue());
         if (quality==null || quality==DataQuality.NOT_APPLICABLE) return;
         final TitledIconBorder peakHeader = new TitledIconBorder(qualityCheckResult.getCategoryName());
@@ -66,7 +66,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         peakPanel.setBorder(peakHeader);
         add(peakPanel);
 
-        for (Item check : checkList) {
+        for (QualityItem check : checkList) {
             JLabel c = new JLabel("<html>" + check.getDescription() + "</html>", getColoredIcon(DataQuality.valueOf(check.getQuality().getValue()), 16), JLabel.LEADING);
             c.setBorder(BorderFactory.createEmptyBorder(6, 0, 2, 0));
             peakPanel.add(c);
