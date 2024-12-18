@@ -2509,9 +2509,9 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "description": "Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention\n time axis. All the returned traces are \u0027projected\u0027, which means they refer not to the original retention time axis,\n but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.\n However, this also means that all traces can be directly compared against each other, as they all lie in the same\n retention time axis.",
-        "operationId": "getCompoundTraces",
+        "operationId": "getCompoundTracesExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -2547,7 +2547,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TraceSet"
+                  "$ref": "#/components/schemas/TraceSetExperimental"
                 }
               }
             }
@@ -2785,9 +2785,9 @@
         "tags": [
           "Features"
         ],
-        "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "description": "Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention\n time axis. All the returned traces are \u0027projected\u0027, which means they refer not to the original retention time axis,\n but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.\n However, this also means that all traces can be directly compared against each other, as they all lie in the same\n retention time axis.\n By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,\n it also includes samples in which the same trace appears in.",
-        "operationId": "getTraces",
+        "operationId": "getTracesExperimental",
         "parameters": [
           {
             "name": "projectId",
@@ -2824,7 +2824,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TraceSet"
+                  "$ref": "#/components/schemas/TraceSetExperimental"
                 }
               }
             }
@@ -3214,7 +3214,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/QuantificationTable"
+                  "$ref": "#/components/schemas/QuantificationTableExperimental"
                 }
               }
             }
@@ -3256,7 +3256,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlignedFeatureQuality"
+                  "$ref": "#/components/schemas/AlignedFeatureQualityExperimental"
                 }
               }
             }
@@ -3566,7 +3566,7 @@
         ],
         "summary": "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time",
         "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS\u0027 internal format.",
-        "operationId": "getSiriusFragTree",
+        "operationId": "getSiriusFragTreeInternal",
         "parameters": [
           {
             "name": "projectId",
@@ -7652,7 +7652,43 @@
           }
         }
       },
-      "Trace": {
+      "TraceAnnotationExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TraceAnnotationTypeExperimental"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "TraceAnnotationTypeExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "type": "string",
+        "enum": [
+          "FEATURE",
+          "MS2"
+        ]
+      },
+      "TraceExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "id": {
@@ -7681,7 +7717,7 @@
           "annotations": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/TraceAnnotation"
+              "$ref": "#/components/schemas/TraceAnnotationExperimental"
             }
           },
           "mz": {
@@ -7703,40 +7739,8 @@
           }
         }
       },
-      "TraceAnnotation": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "$ref": "#/components/schemas/TraceAnnotationType"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "index": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "from": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "to": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
-      },
-      "TraceAnnotationType": {
-        "type": "string",
-        "enum": [
-          "FEATURE",
-          "MS2"
-        ]
-      },
-      "TraceSet": {
+      "TraceSetExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "sampleId": {
@@ -7752,7 +7756,7 @@
           "traces": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Trace"
+              "$ref": "#/components/schemas/TraceExperimental"
             }
           }
         }
@@ -7836,7 +7840,8 @@
           "FEATURES"
         ]
       },
-      "QuantificationTable": {
+      "QuantificationTableExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "quantificationType": {
@@ -7894,7 +7899,8 @@
           }
         }
       },
-      "AlignedFeatureQuality": {
+      "AlignedFeatureQualityExperimental": {
+        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "required": [
           "alignedFeatureId",
           "categories",

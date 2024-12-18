@@ -40,20 +40,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * QuantificationTable
+ * QuantificationTableExperimental
  */
 @JsonPropertyOrder({
-  QuantificationTable.JSON_PROPERTY_QUANTIFICATION_TYPE,
-  QuantificationTable.JSON_PROPERTY_ROW_TYPE,
-  QuantificationTable.JSON_PROPERTY_COLUMN_TYPE,
-  QuantificationTable.JSON_PROPERTY_ROW_IDS,
-  QuantificationTable.JSON_PROPERTY_COLUMN_IDS,
-  QuantificationTable.JSON_PROPERTY_ROW_NAMES,
-  QuantificationTable.JSON_PROPERTY_COLUMN_NAMES,
-  QuantificationTable.JSON_PROPERTY_VALUES
+  QuantificationTableExperimental.JSON_PROPERTY_QUANTIFICATION_TYPE,
+  QuantificationTableExperimental.JSON_PROPERTY_ROW_TYPE,
+  QuantificationTableExperimental.JSON_PROPERTY_COLUMN_TYPE,
+  QuantificationTableExperimental.JSON_PROPERTY_ROW_IDS,
+  QuantificationTableExperimental.JSON_PROPERTY_COLUMN_IDS,
+  QuantificationTableExperimental.JSON_PROPERTY_ROW_NAMES,
+  QuantificationTableExperimental.JSON_PROPERTY_COLUMN_NAMES,
+  QuantificationTableExperimental.JSON_PROPERTY_VALUES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class QuantificationTable {
+public class QuantificationTableExperimental {
   public static final String JSON_PROPERTY_QUANTIFICATION_TYPE = "quantificationType";
   private QuantificationMeasure quantificationType;
 
@@ -78,10 +78,10 @@ public class QuantificationTable {
   public static final String JSON_PROPERTY_VALUES = "values";
   private List<List<Double>> values = new ArrayList<>();
 
-  public QuantificationTable() {
+  public QuantificationTableExperimental() {
   }
 
-  public QuantificationTable quantificationType(QuantificationMeasure quantificationType) {
+  public QuantificationTableExperimental quantificationType(QuantificationMeasure quantificationType) {
     
     this.quantificationType = quantificationType;
     return this;
@@ -106,7 +106,7 @@ public class QuantificationTable {
     this.quantificationType = quantificationType;
   }
 
-  public QuantificationTable rowType(QuantificationRowType rowType) {
+  public QuantificationTableExperimental rowType(QuantificationRowType rowType) {
     
     this.rowType = rowType;
     return this;
@@ -131,7 +131,7 @@ public class QuantificationTable {
     this.rowType = rowType;
   }
 
-  public QuantificationTable columnType(QuantificationColumnType columnType) {
+  public QuantificationTableExperimental columnType(QuantificationColumnType columnType) {
     
     this.columnType = columnType;
     return this;
@@ -156,13 +156,13 @@ public class QuantificationTable {
     this.columnType = columnType;
   }
 
-  public QuantificationTable rowIds(List<Long> rowIds) {
+  public QuantificationTableExperimental rowIds(List<Long> rowIds) {
     
     this.rowIds = rowIds;
     return this;
   }
 
-  public QuantificationTable addRowIdsItem(Long rowIdsItem) {
+  public QuantificationTableExperimental addRowIdsItem(Long rowIdsItem) {
     if (this.rowIds == null) {
       this.rowIds = new ArrayList<>();
     }
@@ -189,13 +189,13 @@ public class QuantificationTable {
     this.rowIds = rowIds;
   }
 
-  public QuantificationTable columnIds(List<Long> columnIds) {
+  public QuantificationTableExperimental columnIds(List<Long> columnIds) {
     
     this.columnIds = columnIds;
     return this;
   }
 
-  public QuantificationTable addColumnIdsItem(Long columnIdsItem) {
+  public QuantificationTableExperimental addColumnIdsItem(Long columnIdsItem) {
     if (this.columnIds == null) {
       this.columnIds = new ArrayList<>();
     }
@@ -222,13 +222,13 @@ public class QuantificationTable {
     this.columnIds = columnIds;
   }
 
-  public QuantificationTable rowNames(List<String> rowNames) {
+  public QuantificationTableExperimental rowNames(List<String> rowNames) {
     
     this.rowNames = rowNames;
     return this;
   }
 
-  public QuantificationTable addRowNamesItem(String rowNamesItem) {
+  public QuantificationTableExperimental addRowNamesItem(String rowNamesItem) {
     if (this.rowNames == null) {
       this.rowNames = new ArrayList<>();
     }
@@ -255,13 +255,13 @@ public class QuantificationTable {
     this.rowNames = rowNames;
   }
 
-  public QuantificationTable columnNames(List<String> columnNames) {
+  public QuantificationTableExperimental columnNames(List<String> columnNames) {
     
     this.columnNames = columnNames;
     return this;
   }
 
-  public QuantificationTable addColumnNamesItem(String columnNamesItem) {
+  public QuantificationTableExperimental addColumnNamesItem(String columnNamesItem) {
     if (this.columnNames == null) {
       this.columnNames = new ArrayList<>();
     }
@@ -288,13 +288,13 @@ public class QuantificationTable {
     this.columnNames = columnNames;
   }
 
-  public QuantificationTable values(List<List<Double>> values) {
+  public QuantificationTableExperimental values(List<List<Double>> values) {
     
     this.values = values;
     return this;
   }
 
-  public QuantificationTable addValuesItem(List<Double> valuesItem) {
+  public QuantificationTableExperimental addValuesItem(List<Double> valuesItem) {
     if (this.values == null) {
       this.values = new ArrayList<>();
     }
@@ -329,15 +329,15 @@ public class QuantificationTable {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    QuantificationTable quantificationTable = (QuantificationTable) o;
-    return Objects.equals(this.quantificationType, quantificationTable.quantificationType) &&
-        Objects.equals(this.rowType, quantificationTable.rowType) &&
-        Objects.equals(this.columnType, quantificationTable.columnType) &&
-        Objects.equals(this.rowIds, quantificationTable.rowIds) &&
-        Objects.equals(this.columnIds, quantificationTable.columnIds) &&
-        Objects.equals(this.rowNames, quantificationTable.rowNames) &&
-        Objects.equals(this.columnNames, quantificationTable.columnNames) &&
-        Objects.equals(this.values, quantificationTable.values);
+    QuantificationTableExperimental quantificationTableExperimental = (QuantificationTableExperimental) o;
+    return Objects.equals(this.quantificationType, quantificationTableExperimental.quantificationType) &&
+        Objects.equals(this.rowType, quantificationTableExperimental.rowType) &&
+        Objects.equals(this.columnType, quantificationTableExperimental.columnType) &&
+        Objects.equals(this.rowIds, quantificationTableExperimental.rowIds) &&
+        Objects.equals(this.columnIds, quantificationTableExperimental.columnIds) &&
+        Objects.equals(this.rowNames, quantificationTableExperimental.rowNames) &&
+        Objects.equals(this.columnNames, quantificationTableExperimental.columnNames) &&
+        Objects.equals(this.values, quantificationTableExperimental.values);
   }
 
   @Override
@@ -348,7 +348,7 @@ public class QuantificationTable {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class QuantificationTable {\n");
+    sb.append("class QuantificationTableExperimental {\n");
     sb.append("    quantificationType: ").append(toIndentedString(quantificationType)).append("\n");
     sb.append("    rowType: ").append(toIndentedString(rowType)).append("\n");
     sb.append("    columnType: ").append(toIndentedString(columnType)).append("\n");

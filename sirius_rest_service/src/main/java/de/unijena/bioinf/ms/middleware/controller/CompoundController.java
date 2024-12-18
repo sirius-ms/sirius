@@ -151,7 +151,8 @@ public class CompoundController {
      * @return Traces of the given compound.
      */
     @Operation(
-            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
+            operationId = "getCompoundTracesExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
     )
     @GetMapping(value = "/{compoundId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getCompoundTraces(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(required = false, defaultValue = "") String featureId) {

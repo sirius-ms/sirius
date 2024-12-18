@@ -1,13 +1,13 @@
 
 
-# TraceAnnotation
+# TraceAnnotationExperimental
 
 
 ## Properties
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**type** | **TraceAnnotationType** |  |  [optional] |
+|**type** | **TraceAnnotationTypeExperimental** |  |  [optional] |
 |**description** | **String** |  |  [optional] |
 |**index** | **Integer** |  |  [optional] |
 |**from** | **Integer** |  |  [optional] |

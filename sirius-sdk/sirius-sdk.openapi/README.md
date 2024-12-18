@@ -119,7 +119,7 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
-*CompoundsApi* | [**getCompoundTraces**](docs/CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+*CompoundsApi* | [**getCompoundTracesExperimental**](docs/CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
@@ -146,7 +146,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
 *FeaturesApi* | [**getQuantificationExperimental**](docs/FeaturesApi.md#getQuantificationExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
-*FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+*FeaturesApi* | [**getSiriusFragTreeInternal**](docs/FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
 *FeaturesApi* | [**getSpectralLibraryMatch**](docs/FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesPaged**](docs/FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
@@ -157,7 +157,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormulaPaged**](docs/FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesPaged**](docs/FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
-*FeaturesApi* | [**getTraces**](docs/FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+*FeaturesApi* | [**getTracesExperimental**](docs/FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
 *GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
@@ -221,7 +221,7 @@ Class | Method | HTTP request | Description
  - [AccountInfo](docs/AccountInfo.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
- - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)
+ - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
@@ -298,7 +298,7 @@ Class | Method | HTTP request | Description
  - [QuantificationColumnType](docs/QuantificationColumnType.md)
  - [QuantificationMeasure](docs/QuantificationMeasure.md)
  - [QuantificationRowType](docs/QuantificationRowType.md)
- - [QuantificationTable](docs/QuantificationTable.md)
+ - [QuantificationTableExperimental](docs/QuantificationTableExperimental.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
@@ -319,10 +319,10 @@ Class | Method | HTTP request | Description
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
- - [Trace](docs/Trace.md)
- - [TraceAnnotation](docs/TraceAnnotation.md)
- - [TraceAnnotationType](docs/TraceAnnotationType.md)
- - [TraceSet](docs/TraceSet.md)
+ - [TraceAnnotationExperimental](docs/TraceAnnotationExperimental.md)
+ - [TraceAnnotationTypeExperimental](docs/TraceAnnotationTypeExperimental.md)
+ - [TraceExperimental](docs/TraceExperimental.md)
+ - [TraceSetExperimental](docs/TraceSetExperimental.md)
  - [UseHeuristic](docs/UseHeuristic.md)
  - [Zodiac](docs/Zodiac.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)

@@ -2,14 +2,16 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
-
-import jakarta.annotation.Nullable;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(
+        name = "TraceSetExperimental",
+        title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 public class TraceSet {
 
     @Getter
@@ -23,7 +25,9 @@ public class TraceSet {
         }
     }
 
-    @Schema(name = "TraceAnnotationType")
+    @Schema(name = "TraceAnnotationTypeExperimental",
+            title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
+
     public enum AnnotationType {
         /**
          * describes the position of the feature
@@ -38,7 +42,8 @@ public class TraceSet {
     @Getter
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @Schema(name = "TraceAnnotation")
+    @Schema(name = "TraceAnnotationExperimental",
+            title =  "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class Annotation {
         private AnnotationType type;
         @Schema(nullable = true)
@@ -70,6 +75,8 @@ public class TraceSet {
     @Getter
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(name = "TraceExperimental",
+            title = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class Trace {
         private long id;
         @Schema(nullable = true)

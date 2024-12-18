@@ -51,6 +51,7 @@ public class SseController {
      * @return SseEmitter that constantly listens to events sent from the server.
      */
     @Operation(
+            operationId = "listenToEventsInternal",
             summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
     )
     @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

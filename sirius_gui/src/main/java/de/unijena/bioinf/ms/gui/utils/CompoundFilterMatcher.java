@@ -93,7 +93,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
 
     private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
         if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
-            AlignedFeatureQuality qualityReport = item.getQualityReport();
+            AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
             if (qualityReport != null) { //always allow to pass the filter if now quality data is available
                 Map<String, Category> categories = qualityReport.getCategories();
                 for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
