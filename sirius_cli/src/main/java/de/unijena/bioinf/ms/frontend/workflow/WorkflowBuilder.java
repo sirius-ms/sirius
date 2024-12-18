@@ -173,7 +173,7 @@ public class WorkflowBuilder {
         // define execution order and dependencies of different Subtools
         final Map<Class<? extends ToolChainOptions>, CommandLine.Model.CommandSpec> chainToolSpecs = configureChainTools(summarySpec);
 
-        final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SiriusOptions.class));
+        final CommandLine.Model.CommandSpec lcmsAlignSpec = forAnnotatedObjectWithSubCommands(lcmsAlignOptions, chainToolSpecs.get(SpectraSearchOptions.class), chainToolSpecs.get(SiriusOptions.class));
 
         Object[] standaloneTools = standaloneTools();
 
