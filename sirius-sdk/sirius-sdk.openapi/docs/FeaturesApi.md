@@ -28,7 +28,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
 | [**getQuantificationExperimental**](FeaturesApi.md#getQuantificationExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
-| [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time |
+| [**getSiriusFragTreeInternal**](FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time |
 | [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
@@ -39,7 +39,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesPaged**](FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
-| [**getTraces**](FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time |
+| [**getTracesExperimental**](FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
 
 
 
@@ -463,7 +463,7 @@ No authorization required
 
 ## getAlignedFeaturesQualityExperimental
 
-> AlignedFeatureQuality getAlignedFeaturesQualityExperimental(projectId, alignedFeatureId)
+> AlignedFeatureQualityExperimental getAlignedFeaturesQualityExperimental(projectId, alignedFeatureId)
 
 EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
@@ -488,7 +488,7 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | identifier of feature (aligned over runs) to access.
         try {
-            AlignedFeatureQuality result = apiInstance.getAlignedFeaturesQualityExperimental(projectId, alignedFeatureId);
+            AlignedFeatureQualityExperimental result = apiInstance.getAlignedFeaturesQualityExperimental(projectId, alignedFeatureId);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesQualityExperimental");
@@ -511,7 +511,7 @@ public class Example {
 
 ### Return type
 
-[**AlignedFeatureQuality**](AlignedFeatureQuality.md)
+[**AlignedFeatureQualityExperimental**](AlignedFeatureQualityExperimental.md)
 
 ### Authorization
 
@@ -1675,7 +1675,7 @@ No authorization required
 
 ## getQuantificationExperimental
 
-> QuantificationTable getQuantificationExperimental(projectId, alignedFeatureId, type)
+> QuantificationTableExperimental getQuantificationExperimental(projectId, alignedFeatureId, type)
 
 EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
@@ -1701,7 +1701,7 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
         QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_HEIGHT"); // QuantificationMeasure | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
         try {
-            QuantificationTable result = apiInstance.getQuantificationExperimental(projectId, alignedFeatureId, type);
+            QuantificationTableExperimental result = apiInstance.getQuantificationExperimental(projectId, alignedFeatureId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getQuantificationExperimental");
@@ -1725,7 +1725,7 @@ public class Example {
 
 ### Return type
 
-[**QuantificationTable**](QuantificationTable.md)
+[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
 
 ### Authorization
 
@@ -1743,9 +1743,9 @@ No authorization required
 | **200** | Quant table row for this feature |  -  |
 
 
-## getSiriusFragTree
+## getSiriusFragTreeInternal
 
-> String getSiriusFragTree(projectId, alignedFeatureId, formulaId)
+> String getSiriusFragTreeInternal(projectId, alignedFeatureId, formulaId)
 
 INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
 
@@ -1771,10 +1771,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         try {
-            String result = apiInstance.getSiriusFragTree(projectId, alignedFeatureId, formulaId);
+            String result = apiInstance.getSiriusFragTreeInternal(projectId, alignedFeatureId, formulaId);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getSiriusFragTree");
+            System.err.println("Exception when calling FeaturesApi#getSiriusFragTreeInternal");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2559,11 +2559,11 @@ No authorization required
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
 
 
-## getTraces
+## getTracesExperimental
 
-> TraceSet getTraces(projectId, alignedFeatureId, includeAll)
+> TraceSetExperimental getTracesExperimental(projectId, alignedFeatureId, includeAll)
 
-INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
 Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
 
@@ -2587,10 +2587,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
         Boolean includeAll = false; // Boolean | when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
         try {
-            TraceSet result = apiInstance.getTraces(projectId, alignedFeatureId, includeAll);
+            TraceSetExperimental result = apiInstance.getTracesExperimental(projectId, alignedFeatureId, includeAll);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getTraces");
+            System.err.println("Exception when calling FeaturesApi#getTracesExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2611,7 +2611,7 @@ public class Example {
 
 ### Return type
 
-[**TraceSet**](TraceSet.md)
+[**TraceSetExperimental**](TraceSetExperimental.md)
 
 ### Authorization
 

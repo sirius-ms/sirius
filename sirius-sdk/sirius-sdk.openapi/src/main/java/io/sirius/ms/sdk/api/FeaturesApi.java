@@ -4,7 +4,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AlignedFeature;
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
 import io.sirius.ms.sdk.model.AnnotatedMsMsData;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.CanopusPrediction;
@@ -23,14 +23,14 @@ import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
 import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.QuantificationTable;
+import io.sirius.ms.sdk.model.QuantificationTableExperimental;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
 import io.sirius.ms.sdk.model.StructureCandidateFormula;
 import io.sirius.ms.sdk.model.StructureCandidateOptField;
 import io.sirius.ms.sdk.model.StructureCandidateScored;
-import io.sirius.ms.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import java.util.HashMap;
 import java.util.List;
@@ -596,7 +596,7 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
+     * @return AlignedFeatureQualityExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getAlignedFeaturesQualityExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
@@ -629,7 +629,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -639,11 +639,11 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
+     * @return AlignedFeatureQualityExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AlignedFeatureQuality getAlignedFeaturesQualityExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+    public AlignedFeatureQualityExperimental getAlignedFeaturesQualityExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
         return getAlignedFeaturesQualityExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
 
@@ -653,11 +653,11 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return ResponseEntity&lt;AlignedFeatureQuality&gt;
+     * @return ResponseEntity&lt;AlignedFeatureQualityExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AlignedFeatureQuality> getAlignedFeaturesQualityExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
+    public ResponseEntity<AlignedFeatureQualityExperimental> getAlignedFeaturesQualityExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
         return getAlignedFeaturesQualityExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
 
@@ -2200,7 +2200,7 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantificationTable
+     * @return QuantificationTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getQuantificationExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
@@ -2235,7 +2235,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -2246,11 +2246,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantificationTable
+     * @return QuantificationTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTable getQuantificationExperimental(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+    public QuantificationTableExperimental getQuantificationExperimental(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
         return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
 
@@ -2261,11 +2261,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @return ResponseEntity&lt;QuantificationTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTable> getQuantificationExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+    public ResponseEntity<QuantificationTableExperimental> getQuantificationExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
         return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
 
@@ -2292,19 +2292,19 @@ public class FeaturesApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSiriusFragTreeRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getSiriusFragTreeInternalRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2341,9 +2341,9 @@ public class FeaturesApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getSiriusFragTree(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public String getSiriusFragTreeInternal(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2356,9 +2356,9 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getSiriusFragTreeWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<String> getSiriusFragTreeInternalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2371,8 +2371,8 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSiriusFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
+    public ResponseSpec getSiriusFragTreeInternalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
      * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
@@ -3407,24 +3407,24 @@ public class FeaturesApi {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTracesRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    private ResponseSpec getTracesExperimentalRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -3448,42 +3448,42 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getTraces(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
+    public TraceSetExperimental getTracesExperimental(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return ResponseEntity&lt;TraceSet&gt;
+     * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
+    public ResponseEntity<TraceSetExperimental> getTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
@@ -3492,7 +3492,7 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTracesWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll);
+    public ResponseSpec getTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll);
     }
 }

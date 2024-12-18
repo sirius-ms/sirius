@@ -1,6 +1,6 @@
 
 
-# Trace
+# TraceExperimental
 
 
 ## Properties
@@ -12,7 +12,7 @@
 |**sampleName** | **String** |  |  [optional] |
 |**label** | **String** |  |  [optional] |
 |**intensities** | **List&lt;Double&gt;** |  |  [optional] |
-|**annotations** | [**List&lt;TraceAnnotation&gt;**](TraceAnnotation.md) |  |  [optional] |
+|**annotations** | [**List&lt;TraceAnnotationExperimental&gt;**](TraceAnnotationExperimental.md) |  |  [optional] |
 |**mz** | **Double** |  |  [optional] |
 |**merged** | **Boolean** |  |  [optional] |
 |**normalizationFactor** | **Double** | Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,  such that traces from different samples can be compared. |  [optional] |

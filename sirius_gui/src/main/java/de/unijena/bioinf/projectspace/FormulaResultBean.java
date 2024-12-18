@@ -288,7 +288,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public synchronized Optional<String> getFTreeJson() {
         if (this.ftreeJson == null)
             this.ftreeJson = Optional.ofNullable(withIds((pid, fid, foid) ->
-                    getClient().features().getSiriusFragTreeWithResponseSpec(pid, fid, foid)
+                    getClient().features().getSiriusFragTreeInternalWithResponseSpec(pid, fid, foid)
                             .bodyToMono(String.class).onErrorComplete().block()
             ));
 

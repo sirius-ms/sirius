@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.Axes;
-import io.sirius.ms.sdk.model.Trace;
+import io.sirius.ms.sdk.model.TraceExperimental;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,16 +39,16 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TraceSet
+ * TraceSetExperimental
  */
 @JsonPropertyOrder({
-  TraceSet.JSON_PROPERTY_SAMPLE_ID,
-  TraceSet.JSON_PROPERTY_SAMPLE_NAME,
-  TraceSet.JSON_PROPERTY_AXES,
-  TraceSet.JSON_PROPERTY_TRACES
+  TraceSetExperimental.JSON_PROPERTY_SAMPLE_ID,
+  TraceSetExperimental.JSON_PROPERTY_SAMPLE_NAME,
+  TraceSetExperimental.JSON_PROPERTY_AXES,
+  TraceSetExperimental.JSON_PROPERTY_TRACES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TraceSet {
+public class TraceSetExperimental {
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
   private Long sampleId;
 
@@ -59,12 +59,12 @@ public class TraceSet {
   private Axes axes;
 
   public static final String JSON_PROPERTY_TRACES = "traces";
-  private List<Trace> traces = new ArrayList<>();
+  private List<TraceExperimental> traces = new ArrayList<>();
 
-  public TraceSet() {
+  public TraceSetExperimental() {
   }
 
-  public TraceSet sampleId(Long sampleId) {
+  public TraceSetExperimental sampleId(Long sampleId) {
     
     this.sampleId = sampleId;
     return this;
@@ -89,7 +89,7 @@ public class TraceSet {
     this.sampleId = sampleId;
   }
 
-  public TraceSet sampleName(String sampleName) {
+  public TraceSetExperimental sampleName(String sampleName) {
     
     this.sampleName = sampleName;
     return this;
@@ -114,7 +114,7 @@ public class TraceSet {
     this.sampleName = sampleName;
   }
 
-  public TraceSet axes(Axes axes) {
+  public TraceSetExperimental axes(Axes axes) {
     
     this.axes = axes;
     return this;
@@ -139,13 +139,13 @@ public class TraceSet {
     this.axes = axes;
   }
 
-  public TraceSet traces(List<Trace> traces) {
+  public TraceSetExperimental traces(List<TraceExperimental> traces) {
     
     this.traces = traces;
     return this;
   }
 
-  public TraceSet addTracesItem(Trace tracesItem) {
+  public TraceSetExperimental addTracesItem(TraceExperimental tracesItem) {
     if (this.traces == null) {
       this.traces = new ArrayList<>();
     }
@@ -161,14 +161,14 @@ public class TraceSet {
   @JsonProperty(JSON_PROPERTY_TRACES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Trace> getTraces() {
+  public List<TraceExperimental> getTraces() {
     return traces;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TRACES)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTraces(List<Trace> traces) {
+  public void setTraces(List<TraceExperimental> traces) {
     this.traces = traces;
   }
 
@@ -180,11 +180,11 @@ public class TraceSet {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TraceSet traceSet = (TraceSet) o;
-    return Objects.equals(this.sampleId, traceSet.sampleId) &&
-        Objects.equals(this.sampleName, traceSet.sampleName) &&
-        Objects.equals(this.axes, traceSet.axes) &&
-        Objects.equals(this.traces, traceSet.traces);
+    TraceSetExperimental traceSetExperimental = (TraceSetExperimental) o;
+    return Objects.equals(this.sampleId, traceSetExperimental.sampleId) &&
+        Objects.equals(this.sampleName, traceSetExperimental.sampleName) &&
+        Objects.equals(this.axes, traceSetExperimental.axes) &&
+        Objects.equals(this.traces, traceSetExperimental.traces);
   }
 
   @Override
@@ -195,7 +195,7 @@ public class TraceSet {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TraceSet {\n");
+    sb.append("class TraceSetExperimental {\n");
     sb.append("    sampleId: ").append(toIndentedString(sampleId)).append("\n");
     sb.append("    sampleName: ").append(toIndentedString(sampleName)).append("\n");
     sb.append("    axes: ").append(toIndentedString(axes)).append("\n");

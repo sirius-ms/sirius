@@ -8,7 +8,7 @@ import io.sirius.ms.sdk.model.CompoundImport;
 import io.sirius.ms.sdk.model.CompoundOptField;
 import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.PagedModelCompound;
-import io.sirius.ms.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import java.util.HashMap;
 import java.util.List;
@@ -325,24 +325,24 @@ public class CompoundsApi {
         return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures);
     }
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
      * <p><b>200</b> - Traces of the given compound.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundTracesRequestCreation(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+    private ResponseSpec getCompoundTracesExperimentalRequestCreation(String projectId, String compoundId, String featureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompoundTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompoundTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'compoundId' is set
         if (compoundId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling getCompoundTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling getCompoundTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -366,42 +366,42 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/compounds/{compoundId}/traces", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
      * <p><b>200</b> - Traces of the given compound.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getCompoundTraces(String projectId, String compoundId, String featureId) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getCompoundTracesRequestCreation(projectId, compoundId, featureId).bodyToMono(localVarReturnType).block();
+    public TraceSetExperimental getCompoundTracesExperimental(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
      * <p><b>200</b> - Traces of the given compound.
      * @param projectId project-space to read from.
      * @param compoundId compound which intensities should be read out
      * @param featureId The featureId parameter
-     * @return ResponseEntity&lt;TraceSet&gt;
+     * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getCompoundTracesWithHttpInfo(String projectId, String compoundId, String featureId) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getCompoundTracesRequestCreation(projectId, compoundId, featureId).toEntity(localVarReturnType).block();
+    public ResponseEntity<TraceSetExperimental> getCompoundTracesExperimentalWithHttpInfo(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId).toEntity(localVarReturnType).block();
     }
 
     /**
-     * INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
      * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.
      * <p><b>200</b> - Traces of the given compound.
      * @param projectId project-space to read from.
@@ -410,8 +410,8 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundTracesWithResponseSpec(String projectId, String compoundId, String featureId) throws WebClientResponseException {
-        return getCompoundTracesRequestCreation(projectId, compoundId, featureId);
+    public ResponseSpec getCompoundTracesExperimentalWithResponseSpec(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+        return getCompoundTracesExperimentalRequestCreation(projectId, compoundId, featureId);
     }
     /**
      * List of all available compounds (group of ion identities) in the given project-space.

@@ -584,6 +584,7 @@ public class AlignedFeatureController {
      *
      */
     @Operation(
+            operationId = "getSiriusFragTreeInternal",
             summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
     )
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -813,7 +814,8 @@ public class AlignedFeatureController {
      * @return Traces of the given feature.
      */
     @Operation(
-            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
+            operationId = "getTracesExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
     )
     @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll ) {

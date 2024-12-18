@@ -32,9 +32,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets TraceAnnotationType
+ * Gets or Sets TraceAnnotationTypeExperimental
  */
-public enum TraceAnnotationType {
+public enum TraceAnnotationTypeExperimental {
   
   FEATURE("FEATURE"),
   
@@ -42,7 +42,7 @@ public enum TraceAnnotationType {
 
   private String value;
 
-  TraceAnnotationType(String value) {
+  TraceAnnotationTypeExperimental(String value) {
     this.value = value;
   }
 
@@ -57,8 +57,8 @@ public enum TraceAnnotationType {
   }
 
   @JsonCreator
-  public static TraceAnnotationType fromValue(String value) {
-    for (TraceAnnotationType b : TraceAnnotationType.values()) {
+  public static TraceAnnotationTypeExperimental fromValue(String value) {
+    for (TraceAnnotationTypeExperimental b : TraceAnnotationTypeExperimental.values()) {
       if (b.value.equals(value)) {
         return b;
       }

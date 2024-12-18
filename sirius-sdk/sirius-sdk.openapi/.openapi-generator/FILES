@@ -4,7 +4,7 @@ docs/AccountInfo.md
 docs/ActuatorApi.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
-docs/AlignedFeatureQuality.md
+docs/AlignedFeatureQualityExperimental.md
 docs/AnnotatedMsMsData.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
@@ -88,7 +88,7 @@ docs/QualityWeight.md
 docs/QuantificationColumnType.md
 docs/QuantificationMeasure.md
 docs/QuantificationRowType.md
-docs/QuantificationTable.md
+docs/QuantificationTableExperimental.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -110,10 +110,10 @@ docs/Subscription.md
 docs/SubscriptionConsumables.md
 docs/Term.md
 docs/Timeout.md
-docs/Trace.md
-docs/TraceAnnotation.md
-docs/TraceAnnotationType.md
-docs/TraceSet.md
+docs/TraceAnnotationExperimental.md
+docs/TraceAnnotationTypeExperimental.md
+docs/TraceExperimental.md
+docs/TraceSetExperimental.md
 docs/UseHeuristic.md
 docs/Zodiac.md
 docs/ZodiacEdgeFilterThresholds.md
@@ -139,7 +139,7 @@ src/main/java/io/sirius/ms/sdk/model/AccountCredentials.java
 src/main/java/io/sirius/ms/sdk/model/AccountInfo.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
-src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQuality.java
+src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQualityExperimental.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedPeak.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedSpectrum.java
@@ -216,7 +216,7 @@ src/main/java/io/sirius/ms/sdk/model/QualityWeight.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationColumnType.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationMeasure.java
 src/main/java/io/sirius/ms/sdk/model/QuantificationRowType.java
-src/main/java/io/sirius/ms/sdk/model/QuantificationTable.java
+src/main/java/io/sirius/ms/sdk/model/QuantificationTableExperimental.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
 src/main/java/io/sirius/ms/sdk/model/Sirius.java
@@ -236,9 +236,10 @@ src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
-src/main/java/io/sirius/ms/sdk/model/TraceAnnotation.java
-src/main/java/io/sirius/ms/sdk/model/TraceAnnotationType.java
-src/main/java/io/sirius/ms/sdk/model/TraceSet.java
+src/main/java/io/sirius/ms/sdk/model/TraceAnnotationExperimental.java
+src/main/java/io/sirius/ms/sdk/model/TraceAnnotationTypeExperimental.java
+src/main/java/io/sirius/ms/sdk/model/TraceExperimental.java
+src/main/java/io/sirius/ms/sdk/model/TraceSetExperimental.java
 src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java

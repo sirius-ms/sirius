@@ -30,24 +30,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.TraceAnnotationType;
+import io.sirius.ms.sdk.model.TraceAnnotationTypeExperimental;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TraceAnnotation
+ * TraceAnnotationExperimental
  */
 @JsonPropertyOrder({
-  TraceAnnotation.JSON_PROPERTY_TYPE,
-  TraceAnnotation.JSON_PROPERTY_DESCRIPTION,
-  TraceAnnotation.JSON_PROPERTY_INDEX,
-  TraceAnnotation.JSON_PROPERTY_FROM,
-  TraceAnnotation.JSON_PROPERTY_TO
+  TraceAnnotationExperimental.JSON_PROPERTY_TYPE,
+  TraceAnnotationExperimental.JSON_PROPERTY_DESCRIPTION,
+  TraceAnnotationExperimental.JSON_PROPERTY_INDEX,
+  TraceAnnotationExperimental.JSON_PROPERTY_FROM,
+  TraceAnnotationExperimental.JSON_PROPERTY_TO
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TraceAnnotation {
+public class TraceAnnotationExperimental {
   public static final String JSON_PROPERTY_TYPE = "type";
-  private TraceAnnotationType type;
+  private TraceAnnotationTypeExperimental type;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
@@ -61,10 +61,10 @@ public class TraceAnnotation {
   public static final String JSON_PROPERTY_TO = "to";
   private Integer to;
 
-  public TraceAnnotation() {
+  public TraceAnnotationExperimental() {
   }
 
-  public TraceAnnotation type(TraceAnnotationType type) {
+  public TraceAnnotationExperimental type(TraceAnnotationTypeExperimental type) {
     
     this.type = type;
     return this;
@@ -78,18 +78,18 @@ public class TraceAnnotation {
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public TraceAnnotationType getType() {
+  public TraceAnnotationTypeExperimental getType() {
     return type;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(TraceAnnotationType type) {
+  public void setType(TraceAnnotationTypeExperimental type) {
     this.type = type;
   }
 
-  public TraceAnnotation description(String description) {
+  public TraceAnnotationExperimental description(String description) {
     
     this.description = description;
     return this;
@@ -114,7 +114,7 @@ public class TraceAnnotation {
     this.description = description;
   }
 
-  public TraceAnnotation index(Integer index) {
+  public TraceAnnotationExperimental index(Integer index) {
     
     this.index = index;
     return this;
@@ -139,7 +139,7 @@ public class TraceAnnotation {
     this.index = index;
   }
 
-  public TraceAnnotation from(Integer from) {
+  public TraceAnnotationExperimental from(Integer from) {
     
     this.from = from;
     return this;
@@ -164,7 +164,7 @@ public class TraceAnnotation {
     this.from = from;
   }
 
-  public TraceAnnotation to(Integer to) {
+  public TraceAnnotationExperimental to(Integer to) {
     
     this.to = to;
     return this;
@@ -197,12 +197,12 @@ public class TraceAnnotation {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TraceAnnotation traceAnnotation = (TraceAnnotation) o;
-    return Objects.equals(this.type, traceAnnotation.type) &&
-        Objects.equals(this.description, traceAnnotation.description) &&
-        Objects.equals(this.index, traceAnnotation.index) &&
-        Objects.equals(this.from, traceAnnotation.from) &&
-        Objects.equals(this.to, traceAnnotation.to);
+    TraceAnnotationExperimental traceAnnotationExperimental = (TraceAnnotationExperimental) o;
+    return Objects.equals(this.type, traceAnnotationExperimental.type) &&
+        Objects.equals(this.description, traceAnnotationExperimental.description) &&
+        Objects.equals(this.index, traceAnnotationExperimental.index) &&
+        Objects.equals(this.from, traceAnnotationExperimental.from) &&
+        Objects.equals(this.to, traceAnnotationExperimental.to);
   }
 
   @Override
@@ -213,7 +213,7 @@ public class TraceAnnotation {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TraceAnnotation {\n");
+    sb.append("class TraceAnnotationExperimental {\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    index: ").append(toIndentedString(index)).append("\n");

@@ -1,6 +1,6 @@
 
 
-# TraceSet
+# TraceSetExperimental
 
 
 ## Properties
@@ -10,7 +10,7 @@
 |**sampleId** | **Long** |  |  [optional] |
 |**sampleName** | **String** |  |  [optional] |
 |**axes** | [**Axes**](Axes.md) |  |  [optional] |
-|**traces** | [**List&lt;Trace&gt;**](Trace.md) |  |  [optional] |
+|**traces** | [**List&lt;TraceExperimental&gt;**](TraceExperimental.md) |  |  [optional] |
 
 
 

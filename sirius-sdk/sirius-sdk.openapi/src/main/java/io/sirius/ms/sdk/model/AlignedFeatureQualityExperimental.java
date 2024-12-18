@@ -38,15 +38,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AlignedFeatureQuality
+ * AlignedFeatureQualityExperimental
  */
 @JsonPropertyOrder({
-  AlignedFeatureQuality.JSON_PROPERTY_ALIGNED_FEATURE_ID,
-  AlignedFeatureQuality.JSON_PROPERTY_OVERALL_QUALITY,
-  AlignedFeatureQuality.JSON_PROPERTY_CATEGORIES
+  AlignedFeatureQualityExperimental.JSON_PROPERTY_ALIGNED_FEATURE_ID,
+  AlignedFeatureQualityExperimental.JSON_PROPERTY_OVERALL_QUALITY,
+  AlignedFeatureQualityExperimental.JSON_PROPERTY_CATEGORIES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class AlignedFeatureQuality {
+public class AlignedFeatureQualityExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
   private String alignedFeatureId;
 
@@ -56,10 +56,10 @@ public class AlignedFeatureQuality {
   public static final String JSON_PROPERTY_CATEGORIES = "categories";
   private Map<String, Category> categories = new HashMap<>();
 
-  public AlignedFeatureQuality() {
+  public AlignedFeatureQualityExperimental() {
   }
 
-  public AlignedFeatureQuality alignedFeatureId(String alignedFeatureId) {
+  public AlignedFeatureQualityExperimental alignedFeatureId(String alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
@@ -84,7 +84,7 @@ public class AlignedFeatureQuality {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-  public AlignedFeatureQuality overallQuality(DataQuality overallQuality) {
+  public AlignedFeatureQualityExperimental overallQuality(DataQuality overallQuality) {
     
     this.overallQuality = overallQuality;
     return this;
@@ -109,13 +109,13 @@ public class AlignedFeatureQuality {
     this.overallQuality = overallQuality;
   }
 
-  public AlignedFeatureQuality categories(Map<String, Category> categories) {
+  public AlignedFeatureQualityExperimental categories(Map<String, Category> categories) {
     
     this.categories = categories;
     return this;
   }
 
-  public AlignedFeatureQuality putCategoriesItem(String key, Category categoriesItem) {
+  public AlignedFeatureQualityExperimental putCategoriesItem(String key, Category categoriesItem) {
     this.categories.put(key, categoriesItem);
     return this;
   }
@@ -147,10 +147,10 @@ public class AlignedFeatureQuality {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AlignedFeatureQuality alignedFeatureQuality = (AlignedFeatureQuality) o;
-    return Objects.equals(this.alignedFeatureId, alignedFeatureQuality.alignedFeatureId) &&
-        Objects.equals(this.overallQuality, alignedFeatureQuality.overallQuality) &&
-        Objects.equals(this.categories, alignedFeatureQuality.categories);
+    AlignedFeatureQualityExperimental alignedFeatureQualityExperimental = (AlignedFeatureQualityExperimental) o;
+    return Objects.equals(this.alignedFeatureId, alignedFeatureQualityExperimental.alignedFeatureId) &&
+        Objects.equals(this.overallQuality, alignedFeatureQualityExperimental.overallQuality) &&
+        Objects.equals(this.categories, alignedFeatureQualityExperimental.categories);
   }
 
   @Override
@@ -161,7 +161,7 @@ public class AlignedFeatureQuality {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AlignedFeatureQuality {\n");
+    sb.append("class AlignedFeatureQualityExperimental {\n");
     sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
     sb.append("    overallQuality: ").append(toIndentedString(overallQuality)).append("\n");
     sb.append("    categories: ").append(toIndentedString(categories)).append("\n");
