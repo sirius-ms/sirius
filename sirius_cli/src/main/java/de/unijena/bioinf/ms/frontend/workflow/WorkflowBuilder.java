@@ -90,7 +90,7 @@ public class WorkflowBuilder {
     //standalone tools
     public final CustomDBOptions customDBOptions;
 
-    public final SimilarityMatrixOptions similarityMatrixOptions;
+//    public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
     public final LoginOptions loginOptions;
     public final SettingsOptions settingsOptions;
@@ -151,7 +151,7 @@ public class WorkflowBuilder {
         );
 
         customDBOptions = new CustomDBOptions();
-        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
+//        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         summaryOptions = new SummaryOptions();
@@ -188,7 +188,7 @@ public class WorkflowBuilder {
     protected Object[] standaloneTools() {
         return Stream.concat(
                 Stream.concat(
-                        Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
+                        Stream.of(customDBOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
                         additionalTools.stream()
                 ), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
