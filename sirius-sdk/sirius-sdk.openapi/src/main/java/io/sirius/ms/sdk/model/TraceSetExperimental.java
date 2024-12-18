@@ -53,6 +53,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 public class TraceSetExperimental {
   public static final String JSON_PROPERTY_ADDUCT_NETWORK = "adductNetwork";
   private AdductNetwork adductNetwork;
+
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
   private Long sampleId;
 
@@ -68,8 +69,8 @@ public class TraceSetExperimental {
   public TraceSetExperimental() {
   }
 
-  public TraceSet adductNetwork(AdductNetwork adductNetwork) {
-
+  public TraceSetExperimental adductNetwork(AdductNetwork adductNetwork) {
+    
     this.adductNetwork = adductNetwork;
     return this;
   }
@@ -210,7 +211,7 @@ public class TraceSetExperimental {
       return false;
     }
     TraceSetExperimental traceSetExperimental = (TraceSetExperimental) o;
-    return Objects.equals(this.adductNetwork, traceSet.adductNetwork) &&
+    return Objects.equals(this.adductNetwork, traceSetExperimental.adductNetwork) &&
         Objects.equals(this.sampleId, traceSetExperimental.sampleId) &&
         Objects.equals(this.sampleName, traceSetExperimental.sampleName) &&
         Objects.equals(this.axes, traceSetExperimental.axes) &&
