@@ -558,10 +558,9 @@ public class SpectraVisualizationPanel extends JPanel implements
                                                     .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
                                                     .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
                                             checkForInterruption();
-        //
 
                                             String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
-                                                    .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
+                                                    .getSiriusFragTreeInternalWithResponseSpec(pid, fid, formulaCandidateId)
                                                     .bodyToMono(String.class).onErrorComplete().block());
 
                                             checkForInterruption();

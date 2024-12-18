@@ -14,7 +14,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
 import io.sirius.ms.sdk.model.Category;
 import io.sirius.ms.sdk.model.QualityItem;
 
@@ -24,7 +24,7 @@ import java.util.List;
 
 public class LCMSCompoundSummaryPanel extends JPanel {
 
-    private AlignedFeatureQuality report;
+    private AlignedFeatureQualityExperimental report;
 
     public LCMSCompoundSummaryPanel() {
 
@@ -36,7 +36,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
         setReport(null);
     }
 
-    public void setReport(AlignedFeatureQuality report) {
+    public void setReport(AlignedFeatureQualityExperimental report) {
         if (this.report!=report) {
             this.report = report;
             updateContent();

@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.TraceAnnotation;
+import io.sirius.ms.sdk.model.TraceAnnotationExperimental;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,22 +38,22 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Trace
+ * TraceExperimental
  */
 @JsonPropertyOrder({
-  Trace.JSON_PROPERTY_ID,
-  Trace.JSON_PROPERTY_SAMPLE_ID,
-  Trace.JSON_PROPERTY_SAMPLE_NAME,
-  Trace.JSON_PROPERTY_LABEL,
-  Trace.JSON_PROPERTY_INTENSITIES,
-  Trace.JSON_PROPERTY_ANNOTATIONS,
-  Trace.JSON_PROPERTY_MZ,
-  Trace.JSON_PROPERTY_MERGED,
-  Trace.JSON_PROPERTY_NORMALIZATION_FACTOR,
-  Trace.JSON_PROPERTY_NOISE_LEVEL
+  TraceExperimental.JSON_PROPERTY_ID,
+  TraceExperimental.JSON_PROPERTY_SAMPLE_ID,
+  TraceExperimental.JSON_PROPERTY_SAMPLE_NAME,
+  TraceExperimental.JSON_PROPERTY_LABEL,
+  TraceExperimental.JSON_PROPERTY_INTENSITIES,
+  TraceExperimental.JSON_PROPERTY_ANNOTATIONS,
+  TraceExperimental.JSON_PROPERTY_MZ,
+  TraceExperimental.JSON_PROPERTY_MERGED,
+  TraceExperimental.JSON_PROPERTY_NORMALIZATION_FACTOR,
+  TraceExperimental.JSON_PROPERTY_NOISE_LEVEL
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class Trace {
+public class TraceExperimental {
   public static final String JSON_PROPERTY_ID = "id";
   private Long id;
 
@@ -70,7 +70,7 @@ public class Trace {
   private List<Double> intensities = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
-  private List<TraceAnnotation> annotations = new ArrayList<>();
+  private List<TraceAnnotationExperimental> annotations = new ArrayList<>();
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
@@ -84,10 +84,10 @@ public class Trace {
   public static final String JSON_PROPERTY_NOISE_LEVEL = "noiseLevel";
   private Double noiseLevel;
 
-  public Trace() {
+  public TraceExperimental() {
   }
 
-  public Trace id(Long id) {
+  public TraceExperimental id(Long id) {
     
     this.id = id;
     return this;
@@ -112,7 +112,7 @@ public class Trace {
     this.id = id;
   }
 
-  public Trace sampleId(Long sampleId) {
+  public TraceExperimental sampleId(Long sampleId) {
     
     this.sampleId = sampleId;
     return this;
@@ -137,7 +137,7 @@ public class Trace {
     this.sampleId = sampleId;
   }
 
-  public Trace sampleName(String sampleName) {
+  public TraceExperimental sampleName(String sampleName) {
     
     this.sampleName = sampleName;
     return this;
@@ -162,7 +162,7 @@ public class Trace {
     this.sampleName = sampleName;
   }
 
-  public Trace label(String label) {
+  public TraceExperimental label(String label) {
     
     this.label = label;
     return this;
@@ -187,13 +187,13 @@ public class Trace {
     this.label = label;
   }
 
-  public Trace intensities(List<Double> intensities) {
+  public TraceExperimental intensities(List<Double> intensities) {
     
     this.intensities = intensities;
     return this;
   }
 
-  public Trace addIntensitiesItem(Double intensitiesItem) {
+  public TraceExperimental addIntensitiesItem(Double intensitiesItem) {
     if (this.intensities == null) {
       this.intensities = new ArrayList<>();
     }
@@ -220,13 +220,13 @@ public class Trace {
     this.intensities = intensities;
   }
 
-  public Trace annotations(List<TraceAnnotation> annotations) {
+  public TraceExperimental annotations(List<TraceAnnotationExperimental> annotations) {
     
     this.annotations = annotations;
     return this;
   }
 
-  public Trace addAnnotationsItem(TraceAnnotation annotationsItem) {
+  public TraceExperimental addAnnotationsItem(TraceAnnotationExperimental annotationsItem) {
     if (this.annotations == null) {
       this.annotations = new ArrayList<>();
     }
@@ -242,18 +242,18 @@ public class Trace {
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<TraceAnnotation> getAnnotations() {
+  public List<TraceAnnotationExperimental> getAnnotations() {
     return annotations;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ANNOTATIONS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAnnotations(List<TraceAnnotation> annotations) {
+  public void setAnnotations(List<TraceAnnotationExperimental> annotations) {
     this.annotations = annotations;
   }
 
-  public Trace mz(Double mz) {
+  public TraceExperimental mz(Double mz) {
     
     this.mz = mz;
     return this;
@@ -278,7 +278,7 @@ public class Trace {
     this.mz = mz;
   }
 
-  public Trace merged(Boolean merged) {
+  public TraceExperimental merged(Boolean merged) {
     
     this.merged = merged;
     return this;
@@ -303,7 +303,7 @@ public class Trace {
     this.merged = merged;
   }
 
-  public Trace normalizationFactor(Double normalizationFactor) {
+  public TraceExperimental normalizationFactor(Double normalizationFactor) {
     
     this.normalizationFactor = normalizationFactor;
     return this;
@@ -328,7 +328,7 @@ public class Trace {
     this.normalizationFactor = normalizationFactor;
   }
 
-  public Trace noiseLevel(Double noiseLevel) {
+  public TraceExperimental noiseLevel(Double noiseLevel) {
     
     this.noiseLevel = noiseLevel;
     return this;
@@ -361,17 +361,17 @@ public class Trace {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Trace trace = (Trace) o;
-    return Objects.equals(this.id, trace.id) &&
-        Objects.equals(this.sampleId, trace.sampleId) &&
-        Objects.equals(this.sampleName, trace.sampleName) &&
-        Objects.equals(this.label, trace.label) &&
-        Objects.equals(this.intensities, trace.intensities) &&
-        Objects.equals(this.annotations, trace.annotations) &&
-        Objects.equals(this.mz, trace.mz) &&
-        Objects.equals(this.merged, trace.merged) &&
-        Objects.equals(this.normalizationFactor, trace.normalizationFactor) &&
-        Objects.equals(this.noiseLevel, trace.noiseLevel);
+    TraceExperimental traceExperimental = (TraceExperimental) o;
+    return Objects.equals(this.id, traceExperimental.id) &&
+        Objects.equals(this.sampleId, traceExperimental.sampleId) &&
+        Objects.equals(this.sampleName, traceExperimental.sampleName) &&
+        Objects.equals(this.label, traceExperimental.label) &&
+        Objects.equals(this.intensities, traceExperimental.intensities) &&
+        Objects.equals(this.annotations, traceExperimental.annotations) &&
+        Objects.equals(this.mz, traceExperimental.mz) &&
+        Objects.equals(this.merged, traceExperimental.merged) &&
+        Objects.equals(this.normalizationFactor, traceExperimental.normalizationFactor) &&
+        Objects.equals(this.noiseLevel, traceExperimental.noiseLevel);
   }
 
   @Override
@@ -382,7 +382,7 @@ public class Trace {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Trace {\n");
+    sb.append("class TraceExperimental {\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    sampleId: ").append(toIndentedString(sampleId)).append("\n");
     sb.append("    sampleName: ").append(toIndentedString(sampleName)).append("\n");
