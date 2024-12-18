@@ -31,7 +31,7 @@ import lombok.extern.jackson.Jacksonized;
 @SuperBuilder
 @Jacksonized
 public class ConsensusAnnotationsCSI extends ConsensusAnnotations {
-    @Schema(enumAsRef = true, name = "ConsensusCriterionCSI", nullable = true)
+    @Schema(name = "ConsensusCriterionCSI", nullable = true)
     public enum Criterion {
         MAJORITY_STRUCTURE,
         CONFIDENCE_STRUCTURE,

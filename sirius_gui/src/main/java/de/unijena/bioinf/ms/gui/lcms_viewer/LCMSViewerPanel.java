@@ -11,9 +11,9 @@ import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
-import io.sirius.ms.sdk.model.Trace;
-import io.sirius.ms.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
+import io.sirius.ms.sdk.model.TraceExperimental;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import javax.swing.*;
 import java.awt.*;
@@ -187,18 +187,18 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             return;
         }
 
-        CompletableFuture<AlignedFeatureQuality> future = currentInstance.getClient().experimental().getAlignedFeaturesQualityWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
-                .bodyToMono(AlignedFeatureQuality.class).onErrorComplete().toFuture();
+        CompletableFuture<AlignedFeatureQualityExperimental> future = currentInstance.getClient().features().getAlignedFeaturesQualityExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
+                .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().toFuture();
 
-        TraceSet spec;
+        TraceSetExperimental spec;
         if (viewType==ViewType.ALIGNMENT) {
-            spec = currentInstance.getClient().features().getTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId(), true).bodyToMono(TraceSet.class).onErrorComplete().block();
+            spec = currentInstance.getClient().features().getTracesExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId(), true).bodyToMono(TraceSetExperimental.class).onErrorComplete().block();
         } else {
-            spec = currentInstance.getClient().features().getAdductNetworkWithMergedTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+            spec = currentInstance.getClient().features().getAdductNetworkWithMergedTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSetExperimental.class).onErrorComplete().block();
         }
 
         try {
-            AlignedFeatureQuality alignedFeatureQuality = future.get();
+            AlignedFeatureQualityExperimental alignedFeatureQuality = future.get();
             summaryPanel.setReport(alignedFeatureQuality);
         } catch (InterruptedException | ExecutionException e) {
             summaryPanel.setReport(null);
@@ -228,9 +228,9 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
     //-----------------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------------
 
-    private static class ColoredTraceSet extends TraceSet {
+    private static class ColoredTraceSet extends TraceSetExperimental {
 
-        public static ColoredTraceSet buildTrace(TraceSet traceSet, ViewType viewType) {
+        public static ColoredTraceSet buildTrace(TraceSetExperimental traceSet, ViewType viewType) {
             if (viewType == ViewType.ALIGNMENT) {
                 return ((ColoredTraceSet)new ColoredTraceSet()
                         .sampleId(traceSet.getSampleId())
@@ -271,18 +271,18 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             ColoredTrace.JSON_PROPERTY_NOISE_LEVEL
     })
 
-    private static class ColoredTrace extends Trace {
+    private static class ColoredTrace extends TraceExperimental {
         public static final String JSON_PROPERTY_COLOR = "color";
         private String color;
 
         public static final String JSON_PROPERTY_DASH_STYLE = "dashStyle";
         private String dashStyle;
 
-        public static ColoredTrace buildTrace(Trace trace, int index) {
+        public static ColoredTrace buildTrace(TraceExperimental trace, int index) {
             return buildTrace(trace, Colors.LCMSVIEW.getFeatureTraceColor(index), "none");
         }
 
-        public static ColoredTrace buildTrace(Trace trace, Color color, String dashStyle) {
+        public static ColoredTrace buildTrace(TraceExperimental trace, Color color, String dashStyle) {
             return ((ColoredTrace) new ColoredTrace()
                     .id(trace.getId())
                     .sampleId(trace.getSampleId())

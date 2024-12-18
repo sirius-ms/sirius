@@ -4,14 +4,13 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases |  |
+| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API. |
 | [**createDatabase**](SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} |  |
 | [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
-| [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
-| [**importIntoDatabaseAsJob**](SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database. |
+| [**importIntoDatabaseExperimental**](SearchableDatabasesApi.md#importIntoDatabaseExperimental) | **POST** /api/databases/{databaseId}/import/from-files | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
 
@@ -21,7 +20,7 @@ All URIs are relative to *http://localhost:8888*
 
 > List&lt;SearchableDatabase&gt; addDatabases(requestBody)
 
-
+DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
 
 ### Example
 
@@ -409,11 +408,11 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## importIntoDatabase
+## importIntoDatabaseExperimental
 
-> SearchableDatabase importIntoDatabase(databaseId, bufferSize, inputFiles)
+> SearchableDatabase importIntoDatabaseExperimental(databaseId, bufferSize, inputFiles)
 
-Start import of structure and spectra files into the specified database.
+EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
 Start import of structure and spectra files into the specified database.
 
@@ -437,10 +436,10 @@ public class Example {
         Integer bufferSize = 1000; // Integer | 
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, bufferSize, inputFiles);
+            SearchableDatabase result = apiInstance.importIntoDatabaseExperimental(databaseId, bufferSize, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabase");
+            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -462,78 +461,6 @@ public class Example {
 ### Return type
 
 [**SearchableDatabase**](SearchableDatabase.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: multipart/form-data
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Job of the import command to be executed. |  -  |
-
-
-## importIntoDatabaseAsJob
-
-> Job importIntoDatabaseAsJob(databaseId, bufferSize, optFields, inputFiles)
-
-Start import of structure and spectra files into the specified database.
-
-Start import of structure and spectra files into the specified database.
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.SearchableDatabasesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
-        String databaseId = "databaseId_example"; // String | database to import into
-        Integer bufferSize = 1000; // Integer | 
-        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
-        try {
-            Job result = apiInstance.importIntoDatabaseAsJob(databaseId, bufferSize, optFields, inputFiles);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseAsJob");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **databaseId** | **String**| database to import into | |
-| **bufferSize** | **Integer**|  | [optional] [default to 1000] |
-| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
-
-### Return type
-
-[**Job**](Job.md)
 
 ### Authorization
 
