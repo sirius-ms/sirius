@@ -252,7 +252,7 @@ No authorization required
 
 ## getAdductNetworkWithMergedTraces
 
-> TraceSet getAdductNetworkWithMergedTraces(projectId, alignedFeatureId)
+> TraceSetExperimental getAdductNetworkWithMergedTraces(projectId, alignedFeatureId)
 
 Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
 
@@ -277,7 +277,7 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | one feature that is considered the main feature of the adduct network
         try {
-            TraceSet result = apiInstance.getAdductNetworkWithMergedTraces(projectId, alignedFeatureId);
+            TraceSetExperimental result = apiInstance.getAdductNetworkWithMergedTraces(projectId, alignedFeatureId);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAdductNetworkWithMergedTraces");
@@ -300,7 +300,7 @@ public class Example {
 
 ### Return type
 
-[**TraceSet**](TraceSet.md)
+[**TraceSetExperimental**](TraceSetExperimental.md)
 
 ### Authorization
 
