@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AlignedFeatureQualityExperimental
+ * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
   AlignedFeatureQualityExperimental.JSON_PROPERTY_ALIGNED_FEATURE_ID,

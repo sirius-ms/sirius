@@ -7570,52 +7570,44 @@
             "$ref": "#/components/schemas/ParentPeak"
           },
           "substructureAtoms": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "array",
-            "description": "Array/List of indices of the atoms of the structure candidate that are part of this fragments substructure\n (highlighted atoms)",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Array/List of indices of the atoms of the structure candidate that are part of this fragments substructure\n (highlighted atoms)",
             "nullable": true,
             "items": {
-              "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
               "type": "integer",
               "format": "int32",
               "nullable": true
             }
           },
           "substructureBonds": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "array",
-            "description": "Array/List of indices of the bonds of the structure candidate that are part of this fragments substructure\n (highlighted bonds)\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Array/List of indices of the bonds of the structure candidate that are part of this fragments substructure\n (highlighted bonds)\n\n Null if substructure annotation not available or not requested.",
             "nullable": true,
             "items": {
-              "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
               "type": "integer",
               "format": "int32",
               "nullable": true
             }
           },
           "substructureBondsCut": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "array",
-            "description": "Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments\n substructure (highlighted cutted bonds).\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Array/List of indices of the bonds of the structure candidate that need to be cut to produce this fragments\n substructure (highlighted cutted bonds).\n\n Null if substructure annotation not available or not requested.",
             "nullable": true,
             "items": {
-              "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
               "type": "integer",
               "format": "int32",
               "nullable": true
             }
           },
           "substructureScore": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "number",
-            "description": "This score roughly reflects the probability of this fragment forming.\n\n This is the score of the path from root to this node which has the maximal score or \"profit\".\n The score of a path is equal to the sum of scores of its contained fragments and edges.\n Note: Refers to \u0027totalScore\u0027 in CombinatorialNode\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n This score roughly reflects the probability of this fragment forming.\n\n This is the score of the path from root to this node which has the maximal score or \"profit\".\n The score of a path is equal to the sum of scores of its contained fragments and edges.\n Note: Refers to \u0027totalScore\u0027 in CombinatorialNode\n\n Null if substructure annotation not available or not requested.",
             "format": "float",
             "nullable": true
           },
           "hydrogenRearrangements": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "integer",
-            "description": "Number of hydrogens rearrangements needed to match the substructure to the fragment formula.\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Number of hydrogens rearrangements needed to match the substructure to the fragment formula.\n\n Null if substructure annotation not available or not requested.",
             "format": "int32",
             "nullable": true
           }
@@ -7716,15 +7708,13 @@
             "nullable": true
           },
           "structureAnnotationSmiles": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "string",
-            "description": "Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n\n Null if substructure annotation not available or not requested.",
             "nullable": true
           },
           "structureAnnotationScore": {
-            "title": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "number",
-            "description": "Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)\n\n Null if substructure annotation not available or not requested.",
             "format": "double",
             "nullable": true
           }
@@ -7909,12 +7899,11 @@
         }
       },
       "TraceAnnotationExperimental": {
-        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "type": {
-            "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "type": "string",
+            "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
             "enum": [
               "FEATURE",
               "MS2"
@@ -7938,10 +7927,10 @@
             "format": "int32",
             "nullable": true
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "TraceExperimental": {
-        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "id": {
@@ -7990,10 +7979,10 @@
             "description": "The noise level is estimated from the median noise in the surrounding scans. It can be used to\n calculate signal-to-noise ratios.",
             "format": "double"
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "TraceSetExperimental": {
-        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "sampleId": {
@@ -8012,7 +8001,8 @@
               "$ref": "#/components/schemas/TraceExperimental"
             }
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "PagedModelCompound": {
         "type": "object",
@@ -8068,7 +8058,6 @@
         }
       },
       "QuantificationTableExperimental": {
-        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "type": "object",
         "properties": {
           "quantificationType": {
@@ -8133,10 +8122,10 @@
               }
             }
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "AlignedFeatureQualityExperimental": {
-        "title": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.",
         "required": [
           "alignedFeatureId",
           "categories",
@@ -8167,7 +8156,8 @@
             },
             "description": "Contains all pre-computation quality information that belong to\n this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,"
           }
-        }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
       },
       "Category": {
         "type": "object",
