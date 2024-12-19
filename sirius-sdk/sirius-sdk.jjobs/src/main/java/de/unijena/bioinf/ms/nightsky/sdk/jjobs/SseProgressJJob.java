@@ -124,17 +124,17 @@ public class SseProgressJJob extends WaiterJJob<Job> {
 
         setState(JobState.valueOf(p.getState().name()));
 
-        if (p.getState() == JobProgress.StateEnum.FAILED) {
+        if (p.getState() == io.sirius.ms.sdk.model.JobState.FAILED) {
             crash(new Exception(p.getErrorMessage()));
             return true;
         }
 
-        if (p.getState() == JobProgress.StateEnum.CANCELED) {
+        if (p.getState() == io.sirius.ms.sdk.model.JobState.CANCELED) {
             super.cancel(true);
             return true;
         }
 
-        if (p.getState() == JobProgress.StateEnum.DONE) {
+        if (p.getState() == io.sirius.ms.sdk.model.JobState.DONE) {
             finish(wrappedJob);
             return true;
         }

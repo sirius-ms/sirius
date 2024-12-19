@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -90,8 +91,11 @@ public class SearchableDatabaseController {
         return chemDbService.update(databaseId, dbUpdate);
     }
 
+    @Deprecated(forRemoval = true)
+    @Operation(
+            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API."
+    )
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Deprecated
     public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToDatabases) {
         return chemDbService.add(pathToDatabases);
     }
@@ -108,6 +112,10 @@ public class SearchableDatabaseController {
      * @param inputFiles files to be imported
      * @return Job of the import command to be executed.
      */
+    @Operation(
+            operationId = "importIntoDatabaseExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
+    )
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
                                                  @RequestBody MultipartFile[] inputFiles,
@@ -120,23 +128,24 @@ public class SearchableDatabaseController {
         );
     }
 
-    /**
-     * Start import of structure and spectra files into the specified database.
-     *
-     * @param databaseId database to import into
-     * @param inputFiles files to be imported
-     * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Job of the import command to be executed.
-     */
-    @PostMapping(value = "/{databaseId}/import/from-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importIntoDatabaseAsJob(@PathVariable String databaseId,
-                                       @RequestBody MultipartFile[] inputFiles,
-                                       @RequestParam(defaultValue = "1000") int bufferSize,
-                                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-//        DatabaseImportSubmission dbImport = new DatabaseImportSubmission(databaseId, inputFiles, );
-//        SearchableDatabase db = chemDbService.findById(dbImport.getDatabaseId(), false);
-//        return computeService.createAndSubmitCommandJob(dbImport.asCommandSubmission(db.getLocation()), removeNone(optFields));
-        throw new UnsupportedOperationException("Async DB import not yet implemented");
-    }
+    //todo TBD whether we want to implement this endpoint
+//    /**
+//     * Start import of structure and spectra files into the specified database.
+//     *
+//     * @param databaseId database to import into
+//     * @param inputFiles files to be imported
+//     * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
+//     * @return Job of the import command to be executed.
+//     */
+//    @PostMapping(value = "/{databaseId}/import/from-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public Job importIntoDatabaseAsJob(@PathVariable String databaseId,
+//                                       @RequestBody MultipartFile[] inputFiles,
+//                                       @RequestParam(defaultValue = "1000") int bufferSize,
+//                                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+//    ) {
+////        DatabaseImportSubmission dbImport = new DatabaseImportSubmission(databaseId, inputFiles, );
+////        SearchableDatabase db = chemDbService.findById(dbImport.getDatabaseId(), false);
+////        return computeService.createAndSubmitCommandJob(dbImport.asCommandSubmission(db.getLocation()), removeNone(optFields));
+//        throw new UnsupportedOperationException("Async DB import not yet implemented");
+//    }
 }

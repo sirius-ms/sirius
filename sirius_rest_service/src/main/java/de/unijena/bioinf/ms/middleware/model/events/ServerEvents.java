@@ -47,8 +47,8 @@ public class ServerEvents {
         return new ServerEventImpl<>(projectEvent, projectEvent.getProjectId(), ServerEvent.Type.PROJECT);
     }
 
-    public static ServerEventImpl<ProjectChangeEvent> newProjectEvent(@NotNull String projectId, @NotNull ProjectChangeEvent.Type projectEventType) {
-        assert projectEventType.ordinal() <= ProjectChangeEvent.Type.PROJECT_CLOSED.ordinal();
+    public static ServerEventImpl<ProjectChangeEvent> newProjectEvent(@NotNull String projectId, @NotNull ProjectEventType projectEventType) {
+        assert projectEventType.ordinal() <= ProjectEventType.PROJECT_CLOSED.ordinal();
         return newProjectEvent(ProjectChangeEvent.builder()
                 .eventType(projectEventType)
                 .projectId(projectId)

@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.jetbrains.annotations.NotNull;
@@ -154,7 +155,7 @@ public class JobController {
                                   @RequestParam(required = false) @Nullable Boolean recompute,
                                   @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) {
-        final JobSubmission js = getJobConfig(jobConfigName, true, false);
+        final JobSubmission js = getJobConfig(jobConfigName, false);
         js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
@@ -169,10 +170,11 @@ public class JobController {
      * @param commandSubmission the command and the input to be executed
      * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
      * @return Job of the command to be executed.
-     *
-     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
+    @Operation(
+            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
+    )
     @PostMapping(value = "/projects/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
                             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
@@ -227,13 +229,15 @@ public class JobController {
      *
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
      * @return {@link JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public JobSubmission getDefaultJobConfig(@RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
-                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
-        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap);
+                                             @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap,
+                                             @RequestParam(required = false, defaultValue = "false") boolean includeCustomDbsForStructureSearch) {
+        JobSubmission js = JobSubmission.createDefaultInstance(includeConfigMap, includeCustomDbsForStructureSearch);
         if (moveParametersToConfigMap) {
             js.mergeCombinedConfigMap();
         }
@@ -246,19 +250,14 @@ public class JobController {
     /**
      * Request all available job configurations
      *
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @return list of available {@link JobSubmission}s
      */
     @GetMapping(value = "/job-configs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public List<JobSubmission> getJobConfigs(@Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap) {
+    public List<JobSubmission> getJobConfigs() {
         try {
-            List<JobSubmission> js = FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
+            return FileUtils.listAndClose(Workspace.runConfigDir, s -> s.filter(Files::isRegularFile)
                     .map(this::readFromFile).collect(Collectors.toList()));
-
-            if (!includeConfigMap) js.forEach(j -> j.setConfigMap(null));
-
-            return js;
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected Error when crawling job-config files.", e);
         }
@@ -284,25 +283,20 @@ public class JobController {
      * Request job configuration with given name.
      *
      * @param name             name of the job-config to return
-     * @param includeConfigMap if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
      * @return {@link JobSubmission} for given name.
      */
     @GetMapping(value = "/job-configs/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public JobSubmission getJobConfig(@PathVariable @NotNull String name,
-                                      @Deprecated(forRemoval = true) @RequestParam(required = false, defaultValue = "false") boolean includeConfigMap,
                                       @RequestParam(required = false, defaultValue = "false") boolean moveParametersToConfigMap) {
-        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
+        if (name.equals(DEFAULT_PARAMETERS)) return getDefaultJobConfig(true, moveParametersToConfigMap, false);
 
         final Path config = Workspace.runConfigDir.resolve(name + ".json");
 
         JobSubmission js = readFromFile(config);
         if (moveParametersToConfigMap) {
             js.mergeCombinedConfigMap();
-        }
-        if (!includeConfigMap) {
-            js.setConfigMap(null);
         }
         return js;
     }
