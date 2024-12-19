@@ -64,7 +64,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * Instrument specific profile for internal algorithms
      * Just select what comes closest to the instrument that was used for measuring the data.
      */
-    @Schema(enumAsRef = true, nullable = true)
+    @Schema(nullable = true)
     InstrumentProfile profile;
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
