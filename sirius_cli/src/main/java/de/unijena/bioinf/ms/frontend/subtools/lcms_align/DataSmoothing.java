@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(enumAsRef = true)
+@Schema
 public enum DataSmoothing {
     AUTO, NOFILTER, GAUSSIAN, WAVELET, SAVITZKY_GOLAY
 }

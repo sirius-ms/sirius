@@ -29,7 +29,7 @@ apply plugin: 'java-library'
 
 allprojects {
     group = 'io.sirius-ms'
-    version =  siriusFrontendVersion
+    version =  "3.0+sirius$siriusFrontendVersion"
 
     ext {
         reactor_version = "3.4.3"
@@ -60,8 +60,9 @@ dependencies {
 
 openApiGenerate {
     generatorName.set("java")
-    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec.json")
+    inputSpec.set("$rootDir/sirius_rest_service/openapi-spec-enums-as-ref.json")
     outputDir.set("$projectDir/sirius-sdk.openapi")
+    templateDir.set("$projectDir/templates")
     apiPackage.set("io.sirius.ms.sdk.api")
     invokerPackage.set("io.sirius.ms.sdk.client")
     modelPackage.set("io.sirius.ms.sdk.model")

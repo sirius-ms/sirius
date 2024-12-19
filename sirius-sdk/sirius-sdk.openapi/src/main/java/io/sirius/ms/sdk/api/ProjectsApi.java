@@ -122,9 +122,9 @@ public class ProjectsApi {
         return closeProjectSpaceRequestCreation(projectId);
     }
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Move an existing (opened) project-space to another location.
-     * Move an existing (opened) project-space to another location.
-     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
@@ -172,9 +172,9 @@ public class ProjectsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Move an existing (opened) project-space to another location.
-     * Move an existing (opened) project-space to another location.
-     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
@@ -188,9 +188,9 @@ public class ProjectsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Move an existing (opened) project-space to another location.
-     * Move an existing (opened) project-space to another location.
-     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
@@ -204,9 +204,9 @@ public class ProjectsApi {
     }
 
     /**
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * Move an existing (opened) project-space to another location.
-     * Move an existing (opened) project-space to another location.
-     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * <p><b>200</b> - ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;
      * @param projectId unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
@@ -334,7 +334,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
         
         final String[] localVarAccepts = { 
-            "application/csv"
+            "application/csv", "application/CSV"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -418,7 +418,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
         
         final String[] localVarAccepts = { 
-            "application/csv"
+            "application/csv", "application/CSV"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -502,7 +502,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
         
         final String[] localVarAccepts = { 
-            "application/csv"
+            "application/csv", "application/CSV"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -703,20 +703,16 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataRequestCreation(String projectId, LcmsSubmissionParameters parameters, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataRequestCreation(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'parameters' is set
-        if (parameters == null) {
-            throw new WebClientResponseException("Missing the required parameter 'parameters' when calling importMsRunData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -728,10 +724,10 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
-        
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+        if (parameters != null)
+            formParams.add("parameters", parameters);
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -753,14 +749,14 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunData(String projectId, LcmsSubmissionParameters parameters, List<File> inputFiles) throws WebClientResponseException {
+    public ImportResult importMsRunData(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, parameters, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, inputFiles, parameters).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -768,14 +764,14 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, LcmsSubmissionParameters parameters, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, parameters, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, inputFiles, parameters).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -783,34 +779,30 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, LcmsSubmissionParameters parameters, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataRequestCreation(projectId, parameters, inputFiles);
+    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+        return importMsRunDataRequestCreation(projectId, inputFiles, parameters);
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, LcmsSubmissionParameters parameters, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, List<JobOptField> optFields, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunDataAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'parameters' is set
-        if (parameters == null) {
-            throw new WebClientResponseException("Missing the required parameter 'parameters' when calling importMsRunDataAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -822,11 +814,12 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+        if (parameters != null)
+            formParams.add("parameters", parameters);
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -848,15 +841,15 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJob(String projectId, LcmsSubmissionParameters parameters, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public Job importMsRunDataAsJob(String projectId, List<JobOptField> optFields, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, parameters, optFields, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, optFields, inputFiles, parameters).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -864,15 +857,15 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, LcmsSubmissionParameters parameters, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, List<JobOptField> optFields, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, parameters, optFields, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, optFields, inputFiles, parameters).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -880,18 +873,18 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
-     * @param parameters Parameters for feature alignment and feature finding.
      * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
+     * @param parameters The parameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, LcmsSubmissionParameters parameters, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataAsJobRequestCreation(projectId, parameters, optFields, inputFiles);
+    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, List<JobOptField> optFields, List<File> inputFiles, LcmsSubmissionParameters parameters) throws WebClientResponseException {
+        return importMsRunDataAsJobRequestCreation(projectId, optFields, inputFiles, parameters);
     }
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -945,8 +938,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -961,8 +954,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -977,8 +970,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job
-     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -991,8 +984,8 @@ public class ProjectsApi {
         return importMsRunDataAsJobLocallyRequestCreation(projectId, parameters, requestBody, optFields);
     }
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -1044,8 +1037,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -1059,8 +1052,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -1074,8 +1067,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
-     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param parameters Parameters for feature alignment and feature finding.
@@ -1280,8 +1273,8 @@ public class ProjectsApi {
         return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
     }
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
@@ -1333,8 +1326,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
@@ -1350,8 +1343,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
@@ -1367,8 +1360,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job
-     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
      * <p><b>200</b> - the import job.
      * @param projectId project-space to import into.
      * @param requestBody The requestBody parameter
@@ -1382,8 +1375,8 @@ public class ProjectsApi {
         return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields);
     }
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
@@ -1433,8 +1426,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
@@ -1449,8 +1442,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId project-space to import into.
      * @param requestBody files to import into project
@@ -1465,8 +1458,8 @@ public class ProjectsApi {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
      * <p><b>200</b> - OK
      * @param projectId project-space to import into.
      * @param requestBody files to import into project

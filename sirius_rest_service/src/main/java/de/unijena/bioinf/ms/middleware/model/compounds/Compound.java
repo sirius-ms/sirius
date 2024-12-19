@@ -35,7 +35,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Compound {
-    @Schema(enumAsRef = true, name = "CompoundOptField", nullable = true)
+    @Schema(name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
 
     /**

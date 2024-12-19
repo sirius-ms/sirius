@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.DataImportEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.core.converter.ResolvedSchema;
@@ -33,6 +34,8 @@ import io.swagger.v3.oas.models.info.Info;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
@@ -69,6 +72,18 @@ public class SwaggerConfig {
 
     @Bean
     public OpenApiCustomizer openApiCustomiser() {
+        final ResolvedSchema projectChangeEventType;
+        if (io.swagger.v3.core.jackson.ModelResolver.enumsAsRef) {
+            projectChangeEventType = ModelConverters.getInstance()
+                    .resolveAsResolvedSchema(new AnnotatedType(ProjectEventType.class));
+            projectChangeEventType.schema.setName("ProjectEventType");
+            projectChangeEventType.schema.setType("string");
+            projectChangeEventType.schema.setEnum(List.of(ProjectEventType.values()));
+            projectChangeEventType.schema.set$ref(null);
+        }else projectChangeEventType = null;
+
+
+
         ResolvedSchema projectChangeEvent = ModelConverters.getInstance()
                 .resolveAsResolvedSchema(new AnnotatedType(ProjectChangeEvent.class));
         ResolvedSchema importEvent = ModelConverters.getInstance()
@@ -76,9 +91,13 @@ public class SwaggerConfig {
         ResolvedSchema backgroundComputationsStateEvent = ModelConverters.getInstance()
                 .resolveAsResolvedSchema(new AnnotatedType(BackgroundComputationsStateEvent.class));
 
-        return openApi -> openApi
-                .schema(projectChangeEvent.schema.getName(), projectChangeEvent.schema)
-                .schema(importEvent.schema.getName(), importEvent.schema)
-                .schema(backgroundComputationsStateEvent.schema.getName(), backgroundComputationsStateEvent.schema);
+        return openApi -> {
+            openApi.schema(projectChangeEvent.schema.getName(), projectChangeEvent.schema)
+                    .schema(importEvent.schema.getName(), importEvent.schema)
+                    .schema(backgroundComputationsStateEvent.schema.getName(), backgroundComputationsStateEvent.schema);
+            if (projectChangeEventType != null)
+                openApi.schema(projectChangeEventType.schema.getName(), projectChangeEventType.schema);
+
+        };
     }
 }
