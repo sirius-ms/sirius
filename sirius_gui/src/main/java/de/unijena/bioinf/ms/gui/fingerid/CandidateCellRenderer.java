@@ -25,8 +25,8 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
-import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -129,7 +129,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     @Override
     public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
         if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
-            nameLabel.setText(value.getName());
+            nameLabel.setText(GuiUtils.normalizeIUPACName(value.getName()));
         } else {
             nameLabel.setText("-");
         }
