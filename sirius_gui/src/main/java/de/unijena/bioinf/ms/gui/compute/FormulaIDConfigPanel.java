@@ -241,16 +241,32 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     }
 
     /**
-     * @return set of all selectable adducts, set of all selected adducts
      * @param selectionCandidates default candidates (pos and neg) to use if no adducts could be detected or the unknown adduct indicates adding them
-     * @param forceSelection forces the selection of all selectionCandidates (with the correct charge)
+     * @param forceSelection      forces the selection of all selectionCandidates (with the correct charge)
+     * @return set of all selectable adducts, set of all selected adducts
      */
     private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> selectionCandidates, boolean forceSelection) {
-        Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet());
-        Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet()); //selected the [M+?]+ or [M+?]- PrecursorIonTypes
-        Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
+        Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream()
+                .map(InstanceBean::getDetectedAdductsOrCharge)
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
 
-        Set<PrecursorIonType> possibleAdducts = gui.getProjectManager().INSTANCE_LIST.stream().map(InstanceBean::getDetectedAdducts).flatMap(Set::stream).filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
+        Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream()
+                .filter(PrecursorIonType::isIonizationUnknown)
+                .collect(Collectors.toSet()); //selected the [M+?]+ or [M+?]- PrecursorIonTypes
+
+        Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream()
+                .filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged())
+                .collect(Collectors.toSet());
+
+        // list of adducts to be shown in the Compute panel
+        Set<PrecursorIonType> possibleAdducts = gui.getProjectManager().INSTANCE_LIST.stream()
+                .map(InstanceBean::getDetectedAdducts)
+                .flatMap(Set::stream)
+                .filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged())
+                .collect(Collectors.toSet());
+
+        // Subset of possibleAdducts where the checkboxes are pre-selected (checked) in the compute panel.
         Set<PrecursorIonType> selectedAdducts = new HashSet<>();
 
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
