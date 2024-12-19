@@ -984,7 +984,7 @@ class AdductGraph {
                     for (let el of f.description.matchAll(/\[[^\]]+\]/g)) {
                         grps.push(el[0]);
                     }
-                    const id = Number.parseInt(f.description.match(/(\d+)$/)[1])
+                    const id = f.description.match(/(\d+)$/)[1]
                     grps.push(data.traces[tr].index);
                     features[id] = grps;
                 }

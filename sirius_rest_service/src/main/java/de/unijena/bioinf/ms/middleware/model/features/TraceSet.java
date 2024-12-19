@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ms.middleware.model.networks.AdductNetwork;
@@ -104,9 +105,9 @@ public class TraceSet {
     @Setter
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Trace {
-        private long id;
+        @JsonFormat(shape = JsonFormat.Shape.STRING) private long id;
         @Schema(nullable = true)
-        private Long sampleId;
+        @JsonFormat(shape = JsonFormat.Shape.STRING) private Long sampleId;
         @Schema(nullable = true)
         private String sampleName;
         private String label;
@@ -179,7 +180,7 @@ public class TraceSet {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private @Nullable AdductNetwork adductNetwork;
-    private long sampleId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING) private long sampleId;
     private String sampleName;
     private Axes axes;
     private Trace[] traces;
