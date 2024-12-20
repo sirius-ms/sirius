@@ -31,7 +31,7 @@ public class AdductNetwork {
                 ano.put(node.getPossibleAdducts()[i].toString(), (double)(node.getAdductProbabilities()[i]));
             }
             jnode.setAdductAnnotations(ano);
-            jnode.setAlignedFeatureId(node.getAlignedFeatureId());
+            jnode.setAlignedFeatureId(String.valueOf(node.getAlignedFeatureId()));
             dict.put(node.getAlignedFeatureId(), k);
             jnet.nodes.add(jnode);
         }
@@ -80,7 +80,7 @@ public class AdductNetwork {
     @Schema(name = "AdductNodeExperimental",
             description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class AdductNode {
-        long alignedFeatureId;
+        String alignedFeatureId;
         private double mz;
         private Map<String, Double> adductAnnotations;
 
