@@ -55,10 +55,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TraceExperimental {
   public static final String JSON_PROPERTY_ID = "id";
-  private Long id;
+  private String id;
 
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
-  private Long sampleId;
+  private String sampleId;
 
   public static final String JSON_PROPERTY_SAMPLE_NAME = "sampleName";
   private String sampleName;
@@ -87,7 +87,7 @@ public class TraceExperimental {
   public TraceExperimental() {
   }
 
-  public TraceExperimental id(Long id) {
+  public TraceExperimental id(String id) {
     
     this.id = id;
     return this;
@@ -101,18 +101,18 @@ public class TraceExperimental {
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Long getId() {
+  public String getId() {
     return id;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setId(Long id) {
+  public void setId(String id) {
     this.id = id;
   }
 
-  public TraceExperimental sampleId(Long sampleId) {
+  public TraceExperimental sampleId(String sampleId) {
     
     this.sampleId = sampleId;
     return this;
@@ -126,14 +126,14 @@ public class TraceExperimental {
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Long getSampleId() {
+  public String getSampleId() {
     return sampleId;
   }
 
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleId(Long sampleId) {
+  public void setSampleId(String sampleId) {
     this.sampleId = sampleId;
   }
 
