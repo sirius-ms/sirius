@@ -159,7 +159,8 @@ public class ImportAction extends AbstractGuiAction {
             String m = Objects.requireNonNullElse(e.getMessage(), "");
             Stream.of("ProjectTypeException:", "ProjectStateException:").filter(m::contains).findFirst().ifPresentOrElse(
                     extText -> Jobs.runEDTLater(() -> new WarningDialog(gui.getMainFrame(), extText, GuiUtils.formatAndStripToolTip(m.substring(m.lastIndexOf(extText) + extText.length()).split(" \\| ")[0]), null)),
-                    () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), e.getMessage(), e.getCause()))
+                    () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(),
+                            GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause()))
             );
         }
     }
