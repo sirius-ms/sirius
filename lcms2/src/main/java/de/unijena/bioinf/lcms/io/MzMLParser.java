@@ -102,7 +102,14 @@ public class MzMLParser implements LCMSParser {
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
     ) throws IOException {
-        return parse(input.getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+        try {
+            return parse(input.getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+        } catch (RuntimeException e) {
+            //expect IllegalStateException, but catch any RuntimeException
+            LoggerFactory.getLogger(this.getClass()).error("Cannot parse input file {}. File may be corrupted.", input.toAbsolutePath(), e);
+            throw new IOException("Cannot parse input file "+input.toAbsolutePath()+". File may be corrupted.",e);
+        }
+
     }
 
     private ProcessedSample parse(
