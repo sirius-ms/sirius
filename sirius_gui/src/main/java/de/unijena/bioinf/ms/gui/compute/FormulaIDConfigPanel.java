@@ -241,11 +241,12 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     }
 
     /**
-     * @param selectionCandidates default candidates (pos and neg) to use if no adducts could be detected or the unknown adduct indicates adding them
-     * @param forceSelection      forces the selection of all selectionCandidates (with the correct charge)
      * @return set of all selectable adducts, set of all selected adducts
+     * @param fallbackSelection default candidates (pos and neg) to use if no adducts could be detected or the unknown adduct indicates adding them
+     * @param forceFallback forces the selection of all fallbackSelection candidates (with the correct charge)
+     * @param addBaseIonizationForDetected add the base ionization for each detected adduct to the list of selected
      */
-    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> selectionCandidates, boolean forceSelection) {
+    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> fallbackSelection, boolean forceFallback, boolean addBaseIonizationForDetected) {
         Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream()
                 .map(InstanceBean::getDetectedAdductsOrCharge)
                 .flatMap(Set::stream)
@@ -269,31 +270,28 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         // Subset of possibleAdducts where the checkboxes are pre-selected (checked) in the compute panel.
         Set<PrecursorIonType> selectedAdducts = new HashSet<>();
 
+        if (!forceFallback) {
+            selectedAdducts.addAll(detectedAdductsNoMulti);
+            if (addBaseIonizationForDetected) {
+                detectedAdductsNoMulti.stream().map(p -> PrecursorIonType.getPrecursorIonType(p.getIonization())).forEach(selectedAdducts::add);
+            }
+        }
+
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
             PeriodicTable.getInstance().getPositiveAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged())
                     .forEach(possibleAdducts::add);
-            if (forceSelection) {
-                selectionCandidates.stream().filter(PrecursorIonType::isPositive).forEach(selectedAdducts::add);
+            if (forceFallback || detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownPositive())) {
+                fallbackSelection.stream().filter(PrecursorIonType::isPositive).forEach(selectedAdducts::add);
                 possibleAdducts.addAll(selectedAdducts);
-            } else {
-                selectedAdducts.addAll(detectedAdductsNoMulti);
-                if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownPositive())) {
-                    selectionCandidates.stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                }
             }
         }
 
         if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
             PeriodicTable.getInstance().getNegativeAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged())
                     .forEach(possibleAdducts::add);
-            if (forceSelection) {
-                selectionCandidates.stream().filter(PrecursorIonType::isNegative).forEach(selectedAdducts::add);
+            if (forceFallback || detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownNegative())) {
+                fallbackSelection.stream().filter(PrecursorIonType::isNegative).forEach(selectedAdducts::add);
                 possibleAdducts.addAll(selectedAdducts);
-            } else {
-                selectedAdducts.addAll(detectedAdductsNoMulti);
-                if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownNegative())) {
-                    selectionCandidates.stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
-                }
             }
         }
 
@@ -379,7 +377,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             throw new UnsupportedOperationException("Enforced adducts differ from fallback adducts.");
         }
 
-        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, isBatchDialog()); //in batch-mode we always use the fallback adducts (only) - adding detected adducts was no good idea, since there are too many of them.
+        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, isBatchDialog(), !isBatchDialog()); //in batch-mode we always use the fallback adducts (only) - adding detected adducts was no good idea, since there are too many of them.
         refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
 
         treeTimeout.setValue(Integer.parseInt(preset.get("Timeout.secondsPerTree")));

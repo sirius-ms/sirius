@@ -40,12 +40,13 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 
 
 /**
@@ -266,5 +267,120 @@ public class GuiUtils {
             box.setSelectedItem(defaultSelection);
 
         return box;
+    }
+
+    private static final Map<Character, String> CHAR_MAP = new HashMap<>();
+    static {
+        // Superscript digits
+        CHAR_MAP.put('⁰', "0");
+        CHAR_MAP.put('¹', "1");
+        CHAR_MAP.put('²', "2");
+        CHAR_MAP.put('³', "3");
+        CHAR_MAP.put('⁴', "4");
+        CHAR_MAP.put('⁵', "5");
+        CHAR_MAP.put('⁶', "6");
+        CHAR_MAP.put('⁷', "7");
+        CHAR_MAP.put('⁸', "8");
+        CHAR_MAP.put('⁹', "9");
+
+        // Subscript digits
+        CHAR_MAP.put('₀', "0");
+        CHAR_MAP.put('₁', "1");
+        CHAR_MAP.put('₂', "2");
+        CHAR_MAP.put('₃', "3");
+        CHAR_MAP.put('₄', "4");
+        CHAR_MAP.put('₅', "5");
+        CHAR_MAP.put('₆', "6");
+        CHAR_MAP.put('₇', "7");
+        CHAR_MAP.put('₈', "8");
+        CHAR_MAP.put('₉', "9");
+
+        // Superscript signs
+        CHAR_MAP.put('⁺', "+");
+        CHAR_MAP.put('⁻', "-");
+
+        // If encountered, subscript plus/minus can also be mapped if needed
+        // (not common in IUPAC names, but for completeness)
+        CHAR_MAP.put('₊', "+");
+        CHAR_MAP.put('₋', "-");
+
+        // Greek letters often found in IUPAC names (approximate transliterations)
+        // Lowercase:
+        CHAR_MAP.put('α', "a");
+        CHAR_MAP.put('β', "b");
+        CHAR_MAP.put('γ', "g");
+        CHAR_MAP.put('δ', "d");
+        CHAR_MAP.put('ε', "e");
+        CHAR_MAP.put('ζ', "z");
+        CHAR_MAP.put('η', "h");
+        CHAR_MAP.put('θ', "th");
+        CHAR_MAP.put('κ', "k");
+        CHAR_MAP.put('λ', "l");
+        CHAR_MAP.put('μ', "m");
+        CHAR_MAP.put('ν', "n");
+        CHAR_MAP.put('ξ', "x");
+        CHAR_MAP.put('ο', "o");
+        CHAR_MAP.put('π', "p");
+        CHAR_MAP.put('ρ', "r");
+        CHAR_MAP.put('σ', "s");
+        CHAR_MAP.put('ς', "s");
+        CHAR_MAP.put('τ', "t");
+        CHAR_MAP.put('υ', "u");
+        CHAR_MAP.put('φ', "f");
+        CHAR_MAP.put('χ', "ch");
+        CHAR_MAP.put('ψ', "ps");
+        CHAR_MAP.put('ω', "w");
+
+        // If uppercase Greek letters are used, map them similarly if needed:
+        CHAR_MAP.put('Α', "A");
+        CHAR_MAP.put('Β', "B");
+        CHAR_MAP.put('Γ', "G");
+        CHAR_MAP.put('Δ', "D");
+        CHAR_MAP.put('Ε', "E");
+        CHAR_MAP.put('Ζ', "Z");
+        CHAR_MAP.put('Η', "H");
+        CHAR_MAP.put('Θ', "Th");
+        CHAR_MAP.put('Κ', "K");
+        CHAR_MAP.put('Λ', "L");
+        CHAR_MAP.put('Μ', "M");
+        CHAR_MAP.put('Ν', "N");
+        CHAR_MAP.put('Ξ', "X");
+        CHAR_MAP.put('Ο', "O");
+        CHAR_MAP.put('Π', "P");
+        CHAR_MAP.put('Ρ', "R");
+        CHAR_MAP.put('Σ', "S");
+        CHAR_MAP.put('Τ', "T");
+        CHAR_MAP.put('Υ', "U");
+        CHAR_MAP.put('Φ', "F");
+        CHAR_MAP.put('Χ', "Ch");
+        CHAR_MAP.put('Ψ', "Ps");
+        CHAR_MAP.put('Ω', "W");
+    }
+
+    /**
+     * Normalizes an IUPAC chemical name string by converting any superscripts, subscripts,
+     * and Greek letters into their ASCII equivalents, producing a name that does not contain
+     * these special Unicode characters.
+     *
+     * @param input The IUPAC name string to normalize.
+     * @return A normalized version of the IUPAC name string.
+     */
+    public static String normalizeIUPACName(String input) {
+        if (isNullOrBlank(input)) {
+            return input;
+        }
+
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            String replacement = CHAR_MAP.get(c);
+            if (replacement != null) {
+                sb.append(replacement);
+            } else {
+                sb.append(c);
+            }
+        }
+
+        return sb.toString();
     }
 }
