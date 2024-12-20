@@ -7,6 +7,7 @@ All URIs are relative to *http://localhost:8888*
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
+| [**getAdductNetworkWithMergedTracesExperimental**](FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
 | [**getAlignedFeature**](FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAlignedFeatures**](FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space. |
 | [**getAlignedFeaturesPaged**](FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space. |
@@ -241,6 +242,74 @@ No authorization required
 
 - **Content-Type**: application/json
 - **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getAdductNetworkWithMergedTracesExperimental
+
+> TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId)
+
+EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+
+Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | one feature that is considered the main feature of the adduct network
+        try {
+            TraceSetExperimental result = apiInstance.getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getAdductNetworkWithMergedTracesExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| one feature that is considered the main feature of the adduct network | |
+
+### Return type
+
+[**TraceSetExperimental**](TraceSetExperimental.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
 
 ### HTTP response details

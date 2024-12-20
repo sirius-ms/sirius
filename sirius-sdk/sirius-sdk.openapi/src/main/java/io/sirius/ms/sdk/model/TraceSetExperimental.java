@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.AdductNetworkExperimental;
 import io.sirius.ms.sdk.model.Axes;
 import io.sirius.ms.sdk.model.TraceExperimental;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
+  TraceSetExperimental.JSON_PROPERTY_ADDUCT_NETWORK,
   TraceSetExperimental.JSON_PROPERTY_SAMPLE_ID,
   TraceSetExperimental.JSON_PROPERTY_SAMPLE_NAME,
   TraceSetExperimental.JSON_PROPERTY_AXES,
@@ -49,6 +51,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TraceSetExperimental {
+  public static final String JSON_PROPERTY_ADDUCT_NETWORK = "adductNetwork";
+  private AdductNetworkExperimental adductNetwork;
+
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
   private Long sampleId;
 
@@ -62,6 +67,31 @@ public class TraceSetExperimental {
   private List<TraceExperimental> traces = new ArrayList<>();
 
   public TraceSetExperimental() {
+  }
+
+  public TraceSetExperimental adductNetwork(AdductNetworkExperimental adductNetwork) {
+    
+    this.adductNetwork = adductNetwork;
+    return this;
+  }
+
+   /**
+   * Get adductNetwork
+   * @return adductNetwork
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public AdductNetworkExperimental getAdductNetwork() {
+    return adductNetwork;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ADDUCT_NETWORK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAdductNetwork(AdductNetworkExperimental adductNetwork) {
+    this.adductNetwork = adductNetwork;
   }
 
   public TraceSetExperimental sampleId(Long sampleId) {
@@ -181,7 +211,8 @@ public class TraceSetExperimental {
       return false;
     }
     TraceSetExperimental traceSetExperimental = (TraceSetExperimental) o;
-    return Objects.equals(this.sampleId, traceSetExperimental.sampleId) &&
+    return Objects.equals(this.adductNetwork, traceSetExperimental.adductNetwork) &&
+        Objects.equals(this.sampleId, traceSetExperimental.sampleId) &&
         Objects.equals(this.sampleName, traceSetExperimental.sampleName) &&
         Objects.equals(this.axes, traceSetExperimental.axes) &&
         Objects.equals(this.traces, traceSetExperimental.traces);
@@ -189,13 +220,14 @@ public class TraceSetExperimental {
 
   @Override
   public int hashCode() {
-    return Objects.hash(sampleId, sampleName, axes, traces);
+    return Objects.hash(adductNetwork, sampleId, sampleName, axes, traces);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class TraceSetExperimental {\n");
+    sb.append("    adductNetwork: ").append(toIndentedString(adductNetwork)).append("\n");
     sb.append("    sampleId: ").append(toIndentedString(sampleId)).append("\n");
     sb.append("    sampleName: ").append(toIndentedString(sampleName)).append("\n");
     sb.append("    axes: ").append(toIndentedString(axes)).append("\n");

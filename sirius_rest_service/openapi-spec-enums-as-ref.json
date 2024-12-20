@@ -4746,6 +4746,48 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "description": "Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.",
+        "operationId": "getAdductNetworkWithMergedTracesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "one feature that is considered the main feature of the adduct network",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceSetExperimental"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/page": {
       "get": {
         "tags": [
@@ -7617,6 +7659,86 @@
           }
         }
       },
+      "AdductEdgeExperimental": {
+        "type": "object",
+        "properties": {
+          "mzDelta": {
+            "type": "number",
+            "format": "double"
+          },
+          "annotation": {
+            "type": "string"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mergedCorrelation": {
+            "type": "number",
+            "format": "float"
+          },
+          "representativeCorrelation": {
+            "type": "number",
+            "format": "float"
+          },
+          "ms2cosine": {
+            "type": "number",
+            "format": "float"
+          },
+          "pvalue": {
+            "type": "number",
+            "format": "float"
+          },
+          "intensityRatioScore": {
+            "type": "number",
+            "format": "float"
+          }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
+      },
+      "AdductNetworkExperimental": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdductNodeExperimental"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdductEdgeExperimental"
+            }
+          }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
+      },
+      "AdductNodeExperimental": {
+        "type": "object",
+        "properties": {
+          "alignedFeatureId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mz": {
+            "type": "number",
+            "format": "double"
+          },
+          "adductAnnotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        },
+        "description": "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable."
+      },
       "Axes": {
         "type": "object",
         "properties": {
@@ -7732,6 +7854,9 @@
       "TraceSetExperimental": {
         "type": "object",
         "properties": {
+          "adductNetwork": {
+            "$ref": "#/components/schemas/AdductNetworkExperimental"
+          },
           "sampleId": {
             "type": "integer",
             "format": "int64"

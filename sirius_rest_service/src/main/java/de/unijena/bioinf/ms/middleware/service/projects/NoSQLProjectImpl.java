@@ -44,6 +44,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
+import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
@@ -316,8 +318,86 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return Optional.of(traceSet);
     }
 
+
+    @Override
+    @SneakyThrows
+    public Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId) {
+        Database<?> storage = storage();
+        Optional<AlignedFeatures> maybeMainFeature = storage.getByPrimaryKey(Long.parseLong(alignedFeatureId), AlignedFeatures.class);
+        if (maybeMainFeature.isEmpty()) return Optional.empty();
+        AlignedFeatures mainFeature = maybeMainFeature.get();
+        if (mainFeature.getTraceReference().isEmpty()) return Optional.empty(); // no trace information available
+        Optional<MergedTrace> maybeMergedTrace = storage.getByPrimaryKey(mainFeature.getTraceRef().getTraceId(), MergedTrace.class);
+        if (maybeMergedTrace.isEmpty()) return Optional.empty(); // no trace information available
+
+        TraceSet traceSet = new TraceSet();
+        IntArrayList offsets = new IntArrayList();
+        MergedLCMSRun merged = storage.getByPrimaryKey(mainFeature.getRunId(), MergedLCMSRun.class).orElse(null);
+        if (merged == null) return Optional.empty();
+        storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
+        if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
+        RetentionTimeAxis retentionTimeAxis = merged.getRetentionTimeAxis().get();
+        ArrayList<TraceSet.Trace> traces = new ArrayList<>();
+        {
+            traces.add(TraceSet.Trace.of("[MAIN]", merged, mainFeature, maybeMergedTrace.get(), retentionTimeAxis));
+            offsets.add(maybeMergedTrace.get().getScanIndexOffset());
+        }
+
+
+        // also add isotopes
+        {
+            storage.fetchAllChildren(mainFeature, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
+            for (AlignedIsotopicFeatures g  : mainFeature.getIsotopicFeatures().orElse(Collections.emptyList())) {
+                Optional<MergedTrace> isotopicTrace = Optional.empty();
+                if (g.getTraceReference().isPresent()) {
+                    isotopicTrace = storage.getByPrimaryKey(g.getTraceReference().get().getTraceId(), MergedTrace.class);
+                }
+                if (isotopicTrace.isPresent()) {
+                    traces.add(TraceSet.Trace.of("[ISOTOPE]", merged, g, isotopicTrace.get(), retentionTimeAxis));
+                    offsets.add(isotopicTrace.get().getScanIndexOffset());
+
+                }
+            }
+        }
+        LongOpenHashSet alreadyFetched = new LongOpenHashSet();
+        alreadyFetched.add(maybeMergedTrace.get().getMergedTraceId());
+        if (mainFeature.getAdductNetworkId()!=null) {
+            Optional<AdductNetwork> maybeNetwork = storage.getByPrimaryKey(mainFeature.getAdductNetworkId(), AdductNetwork.class);
+            if (maybeNetwork.isPresent()) {
+                AdductNetwork network = maybeNetwork.get();
+                for (AdductNode node : network.getNodes()) {
+                    if (node.getAlignedFeatureId()==mainFeature.getAlignedFeatureId()) continue;
+                    Optional<MergedTrace> tr = storage.getByPrimaryKey(node.getTraceId(), MergedTrace.class);
+                    Optional<AlignedFeatures> fr =storage.getByPrimaryKey(node.getAlignedFeatureId(), AlignedFeatures.class);
+                    if (tr.isPresent() && fr.isPresent()) {
+                        traces.add(TraceSet.Trace.of(String.format(Locale.US, "[CORRELATED] m/z = %.4f", fr.get().getAverageMass()), merged, fr.get(), tr.get(), retentionTimeAxis));
+                        offsets.add(tr.get().getScanIndexOffset());
+                        storage.fetchAllChildren(fr.get(), "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
+                        for (AlignedIsotopicFeatures g  : fr.get().getIsotopicFeatures().orElse(Collections.emptyList())) {
+                            Optional<MergedTrace> isotopicTrace = Optional.empty();
+                            if (g.getTraceReference().isPresent()) {
+                                isotopicTrace = storage.getByPrimaryKey(g.getTraceReference().get().getTraceId(), MergedTrace.class);
+                            }
+                            if (isotopicTrace.isPresent()) {
+                                traces.add(TraceSet.Trace.of("[CORRELATED][ISOTOPE]", merged, g, isotopicTrace.get(), retentionTimeAxis));
+                                offsets.add(isotopicTrace.get().getScanIndexOffset());
+                            }
+                        }
+                    }
+                }
+                traceSet.setAdductNetwork(de.unijena.bioinf.ms.middleware.model.networks.AdductNetwork.from(network));
+            }
+        }
+        traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
+        traceSet.setSampleName(merged.getName());
+        traceSet.setSampleId(merged.getRunId());
+        traceSet.harmonizeTraces(retentionTimeAxis, offsets.toIntArray());
+        return Optional.of(traceSet);
+    }
+
+
     /**
-     * This method will collect all aligned features belonging to the same traceset
+     * This method wil return Optional.empty();l collect all aligned features belonging to the same traceset
      */
     @SneakyThrows
     public Optional<TraceSet> getCompleteTraceSetForAlignedFeature(String alignedFeatureId) {
@@ -474,7 +554,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (scanIds != null) {
                 for (int id : scanIds) {
                     annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.MS2, "",
-                            id + mainFeature.getTraceRef().getScanIndexOffsetOfTrace() - mergedTrace.getScanIndexOffset()));
+                            id - mergedTrace.getScanIndexOffset()));
                 }
             }
             trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
