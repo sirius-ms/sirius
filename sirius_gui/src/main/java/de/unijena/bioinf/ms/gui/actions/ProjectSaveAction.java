@@ -97,7 +97,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
     @Override
     protected String openNewWindowQuestion() {
-        return "<html><body>Would you like to open the newly saved project, or keep working on the current one? </body></html>";
+        return "<html><body>Would you like to open the newly saved project, or continue working on the current one? </body></html>";
 
     }
 
