@@ -30,7 +30,6 @@ import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import gnu.trove.list.array.TDoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;

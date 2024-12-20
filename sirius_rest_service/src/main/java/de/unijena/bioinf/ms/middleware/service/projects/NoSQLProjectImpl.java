@@ -397,7 +397,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
     /**
-     * This method wilreturn Optional.empty();l collect all aligned features belonging to the same traceset
+     * This method wil return Optional.empty();l collect all aligned features belonging to the same traceset
      */
     @SneakyThrows
     public Optional<TraceSet> getCompleteTraceSetForAlignedFeature(String alignedFeatureId) {
