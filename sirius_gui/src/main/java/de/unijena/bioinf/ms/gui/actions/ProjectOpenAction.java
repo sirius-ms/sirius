@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,7 +140,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     public synchronized void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
-                Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
+                Objects.requireNonNullElseGet(closeCurrent, () -> new OpenInNewWindowDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isCancel());
 
         Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading Project...", () -> {
@@ -158,8 +159,20 @@ public class ProjectOpenAction extends AbstractGuiAction {
     }
 
     protected String openNewWindowQuestion() {
-        return "<html><body>Do you wish to open the Project in an additional Window? <br> Otherwise, the current one will be replaced. </body></html>";
+        return "<html><body>Would you like to open this project in a <b>new window</b> or in the <b>current window</b>? </body></html>";
     }
 
+    private class OpenInNewWindowDialog extends QuestionDialog {
 
+        public OpenInNewWindowDialog(Window owner, String title, String question, String propertyKey) {
+            super(owner, title, question, propertyKey);
+        }
+
+        @Override
+        protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+            super.decorateButtonPanel(boxedButtonPanel);
+            ok.setText("New Window");
+            cancel.setText("This Window");
+        }
+    }
 }
