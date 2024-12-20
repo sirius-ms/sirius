@@ -8056,12 +8056,10 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "integer",
-            "format": "int64"
+            "type": "string"
           },
           "sampleId": {
-            "type": "integer",
-            "format": "int64",
+            "type": "string",
             "nullable": true
           },
           "sampleName": {
@@ -8111,8 +8109,7 @@
             "$ref": "#/components/schemas/AdductNetworkExperimental"
           },
           "sampleId": {
-            "type": "integer",
-            "format": "int64"
+            "type": "string"
           },
           "sampleName": {
             "type": "string"

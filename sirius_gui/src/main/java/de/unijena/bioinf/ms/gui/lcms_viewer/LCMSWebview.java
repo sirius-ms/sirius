@@ -82,7 +82,7 @@ public class LCMSWebview extends JFXPanel {
                 if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
                     f.call("loadString", json);
                 } else {
-                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                    f.call("loadStringForCompound", json,  featureId);
                 }
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -153,7 +153,7 @@ public class LCMSWebview extends JFXPanel {
         }
 
         public void log(JSObject msg) {
-            System.err.println(msg);
+            System.err.println(msg.getMember("test"));
         }
 
     }
