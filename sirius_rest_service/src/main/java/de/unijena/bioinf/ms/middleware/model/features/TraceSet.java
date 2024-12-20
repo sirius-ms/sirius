@@ -113,9 +113,9 @@ public class TraceSet {
     @Schema(name = "TraceExperimental",
             description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
     public static class Trace {
-        @JsonFormat(shape = JsonFormat.Shape.STRING) private long id;
+        private String id;
         @Schema(nullable = true)
-        @JsonFormat(shape = JsonFormat.Shape.STRING) private Long sampleId;
+        private String sampleId;
         @Schema(nullable = true)
         private String sampleName;
         private String label;
@@ -138,8 +138,8 @@ public class TraceSet {
 
         public static Trace of(String label, AbstractLCMSRun run, AbstractAlignedFeatures feature, AbstractTrace trace, RetentionTimeAxis axis) {
             Trace t = new Trace();
-            t.setId(feature instanceof AlignedFeatures ? ((AlignedFeatures)feature).getAlignedFeatureId() : ((AlignedIsotopicFeatures)feature).getAlignedIsotopeFeatureId());
-            t.setSampleId(feature.getRunId());
+            t.setId(String.valueOf(feature instanceof AlignedFeatures ? ((AlignedFeatures)feature).getAlignedFeatureId() : ((AlignedIsotopicFeatures)feature).getAlignedIsotopeFeatureId()));
+            t.setSampleId(String.valueOf(feature.getRunId()));
             t.setIntensities(MatrixUtils.float2double(trace.getIntensities().toFloatArray()));
             t.setMz(feature.getAverageMass());
             t.setMerged(run instanceof MergedLCMSRun);
@@ -166,7 +166,7 @@ public class TraceSet {
                             }
                         } else {
                             for (int i=0; i < ids.length; ++i) {
-                                if (spec.getSampleIds()[i]==t.sampleId) {
+                                if (String.valueOf(spec.getSampleIds()[i]).equals(t.sampleId)) {
                                     for (int j = 0; j < ids[i].length; ++j) {
                                         annos.add(new Annotation(AnnotationType.MS2, String.format(Locale.US, "scan index = %d", spec.getMs2ScanIds()[i][j]),
                                                 ids[i][j]));
@@ -188,7 +188,7 @@ public class TraceSet {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private @Nullable AdductNetwork adductNetwork;
-    @JsonFormat(shape = JsonFormat.Shape.STRING) private long sampleId;
+    private String sampleId;
     private String sampleName;
     private Axes axes;
     private Trace[] traces;

@@ -84,7 +84,7 @@ class LiquidChromatographyPlot {
         this.createPlot();
     }
 
-    loadData(dataUrl, afterwards, compoundMainFeature=null) {
+    loadData(dataUrl, afterwards, compoundMainFeature) {
         d3.json(dataUrl).then(data => {
             this.data = compoundMainFeature===null ? new LCAlignmentData(data) : new LCCompoundData(data, compoundMainFeature);
             this.clear();
@@ -519,7 +519,8 @@ class LCCompoundData extends AbstractLiquidChromatographyData {
         for (var i=0; i < this.json.traces.length; ++i) {
             let tr = new Trace(this, this.json.traces[i], this.traces.length, this.json.traces[i].label);
             this.addTrace(tr);
-            if (this.json.traces[i].id==mainFeature) {
+            const tid = this.json.traces[i].id;
+            if (tid===this.mainFeatureId) {
                 this.setSpecialTrace(tr);
             }
         }

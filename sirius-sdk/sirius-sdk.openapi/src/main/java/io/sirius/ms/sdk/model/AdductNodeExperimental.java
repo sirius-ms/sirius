@@ -25,12 +25,14 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
-
-import com.fasterxml.jackson.annotation.*;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.HashMap;
 import java.util.Map;
-
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
@@ -44,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AdductNodeExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
-  @JsonFormat(shape = JsonFormat.Shape.STRING) private Long alignedFeatureId;
+  private Long alignedFeatureId;
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
