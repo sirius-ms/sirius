@@ -125,6 +125,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
+*FeaturesApi* | [**getAdductNetworkWithMergedTracesExperimental**](docs/FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
 *FeaturesApi* | [**getAlignedFeaturesPaged**](docs/FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space.
@@ -219,6 +220,9 @@ Class | Method | HTTP request | Description
 
  - [AccountCredentials](docs/AccountCredentials.md)
  - [AccountInfo](docs/AccountInfo.md)
+ - [AdductEdgeExperimental](docs/AdductEdgeExperimental.md)
+ - [AdductNetworkExperimental](docs/AdductNetworkExperimental.md)
+ - [AdductNodeExperimental](docs/AdductNodeExperimental.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)

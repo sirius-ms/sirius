@@ -7,16 +7,16 @@ public class MsMsTraceReference implements Serializable {
 
     public final int ms2Uid;
     public final int traceUid;
-    public final int rawScanIdx;
+    public final int rawScanIdxOfParent;
 
     public MsMsTraceReference(int ms2Uid, int traceUid, int scanIdx) {
         this.ms2Uid = ms2Uid;
         this.traceUid = traceUid;
-        this.rawScanIdx = scanIdx;
+        this.rawScanIdxOfParent = scanIdx;
     }
 
     @Override
     public String toString() {
-        return String.format(Locale.US, "MsMS at scan %d for trace %d (Ms2ID: %d)", rawScanIdx, traceUid, ms2Uid);
+        return String.format(Locale.US, "MsMS at scan %d for trace %d (Ms2ID: %d)", rawScanIdxOfParent, traceUid, ms2Uid);
     }
 }
