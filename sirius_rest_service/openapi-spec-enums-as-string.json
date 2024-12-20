@@ -87,7 +87,9 @@
                   "sizeInformation"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -146,7 +148,9 @@
                   "sizeInformation"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -205,7 +209,9 @@
                   "sizeInformation"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -298,7 +304,9 @@
                   "sizeInformation"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -567,7 +575,9 @@
                   "affectedIds"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1538,7 +1548,9 @@
                   "customAnnotations"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -1558,7 +1570,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1626,7 +1640,9 @@
                   "customAnnotations"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -1647,7 +1663,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1718,7 +1736,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1787,7 +1807,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2452,7 +2474,9 @@
                   "affectedIds"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2598,7 +2622,9 @@
                   "customAnnotations"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -2618,7 +2644,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2789,7 +2817,9 @@
                   "customAnnotations"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -2809,7 +2839,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2917,7 +2949,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3090,7 +3124,9 @@
                   "referenceSpectrum"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3160,7 +3196,9 @@
                   "referenceSpectrum"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3356,7 +3394,9 @@
                   "referenceSpectrum"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3562,7 +3602,9 @@
                   "canopusPredictions"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3641,7 +3683,9 @@
                   "canopusPredictions"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4102,7 +4146,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4210,7 +4256,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4281,7 +4329,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4389,7 +4439,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4705,7 +4757,9 @@
                   "canopusPredictions"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4767,7 +4821,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4866,7 +4922,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4928,7 +4986,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -5027,7 +5087,9 @@
                   "libraryMatches"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -5157,7 +5219,9 @@
                   "computedTools"
                 ]
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
