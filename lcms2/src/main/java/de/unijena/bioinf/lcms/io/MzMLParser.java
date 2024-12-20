@@ -297,7 +297,7 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
-                    log.error("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
                     continue;
                 }
 
