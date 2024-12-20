@@ -106,7 +106,7 @@ public class MzMLParser implements LCMSParser {
             return parse(input.getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
         } catch (RuntimeException e) {
             //expect IllegalStateException, but catch any RuntimeException
-            LoggerFactory.getLogger(this.getClass()).error("Cannot parse input file {}. File may be corrupted.", input.toAbsolutePath(), e);
+            log.error("Cannot parse input file {}. File may be corrupted.", input.toAbsolutePath(), e);
             throw new IOException("Cannot parse input file "+input.toAbsolutePath()+". File may be corrupted.",e);
         }
 
@@ -176,6 +176,7 @@ public class MzMLParser implements LCMSParser {
                         }
                         if (ionization == null) {
                             for (UserParam userParam : sc.getUserParam()) {
+                                if (isParamValueNull(userParam, parent, fileName)) continue;
                                 Optional<Ionization> optType = Ionization.byValue(userParam.getValue());
                                 if (optType.isPresent()) {
                                     ionization = optType.get();
@@ -197,6 +198,7 @@ public class MzMLParser implements LCMSParser {
                         }
 
                         for (UserParam userParam : ac.getUserParam()) {
+                            if (isParamValueNull(userParam, parent, fileName)) continue;
                             Optional<MassAnalyzer> optType = MassAnalyzer.byValue(userParam.getValue());
                             if (optType.isPresent()) {
                                 massAnalyzers.add(optType.get());
@@ -358,6 +360,7 @@ public class MzMLParser implements LCMSParser {
                         }
                         if (fragmentation == null) {
                             for (UserParam userParam : precursor.getActivation().getUserParam()) {
+                                if (isParamValueNull(userParam, parent, fileName)) continue;
                                 Optional<Fragmentation> optType = Fragmentation.byValue(userParam.getValue());
                                 if (optType.isPresent()) {
                                     fragmentation = optType.get();
@@ -418,8 +421,17 @@ public class MzMLParser implements LCMSParser {
             return sample;
 
         } catch (Exception e) {
-            throw new IOException(e);
+            log.error("Cannot parse input file {}.", parent.resolve(fileName), e);
+            throw new IOException("Cannot parse input file "+parent.resolve(fileName),e);
         }
+    }
+
+    private boolean isParamValueNull(UserParam userParam, URI parent, String fileName) {
+        if (userParam.getValue() == null) {
+            log.warn("Parameter value for '{}' missing in file '{}'.", userParam.getName(), parent.resolve(fileName));
+            return true;
+        }
+        return false;
     }
 
     private static Pattern SCAN_PATTERN = Pattern.compile("scan=(\\d+)"), ALT_PATTERN = Pattern.compile("\\S+=(\\d+)");
