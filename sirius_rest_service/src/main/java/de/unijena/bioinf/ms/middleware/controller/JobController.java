@@ -81,7 +81,7 @@ public class JobController {
     @ResponseStatus(HttpStatus.OK)
     public Page<Job> getJobsPaged(@PathVariable String projectId,
                                   @ParameterObject Pageable pageable,
-                                  @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+                                  @RequestParam(defaultValue = "none") EnumSet<Job.OptField> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
@@ -95,7 +95,7 @@ public class JobController {
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public List<Job> getJobs(@PathVariable String projectId,
-                             @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+                             @RequestParam(defaultValue = "none") EnumSet<Job.OptField> optFields
     ) {
         return getJobsPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
     }

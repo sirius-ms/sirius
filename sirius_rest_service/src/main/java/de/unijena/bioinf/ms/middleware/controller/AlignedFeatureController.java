@@ -82,7 +82,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPaged(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
     }
@@ -97,7 +97,7 @@ public class AlignedFeatureController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
-            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), removeNone(optFields))
                 .getContent();
@@ -126,7 +126,7 @@ public class AlignedFeatureController {
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @Valid @RequestBody List<FeatureImport> features,
                                                    @RequestParam(required = false) InstrumentProfile profile,
-                                                   @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+                                                   @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
         List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
 
@@ -150,7 +150,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeature(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, removeNone(optFields));
     }
@@ -179,7 +179,7 @@ public class AlignedFeatureController {
     public Page<StructureCandidateFormula> getStructureCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findStructureCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
@@ -197,7 +197,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateFormula> getStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return getStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
@@ -215,7 +215,7 @@ public class AlignedFeatureController {
     public Page<StructureCandidateFormula> getDeNovoStructureCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findDeNovoStructureCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
@@ -233,7 +233,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateFormula> getDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
@@ -282,7 +282,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "1") int minSharedPeaks,
             @RequestParam(defaultValue = "0.2") double minSimilarity,
             @RequestParam(defaultValue = "") @Nullable String inchiKey,
-            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
         minSharedPeaks = Math.max(minSharedPeaks, 0);
         minSimilarity = Math.min(Math.max(minSimilarity, 0d), 1d);
@@ -293,7 +293,7 @@ public class AlignedFeatureController {
             matches = projectsProvider.getProjectOrThrow(projectId).findLibraryMatchesByFeatureIdAndInchi(alignedFeatureId, inchiKey, minSharedPeaks, minSimilarity, pageable);
         }
 
-        if (matches != null && optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
+        if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
             matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
@@ -302,9 +302,9 @@ public class AlignedFeatureController {
 
 
                         } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
                         }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: " + match.getDbName())
+                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
             ));
         return matches;
     }
@@ -323,7 +323,7 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "1") int minSharedPeaks,
             @RequestParam(defaultValue = "0.2") double minSimilarity,
             @RequestParam(defaultValue = "") @Nullable String inchiKey,
-            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
         return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), minSharedPeaks, minSimilarity, inchiKey, optFields).stream().toList();
     }
@@ -338,13 +338,13 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public SpectralLibraryMatch getSpectralLibraryMatch(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String matchId,
-            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
         SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
                 .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
 
 
-        if (optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
+        if (removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
@@ -353,9 +353,9 @@ public class AlignedFeatureController {
 
 
                         } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
                         }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: " + match.getDbName())
+                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
             );
         return match;
     }
@@ -388,7 +388,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<FormulaCandidate> getFormulaCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
@@ -406,7 +406,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<FormulaCandidate> getFormulaCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
@@ -424,7 +424,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaCandidate getFormulaCandidate(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
 
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
@@ -445,7 +445,7 @@ public class AlignedFeatureController {
     public Page<StructureCandidateScored> getStructureCandidatesByFormulaPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
@@ -464,7 +464,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/db-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateScored> getStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId,formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
@@ -484,7 +484,7 @@ public class AlignedFeatureController {
     public Page<StructureCandidateScored> getDeNovoStructureCandidatesByFormulaPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
                 .findDeNovoStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
@@ -503,7 +503,7 @@ public class AlignedFeatureController {
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateScored> getDeNovoStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+            @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
