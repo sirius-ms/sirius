@@ -8,8 +8,8 @@ EXPERIMENTAL: This schema is experimental and may be changed (or even removed) w
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**id** | **Long** |  |  [optional] |
-|**sampleId** | **Long** |  |  [optional] |
+|**id** | **String** |  |  [optional] |
+|**sampleId** | **String** |  |  [optional] |
 |**sampleName** | **String** |  |  [optional] |
 |**label** | **String** |  |  [optional] |
 |**intensities** | **List&lt;Double&gt;** |  |  [optional] |
