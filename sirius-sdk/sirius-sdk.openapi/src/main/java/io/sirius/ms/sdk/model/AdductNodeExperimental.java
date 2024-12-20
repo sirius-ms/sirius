@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AdductNodeExperimental {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
-  private Long alignedFeatureId;
+  private String alignedFeatureId;
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
@@ -57,7 +57,7 @@ public class AdductNodeExperimental {
   public AdductNodeExperimental() {
   }
 
-  public AdductNodeExperimental alignedFeatureId(Long alignedFeatureId) {
+  public AdductNodeExperimental alignedFeatureId(String alignedFeatureId) {
     
     this.alignedFeatureId = alignedFeatureId;
     return this;
@@ -71,14 +71,14 @@ public class AdductNodeExperimental {
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Long getAlignedFeatureId() {
+  public String getAlignedFeatureId() {
     return alignedFeatureId;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureId(Long alignedFeatureId) {
+  public void setAlignedFeatureId(String alignedFeatureId) {
     this.alignedFeatureId = alignedFeatureId;
   }
 
