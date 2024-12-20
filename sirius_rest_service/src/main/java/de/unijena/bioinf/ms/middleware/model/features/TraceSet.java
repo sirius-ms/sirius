@@ -8,7 +8,6 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatur
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.AbstractLCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -107,7 +106,6 @@ public class TraceSet {
             this.index = index;
         }
     }
-
 
     @Getter
     @Setter

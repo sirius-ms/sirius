@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
@@ -83,7 +82,6 @@ public class LCMSWebview extends JFXPanel {
                 if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
                     f.call("loadString", json);
                 } else {
-                    System.out.println(featureId + "::\n " + json + "\n:::::");
                     f.call("loadStringForCompound", json, Long.parseLong(featureId));
                 }
             } catch (Throwable e) {
