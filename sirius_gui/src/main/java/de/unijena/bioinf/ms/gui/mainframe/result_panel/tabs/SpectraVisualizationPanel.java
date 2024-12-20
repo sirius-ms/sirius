@@ -314,17 +314,17 @@ public class SpectraVisualizationPanel extends JPanel implements
             } else if (mode.equals(MS2_MIRROR_DISPLAY)) {
                 if (selectedMatchBean == null || selectedMatchBean.getReference().isEmpty()) {
                     showError("Reference spectrum not found!");
-                    LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Spectrum {} not found!", Optional.ofNullable(selectedMatchBean).map(s-> s.getMatch().getDbId()).orElse("N/A"));
+                    LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Spectrum {} not found!", Optional.ofNullable(selectedMatchBean).map(s -> s.getMatch().getDbId()).orElse("N/A"));
                     return;
                 }
 
-                if (isNullOrEmpty(msData.getMs2Spectra())){
+                if (isNullOrEmpty(msData.getMs2Spectra())) {
                     showError("Measured MS/MS spectrum not found!");
                     return;
                 }
 
                 BasicSpectrum s = ce_index >= 0 && ce_index < msData.getMs2Spectra().size() ?
-                        msData.getMs2Spectra().get(queryIndices.getInt(ce_index)): msData.getMs2Spectra().getFirst();
+                        msData.getMs2Spectra().get(queryIndices.getInt(ce_index)) : msData.getMs2Spectra().getFirst();
 
                 jsonSpectra = SpectraViewContainer.of(List.of(s, selectedMatchBean.getReference().get()));
                 smiles = selectedMatchBean.getMatch().getSmiles();
@@ -532,7 +532,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                             }
 
                             synchronized (SpectraVisualizationPanel.this) {
-                                if (instance == null && formulaCandidateId == null && smiles == null && matchList == null && matchBean == null){
+                                if (instance == null && formulaCandidateId == null && smiles == null && matchList == null && matchBean == null) {
                                     checkForInterruption();
                                     clearData();
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
@@ -558,7 +558,6 @@ public class SpectraVisualizationPanel extends JPanel implements
                                                     .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
                                                     .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
                                             checkForInterruption();
-        //
 
                                             String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
                                                     .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
@@ -652,13 +651,13 @@ public class SpectraVisualizationPanel extends JPanel implements
                                 center.disableLoading();
                                 return null;
                             }
-                        }finally {
+                        } finally {
                             if (loading)
                                 center.decreaseLoading();
                         }
                     }
                 });
-            }finally {
+            } finally {
                 backgroundLoaderLock.unlock();
             }
         } finally {
@@ -680,7 +679,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         ceBox.removeAllItems();
         if (ms2MirrorEnabled) {
             SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
-            int maxIndex = 0;
+            int maxIndex = -1;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
                 if (similarities != null && similarities[i] != null) {
                     BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
@@ -689,11 +688,11 @@ public class SpectraVisualizationPanel extends JPanel implements
                             String.format(" (%.1f %% similarity, %d shared peaks)", 100 * similarities[i].similarity, similarities[i].sharedPeaks));
                     if (similarities[i].similarity > maxSimilarity.similarity || (Math.abs(similarities[i].similarity - maxSimilarity.similarity) < 1E-3 && similarities[i].sharedPeaks > maxSimilarity.sharedPeaks)) {
                         maxSimilarity = similarities[i];
-                        maxIndex = i;
+                        maxIndex++;
                     }
                 }
             }
-            if (ceBox.getItemCount() > 0)
+            if (ceBox.getItemCount() > 0 && ceBox.getItemCount() > maxIndex)
                 ceBox.setSelectedIndex(maxIndex);
         } else {
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
@@ -900,15 +899,16 @@ public class SpectraVisualizationPanel extends JPanel implements
     }
 
     private static final Pattern PEAK_ID_WITH_STYLE = Pattern.compile("(id=\"peak[0-9]+\"[^>]*style=\")");
+
     /**
      * since the css styling information gets lost, we set the peak width here, so that the peakss are not invisible.
      * All intends to fix this in the .js broke the actual viewer.
-     *
+     * <p>
      * Assumes that peaks have ids 'peak[0-9]+
      */
     private String enforcePeakWidth(String svgString) {
         Matcher m = PEAK_ID_WITH_STYLE.matcher(svgString);
-        String replaced =  m.replaceAll((mr) -> mr.group(1)+"width: 2px;");
+        String replaced = m.replaceAll((mr) -> mr.group(1) + "width: 2px;");
         return replaced;
     }
 }
