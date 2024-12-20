@@ -73,7 +73,7 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) {
+    public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) {
         return projectsProvider.getProjectInfoOrThrow(projectId, removeNone(optFields));
     }
 
@@ -86,7 +86,7 @@ public class ProjectController {
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo openProjectSpace(@PathVariable String projectId,
                                         @Deprecated(forRemoval = true) @RequestParam(required = false) String pathToProject,
-                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+                                        @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
         return projectsProvider.openProject(projectId, pathToProject, removeNone(optFields));
     }
@@ -100,7 +100,7 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo createProjectSpace(@PathVariable String projectId,
                                           @Deprecated(forRemoval = true) @RequestParam(required = false) String pathToProject,
-                                          @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+                                          @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
         return projectsProvider.createProject(projectId, pathToProject, removeNone(optFields));
     }
@@ -365,7 +365,7 @@ public class ProjectController {
             summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
     )
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+    public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return projectsProvider.copyProject(projectId, pathToCopiedProject, copyProjectId, removeNone(optFields));
     }
 

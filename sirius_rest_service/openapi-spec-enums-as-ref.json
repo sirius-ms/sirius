@@ -81,7 +81,9 @@
               "items": {
                 "$ref": "#/components/schemas/ProjectInfoOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -134,7 +136,9 @@
               "items": {
                 "$ref": "#/components/schemas/ProjectInfoOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -187,7 +191,9 @@
               "items": {
                 "$ref": "#/components/schemas/ProjectInfoOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -274,7 +280,9 @@
               "items": {
                 "$ref": "#/components/schemas/ProjectInfoOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -536,7 +544,9 @@
               "items": {
                 "$ref": "#/components/schemas/JobOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1451,7 +1461,9 @@
               "items": {
                 "$ref": "#/components/schemas/CompoundOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -1463,7 +1475,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1519,7 +1533,9 @@
               "items": {
                 "$ref": "#/components/schemas/CompoundOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -1532,7 +1548,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1595,7 +1613,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -1651,7 +1671,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2302,7 +2324,9 @@
               "items": {
                 "$ref": "#/components/schemas/JobOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2441,7 +2465,9 @@
               "items": {
                 "$ref": "#/components/schemas/CompoundOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -2453,7 +2479,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2617,7 +2645,9 @@
               "items": {
                 "$ref": "#/components/schemas/CompoundOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           },
           {
@@ -2629,7 +2659,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2729,7 +2761,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2897,7 +2931,9 @@
               "items": {
                 "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -2962,7 +2998,9 @@
               "items": {
                 "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3153,7 +3191,9 @@
               "items": {
                 "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3343,7 +3383,9 @@
               "items": {
                 "$ref": "#/components/schemas/FormulaCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3410,7 +3452,9 @@
               "items": {
                 "$ref": "#/components/schemas/FormulaCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3864,7 +3908,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -3965,7 +4011,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4029,7 +4077,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4130,7 +4180,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4434,7 +4486,9 @@
               "items": {
                 "$ref": "#/components/schemas/FormulaCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4489,7 +4543,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4581,7 +4637,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4636,7 +4694,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4728,7 +4788,9 @@
               "items": {
                 "$ref": "#/components/schemas/StructureCandidateOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
@@ -4850,7 +4912,9 @@
               "items": {
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
-              "default": []
+              "default": [
+                "none"
+              ]
             }
           }
         ],
