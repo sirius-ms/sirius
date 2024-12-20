@@ -222,8 +222,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // add merged trace
             TraceSet.Trace mergedtrace = new TraceSet.Trace();
             mergedtrace.setMz(feature.getAverageMass());
-            mergedtrace.setId(feature.getAlignedFeatureId());
-            mergedtrace.setSampleId(merged.getRunId());
+            mergedtrace.setId(String.valueOf(feature.getAlignedFeatureId()));
+            mergedtrace.setSampleId(String.valueOf(merged.getRunId()));
             mergedtrace.setSampleName(merged.getName());
             mergedtrace.setLabel(merged.getName());
             mergedtrace.setNormalizationFactor(1d);
@@ -268,8 +268,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     }
 
                     TraceSet.Trace trace = new TraceSet.Trace();
-                    trace.setId(features.get(k).getFeatureId());
-                    trace.setSampleId(features.get(k).getRunId());
+                    trace.setId(String.valueOf(features.get(k).getFeatureId()));
+                    trace.setSampleId(String.valueOf(features.get(k).getRunId()));
                     trace.setSampleName(samples.get(k) == null ? "unknown" : samples.get(k).getName());
 
                     trace.setIntensities(vec);
@@ -313,7 +313,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         traceSet.setAxes(axes);
 
         traceSet.setSampleName(merged.getName());
-        traceSet.setSampleId(merged.getRunId());
+        traceSet.setSampleId(String.valueOf(merged.getRunId()));
 
         return Optional.of(traceSet);
     }
@@ -390,14 +390,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
         traceSet.setSampleName(merged.getName());
-        traceSet.setSampleId(merged.getRunId());
+        traceSet.setSampleId(String.valueOf(merged.getRunId()));
         traceSet.harmonizeTraces(retentionTimeAxis, offsets.toIntArray());
         return Optional.of(traceSet);
     }
 
 
     /**
-     * This method wil return Optional.empty();l collect all aligned features belonging to the same traceset
+     * This method wilreturn Optional.empty();l collect all aligned features belonging to the same traceset
      */
     @SneakyThrows
     public Optional<TraceSet> getCompleteTraceSetForAlignedFeature(String alignedFeatureId) {
@@ -487,8 +487,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // add merged trace
             TraceSet.Trace mergedtrace = new TraceSet.Trace();
             mergedtrace.setMz(mainFeature.getAverageMass());
-            mergedtrace.setId(mainFeature.getAlignedFeatureId());
-            mergedtrace.setSampleId(merged.getRunId());
+            mergedtrace.setId(String.valueOf(mainFeature.getAlignedFeatureId()));
+            mergedtrace.setSampleId(String.valueOf(merged.getRunId()));
             mergedtrace.setSampleName(merged.getName());
             mergedtrace.setLabel(merged.getName());
             mergedtrace.setNormalizationFactor(1d);
@@ -526,8 +526,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
 
             TraceSet.Trace trace = new TraceSet.Trace();
-            trace.setId(-1);
-            trace.setSampleId(sampleKey);
+            trace.setId("-1");
+            trace.setSampleId(String.valueOf(sampleKey));
             trace.setSampleName(samples.get(sampleKey) == null ? "unknown" : samples.get(sampleKey).getName());
 
             trace.setIntensities(traceIntensities);
@@ -577,7 +577,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         traceSet.setAxes(axes);
 
         traceSet.setSampleName(merged.getName());
-        traceSet.setSampleId(merged.getRunId());
+        traceSet.setSampleId(String.valueOf(merged.getRunId()));
 
         return Optional.of(traceSet);
     }
@@ -626,7 +626,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
 
-        traceSet.setSampleId(merged.getRunId());
+        traceSet.setSampleId(String.valueOf(merged.getRunId()));
         traceSet.setSampleName(merged.getName());
 
         int startIndexOfTraces = Integer.MAX_VALUE;
@@ -645,7 +645,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             maximumIndex = Math.max(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
             TraceSet.Trace trace = new TraceSet.Trace();
             trace.setMz(f.getAverageMass());
-            trace.setId(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0));
+            trace.setId(String.valueOf(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0)));
             trace.setLabel(label);
 
             int shift = mergedTrace.getScanIndexOffset() - startIndexOfTraces;

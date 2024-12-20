@@ -55,7 +55,7 @@ public class TraceSetExperimental {
   private AdductNetworkExperimental adductNetwork;
 
   public static final String JSON_PROPERTY_SAMPLE_ID = "sampleId";
-  private Long sampleId;
+  private String sampleId;
 
   public static final String JSON_PROPERTY_SAMPLE_NAME = "sampleName";
   private String sampleName;
@@ -94,7 +94,7 @@ public class TraceSetExperimental {
     this.adductNetwork = adductNetwork;
   }
 
-  public TraceSetExperimental sampleId(Long sampleId) {
+  public TraceSetExperimental sampleId(String sampleId) {
     
     this.sampleId = sampleId;
     return this;
@@ -108,14 +108,14 @@ public class TraceSetExperimental {
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Long getSampleId() {
+  public String getSampleId() {
     return sampleId;
   }
 
 
   @JsonProperty(JSON_PROPERTY_SAMPLE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSampleId(Long sampleId) {
+  public void setSampleId(String sampleId) {
     this.sampleId = sampleId;
   }
 
