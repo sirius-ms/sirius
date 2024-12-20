@@ -65,7 +65,7 @@ public class LCMSWebview extends JFXPanel {
                     } else {
                         this.webView.getEngine().executeScript("document.setDark()");
                     }
-                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
+                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('lc')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();

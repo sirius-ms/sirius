@@ -56,7 +56,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                 if (isotopePeakIdx<0) continue;
                 Optional<ContiguousTrace> isotope = sample.getStorage().getTraceStorage().getContigousTrace(mz-largeDev.absoluteFor(mz), mz+largeDev.absoluteFor(mz), moi.getScanId());
                 double score = isotope.isPresent() ? correlationScore(sample, moi, trace, traceSegment, spectrum, isotope.get()) : 0d;
-                if (score >= 0.5) {
+                if (score >= 0.5 || (score > 0 && isotope.isPresent() && trace.apex()==isotope.get().apex())) {
                     scoresum+=score;
                     traceIdsAll[i] =isotope.get().getUid();
                     iso[i] = true;
