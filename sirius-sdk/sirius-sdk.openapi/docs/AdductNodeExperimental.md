@@ -8,7 +8,7 @@ EXPERIMENTAL: This schema is experimental and may be changed (or even removed) w
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**alignedFeatureId** | **Long** |  |  [optional] |
+|**alignedFeatureId** | **String** |  |  [optional] |
 |**mz** | **Double** |  |  [optional] |
 |**adductAnnotations** | **Map&lt;String, Double&gt;** |  |  [optional] |
 

@@ -7978,8 +7978,7 @@
         "type": "object",
         "properties": {
           "alignedFeatureId": {
-            "type": "integer",
-            "format": "int64"
+            "type": "string"
           },
           "mz": {
             "type": "number",
