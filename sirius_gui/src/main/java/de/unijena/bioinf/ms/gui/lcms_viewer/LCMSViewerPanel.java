@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
@@ -27,6 +28,7 @@ import java.util.stream.IntStream;
 
 public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean>, Loadable {
 
+    private static final String SHOW_ADDUCT_NETWORK_VIEW_KEY = "de.unijena.bioinf.sirius.ui.showAdductNetworkView";
     private InstanceBean currentInstance;
 
     private LCMSWebview lcmsWebview;
@@ -79,7 +81,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         scrollpanel.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
         this.add(new ToggableSidePanel("quality report", scrollpanel), BorderLayout.EAST);
 
-        {
+        if (SiriusProperties.getBoolean(SHOW_ADDUCT_NETWORK_VIEW_KEY, false)) {
             JLabel label = new JLabel("Show ");
             toolbar.add(label);
             ButtonGroup group = new ButtonGroup();
