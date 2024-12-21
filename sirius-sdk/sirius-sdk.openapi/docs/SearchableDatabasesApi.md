@@ -10,7 +10,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
-| [**importIntoDatabaseExperimental**](SearchableDatabasesApi.md#importIntoDatabaseExperimental) | **POST** /api/databases/{databaseId}/import/from-files | EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable. |
+| [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
 
@@ -408,11 +408,11 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## importIntoDatabaseExperimental
+## importIntoDatabase
 
-> SearchableDatabase importIntoDatabaseExperimental(databaseId, bufferSize, inputFiles)
+> SearchableDatabase importIntoDatabase(databaseId, bufferSize, inputFiles)
 
-EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+Start import of structure and spectra files into the specified database.
 
 Start import of structure and spectra files into the specified database.
 
@@ -436,10 +436,10 @@ public class Example {
         Integer bufferSize = 1000; // Integer | 
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            SearchableDatabase result = apiInstance.importIntoDatabaseExperimental(databaseId, bufferSize, inputFiles);
+            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, bufferSize, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseExperimental");
+            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabase");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

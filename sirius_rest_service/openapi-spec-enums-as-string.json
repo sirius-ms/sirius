@@ -61,7 +61,7 @@
         ],
         "summary": "Get project space info by its projectId.",
         "description": "Get project space info by its projectId.",
-        "operationId": "getProjectSpace",
+        "operationId": "getProject",
         "parameters": [
           {
             "name": "projectId",
@@ -112,7 +112,7 @@
         ],
         "summary": "Open an existing project-space and make it accessible via the given projectId.",
         "description": "Open an existing project-space and make it accessible via the given projectId.",
-        "operationId": "openProjectSpace",
+        "operationId": "openProject",
         "parameters": [
           {
             "name": "projectId",
@@ -173,7 +173,7 @@
         ],
         "summary": "Create and open a new project-space at given location and make it accessible via the given projectId.",
         "description": "Create and open a new project-space at given location and make it accessible via the given projectId.",
-        "operationId": "createProjectSpace",
+        "operationId": "createProject",
         "parameters": [
           {
             "name": "projectId",
@@ -234,7 +234,7 @@
         ],
         "summary": "Close project-space and remove it from application",
         "description": "Close project-space and remove it from application. Project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
-        "operationId": "closeProjectSpace",
+        "operationId": "closeProject",
         "parameters": [
           {
             "name": "projectId",
@@ -260,7 +260,7 @@
         ],
         "summary": "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
         "description": "Move an existing (opened) project-space to another location.",
-        "operationId": "copyProjectSpace",
+        "operationId": "copyProject",
         "parameters": [
           {
             "name": "projectId",
@@ -2051,9 +2051,9 @@
         "tags": [
           "Searchable Databases"
         ],
-        "summary": "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.",
+        "summary": "Start import of structure and spectra files into the specified database.",
         "description": "Start import of structure and spectra files into the specified database.",
-        "operationId": "importIntoDatabaseExperimental",
+        "operationId": "importIntoDatabase",
         "parameters": [
           {
             "name": "databaseId",
@@ -2225,7 +2225,7 @@
         ],
         "summary": "List opened project spaces.",
         "description": "List opened project spaces.",
-        "operationId": "getProjectSpaces",
+        "operationId": "getProjects",
         "responses": {
           "200": {
             "description": "OK",

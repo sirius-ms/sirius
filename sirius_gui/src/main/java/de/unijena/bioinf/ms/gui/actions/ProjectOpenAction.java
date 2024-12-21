@@ -114,11 +114,11 @@ public class ProjectOpenAction extends AbstractGuiAction {
             if (!pidInput.equals(projectId))
                 LoggerFactory.getLogger(getClass()).warn("Changed pid from '{}' to '{};, to respect name restrictions", projectId, pidInput);
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        ProjectInfo project = gui.getSiriusClient().projects().getProjectSpaces().stream()
+                        ProjectInfo project = gui.getSiriusClient().projects().getProjects().stream()
                                 .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
                         if (project == null)
-                            project = gui.getSiriusClient().projects().openProjectSpace(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+                            project = gui.getSiriusClient().projects().openProject(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
 
                         return project.getProjectId();
                     }

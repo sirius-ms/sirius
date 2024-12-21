@@ -256,11 +256,11 @@ public class GuiProjectManager implements Closeable {
     }
 
     public String getProjectLocation() {
-        return siriusClient.projects().getProjectSpace(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
+        return siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
     }
 
     public ProjectInfo getProjectInfo() {
-        return siriusClient.projects().getProjectSpace(
+        return siriusClient.projects().getProject(
                 projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
     }
 
