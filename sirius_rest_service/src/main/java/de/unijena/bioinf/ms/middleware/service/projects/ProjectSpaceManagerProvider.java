@@ -49,6 +49,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.PROJECT_OPENED;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
@@ -135,7 +136,8 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             }
 
             Path location = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
-            if (!isExistingProjectspaceDirectory(location) && !isZipProjectSpace(location)) {
+            // zip test does also work for nosql projects.
+            if (!isZipProjectSpace(location) && !isExistingProjectspaceDirectory(location)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
             }
 
@@ -149,7 +151,13 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) {
         return ensureUniqueName(validateId(projectIdSuggestion), (projectId) -> {
             try {
-                Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(projectId);
+                Path location;
+                if (notNullOrBlank(path)) {
+                    location = Path.of(path);
+                } else {
+                    location = defaultProjectDir().resolve(projectId);
+                    Files.createDirectories(location.getParent());
+                }
 
                 if (Files.exists(location)) {
                     if (failIfExists) {
@@ -249,6 +257,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
      * registers listeners that will transform project space events into server events to be sent via rest api*
      */
     protected abstract void registerEventListeners(@NotNull String id, @NotNull PSM psm);
+
     protected ServerEventImpl<ProjectChangeEvent> creatEvent(
             String projectId,
             ProjectEventType eventType,
