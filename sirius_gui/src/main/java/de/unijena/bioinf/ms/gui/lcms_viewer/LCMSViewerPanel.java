@@ -79,17 +79,18 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         scrollpanel.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
         this.add(new ToggableSidePanel("quality report", scrollpanel), BorderLayout.EAST);
 
-        {
-            JLabel label = new JLabel("Show ");
-            toolbar.add(label);
-            ButtonGroup group = new ButtonGroup();
-            for (ViewType o : ViewType.values()) {
-                JRadioButton button = new JRadioButton(new SetViewType(o));
-                if(o==viewType) button.setSelected(true);
-                group.add(button);
-                toolbar.add(button);
-            }
-        }
+        //todo activate ViewType.COMPOUND again once the new adduct networks are ready
+//        {
+//            JLabel label = new JLabel("Show ");
+//            toolbar.add(label);
+//            ButtonGroup group = new ButtonGroup();
+//            for (ViewType o : ViewType.values()) {
+//                JRadioButton button = new JRadioButton(new SetViewType(o));
+//                if(o==viewType) button.setSelected(true);
+//                group.add(button);
+//                toolbar.add(button);
+//            }
+//        }
         toolbar.add(Box.createHorizontalStrut(18));
         {
             orderLabel = new JLabel("Order samples ");
