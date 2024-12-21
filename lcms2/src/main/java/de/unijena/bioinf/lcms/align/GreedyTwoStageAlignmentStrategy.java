@@ -502,7 +502,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         DoubleArrayList xs=new DoubleArrayList(), ys=new DoubleArrayList(), xs2 = new DoubleArrayList(), ys2 = new DoubleArrayList();
         populate(storage, xs, ys, null, null, alignments, sample.getUid());
 
-        if (true/*minimumBuckSize > 1 && minimumBuckSize < 25*/) {
+        if (minimumBuckSize > 1/* && minimumBuckSize < 25*/) {
             // linear recalibration
             PolynomialFunction medianLinearRecalibration;
             if (xs.size() < 500) {
@@ -523,7 +523,8 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
 
             sample.setRtRecalibration(RecalibrationFunction.linear(medianLinearRecalibration));
             sample.setMzRecalibration(RecalibrationFunction.identity());
-        } else if (minimumBuckSize>=25) {
+        }/* else if (minimumBuckSize>=25) {
+            System.out.println("Second Case");
             double[] x,y;
             strictMonotonic(xs,ys, 0);
             x=xs.toDoubleArray();
@@ -565,7 +566,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                     rtError = loessError;
                 }
             }
-        }
+        }*/
         return rtError;
     }
     private double[] recalibrateByAlignmentWithMzRecal(ProcessedSample sample, AlignmentStorage storage, long[] alignments, HashMap<Integer, int[]> bucketCounts) {
