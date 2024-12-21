@@ -67,7 +67,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
     public void copyProject(@NotNull String projectId, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String nuPid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Copying Project...", () ->
-                    gui.applySiriusClient((c, pid) -> c.projects().copyProjectSpace(
+                    gui.applySiriusClient((c, pid) -> c.projects().copyProject(
                             pid, projectPath.toAbsolutePath().toString(), projectId,
                             List.of(ProjectInfoOptField.NONE)
                     ).getProjectId())
@@ -90,7 +90,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
                     gui.getSiriusClient().gui().openGui(projectId);
                     gui.close();
                 } else {
-                    gui.getSiriusClient().projects().closeProjectSpace(projectId);
+                    gui.getSiriusClient().projects().closeProject(projectId);
                 }
             });
     }

@@ -4,14 +4,14 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeProjectSpace**](ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
-| [**copyProjectSpace**](ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
-| [**createProjectSpace**](ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
+| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
+| [**copyProject**](ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**createProject**](ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
 | [**getCanopusNpcData**](ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes |
 | [**getFingerIdData**](ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition |
-| [**getProjectSpace**](ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
-| [**getProjectSpaces**](ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces. |
+| [**getProject**](ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
+| [**getProjects**](ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces. |
 | [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML) |
 | [**importMsRunDataAsJob**](ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job. |
 | [**importMsRunDataAsJobLocally**](ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
@@ -20,13 +20,13 @@ All URIs are relative to *http://localhost:8888*
 | [**importPreprocessedDataAsJob**](ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job. |
 | [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
-| [**openProjectSpace**](ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
+| [**openProject**](ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
 
 
 
-## closeProjectSpace
+## closeProject
 
-> closeProjectSpace(projectId)
+> closeProject(projectId)
 
 Close project-space and remove it from application
 
@@ -50,9 +50,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier of the  project-space to be closed.
         try {
-            apiInstance.closeProjectSpace(projectId);
+            apiInstance.closeProject(projectId);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#closeProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#closeProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -89,9 +89,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## copyProjectSpace
+## copyProject
 
-> ProjectInfo copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields)
+> ProjectInfo copyProject(projectId, pathToCopiedProject, copyProjectId, optFields)
 
 DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
@@ -118,10 +118,10 @@ public class Example {
         String copyProjectId = "copyProjectId_example"; // String | optional id/mame of the newly created project (copy). If given the project will be opened.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields);
+            ProjectInfo result = apiInstance.copyProject(projectId, pathToCopiedProject, copyProjectId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#copyProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#copyProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -161,9 +161,9 @@ No authorization required
 | **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt; |  -  |
 
 
-## createProjectSpace
+## createProject
 
-> ProjectInfo createProjectSpace(projectId, pathToProject, optFields)
+> ProjectInfo createProject(projectId, pathToProject, optFields)
 
 Create and open a new project-space at given location and make it accessible via the given projectId.
 
@@ -189,10 +189,10 @@ public class Example {
         String pathToProject = "pathToProject_example"; // String | local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject, optFields);
+            ProjectInfo result = apiInstance.createProject(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#createProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#createProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -429,9 +429,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getProjectSpace
+## getProject
 
-> ProjectInfo getProjectSpace(projectId, optFields)
+> ProjectInfo getProject(projectId, optFields)
 
 Get project space info by its projectId.
 
@@ -456,10 +456,10 @@ public class Example {
         String projectId = "projectId_example"; // String | unique name/identifier tof the project-space to be accessed.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.getProjectSpace(projectId, optFields);
+            ProjectInfo result = apiInstance.getProject(projectId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#getProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#getProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -497,9 +497,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getProjectSpaces
+## getProjects
 
-> List&lt;ProjectInfo&gt; getProjectSpaces()
+> List&lt;ProjectInfo&gt; getProjects()
 
 List opened project spaces.
 
@@ -522,10 +522,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         try {
-            List<ProjectInfo> result = apiInstance.getProjectSpaces();
+            List<ProjectInfo> result = apiInstance.getProjects();
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#getProjectSpaces");
+            System.err.println("Exception when calling ProjectsApi#getProjects");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -1135,9 +1135,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## openProjectSpace
+## openProject
 
-> ProjectInfo openProjectSpace(projectId, pathToProject, optFields)
+> ProjectInfo openProject(projectId, pathToProject, optFields)
 
 Open an existing project-space and make it accessible via the given projectId.
 
@@ -1163,10 +1163,10 @@ public class Example {
         String pathToProject = "pathToProject_example"; // String | local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.openProjectSpace(projectId, pathToProject, optFields);
+            ProjectInfo result = apiInstance.openProject(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#openProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#openProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

@@ -505,7 +505,7 @@ public class SearchableDatabasesApi {
         return getIncludedDatabasesRequestCreation(includeStats);
     }
     /**
-     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
@@ -514,11 +514,11 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseExperimentalRequestCreation(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -551,7 +551,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
@@ -560,13 +560,13 @@ public class SearchableDatabasesApi {
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase importIntoDatabaseExperimental(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    public SearchableDatabase importIntoDatabase(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseExperimentalRequestCreation(databaseId, bufferSize, inputFiles).bodyToMono(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
@@ -575,13 +575,13 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> importIntoDatabaseExperimentalWithHttpInfo(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseExperimentalRequestCreation(databaseId, bufferSize, inputFiles).toEntity(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
-     * EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
@@ -590,8 +590,8 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseExperimentalWithResponseSpec(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
-        return importIntoDatabaseExperimentalRequestCreation(databaseId, bufferSize, inputFiles);
+    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles);
     }
     /**
      * 

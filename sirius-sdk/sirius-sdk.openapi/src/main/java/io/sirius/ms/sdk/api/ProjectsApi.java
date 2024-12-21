@@ -59,11 +59,11 @@ public class ProjectsApi {
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeProjectSpaceRequestCreation(String projectId) throws WebClientResponseException {
+    private ResponseSpec closeProjectRequestCreation(String projectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling closeProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling closeProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -93,9 +93,9 @@ public class ProjectsApi {
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void closeProjectSpace(String projectId) throws WebClientResponseException {
+    public void closeProject(String projectId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        closeProjectSpaceRequestCreation(projectId).bodyToMono(localVarReturnType).block();
+        closeProjectRequestCreation(projectId).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -105,9 +105,9 @@ public class ProjectsApi {
      * @param projectId unique name/identifier of the  project-space to be closed.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> closeProjectSpaceWithHttpInfo(String projectId) throws WebClientResponseException {
+    public ResponseEntity<Void> closeProjectWithHttpInfo(String projectId) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return closeProjectSpaceRequestCreation(projectId).toEntity(localVarReturnType).block();
+        return closeProjectRequestCreation(projectId).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -118,8 +118,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeProjectSpaceWithResponseSpec(String projectId) throws WebClientResponseException {
-        return closeProjectSpaceRequestCreation(projectId);
+    public ResponseSpec closeProjectWithResponseSpec(String projectId) throws WebClientResponseException {
+        return closeProjectRequestCreation(projectId);
     }
     /**
      * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
@@ -134,15 +134,15 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec copyProjectSpaceRequestCreation(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec copyProjectRequestCreation(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling copyProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling copyProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'pathToCopiedProject' is set
         if (pathToCopiedProject == null) {
-            throw new WebClientResponseException("Missing the required parameter 'pathToCopiedProject' when calling copyProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'pathToCopiedProject' when calling copyProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -182,9 +182,9 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo copyProjectSpace(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo copyProject(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return copyProjectSpaceRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).bodyToMono(localVarReturnType).block();
+        return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -198,9 +198,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> copyProjectSpaceWithHttpInfo(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> copyProjectWithHttpInfo(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return copyProjectSpaceRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).toEntity(localVarReturnType).block();
+        return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -214,8 +214,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec copyProjectSpaceWithResponseSpec(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
-        return copyProjectSpaceRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields);
+    public ResponseSpec copyProjectWithResponseSpec(String projectId, String pathToCopiedProject, String copyProjectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return copyProjectRequestCreation(projectId, pathToCopiedProject, copyProjectId, optFields);
     }
     /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
@@ -227,11 +227,11 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec createProjectSpaceRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec createProjectRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling createProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling createProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -269,9 +269,9 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo createProjectSpace(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo createProject(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
+        return createProjectRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -284,9 +284,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> createProjectSpaceWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> createProjectWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
+        return createProjectRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -299,8 +299,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec createProjectSpaceWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
-        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields);
+    public ResponseSpec createProjectWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return createProjectRequestCreation(projectId, pathToProject, optFields);
     }
     /**
      * Get CANOPUS prediction vector definition for ClassyFire classes
@@ -563,11 +563,11 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getProjectSpaceRequestCreation(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getProjectRequestCreation(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -603,9 +603,9 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo getProjectSpace(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo getProject(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return getProjectSpaceRequestCreation(projectId, optFields).bodyToMono(localVarReturnType).block();
+        return getProjectRequestCreation(projectId, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -617,9 +617,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> getProjectSpaceWithHttpInfo(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> getProjectWithHttpInfo(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return getProjectSpaceRequestCreation(projectId, optFields).toEntity(localVarReturnType).block();
+        return getProjectRequestCreation(projectId, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -631,8 +631,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getProjectSpaceWithResponseSpec(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
-        return getProjectSpaceRequestCreation(projectId, optFields);
+    public ResponseSpec getProjectWithResponseSpec(String projectId, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return getProjectRequestCreation(projectId, optFields);
     }
     /**
      * List opened project spaces.
@@ -641,7 +641,7 @@ public class ProjectsApi {
      * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getProjectSpacesRequestCreation() throws WebClientResponseException {
+    private ResponseSpec getProjectsRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -671,9 +671,9 @@ public class ProjectsApi {
      * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<ProjectInfo> getProjectSpaces() throws WebClientResponseException {
+    public List<ProjectInfo> getProjects() throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return getProjectSpacesRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
+        return getProjectsRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -683,9 +683,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;List&lt;ProjectInfo&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<ProjectInfo>> getProjectSpacesWithHttpInfo() throws WebClientResponseException {
+    public ResponseEntity<List<ProjectInfo>> getProjectsWithHttpInfo() throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return getProjectSpacesRequestCreation().toEntityList(localVarReturnType).block();
+        return getProjectsRequestCreation().toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -695,8 +695,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getProjectSpacesWithResponseSpec() throws WebClientResponseException {
-        return getProjectSpacesRequestCreation();
+    public ResponseSpec getProjectsWithResponseSpec() throws WebClientResponseException {
+        return getProjectsRequestCreation();
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
@@ -1481,11 +1481,11 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec openProjectSpaceRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec openProjectRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling openProjectSpace", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling openProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -1523,9 +1523,9 @@ public class ProjectsApi {
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo openProjectSpace(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ProjectInfo openProject(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return openProjectSpaceRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
+        return openProjectRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1538,9 +1538,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> openProjectSpaceWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> openProjectWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return openProjectSpaceRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
+        return openProjectRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1553,7 +1553,7 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec openProjectSpaceWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
-        return openProjectSpaceRequestCreation(projectId, pathToProject, optFields);
+    public ResponseSpec openProjectWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return openProjectRequestCreation(projectId, pathToProject, optFields);
     }
 }
