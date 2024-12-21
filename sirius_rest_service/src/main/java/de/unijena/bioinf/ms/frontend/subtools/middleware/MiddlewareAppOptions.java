@@ -82,10 +82,10 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                     "/api/projects/*/import/ms-local-data-files," +
                     "/api/projects/*/import/preprocessed-local-data-files-job," +
                     "/api/projects/*/import/preprocessed-local-data-files," +
-                    "/api/projects/*/copy," +
+                    "/api/projects/*/copy,";
 
-                    "/api/databases/*/import/from-files-job," +
-                    "/api/databases/*/import/from-files";
+//                    "/api/databases/*/import/from-files-job," +
+//                    "/api/databases/*/import/from-files";
 
     @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
