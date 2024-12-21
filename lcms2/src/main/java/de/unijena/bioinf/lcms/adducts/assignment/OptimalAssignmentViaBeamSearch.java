@@ -63,7 +63,7 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         AdductAssignment[] array = Arrays.stream(subnetwork).map(x -> new AdductAssignment(new IonType[]{assignments.get(x.getIndex())}, new double[]{1d})).toArray(AdductAssignment[]::new);
         addMissingIonTypesByTransitiveEdges(manager, array, subnetwork, assignments);
         addFallbackIonsForUnlikelyAdducts(manager, array, subnetwork, assignments);
-        debugPrint(subnetwork, array, score);
+//        debugPrint(subnetwork, array, score);
         return array;
 
     }
