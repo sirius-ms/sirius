@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.service.compute;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobStateEvent;
+import de.unijena.bioinf.jjobs.exceptions.Exceptions;
 import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
@@ -31,6 +32,8 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.projectspace.Instance;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -98,7 +101,7 @@ public class ComputeServiceImpl implements ComputeService {
         run.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
             JJob.JobState s = ((JobStateEvent) evt).getNewValue();
             if (s.ordinal() > JJob.JobState.RUNNING.ordinal())
-                eventService.sendEvent(ServerEvents.newImportEvent(extractJobId(run, EnumSet.of(Job.OptField.affectedIds)),projectId));
+                eventService.sendEvent(ServerEvents.newImportEvent(extractJobId(run, EnumSet.of(Job.OptField.affectedIds)), projectId));
         });
     }
 
@@ -144,7 +147,7 @@ public class ComputeServiceImpl implements ComputeService {
         return id;
     }
 
-    private static Instance loadInstance(Project<?> project, String alignedFeatureId){
+    private static Instance loadInstance(Project<?> project, String alignedFeatureId) {
         return project.getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + project.getProjectId() + ".")
         );
@@ -231,13 +234,19 @@ public class ComputeServiceImpl implements ComputeService {
         return awaitImportAndExtractResult(createAndSubmitMsDataImportJob(project, importSubmission));
     }
 
-    private ImportResult awaitImportAndExtractResult(BackgroundRuns.BackgroundRunJob run){
-        run.takeResult();
-        Job jobInfo = extractJobId(run, EnumSet.of(Job.OptField.affectedIds));
-        return ImportResult.builder()
-                .affectedAlignedFeatureIds(jobInfo.getAffectedAlignedFeatureIds())
-                .affectedCompoundIds(jobInfo.getAffectedCompoundIds())
-                .build();
+    private ImportResult awaitImportAndExtractResult(BackgroundRuns.BackgroundRunJob run) {
+        try {
+            run.takeResult();
+            Job jobInfo = extractJobId(run, EnumSet.of(Job.OptField.affectedIds));
+            return ImportResult.builder()
+                    .affectedAlignedFeatureIds(jobInfo.getAffectedAlignedFeatureIds())
+                    .affectedCompoundIds(jobInfo.getAffectedCompoundIds())
+                    .build();
+        } catch (RuntimeException e) {
+            if (Exceptions.containsCause(e, ProjectStateException.class) || Exceptions.containsCause(e, ProjectTypeException.class))
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, Exceptions.unpack(e).getMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -263,9 +272,9 @@ public class ComputeServiceImpl implements ComputeService {
 
     private BackgroundRuns.BackgroundRunJob createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission<?> importSubmission) {
         return backgroundRuns(project).runImportPeakData(importSubmission, job -> {
-                    registerServerJobEventListener(job, project.getProjectId());
-                    registerServerImportEventListener(job, project.getProjectId());
-                });
+            registerServerJobEventListener(job, project.getProjectId());
+            registerServerImportEventListener(job, project.getProjectId());
+        });
     }
 
     @Override
