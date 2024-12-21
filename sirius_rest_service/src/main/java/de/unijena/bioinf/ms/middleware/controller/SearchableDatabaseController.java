@@ -112,10 +112,6 @@ public class SearchableDatabaseController {
      * @param inputFiles files to be imported
      * @return Job of the import command to be executed.
      */
-    @Operation(
-            operationId = "importIntoDatabaseExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
                                                  @RequestBody MultipartFile[] inputFiles,
