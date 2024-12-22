@@ -314,6 +314,7 @@ Class | Method | HTTP request | Description
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
+ - [StoredJobSubmission](docs/StoredJobSubmission.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)

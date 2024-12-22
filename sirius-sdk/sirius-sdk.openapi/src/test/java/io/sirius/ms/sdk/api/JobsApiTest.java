@@ -73,13 +73,13 @@ public class JobsApiTest {
     @Test
     public void testDeleteJobConfig() {
         JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
-        String name = null;
+        StoredJobSubmission storedConfig = null;
         try {
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
-            instance.deleteJobConfig(name);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
+            instance.deleteJobConfig(storedConfig.getName());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
@@ -116,7 +116,7 @@ public class JobsApiTest {
 
     @Test
     public void testGetJobConfig() {
-        String name = null;
+        StoredJobSubmission storedConfig = null;
         try {
             JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
             defJs.setFormulaIdParams(new Sirius().enabled(false));
@@ -124,10 +124,10 @@ public class JobsApiTest {
             defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(false));
             defJs.setStructureDbSearchParams(new StructureDbSearch().enabled(false));
 
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
 
-            JobSubmission jc = instance.getJobConfig(name, false);
+            JobSubmission jc = storedConfig.getJobSubmission();
             assertNotNull(jc);
             assertTrue(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty());
 
@@ -137,23 +137,23 @@ public class JobsApiTest {
             assertFalse(jc.getFingerprintPredictionParams().isEnabled());
             assertFalse(jc.getStructureDbSearchParams().isEnabled());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
     @Test
     public void testGetJobConfigs() {
-        String name = null;
+        StoredJobSubmission storedConfig = null;
         try {
             JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
 
-            List<JobSubmission> response = instance.getJobConfigs();
+            List<StoredJobSubmission> response = instance.getJobConfigs();
             assertNotNull(response);
             assertFalse(response.isEmpty());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
@@ -194,31 +194,37 @@ public class JobsApiTest {
         submission.getCanopusParams().setEnabled(false);
         submission.setRecompute(false); // store false but start job with true
 
-        // Saving job configuration
-        String configName = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true);
 
-        // Check if storing worked
-        JobSubmission config = instance.getJobConfig(configName, null);
-        assertNotNull(config);
+        StoredJobSubmission storedConfig = null;
+        try {
+            // Saving job configuration
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true, false);
 
-        // Retrieving aligned features for the project
-        List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), null)
-                .stream()
-                .map(AlignedFeature::getAlignedFeatureId)
-                .toList();
+            // Check if storing worked
+            JobSubmission config = storedConfig.getJobSubmission();
+            assertNotNull(config);
 
-        // Start job from config
-        List<JobOptField> optFields = makeOptFields(includeProgress, includeCommand, includeAffectedCompounds);
-        Job job = instance.startJobFromConfig(project.getProjectId(), configName, features, true, optFields);
-        assertNotNull(job);
+            // Retrieving aligned features for the project
+            List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), null)
+                    .stream()
+                    .map(AlignedFeature::getAlignedFeatureId)
+                    .toList();
 
-        // Check if progress and command fields are included as expected
-        assertEquals(includeProgress, job.getProgress() != null);
-        assertEquals(includeCommand, job.getCommand() != null);
+            // Start job from config
+            List<JobOptField> optFields = makeOptFields(includeProgress, includeCommand, includeAffectedCompounds);
+            Job job = instance.startJobFromConfig(project.getProjectId(), storedConfig.getName(), features, true, optFields);
+            assertNotNull(job);
 
-        // Wait for the job to complete
-        job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
-        assertEquals(JobState.DONE, job.getProgress().getState());
+            // Check if progress and command fields are included as expected
+            assertEquals(includeProgress, job.getProgress() != null);
+            assertEquals(includeCommand, job.getCommand() != null);
+
+            // Wait for the job to complete
+            job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
+            assertEquals(JobState.DONE, job.getProgress().getState());
+        } finally {
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
+        }
     }
 
     // Helper function to generate optional fields list

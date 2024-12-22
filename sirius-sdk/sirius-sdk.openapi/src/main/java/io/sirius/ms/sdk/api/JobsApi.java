@@ -7,6 +7,7 @@ import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.JobSubmission;
 import io.sirius.ms.sdk.model.PagedModelJob;
+import io.sirius.ms.sdk.model.StoredJobSubmission;
 
 import java.util.HashMap;
 import java.util.List;
@@ -463,7 +464,7 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @return JobSubmission
+     * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getJobConfigRequestCreation(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
@@ -493,7 +494,7 @@ public class JobsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return apiClient.invokeAPI("/api/job-configs/{name}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -503,11 +504,11 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @return JobSubmission
+     * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public JobSubmission getJobConfig(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+    public StoredJobSubmission getJobConfig(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigRequestCreation(name, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
 
@@ -517,11 +518,11 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} for given name.
      * @param name name of the job-config to return
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @return ResponseEntity&lt;JobSubmission&gt;
+     * @return ResponseEntity&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<JobSubmission> getJobConfigWithHttpInfo(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+    public ResponseEntity<StoredJobSubmission> getJobConfigWithHttpInfo(String name, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigRequestCreation(name, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
 
@@ -605,7 +606,7 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @return List&lt;JobSubmission&gt;
+     * @return List&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getJobConfigsRequestCreation() throws WebClientResponseException {
@@ -627,7 +628,7 @@ public class JobsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return apiClient.invokeAPI("/api/job-configs", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -635,11 +636,11 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @return List&lt;JobSubmission&gt;
+     * @return List&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<JobSubmission> getJobConfigs() throws WebClientResponseException {
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+    public List<StoredJobSubmission> getJobConfigs() throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigsRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
     }
 
@@ -647,11 +648,11 @@ public class JobsApi {
      * Request all available job configurations
      * Request all available job configurations
      * <p><b>200</b> - list of available {@link JobSubmission JobSubmission}s
-     * @return ResponseEntity&lt;List&lt;JobSubmission&gt;&gt;
+     * @return ResponseEntity&lt;List&lt;StoredJobSubmission&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<JobSubmission>> getJobConfigsWithHttpInfo() throws WebClientResponseException {
-        ParameterizedTypeReference<JobSubmission> localVarReturnType = new ParameterizedTypeReference<JobSubmission>() {};
+    public ResponseEntity<List<StoredJobSubmission>> getJobConfigsWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return getJobConfigsRequestCreation().toEntityList(localVarReturnType).block();
     }
 
@@ -923,14 +924,15 @@ public class JobsApi {
     /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
-     * <p><b>200</b> - Probably modified name of the config (to ensure filesystem path compatibility).
+     * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
-     * @return String
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
+     * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec saveJobConfigRequestCreation(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
+    private ResponseSpec saveJobConfigRequestCreation(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
         Object postBody = jobSubmission;
         // verify the required parameter 'name' is set
         if (name == null) {
@@ -951,9 +953,10 @@ public class JobsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "overrideExisting", overrideExisting));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "moveParametersToConfigMap", moveParametersToConfigMap));
         
         final String[] localVarAccepts = { 
-            "application/problem+json", "text/plain"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -963,52 +966,55 @@ public class JobsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
         return apiClient.invokeAPI("/api/job-configs/{name}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
-     * <p><b>200</b> - Probably modified name of the config (to ensure filesystem path compatibility).
+     * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
-     * @return String
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
+     * @return StoredJobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String saveJobConfig(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
-        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting).bodyToMono(localVarReturnType).block();
+    public StoredJobSubmission saveJobConfig(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
-     * <p><b>200</b> - Probably modified name of the config (to ensure filesystem path compatibility).
+     * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
-     * @return ResponseEntity&lt;String&gt;
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
+     * @return ResponseEntity&lt;StoredJobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> saveJobConfigWithHttpInfo(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
-        ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting).toEntity(localVarReturnType).block();
+    public ResponseEntity<StoredJobSubmission> saveJobConfigWithHttpInfo(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        ParameterizedTypeReference<StoredJobSubmission> localVarReturnType = new ParameterizedTypeReference<StoredJobSubmission>() {};
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap).toEntity(localVarReturnType).block();
     }
 
     /**
      * Add new job configuration with given name.
      * Add new job configuration with given name.
-     * <p><b>200</b> - Probably modified name of the config (to ensure filesystem path compatibility).
+     * <p><b>200</b> - StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).
      * @param name name of the job-config to add
      * @param jobSubmission to add
      * @param overrideExisting The overrideExisting parameter
+     * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec saveJobConfigWithResponseSpec(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
-        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting);
+    public ResponseSpec saveJobConfigWithResponseSpec(String name, JobSubmission jobSubmission, Boolean overrideExisting, Boolean moveParametersToConfigMap) throws WebClientResponseException {
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
     }
     /**
      * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.

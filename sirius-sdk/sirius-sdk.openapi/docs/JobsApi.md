@@ -369,7 +369,7 @@ No authorization required
 
 ## getJobConfig
 
-> JobSubmission getJobConfig(name, moveParametersToConfigMap)
+> StoredJobSubmission getJobConfig(name, moveParametersToConfigMap)
 
 Request job configuration with given name.
 
@@ -394,7 +394,7 @@ public class Example {
         String name = "name_example"; // String | name of the job-config to return
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
         try {
-            JobSubmission result = apiInstance.getJobConfig(name, moveParametersToConfigMap);
+            StoredJobSubmission result = apiInstance.getJobConfig(name, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfig");
@@ -417,7 +417,7 @@ public class Example {
 
 ### Return type
 
-[**JobSubmission**](JobSubmission.md)
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -499,7 +499,7 @@ No authorization required
 
 ## getJobConfigs
 
-> List&lt;JobSubmission&gt; getJobConfigs()
+> List&lt;StoredJobSubmission&gt; getJobConfigs()
 
 Request all available job configurations
 
@@ -522,7 +522,7 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         try {
-            List<JobSubmission> result = apiInstance.getJobConfigs();
+            List<StoredJobSubmission> result = apiInstance.getJobConfigs();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfigs");
@@ -541,7 +541,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**List&lt;JobSubmission&gt;**](JobSubmission.md)
+[**List&lt;StoredJobSubmission&gt;**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -769,7 +769,7 @@ No authorization required
 
 ## saveJobConfig
 
-> String saveJobConfig(name, jobSubmission, overrideExisting)
+> StoredJobSubmission saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap)
 
 Add new job configuration with given name.
 
@@ -794,8 +794,9 @@ public class Example {
         String name = "name_example"; // String | name of the job-config to add
         JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | to add
         Boolean overrideExisting = false; // Boolean | 
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
         try {
-            String result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting);
+            StoredJobSubmission result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#saveJobConfig");
@@ -816,10 +817,11 @@ public class Example {
 | **name** | **String**| name of the job-config to add | |
 | **jobSubmission** | [**JobSubmission**](JobSubmission.md)| to add | |
 | **overrideExisting** | **Boolean**|  | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object | [optional] [default to false] |
 
 ### Return type
 
-**String**
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -828,13 +830,13 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/problem+json, text/plain
+- **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Probably modified name of the config (to ensure filesystem path compatibility). |  -  |
+| **200** | StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility). |  -  |
 
 
 ## startCommand
