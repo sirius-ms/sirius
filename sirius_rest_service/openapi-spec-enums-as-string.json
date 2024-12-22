@@ -1879,7 +1879,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JobSubmission"
+                  "$ref": "#/components/schemas/StoredJobSubmission"
                 }
               }
             }
@@ -1911,6 +1911,16 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "moveParametersToConfigMap",
+            "in": "query",
+            "description": "if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "requestBody": {
@@ -1926,16 +1936,11 @@
         },
         "responses": {
           "200": {
-            "description": "Probably modified name of the config (to ensure filesystem path compatibility).",
+            "description": "StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility).",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
-                }
-              },
-              "text/plain": {
-                "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/StoredJobSubmission"
                 }
               }
             }
@@ -5255,7 +5260,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/JobSubmission"
+                    "$ref": "#/components/schemas/StoredJobSubmission"
                   }
                 }
               }
@@ -7925,6 +7930,22 @@
           }
         },
         "nullable": true
+      },
+      "StoredJobSubmission": {
+        "required": [
+          "jobSubmission",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name to identify this JobSubmission (job config)."
+          },
+          "jobSubmission": {
+            "$ref": "#/components/schemas/JobSubmission"
+          }
+        }
       },
       "AccountCredentials": {
         "type": "object",

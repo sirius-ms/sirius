@@ -104,6 +104,7 @@ docs/SpectralLibraryMatchSummary.md
 docs/SpectralLibrarySearch.md
 docs/SpectralMatchingType.md
 docs/SpectrumAnnotation.md
+docs/StoredJobSubmission.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -233,6 +234,7 @@ src/main/java/io/sirius/ms/sdk/model/SpectralLibraryMatchSummary.java
 src/main/java/io/sirius/ms/sdk/model/SpectralLibrarySearch.java
 src/main/java/io/sirius/ms/sdk/model/SpectralMatchingType.java
 src/main/java/io/sirius/ms/sdk/model/SpectrumAnnotation.java
+src/main/java/io/sirius/ms/sdk/model/StoredJobSubmission.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidate.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateFormula.java
 src/main/java/io/sirius/ms/sdk/model/StructureCandidateOptField.java

@@ -703,7 +703,7 @@ public class BatchComputeDialog extends JDialog {
         savePreset.addActionListener(e -> {
             String presetName = (String) presetDropdown.getSelectedItem();
             JobSubmission currentConfig = makeJobSubmission();
-            gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true));
+            gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true, false));
             activatePreset(presetName);
         });
 
@@ -721,9 +721,9 @@ public class BatchComputeDialog extends JDialog {
             if (newPresetName != null && !newPresetName.isBlank()) {
                 JobSubmission currentConfig = makeJobSubmission();
                 try {
-                    String createdPresetName = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false));
+                    StoredJobSubmission createdPreset = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false, false));
                     reloadPresets();
-                    presetDropdown.setSelectedItem(createdPresetName);
+                    presetDropdown.setSelectedItem(createdPreset.getName());
                 } catch (Exception ex) {
                     String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
                             .map(SiriusSDKErrorResponse::getMessage)
@@ -766,7 +766,7 @@ public class BatchComputeDialog extends JDialog {
                 // they will be all selected anyway, so we can ignore it
                 Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
 
-                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true));
+                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true)).getJobSubmission();
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
