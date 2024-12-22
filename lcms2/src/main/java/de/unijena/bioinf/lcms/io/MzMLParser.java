@@ -103,7 +103,7 @@ public class MzMLParser implements LCMSParser {
             LCMSRun run
     ) throws IOException {
         try {
-            return parse(input.getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+            return parse(input.toAbsolutePath().getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
         } catch (RuntimeException e) {
             //expect IllegalStateException, but catch any RuntimeException
             log.error("Cannot parse input file {}. File may be corrupted.", input.toAbsolutePath(), e);
