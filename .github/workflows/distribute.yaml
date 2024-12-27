@@ -13,7 +13,7 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-14 macos-14-arm64 ]
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -42,7 +42,7 @@ jobs:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_APP_IDENTITY_ID != '') }}
+      - if: ${{ ((matrix.os == 'macos-14') || (matrix.os == 'macos-14-arm64')) && (env.MACOS_APP_IDENTITY_ID != '') }}
         name: Import Apple APP Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -50,7 +50,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_APP_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_APP_CERTIFICATE_PWD }}
 
-      - if: ${{ (matrix.os == 'macos-latest') && (env.MACOS_IDENTITY_ID != '') }}
+      - if: ${{ ((matrix.os == 'macos-14') || (matrix.os == 'macos-14-arm64')) && (env.MACOS_IDENTITY_ID != '') }}
         name: Import Apple Installer Code-signing ID and p12
         uses: apple-actions/import-codesign-certs@v1
         with:
@@ -59,7 +59,7 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
 
-      - if: matrix.os == 'macos-latest'
+      - if: ((matrix.os == 'macos-14') || (matrix.os == 'macos-14-arm64'))
         name: Check Identities
         run: /usr/bin/security find-identity
 
