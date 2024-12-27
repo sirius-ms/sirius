@@ -25,24 +25,15 @@ ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
-        nativeLibs = 'l64'
-        osName = 'linux64'
-        zosName = 'linux'
-        msName = 'linux'
+        osName = 'linux-x64'
         installerNameType = 'deb'
         installerAppendix = "_${version}-1_amd64.$installerNameType"
     } else if (siriusTargetPlatform.isWin()) {
-        nativeLibs = 'w64'
-        osName = 'win64'
-        zosName = 'win'
-        msName = 'windows'
+        osName = 'win-x64'
         installerNameType = 'msi'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     } else if (siriusTargetPlatform.isMac()) {
-        nativeLibs = 'osx'
-        osName = 'osx64'
-        zosName = 'macosx'
-        msName = 'macos'
+        osName = siriusTargetPlatform == SiriusPlatform.MAC_x86_64 ? 'osx-x64' : 'osx-arm64'
         installerNameType = 'pkg'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     }
@@ -50,16 +41,6 @@ ext {
     // configure infos for bundled JRE
     jre_version = '21.0.4'
     jre_major = jre_version.split("[.]")[0]
-
-    // zulu config
-//    jre_distributor_version = '21.36.17'
-//    jre_mac_prefix = "zulu-${jre_major}.jre/Contents/Home/"
-//    jre_fname = "zulu${jre_distributor_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-//    jre_download_link = "https://cdn.azul.com/zulu/bin/"
-
-    // ms config
-//    jre_fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-//    jre_download_link = "https://aka.ms/download-jdk/"
 
     // liberica config
     jre_distributor_version = '21.0.4+9'
