@@ -340,22 +340,18 @@ tasks.register('refreshDownloadLinks') {
         List<String> lines = [
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64.zip)",
 
-                "",
-                "<!--", //DISABLED ->  enable if needed
-                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
-                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64-headless.zip)",
-                "-->", //DISABLED ->  enable if needed
+                "- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.zip)",
+
+                "- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.zip)",
+                "- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.zip)",
+
+                "- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-x64.zip)",
+                "- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-arm64.zip)",
+
                 ""
         ] as List
 
