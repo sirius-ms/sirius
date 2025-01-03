@@ -39,11 +39,11 @@ ext {
     }
 
     // configure infos for bundled JRE
-    jre_version = '21.0.4'
+    jre_version = '21.0.5'
     jre_major = jre_version.split("[.]")[0]
 
     // liberica config
-    jre_distributor_version = '21.0.4+9'
+    jre_distributor_version = '21.0.5+11'
     jre_mac_prefix = null
     jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
     jre_download_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
