@@ -25,15 +25,15 @@ ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
-        osName = 'linux-x64'
+        osName = siriusTargetPlatform == SiriusPlatform.LINUX_x86_64 ? 'linux-x64' : 'linux-arm64'
         installerNameType = 'deb'
-        installerAppendix = "_${version}-1_amd64.$installerNameType"
+        installerAppendix = "_${version}-1_${siriusTargetPlatform == SiriusPlatform.LINUX_x86_64 ? 'amd64' : 'arm64'}.$installerNameType"
     } else if (siriusTargetPlatform.isWin()) {
-        osName = 'win-x64'
+        osName = siriusTargetPlatform == SiriusPlatform.WIN_x86_64 ? 'win-x64' : 'win-arm64'
         installerNameType = 'msi'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     } else if (siriusTargetPlatform.isMac()) {
-        osName = siriusTargetPlatform == SiriusPlatform.MAC_x86_64 ? 'osx-x64' : 'osx-arm64'
+        osName = siriusTargetPlatform == SiriusPlatform.MAC_x86_64 ? 'macos-x64' : 'macos-arm64'
         installerNameType = 'pkg'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     }
