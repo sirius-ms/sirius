@@ -33,7 +33,7 @@ public enum SiriusPlatform {
     WIN_ARM32(null, null, null, null),
     LINUX_x86_64("linux", "linux-x86-64", "linux-x86-64", "linux-amd64"),
     LINUX_x86_32(null, "linux-x86", null, null),
-    LINUX_ARM64("linux-aarch64", "linux-aarch64", "mac-arm64", "linux-aarch64"),
+    LINUX_ARM64("linux-aarch64", "linux-aarch64", "linux-arm64", "linux-aarch64"),
     LINUX_ARM32(null, "linux-arm", null, null),
     MAC_x86_64("mac", "darwin-x86-64", "mac-x86-64", "macos-amd64"),
     MAC_ARM64("mac-aarch64", "darwin-aarch64", "mac-arm64", "macos-aarch64"),;
