@@ -96,7 +96,11 @@ public enum SiriusPlatform {
         System.out.println("----> Parsing following platform descriptor: " + platformDescriptor);
         platformDescriptor = platformDescriptor.toLowerCase();
 
-        if (platformDescriptor.contains("win")) {
+        if (platformDescriptor.contains("darwin") || platformDescriptor.contains("mac") || platformDescriptor.contains("osx")) {
+            if (isARM(platformDescriptor))
+                return SiriusPlatform.MAC_ARM64;
+            return SiriusPlatform.MAC_x86_64;
+        } else if (platformDescriptor.contains("win")) {
             if (is32Bit(platformDescriptor))
                 if (isARM(platformDescriptor))
                     return SiriusPlatform.WIN_ARM32;
@@ -105,11 +109,6 @@ public enum SiriusPlatform {
             else if (isARM(platformDescriptor))
                 return SiriusPlatform.WIN_ARM64;
             return SiriusPlatform.WIN_x86_64;
-
-        } else if (platformDescriptor.contains("darwin") || platformDescriptor.contains("mac") || platformDescriptor.contains("osx")) {
-            if (isARM(platformDescriptor))
-                return SiriusPlatform.MAC_ARM64;
-            return SiriusPlatform.MAC_x86_64;
         } else {
             if (is32Bit(platformDescriptor))
                 if (isARM(platformDescriptor))
