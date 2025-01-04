@@ -21,12 +21,13 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
@@ -38,7 +39,6 @@ import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
 
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -62,6 +62,8 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         AnnotatedMsMsData annotatedMsMsData = null;
         try {
             checkForInterruption();
+            //warn if tree is unresolved but has adduct.
+            if (IonTreeUtils.isUnresolved(ftree) && !ftree.getAnnotation(PrecursorIonType.class, PrecursorIonType::unknownPositive).getAdduct().isEmpty()) logWarn("Fragmentation tree is not resolved. Adducts of peak annotations may be not correctly derived.");
             annotatedMsMsData = new AnnotatedMsMsData();
             final InsilicoFragmentationResult structureAnno = smiles == null ? null :
                     submitSubJob(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, smiles)
@@ -70,11 +72,11 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
 
             List<AnnotatedSpectrum> annotatedMsMs = msData.getMs2Spectra().stream()
                     .map(this::toAnnotatedSpectrum)
-                    .peek(as -> annotateMsMs(as, ftree, structureAnno, smiles))
+                    .peek(as -> annotateMsMs(as, ftree, structureAnno, smiles, false))
                     .toList();
             checkForInterruption();
             annotatedMsMsData.setMs2Spectra(annotatedMsMs);
-            annotatedMsMsData.setMergedMs2(annotateMsMs(toAnnotatedSpectrum(msData.getMergedMs2()), ftree, structureAnno, smiles));
+            annotatedMsMsData.setMergedMs2(annotateMsMs(toAnnotatedSpectrum(msData.getMergedMs2()), ftree, structureAnno, smiles, true));
             checkForInterruption();
         } catch (RuntimeException e) {
             if (e.getCause() instanceof Exception)
@@ -84,73 +86,90 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         return annotatedMsMsData;
     }
 
+    /**
+     * Annotates peaks which are explained by fragmentation tree fragments.
+     * Currently, does NOT annotate the fragment's isotope peaks.
+     */
     @SneakyThrows
-    private AnnotatedSpectrum annotateMsMs(@Nullable AnnotatedSpectrum as, FTree ftree, InsilicoFragmentationResult structureAnno, @Nullable String inChIKey2d) {
+    private AnnotatedSpectrum annotateMsMs(@Nullable AnnotatedSpectrum as, FTree ftree, InsilicoFragmentationResult structureAnno, @Nullable String inChIKey2d, boolean isMergedMs2) {
         if (as == null)
             return null;
         checkForInterruption();
-        Fragment[] fragments = annotateFragmentsToSingleMsMs(WrapperSpectrum.of(as.getPeaks(), AnnotatedPeak::getMz, AnnotatedPeak::getIntensity), ftree);
+        Fragment[] fragments = annotateFragmentsToSingleMsMs(WrapperSpectrum.of(as.getPeaks(), AnnotatedPeak::getMz, AnnotatedPeak::getIntensity), ftree, as.getPrecursorMz(), isMergedMs2);
         checkForInterruption();
         setSpectrumAnnotation(as, ftree, structureAnno, inChIKey2d);
         checkForInterruption();
-        setPeakAnnotations(as, ftree, Arrays.asList(fragments), structureAnno);
+        setPeakAnnotations(as, ftree, Arrays.asList(fragments), structureAnno, isMergedMs2);
         return as;
     }
 
+    /*
+    duplicate code in Spectrums.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void setPeakAnnotations(@NotNull AnnotatedSpectrum spectrum,
                                     @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments,
-                                    @Nullable InsilicoFragmentationResult structureAnno) throws InterruptedException {
+                                    @Nullable InsilicoFragmentationResult structureAnno, boolean isMergedMs2) throws InterruptedException {
         List<AnnotatedPeak> peaks = spectrum.getPeaks();
 
         for (Fragment f : fragments) {
             checkForInterruption();
             if (f != null) {
-                int vertexId = f.getVertexId();
-                PeakAnnotation peakAnno = new PeakAnnotation();
-                if (f.getFormula() != null && f.getIonization() != null) {
-                    peakAnno.molecularFormula(f.getFormula().toString())
-                            .ionization(f.getIonization().toString())
-                            .exactMass(f.getIonization().addToMass(f.getFormula().getMass()))
-                            .fragmentId(vertexId);
-                }
-
-                // deviation (from FTJsonWriter tree2json)
-                {
-                    de.unijena.bioinf.ChemistryBase.ms.Deviation dev = ftree.getMassError(f);
-                    if (f.isRoot() && dev.equals(de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION))
-                        dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-
-                    de.unijena.bioinf.ChemistryBase.ms.Deviation rdev = ftree.getRecalibratedMassError(f);
-                    if (f.isRoot() && rdev.equals(de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION))
-                        rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
-
-
-                    if (!dev.equals(de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION))
-                        peakAnno.massDeviationMz(dev.getAbsolute())
-                                .massDeviationPpm(dev.getPpm());
-                    if (!rdev.equals(de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION))
-                        peakAnno.recalibratedMassDeviationMz(rdev.getAbsolute())
-                                .recalibratedMassDeviationPpm(rdev.getPpm());
-                }
-                // we only store incoming edges because references are ugly for serialization
-                f.getIncomingEdges().stream().findFirst().ifPresent(l ->
-                        peakAnno.parentPeak(new ParentPeak()
-                                .lossFormula(l.getFormula().toString())
-                                .parentIdx((int) l.getSource().getPeakId())
-                                .parentFragmentId(l.getSource().getVertexId())
-                        ));
-                if (structureAnno != null) {
-                    CombinatorialFragment subStr = Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
-                            .map(List::stream).flatMap(Stream::findFirst).orElse(null);
-                    if (subStr != null)
-                        annotateSubstructure(peakAnno, f.getFormula(), subStr, structureAnno.getSubtree());
-                }
-                //add annotations to corresponding peak
-                peaks.get(f.getPeakId()).setPeakAnnotation(peakAnno);
+                setPeakAnnotations(ftree, structureAnno, f, peaks, isMergedMs2);
             }
         }
     }
 
+    /*
+    duplicate code in Spectrums.setPeakAnnotations (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
+    private void setPeakAnnotations(@NotNull FTree ftree, @Nullable InsilicoFragmentationResult structureAnno, Fragment f, List<AnnotatedPeak> peaks, boolean isMergedMs2) throws InterruptedException {
+        int vertexId = f.getVertexId();
+        PeakAnnotation peakAnno = new PeakAnnotation();
+        if (f.getFormula() != null && f.getIonization() != null) {
+            peakAnno.molecularFormula(f.getFormula().toString())
+                    .adduct(ftree.getAdduct(f).toString())
+                    .exactMass(ftree.getExactMass(f))
+                    .fragmentId(vertexId);
+        }
+
+        AnnotatedPeak peak = peaks.get(f.getPeakId());
+        de.unijena.bioinf.ChemistryBase.ms.Deviation dev = ftree.getMassErrorTo(f, peak.getMz());
+
+        peakAnno.massDeviationMz(dev.getAbsolute())
+                .massDeviationPpm(dev.getPpm());
+
+
+        if (isMergedMs2) {
+            //there may be the edge case that the root fragment actually used the MS1 precursor m/z and not the m/z of any actual MS2 peak.
+            //I believe in this case the recalibrated m/z is always identical to the normal m/z. I am not entirely sure if this may influence anything.
+            //todo: are we using the recalibrated m/z for anything?
+            de.unijena.bioinf.ChemistryBase.ms.Deviation rdev = ftree.getRecalibratedMassError(f);
+            if (!rdev.equals(de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION))
+                peakAnno.recalibratedMassDeviationMz(rdev.getAbsolute())
+                        .recalibratedMassDeviationPpm(rdev.getPpm());
+        }
+
+
+        // we only store incoming edges because references are ugly for serialization
+        f.getIncomingEdges().stream().findFirst().ifPresent(l ->
+                peakAnno.parentPeak(new ParentPeak()
+                        .lossFormula(l.getFormula().toString())
+                        .parentIdx((int) l.getSource().getPeakId())
+                        .parentFragmentId(l.getSource().getVertexId())
+                ));
+        if (structureAnno != null) {
+            CombinatorialFragment subStr = Optional.ofNullable(structureAnno.getFragmentMapping().get(f))
+                    .map(List::stream).flatMap(Stream::findFirst).orElse(null);
+            if (subStr != null)
+                annotateSubstructure(peakAnno, f.getFormula(), subStr, structureAnno.getSubtree());
+        }
+        //add annotations to corresponding peak
+        peaks.get(f.getPeakId()).setPeakAnnotation(peakAnno);
+    }
+
+    /*
+    duplicate code in Spectrums.annotateSubstructure (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void annotateSubstructure(PeakAnnotation peakAnno, MolecularFormula fragmentFormula, CombinatorialFragment subStructureAnno, CombinatorialSubtree subtree) throws InterruptedException {
         CombinatorialNode node = subtree.getNode(subStructureAnno.getBitSet());
         checkForInterruption();
@@ -179,6 +198,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
     }
 
 
+    /*
+    Spectrums.setSpectrumAnnotation (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
+     */
     private void setSpectrumAnnotation(@NotNull AnnotatedSpectrum spectrum, @Nullable FTree ftree,
                                        @Nullable InsilicoFragmentationResult structureAnno,
                                        @Nullable String candidateSmiles
@@ -188,14 +210,21 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         // create formula/ftree based spectrum annotation
         SpectrumAnnotation specAnno = new SpectrumAnnotation();
 
-        if (ftree.getRoot().getFormula() != null && ftree.getRoot().getIonization() != null) {
-            specAnno.molecularFormula(ftree.getRoot().getFormula().toString())
-                    .ionization(ftree.getRoot().getIonization().toString())
-                    .exactMass(ftree.getRoot().getIonization().addToMass(ftree.getRoot().getFormula().getMass()));
+        Fragment precursorRoot = IonTreeUtils.getMeasuredIonRoot(ftree);
+        MolecularFormula compoundFormula = IonTreeUtils.getCompoundMolecularFormula(ftree);
+        PrecursorIonType ionType = ftree.getAnnotation(PrecursorIonType.class,
+                () -> precursorRoot.getIonization() != null ? PrecursorIonType.getPrecursorIonType(precursorRoot.getIonization()) : null);
+        if (compoundFormula != null && ionType != null) {
+            specAnno.molecularFormula(compoundFormula.toString())
+                    .adduct(ionType.toString())
+                    .exactMass(ftree.getExactMass(precursorRoot));
         }
 
-        de.unijena.bioinf.ChemistryBase.ms.Deviation dev = ftree.getMassErrorTo(ftree.getRoot(), spectrum.getPrecursorMz());
+        de.unijena.bioinf.ChemistryBase.ms.Deviation dev = ftree.getMassErrorTo(precursorRoot, spectrum.getPrecursorMz());
         specAnno.massDeviationMz(dev.getAbsolute()).massDeviationPpm(dev.getPpm());
+        if (dev.getAbsolute()>1) {
+            logWarn("Wrong fragmentation tree fragment selected for precursor m/z. {} for m/z {}", precursorRoot, spectrum.getPrecursorMz());
+        }
 
         if (structureAnno != null) {
             specAnno.structureAnnotationSmiles(candidateSmiles)
@@ -221,62 +250,99 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
                 .name(spectrum.getName());
     }
 
-    private Fragment[] annotateFragmentsToSingleMsMs(Spectrum<? extends Peak> spectrum, FTree tree) throws InterruptedException {
+    /**
+     * annotates
+     * @param spectrum
+     * @param tree
+     * @param isMergedM2
+     * @return
+     * @throws InterruptedException
+     */
+    private Fragment[] annotateFragmentsToSingleMsMs(Spectrum<? extends Peak> spectrum, FTree tree, Double precursorMz, boolean isMergedM2) throws InterruptedException {
         final FragmentAnnotation<de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak> annotatedPeak;
         if (tree == null || (annotatedPeak = tree.getFragmentAnnotationOrNull(de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak.class)) == null)
             return null;
         checkForInterruption();
 
         Fragment[] annotatedFormulas = new Fragment[spectrum.size()];
-        BitSet isIsotopicPeak = new BitSet(spectrum.size());
-        final FragmentAnnotation<Ms2IsotopePattern> isoAno = tree.getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
         final de.unijena.bioinf.ChemistryBase.ms.Deviation dev = new de.unijena.bioinf.ChemistryBase.ms.Deviation(1, 0.01);
+
         for (Fragment f : tree) {
             checkForInterruption();
 
             de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak = annotatedPeak.get(f);
-            if (peak == null) {
+            if (peak == null || peak.isArtificial()) {
                 continue;
             }
-            Ms2IsotopePattern isoPat = isoAno == null ? null : isoAno.get(f);
-            if (isoPat != null) {
-                for (Peak p : isoPat.getPeaks()) {
-                    if (p.getMass() - peak.getMass() > 0.25) {
-                        int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, p.getMass() - 1e-6);
-                        for (int j = i; j < spectrum.size(); ++j) {
-                            if (dev.inErrorWindow(p.getMass(), spectrum.getMzAt(j))) {
-                                f.setPeakId(j);
-                                annotatedFormulas[j] = f;
-                                isIsotopicPeak.set(j);
-                            } else break;
-                        }
+
+            if (isMergedM2) {
+                boolean found = findCorrectPeakInMergedMs2Spectrum(tree, f, spectrum, peak, annotatedFormulas, dev, precursorMz);
+                if (!found) {
+                    if (f == tree.getRoot()) {
+                        logWarn("Root fragment '{}' of the fragmentation tree could not be assigned to a peak in the merged MS2 spectrum.", f.getFormula());
+                    } else {
+                        logWarn("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the merged MS2 spectrum.", f.getFormula());
                     }
                 }
-            }
-            for (Peak p : peak.getOriginalPeaks()) {
-                checkForInterruption();
-
-                int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, p.getMass() - 1e-6);
-                for (int j = i; j < spectrum.size(); ++j) {
-                    if (dev.inErrorWindow(p.getMass(), spectrum.getMzAt(j))) {
-                        f.setPeakId(j);
-                        annotatedFormulas[j] = f;
-                    } else break;
-                }
-            }
-            // due to the recalibration we might be far away from the "original" mass
-            final double recalibratedMz = peak.getRecalibratedMass();
-            {
-                int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getFirstPeakGreaterOrEqualThan(spectrum, recalibratedMz - 1e-4);
-                for (int j = i; j < spectrum.size(); ++j) {
-                    if (dev.inErrorWindow(recalibratedMz, spectrum.getMzAt(j))) {
-                        f.setPeakId(j);
-                        annotatedFormulas[j] = f;
-                    } else break;
+            } else {
+                boolean found = findCorrectPeakInInputFragmentationSpectrum(f, spectrum, peak, annotatedFormulas, this::checkForInterruption);
+                if (!found) {
+                    //can still be normal behaviour. The fragment peak might be indeed only contained in a subset of all MS2 spectra
+                    logDebug("Fragment '{}' of the fragmentation tree could not be assigned to a peak in the input MS2 spectrum. Could be that fragment is just not contained in this particular spectrum.", f.getFormula());
                 }
             }
         }
 
         return annotatedFormulas;
+    }
+
+    public static boolean findCorrectPeakInInputFragmentationSpectrum(Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, InterruptionCheck interruptionCheck) throws InterruptedException {
+        //the FTree store spectrum indices for the original peaks. However, at this stage I rather don't want to make assumptions on the order of the spectra in MSData. Hence, we check all original peaks (from different spectra).
+        for (Peak p : peak.getOriginalPeaks()) {
+            interruptionCheck.check();
+            int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, p.getMass());
+            if (i >= 0) {
+                f.setPeakId(i);
+                annotatedFormulas[i] = f;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean findCorrectPeakInMergedMs2Spectrum(FTree tree, Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, de.unijena.bioinf.ChemistryBase.ms.Deviation dev, Double precursorMz) {
+        if (f == tree.getRoot()){
+            //the precursor mass (MS1) may be used for the root fragment. First check, if there is some exact mz match. Else use most intense beak in proximity.
+            int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, peak.getMass());
+            if (i < 0) {
+                i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mostIntensivePeakWithin(spectrum, peak.getMass(), dev);
+            }
+            if (i >= 0) {
+                f.setPeakId(i);
+                annotatedFormulas[i] = f;
+                return true;
+            }
+        } else {
+            int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, peak.getMass());
+            if (i < 0) {
+                //the only expected case would be a fragment corresponding to the precursor mz for a tree with insource PrecursorIonType (may be replaced by MS1 peaks).
+                i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mostIntensivePeakWithin(spectrum, peak.getMass(), dev);
+                {
+                    boolean isPrecursorFragment = precursorMz != null && dev.inErrorWindow(peak.getMass(), precursorMz);
+                    if (!isPrecursorFragment) logDebug("Fragment '{}' in the fragmentation tree does not correspond to an exactly matching m/z in the merged MS2 spectrum. And it is not the 'precursor' of an adduct ion type.", f.getFormula());
+                }
+            }
+            if (i >= 0) {
+                f.setPeakId(i);
+                annotatedFormulas[i] = f;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @FunctionalInterface
+    public interface InterruptionCheck {
+        void check() throws InterruptedException;
     }
 }

@@ -21,7 +21,7 @@
 
 package de.unijena.bioinf.ChemistryBase.math;
 
-import gnu.trove.list.array.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -66,8 +66,8 @@ public class Statistics {
         return medianInPlace(xs.clone());
     }
 
-    public static double median(TDoubleArrayList ys) {
-        return medianInPlace(ys.toArray());
+    public static double median(DoubleArrayList ys) {
+        return medianInPlace(ys.toDoubleArray());
     }
 
     private static double medianInPlace(final double[] xs) {

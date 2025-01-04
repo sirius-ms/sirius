@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.sirius.ms.sdk.model.BackgroundComputationsStateEvent;
+import io.sirius.ms.sdk.model.DataImportEvent;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.ProjectChangeEvent;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,9 @@ public class DataObjectEvents {
                 }
                 case PROJECT -> {
                     return jsonMapper.readValue(data, new TypeReference<DataObjectEvent<ProjectChangeEvent>>() {});
+                }
+                case DATA_IMPORT -> {
+                    return jsonMapper.readValue(data, new TypeReference<DataObjectEvent<DataImportEvent>>() {});
                 }
                 case BACKGROUND_COMPUTATIONS_STATE -> {
                     return jsonMapper.readValue(data, new TypeReference<DataObjectEvent<BackgroundComputationsStateEvent>>() {});

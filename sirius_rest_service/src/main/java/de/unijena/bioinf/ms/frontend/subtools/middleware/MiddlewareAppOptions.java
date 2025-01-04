@@ -73,9 +73,21 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     }
 
-    public enum ApiDocMode{STABLE, BASIC, STABLE_ADVANCED, ADVANCED }
-    private final static String STABLE_EXCLUSIONS = "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job";
-    @CommandLine.Option(names = {"--api-doc-mode","--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
+    public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
+
+    private final static String STABLE_EXCLUSIONS =
+            "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree," +
+                    "/api/projects/*/jobs/run-command," +
+                    "/api/projects/*/import/ms-data-local-files-job," +
+                    "/api/projects/*/import/ms-local-data-files," +
+                    "/api/projects/*/import/preprocessed-local-data-files-job," +
+                    "/api/projects/*/import/preprocessed-local-data-files," +
+                    "/api/projects/*/copy,";
+
+//                    "/api/databases/*/import/from-files-job," +
+//                    "/api/databases/*/import/from-files";
+
+    @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
             setApiDocMode(ApiDocMode.STABLE);
@@ -101,6 +113,14 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                 System.getProperties().remove("springdoc.pathsToExclude");
             }
         }
+    }
+
+    @CommandLine.Option(names = {"--enums-as-ref"}, description = "Specify whether enums in the api model should be represented as object reference.", hidden = true, defaultValue = "false")
+    private void setEnumsAsRef(boolean enumsAsRef) {
+        if (enumsAsRef)
+            System.setProperty("enums-as-ref", String.valueOf(true));
+        else
+            System.getProperties().remove("enums-as-ref");
     }
 
     public boolean isStartGui() {
@@ -167,10 +187,10 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                         if (isStartGui())
                             guiService.createGuiInstance(startPs.getProjectId());
 
-                        if (splash != null) {
-                            splash.setVisible(false);
-                            splash.dispose();
-                        }
+                        if (splash != null)
+                            Jobs.runEDTLater(splash::dispose);
+
+                        //increase priority of GUI thread.
                         Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                     } else {
                         log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");

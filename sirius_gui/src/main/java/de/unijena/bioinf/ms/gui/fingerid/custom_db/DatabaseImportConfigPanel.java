@@ -11,6 +11,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
+import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
 import io.sirius.ms.sdk.model.ConnectionCheck;
@@ -29,6 +30,7 @@ import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -86,10 +88,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private boolean loggedIn = false;
 
-    private final JLabel loginErrorLabel = new JLabel();
+    private final MessageBanner connectionErrorBanner = new MessageBanner(false);
 
     private final SiriusGui gui;
 
+    private final PropertyChangeListener connectionListener;
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
         super(CustomDBOptions.class);
         this.gui = gui;
@@ -99,17 +102,34 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         add(createCompoundsBox(), BorderLayout.CENTER);
         add(createImportButton(), BorderLayout.SOUTH);
 
-
-        gui.getConnectionMonitor().addConnectionStateListener(evt -> {
+        connectionListener = evt -> {
             ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
             setLoggedIn(check);
-        });
+        };
+
+        gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         Jobs.runInBackground(() -> setLoggedIn(gui.getConnectionMonitor().checkConnection()));
+    }
+
+    public void destroy(){
+        if (connectionListener != null)
+            gui.getConnectionMonitor().removePropertyChangeListener(connectionListener);
     }
 
     private synchronized void setLoggedIn(ConnectionCheck check) {
         loggedIn = isConnected(check) && isLoggedIn(check);
-        loginErrorLabel.setVisible(!loggedIn);
+
+        if (connectionErrorBanner != null)
+            connectionErrorBanner.setVisible(false);
+
+        if (ConnectionChecks.isInternet(check) && !ConnectionChecks.isLoggedIn(check)) {
+            connectionErrorBanner.update("Not logged in! Please login with a verified user account to import compounds.",
+                    MessageBanner.BannerType.WARNING, true);
+        } else if (!ConnectionChecks.isInternet(check)) {
+            connectionErrorBanner.update("No Connection! Webservice connection is needed to download fingerprints during import.",
+                    MessageBanner.BannerType.ERROR, true);
+        }
+
         refreshImportButton();
     }
 
@@ -121,7 +141,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     }
 
     private JPanel createParametersPanel(@Nullable SearchableDatabase db) {
+        final JPanel withErrorMessageWrapper = new JPanel(new BorderLayout());
+        withErrorMessageWrapper.add(connectionErrorBanner, BorderLayout.NORTH);
+
         final TwoColumnPanel smalls = new TwoColumnPanel();
+        withErrorMessageWrapper.add(smalls, BorderLayout.CENTER);
 
         dbDisplayNameField = new PlaceholderTextField("");
         smalls.addNamed("Name", dbDisplayNameField, GuiUtils.formatToolTip("Displayable name of the custom database. " +
@@ -250,7 +274,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
 
-        return smalls;
+        return withErrorMessageWrapper;
     }
 
     private Box createCompoundsBox() {
@@ -340,15 +364,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private JPanel createImportButton() {
         JPanel panel = new JPanel(new BorderLayout());
-
-        loginErrorLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        loginErrorLabel.setText("<html><p style=\"background-color:#ffafaf; color:black\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
-        loginErrorLabel.setVisible(false);
-
         importButton = new JButton("Import structures and spectra");
         importButton.setEnabled(false);
 
-        panel.add(loginErrorLabel, BorderLayout.CENTER);
         panel.add(importButton, BorderLayout.SOUTH);
         return panel;
     }

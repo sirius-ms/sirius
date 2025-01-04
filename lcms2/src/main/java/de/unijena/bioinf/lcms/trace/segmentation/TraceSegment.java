@@ -31,4 +31,8 @@ public class TraceSegment {
     public boolean overlaps(Trace mergedSegment) {
         return leftEdge <= mergedSegment.endId() && rightEdge >= mergedSegment.startId() && (leftEdge < mergedSegment.endId() || rightEdge > mergedSegment.startId());
     }
+
+    public boolean isContainedIn(TraceSegment traceSegment) {
+        return leftEdge >= traceSegment.leftEdge && rightEdge <= traceSegment.rightEdge;
+    }
 }

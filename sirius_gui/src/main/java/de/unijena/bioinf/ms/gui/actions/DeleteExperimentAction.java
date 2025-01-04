@@ -47,7 +47,7 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
     public DeleteExperimentAction(SiriusGui gui) {
         super("Delete", gui);
-        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
+        putValue(Action.SMALL_ICON, Icons.REMOVE_DOC.derive(16,16));
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
 
@@ -56,6 +56,7 @@ public class DeleteExperimentAction extends AbstractGuiAction {
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
 
             @Override

@@ -66,11 +66,11 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
             Long2DoubleMap intensitiesRight = traceProvider.getIntensities(iso);
             MergedTrace right = traceProvider.getMergeTrace(iso).orElse(null);
             if (right==null) continue;
-            double correlation = Scorer.correlateTraces(feature.getTraceRef(), left, iso.getTraceRef(), right);
+            double correlation = Scorer.correlateTraces(feature.getTraceRef(), left, iso.getTraceRef(), right).correlation();
             double reprCorrelation = Scorer.correlateRepresentatives(
                     traceProvider,feature, iso, intensitiesLeft, intensitiesRight
-            );
-            double stability = Scorer.correlateAcrossSamples(intensitiesLeft, intensitiesRight);
+            ).correlation();
+            double stability = Scorer.correlateAcrossSamples(intensitiesLeft, intensitiesRight).correlation();
             final boolean mostIntensive = (iso.getApexIntensity()>=mostIntensiveOne);
             final QualityReport.Weight weight = mostIntensive ? QualityReport.Weight.MAJOR : QualityReport.Weight.MINOR;
             final double betterCorrelation = Math.max(correlation, reprCorrelation);

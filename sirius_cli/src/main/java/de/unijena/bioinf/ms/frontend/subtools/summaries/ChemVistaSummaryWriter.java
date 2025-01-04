@@ -46,7 +46,7 @@ class ChemVistaSummaryWriter extends SummaryTable {
             "ConfidenceScoreApproximate",
             "CSI:FingerIDScore",
             "ZodiacScore",
-            "SiriusScore",
+            "SiriusScoreNormalized",
             "adduct",
             "precursorFormula",
             "ionMass",
@@ -79,7 +79,7 @@ class ChemVistaSummaryWriter extends SummaryTable {
         row.add(searchResult.getConfidenceApprox());
         row.add(match.getCsiScore());
         row.add(fc.getZodiacScore());
-        row.add(fc.getSiriusScore());
+        row.add(fc.getSiriusScoreNormalized());
         row.add(fc.getAdduct().toString());
         row.add(fc.getPrecursorFormulaWithCharge());
         row.add(f.getAverageMass());

@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Getter
 @Slf4j
@@ -54,8 +55,15 @@ public class TestSetup {
                 throw new RuntimeException("Failed to create temp directory", e);
             }
         }
+
         // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
-        Path bootJar = dataDir.getParent().getParent().getParent().getParent().getParent().getParent().resolve("sirius_rest_service/build/libs/sirius_rest_service-6.0.6-SNAPSHOT-boot.jar");
+        Path bootJar;
+        try (Stream<Path> walker = Files.walk(dataDir.getParent().getParent().getParent().getParent().getParent().getParent()
+                .resolve("sirius_rest_service/build/libs"))){
+            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).findAny()
+                    .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
+        }
+
         siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
     }
 
@@ -89,15 +97,15 @@ public class TestSetup {
 
         if (sourceProject != null) {
             copySiriusProject(sourceProject, path);
-            return siriusClient.projects().openProjectSpace(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().openProject(uid, path.toAbsolutePath().toString(), null);
         } else {
-            return siriusClient.projects().createProjectSpace(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().createProject(uid, path.toAbsolutePath().toString(), null);
         }
     }
 
     public void deleteTestProject(ProjectInfo projectSpace) {
         try {
-            siriusClient.projects().closeProjectSpace(projectSpace.getProjectId());
+            siriusClient.projects().closeProject(projectSpace.getProjectId());
             Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
         } catch (IOException e) {
             e.printStackTrace();

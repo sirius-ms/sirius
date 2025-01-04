@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -40,15 +39,17 @@ public class ComputeAction extends AbstractGuiAction {
 
     public ComputeAction(SiriusGui gui) {
         super("Compute", gui);
-        putValue(Action.SMALL_ICON, Icons.RUN_16);
-        putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
+        putValue(Action.SMALL_ICON, Icons.RUN.derive(16,16));
+        putValue(Action.LARGE_ICON_KEY, Icons.RUN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
         setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {}
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+                setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
+            }
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {

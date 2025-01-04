@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Simple and easy serializable fragmentation tree model with annotated fragments/nodes abd losses/edges
  * Root fragment has index 0;
+ * Molecular formula and adduct are identical to the ones of the corresponding molecular formula candidate and SpectrumAnnotation
  */
 @Getter
 @Setter
@@ -45,39 +47,46 @@ public class FragmentationTree {
     protected List<FragmentNode> fragments;
     protected List<LossEdge> losses;
     Double treeScore;
+    String molecularFormula;
+    String adduct;
 
     public static FragmentationTree fromFtree(FTree sourceTree) {
+        //should be already be resolved. Just to be safe.
+        FTree resolvedTree = IonTreeUtils.isUnresolved(sourceTree) ? new IonTreeUtils().treeToNeutralTree(sourceTree) : sourceTree;
+
         final List<LossEdge> lossEdges = new ArrayList<>();
         final Int2IntMap fragmentIdToIndex = new Int2IntOpenHashMap();
         final AtomicInteger idx = new AtomicInteger(0);
 
         FragmentationTreeBuilder treeBuilder = FragmentationTree.builder()
-                .treeScore(sourceTree.getTreeWeight())
+                .molecularFormula(IonTreeUtils.getCompoundMolecularFormula(resolvedTree).toString())
+                .adduct(resolvedTree.getAnnotation(PrecursorIonType.class).map(PrecursorIonType::toString).orElse(null))
+                .treeScore(resolvedTree.getTreeWeight())
 
-                .fragments(sourceTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
+                .fragments(resolvedTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
                     final FragmentNode fn = new FragmentNode();
                     fn.setFragmentId(f.getVertexId());
                     fn.setMolecularFormula(f.getFormula().toString());
-                    fn.setIonType(f.getIonization().toString());
+                    fn.setAdduct(resolvedTree.getAdduct(f).toString());
 
                     {
-                        final FragmentAnnotation<Peak> peakInfo = sourceTree.getFragmentAnnotationOrThrow(Peak.class);
+                        final FragmentAnnotation<Peak> peakInfo = resolvedTree.getFragmentAnnotationOrThrow(Peak.class);
                         fn.setMz(peakInfo.get(f).getMass());
                         fn.setIntensity(peakInfo.get(f).getIntensity());
                     }
 
                     {
-                        final FragmentAnnotation<AnnotatedPeak> anoPeak = sourceTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+                        final FragmentAnnotation<AnnotatedPeak> anoPeak = resolvedTree.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
                         if (anoPeak.get(f).isMeasured()) {
-                            Deviation dev = sourceTree.getMassError(f);
+                            Deviation dev = resolvedTree.getMassError(f);
                             fn.setMassDeviationDa(dev.getAbsolute());
                             fn.setMassDeviationPpm(dev.getPpm());
                         }
                     }
 
                     {
-                        final FragmentAnnotation<Score> scores = sourceTree.getFragmentAnnotationOrThrow(Score.class);
-                        fn.setScore(scores.get(f).sum());
+                        final FragmentAnnotation<Score> scores = resolvedTree.getFragmentAnnotationOrThrow(Score.class);
+                        if (scores.get(f) != null) fn.setScore(scores.get(f).sum());
                     }
 
                     fragmentIdToIndex.put(fn.getFragmentId(), idx.getAndIncrement());
@@ -85,7 +94,7 @@ public class FragmentationTree {
                 }).toList());
 
 
-        for (Loss l : sourceTree.losses()) {
+        for (Loss l : resolvedTree.losses()) {
             LossEdge loss = LossEdge.builder()
                     .sourceFragmentIdx(fragmentIdToIndex.get(l.getSource().getVertexId()))
                     .targetFragmentIdx(fragmentIdToIndex.get(l.getTarget().getVertexId()))

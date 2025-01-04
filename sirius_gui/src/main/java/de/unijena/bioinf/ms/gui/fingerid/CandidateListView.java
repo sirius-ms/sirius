@@ -78,20 +78,20 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 //        tb.addSeparator();
 
 
-        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "show filter");
+        final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN.derive(24,24), "Show database filters");
         filter.addActionListener(e -> {
             if (dbFilterPanel.toggle()) {
-                filter.setIcon(Icons.FILTER_UP_24);
+                filter.setIcon(Icons.FILTER_UP.derive(24,24));
                 filter.setToolTipText("Hide database filters");
             } else {
-                filter.setIcon(Icons.FILTER_DOWN_24);
+                filter.setIcon(Icons.FILTER_DOWN.derive(24,24));
                 filter.setToolTipText("Show database filters");
             }
         });
         tb.add(filter);
 //        tb.addSeparator();
 
-        loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
+        loadAll = new ToolbarToggleButton(Icons.LOAD_ALL.derive(24,24), "Load all Candidates (Might be many!).");
         loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), true, false);
         loadAll.addActionListener(loadDataActionListener);
         tb.add(firstGap);
