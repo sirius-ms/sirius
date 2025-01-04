@@ -21,10 +21,24 @@
 package de.unijena.bioinf.ms.middleware.model.events;
 
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
-import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ServerEvents {
+
+    public static ServerEventImpl<DataImportEvent> newImportEvent(@NotNull List<String> compoundIds, @NotNull List<String> featureIds, @NotNull String projectId) {
+        return newImportEvent(DataImportEvent.builder().importedCompoundIds(compoundIds).importedFeatureIds(featureIds).build(), projectId);
+    }
+
+    public static ServerEventImpl<DataImportEvent> newImportEvent(@NotNull Job job, @NotNull String projectId) {
+        return newImportEvent(DataImportEvent.builder().importJobId(job.getId()).importedCompoundIds(job.getAffectedCompoundIds()).importedFeatureIds(job.getAffectedAlignedFeatureIds()).build(), projectId);
+
+    }
+    public static ServerEventImpl<DataImportEvent> newImportEvent(@NotNull DataImportEvent dataImportEvent, @NotNull String projectId) {
+        return new ServerEventImpl<>(dataImportEvent, projectId, ServerEvent.Type.DATA_IMPORT);
+    }
+
     public static ServerEventImpl<Job> newJobEvent(@NotNull Job job, @NotNull String projectId) {
         return new ServerEventImpl<>(job, projectId, ServerEvent.Type.JOB);
     }
@@ -33,8 +47,8 @@ public class ServerEvents {
         return new ServerEventImpl<>(projectEvent, projectEvent.getProjectId(), ServerEvent.Type.PROJECT);
     }
 
-    public static ServerEventImpl<ProjectChangeEvent> newProjectEvent(@NotNull String projectId, @NotNull ProjectChangeEvent.Type projectEventType) {
-        assert projectEventType.ordinal() <= ProjectChangeEvent.Type.PROJECT_CLOSED.ordinal();
+    public static ServerEventImpl<ProjectChangeEvent> newProjectEvent(@NotNull String projectId, @NotNull ProjectEventType projectEventType) {
+        assert projectEventType.ordinal() <= ProjectEventType.PROJECT_CLOSED.ordinal();
         return newProjectEvent(ProjectChangeEvent.builder()
                 .eventType(projectEventType)
                 .projectId(projectId)

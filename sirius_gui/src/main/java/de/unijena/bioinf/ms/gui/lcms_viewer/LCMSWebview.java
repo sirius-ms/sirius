@@ -1,9 +1,10 @@
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
-import io.sirius.ms.sdk.model.TraceSet;
+import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -13,9 +14,8 @@ import netscape.javascript.JSObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -40,15 +40,16 @@ public class LCMSWebview extends JFXPanel {
         this.delayAfterHTMLLoading = new ArrayList<>();
         taskList.runJFXLater(()-> {
             this.webView = new WebView();
-            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            boolean DarkMode = theme.equals("Dark");
+
+            boolean DarkMode = Colors.isDarkTheme();
             if (!DarkMode) {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles.css"))
+                );
             } else {
                 this.webView.getEngine().setUserStyleSheetLocation(
-                        getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+                        WebViewUtils.textToDataURL(WebViewUtils.loadCSSAndSetColorThemeAndFont("/js/" + "styles-dark.css"))
+                );
             }
             setScene(new Scene(webView));
             final String htmlContent = getHTMLContent();
@@ -64,7 +65,7 @@ public class LCMSWebview extends JFXPanel {
                     } else {
                         this.webView.getEngine().executeScript("document.setDark()");
                     }
-                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
+                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('lc')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
@@ -73,7 +74,7 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
+    public void setInstance(TraceSetExperimental peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
@@ -81,7 +82,7 @@ public class LCMSWebview extends JFXPanel {
                 if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
                     f.call("loadString", json);
                 } else {
-                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                    f.call("loadStringForCompound", json,  featureId);
                 }
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -152,7 +153,7 @@ public class LCMSWebview extends JFXPanel {
         }
 
         public void log(JSObject msg) {
-            System.err.println(msg);
+            System.err.println(msg.getMember("test"));
         }
 
     }

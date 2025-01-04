@@ -48,14 +48,14 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
     private SortedList<FormulaResultBean> sortedSource;
-    private final SiriusResultTableFormat tableFormat;
+    private final FormulaResultTableFormat tableFormat;
 
     private final LoadablePanel loadingWrapper;
     public FormulaListDetailView(final FormulaList source) {
         super(source);
         //todo dirty hack until search field bug is fixed
         getNorth().remove(searchField);
-        tableFormat = new SiriusResultTableFormat(source.getBestFunc());
+        tableFormat = new FormulaResultTableFormat(source.getBestHitFunction(), source.getFallBackNormalizedSiriusScoreFunction());
 
         table = new ActionTable<>(filteredSource, sortedSource, tableFormat);
 
@@ -71,15 +71,12 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         selectionConnection = new ConnectedSelection<>(source.getElementListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
 
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
-        //todo re-enable threshold marker
-//        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-//        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
-        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
-        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
-        table.getColumnModel().getColumn(8).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
+        table.getColumnModel().getColumn(3).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tableFormat.highlightColumnIndex()));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.siriusScoreStats, AbstractBarTableCellRenderer.PercentageMode.MULTIPLY_PROBABILITIES));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED));
+        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, AbstractBarTableCellRenderer.PercentageMode.DEACTIVATED, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(8).setCellRenderer(BarTableCellRenderer.newProbabilityBar(tableFormat.highlightColumnIndex()));
 
         loadingWrapper = new LoadablePanel(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         add(loadingWrapper, BorderLayout.CENTER);

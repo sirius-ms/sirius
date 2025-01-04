@@ -36,7 +36,8 @@ import java.io.StringWriter;
 
 public class StacktraceDialog extends JDialog implements ActionListener, KeyListener {
 
-    private JButton ok, copy;
+    private JButton ok, copy, showStacktrace;
+    private JScrollPane sc;
     private String fullmsg;
 
     public StacktraceDialog(Frame owner, String message, String stackTrace ) {
@@ -72,25 +73,33 @@ public class StacktraceDialog extends JDialog implements ActionListener, KeyList
         this.setLayout(new BorderLayout());
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
         Icon icon = UIManager.getIcon("OptionPane.errorIcon");
-        final JPanel stackedPanel = new JPanel();
-        stackedPanel.setLayout(new BoxLayout(stackedPanel, BoxLayout.Y_AXIS));
         northPanel.add(new JLabel(icon));
         northPanel.add(new JLabel(GuiUtils.formatToolTip(message)));
+        this.add(northPanel,BorderLayout.NORTH);
+
+        final JPanel stackedPanel = new JPanel();
+        stackedPanel.setLayout(new BoxLayout(stackedPanel, BoxLayout.Y_AXIS));
         final JTextArea textarea = new JTextArea(stacktrace);
         textarea.setEditable(false);
         textarea.addKeyListener(this);
-        final JScrollPane sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sc = new JScrollPane(textarea, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        sc.setPreferredSize(new Dimension(400, 400));
         stackedPanel.add(sc);
-        stackedPanel.setPreferredSize(new Dimension(400, 600));
-        this.add(northPanel,BorderLayout.NORTH);
         this.add(stackedPanel, BorderLayout.CENTER);
+        sc.setVisible(false);
+
         JPanel south = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
         ok = new JButton("Ok");
         ok.addActionListener(this);
-        copy = new JButton("Copy to clipboard");
         south.add(ok);
+        copy = new JButton("Copy to clipboard");
         copy.addActionListener(this);
+        copy.setVisible(false);
         south.add(copy);
+        showStacktrace = new JButton("Show stack trace");
+        showStacktrace.addActionListener(this);
+        south.add(showStacktrace);
+
         this.add(south,BorderLayout.SOUTH);
         this.pack();
         setLocationRelativeTo(getParent());
@@ -101,7 +110,12 @@ public class StacktraceDialog extends JDialog implements ActionListener, KeyList
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource()==copy) {
+        if (e.getSource() == showStacktrace) {
+            showStacktrace.setVisible(false);
+            sc.setVisible(true);
+            copy.setVisible(true);
+            this.pack();
+        } else if (e.getSource() == copy) {
             copyPlainText(fullmsg);
         } else {
             this.dispose();

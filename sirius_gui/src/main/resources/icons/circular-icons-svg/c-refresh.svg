@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="svg51219" width="64px" height="64px" version="1.1" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+ <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+ <title id="title51207">c-refresh</title>
+ <desc id="desc51209">Created with Sketch.</desc>
+ <g id="Page-1" fill="none" fill-rule="evenodd">
+  <g id="c-refresh">
+   <path id="Oval-1" d="m32 64c17.673 0 32-14.327 32-32s-14.327-32-32-32-32 14.327-32 32 14.327 32 32 32z" fill="#4da6bf"/>
+   <path id="path51214" d="m52 32c0-11.046-8.9543-20-20-20s-20 8.9543-20 20c0 7.3725 3.9891 13.813 9.9265 17.282-3.7721-4.4807-5.9265-11.906-5.9265-17.282 0-8.8366 8.5-14 16-14 9.5 0 11 8.5 11 14 0 6-2 7.5-9 12-1.1013 0.70796 0.87166 5.3513 1.4425 7.7049 9.4053-1.6317 16.558-9.833 16.558-19.705z" fill="#fff"/>
+   <path id="Rectangle-171" d="m31 40 13 13h-13v-13z" fill="#fff"/>
+  </g>
+ </g>
+</svg>

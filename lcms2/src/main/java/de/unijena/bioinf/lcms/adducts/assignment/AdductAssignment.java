@@ -3,8 +3,6 @@ package de.unijena.bioinf.lcms.adducts.assignment;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.lcms.adducts.IonType;
 import de.unijena.bioinf.lcms.adducts.IonType;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
@@ -39,6 +37,14 @@ public class AdductAssignment {
     public AdductAssignment(IonType[] ionTypes, double[] probabilities) {
         this.ionTypes = ionTypes;
         this.probabilities = probabilities;
+    }
+
+    public IonType[] getIonTypes() {
+        return ionTypes;
+    }
+
+    public double[] getProbabilities() {
+        return probabilities;
     }
 
     public IonType mostLikelyAdduct() {
@@ -78,4 +84,17 @@ public class AdductAssignment {
         return buf.toString();
     }
 
+    public AdductAssignment withAdded(IonType ionTypeLeft) {
+        for (IonType tp : ionTypes) {
+            if (tp.equals(ionTypeLeft)) return this;
+        }
+        IonType[] newIonTypes = Arrays.copyOf(ionTypes, ionTypes.length + 1);
+        double[] newProbs = Arrays.copyOf(probabilities, probabilities.length+1);
+        newIonTypes[ionTypes.length] = ionTypeLeft;
+        newProbs[probabilities.length] = 1d;
+        double sum = 0d;
+        for (double prob : newProbs) sum += prob;
+        for (int i=0; i < newProbs.length; ++i) newProbs[i] /= sum;
+        return new AdductAssignment(newIonTypes, newProbs);
+    }
 }

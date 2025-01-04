@@ -184,10 +184,10 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         final boolean formulaGiven = pinput.getOriginalInput().getMolecularFormula()!=null;
 
         if (formulaGiven) {
-            //from input file or otherwise specified formula
+            //single formula given in input file or otherwise specified by the user. This part also ensure backwards compatibility with old code / evaluation scripts etc. this should not be necessary for SIRIUS frontend application
             Set<MolecularFormula> inputFormulaSingleton = Collections.singleton(pinput.getOriginalInput().getMolecularFormula());
-            if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles) {
-                //molecular formula given in input file. Force it.
+            if (formulaSettings.prioritizeAndForceCandidatesFromUserInput) {
+                //molecular formula given in by user / input file. Force it.
                 //PossibleAdducts should always contain a matching adduct after Ms2Validator was run -> is this also true for MS1?
                 warnIfFormulaCandidateWithoutMatchingAdduct(inputFormulaSingleton, possibleAdducts, pinput.getExperimentInformation().getIonMass());
                 whiteset = Whiteset.ofNeutralizedFormulas(inputFormulaSingleton, Ms1Preprocessor.class).setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true).setFinalized(true);
@@ -203,10 +203,12 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             //CandidateFormulas may be set by user, database or from input files.
             //here we convert them to Whiteset to use and modify internally
             CandidateFormulas candidateFormulas = pinput.getAnnotationOrThrow(CandidateFormulas.class);
-            if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles && candidateFormulas.hasInputFileProvider()) {
+            if (formulaSettings.prioritizeAndForceCandidatesFromUserInput && candidateFormulas.hasUserInputProvider()) {
                 //molecular formula candidate set given in input file. Force it.
-                warnIfFormulaCandidateWithoutMatchingAdduct(candidateFormulas.getWhitesetOfInputFileCandidates().getNeutralFormulas(), possibleAdducts, pinput.getExperimentInformation().getIonMass());
-                whiteset = candidateFormulas.getWhitesetOfInputFileCandidates().setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true);
+                warnIfFormulaCandidateWithoutMatchingAdduct(candidateFormulas.getWhitesetOfUserInputCandidates().getNeutralFormulas(), possibleAdducts, pinput.getExperimentInformation().getIonMass());
+                whiteset = candidateFormulas.getWhitesetOfUserInputCandidates().setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true).setFinalized(true);
+                pinput.setAnnotation(Whiteset.class, whiteset);
+                return;
             } else {
                 Whiteset candidateWhiteset = candidateFormulas.toWhiteSet();
                 if (formulaSettings.applyFormulaConstraintsToDatabaseCandidates) candidateWhiteset = candidateWhiteset.filter(formulaConstraints, possibleAdducts.getAdducts(), Ms1Preprocessor.class);
@@ -221,8 +223,8 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
                 } else {
                     whiteset = whiteset.add(candidateWhiteset);
                 }
+                whiteset = whiteset.setIgnoreMassDeviationToResolveIonType(formulaSettings.ignoreMassDeviationForCandidateList);
             }
-            whiteset = whiteset.setIgnoreMassDeviationToResolveIonType(formulaSettings.ignoreMassDeviationForCandidateList);
         }
         whiteset = whiteset
                 .setRequiresDeNovo(formulaSettings.useDeNovoFor(pinput.getExperimentInformation().getIonMass()))
@@ -233,13 +235,13 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
 
     /**
      * check and warn for enforced molecular formulas
-     * @param candidatesFromSpectralLibraryMatches
+     * @param candidates
      * @param possibleAdducts
      * @param precursorMass
      * @return
      */
-    private boolean warnIfFormulaCandidateWithoutMatchingAdduct(Set<MolecularFormula> candidatesFromSpectralLibraryMatches, PossibleAdducts possibleAdducts, double precursorMass) {
-        Set<MolecularFormula> issues = candidatesFromSpectralLibraryMatches.stream().filter(mf -> possibleAdducts.getAdducts().stream().anyMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.addIonAndAdduct(mf.getMass()))<0.1)).collect(Collectors.toSet());
+    private boolean warnIfFormulaCandidateWithoutMatchingAdduct(Set<MolecularFormula> candidates, PossibleAdducts possibleAdducts, double precursorMass) {
+        Set<MolecularFormula> issues = candidates.stream().filter(mf -> !possibleAdducts.getAdducts().stream().anyMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.addIonAndAdduct(mf.getMass())-precursorMass)<0.1)).collect(Collectors.toSet());
         if (!issues.isEmpty()) {
             LoggerFactory.getLogger(this.getClass()).warn("Enforced molecular formula has no matching adduct: "+issues.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")) + ". Adducts are: "+possibleAdducts.getAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
             return true;

@@ -3,8 +3,6 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import java.io.File;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import io.sirius.ms.sdk.model.SearchableDatabaseParameters;
 
@@ -51,7 +49,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -90,7 +88,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -103,7 +101,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -116,7 +114,7 @@ public class SearchableDatabasesApi {
     }
 
     /**
-     * 
+     * DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
      * 
      * <p><b>200</b> - OK
      * @param requestBody The requestBody parameter
@@ -594,100 +592,6 @@ public class SearchableDatabasesApi {
      */
     public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles);
-    }
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param databaseId database to import into
-     * @param bufferSize The bufferSize parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param inputFiles The inputFiles parameter
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec importIntoDatabaseAsJobRequestCreation(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'databaseId' is set
-        if (databaseId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("databaseId", databaseId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
-        if (inputFiles != null)
-            formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "multipart/form-data"
-        };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/databases/{databaseId}/import/from-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param databaseId database to import into
-     * @param bufferSize The bufferSize parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param inputFiles The inputFiles parameter
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Job importIntoDatabaseAsJob(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param databaseId database to import into
-     * @param bufferSize The bufferSize parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param inputFiles The inputFiles parameter
-     * @return ResponseEntity&lt;Job&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<Job> importIntoDatabaseAsJobWithHttpInfo(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param databaseId database to import into
-     * @param bufferSize The bufferSize parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param inputFiles The inputFiles parameter
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec importIntoDatabaseAsJobWithResponseSpec(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles);
     }
     /**
      * 

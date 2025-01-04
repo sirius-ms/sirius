@@ -10,12 +10,13 @@ All URIs are relative to *http://localhost:8888*
 | [**getDefaultJobConfig**](JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration |
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
+| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | Get all (non-default) job configuration names |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
 | [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
-| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input. |
+| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**startJob**](JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters. |
 | [**startJobFromConfig**](JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config. |
 
@@ -47,8 +48,8 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete job from
         String jobId = "jobId_example"; // String | of the job to be deleted
-        Boolean cancelIfRunning = true; // Boolean | If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-        Boolean awaitDeletion = true; // Boolean | If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+        Boolean cancelIfRunning = true; // Boolean | If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+        Boolean awaitDeletion = true; // Boolean | If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
         try {
             apiInstance.deleteJob(projectId, jobId, cancelIfRunning, awaitDeletion);
         } catch (ApiException e) {
@@ -69,8 +70,8 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete job from | |
 | **jobId** | **String**| of the job to be deleted | |
-| **cancelIfRunning** | **Boolean**| If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
-| **awaitDeletion** | **Boolean**| If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
+| **cancelIfRunning** | **Boolean**| If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
+| **awaitDeletion** | **Boolean**| If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
 
 ### Return type
 
@@ -182,8 +183,8 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete jobs from
-        Boolean cancelIfRunning = true; // Boolean | If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
-        Boolean awaitDeletion = true; // Boolean | If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
+        Boolean cancelIfRunning = true; // Boolean | If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished.
+        Boolean awaitDeletion = true; // Boolean | If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished.
         try {
             apiInstance.deleteJobs(projectId, cancelIfRunning, awaitDeletion);
         } catch (ApiException e) {
@@ -203,8 +204,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete jobs from | |
-| **cancelIfRunning** | **Boolean**| If true job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
-| **awaitDeletion** | **Boolean**| If true request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
+| **cancelIfRunning** | **Boolean**| If true, job will be canceled if it is not finished. Otherwise,                         deletion will fail for running jobs or request will block until job has finished. | [optional] [default to true] |
+| **awaitDeletion** | **Boolean**| If true, request will block until deletion succeeded or failed.                         If the job is still running the request will wait until the job has finished. | [optional] [default to true] |
 
 ### Return type
 
@@ -228,7 +229,7 @@ No authorization required
 
 ## getDefaultJobConfig
 
-> JobSubmission getDefaultJobConfig(includeConfigMap)
+> JobSubmission getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch)
 
 Request default job configuration
 
@@ -251,8 +252,10 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true, generic configmap with-defaults will be included
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
+        Boolean includeCustomDbsForStructureSearch = false; // Boolean | if true, default database selection of structure db search contains also all available custom DB.
         try {
-            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap);
+            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getDefaultJobConfig");
@@ -271,6 +274,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **includeConfigMap** | **Boolean**| if true, generic configmap with-defaults will be included | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
+| **includeCustomDbsForStructureSearch** | **Boolean**| if true, default database selection of structure db search contains also all available custom DB. | [optional] [default to false] |
 
 ### Return type
 
@@ -364,7 +369,7 @@ No authorization required
 
 ## getJobConfig
 
-> JobSubmission getJobConfig(name, includeConfigMap)
+> StoredJobSubmission getJobConfig(name, moveParametersToConfigMap)
 
 Request job configuration with given name.
 
@@ -387,9 +392,9 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
         try {
-            JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap);
+            StoredJobSubmission result = apiInstance.getJobConfig(name, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfig");
@@ -408,11 +413,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **name** | **String**| name of the job-config to return | |
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
 
 ### Return type
 
-[**JobSubmission**](JobSubmission.md)
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -430,9 +435,71 @@ No authorization required
 | **200** | {@link JobSubmission JobSubmission} for given name. |  -  |
 
 
+## getJobConfigNames
+
+> List&lt;String&gt; getJobConfigNames()
+
+Get all (non-default) job configuration names
+
+Get all (non-default) job configuration names
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.JobsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        JobsApi apiInstance = new JobsApi(defaultClient);
+        try {
+            List<String> result = apiInstance.getJobConfigNames();
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling JobsApi#getJobConfigNames");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**List&lt;String&gt;**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
 ## getJobConfigs
 
-> List&lt;JobSubmission&gt; getJobConfigs(includeConfigMap)
+> List&lt;StoredJobSubmission&gt; getJobConfigs()
 
 Request all available job configurations
 
@@ -454,9 +521,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
-        Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output
         try {
-            List<JobSubmission> result = apiInstance.getJobConfigs(includeConfigMap);
+            List<StoredJobSubmission> result = apiInstance.getJobConfigs();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfigs");
@@ -471,14 +537,11 @@ public class Example {
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **includeConfigMap** | **Boolean**| if true the generic configmap will be part of the output | [optional] [default to false] |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**List&lt;JobSubmission&gt;**](JobSubmission.md)
+[**List&lt;StoredJobSubmission&gt;**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -566,7 +629,7 @@ No authorization required
 
 ## getJobsPaged
 
-> PageJob getJobsPaged(projectId, page, size, sort, optFields)
+> PagedModelJob getJobsPaged(projectId, page, size, sort, optFields)
 
 Get Page of jobs with information such as current state and progress (if available).
 
@@ -594,7 +657,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
+            PagedModelJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobsPaged");
@@ -620,7 +683,7 @@ public class Example {
 
 ### Return type
 
-[**PageJob**](PageJob.md)
+[**PagedModelJob**](PagedModelJob.md)
 
 ### Authorization
 
@@ -706,7 +769,7 @@ No authorization required
 
 ## saveJobConfig
 
-> String saveJobConfig(name, jobSubmission, overrideExisting)
+> StoredJobSubmission saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap)
 
 Add new job configuration with given name.
 
@@ -731,8 +794,9 @@ public class Example {
         String name = "name_example"; // String | name of the job-config to add
         JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | to add
         Boolean overrideExisting = false; // Boolean | 
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
         try {
-            String result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting);
+            StoredJobSubmission result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#saveJobConfig");
@@ -753,10 +817,11 @@ public class Example {
 | **name** | **String**| name of the job-config to add | |
 | **jobSubmission** | [**JobSubmission**](JobSubmission.md)| to add | |
 | **overrideExisting** | **Boolean**|  | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object | [optional] [default to false] |
 
 ### Return type
 
-**String**
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -765,20 +830,20 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: text/plain
+- **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Probably modified name of the config (to ensure filesystem path compatibility). |  -  |
+| **200** | StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility). |  -  |
 
 
 ## startCommand
 
 > Job startCommand(projectId, commandSubmission, optFields)
 
-Start computation for given command and input.
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 Start computation for given command and input.
 
@@ -841,7 +906,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |  -  |
+| **200** | Job of the command to be executed. |  -  |
 
 
 ## startJob

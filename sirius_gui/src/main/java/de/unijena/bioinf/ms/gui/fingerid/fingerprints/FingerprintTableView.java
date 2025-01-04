@@ -80,10 +80,10 @@ public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyB
             }
         });
         // display color bar for posterior probability
-        BarTableCellRenderer barRenderer = new BarTableCellRenderer(-1, 0, 1, true);
+        BarTableCellRenderer barRenderer = BarTableCellRenderer.newProbabilityBar(-1);
         barRenderer.setTwoWayBar(true);
         actionTable.getColumnModel().getColumn(2).setCellRenderer(barRenderer);
-        actionTable.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(-1,0,1,false));
+        actionTable.getColumnModel().getColumn(6).setCellRenderer(BarTableCellRenderer.newProbabilityBar(-1));
     }
 
 

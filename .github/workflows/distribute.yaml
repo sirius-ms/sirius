@@ -14,6 +14,10 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
+        targetArchitecture: [amd64, arm64]
+        exclude:
+          - os: windows-latest
+            targetArchitecture: arm64
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -30,11 +34,12 @@ jobs:
       - name: Git LFS Pull
         run: git lfs pull
       - name: Set up Zulu JDK-FX
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
+          distribution: 'adopt'
           java-version: '21' # The JDK version to make available on the path.
-          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: x64 # (x64 or x86) - defaults to x64
+          java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: 'x64' # (x64 or x86) - defaults to x64
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
@@ -63,14 +68,6 @@ jobs:
         name: Check Identities
         run: /usr/bin/security find-identity
 
-      #      - if: ${{ (matrix.os == 'windows-latest' ||  matrix.os == 'ubuntu-latest') && (env.GENERIC_INSTALLER_CERTIFICATE != '') }}
-      #        name: Load generic installer codesign cert
-      #        id: generic_codesign_cert
-      #        uses: timheuer/base64-to-file@v1.1
-      #        with:
-      #          fileName: 'generic_installer_cert.p12'
-      #          encodedString: ${{ env.GENERIC_INSTALLER_CERTIFICATE }}
-
       - name: Gradle Build
         uses: eskatos/gradle-command-action@v1
         env:
@@ -78,112 +75,7 @@ jobs:
         with:
           gradle-version: 8.8
           build-root-directory: sirius_dist/sirius_gui_dist
-          arguments: --stacktrace clean buildJpDists -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
-
-#      - name: Sirius Run
-#        run: |
-#          TEMP_ROOT="$(cd "$(dirname "sirius_cli")"; pwd -P)/$(basename "sirius_cli")"
-#          TEMP_DIR="${TEMP_ROOT}/build/test/temp_results"
-#          mkdir -p "${TEMP_DIR}" "${TEMP_DIR}/mgf_temp_output" "${TEMP_DIR}/mgf_temp_summary" "${TEMP_DIR}/ms_temp_output" "${TEMP_DIR}/ms_temp_summary" "${TEMP_DIR}/txt_temp_output" "${TEMP_DIR}/txt_temp_summary"
-#          DEMO_DIR="$(cd "$(dirname "sirius_doc/manual/demo-data")"; pwd -P)/$(basename "sirius_doc/manual/demo-data")"
-#          MGF_DATA="${DEMO_DIR}/mgf/laudanosine.mgf"
-#          MS_DATA="${DEMO_DIR}/ms/Bicuculline.ms"
-#          TXT_DATA_1="${DEMO_DIR}/txt/chelidonine_ms.txt"
-#          TXT_DATA_2="${DEMO_DIR}/txt/chelidonine_msms1.txt,${DEMO_DIR}/txt/chelidonine_msms2.txt"
-#          MGF_OUTPUT="${TEMP_DIR}/mgf_temp_output"
-#          MGF_SUMMARY="${TEMP_DIR}/mgf_temp_summary"
-#          MS_OUTPUT="${TEMP_DIR}/ms_temp_output"
-#          MS_SUMMARY="${TEMP_DIR}/ms_temp_summary"
-#          TXT_OUTPUT="${TEMP_DIR}/txt_temp_output"
-#          TXT_SUMMARY="${TEMP_DIR}/txt_temp_summary"
-#          case "$OSTYPE" in
-#            darwin*) SIRIUS="./sirius_dist/sirius_gui_dist/build/distributions/sirius.app/Contents/MacOS/sirius" ;;
-#            linux*) SIRIUS="./sirius_dist/sirius_gui_dist/build/distributions/sirius/bin/sirius" ;;
-#            msys*) SIRIUS="./sirius_dist/sirius_gui_dist/build/distributions/sirius/sirius.exe" ;;
-#            *) echo "Error: Could not find OS."; exit 1 ;;
-#          esac
-#          ${SIRIUS} login --show --user-env SIRIUS_USER --password-env SIRIUS_PW
-#          ${SIRIUS} login --show --select-license ${{ env.GITHUB_REF_SLUG == 'stable' && secrets.SIRIUS_SUB || secrets.SIRIUS_SUB_DEV }}
-#          ${SIRIUS} --input ${MGF_DATA} --output ${MGF_OUTPUT} formula -p orbitrap fingerprint structure compound-classes write-summaries --output ${MGF_SUMMARY}
-#          ${SIRIUS} -1 ${TXT_DATA_1} -2 ${TXT_DATA_2} -z 354.134704589844 -o ${TXT_OUTPUT} formula -p orbitrap write-summaries --output ${TXT_SUMMARY}
-#          ${SIRIUS} -o ${MS_OUTPUT} -i ${MS_DATA} --ignore-formula formula -p orbitrap -c 5 fingerprint structure compound-classes write-summaries --output ${MS_SUMMARY}
-#        shell: bash
-#
-#      - name: Sirius MGF Test
-#        run: |
-#          RESULTS="sirius_cli/build/test/temp_results/"
-#          OUTPUT="${RESULTS}mgf_temp_output/1_laudanosine_FEATURE_1/"
-#          SUMMARY="${RESULTS}mgf_temp_summary/1_laudanosine_FEATURE_1/"
-#          CANOPUS="${OUTPUT}canopus/"
-#          CANOPUS_NPC="${OUTPUT}canopus_npc/"
-#          FINGERPRINTS="${OUTPUT}fingerprints/"
-#          FINGER_ID="${OUTPUT}fingerid/"
-#          DIRS=(${SUMMARY} ${OUTPUT} ${CANOPUS} ${CANOPUS_NPC} ${FINGERPRINTS} ${FINGER_ID})
-#          for DIR in "${DIRS[@]}" ; do
-#            if [ -d "${DIR}" ]; then
-#              echo "Found result directory ${DIR}..."
-#              if [ "$(ls -A ${DIR})" ]; then
-#                echo "${DIR} is not empty."
-#              else
-#                echo "Error: ${DIR} is empty."
-#                exit 1
-#              fi
-#            else
-#              echo "Error: result directory ${DIR} not found."
-#              exit 1
-#            fi
-#          done
-#        shell: bash
-#
-#      - name: Sirius MS Test
-#        run: |
-#          RESULTS="sirius_cli/build/test/temp_results/"
-#          OUTPUT="${RESULTS}ms_temp_output/1_Bicuculline_Bicuculline/"
-#          SUMMARY="${RESULTS}ms_temp_summary/1_Bicuculline_Bicuculline/"
-#          CANOPUS="${OUTPUT}canopus/"
-#          CANOPUS_NPC="${OUTPUT}canopus_npc/"
-#          FINGERPRINTS="${OUTPUT}fingerprints/"
-#          FINGER_ID="${OUTPUT}fingerid/"
-#          echo "${FINGER_ID}"
-#          DIRS=(${SUMMARY} ${OUTPUT} ${CANOPUS} ${CANOPUS_NPC} ${FINGERPRINTS} ${FINGER_ID})
-#          echo "${DIRS}"
-#          for DIR in "${DIRS[@]}" ; do
-#            if [ -d "${DIR}" ]; then
-#              echo "Found result directory ${DIR}..."
-#              if [ "$(ls -A ${DIR})" ]; then
-#                echo "${DIR} is not empty."
-#              else
-#                echo "Error: ${DIR} is empty."
-#                exit 1
-#              fi
-#            else
-#              echo "Error: result directory ${DIR} not found."
-#              exit 1
-#            fi
-#          done
-#        shell: bash
-#
-#      - name: Sirius TXT Test
-#        run: |
-#          RESULTS="sirius_cli/build/test/temp_results/"
-#          SUMMARY="${RESULTS}txt_temp_summary/1_unknown_/"
-#          if [ -d "${SUMMARY}" ]; then
-#            echo "Found result directory ${SUMMARY}..."
-#            if [ "$(ls -A ${SUMMARY})" ]; then
-#              echo "${SUMMARY} is not empty."
-#            else
-#              echo "Error: ${SUMMARY} is empty."
-#              exit 1
-#            fi
-#          else
-#            echo "Error: result directory ${SUMMARY} not found."
-#            exit 1
-#          fi
-#        shell: bash
-#
-#      - name: Sirius Run Cleanup
-#        run: |
-#          rm -r sirius_cli/build/test/temp_results
+          arguments: --stacktrace clean buildJpDists -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
       - if: matrix.os == 'windows-latest'
         name: Azure Trusted Signing for Widows MSI
         uses: azure/trusted-signing-action@v0.3.16
@@ -204,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           retention-days: 1
-          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
+          name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ matrix.os }}-${{ matrix.targetArchitecture }}"
           path: |
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.msi

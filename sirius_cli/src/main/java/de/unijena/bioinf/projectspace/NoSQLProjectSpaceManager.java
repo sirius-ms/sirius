@@ -23,6 +23,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -140,6 +141,11 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @Override
     public void close() throws IOException {
         project.getStorage().close();
+    }
+
+    @Override
+    public @NotNull Optional<ProjectType> getType() {
+        return project.findProjectType();
     }
 
     @Override

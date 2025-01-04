@@ -37,28 +37,15 @@ import lombok.Setter;
 @Setter
 @Builder
 public class ProjectChangeEvent {
-    public enum Type {
-        PROJECT_OPENED,
-        PROJECT_MOVED,
-        PROJECT_CLOSED,
-
-        FEATURE_CREATED,
-        FEATURE_UPDATED,
-        FEATURE_DELETED,
-
-        RESULT_CREATED,
-        RESULT_UPDATED,
-        RESULT_DELETED
-    }
 
     /**
      * Type of change that has happened.
      */
     @Schema
-    private Type eventType;
+    private ProjectEventType eventType;
 
     /**
-     * Project on which the change has happened (is allways given).
+     * Project on which the change has happened (is always given).
      * If no other `id` is given this indicates that the whole project has been changed
      * (e.g. PROJECT_OPENED, PROJECT_MOVED, PROJECT_CLOSED).
      */

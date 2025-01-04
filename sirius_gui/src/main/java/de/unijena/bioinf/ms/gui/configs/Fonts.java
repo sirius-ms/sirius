@@ -35,11 +35,24 @@ import java.io.IOException;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class Fonts {
-    public static final Font  FONT_BOLD;
-    public static final Font  FONT;
-    public static final Font  FONT_ITALIC;
-    public static final Font  FONT_BOLD_ITALIC;
-    public static final Font  FONT_MONO;
+    public static final Font FONT;
+    public static final Font FONT_ITALIC;
+    public static final Font FONT_MEDIUM;
+    public static final Font FONT_MEDIUM_ITALIC;
+    public static final Font FONT_BOLD;
+    public static final Font FONT_BOLD_ITALIC;
+    public static final Font FONT_MONO;
+    public static final Font FONT_DEJAVU_SANS;
+
+
+    public static final String LOCATION_FONT = "/ttf/Roboto-Regular.ttf";
+    public static final String LOCATION_FONT_ITALIC = "/ttf/Roboto-Italic.ttf";
+    public static final String LOCATION_FONT_MEDIUM = "/ttf/Roboto-Medium.ttf";
+    public static final String LOCATION_FONT_MEDIUM_ITALIC = "/ttf/Roboto-MediumItalic.ttf";
+    public static final String LOCATION_FONT_BOLD = "/ttf/Roboto-Bold.ttf";
+    public static final String LOCATION_FONT_BOLD_ITALIC = "/ttf/Roboto-BoldItalic.ttf";
+    public static final String LOCATION_FONT_MONO = "/ttf/RobotoMono-Regular.ttf";
+    public static final String LOCATION_FONT_DEJAVU_SANS = "/ttf/DejaVuSans.ttf";
 
      static {
          Font tm1 = null;
@@ -47,21 +60,29 @@ public class Fonts {
          Font tm3 = null;
          Font tm4 = null;
          Font tm5 = null;
+         Font tm6 = null;
+         Font tm7 = null;
+         Font tm8 = null;
          try {
-             tm1 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-Bold.ttf"));
-             tm2 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans.ttf"));
-             tm3 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-Oblique.ttf"));
-             tm4 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSans-BoldOblique.ttf"));
-             tm5 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream("/ttf/DejaVuSansMono-Bold.ttf"));
+             tm1 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT));
+             tm2 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_ITALIC));
+             tm3 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_MEDIUM));
+             tm4 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_MEDIUM_ITALIC));
+             tm5 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_BOLD));
+             tm6 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_BOLD_ITALIC));
+             tm7 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_MONO));
+             tm8 = Font.createFont(Font.TRUETYPE_FONT, Fonts.class.getResourceAsStream(LOCATION_FONT_DEJAVU_SANS));
          } catch (FontFormatException | IOException e) {
              LoggerFactory.getLogger(Fonts.class).error("Could not load default font", e);
          }
-         FONT_BOLD = tm1;
-         FONT = tm2;
-         FONT_ITALIC = tm3;
-         FONT_BOLD_ITALIC = tm4;
-         FONT_MONO = tm5;
-
+         FONT = tm1;
+         FONT_ITALIC = tm2;
+         FONT_MEDIUM = tm3;
+         FONT_MEDIUM_ITALIC = tm4;
+         FONT_BOLD = tm5;
+         FONT_BOLD_ITALIC = tm6;
+         FONT_MONO = tm7;
+         FONT_DEJAVU_SANS = tm8;
      }
 
      public static void initFonts(){
@@ -71,9 +92,21 @@ public class Fonts {
              LoggerFactory.getLogger(Fonts.class).debug("Global Anti Aliasing enabled");
          }
 
-         if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.enforcefont",false)){
-             UIManager.getLookAndFeelDefaults().put("defaultFont", FONT);
-             LoggerFactory.getLogger(Fonts.class).debug(FONT.getFontName() +  " enforced!");
-         }
+         float defaultFontSize = getDefaultFontSize();
+         UIManager.getDefaults().put("defaultFont", FONT.deriveFont(defaultFontSize));
      }
+
+    private static float getDefaultFontSize() {
+         //if this ever does not work, there also exists 'Toolkit.getToolkit().getFontLoader().getSystemFontSize()'
+        Font defaultFont = UIManager.getFont("defaultFont");
+        if (defaultFont == null) defaultFont = UIManager.getFont("Label.font");
+        if (defaultFont == null) defaultFont = (new JLabel().getFont());
+
+        return defaultFont.getSize();
+    }
+
+    public static String getFontURLExternalForm() {
+        return Fonts.class.getResource(LOCATION_FONT).toExternalForm();
+    }
+
 }

@@ -28,6 +28,6 @@ public class AdductRelationship implements KnownMassDelta{
 
     @Override
     public String toString() {
-        return "AdductRelationship{" + left.toString() + " --> " + right.toString() + "}";
+        return left.toString() + " -> " + right.toString();
     }
 }

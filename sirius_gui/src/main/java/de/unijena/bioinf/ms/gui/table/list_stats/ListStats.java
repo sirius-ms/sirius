@@ -25,4 +25,6 @@ public interface ListStats {
     double getMax();
     double getMin();
     double getSum();
+    double getRangeMin();
+    double getRangeMax();
 }

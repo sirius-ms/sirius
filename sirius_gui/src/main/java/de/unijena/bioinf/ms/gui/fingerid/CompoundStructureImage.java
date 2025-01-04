@@ -19,12 +19,18 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
+import org.openscience.cdk.renderer.color.IAtomColorer;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -35,50 +41,49 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-class CompoundStructureImage extends JPanel {
+class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT {
 
-    protected static final Font nameFont, rankFont, matchFont;
+    protected static final Font formulaFont, scoreFont;
     private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
 
     static {
         //init fonts
-        final Font tempFont = Fonts.FONT_BOLD;
-        if (tempFont != null) {
-            nameFont = tempFont.deriveFont(13f);
-            matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(18f);
-        } else {
-            nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
-
-        }
+        final Font tempFont = Fonts.FONT_MEDIUM;
+        formulaFont = tempFont.deriveFont(14f);
+        scoreFont = tempFont.deriveFont(18f);
     }
 
     protected FingerprintCandidateBean molecule;
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 
-    public CompoundStructureImage() {
-        this(StandardGenerator.HighlightStyle.OuterGlow);
+    public CompoundStructureImage(SiriusGui gui) {
+        this(StandardGenerator.HighlightStyle.OuterGlow, gui);
     }
 
-    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle) {
+    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle, SiriusGui gui) {
+        gui.getProperties().addPropertyChangeListener("molecularStructuresDisplayColors", this);
+
         setOpaque(false);
         setPreferredSize(new Dimension(374, 215));
         // make generators
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
-        generators.add(new StandardGenerator(nameFont));
+        generators.add(new StandardGenerator(formulaFont));
 
         // setup the renderer
         this.renderer = new AtomContainerRenderer(generators, new AWTFontManager());
 
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 highlightStyle);
-        renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new ThemedAtomColors());
+        setAtomColoring(gui.getProperties().getMolecularStructureDisplayColors());
+
+        renderer.getRenderer2DModel().set(StandardGenerator.AnnotationColor.class,
+                Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         setVisible(true);
     }
 
@@ -104,21 +109,56 @@ class CompoundStructureImage extends JPanel {
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
 
-        gg.setFont(rankFont);
+        gg.setFont(formulaFont);
+        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         final String fromulaString = molecule.getMolecularFormula();
         final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
             final int x = 3;
-            final int y = getHeight() - (int) (bound.getHeight());
+            final int y = 0; // top-left
             final int h = (int) (y + bound.getHeight());
             gg.drawString(fromulaString, x, h - 2);
         }
 
         //todo change to gif
         final String scoreText = decimalFormat.format(molecule.getScore());
-        double tw = gg.getFontMetrics(matchFont).getStringBounds(scoreText, gg).getWidth();
+        double tw = gg.getFontMetrics(scoreFont).getStringBounds(scoreText, gg).getWidth();
 
-        gg.setFont(matchFont);
+        gg.setFont(scoreFont);
+        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
         gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
+    }
+
+    @Override
+    public void propertyChangeInEDT(PropertyChangeEvent propertyChangeEvent) {
+        if (propertyChangeEvent.getNewValue() instanceof MolecularStructuresDisplayColors mode) {
+            setAtomColoring(mode);
+            repaint();
+        }
+
+    }
+
+    private void setAtomColoring(MolecularStructuresDisplayColors mode) {
+        if (mode == MolecularStructuresDisplayColors.MONOCHROME) {
+            IAtomColorer atomColorer = new UniColorHighlightingAware();
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, atomColorer);
+        } else {
+            renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, new ThemedAtomColors());
+        }
+    }
+
+    private static class UniColorHighlightingAware implements IAtomColorer {
+
+        @Override
+        public Color getAtomColor(IAtom atom) {
+            if (atom.getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null) {
+                //normal atom without highlighting
+                return Colors.MolecularStructures.SELECTED_SUBSTRUCTURE;
+            } else {
+                //with substructure highlighting
+                return Colors.MolecularStructures.SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT;
+            }
+        }
+
     }
 }

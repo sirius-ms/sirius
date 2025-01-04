@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.gui.utils;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
@@ -34,20 +34,19 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 
 
 /**
@@ -60,37 +59,29 @@ public class GuiUtils {
     public final static int LARGE_GAP = 20;
 
     public static void initUI() {
-        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
-        switch (theme) {
-            case "Dark":
+        switch (Colors.THEME()) {
+            case DARK:
                 try {
                     UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
                     e.printStackTrace();
                 }
-            case "Light":
+            case LIGHT:
+            default:
                 try {
                     UIManager.setLookAndFeel(new FlatIntelliJLaf());
                     break;
                 } catch (UnsupportedLookAndFeelException e) {
+                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
                     e.printStackTrace();
                 }
-            case "Classic":
-            default:
-                try {
-                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                        if ("Nimbus".equals(info.getName())) {
-                            UIManager.setLookAndFeel(info.getClassName());
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
-                }
         }
+
+        //load fonts. Run AFTER setting look-and-feel
+        Fonts.initFonts();
+        Colors.adjustLookAndFeel();
 
         //nicer times for tooltips
         ToolTipManager.sharedInstance().setInitialDelay(500);
@@ -100,87 +91,11 @@ public class GuiUtils {
     public static void drawListStatusElement(boolean isComputing, Graphics2D g2, Component c) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        final Color prevCol = g2.getColor();
         String icon = isComputing ? "\u2699" : "";
-
-
-        /*switch (state) {
-            case COMPUTING:
-                icon = "\u2699";
-                break;
-            case COMPUTED:
-                g2.setColor(Colors.ICON_GREEN);
-                icon = "\u2713";
-                break;
-            case QUEUED:
-                icon = "...";
-                break;
-            case FAILED:
-                g2.setColor(Colors.ICON_RED);
-                icon = "\u2718";
-                break;
-            default:
-                icon = "";
-        }*/
 
         int offset = g2.getFontMetrics().stringWidth(icon);
         g2.drawString(icon, c.getWidth() - offset - 10, c.getHeight() - 8);
-        g2.setColor(prevCol);
     }
-
-    public static class SimplePainter extends AbstractRegionPainter {
-
-        private Color fillColor;
-
-        public SimplePainter(Color color) {
-            // as a slight visual improvement, make the color transparent
-            // to at least see the background gradient
-            // the default progressBarPainter does it as well (plus a bit more)
-            fillColor = new Color(
-                    color.getRed(), color.getGreen(), color.getBlue(), 156);
-        }
-
-        @Override
-        protected void doPaint(Graphics2D g, JComponent c, int width,
-                               int height, Object[] extendedCacheKeys) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setColor(fillColor);
-            g.fillRect(0, 0, width, height);
-        }
-
-        @Override
-        protected PaintContext getPaintContext() {
-            return null;
-        }
-
-    }
-
-    public static class ProgressPainter implements Painter {
-
-        private Color light, dark;
-        private GradientPaint gradPaint;
-
-        public ProgressPainter(Color light, Color dark) {
-            this.light = light;
-            this.dark = dark;
-        }
-
-        @Override
-        public void paint(Graphics2D g, Object c, int w, int h) {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            gradPaint = new GradientPaint((w / 2.0f), 0, light, (w / 2.0f), (h / 2.0f), dark, true);
-            g.setPaint(gradPaint);
-            g.fillRect(2, 2, (w - 5), (h - 5));
-
-            Color outline = new Color(0, 85, 0);
-            g.setColor(outline);
-            g.drawRect(2, 2, (w - 5), (h - 5));
-            Color trans = new Color(outline.getRed(), outline.getGreen(), outline.getBlue(), 100);
-            g.setColor(trans);
-            g.drawRect(1, 1, (w - 3), (h - 3));
-        }
-    }
-
 
     public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
         final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
@@ -273,18 +188,29 @@ public class GuiUtils {
         return Pair.of(p, label);
     }
 
-    public static void openURL(@NotNull Frame owner, URI url) throws IOException {
+    public static void openURLOrError(@NotNull Frame owner, URI url) {
+        try {
+            openURL(owner, url, true);
+        } catch (IOException e) {
+            new ExceptionDialog(owner, "Error opening URL '" + url + "'. Cause: " + e.getMessage());
+        }
+    }
+
+    public static void openURL(@NotNull Window owner, URI url) throws IOException {
         openURL(owner, url, true);
     }
 
-    public static void openURL(@NotNull Frame owner, URI url, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@NotNull Window owner, URI url, boolean useSystemBrowser) throws IOException {
         openURL(owner, url, null, useSystemBrowser);
     }
 
 
-    public static void openURL(@NotNull Frame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@Nullable Window owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
         if (url == null)
-            new ExceptionDialog(owner, "Cannot open empty URL!");
+            if (owner instanceof JDialog dialog)
+                new ExceptionDialog(dialog, "Cannot open empty URL!");
+            else
+                new ExceptionDialog((Frame) owner, "Cannot open empty URL!");
 
         if (useSystemBrowser) {
             if (Desktop.isDesktopSupported()) {
@@ -296,7 +222,10 @@ public class GuiUtils {
             }
         }
 
-        new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
+        if (owner instanceof JDialog dialog)
+            new WebViewBrowserDialog(dialog, title == null ? "SIRIUS WebView" : title, url);
+        else
+            new WebViewBrowserDialog((Frame) owner, title == null ? "SIRIUS WebView" : title, url);
     }
 
     /**
@@ -312,15 +241,6 @@ public class GuiUtils {
                 dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
             }
         });
-    }
-
-    public static int getComponentIndex(JComponent parent, JComponent child) {
-        for (int i = 0; i < parent.getComponentCount(); ++i) {
-            if (parent.getComponent(i).equals(child)) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
@@ -349,33 +269,118 @@ public class GuiUtils {
         return box;
     }
 
-    public static JPanel newLoadingPanel() {
-        return newLoadingPanel("Loading...");
+    private static final Map<Character, String> CHAR_MAP = new HashMap<>();
+    static {
+        // Superscript digits
+        CHAR_MAP.put('⁰', "0");
+        CHAR_MAP.put('¹', "1");
+        CHAR_MAP.put('²', "2");
+        CHAR_MAP.put('³', "3");
+        CHAR_MAP.put('⁴', "4");
+        CHAR_MAP.put('⁵', "5");
+        CHAR_MAP.put('⁶', "6");
+        CHAR_MAP.put('⁷', "7");
+        CHAR_MAP.put('⁸', "8");
+        CHAR_MAP.put('⁹', "9");
+
+        // Subscript digits
+        CHAR_MAP.put('₀', "0");
+        CHAR_MAP.put('₁', "1");
+        CHAR_MAP.put('₂', "2");
+        CHAR_MAP.put('₃', "3");
+        CHAR_MAP.put('₄', "4");
+        CHAR_MAP.put('₅', "5");
+        CHAR_MAP.put('₆', "6");
+        CHAR_MAP.put('₇', "7");
+        CHAR_MAP.put('₈', "8");
+        CHAR_MAP.put('₉', "9");
+
+        // Superscript signs
+        CHAR_MAP.put('⁺', "+");
+        CHAR_MAP.put('⁻', "-");
+
+        // If encountered, subscript plus/minus can also be mapped if needed
+        // (not common in IUPAC names, but for completeness)
+        CHAR_MAP.put('₊', "+");
+        CHAR_MAP.put('₋', "-");
+
+        // Greek letters often found in IUPAC names (approximate transliterations)
+        // Lowercase:
+        CHAR_MAP.put('α', "a");
+        CHAR_MAP.put('β', "b");
+        CHAR_MAP.put('γ', "g");
+        CHAR_MAP.put('δ', "d");
+        CHAR_MAP.put('ε', "e");
+        CHAR_MAP.put('ζ', "z");
+        CHAR_MAP.put('η', "h");
+        CHAR_MAP.put('θ', "th");
+        CHAR_MAP.put('κ', "k");
+        CHAR_MAP.put('λ', "l");
+        CHAR_MAP.put('μ', "m");
+        CHAR_MAP.put('ν', "n");
+        CHAR_MAP.put('ξ', "x");
+        CHAR_MAP.put('ο', "o");
+        CHAR_MAP.put('π', "p");
+        CHAR_MAP.put('ρ', "r");
+        CHAR_MAP.put('σ', "s");
+        CHAR_MAP.put('ς', "s");
+        CHAR_MAP.put('τ', "t");
+        CHAR_MAP.put('υ', "u");
+        CHAR_MAP.put('φ', "f");
+        CHAR_MAP.put('χ', "ch");
+        CHAR_MAP.put('ψ', "ps");
+        CHAR_MAP.put('ω', "w");
+
+        // If uppercase Greek letters are used, map them similarly if needed:
+        CHAR_MAP.put('Α', "A");
+        CHAR_MAP.put('Β', "B");
+        CHAR_MAP.put('Γ', "G");
+        CHAR_MAP.put('Δ', "D");
+        CHAR_MAP.put('Ε', "E");
+        CHAR_MAP.put('Ζ', "Z");
+        CHAR_MAP.put('Η', "H");
+        CHAR_MAP.put('Θ', "Th");
+        CHAR_MAP.put('Κ', "K");
+        CHAR_MAP.put('Λ', "L");
+        CHAR_MAP.put('Μ', "M");
+        CHAR_MAP.put('Ν', "N");
+        CHAR_MAP.put('Ξ', "X");
+        CHAR_MAP.put('Ο', "O");
+        CHAR_MAP.put('Π', "P");
+        CHAR_MAP.put('Ρ', "R");
+        CHAR_MAP.put('Σ', "S");
+        CHAR_MAP.put('Τ', "T");
+        CHAR_MAP.put('Υ', "U");
+        CHAR_MAP.put('Φ', "F");
+        CHAR_MAP.put('Χ', "Ch");
+        CHAR_MAP.put('Ψ', "Ps");
+        CHAR_MAP.put('Ω', "W");
     }
 
-    public static JPanel newLoadingPanel(@Nullable String loadingMessage) {
-        return newLoadingPanel(Icons.ECLIPSE_LOADER_THICK_160, loadingMessage);
-    }
+    /**
+     * Normalizes an IUPAC chemical name string by converting any superscripts, subscripts,
+     * and Greek letters into their ASCII equivalents, producing a name that does not contain
+     * these special Unicode characters.
+     *
+     * @param input The IUPAC name string to normalize.
+     * @return A normalized version of the IUPAC name string.
+     */
+    public static String normalizeIUPACName(String input) {
+        if (isNullOrBlank(input)) {
+            return input;
+        }
 
-    public static JPanel newLoadingPanel(@NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Colors.BACKGROUND);
-        //todo transparency would be cool
-        panel.setOpaque(true);
-        JLabel iconLabel = new JLabel(filterAnimation, SwingUtilities.CENTER);
-        JLabel label = loadingMessage != null && !loadingMessage.isBlank() ? new JLabel(loadingMessage) : null;
-//        if (filter) {
-//            iconLabel = new JLabel(Icons.FILTER_LOADER_160, SwingUtilities.CENTER);
-//            Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
-//            label = new JLabel("Filtering...");
-//        } else {
-//            iconLabel = new JLabel(Icons.ATOM_LOADER_200, SwingUtilities.CENTER);
-//            Icons.ATOM_LOADER_200.setImageObserver(iconLabel);
-//            label = new JLabel("Loading...");
-//        }
-        panel.add(iconLabel, BorderLayout.CENTER);
-        if (label != null)
-            panel.add(label, BorderLayout.SOUTH);
-        return panel;
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            String replacement = CHAR_MAP.get(c);
+            if (replacement != null) {
+                sb.append(replacement);
+            } else {
+                sb.append(c);
+            }
+        }
+
+        return sb.toString();
     }
 }

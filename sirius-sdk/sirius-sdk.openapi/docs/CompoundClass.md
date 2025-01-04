@@ -10,11 +10,14 @@ Predicted compound class with name, probability and id if available.  (ClassyFir
 |------------ | ------------- | ------------- | -------------|
 |**type** | **CompoundClassType** |  |  [optional] |
 |**level** | **String** | Name of the level this compound class belongs to |  [optional] |
+|**levelIndex** | **Integer** | Index of the level this compound class belongs to |  [optional] |
 |**name** | **String** | Name of the compound class. |  [optional] |
 |**description** | **String** | Description of the compound class. |  [optional] |
 |**id** | **Integer** | Unique id of the class. Might be undefined for certain classification ontologies. |  [optional] |
 |**probability** | **Double** | prediction probability |  [optional] |
 |**index** | **Integer** | Absolute index of this property in the predicted vector/embedding |  [optional] |
+|**parentId** | **Integer** | Unique id of the parent class. Might be undefined for certain classification ontologies. |  [optional] |
+|**parentName** | **String** | Name of the parent compound class. |  [optional] |
 
 
 

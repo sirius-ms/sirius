@@ -295,7 +295,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     @Synchronized
-    public void updateAdducts(EventList<InstanceBean> compoundList) {
+    public void updateAdducts(List<InstanceBean> compoundList) {
         Set<PrecursorIonType> listAdducts = new HashSet<>();
         for (InstanceBean instanceBean : compoundList) {
             listAdducts.addAll(instanceBean.getDetectedAdductsIncludingUnknown());

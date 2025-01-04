@@ -29,6 +29,10 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -41,6 +45,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -108,8 +113,24 @@ public class InstanceImporter {
 
         @Override
         protected List<Instance> compute() throws Exception {
+            if (importTarget instanceof NoSQLProjectSpaceManager noSQLProject)
+                setProjectTypeOrThrow(noSQLProject.getProject());
+
             prog = new JobProgressMerger(pcs);
             return importMultipleSources();
+        }
+
+        private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
+            Optional<ProjectType> psType = ps.findProjectType();
+            if (psType.isPresent()) {
+                switch (psType.get()) {
+                    case ALIGNED_RUNS:
+                    case UNALIGNED_RUNS:
+                        throw new ProjectTypeException("Project already contains preprocessed MS runs (.mzml, .mzxml). Additional peak-list data cannot be added to such project. Please create a new project to import your data.", ProjectType.PEAKLISTS, psType.get());
+                }
+            }else {
+                ps.upsertProjectType(ProjectType.PEAKLISTS);
+            }
         }
 
 

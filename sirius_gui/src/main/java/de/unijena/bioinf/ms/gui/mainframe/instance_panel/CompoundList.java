@@ -27,6 +27,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
@@ -136,8 +137,11 @@ public class CompoundList {
                 l.setLoading(true, true);
 
             if (!e.getValueIsAdjusting()) {
+                //we only enable listener for first selected because this is the one where results are visible.
                 compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                compountListSelectionModel.getSelected().forEach(InstanceBean::enableProjectSpaceListener);
+                compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+                if (!compountListSelectionModel.isSelectionEmpty())
+                    compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
                 notifyListenerSelectionChange(e);
             }
         });
@@ -147,17 +151,21 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        fireFilterChanged();
+        compoundFilterModel.updateAdducts(sortedSource);
+        compoundFilterModel.fireUpdateCompleted();
     }
 
     private void colorByActiveFilter() {
         //is any filtering option active (despite the text filter which is visible all the time)
         if (isFilterInverted()) {
-            openFilterPanelButton.setBackground(new Color(235, 94, 85));
+            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
+            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
         } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
-            openFilterPanelButton.setBackground(new Color(49, 153, 187));
+            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
+            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
         } else {
             openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
+            openFilterPanelButton.setForeground(Colors.FOREGROUND_DATA);
         }
     }
 
@@ -220,6 +228,15 @@ public class CompoundList {
         compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
     }
 
+
+    /**
+     * Updates the  available filter options in the filter model.
+     * Does not cause global re-filtering
+     */
+    public void updateFilter(@NotNull java.util.List<InstanceBean> instances) {
+        compoundFilterModel.updateAdducts(instances);
+        updateTogglesByActiveFilter();
+    }
     public void resetFilter() {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
         compoundFilterModel.resetFilter();
@@ -230,18 +247,11 @@ public class CompoundList {
         updateTogglesByActiveFilter();
     }
 
-    public void fireFilterChanged() {
-        compoundFilterModel.updateAdducts(sortedSource);
-        compoundFilterModel.fireUpdateCompleted();
-    }
-
     private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
         //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
             l.fullListChanged(event.copy(), compountListSelectionModel, compoundList.size());
         }
-        compoundFilterModel.updateAdducts(event.getSourceList());
-        updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
