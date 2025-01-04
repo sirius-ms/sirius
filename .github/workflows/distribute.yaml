@@ -95,7 +95,7 @@ jobs:
       - name: Upload Distributions
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 1
+          retention-days: 3
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ matrix.os }}-${{ matrix.targetArchitecture }}"
           path: |
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip
