@@ -116,8 +116,8 @@ public class ComputeAllAction extends AbstractGuiAction {
                     setEnabled(true);
                     isActive.set(false);
                     putValue(Action.NAME, "Compute All");
-                    putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
-                    putValue(Action.SMALL_ICON, Icons.RUN_16);
+                    putValue(Action.LARGE_ICON_KEY, Icons.RUN.derive(32,32));
+                    putValue(Action.SMALL_ICON, Icons.RUN.derive(16,16));
                     putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
                     setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
                 }
@@ -131,8 +131,8 @@ public class ComputeAllAction extends AbstractGuiAction {
                     setEnabled(true);
                     isActive.set(true);
                     putValue(Action.NAME, "Cancel All");
-                    putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
-                    putValue(Action.SMALL_ICON, Icons.CANCEL_16);
+                    putValue(Action.LARGE_ICON_KEY, Icons.NO.derive(32,32));
+                    putValue(Action.SMALL_ICON, Icons.NO.derive(16,16));
                     putValue(Action.SHORT_DESCRIPTION, "Cancel all running computations");
                     setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
                 }

@@ -31,21 +31,21 @@ public class IsotopicIntensitySettings implements Ms2ExperimentAnnotation {
      * Obviously, this is hard to judge without having absolute values. Keeping this value around 1 percent is
      * fine for most settings. Set it to smaller values if you trust your small intensities.
      */
-    @DefaultProperty(propertyParent = "ms1", propertyKey = "minimalIntensityToConsider")
+    @DefaultProperty
     public final double minimalIntensityToConsider;
 
     /**
      * The average absolute deviation between theoretical and measured intensity of isotope peaks.
      * Do not change this parameter without a good reason!
      */
-    @DefaultProperty(propertyParent = "ms1", propertyKey = "absoluteIntensityError")
+    @DefaultProperty
     public final double absoluteIntensityError;
 
     /**
      * The average relative deviation between theoretical and measured intensity of isotope peaks.
      * Do not change this parameter without a good reason!
      */
-    @DefaultProperty(propertyParent = "ms1", propertyKey = "relativeIntensityError")
+    @DefaultProperty
     public final double relativeIntensityError;
 
     public IsotopicIntensitySettings(double minimalIntensityToConsider, double absoluteIntensityError, double relativeIntensityError) {

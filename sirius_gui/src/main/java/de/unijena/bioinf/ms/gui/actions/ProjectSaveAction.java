@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.List;
@@ -46,7 +47,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
     public ProjectSaveAction(SiriusGui gui) {
         super("Save as", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
         setEnabled(true);
 
@@ -66,7 +67,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
     public void copyProject(@NotNull String projectId, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String nuPid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Copying Project...", () ->
-                    gui.applySiriusClient((c, pid) -> c.projects().copyProjectSpace(
+                    gui.applySiriusClient((c, pid) -> c.projects().copyProject(
                             pid, projectPath.toAbsolutePath().toString(), projectId,
                             List.of(ProjectInfoOptField.NONE)
                     ).getProjectId())
@@ -81,7 +82,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
     public void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
-                Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
+                Objects.requireNonNullElseGet(closeCurrent, () -> new OpenInNewProjectDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isSuccess());
 
             Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading new Project Window...", () -> {
@@ -89,19 +90,33 @@ public class ProjectSaveAction extends ProjectOpenAction {
                     gui.getSiriusClient().gui().openGui(projectId);
                     gui.close();
                 } else {
-                    gui.getSiriusClient().projects().closeProjectSpace(projectId);
+                    gui.getSiriusClient().projects().closeProject(projectId);
                 }
             });
     }
 
     @Override
     protected String openNewWindowQuestion() {
-        return "<html><body>Do you wish to open the newly saved project (new location)? <br> Otherwise, the current one will kept open. </body></html>";
+        return "<html><body>Would you like to open the newly saved project, or continue working on the current one? </body></html>";
 
     }
 
     @Override
     protected String dontAskKey() {
         return DONT_ASK_NEW_WINDOW_COPY_KEY;
+    }
+
+    protected class OpenInNewProjectDialog extends QuestionDialog {
+
+        public OpenInNewProjectDialog(Window owner, String title, String question, String propertyKey) {
+            super(owner, title, question, propertyKey);
+        }
+
+        @Override
+        protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+            super.decorateButtonPanel(boxedButtonPanel);
+            ok.setText("New Project");
+            cancel.setText("Current Project");
+        }
     }
 }

@@ -32,19 +32,16 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 public class ConsensusAnnotationsDeNovo extends ConsensusAnnotations{
 
-    @Schema(enumAsRef = true, name = "ConsensusCriterionDeNovo", nullable = true)
+    @Schema(name = "ConsensusCriterionDeNovo")
     public enum Criterion {
         MAJORITY_FORMULA,
         TOP_FORMULA,
         SINGLETON_FORMULA
     }
 
+    /**
+     * Criterion that was used to select the consensus annotation.
+     */
     @Schema(nullable = true)
     protected Criterion selectionCriterion;
-
-//    /**
-//     * DeNovo Structure candidate (predicted with MSNovelist) corresponding to the molecularFormula
-//     * Might be null if no consensus structure is available.
-//     */
-//    protected StructureCandidate structureMsNovelist;
 }

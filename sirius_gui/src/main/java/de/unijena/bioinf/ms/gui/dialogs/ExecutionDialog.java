@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
 import io.sirius.ms.sdk.model.CommandSubmission;

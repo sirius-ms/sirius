@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
@@ -92,6 +93,12 @@ public class SpectralUtils {
                     .precursorMz(s.getPrecursorMz())
                     .precursorIonType(experiment.getPrecursorIonType())
                     .spectrum(new SimpleSpectrum(s));
+
+            if (s instanceof SpectrumWithAdditionalFields<?> saf) {
+                if (saf.additionalFields().containsKey("instrument_type")) b.instrumentType(saf.additionalFields().get("instrument_type"));
+                if (saf.additionalFields().containsKey("instrument")) b.instrument(saf.additionalFields().get("instrument"));
+                if (saf.additionalFields().containsKey("ce")) b.ce(saf.additionalFields().get("ce"));
+            }
 
             experiment.getAnnotation(Splash.class).ifPresentOrElse((splash -> b.splash(splash.getSplash())), () -> {
                 final edu.ucdavis.fiehnlab.spectra.hash.core.Spectrum spectrum = new SpectrumImpl(StreamSupport.stream(s.spliterator(), false).map(peak -> new Ion(peak.getMass(), peak.getIntensity())).toList(), SpectraType.MS);

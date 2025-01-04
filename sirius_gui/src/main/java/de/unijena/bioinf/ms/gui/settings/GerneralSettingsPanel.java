@@ -24,6 +24,9 @@ import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -40,10 +43,14 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Vector;
 
+import static de.unijena.bioinf.ms.gui.properties.GuiProperties.*;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
+    public static final String DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB = "de.unijena.bioinf.sirius.settings.activateSpectralLibraryTab.dontAskAgain";
+
     private Properties props;
     final JSpinner scalingSpinner;
     final int scaling;
@@ -53,16 +60,21 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> themeBox;
 
     final FileChooserPanel db;
-    final JComboBox<String> solver, confidenceDisplayMode;
+    final JCheckBox showSpectraMatchPanel;
+    final JComboBox<String> solver;
+    final JComboBox<ConfidenceDisplayMode> confidenceDisplayMode;
+    final JComboBox<MolecularStructuresDisplayColors> molecularStructuresDisplayColors;
     private boolean restartRequired = false;
+    private SiriusGui gui;
 
     public GerneralSettingsPanel(Properties properties, SiriusGui gui) {
         super();
         this.props = properties;
+        this.gui = gui;
         add(new JXTitledSeparator("Graphical User Interface"));
 
         theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-        String[] themes = new String[]{"Light", "Dark", "Classic"};
+        String[] themes = new String[]{"Light", "Dark"};
         themeBox = new JComboBox<>(themes);
         themeBox.setSelectedItem(theme);
         themeBox.setToolTipText("Set theme of the Graphical User Interface");
@@ -76,12 +88,44 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         addNamed("Scaling Factor", scalingSpinner);
 
         add(new JXTitledSeparator("Display settings"));
-        Vector<String> modes =  new Vector<>(Arrays.asList("approximate (default)","exact"));
-        String selectedMode = props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
-        confidenceDisplayMode = new JComboBox<>(modes);
-        confidenceDisplayMode.setSelectedItem(selectedMode);
-        confidenceDisplayMode.setToolTipText(GuiUtils.formatToolTip("Select the confidence score display mode. \"exact\" will show confidences for the exact top hit structure to be correct. \"approximate\" will show confidences for the top hit or a sufficiently similar structure to be correct. Structure candidates that are within the similarity threshold are marked in green"));
-        add(new JLabel("Confidence score display mode"),confidenceDisplayMode);
+        // confidenceDisplayMode shows the settings used at program start.
+        confidenceDisplayMode = GuiUtils.makeParameterComboBoxFromDescriptiveValues(ConfidenceDisplayMode.values());
+
+        try {
+            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.valueOf(props.getProperty(CONFIDENCE_DISPLAY_MODE_KEY, "APPROXIMATE")));
+        } catch (IllegalArgumentException e) {
+            confidenceDisplayMode.setSelectedItem(ConfidenceDisplayMode.APPROXIMATE);
+        }
+        JLabel confLabel = new JLabel("Confidence score display mode");
+        confLabel.setToolTipText("The default confidence score display mode used after every new program start.");
+        add(confLabel,confidenceDisplayMode);
+
+        //molecularStructuresDisplayColors uses the current settings and also stores it persistently
+        molecularStructuresDisplayColors = GuiUtils.makeParameterComboBoxFromDescriptiveValues(MolecularStructuresDisplayColors.values());
+        molecularStructuresDisplayColors.setSelectedItem(gui.getProperties().getMolecularStructureDisplayColors());
+        add(new JLabel("Molecular structures display color"), molecularStructuresDisplayColors);
+
+        showSpectraMatchPanel = new JCheckBox();
+        showSpectraMatchPanel.setToolTipText("Show a result tab with all spectral library matches for the selected features.");
+        showSpectraMatchPanel.setSelected(gui.getProperties().isShowSpectraMatchPanel());
+        addNamed("Show \"Library Matches\" tab", showSpectraMatchPanel);
+        showSpectraMatchPanel.addActionListener(evt -> {
+            if (showSpectraMatchPanel.isSelected()) {
+                new WarningDialog(gui.getMainFrame(),
+                        "Activate spectral library results tab",
+                        GuiUtils.formatToolTip(
+                                "SIRIUS automatically searches in your spectral libraries as part of the molecular formula annotation step. " +
+                                "Library hits can be viewed via the \"Structures\" tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
+                                "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"Structures\" tab.", "",
+                                "NOTE: In SIRIUS, each spectral library is also a molecular structure database. ANY hit in this library can also be found via CSI:FingerID structure database search. " +
+                                        "Since structure database results depend on the selected molecular formula, SIRIUS ensures that molecular structures with a formula corresponding to a good spectral library hit are considered - even if this molecular formula receives a low score. " +
+                                        "In this way, molecular structures of well-matching reference spectra are automatically included in the structure database search.", "",
+                                        "To ensure that the database search is performed on all your spectral libraries and CSI:FingerID does not miss a candidate, you still need to select these libraries (databases) in the database search step."),
+                        DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB);
+            }
+        });
+
+
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
@@ -138,19 +182,23 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
             props.setProperty("de.unijena.bioinf.sirius.ui.theme", selectedTheme);
             restartRequired = true;
         }
+
+        props.setProperty(SHOW_SPECTRA_MATCH_PANEL_KEY, String.valueOf(showSpectraMatchPanel.isSelected()));
+        gui.getProperties().setShowSpectraMatchPanel(showSpectraMatchPanel.isSelected());
+
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
-        props.setProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode",String.valueOf(confidenceDisplayMode.getSelectedItem()));
-//        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
+
+        props.setProperty(CONFIDENCE_DISPLAY_MODE_KEY, ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
+        gui.getProperties().setConfidenceDisplayMode((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem());
+
+        props.setProperty(MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY,((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem()).name());
+        gui.getProperties().setMolecularStructureDisplayColors((MolecularStructuresDisplayColors) molecularStructuresDisplayColors.getSelectedItem());
 
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
-            //todo do we need to invalidate chache somehow
-            /*Jobs.runInBackgroundAndLoad(MF, () -> {
-                System.out.println("WaRN Check if we have to do something???");
-            });*/
         } else {
-            LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory (" + dir.toString() + "). Directory not Changed!");
+            LoggerFactory.getLogger(this.getClass()).warn("Specified path is not a directory ({}). Directory not Changed!", dir);
         }
         if (scaling != (int) scalingSpinner.getValue()) {
             props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));

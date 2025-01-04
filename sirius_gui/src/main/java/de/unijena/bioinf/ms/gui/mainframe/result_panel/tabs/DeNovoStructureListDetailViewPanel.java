@@ -58,13 +58,13 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
 
     protected class DeNovoCandidateListDetailView extends CandidateListDetailView {
         public DeNovoCandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
-            super(resultPanel, sourceList, gui);
+            super(resultPanel, sourceList, gui, instanceBean -> instanceBean.getComputedTools().isDeNovoSearch());
         }
 
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS_24, "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
+            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS.derive(24,24), "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
             showDatabaseHits.setSelected(true);
             tb.add(showDatabaseHits, getIndexOfSecondGap(tb) + 1);
 

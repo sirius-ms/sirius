@@ -23,7 +23,7 @@ public class SearchableDatabasesApiTest {
     public void setUp() {
         TestSetup.getInstance().loginIfNeeded();
         instance = TestSetup.getInstance().getSiriusClient().databases();
-        boolean customDbIsLoaded = instance.getCustomDatabases(false).stream()
+        boolean customDbIsLoaded = instance.getCustomDatabases(false, false).stream()
                 .anyMatch(db -> db.getDatabaseId().equals("customdbid_db"));
         if (!customDbIsLoaded) {
             instance.addDatabases(List.of(TestSetup.getInstance().getSearchableCustomDB().toString()));
@@ -59,7 +59,7 @@ public class SearchableDatabasesApiTest {
 
     @Test
     public void getDatabasesTest() {
-        var response = instance.getDatabases(null);
+        var response = instance.getDatabases(null, null);
         assertNotNull(response);
         assertFalse(response.isEmpty());
     }

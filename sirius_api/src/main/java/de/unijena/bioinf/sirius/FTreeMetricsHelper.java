@@ -30,12 +30,12 @@ import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import gnu.trove.list.array.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -49,8 +49,7 @@ public class FTreeMetricsHelper {
         this.tree = tree;
         this.fragmentScoring = tree.getOrCreateFragmentAnnotation(Score.class);
         this.lossScoring = tree.getOrCreateLossAnnotation(Score.class);
-        final LossAnnotation<LossType> l = tree.getLossAnnotationOrNull(LossType.class);
-        this.measuredIonRoot = l==null ? tree.getRoot() : getMeasuredIonRoot(l, tree.getRoot());
+        this.measuredIonRoot = IonTreeUtils.getMeasuredIonRoot(tree);
     }
 
     public Optional<TreeStatistics> asTreeStats() {
@@ -90,14 +89,6 @@ public class FTreeMetricsHelper {
             return score.get(FragmentationPatternAnalysis.getScoringMethodName(IsotopePatternInMs1Plugin.Ms1IsotopePatternScorer.class));
     }
 
-    // TODO: we should solve that smarter... A fragment should know if it is the measured ion. Need another annotation for that
-    private Fragment getMeasuredIonRoot(LossAnnotation<LossType> lossAno, Fragment root) {
-        if (root.isLeaf()) return root;
-        final LossType ano = lossAno.get(root.getOutgoingEdge(0), LossType::regular);
-        if (ano.isRegular()) return root;
-        return getMeasuredIonRoot(lossAno, root.getChildren(0));
-    }
-
     public double getBeautificationPenalty() {
         return fragmentScoring.get(measuredIonRoot).get(Beautified.PENALTY_KEY);
     }
@@ -112,7 +103,7 @@ public class FTreeMetricsHelper {
      * @return
      */
     private Deviation getMedianMassDeviation(boolean useAbsoluteValues) {
-        TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
+        DoubleArrayList ppms = new DoubleArrayList(), mzs = new DoubleArrayList();
         for (Fragment f : tree) {
             final Deviation dev = tree.getMassError(f);
             if (dev != Deviation.NULL_DEVIATION) {
@@ -138,6 +129,7 @@ public class FTreeMetricsHelper {
 
 
     // static helper methods
+
     public static double getSiriusScore(FTree tree) {
         return tree.getTreeWeight();
     }
@@ -177,10 +169,6 @@ public class FTreeMetricsHelper {
         return (int)tree.getFragmentsWithoutRoot().stream().filter(x->peakAno.get(x).isMeasured() && (lossAno==null || lossAno.get(x.getIncomingEdge(), LossType::regular)!=LossType.insource())).count();
     }
 
-
-
-
-
     public static Set<FormulaScore> getScoresFromTree(@NotNull final FTree tree) {
         final FTreeMetricsHelper helper = new FTreeMetricsHelper(tree);
         final Set<FormulaScore> scores = new HashSet<>(3);
@@ -194,7 +182,17 @@ public class FTreeMetricsHelper {
             e.printStackTrace();
         }
 
-
         return scores;
+    }
+
+    public static void computeNormalizedSiriusScores(List<IdentificationResult> idResults, double maxTreeWeight, double remainingCandidatesTreeWeightExpSumEstimate) {
+        if (idResults == null || idResults.isEmpty()) return;
+
+        assert maxTreeWeight == idResults.stream().mapToDouble(r -> r.getTree().getTreeWeight()).max().orElse(0);
+
+        double resultsTreeWeightExpSumEstimate = idResults.stream().mapToDouble(r ->Math.exp(r.getTree().getTreeWeight() - maxTreeWeight)).sum();
+
+        final double normalizationFactor = resultsTreeWeightExpSumEstimate + remainingCandidatesTreeWeightExpSumEstimate;
+        idResults.forEach(r -> r.setNormalizedScore(Math.exp(r.getTree().getTreeWeight() - maxTreeWeight) / normalizationFactor));
     }
 }

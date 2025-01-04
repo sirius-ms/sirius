@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -49,11 +47,13 @@ import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
+import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -67,14 +67,19 @@ import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
+    private static final Logger log = LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class);
     List<Path> inputFiles;
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
@@ -143,151 +148,195 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.saveImportedCompounds = saveImportedCompounds;
     }
 
-    private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
+    private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
-        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds);
+        setProjectTypeOrThrow(ps);
+
+        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent());
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
 
-        {
-            updateProgress(totalProgress, progress, "Reading files");
-            List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
-            int atmost = Integer.MAX_VALUE;
-            for (Path f : files) {
-                if (--atmost < 0) break;
-                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
-                    @Override
-                    protected ProcessedSample compute() throws Exception {
-                        ProcessedSample sample = processing.processSample(f);
-                        int hasIsotopes = 0, hasNoIsotopes = 0;
-                        for (MoI m : sample.getStorage().getAlignmentStorage()) {
-                            if (m.hasIsotopes()) ++hasIsotopes;
-                            else ++hasNoIsotopes;
+        try {
+            {
+                updateProgress(totalProgress, progress, "Processing Runs");
+                List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
+                int atmost = Integer.MAX_VALUE;
+                for (Path f : files) {
+                    if (--atmost < 0) break;
+                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
+                        @Override
+                        protected ProcessedSample compute() throws Exception {
+                            ProcessedSample sample = processing.processSample(f);
+                            int hasIsotopes = 0, hasNoIsotopes = 0;
+                            for (MoI m : sample.getStorage().getAlignmentStorage()) {
+                                if (m.hasIsotopes()) ++hasIsotopes;
+                                else ++hasNoIsotopes;
+                            }
+                            sample.inactive();
+                            System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
+                            return sample;
                         }
-                        sample.inactive();
-                        System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
-                        return sample;
+                    }));
+                }
+
+                int count = 0;
+                for (BasicJJob<ProcessedSample> job : jobs) {
+                    System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
+                    updateProgress(totalProgress, ++progress, "Processing Runs");
+                }
+            }
+
+            updateProgress(totalProgress, progress, "Aligning runs");
+            AlignmentBackbone bac = processing.align();
+            HashMap<DataQuality, Integer> countMap;
+
+            updateProgress(totalProgress, ++progress, "Merging runs");
+            ProcessedSample merged = processing.merge(bac);
+            DoubleArrayList avgAl = new DoubleArrayList();
+            System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
+            System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
+
+            updateProgress(totalProgress, ++progress, "Importing features");
+            if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
+                System.err.println("No features found.");
+                progress += 2;
+                updateProgress(totalProgress, progress, "No features");
+                return;
+            }
+            importedFeatureIds = processing.getImportedFeatureIds();
+
+            updateProgress(totalProgress, ++progress, "Detecting adducts");
+            System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
+
+            final double allowedAdductRtDeviation;
+            if (bac.getSamples().length <= 3) {
+                FloatArrayList peakWidths = new FloatArrayList();
+                for (long fid : processing.getImportedFeatureIds()) {
+                    ps.getStorage().getByPrimaryKey(fid, AlignedFeatures.class).ifPresent((feature) -> {
+                        // here we can also obtain statistics if we need them
+                        Double v = feature.getFwhm();
+                        if (v != null) peakWidths.add(v.floatValue());
+
+                    });
+                }
+                float medianPeakWidth = 1;
+                if (!peakWidths.isEmpty()) {
+                    peakWidths.sort(null);
+                    medianPeakWidth = peakWidths.getFloat(peakWidths.size() / 2);
+                }
+                allowedAdductRtDeviation = Math.max(1, medianPeakWidth);
+            } else {
+                allowedAdductRtDeviation = bac.getStatistics().getExpectedRetentionTimeDeviation();
+            }
+            LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use {} s as allowed deviation between adducts", allowedAdductRtDeviation);
+
+            AdductManager adductManager = new AdductManager(merged.getPolarity());
+
+            // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
+            // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
+            ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
+            {
+                final LongList importedCids = new LongArrayList();
+                AlignedFeatures[] alignedFeatures = ps.getStorage().findAllStr(AlignedFeatures.class)
+                        .filter(f -> f.getApexIntensity() != null)
+                        .filter(AbstractFeature::isRTInterval)
+                        .toArray(AlignedFeatures[]::new);
+                AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation, bac.getStatistics().getExpectedRetentionTimeDeviation());
+                network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
+                //network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
+
+
+                network.assignNetworksAndAdductsToFeatures(
+                        SiriusJobs.getGlobalJobManager(),
+                        new OptimalAssignmentViaBeamSearch(),
+                        merged.getPolarity(),
+                        x->ps.getStorage().upsert(x),
+                        (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
+                        (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
+                );
+
+                importedCompoundIds = importedCids;
+            }
+
+            updateProgress(totalProgress, ++progress, "Assessing data quality");
+            // quality assessment
+            countMap = new HashMap<>();
+            for (DataQuality q : DataQuality.values()) {
+                countMap.put(q, 0);
+            }
+            final QualityAssessment qa = alignRuns ? new QualityAssessment() : new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
+            ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
+            ps.getStorage().fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
+            ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
+            ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality() == DataQuality.NOT_APPLICABLE).forEach(feature -> {
+                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
+                    @Override
+                    protected DataQuality compute() {
+                        QualityReport report = QualityReport.withDefaultCategories(alignRuns);
+                        ps.fetchFeatures(feature);
+                        ps.fetchIsotopicFeatures(feature);
+                        ps.fetchMsData(feature);
+                        try {
+                            qa.addToReport(report, (MergedLCMSRun) merged.getRun(), feature, provider);
+                            report.setAlignedFeatureId(feature.getAlignedFeatureId());
+                            feature.setDataQuality(report.getOverallQuality());
+                            ps.getStorage().insert(report);
+                            ps.getStorage().upsert(feature);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        return report.getOverallQuality();
                     }
                 }));
-            }
+            });
+            jobs.forEach(x -> {
+                DataQuality q = x.takeResult();
+                countMap.put(q, countMap.get(q) + 1);
+            });
 
-            int count = 0;
-            for (BasicJJob<ProcessedSample> job : jobs) {
-                System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
-                updateProgress(totalProgress, ++progress, "Reading files");
-            }
+            System.out.printf(
+                    """
+                             -------- Preprocessing Summary ---------
+                             Preprocessed data in:      %s
+                             # Good Al. Features:           %d
+                             # Decent Al. Features:         %d
+                             # Bad Al. Features:            %d
+                             # Lowest Quality Al. Features: %d
+                            
+                             # Total Al. Features: %d
+                            \s""",
+                    stopWatch,
+
+                    countMap.get(DataQuality.GOOD),
+                    countMap.get(DataQuality.DECENT),
+                    countMap.get(DataQuality.BAD),
+                    countMap.get(DataQuality.LOWEST),
+                    countMap.values().stream().mapToInt(Integer::intValue).sum()
+            );
+        } finally {
+            processing.closeStorages();
         }
+    }
 
-        updateProgress(totalProgress, progress,"Aligning runs");
-        AlignmentBackbone bac = processing.align();
-        updateProgress(totalProgress, ++progress, "Merging runs");
-        ProcessedSample merged = processing.merge(bac);
-        DoubleArrayList avgAl = new DoubleArrayList();
-        System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
-        System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
-
-        updateProgress(totalProgress, ++progress, "Importing features");
-        if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
-            System.err.println("No features found.");
-            progress += 2;
-            updateProgress(totalProgress, progress, "No features");
-            return;
-        }
-        importedFeatureIds = processing.getImportedFeatureIds();
-
-        updateProgress(totalProgress, ++progress,"Detecting adducts");
-        System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
-
-        final double allowedAdductRtDeviation;
-        if (bac.getSamples().length <= 3) {
-            FloatArrayList peakWidths = new FloatArrayList();
-            for (long fid : processing.getImportedFeatureIds()) {
-                ps.getStorage().getByPrimaryKey(fid, AlignedFeatures.class).ifPresent((feature)->{
-                    // here we can also obtain statistics if we need them
-                    Double v = feature.getFwhm();
-                    if (v!=null) peakWidths.add(v.floatValue());
-
-                });
-            }
-            float medianPeakWidth = 1;
-            if (!peakWidths.isEmpty()) {
-                peakWidths.sort(null);
-                medianPeakWidth = peakWidths.getFloat(peakWidths.size()/2);
-            }
-            allowedAdductRtDeviation = Math.max(1,medianPeakWidth);
-        } else {
-            allowedAdductRtDeviation = bac.getStatistics().getExpectedRetentionTimeDeviation();
-        }
-        LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use " + allowedAdductRtDeviation + " s as allowed deviation between adducts" );
-
-        AdductManager adductManager = new AdductManager(merged.getPolarity());
-
-        // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
-        // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
-        ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
-        {
-            final LongList importedCids = new LongArrayList();
-            AlignedFeatures[] alignedFeatures = store.findAllStr(AlignedFeatures.class)
-                            .filter(f -> f.getApexIntensity() != null)
-                            .filter(AbstractFeature::isRTInterval)
-                    .toArray(AlignedFeatures[]::new);
-            AdductNetwork network = new AdductNetwork(provider,alignedFeatures, adductManager, allowedAdductRtDeviation);
-            network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
-                    (compound) -> groupFeaturesToCompound(store, compound, importedCids));
-            importedCompoundIds = importedCids;
-        }
-
-        updateProgress(totalProgress, ++progress, "Assessing data quality");
-        // quality assessment
-        HashMap<DataQuality, Integer> countMap = new HashMap<>();
-        for (DataQuality q : DataQuality.values()) {
-            countMap.put(q, 0);
-        }
-        final QualityAssessment qa = alignRuns ? new QualityAssessment(): new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
-        ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
-        store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
-        ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
-        store.findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
-            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
-                @Override
-                protected DataQuality compute() throws Exception {
-                    QualityReport report = QualityReport.withDefaultCategories(alignRuns);
-                    ps.fetchFeatures(feature);
-                    ps.fetchIsotopicFeatures(feature);
-                    ps.fetchMsData(feature);
-                    try {
-                        qa.addToReport(report, (MergedLCMSRun) merged.getRun(), feature, provider);
-                        report.setAlignedFeatureId(feature.getAlignedFeatureId());
-                        feature.setDataQuality(report.getOverallQuality());
-                        store.insert(report);
-                        store.upsert(feature);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return report.getOverallQuality();
+    private void setProjectTypeOrThrow(SiriusProjectDatabaseImpl<? extends Database<?>> ps) {
+        Optional<ProjectType> psType = ps.findProjectType();
+        if (psType.isPresent()) {
+            switch (psType.get()) {
+                case DIRECT_IMPORT ->
+                        throw new ProjectTypeException("Project already contains data from direct API import. Additional MS run data (.mzml, .mzxml) cannot be added to this project. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.DIRECT_IMPORT);
+                case PEAKLISTS ->
+                        throw new ProjectTypeException("Project already contains peak-list data (e.g .ms, .mgf, .mat). Additional MS run data (.mzml, .mzxml) cannot be added to peak-list based projects. Please create a new project to import your data.", ProjectType.ALIGNED_RUNS, ProjectType.PEAKLISTS);
+                case UNALIGNED_RUNS -> {
+                    if (alignRuns) throw new ProjectStateException("Project already contains preprocessed features from aligning MS runs. Additional data cannot be added. Please create a new project to import your data.");
                 }
-            }));
-        });
-        jobs.forEach(x->{
-            DataQuality q = x.takeResult();
-            countMap.put(q, countMap.get(q)+1);
-        });
-
-        System.out.printf(
-                """
-                       
-                        -------- Preprocessing Summary ---------
-                        Preprocessed data in:      %s
-                        # Good Al. Features:           %d
-                        # Decent Al. Features:         %d
-                        # Bad Al. Features:            %d
-                        # Lowest Quality Al. Features: %d
-                       \s""",
-                stopWatch,
-                countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
-        );
+                default ->
+                        throw new ProjectStateException("Project already contains preprocessed features. It is currently not supported to add additional data after preprocessing has been performed. Please create a new project to import your data.");
+            }
+        } else {
+            ps.upsertProjectType(alignRuns && inputFiles.size() > 1 ? ProjectType.ALIGNED_RUNS : ProjectType.UNALIGNED_RUNS);
+        }
     }
 
     @Override
@@ -297,19 +346,18 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
-        Database<?> store = space.getProject().getStorage();
 
         progress = 0;
         if (alignRuns) {
             totalProgress = inputFiles.size() + 5L;
-            compute(ps, store, inputFiles);
+            compute(ps, inputFiles);
         } else {
             // TODO parallelize
             totalProgress = inputFiles.size() * 5L + 1;
             int atmost = Integer.MAX_VALUE;
             for (Path f : inputFiles) {
                 if (--atmost < 0) break;
-                compute(ps, store, List.of(f));
+                compute(ps, List.of(f));
             }
         }
         updateProgress(totalProgress, totalProgress, "Done");
@@ -322,13 +370,13 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (importedCompoundIds != null)
             importedCompoundIds.add(compound.getCompoundId());
 
-        if (compound.getCorrelatedIonPairs().isPresent()){
+        if (compound.getCorrelatedIonPairs().isPresent()) {
             for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
                 ps.insert(pair);
             }
         }
 
-        List<AlignedFeatures> adducts = compound.getAdductFeatures().get();
+        List<AlignedFeatures> adducts = compound.getAdductFeatures().orElseGet(List::of);
         for (AlignedFeatures f : adducts) {
             if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId())
                 f.setCompoundId(compound.getCompoundId());
@@ -337,9 +385,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         final SimpleMutableSpectrum ms1Spectra = new SimpleMutableSpectrum();
         List<MSData> msDataList = new ArrayList<>();
         for (AlignedFeatures adduct : adducts) {
-            List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adduct.getAlignedFeatureId()), MSData.class).toList();
-            if (!ms.isEmpty()) {
-                MSData m = ms.get(0);
+            ps.getByPrimaryKey(adduct.getAlignedFeatureId(), MSData.class).ifPresent(m -> {
                 msDataList.add(m);
                 if (m.getIsotopePattern() != null) {
                     SimpleSpectrum b = m.getIsotopePattern();
@@ -347,7 +393,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         ms1Spectra.addPeak(b.getMzAt(i), b.getIntensityAt(i) * adduct.getApexIntensity());
                     }
                 }
-            }
+            });
         }
         SimpleSpectrum ms1 = new SimpleSpectrum(ms1Spectra);
         for (MSData m : msDataList) {

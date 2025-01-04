@@ -96,16 +96,16 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     }
 
     public void initColorsAndFonts() {
-        compoundFont = Fonts.FONT_BOLD.deriveFont(13f);
-        propertyFont = Fonts.FONT_BOLD.deriveFont(12f);
-        statusFont = Fonts.FONT_BOLD.deriveFont(24f);
+        compoundFont = Fonts.FONT_MEDIUM.deriveFont(13f);
+        propertyFont = Fonts.FONT_MEDIUM.deriveFont(12f);
+        statusFont = Fonts.FONT_DEJAVU_SANS.deriveFont(24f);
         valueFont = Fonts.FONT.deriveFont(12f);
 
-        selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
-        selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-        evenBackground = Colors.LIST_EVEN_BACKGROUND;
-        unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
-        activatedForeground = UIManager.getColor("List.foreground");
+        selectedBackground = Colors.CellsAndRows.LargerCells.SELECTED_CELL;
+        selectedForeground = Colors.CellsAndRows.LargerCells.SELECTED_CELL_TEXT;
+        evenBackground = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1;
+        unevenBackground = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_2;
+        activatedForeground = Colors.CellsAndRows.LargerCells.CELL_TEXT;
     }
 
     @Override
@@ -127,7 +127,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 ec.getGUIName(),
                 ec.getQuality() != null ? ec.getQuality().name() : "",
                 ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or ")),
-                ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " Da" : "",
+                ec.getIonMass() > 0 ? numberFormatMassLong.format(ec.getIonMass()) + " m/z" : "",
                 ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
                 gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? "Confidence Approximate" : "Confidence Exact",
                 ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).map(confScore -> confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString()).orElse(""))
@@ -200,7 +200,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or "));
         double focD = ec.getIonMass();
-        String focMass = focD > 0 ? numberFormatMass.format(focD) + " Da" : "";
+        String focMass = focD > 0 ? numberFormatMass.format(focD) + " m/z" : "";
         String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("");
 
@@ -230,17 +230,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     }
 
     private static Icon getQualityIcon(@NotNull DataQuality quality) {
-        switch (quality) {
-            case LOWEST:
-                return Icons.TRAFFIC_LIGHT_TINY_GRAY;
-            case BAD:
-                return Icons.TRAFFIC_LIGHT_TINY[0];
-            case DECENT:
-                return Icons.TRAFFIC_LIGHT_TINY[1];
-            case GOOD:
-                return Icons.TRAFFIC_LIGHT_TINY[2];
-        }
-        return Icons.TRAFFIC_LIGHT_TINY_GRAY;
+        return switch (quality) {
+            case BAD -> Icons.TRAFFIC_LIGHT_BOARDER[0].derive(9,9);
+            case DECENT -> Icons.TRAFFIC_LIGHT_BOARDER[1].derive(9,9);
+            case GOOD -> Icons.TRAFFIC_LIGHT_BOARDER[2].derive(9,9);
+            default -> Icons.TRAFFIC_LIGHT_LOWEST_BOARDER.derive(9,9);
+        };
     }
 
 }

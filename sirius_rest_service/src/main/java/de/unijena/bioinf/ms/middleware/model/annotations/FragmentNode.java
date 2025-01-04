@@ -28,10 +28,19 @@ import lombok.Setter;
 @Setter
 public class FragmentNode {
     int fragmentId;
+
+    /**
+     * neutral molecular formula of the fragment without adduct
+     */
     @Schema(nullable = true)
     String molecularFormula;
+
+    /**
+     * This combines the ionization plus adduct of the fragment. In contrast to the {@link FragmentationTree}s adduct,
+     * this adduct may not include any in-source loss.
+     */
     @Schema(nullable = true)
-    String ionType;
+    String adduct;
     @Schema(nullable = true)
     double massDeviationDa;
     @Schema(nullable = true)

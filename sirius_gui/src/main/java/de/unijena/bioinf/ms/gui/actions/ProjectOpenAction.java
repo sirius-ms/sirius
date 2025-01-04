@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,7 +57,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     public ProjectOpenAction(SiriusGui gui) {
         this("Open", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION, "Open a previously saved project.");
     }
 
@@ -113,11 +114,11 @@ public class ProjectOpenAction extends AbstractGuiAction {
             if (!pidInput.equals(projectId))
                 LoggerFactory.getLogger(getClass()).warn("Changed pid from '{}' to '{};, to respect name restrictions", projectId, pidInput);
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        ProjectInfo project = gui.getSiriusClient().projects().getProjectSpaces().stream()
+                        ProjectInfo project = gui.getSiriusClient().projects().getProjects().stream()
                                 .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
                         if (project == null)
-                            project = gui.getSiriusClient().projects().openProjectSpace(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+                            project = gui.getSiriusClient().projects().openProject(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
 
                         return project.getProjectId();
                     }
@@ -139,10 +140,10 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     public synchronized void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
-                Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
+                Objects.requireNonNullElseGet(closeCurrent, () -> new OpenInNewWindowDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isCancel());
 
-        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading Project Window...", () -> {
+        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading Project...", () -> {
             gui.getSiriusClient().gui().openGui(projectId);
             if (close)
                 gui.close();
@@ -158,8 +159,20 @@ public class ProjectOpenAction extends AbstractGuiAction {
     }
 
     protected String openNewWindowQuestion() {
-        return "<html><body>Do you wish to open the Project in an additional Window? <br> Otherwise, the current one will be replaced. </body></html>";
+        return "<html><body>Would you like to open this project in a <b>new window</b> or in the <b>current window</b>? </body></html>";
     }
 
+    private class OpenInNewWindowDialog extends QuestionDialog {
 
+        public OpenInNewWindowDialog(Window owner, String title, String question, String propertyKey) {
+            super(owner, title, question, propertyKey);
+        }
+
+        @Override
+        protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+            super.decorateButtonPanel(boxedButtonPanel);
+            ok.setText("New Window");
+            cancel.setText("This Window");
+        }
+    }
 }

@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
@@ -49,7 +49,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.PROJECT_OPENED;
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.PROJECT_OPENED;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
@@ -113,7 +114,9 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     private ProjectInfo createProjectInfo(String projectId, PSM psm,
                                           @NotNull EnumSet<ProjectInfo.OptField> optFields) {
         ProjectInfo.ProjectInfoBuilder b = ProjectInfo.builder()
-                .projectId(projectId).location(psm.getLocation());
+                .projectId(projectId)
+                .location(psm.getLocation())
+                .type(psm.getType().orElse(null));
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countFeatures()).numOfCompounds(psm.countCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
@@ -133,7 +136,8 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             }
 
             Path location = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
-            if (!isExistingProjectspaceDirectory(location) && !isZipProjectSpace(location)) {
+            // zip test does also work for nosql projects.
+            if (!isZipProjectSpace(location) && !isExistingProjectspaceDirectory(location)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
             }
 
@@ -147,7 +151,13 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) {
         return ensureUniqueName(validateId(projectIdSuggestion), (projectId) -> {
             try {
-                Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(projectId);
+                Path location;
+                if (notNullOrBlank(path)) {
+                    location = Path.of(path);
+                } else {
+                    location = defaultProjectDir().resolve(projectId);
+                    Files.createDirectories(location.getParent());
+                }
 
                 if (Files.exists(location)) {
                     if (failIfExists) {
@@ -247,9 +257,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
      * registers listeners that will transform project space events into server events to be sent via rest api*
      */
     protected abstract void registerEventListeners(@NotNull String id, @NotNull PSM psm);
+
     protected ServerEventImpl<ProjectChangeEvent> creatEvent(
             String projectId,
-            ProjectChangeEvent.Type eventType,
+            ProjectEventType eventType,
             FormulaResultId formulaResultId
     ) {
         CompoundContainerId compoundContainerId = formulaResultId.getParentId();
@@ -264,7 +275,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     protected ServerEventImpl<ProjectChangeEvent> creatEvent(
             String projectId,
-            ProjectChangeEvent.Type eventType,
+            ProjectEventType eventType,
             CompoundContainerId compoundContainerId
     ) {
         return ServerEvents.newProjectEvent(
@@ -278,9 +289,6 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
 
     @Override
     public void destroy() {
-        System.out.println("Destroy Project Provider Service...");
         closeAll();
-        System.out.println("Destroy Project Provider Service DONE");
-
     }
 }

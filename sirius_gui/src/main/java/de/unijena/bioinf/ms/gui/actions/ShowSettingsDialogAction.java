@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.SettingsDialog;
+import de.unijena.bioinf.ms.gui.settings.SettingsDialog;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -32,7 +32,7 @@ import java.awt.event.ActionEvent;
 public class ShowSettingsDialogAction extends AbstractGuiAction {
     public ShowSettingsDialogAction(SiriusGui gui) {
         super("Settings", gui);
-        putValue(Action.LARGE_ICON_KEY, Icons.GEAR_32);
+        putValue(Action.LARGE_ICON_KEY, Icons.GEAR.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Open Sirius settings");
     }
     @Override

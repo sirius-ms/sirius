@@ -4,29 +4,29 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeProjectSpace**](ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
-| [**copyProjectSpace**](ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | Move an existing (opened) project-space to another location. |
-| [**createProjectSpace**](ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
+| [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
+| [**copyProject**](ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**createProject**](ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
 | [**getCanopusNpcData**](ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes |
 | [**getFingerIdData**](ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition |
-| [**getProjectSpace**](ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
-| [**getProjectSpaces**](ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces. |
+| [**getProject**](ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
+| [**getProjects**](ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces. |
 | [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML) |
 | [**importMsRunDataAsJob**](ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job. |
-| [**importMsRunDataAsJobLocally**](ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job |
-| [**importMsRunDataLocally**](ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   |
+| [**importMsRunDataAsJobLocally**](ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**importMsRunDataLocally**](ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**importPreprocessedData**](ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp) |
 | [**importPreprocessedDataAsJob**](ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job. |
-| [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job |
-| [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   |
-| [**openProjectSpace**](ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
+| [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**openProject**](ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
 
 
 
-## closeProjectSpace
+## closeProject
 
-> closeProjectSpace(projectId)
+> closeProject(projectId)
 
 Close project-space and remove it from application
 
@@ -50,9 +50,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier of the  project-space to be closed.
         try {
-            apiInstance.closeProjectSpace(projectId);
+            apiInstance.closeProject(projectId);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#closeProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#closeProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -89,11 +89,11 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## copyProjectSpace
+## copyProject
 
-> ProjectInfo copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields)
+> ProjectInfo copyProject(projectId, pathToCopiedProject, copyProjectId, optFields)
 
-Move an existing (opened) project-space to another location.
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 Move an existing (opened) project-space to another location.
 
@@ -118,10 +118,10 @@ public class Example {
         String copyProjectId = "copyProjectId_example"; // String | optional id/mame of the newly created project (copy). If given the project will be opened.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields);
+            ProjectInfo result = apiInstance.copyProject(projectId, pathToCopiedProject, copyProjectId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#copyProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#copyProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -158,12 +158,12 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases. |  -  |
+| **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt; |  -  |
 
 
-## createProjectSpace
+## createProject
 
-> ProjectInfo createProjectSpace(projectId, pathToProject, optFields)
+> ProjectInfo createProject(projectId, pathToProject, optFields)
 
 Create and open a new project-space at given location and make it accessible via the given projectId.
 
@@ -189,10 +189,10 @@ public class Example {
         String pathToProject = "pathToProject_example"; // String | local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject, optFields);
+            ProjectInfo result = apiInstance.createProject(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#createProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#createProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -288,7 +288,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -354,7 +354,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -420,7 +420,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/csv
+- **Accept**: application/csv, application/CSV
 
 
 ### HTTP response details
@@ -429,9 +429,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getProjectSpace
+## getProject
 
-> ProjectInfo getProjectSpace(projectId, optFields)
+> ProjectInfo getProject(projectId, optFields)
 
 Get project space info by its projectId.
 
@@ -456,10 +456,10 @@ public class Example {
         String projectId = "projectId_example"; // String | unique name/identifier tof the project-space to be accessed.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.getProjectSpace(projectId, optFields);
+            ProjectInfo result = apiInstance.getProject(projectId, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#getProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#getProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -497,9 +497,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getProjectSpaces
+## getProjects
 
-> List&lt;ProjectInfo&gt; getProjectSpaces()
+> List&lt;ProjectInfo&gt; getProjects()
 
 List opened project spaces.
 
@@ -522,10 +522,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         try {
-            List<ProjectInfo> result = apiInstance.getProjectSpaces();
+            List<ProjectInfo> result = apiInstance.getProjects();
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#getProjectSpaces");
+            System.err.println("Exception when calling ProjectsApi#getProjects");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -561,7 +561,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, parameters, inputFiles)
+> ImportResult importMsRunData(projectId, inputFiles, parameters)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -584,10 +584,10 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, parameters, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, inputFiles, parameters);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -606,8 +606,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
 
 ### Return type
 
@@ -631,7 +631,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, parameters, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, optFields, inputFiles, parameters)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -654,11 +654,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, parameters, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, optFields, inputFiles, parameters);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -677,9 +677,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
 
 ### Return type
 
@@ -705,9 +705,9 @@ No authorization required
 
 > Job importMsRunDataAsJobLocally(projectId, parameters, requestBody, optFields)
 
-Import and Align full MS-Runs from various formats into the specified project as background job
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
-Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
 
 ### Example
 
@@ -777,9 +777,9 @@ No authorization required
 
 > ImportResult importMsRunDataLocally(projectId, parameters, requestBody)
 
-Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
-Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
 
 ### Example
 
@@ -993,9 +993,9 @@ No authorization required
 
 > Job importPreprocessedDataAsJobLocally(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields)
 
-Import ms/ms data from the given format into the specified project-space as background job
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
-Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
 
 ### Example
 
@@ -1067,9 +1067,9 @@ No authorization required
 
 > ImportResult importPreprocessedDataLocally(projectId, requestBody, ignoreFormulas, allowMs1Only)
 
-Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
-Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
 
 ### Example
 
@@ -1135,9 +1135,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## openProjectSpace
+## openProject
 
-> ProjectInfo openProjectSpace(projectId, pathToProject, optFields)
+> ProjectInfo openProject(projectId, pathToProject, optFields)
 
 Open an existing project-space and make it accessible via the given projectId.
 
@@ -1163,10 +1163,10 @@ public class Example {
         String pathToProject = "pathToProject_example"; // String | local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.openProjectSpace(projectId, pathToProject, optFields);
+            ProjectInfo result = apiInstance.openProject(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#openProjectSpace");
+            System.err.println("Exception when calling ProjectsApi#openProject");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

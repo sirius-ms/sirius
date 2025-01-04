@@ -21,10 +21,7 @@
 package de.unijena.bioinf.ms.gui.net;
 
 
-import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.ConnectionError;
-import io.sirius.ms.sdk.model.LicenseInfo;
-import io.sirius.ms.sdk.model.Term;
+import io.sirius.ms.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,13 +49,15 @@ public class ConnectionChecks {
         return errors.isEmpty();
     }
 
-    public static boolean isInternet(@NotNull ConnectionCheck check) {
+    public static boolean isInternet(ConnectionCheck check) {
+        if (check == null)
+            return false;
         return isInternet(check.getErrors());
     }
 
     public static boolean isInternet(@NotNull List<ConnectionError> errors) {
         return isConnected(errors) || errors.stream()
-                .filter(e -> e.getErrorKlass().equals(ConnectionError.ErrorKlassEnum.INTERNET))
+                .filter(e -> e.getErrorKlass().equals(ConnectionErrorClass.INTERNET))
                 .findAny().isEmpty();
     }
 
@@ -69,7 +68,7 @@ public class ConnectionChecks {
     public static boolean isWarningOnly(@NotNull List<ConnectionError> errors) {
         return !errors.isEmpty() && errors.stream()
                 .map(ConnectionError::getErrorType)
-                .filter(e -> !e.equals(ConnectionError.ErrorTypeEnum.WARNING))
+                .filter(e -> !e.equals(ConnectionErrorType.WARNING))
                 .findAny().isEmpty();
     }
 
@@ -79,8 +78,8 @@ public class ConnectionChecks {
         if (terms == null || terms.isEmpty())
             return null;
         StringBuilder builder = new StringBuilder()
-                .append("<a href=").append(terms.get(0).getLink())
-                .append(">").append(terms.get(0).getName()).append("</a>");
+                .append("<a href=").append(terms.getFirst().getLink())
+                .append(">").append(terms.getFirst().getName()).append("</a>");
         for (int i = 1; i < terms.size(); i++) {
             builder.append(" and ")
                     .append("<a href=").append(terms.get(i).getLink())

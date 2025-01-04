@@ -71,7 +71,7 @@ public class JToggleSwitch extends JComponent {
     private final List<ToggleListener> events = new ArrayList<>();
 
     public JToggleSwitch() {
-        this(Colors.ICON_BLUE);
+        this(Colors.Menu.ICON_BLUE);
     }
     public JToggleSwitch(Color foreground) {
         this.foreground = foreground;

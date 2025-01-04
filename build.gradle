@@ -47,7 +47,7 @@ ext {
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
     //version for external libraries
-    jjobs_version = '0.9.36'
+    jjobs_version = '0.10.0'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
     lombok_version = '1.18.34'
@@ -57,7 +57,7 @@ ext {
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     cdk_version = "2.9"
-    jetbrains_version = "24.1.0"
+    jetbrains_version = "26.0.1"
     okhttp_version = "4.12.0"
     trove_version = '3.1.0' //DEPRECATED -> user fast util instead
     fastutil_version = '8.5.12' //replaces trove
@@ -82,7 +82,7 @@ ext {
     liblinear_version = "1.95"
     libsvm_version = "3.20"
 
-    swagger_version = "2.2.22"
+    swagger_version = "2.2.26"
 
     jaxb_version = "2.3.9"
     picocli_version = '4.7.5'
@@ -90,10 +90,10 @@ ext {
     jakarta_annotation_version = "3.0.0"
 
 
-    spring_boot_version = "3.3.1"
-    springdoc_version = "2.3.0"
+    spring_boot_version = "3.4.0"
+    springdoc_version = "2.6.0"
 
-    junit_version = '5.10.3'
+    junit_version = '5.11.4'
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
@@ -120,7 +120,6 @@ ext {
     excludeJFX = Boolean.parseBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "false") as String)
     System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
 }
-
 
 
 /*################### DISTRIBUTION STUFF ################### */
@@ -153,7 +152,7 @@ allprojects {
             name "sirius-ms-maven-public"
             url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
         }
-        //this is just needed to load non-public test data.
+        //this is just needed to load non-public test for acceptance testing.
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -188,16 +187,6 @@ allprojects {
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
-        }
-        maven {
-            // only used for spectral hashs (Splash)
-            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
-            allowInsecureProtocol = true
-        }
-        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
-        // but currently Gitlab CI/CD workers refuse to connect to it.
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
     }
 
@@ -246,11 +235,6 @@ allprojects {
 
     }
 
-    test {
-        useJUnitPlatform()
-        maxHeapSize = "16G"
-    }
-
     //there are some outdated incompatible trove dependencies in some libs.
     // this is to exclude them and enforce the one we need.
     configurations.configureEach {
@@ -264,6 +248,45 @@ allprojects {
     configurations {
         compileClasspath {
             resolutionStrategy.force 'net.sf.trove4j:core:3.1.0'
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform {
+            filter { //filter test groups that do not have to run on every commit
+                excludeTestsMatching "*IntegrationTest"
+                excludeTestsMatching "*ApiTest"
+                excludeTestsMatching "*AcceptanceTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+
+    //We usually just do them for the sirius-sdk. Maybe also for the cli
+    def integrationTest = tasks.register("integrationTest", Test) {
+        group = 'verification'
+        useJUnitPlatform {
+            filter {
+                includeTestsMatching "*IntegrationTest"
+                includeTestsMatching "*ApiTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+        }
+    }
+
+    def acceptanceTest = tasks.register("acceptanceTest", Test) {
+        group = 'verification'
+        useJUnitPlatform {
+            filter {
+                includeTestsMatching "*AcceptanceTest"
+                failOnNoMatchingTests false // to prevent failing if no test passes the filter for some module
+            }
+            maxHeapSize = "16G"
         }
     }
 }
@@ -317,22 +340,18 @@ tasks.register('refreshDownloadLinks') {
         List<String> lines = [
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64.zip)",
 
-                "",
-                "<!--", //DISABLED ->  enable if needed
-                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
-                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64-headless.zip)",
-                "-->", //DISABLED ->  enable if needed
+                "- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.zip)",
+
+                "- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.zip)",
+                "- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.zip)",
+
+                "- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-x64.zip)",
+                "- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-arm64.zip)",
+
                 ""
         ] as List
 

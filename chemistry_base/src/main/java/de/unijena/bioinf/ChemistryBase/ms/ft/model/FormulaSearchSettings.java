@@ -23,10 +23,10 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
     public final double performDeNovoBelowMz;
 
     /**
-     * if true, formula candidates from inputfiles are always prioritized and any other candidates from database or de novo generation ignored.
-     * For now, this is an internal paramter and always true.
+     * if true, formula candidates from user input (input files, CLI or API) are always prioritized and any other candidates from database or de novo generation ignored.
+     * For now, this is an internal parameter and always true.
      */
-    public final boolean prioritizeAndForceCandidatesFromInputFiles;
+    public final boolean prioritizeAndForceCandidatesFromUserInput; //todo maybe change to a isIgnoreCandidatesFromInputFiles when presented to the outside. But probably the better solution is to add parameter to ignore input file config
 
     /**
      * force use of all neutral formulas that are provided by user, database or input file through {@link CandidateFormulas}
@@ -67,10 +67,10 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
         this(performBottomUpAboveMz, performDeNovoBelowMz, applyFormulaConstraintsToBottomUp, applyFormulaConstraintsToDatabaseCandidates, true, false);
     }
 
-    private FormulaSearchSettings(double performBottomUpAboveMz, double performDeNovoBelowMz, boolean applyFormulaConstraintsToBottomUp, boolean applyFormulaConstraintsToDatabaseCandidates, boolean prioritizeAndForceCandidatesFromInputFiles, boolean ignoreMassDeviationForCandidateList) {
+    private FormulaSearchSettings(double performBottomUpAboveMz, double performDeNovoBelowMz, boolean applyFormulaConstraintsToBottomUp, boolean applyFormulaConstraintsToDatabaseCandidates, boolean prioritizeAndForceCandidatesFromUserInput, boolean ignoreMassDeviationForCandidateList) {
         this.performBottomUpAboveMz = performBottomUpAboveMz;
         this.performDeNovoBelowMz = performDeNovoBelowMz;
-        this.prioritizeAndForceCandidatesFromInputFiles = prioritizeAndForceCandidatesFromInputFiles;
+        this.prioritizeAndForceCandidatesFromUserInput = prioritizeAndForceCandidatesFromUserInput;
         this.applyFormulaConstraintsToBottomUp = applyFormulaConstraintsToBottomUp;
         this.applyFormulaConstraintsToDatabaseCandidates = applyFormulaConstraintsToDatabaseCandidates;
         this.ignoreMassDeviationForCandidateList = ignoreMassDeviationForCandidateList;
@@ -88,7 +88,7 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
         return useDeNovoFor(mass) || useBottomUpFor(mass);
     }
 
-    public boolean isPrioritizeAndForceCandidatesFromInputFiles() {
-        return prioritizeAndForceCandidatesFromInputFiles;
+    public boolean isPrioritizeAndForceCandidatesFromUserInput() {
+        return prioritizeAndForceCandidatesFromUserInput;
     }
 }

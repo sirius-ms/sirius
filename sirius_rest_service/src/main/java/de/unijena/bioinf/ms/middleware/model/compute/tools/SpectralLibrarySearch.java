@@ -69,7 +69,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      * GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.
      * MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
      */
-    @Schema(nullable = true, enumAsRef = true)
+    @Schema(nullable = true)
     private SpectralMatchingType scoring;
 
     private SpectralLibrarySearch() {

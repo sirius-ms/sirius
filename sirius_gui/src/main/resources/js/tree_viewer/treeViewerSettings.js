@@ -66,7 +66,7 @@ function settingsChanged(){
             drawLinks(root);
             break;
         case "deviationColors":
-            drawNodeAnnots();
+            drawNodeAnnots(config.get("colorScheme3"));
             break;
         case "centeredNodeLabels":
             drawNodes(root);

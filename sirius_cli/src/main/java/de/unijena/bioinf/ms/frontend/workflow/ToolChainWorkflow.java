@@ -79,7 +79,6 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             throw new InterruptedException("Workflow was canceled");
     }
 
-    //todo allow dataset jobs that do not have to put all exps into memory
     @Override
     public void run() {
         try {
@@ -93,61 +92,65 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             });
 
             Iterable<? extends Instance> iteratorSource = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
-            int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
-
-            progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())
-                    .map(JobProgressEvent::getMaxDelta).orElse(0L) + (long) (toolchain.size() + 1) * iteratorSourceSize * 100);
-
-            // build toolchain
-            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size() + 1);
-            //job factory for job that add config annotations to an instance
-            instanceJobChain.add(new InstanceJob.Factory<>(
-                    (jj) -> new AddConfigsJob(parameters),
-                    (inst) -> {
-                    }
-            ));
-
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
-            LoggerFactory.getLogger(getClass()).info("Create Toolchain InstanceBuffer of size {}", bufferSize);
+            LoggerFactory.getLogger(getClass()).info("Creating Toolchain InstanceBuffer of size {}", bufferSize);
 
-            //other jobs
+            if (!toolchain.isEmpty()) {
+                int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
 
-            for (Object o : toolchain) {
+                progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())
+                        .map(JobProgressEvent::getMaxDelta).orElse(0L) + (long) (toolchain.size() + 1) * iteratorSourceSize * 100);
+
+                // build toolchain
+                final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size() + 1);
+                //job factory for job that add config annotations to an instance
+                instanceJobChain.add(new InstanceJob.Factory<>(
+                        (jj) -> new AddConfigsJob(parameters),
+                        (inst) -> {
+                        }
+                ));
+
+
+                //other jobs
+                for (Object o : toolchain) {
+                    checkForCancellation();
+                    if (o instanceof InstanceJob.Factory) {
+                        instanceJobChain.add((InstanceJob.Factory<?>) o);
+                    } else if (o instanceof DataSetJob.Factory) {
+                        submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o), progressSupport);
+                        submitter.start();
+                        checkForCancellation();
+                        iteratorSource = submitter.submitJob(submitter.getCollectorJob()).awaitResult();
+                        iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
+                        checkForCancellation();
+                        instanceJobChain.clear();
+                    } else {
+                        throw new IllegalArgumentException("Illegal job Type submitted. Only InstanceJobs and DataSetJobs are allowed");
+                    }
+                }
+
+                // we have no dataset job that ends the chain, so we have to collect results from
+                // disk to not waste memory -> otherwise the whole buffer thing is useless.
                 checkForCancellation();
-                if (o instanceof InstanceJob.Factory) {
-                    instanceJobChain.add((InstanceJob.Factory<?>) o);
-                } else if (o instanceof DataSetJob.Factory) {
-                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, ((DataSetJob.Factory<?>) o), progressSupport);
-                    submitter.start();
-                    checkForCancellation();
-                    iteratorSource = submitter.submitJob(submitter.getCollectorJob()).awaitResult();
-                    iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
-                    checkForCancellation();
-                    instanceJobChain.clear();
-                } else {
-                    throw new IllegalArgumentException("Illegal job Type submitted. Only InstanceJobs and DataSetJobs are allowed");
+                if (!instanceJobChain.isEmpty()) {
+                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, progressSupport);
+                    submitter.start(true);
                 }
             }
-
-            // we have no dataset job that ends the chain, so we have to collect results from
-            // disk to not waste memory -> otherwise the whole buffer thing is useless.
-            checkForCancellation();
-            if (!instanceJobChain.isEmpty()) {
-                submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), instanceJobChain, progressSupport);
-                submitter.start(true);
-            }
-            LOG.info("Workflow has been finished in " + w);
+            LOG.info("Workflow has been finished in {}", w);
 
             checkForCancellation();
             if (postprocessingJob != null) {
                 LOG.info("Executing Postprocessing...");
                 postprocessingJob.setInput(iteratorSource, parameters);
+                if (submitter == null)
+                    submitter = bufferFactory.create(bufferSize, iteratorSource.iterator(), List.of(), progressSupport);
                 submitter.submitJob(postprocessingJob).awaitResult();
             }
         } catch (ExecutionException | RuntimeException e) {
             if (e.getCause() instanceof CancellationException || e.getCause() instanceof InterruptedException)
-                LOG.info("Workflow was canceled by: " + e.getMessage());
+                LOG.info("Workflow was canceled by: {}", e.getMessage());
             else
                 LOG.error("Error When Executing ToolChain", e);
         } catch (InterruptedException e) {

@@ -38,6 +38,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
             "CSI:FingerIDScore",
             "ModelScore",
             "ZodiacScore",
+            "SiriusScoreNormalized",
             "SiriusScore",
             "molecularFormula",
             "adduct",
@@ -72,6 +73,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
         row.add(match.getCsiScore());
         row.add(match.getModelScore());
         row.add(fc.getZodiacScore());
+        row.add(fc.getSiriusScoreNormalized());
         row.add(fc.getSiriusScore());
         row.add(fc.getMolecularFormula().toString());
         row.add(fc.getAdduct().toString());

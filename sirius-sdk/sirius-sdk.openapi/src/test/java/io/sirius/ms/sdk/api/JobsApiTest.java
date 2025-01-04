@@ -49,7 +49,7 @@ public class JobsApiTest {
             "false, true"
     })
     public void testDeleteJob(boolean cancelIfRunning, boolean awaitDeletion) {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
         defJs.setFormulaIdParams(new Sirius().enabled(false));
         defJs.setZodiacParams(new Zodiac().enabled(false));
         defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(false));
@@ -72,28 +72,28 @@ public class JobsApiTest {
 
     @Test
     public void testDeleteJobConfig() {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
-        String name = null;
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
+        StoredJobSubmission storedConfig = null;
         try {
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
-            instance.deleteJobConfig(name);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
+            instance.deleteJobConfig(storedConfig.getName());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     public void testGetDefaultJobConfig(boolean includeConfigMap) {
-        JobSubmission defJs = instance.getDefaultJobConfig(includeConfigMap);
+        JobSubmission defJs = instance.getDefaultJobConfig(includeConfigMap, false, false);
         assertNotNull(defJs);
         assertEquals(defJs.getConfigMap() != null && !defJs.getConfigMap().isEmpty(), includeConfigMap);
     }
 
     @Test
     public void testGetJob() throws InterruptedException {
-        JobSubmission defJs = instance.getDefaultJobConfig(true);
+        JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
         defJs.setFormulaIdParams(new Sirius().enabled(true));
         defJs.setZodiacParams(new Zodiac().enabled(false));
         defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(true));
@@ -114,23 +114,22 @@ public class JobsApiTest {
         assertNotNull(job.getAffectedCompoundIds());
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetJobConfig(boolean includeConfigMap) {
-        String name = null;
+    @Test
+    public void testGetJobConfig() {
+        StoredJobSubmission storedConfig = null;
         try {
-            JobSubmission defJs = instance.getDefaultJobConfig(true);
+            JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
             defJs.setFormulaIdParams(new Sirius().enabled(false));
             defJs.setZodiacParams(new Zodiac().enabled(false));
             defJs.setFingerprintPredictionParams(new FingerprintPrediction().enabled(false));
             defJs.setStructureDbSearchParams(new StructureDbSearch().enabled(false));
 
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
 
-            JobSubmission jc = instance.getJobConfig(name, includeConfigMap);
+            JobSubmission jc = storedConfig.getJobSubmission();
             assertNotNull(jc);
-            assertEquals(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty(), includeConfigMap);
+            assertTrue(jc.getConfigMap() != null && !jc.getConfigMap().isEmpty());
 
             assertTrue(jc.getCanopusParams().isEnabled());
             assertFalse(jc.getFormulaIdParams().isEnabled());
@@ -138,24 +137,23 @@ public class JobsApiTest {
             assertFalse(jc.getFingerprintPredictionParams().isEnabled());
             assertFalse(jc.getStructureDbSearchParams().isEnabled());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    public void testGetJobConfigs(boolean includeConfigMap) {
-        String name = null;
+    @Test
+    public void testGetJobConfigs() {
+        StoredJobSubmission storedConfig = null;
         try {
-            JobSubmission defJs = instance.getDefaultJobConfig(true);
-            name = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false);
-            assertNotNull(name);
+            JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), defJs, false, false);
+            assertNotNull(storedConfig);
 
-            List<JobSubmission> response = instance.getJobConfigs(includeConfigMap);
+            List<StoredJobSubmission> response = instance.getJobConfigs();
             assertNotNull(response);
             assertFalse(response.isEmpty());
         } finally {
-            if (name != null) instance.deleteJobConfig(name);
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
         }
     }
 
@@ -165,7 +163,7 @@ public class JobsApiTest {
             "true, true, true, true"
     })
     public void testStartJob(boolean includeProgress, boolean includeCommand, boolean includeAffectedCompounds, boolean configMap) throws InterruptedException {
-        JobSubmission submission = instance.getDefaultJobConfig(configMap);
+        JobSubmission submission = instance.getDefaultJobConfig(configMap, false, false);
         submission.setZodiacParams(new Zodiac().enabled(false));
         submission.setRecompute(true);
 
@@ -178,7 +176,7 @@ public class JobsApiTest {
         assertEquals(job.getCommand() != null, includeCommand);
 
         job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
-        assertEquals(JobProgress.StateEnum.DONE, job.getProgress().getState());
+        assertEquals(JobState.DONE, job.getProgress().getState());
     }
 
     @ParameterizedTest
@@ -188,7 +186,7 @@ public class JobsApiTest {
     })
     public void testStartJobFromConfig(boolean includeProgress, boolean includeCommand, boolean includeAffectedCompounds, boolean configMap) throws InterruptedException {
         // Creating job submission with parameters
-        JobSubmission submission = instance.getDefaultJobConfig(configMap);
+        JobSubmission submission = instance.getDefaultJobConfig(configMap, false, false);
         submission.getFormulaIdParams().setEnabled(true);
         submission.getZodiacParams().setEnabled(false);
         submission.getStructureDbSearchParams().setEnabled(false);
@@ -196,31 +194,37 @@ public class JobsApiTest {
         submission.getCanopusParams().setEnabled(false);
         submission.setRecompute(false); // store false but start job with true
 
-        // Saving job configuration
-        String configName = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true);
 
-        // Check if storing worked
-        JobSubmission config = instance.getJobConfig(configName, null);
-        assertNotNull(config);
+        StoredJobSubmission storedConfig = null;
+        try {
+            // Saving job configuration
+            storedConfig = instance.saveJobConfig(UUID.randomUUID().toString(), submission, true, false);
 
-        // Retrieving aligned features for the project
-        List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), null)
-                .stream()
-                .map(AlignedFeature::getAlignedFeatureId)
-                .toList();
+            // Check if storing worked
+            JobSubmission config = storedConfig.getJobSubmission();
+            assertNotNull(config);
 
-        // Start job from config
-        List<JobOptField> optFields = makeOptFields(includeProgress, includeCommand, includeAffectedCompounds);
-        Job job = instance.startJobFromConfig(project.getProjectId(), configName, features, true, optFields);
-        assertNotNull(job);
+            // Retrieving aligned features for the project
+            List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), null)
+                    .stream()
+                    .map(AlignedFeature::getAlignedFeatureId)
+                    .toList();
 
-        // Check if progress and command fields are included as expected
-        assertEquals(includeProgress, job.getProgress() != null);
-        assertEquals(includeCommand, job.getCommand() != null);
+            // Start job from config
+            List<JobOptField> optFields = makeOptFields(includeProgress, includeCommand, includeAffectedCompounds);
+            Job job = instance.startJobFromConfig(project.getProjectId(), storedConfig.getName(), features, true, optFields);
+            assertNotNull(job);
 
-        // Wait for the job to complete
-        job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
-        assertEquals(JobProgress.StateEnum.DONE, job.getProgress().getState());
+            // Check if progress and command fields are included as expected
+            assertEquals(includeProgress, job.getProgress() != null);
+            assertEquals(includeCommand, job.getCommand() != null);
+
+            // Wait for the job to complete
+            job = testSetup.getSiriusClient().awaitJob(project.getProjectId(), job.getId());
+            assertEquals(JobState.DONE, job.getProgress().getState());
+        } finally {
+            if (storedConfig != null) instance.deleteJobConfig(storedConfig.getName());
+        }
     }
 
     // Helper function to generate optional fields list

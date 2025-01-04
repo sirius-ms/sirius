@@ -23,6 +23,7 @@ package de.unijena.bioinf.ChemistryBase.ms.ft;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.Annotated;
@@ -484,5 +485,29 @@ public abstract class AbstractFragmentationGraph implements Iterable<Fragment>, 
         if (adduct == null)
             adduct = ImplicitAdduct.none();
         return Deviation.fromMeasurementAndReference(referenceMass, fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass()));
+    }
+
+    /**
+     *
+     * return exact m/z of the fragment peak based on the fragment formula, ionization and implicit adduct
+     */
+    public double getExactMass(Fragment fragment) {
+        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
+        if (adduct == null)
+            adduct = ImplicitAdduct.none();
+        return fragment.getIonization().addToMass(fragment.formula.add(adduct.getAdductFormula()).getMass());
+    }
+
+    /**
+     *
+     * @param fragment
+     * @return PrecursorIonType of a fragment that represents its ionization plus potential implicit adduct.
+     */
+    public PrecursorIonType getAdduct(Fragment fragment) {
+        PrecursorIonType ionType = PrecursorIonType.getPrecursorIonType(fragment.getIonization());
+        ImplicitAdduct adduct = getFragmentAnnotationOrNull(ImplicitAdduct.class) != null ? getFragmentAnnotationOrNull(ImplicitAdduct.class).get(fragment) : null;
+        if (adduct == null)
+            adduct = ImplicitAdduct.none();
+        return ionType.substituteAdduct(adduct.getAdductFormula());
     }
 }

@@ -24,8 +24,9 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.LicenseInfo;
 import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.ConnectionErrorClass;
+import io.sirius.ms.sdk.model.LicenseInfo;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.util.Objects;
 
 /**
  * THREAD SAFE
@@ -89,7 +91,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
     @Nullable
-    public synchronized ConnectionCheck getCurrentCheckResult(){
+    public synchronized ConnectionCheck getCurrentCheckResult() {
         if (checkResult == null)
             if (checkJob != null)
                 return checkJob.getResult();
@@ -115,9 +117,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         this.checkResult = checkResult;
 
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
-        firePropertyChange(new ConnectionStateEvent(old, checkResult));
+        fireNullAsEqualPropertyChange(new ConnectionStateEvent(old, checkResult));
     }
 
+    protected void fireNullAsEqualPropertyChange(PropertyChangeEvent evt) {
+        if (!Objects.equals(evt.getOldValue(), evt.getNewValue()))
+            firePropertyChange(evt);
+    }
 
     public void addConnectionUpdateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionUpdateEvent.KEY, listener);
@@ -180,13 +186,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getNewValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getNewValue();
+        public ConnectionErrorClass getNewValue() {
+            return (ConnectionErrorClass) super.getNewValue();
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getOldValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getOldValue();
+        public ConnectionErrorClass getOldValue() {
+            return (ConnectionErrorClass) super.getOldValue();
         }
 
         public ConnectionCheck getConnectionCheck() {

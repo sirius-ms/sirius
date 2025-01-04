@@ -29,7 +29,11 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.babelms.utils.ParserUtils;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
@@ -205,8 +209,12 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         else return;
                     }
                 }
-                spec.spectrum.setIonization(ion.getIonization());
-                spec.ionType = ion;
+                if (spec.ionType == null || spec.ionType.isIonizationUnknown()) {
+                    spec.spectrum.setIonization(ion.getIonization());
+                    spec.ionType = ion;
+                } else if (!ion.isIonizationUnknown() && !spec.ionType.equals(ion.isIonizationUnknown())) {
+                    LoggerFactory.getLogger(MgfParser.class).warn("Contradicting adduct annotations: " + ion + " vs " + spec.ionType);
+                }
             } else if (keyword.contains("SPECTYPE")) {
                 if (value.toUpperCase().contains("CORRELATED")) {
                     spec.type = SpecType.CORRELATED;
@@ -248,6 +256,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         reading = true;
                     } else if (reading && line.startsWith("END IONS")) {
                         lastErrorFeatureId = null;
+                        checkSpecIntegrity(spec);
                         return spec;
                     } else if (reading) {
                         if (Character.isDigit(line.charAt(0))) {
@@ -273,7 +282,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if (e instanceof MultipleChargeException || e instanceof MultimereException) {
                         LoggerFactory.getLogger(this.getClass()).warn("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage());
                     } else {
-                        LoggerFactory.getLogger(this.getClass()).error("Compound " + lastErrorFeatureId + " ignored because of unexpected parsing error.", e);
+                        LoggerFactory.getLogger(this.getClass()).error("Compound " + lastErrorFeatureId + " ignored because of: " + e.getMessage(), e);
                     }
 
                     if (reading) {
@@ -299,6 +308,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 }
             }
             return null;
+        }
+
+        private void checkSpecIntegrity(MgfSpec spec) {
+            if (spec.ionType == null) throw new RuntimeException("Ion type is not defined");
         }
     }
 
@@ -367,6 +380,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         exp.computeAnnotationIfAbsent(AdditionalFields.class, AdditionalFields::new).put("index", Integer.toString(inst.specIndex));
         final AdditionalFields additionalFields = new AdditionalFields();
 
+        //if some annotation should be persistent in nitrite it must be added to this config. additionalFields are not persistent
+        //but in contrast to JenaMsParser, mgf is not meant to support our parameters
+        ParameterConfig config = PropertyManager.DEFAULTS.newIndependentInstance("MS_FILE:" + exp.getName());
+
         while (true) {
             final MgfSpec spec = inst.pollNext();
             if (spec.spectrum.getMsLevel() == 1) {
@@ -378,7 +395,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else {
                 exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
             }
-            if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isUnknownNoCharge()) {
+            if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown()) {
                 exp.setPrecursorIonType(spec.ionType);
                 if (!spec.ionType.isIonizationUnknown())
                     exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, spec.ionType));
@@ -397,7 +414,12 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 }
             }
             if (spec.formula != null) {
-                exp.setMolecularFormula(spec.formula);
+                exp.setMolecularFormula(spec.formula); //this is for backwards compatibility with any old code / evaluation scripts etc. this should not be necessary for SIRIUS frontend application
+                try {
+                    config.changeConfig("CandidateFormulas", spec.formula.toString());
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(MgfParser.class).error("Could not set given formula as whitelist in configuration: "+spec.formula, e);
+                }
             }
             if (spec.instrumentation != null) {
                 if (exp.hasAnnotation(MsInstrumentation.class)) {
@@ -408,6 +430,10 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 }
             }
             additionalFields.putAll(spec.fields);
+
+            //add config annotations that have been set within the file
+            exp.setAnnotation(InputFileConfig.class, new InputFileConfig(config)); //set map for reconstructability
+            exp.setAnnotationsFrom(config.createInstancesWithModifiedDefaults(Ms2ExperimentAnnotation.class, true));
 
             if (inst.hasNext()) {
                 final MgfSpec nextOne = inst.peekNext();

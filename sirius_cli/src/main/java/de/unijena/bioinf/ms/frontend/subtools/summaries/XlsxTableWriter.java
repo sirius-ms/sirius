@@ -113,7 +113,8 @@ public class XlsxTableWriter implements SummaryTableWriter {
     private CellStyle createHeaderStyle() {
         CellStyle style = workBook.createCellStyle();
 
-        XSSFColor bgColor = new XSSFColor(new java.awt.Color(245, 187, 201), new DefaultIndexedColorMap());  // TODO streamline with other colors
+        //custom blue
+        XSSFColor bgColor = new XSSFColor(java.awt.Color.decode("#b3d9e5"), new DefaultIndexedColorMap()); //these should be the same colors as specified in de.unijena.bioinf.ms.gui.configs.Colors. But there is no dependency.
         style.setFillForegroundColor(bgColor);
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
@@ -125,29 +126,37 @@ public class XlsxTableWriter implements SummaryTableWriter {
     }
 
     private void createQualityStyles() {
-        // TODO streamline with other colors
-        CellStyle redStyle = workBook.createCellStyle();
-        redStyle.setFillForegroundColor(IndexedColors.RED.index);
-        redStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        //these should be the same colors as specified in de.unijena.bioinf.ms.gui.configs.Colors. But there is no dependency.
+        XSSFColor customPink = new XSSFColor(java.awt.Color.decode("#f570a1"), null);
+        XSSFColor customYellow = new XSSFColor(java.awt.Color.decode("#feff66"), null);
+        XSSFColor customGreen = new XSSFColor(java.awt.Color.decode("#68da58"), null);
 
-        CellStyle yellowStyle = workBook.createCellStyle();
-        yellowStyle.setFillForegroundColor(IndexedColors.YELLOW.index);
-        yellowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        CellStyle badQualityStyle = workBook.createCellStyle();
+        badQualityStyle.setFillForegroundColor(customPink);
+        badQualityStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        CellStyle greenStyle = workBook.createCellStyle();
-        greenStyle.setFillForegroundColor(IndexedColors.BRIGHT_GREEN.index);
-        greenStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        CellStyle decentQualityStyle = workBook.createCellStyle();
+        decentQualityStyle.setFillForegroundColor(customYellow);
+        decentQualityStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        CellStyle greyStyle = workBook.createCellStyle();
-        greyStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.index);
-        greyStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        CellStyle goodQualityStyle = workBook.createCellStyle();
+        goodQualityStyle.setFillForegroundColor(customGreen);
+        goodQualityStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle lowestQualityStyle = workBook.createCellStyle();
+        lowestQualityStyle.setFillForegroundColor(customPink); //same color as bad. in the GUI we additionally use an exclamation mark
+        lowestQualityStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle notApplicableStyle = workBook.createCellStyle();
+        notApplicableStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.index);
+        notApplicableStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
         qualityStyles = Map.of(
-                DataQuality.GOOD, greenStyle,
-                DataQuality.DECENT, yellowStyle,
-                DataQuality.BAD, redStyle,
-                DataQuality.LOWEST, greyStyle,
-                DataQuality.NOT_APPLICABLE, greyStyle
+                DataQuality.GOOD, goodQualityStyle,
+                DataQuality.DECENT, decentQualityStyle,
+                DataQuality.BAD, badQualityStyle,
+                DataQuality.LOWEST, lowestQualityStyle,
+                DataQuality.NOT_APPLICABLE, lowestQualityStyle //I assume this should never happen for the overall quality
         );
     }
 

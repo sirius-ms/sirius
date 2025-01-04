@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.adducts;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -10,8 +11,8 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.babelms.cef.P;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.adducts.assignment.AdductAssignment;
 import de.unijena.bioinf.lcms.adducts.assignment.SubnetworkResolver;
@@ -21,11 +22,13 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.*;
 import java.util.*;
 
 public class AdductNetwork {
@@ -38,10 +41,10 @@ public class AdductNetwork {
     protected Deviation deviation;
     ProjectSpaceTraceProvider provider;
 
-    double retentionTimeTolerance;
+    double retentionTimeTolerance, expectedPeakWidth;
     PValueStats pValueStats;
 
-    public AdductNetwork(ProjectSpaceTraceProvider provider, AlignedFeatures[] features, AdductManager manager, double retentionTimeTolerance) {
+    public AdductNetwork(ProjectSpaceTraceProvider provider, AlignedFeatures[] features, AdductManager manager, double retentionTimeTolerance, double expectedPeakWidth) {
         this.rtOrderedNodes = new AdductNode[features.length];
         for (int k=0; k < features.length; ++k) {
             rtOrderedNodes[k] = new AdductNode(features[k], k);
@@ -52,13 +55,21 @@ public class AdductNetwork {
         pValueStats = new PValueStats();
         deviation = new Deviation(10);
         this.retentionTimeTolerance = retentionTimeTolerance;
+        this.expectedPeakWidth = expectedPeakWidth;
     }
 
-    record NetworkResult(AdductEdge[] realEdges, AdductEdge[] decoyEdges) {
+    record NetworkResult(AdductEdge[] realEdges, AdductEdge[] decoyEdges, int densityEstimate) {
     }
 
     public void buildNetworkFromMassDeltas(JobManager jjobs) {
-        Scorer scorer = new Scorer();
+        Scorer scorer = new Scorer(this.retentionTimeTolerance/3d);
+
+        // we exclude the begin and the end of the LC from p-value estimation, as these might be void volume or
+        // high pressure
+        double voidVolumeStart = rtOrderedNodes[0].getRetentionTime();
+        double voidVolumeEnd = voidVolumeStart + 4*retentionTimeTolerance;
+        double endOfLc = rtOrderedNodes[rtOrderedNodes.length-1].getRetentionTime() - 4*retentionTimeTolerance;
+
         List<BasicJJob<NetworkResult>> jobs = new ArrayList<>();
         for (int rr=0; rr < rtOrderedNodes.length; ++rr) {
             final int r = rr;
@@ -104,7 +115,7 @@ public class AdductNetwork {
                             final Range<Double> threshold2 = Range.of(thresholdStart2, thresholdEnd2);
                             if (rightNode.getMass() > leftNode.getMass() && Math.abs(rightNode.getRetentionTime() - leftNode.getRetentionTime()) < retentionTimeTolerance &&  threshold2.contains(rightNode.getRetentionTime())) {
                                 final double massDelta = rightNode.getMass() - leftNode.getMass();
-                                List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltas(massDelta, deviation);
+                                List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltasWithNoAmbiguity(massDelta, deviation);
 
                                 // add multimere edge if present
                                 adductManager.checkForMultimere(rightNode.getMass(), leftNode.getMass(), deviation).ifPresent(knownMassDeltas::add);
@@ -119,7 +130,7 @@ public class AdductNetwork {
                                 if (!knownMassDeltas.isEmpty()) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
                                     scorer.computeScore(provider, adductEdge);
-                                    if (Double.isFinite(adductEdge.ratioScore)) {
+                                    if (Double.isFinite(adductEdge.extraSampleCorrelation)) {
 
                                         // add MS/MS score
                                         if (!ms2Right.isEmpty()) {
@@ -140,15 +151,17 @@ public class AdductNetwork {
 
                                         realEdges.add(adductEdge);
                                     }
-                                } else if (decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
+                                } else if (rt.getStartTime() > voidVolumeEnd && rt.getEndTime() < endOfLc && decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
                                     scorer.computeScore(provider, adductEdge);
-                                    decoyEdges.add(adductEdge);
+                                    if (Double.isFinite(adductEdge.extraSampleCorrelation)) {
+                                        decoyEdges.add(adductEdge);
+                                    }
                                 }
                             }
                         }
                     }
-                    return new NetworkResult(realEdges.toArray(AdductEdge[]::new), decoyEdges.toArray(AdductEdge[]::new));
+                    return new NetworkResult(realEdges.toArray(AdductEdge[]::new), decoyEdges.toArray(AdductEdge[]::new), rEnd-rStart+1);
                 }
             }));
         }
@@ -158,6 +171,7 @@ public class AdductNetwork {
                 NetworkResult r = iter.next().takeResult();
                 for (AdductEdge e : r.realEdges) addEdge(e);
                 for (AdductEdge e : r.decoyEdges) pValueStats.add(e);
+                pValueStats.addDensity(r.densityEstimate);
                 iter.remove(); // release memory
             }
         }
@@ -180,7 +194,7 @@ public class AdductNetwork {
                 }
             }
         }
-        System.out.println("Number of potentially annotatable adducts: " + numberOfIonsWeCouldAnnotate);
+
     }
 
     private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
@@ -199,6 +213,67 @@ public class AdductNetwork {
         } else return null;
     }
 
+    public void assignNetworksAndAdductsToFeatures(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<AlignedFeatures> updateRoutineForFeatures,
+                                                   IOFunctions.IOFunction<de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork, Long> updateRoutineForNetworks,
+                                                   IOFunctions.IOFunction<de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures, Long> feature2compoundRoutine) throws IOException {
+        final ArrayList<BasicJJob<HashMap<AdductNode, AdductAssignment>>> jobs = new ArrayList<>();
+        for (List<AdductNode> subgraph : subgraphs) {
+            jobs.add(manager.submitJob(new BasicJJob<HashMap<AdductNode, AdductAssignment>>() {
+                @Override
+                protected HashMap<AdductNode, AdductAssignment> compute() throws Exception {
+                    AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
+                    AdductAssignment[] assignments = resolver.resolve(adductManager, nodes, charge);
+                    HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
+
+                    for (int i = 0; i < nodes.length; i++) {
+                        if (assignments != null) {
+                            assignmentMap.put(nodes[i], assignments[i]);
+                        }
+                    }
+                    return assignmentMap;
+                }
+            }));
+        }
+        ListIterator<BasicJJob<HashMap<AdductNode, AdductAssignment>>> iter = jobs.listIterator();
+        while (iter.hasNext()) {
+            HashMap<AdductNode, AdductAssignment> map = iter.next().takeResult();
+            // insert networks into project space
+            Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork> networks = addAdductNetworksToFeatures(map);
+            for (de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork network : Set.copyOf(networks.values())) {
+                long id = updateRoutineForNetworks.apply(network);
+                if (network.getNetworkId()!=id) {
+                    network.setNetworkId(id);
+                }
+            }
+            // insert adduct information
+            for (AdductNode node : networks.keySet()) {
+                AlignedFeatures feature = node.features;
+                addAssignmentsToFeature(node, map.get(node));
+                feature.setAdductNetworkId(networks.get(node).getNetworkId());
+                // insert compounds
+                feature2compoundRoutine.apply(feature);
+            }
+            // finally update all compounds in database
+            for (AdductNode node : map.keySet()) {
+                updateRoutineForFeatures.accept(node.features);
+            }
+            iter.set(null); // free memory
+        }
+        // also process all singleton nodes
+        for (AdductNode node : singletons) {
+            AlignedFeatures f = node.features;
+            if (f.getDetectedAdducts() == null) {
+                f.setDetectedAdducts(DetectedAdducts.emptySingleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN));
+            } else {
+                f.getDetectedAdducts().addEmptySource(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+            }
+            f.setAdductNetworkId(null);
+            feature2compoundRoutine.apply(f);
+            updateRoutineForFeatures.accept(f);
+        }
+    }
+
+    /*
     public void assign(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<Compound> updateRoutine) {
         final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
         for (List<AdductNode> subgraph : subgraphs) {
@@ -206,7 +281,7 @@ public class AdductNetwork {
                 @Override
                 protected Void compute() throws Exception {
                     AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
-                    AdductAssignment[] assignments = resolver.resolve(nodes, charge);
+                    AdductAssignment[] assignments = resolver.resolve(adductManager, nodes, charge);
                     HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
 
                     for (int i = 0; i < nodes.length; i++)
@@ -232,6 +307,110 @@ public class AdductNetwork {
         }));
         jobs.forEach(JJob::takeResult);
     }
+     */
+
+    private Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork> addAdductNetworksToFeatures(HashMap<AdductNode, AdductAssignment> map) {
+        // we first have to split the nodes into subnetworks AFTER knowing about their assignments (as some incompatible edges might
+        // split the graph into connection components
+        Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork> networks = new HashMap<>();
+        Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode> translate = new HashMap<>();
+
+        for (AdductNode node : map.keySet()) {
+            if (!networks.containsKey(node)) {
+                // generate new network
+                de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork network = new de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork();
+                network.setEgdes(new ArrayList<>());
+                network.setNodes(new ArrayList<>());
+                // spread over all connected nodes
+                spreadAdductNetworks(node, network, translate, map, networks);
+            }
+        }
+        return networks;
+
+    }
+
+    private void spreadAdductNetworks(AdductNode node, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork network, Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode> translate, HashMap<AdductNode, AdductAssignment> map, Map<AdductNode, de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork> networks) {
+        de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode newNode = new de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode();
+        newNode.setTraceId(node.features.getTraceReference().stream().mapToLong(TraceRef::getTraceId).findFirst().orElse(-1));
+        newNode.setAlignedFeatureId(node.features.getAlignedFeatureId());
+        newNode.setPossibleAdducts(Arrays.stream(map.get(node).getIonTypes()).map(x -> x.toPrecursorIonType().orElse(null)).toArray(PrecursorIonType[]::new));
+        newNode.setAdductProbabilities(MatrixUtils.double2float(map.get(node).getProbabilities()));
+        newNode.setMz(node.getMass());
+        translate.put(node, newNode);
+
+        networks.put(node, network);
+        network.getNodes().add(newNode);
+
+        for (AdductEdge e : node.getEdges()) {
+
+            AdductNode leftNode = e.left, rightNode = e.right;
+
+            if (!map.containsKey(e.getLeft()) || !map.containsKey(e.getRight())) continue;
+            if (translate.containsKey(e.getLeft()) && translate.containsKey(e.getRight())) continue;
+            boolean compatible = false;
+            IonType cleft=null,cright=null;
+            outer:
+            for (KnownMassDelta delta : e.getExplanations()) {
+                for (IonType left : map.get(e.getLeft()).getIonTypes()) {
+                    for (IonType right : map.get(e.getRight()).getIonTypes()) {
+                        if (delta.isCompatible(left,right)) {
+                            compatible=true;
+                            cleft=left;
+                            cright=right;
+                            break outer;
+                        }
+                    }
+                }
+            }
+            if (/*compatible*/ true) {
+                // add edge
+                de.unijena.bioinf.ms.persistence.model.core.networks.AdductEdge edge = new de.unijena.bioinf.ms.persistence.model.core.networks.AdductEdge();
+                edge.setPvalue(e.pvalue);
+                edge.setMergedCorrelation(e.interSampleCorrelation);
+                edge.setRepresentativeCorrelation(e.interSampleCorrelationRepresentative);
+                edge.setMs2cosine(e.ms2score);
+                edge.setIntensityRatioScore(e.extraSampleCorrelation);
+                edge.setLeftFeatureId(leftNode.getFeature().getAlignedFeatureId());
+                edge.setRightFeatureId(rightNode.getFeature().getAlignedFeatureId());
+
+                String adductLabel=null, insourceLabel=null;
+                for (KnownMassDelta d : e.getExplanations()) {
+                    if (d instanceof LossRelationship) {
+                        insourceLabel = (((LossRelationship) d).formula).toString();
+                    } else if (compatible && d instanceof AdductRelationship) {
+                        if (d.isCompatible(cleft,cright)) {
+                            adductLabel = simplifyEdgeName(((AdductRelationship) d).left, ((AdductRelationship) d).right);
+                        }
+                    }
+                }
+                if (insourceLabel!=null) edge.setLabel(insourceLabel);
+                else if (adductLabel!=null) edge.setLabel(adductLabel);
+                else edge.setLabel("");
+                networks.get(node).getEgdes().add(edge);
+                // attach new node
+                spreadAdductNetworks(e.getOther(node), network, translate, map, networks);
+            }
+        }
+    }
+
+    private String simplifyEdgeName(PrecursorIonType left, PrecursorIonType right) {
+        if (left.getMultimereCount()!=right.getMultimereCount()) {
+            return left.toString() + " -> " + right.toString();
+        }
+        if (!left.getIonization().equals(right.getIonization())) {
+            if (left.getModification().equals(right.getModification())) {
+                return left.getIonization().getAtoms().toString() + (left.getCharge()>0 ? "+" : "-") + " -> " + right.getIonization().getAtoms().toString() + (right.getCharge()>0 ? "+" : "-");
+            } else return left.toString() + " -> " + right.toString();
+        }
+        return shortForm(left) + " -> " + shortForm(right);
+    }
+
+    private String shortForm(PrecursorIonType type) {
+        String ad = type.getAdductAndIons().toString() + (type.getCharge()>0 ? "+" : "-");
+        String insource = type.getInSourceFragmentation().toString();
+        if (insource.isEmpty()) return ad;
+        else return ad + " - " + insource;
+    }
 
     private void addAssignmentsToFeature(@NotNull AdductNode adductNode, @NotNull AdductAssignment assignment){
         final AlignedFeatures feature = adductNode.features;
@@ -244,6 +423,55 @@ public class AdductNetwork {
             }
             detectedAdducts.addAll(pas);
         }
+    }
+    private String toDot(AdductNode node) {
+        return toDot(spread(node, new BitSet()));
+    }
+    private String toDot(Map<AdductNode, AdductAssignment> assignments) {
+        List<AdductNode> subgraph = new ArrayList<>(assignments.keySet());
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("strict digraph {\n");
+        for (AdductNode node : subgraph) {
+            buffer.append("v").append(node.index).append("[label=\"").append(String.format(Locale.US, "%s\n%.2f", assignments.get(node).mostLikelyAdduct().toString(), node.getMass())).append("\"]\n");
+        }
+        for (AdductNode node : subgraph) {
+            for (AdductEdge edge : node.edges) {
+                if (edge.getLeft()==node) {
+                    buffer.append("v").append(node.index).append(" -> ").append("v").append(edge.getRight().index);
+                    buffer.append("[label=\"").append(String.format(Locale.US, "%.2f", edge.getRight().getMass()-edge.getLeft().getMass()));
+                    for (KnownMassDelta d : edge.getExplanations()) {
+                        if (d.isCompatible(assignments.get(edge.getLeft()).mostLikelyAdduct(), assignments.get(edge.getRight()).mostLikelyAdduct())) {
+                            if (!(d instanceof AdductRelationship)) {
+                                buffer.append("\n").append(d.toString());
+                                break;
+                            }
+                        }
+                    }
+                    buffer.append("\"]\n");
+                }
+            }
+        }
+        buffer.append("}\n");
+        return buffer.toString();
+    }
+
+    private String toDot(List<AdductNode> subgraph) {
+        StringBuilder buffer = new StringBuilder();
+        buffer.append("strict digraph {\n");
+        for (AdductNode node : subgraph) {
+            buffer.append("v").append(node.index).append("[label=\"").append(String.format(Locale.US, "%.2f", node.getMass())).append("\"]\n");
+        }
+        for (AdductNode node : subgraph) {
+            for (AdductEdge edge : node.edges) {
+                if (edge.getLeft()==node) {
+                    buffer.append("v").append(node.index).append(" -> ").append("v").append(edge.getRight().index)
+                            .append(" [label=<").append((int)Math.round(edge.getLeft().getMass()-edge.getRight().getMass())).append("<BR/><FONT POINT-SIZE=\"5\">")
+                            .append(edge.getExplanations()[0].toString().replace("-->", "→")).append("</FONT>").append(">]\n");
+                }
+            }
+        }
+        buffer.append("}\n");
+        return buffer.toString();
     }
 
     private Compound extractCompound(Map<AdductNode, AdductAssignment> assignments, Set<AdductNode> visited, AdductNode seed, double probabilityThreshold) {
@@ -305,7 +533,7 @@ public class AdductNetwork {
                             v.features,
                             typeFor(D),
                             (double)uv.getScore(),
-                            Float.isFinite(uv.correlationScore) ? Double.valueOf(uv.correlationScore) : null,
+                            Float.isFinite(uv.interSampleCorrelation) ? Double.valueOf(uv.interSampleCorrelation) : null,
                             Float.isFinite(uv.ms2score) ? Double.valueOf(uv.ms2score) : null
                     ));
                     break;
@@ -383,25 +611,26 @@ public class AdductNetwork {
                     double score = pValueStats.logPvalue(e);
                     // for ms2 we do not compute p-values as this would take quite a lot of time
                     // so we just "guess" an exponential distribution
-                    double ms2value = Float.isNaN(e.ms2score) ? 0f : (e.ms2score - 0.25)*4;
+                    double ms2value = Float.isNaN(e.ms2score) ? 0f : -(e.ms2score - 0.25)*8;
                     e.pvalue = (float) (score + ms2value);
                     ++count;
                 }
             }
         }
-        double correction = Math.log(Math.sqrt(count))+1d;
+        double minimum=Math.max(3,Math.log(pValueStats.medianDensity()));
+        double correction = minimum;
         int above5=0, aboveCorrect=0;
         for (AdductNode node : rtOrderedNodes) {
             for (AdductEdge e : node.getEdges()){
                 if (e.getLeft()==node) {
                     if (e.getScore()>=5) ++above5;
                     if (e.getScore()>=(correction)) ++aboveCorrect;
+                    // correct p-value score
+                    e.pvalue += (float)minimum;
                 }
             }
         }
-        System.out.println(count + " edges in total, so correction would be " + Math.log(count));
-        System.out.println(above5 + " edges have a score above 5, " + aboveCorrect + " also have a score above correction value.");
-        deleteEdgesWithLowPvalue(Math.max(correction, 3d));
+        deleteEdgesWithLowPvalue(3);
     }
 
     private void deleteEdgesWithLowPvalue(double threshold) {
@@ -461,99 +690,130 @@ public class AdductNetwork {
         return sublist;
     }
 
-    class PValueStats {
-        private IntArrayList ratioScore5, cor1, cor2;
-        private double[] pvalueRatio, pvalueCor1, pvalueCor2;
-        private double pbase;
-        private int count;
+    abstract static class PValueVariable {
+        private IntArrayList counts;
+        private double[] pvalues;
+        public abstract int getBinFor(double value);
 
-        public PValueStats() {
-            ratioScore5 = new IntArrayList();
-            cor1 = new IntArrayList();
-            cor2 = new IntArrayList();
-            count = 0;
+        public PValueVariable() {
+            this.counts = new IntArrayList();
         }
 
-        private void done() {
-            pvalueRatio = new double[ratioScore5.size()+1];
-            pvalueCor1 = new double[cor1.size()+1];
-            pvalueCor2 = new double[cor2.size()+1];
-
+        public void done() {
+            int count = counts.intStream().sum();
             int cumsum=1;
             double base = Math.log(count+1);
-            pbase=base;
-            pvalueRatio[pvalueRatio.length-1] = Math.log(cumsum)-base;
-            for (int i=ratioScore5.size()-1; i >= 0; --i) {
-                cumsum += ratioScore5.getInt(i);
+            double pbase=base;
+            pvalues = new double[counts.size()+1];
+            pvalues[pvalues.length-1] = Math.log(cumsum)-base;
+            for (int i=counts.size()-1; i >= 0; --i) {
+                cumsum += counts.getInt(i);
                 double logprob = Math.log(cumsum) - base;
-                pvalueRatio[i] = logprob;
-            }
-            cumsum=1;
-            pvalueCor1[pvalueCor1.length-1] = Math.log(cumsum)-base;
-            for (int i=cor1.size()-1; i >= 0; --i) {
-                cumsum += cor1.getInt(i);
-                double logprob = Math.log(cumsum) - base;
-                pvalueCor1[i] = logprob;
-            }
-            cumsum=1;
-            pvalueCor2[pvalueCor2.length-1] = Math.log(cumsum)-base;
-            for (int i=cor2.size()-1; i >= 0; --i) {
-                cumsum += cor2.getInt(i);
-                double logprob = Math.log(cumsum) - base;
-                pvalueCor2[i] = logprob;
+                pvalues[i] = logprob;
             }
         }
 
-        public double logPvalue(AdductEdge edge) {
-            double pvalue = 0d;
-            if (Double.isFinite(edge.ratioScore)) {
-                int b = ratio2bin(edge.ratioScore);
-                if (b >= pvalueRatio.length) pvalue += pvalueRatio[pvalueRatio.length-1];
-                else pvalue += pvalueRatio[b];
-            }
-            if (Double.isFinite(edge.correlationScore)) {
-                int b = cor2bin(edge.correlationScore);
-                if (b >= pvalueCor1.length) pvalue += pvalueCor1[pvalueCor1.length-1];
-                else pvalue += pvalueCor1[b];
-            }
-            if (Double.isFinite(edge.representativeCorrelationScore)) {
-                int b = cor2bin(edge.representativeCorrelationScore);
-                if (b >= pvalueCor2.length) pvalue += pvalueCor2[pvalueCor2.length-1];
-                else pvalue += pvalueCor2[b];
-            }
-            return pvalue;
+        public double pvalue(double value) {
+            if (Double.isFinite(value)) {
+                int b = getBinFor(value);
+                if (b >= counts.size()) return pvalues[pvalues.length-1];
+                else return pvalues[b];
+            } else return 0;
         }
 
-        public void add(AdductEdge edge) {
-            ++count;
-            if (Double.isFinite(edge.ratioScore)) {
-                int b = ratio2bin(edge.ratioScore);
-                while (b >= ratioScore5.size()) ratioScore5.add(0);
-                ratioScore5.set(b, ratioScore5.getInt(b)+1);
-            }
-            if (Double.isFinite(edge.correlationScore)) {
-                int b = cor2bin(edge.correlationScore);
-                while (b >= cor1.size()) cor1.add(0);
-                cor1.set(b, cor1.getInt(b)+1);
-            }
-            if (Double.isFinite(edge.representativeCorrelationScore)) {
-                int b = cor2bin(edge.representativeCorrelationScore);
-                while (b >= cor2.size()) cor2.add(0);
-                cor2.set(b, cor2.getInt(b)+1);
-            }
+        public void add(double value) {
+            if (!Double.isFinite(value)) return;
+            int b = getBinFor(value);
+            while (b >= counts.size()) counts.add(0);
+            counts.set(b, counts.getInt(b)+1);
         }
-
-        private int ratio2bin(double score) {
-            return (int)Math.max(0,Math.round((score+0)/5));
+        public IntArrayList getCounts() {
+            return counts;
         }
+    }
+    static class ProbabilityValue extends PValueVariable {
+        private static double[] corbins = new double[]{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.92, 0.94, 0.96, 0.97, 0.98, 0.99, 0.995};
 
-        private static double[] corbins = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.92, 0.94, 0.96, 0.97, 0.98, 0.99, 0.995};
-
-        private int cor2bin(double score) {
+        public int getBinFor(double score) {
             int index = Arrays.binarySearch(corbins, score);
             if (index >= 0) return index;
             else return -index +1;
         }
+    }
+
+    static class CorrelationValue {
+        private final int threshold;
+        private final ProbabilityValue below, above;
+        public CorrelationValue(int threshold) {
+            this.threshold = threshold;
+            this.below = new ProbabilityValue();
+            this.above = new ProbabilityValue();
+        }
+
+        public void done() {
+            below.done();
+            above.done();
+        }
+
+        public ProbabilityValue get(int datapoints) {
+            if (datapoints < threshold) {
+                return below;
+            } else return above;
+        }
+    }
+
+    class PValueStats {
+        private CorrelationValue merged, representative, extra;
+        private ProbabilityValue rt, ms2;
+        private IntArrayList density;
+
+        public PValueStats() {
+            merged = new CorrelationValue(8);
+            representative = new CorrelationValue(8);
+            extra = new CorrelationValue(6);
+            rt = new ProbabilityValue();
+            ms2 = new ProbabilityValue();
+            this.density = new IntArrayList();
+        }
+
+        /**
+         * Statistic about how many compounds are within a retention time window in average
+         */
+        public void addDensity(int densityEstimate) {
+            density.add(densityEstimate);
+        }
+
+        public float medianDensity() {
+            density.sort(null);
+            return density.getInt(density.size()/2);
+        }
+        public float averageDensity() {
+            return (float)density.intStream().average().orElse(0);
+        }
+
+        private void done() {
+            merged.done();
+            representative.done();
+            extra.done();
+            rt.done();
+            ms2.done();
+        }
+
+        public double logPvalue(AdductEdge edge) {
+            return merged.get(edge.interSampleCorrelationCount).pvalue(edge.interSampleCorrelation) +
+                    representative.get(edge.interSampleCorrelationRepresentativeCount).pvalue(edge.interSampleCorrelationRepresentative)
+                    + extra.get(edge.extraSampleCorrelationCount).pvalue(edge.extraSampleCorrelation)
+                    + rt.pvalue(edge.rtScore) + ms2.pvalue(edge.ms2score);
+        }
+
+        public void add(AdductEdge edge) {
+            merged.get(edge.interSampleCorrelationCount).add(edge.interSampleCorrelation);
+            representative.get(edge.interSampleCorrelationRepresentativeCount).add(edge.interSampleCorrelationRepresentative);
+            extra.get(edge.extraSampleCorrelationCount).add(edge.extraSampleCorrelation);
+            rt.add(edge.rtScore);
+            ms2.add(edge.ms2score);
+        }
+
     }
 
 }

@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import io.sirius.ms.sdk.model.BinaryFingerprint;
@@ -189,7 +190,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withNewDatabaseAndDeNovoFlag(boolean isDatabase, boolean isDeNovo) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, labels, bestRefMatchLabel, moreRefMatchesLabel);
     }
 
     /**
@@ -376,11 +377,11 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                             if (!colorMap.containsKey(molecule.getAtom(i)))
                                 colorMap.put(molecule.getAtom(i), minCount >= 0 ? 0 : 1);
                             if (molecule.getAtom(i).getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null)
-                                molecule.getAtom(i).setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR : CandidateListDetailView.SECONDARY_HIGHLIGHTED_COLOR);
+                                molecule.getAtom(i).setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_PRIMARY : Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_ALTERNATIVES);
                             for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(i))) {
                                 if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
                                     if (b.getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null)
-                                        b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR : CandidateListDetailView.SECONDARY_HIGHLIGHTED_COLOR);
+                                        b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, minCount >= 0 ? Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_PRIMARY : Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_ALTERNATIVES);
                                 }
                             }
 
@@ -400,10 +401,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 for (int i : relevantFps[index].atoms) atoms.add(molecule.getAtom(i));
                 for (int atom : relevantFps[index].atoms) {
                     colorMap.put(getMolecule().getAtom(atom), 0);
-                    molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+                    molecule.getAtom(atom).setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_PRIMARY);
                     for (IBond b : molecule.getConnectedBondsList(molecule.getAtom(atom))) {
                         if (atoms.contains(b.getAtom(0)) && atoms.contains(b.getAtom(1))) {
-                            b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, CandidateListDetailView.PRIMARY_HIGHLIGHTED_COLOR);
+                            b.setProperty(StandardGenerator.HIGHLIGHT_COLOR, Colors.StructuresView.SELECTED_SUBSTUCTURE_HIGHLIGHTING_PRIMARY);
                         }
                     }
                 }

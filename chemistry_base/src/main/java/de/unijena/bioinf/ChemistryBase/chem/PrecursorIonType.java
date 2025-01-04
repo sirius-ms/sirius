@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -87,12 +88,15 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         return Math.abs(getCharge()) > 1;
     }
 
-    protected static enum SPECIAL_TYPES {
+    protected enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED
     }
 
+    @Getter
     private final Ionization ionization;
+    @Getter
     private final MolecularFormula inSourceFragmentation;
+    @Getter
     private final MolecularFormula adduct;
     private final String name;
     private final boolean multipleIons;
@@ -148,6 +152,10 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         this.ionization = ion;
         this.inSourceFragmentation = insource == null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
+        if (!this.inSourceFragmentation.isAllPositiveOrZero())
+            throw new IllegalArgumentException("Negative element amounts are not allowed in in-source fragments.");
+        if (!this.adduct.isAllPositiveOrZero())
+            throw new IllegalArgumentException("Negative element amounts are not allowed in adducts.");
         this.special = special;
         this.multimere = (byte)multimere;
         this.multipleIons = checkForMultipleIons();
@@ -167,11 +175,11 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         buf.append(neutralFormula.toString());
         if (!inSourceFragmentation.isEmpty()) {
             buf.append(" - ");
-            buf.append(inSourceFragmentation.toString());
+            buf.append(inSourceFragmentation);
         }
         if (!adduct.isEmpty()) {
             buf.append(" + ");
-            buf.append(adduct.toString());
+            buf.append(adduct);
         }
         if (!ionization.getAtoms().isEmpty()) {
             if (ionization.getAtoms().isAllPositiveOrZero()) {
@@ -185,7 +193,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         if (ionization.getCharge() == 1) buf.append("+");
         else if (ionization.getCharge() == -1) buf.append("-");
         else {
-            buf.append(String.valueOf(getCharge()));
+            buf.append(getCharge());
             buf.append(getCharge() > 0 ? "+" : "-");
         }
         return buf.toString();
@@ -248,11 +256,11 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         buf.append("[").append(multimereStr()).append("M");
         if (!inSourceFragmentation.isEmpty()) {
             buf.append(" - ");
-            buf.append(inSourceFragmentation.toString());
+            buf.append(inSourceFragmentation);
         }
         if (!adduct.isEmpty()) {
             buf.append(" + ");
-            buf.append(adduct.toString());
+            buf.append(adduct);
         }
         if (!ionization.getAtoms().isEmpty()) {
             if (ionization.getAtoms().isAllPositiveOrZero()) {
@@ -267,7 +275,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         if (ionization.getCharge() == 1) buf.append("+");
         else if (ionization.getCharge() == -1) buf.append("-");
         else {
-            buf.append(String.valueOf(getCharge()));
+            buf.append(getCharge());
             buf.append(getCharge() > 0 ? "+" : "-");
         }
         return buf.toString();
@@ -418,18 +426,6 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
         return adduct.subtract(inSourceFragmentation);
     }
 
-    public Ionization getIonization() {
-        return ionization;
-    }
-
-    public MolecularFormula getInSourceFragmentation() {
-        return inSourceFragmentation;
-    }
-
-    public MolecularFormula getAdduct() {
-        return adduct;
-    }
-
     public int getMultimereCount() {
         return multimere;
     }
@@ -466,10 +462,12 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
             .thenComparing(p -> !p.getModification().isEmpty())
             .thenComparing(p -> !p.isPlainProtonationOrDeprotonation())
             .thenComparing(PrecursorIonType::isIntrinsicalCharged)
+            .thenComparing(p -> p.getIonization().getAtoms())
             .thenComparing(p -> !p.getAdduct().equals(MolecularFormula.parseOrNull("H3N")))
             .thenComparing(p -> !p.getAdduct().isEmpty())
             .thenComparing(p -> !p.getInSourceFragmentation().isEmpty())
             .thenComparing(p -> p.getAdduct().getMass())
-            .thenComparing(p -> p.getInSourceFragmentation().getMass());
+            .thenComparing(p -> p.getInSourceFragmentation().getMass())
+            .thenComparing(PrecursorIonType::toString); //final tiebreaker to always get a reproducible order. Should only happen if we have two different string representations for the same PrecursorIonType.
 
 }

@@ -120,7 +120,7 @@ public class SiriusSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //write results to project space
-        inst.saveSiriusResult(results.stream().map(IdentificationResult::getTree).toList());
+        inst.saveSiriusResult(results);
 
         updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();

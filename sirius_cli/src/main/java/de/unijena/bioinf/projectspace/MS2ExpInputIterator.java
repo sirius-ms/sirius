@@ -25,11 +25,13 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.inputValidators.Warning;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressInputStream;
 import de.unijena.bioinf.sirius.Sirius;
@@ -117,7 +119,7 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                             }
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException(new Exception("Cannot parse file '" + currentResource.getFilename() + "'", e));  // Nesting because JJob will unwrap the cause
+                        throw new RuntimeException(new Exception("Cannot parse file '" + currentResource.getFilename() + "':\n" + e.getMessage(), e));  // Nesting because JJob will unwrap the cause
                     }
                 } else {
                     return;
@@ -156,6 +158,8 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                             experiment.setMolecularFormula(null);
                             experiment.removeAnnotation(InChI.class);
                             experiment.removeAnnotation(Smiles.class);
+                            experiment.removeAnnotation(CandidateFormulas.class);
+                            experiment.getAnnotation(InputFileConfig.class).ifPresent(config -> config.config().changeConfig("CandidateFormulas", null));
                         }
                         if (experiment.getMs2Spectra().isEmpty()) {
                             new Ms1Validator().validate(experiment, Warning.Logger, true);

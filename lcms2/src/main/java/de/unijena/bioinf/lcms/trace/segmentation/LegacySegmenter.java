@@ -10,7 +10,7 @@ import java.util.List;
 
 public class LegacySegmenter implements TraceSegmentationStrategy {
 
-    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest) {
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest, int[] features) {
         double[] signal = getSignal(trace);
         Maxima maxima = new Maxima(signal);
         float N = (float)noiseLevel;

@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
 import javafx.concurrent.Worker;
 import netscape.javascript.JSObject;
@@ -29,14 +29,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.Properties;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 
     HashMap<String, Object> bridges;
 
     public WebViewSpectraViewer() {
-        super();
+        super("/js/styles.css", "/js/styles-dark.css");
         addJS("d3.min.js");
         addJS("svg-export.js");
         addJS("spectra_viewer/spectra_viewer_oop.js");
@@ -50,9 +49,7 @@ public class WebViewSpectraViewer extends WebViewPanel {
             // after bridges are queued to load, we have to wait (again)
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
-                    final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-                    final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-                    if (!theme.equals("Dark")) {
+                    if (Colors.isLightTheme()) {
                         webView.getEngine().executeScript("var fg_color = 'black';");
                     } else {
                         webView.getEngine().executeScript("var fg_color = '#bbb';");

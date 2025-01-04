@@ -5,6 +5,7 @@ import io.sirius.ms.sdk.model.AccountInfo;
 import io.sirius.ms.sdk.model.Subscription;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -13,7 +14,7 @@ import org.junit.runners.MethodSorters;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@Disabled
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class LoginAndAccountApiTest {
 

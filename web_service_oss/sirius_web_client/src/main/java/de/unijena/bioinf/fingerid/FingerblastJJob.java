@@ -301,42 +301,39 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
          */
         ConfidenceResult finalConfidenceResult = null;
 
-        if (!expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.OFF)) {
-
-            StructureSearchDB searchDBFake = StructureSearchDB.fromString("PUBCHEM");
-
+        if (!ExpansiveSearchConfidenceMode.Mode.OFF.equals(expansiveSearchConfidenceMode.confidenceScoreSimilarityMode)) {
+            final StructureSearchDB expandedSearchDBFake = StructureSearchDB.fromString("PUBCHEM");
 
             ParameterStore parameterStoreAll = (topHitFPAll == null || topHitScoringAll == null || topHitTreeAll == null || topHitFormulaAll == null) ? null : ParameterStore.of(topHitFPAll, topHitScoringAll, topHitTreeAll, topHitFormulaAll);
 
-            ConfidenceJJob confidenceJJobAll = executeConfidenceStack(allMergedCandidates, allMergedCandidates, fTreeCandidatesMapAll, confScoreApproxDist.value, searchDBFake, parameterStoreAll, topFormulaCanopusResultAll);
+            ConfidenceJJob confidenceJJobAll = executeConfidenceStack(allMergedCandidates, allMergedCandidates, fTreeCandidatesMapAll, confScoreApproxDist.value, expandedSearchDBFake, parameterStoreAll, topFormulaCanopusResultAll);
             fTreeCandidatesMapAll = null; //just try to reduce memory consumption
-
 
             ConfidenceResult confidenceResultRequested = confidenceJJobRequested != null ? confidenceJJobRequested.awaitResult() : ConfidenceResult.NaN;
             confidenceJJobRequested = null;
             ConfidenceResult confidenceResultAll = confidenceJJobAll != null ? confidenceJJobAll.awaitResult() : ConfidenceResult.NaN;
             confidenceJJobAll = null;
 
-            /**
+            /*
              * expansive search decision happens here
              */
 
-            if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.EXACT)) {
+            if (ExpansiveSearchConfidenceMode.Mode.EXACT.equals(expansiveSearchConfidenceMode.confidenceScoreSimilarityMode)) {
                 if ((confidenceResultAll.score.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.score.score()) || (requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty())) {
                     //All wins over requested
-                    structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode, searchDB.searchDBs, expandedSearchDBFake.searchDBs);
                     finalConfidenceResult = confidenceResultAll;
                 } else {
-                    structureSearchResult = StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
+                    structureSearchResult = StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF, searchDB.searchDBs, List.of());
                     finalConfidenceResult = confidenceResultRequested;
                 }
-            } else if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)) {
+            } else if (ExpansiveSearchConfidenceMode.Mode.APPROXIMATE.equals(expansiveSearchConfidenceMode.confidenceScoreSimilarityMode)) {
                 if ((confidenceResultAll.scoreApproximate.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.scoreApproximate.score()) || (requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty())) {
                     //All wins over requested
-                    structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+                    structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode, searchDB.searchDBs, expandedSearchDBFake.searchDBs);
                     finalConfidenceResult = confidenceResultAll;
                 } else {
-                    structureSearchResult = StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF);
+                    structureSearchResult = StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF, searchDB.searchDBs, List.of());
                     finalConfidenceResult = confidenceResultRequested;
                 }
             }
@@ -344,7 +341,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         } else {
             ConfidenceResult confidenceResultRequested = confidenceJJobRequested != null ? confidenceJJobRequested.awaitResult() : ConfidenceResult.NaN;
-            structureSearchResult = StructureSearchResult.of(confidenceResultRequested, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
+            structureSearchResult = StructureSearchResult.of(confidenceResultRequested, ExpansiveSearchConfidenceMode.Mode.OFF, searchDB.searchDBs, List.of());
             finalConfidenceResult = confidenceResultRequested;
         }
 

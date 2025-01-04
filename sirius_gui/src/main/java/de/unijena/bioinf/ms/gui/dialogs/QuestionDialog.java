@@ -30,6 +30,8 @@ import java.util.function.Supplier;
 public class QuestionDialog extends DoNotShowAgainDialog {
 
     protected ReturnValue rv;
+    protected JButton ok;
+    protected JButton cancel;
 
     public QuestionDialog(Window owner, String question) {
         this(owner, question, null);
@@ -89,7 +91,7 @@ public class QuestionDialog extends DoNotShowAgainDialog {
 
     @Override
     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
-        final JButton ok = new JButton("Yes");
+       ok = new JButton("Yes");
         ok.addActionListener(e -> {
             rv = ReturnValue.Success;
             saveDoNotAskMeAgain();
@@ -97,8 +99,8 @@ public class QuestionDialog extends DoNotShowAgainDialog {
         });
 
 
-        final JButton abort = new JButton("No");
-        abort.addActionListener(e -> {
+        cancel = new JButton("No");
+        cancel.addActionListener(e -> {
             rv = ReturnValue.Cancel;
             saveDoNotAskMeAgain();
             dispose();
@@ -106,7 +108,7 @@ public class QuestionDialog extends DoNotShowAgainDialog {
 
         boxedButtonPanel.add(Box.createHorizontalGlue());
         boxedButtonPanel.add(ok);
-        boxedButtonPanel.add(abort);
+        boxedButtonPanel.add(cancel);
     }
 
     @Override

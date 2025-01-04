@@ -20,38 +20,39 @@
 
 package de.unijena.bioinf.ms.gui.properties;
 
-import de.unijena.bioinf.jjobs.PropertyChangeOrator;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-public final class GuiProperties implements PropertyChangeOrator {
+public final class GuiProperties {
 
     // region PropertyChangeSupport
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(PropertyChangeListenerEDT listener) {
         pcs.addPropertyChangeListener(listener);
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
+    public void removePropertyChangeListener(PropertyChangeListenerEDT listener) {
         pcs.removePropertyChangeListener(listener);
     }
 
-    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListenerEDT listener) {
         pcs.addPropertyChangeListener(propertyName, listener);
     }
 
-    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListenerEDT listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
     }
     //endregion
 
     // region ConfidenceDisplayMode
+    public static final @NotNull String CONFIDENCE_DISPLAY_MODE_KEY = "de.unijena.bioinf.sirius.ui.confidenceDisplayMode";
+
     @NotNull
-    private ConfidenceDisplayMode confidenceDisplayMode = SiriusProperties.getEnum("de.unijena.bioinf.sirius.ui.ConfidenceDisplayMode", null, ConfidenceDisplayMode.APPROXIMATE);
+    private ConfidenceDisplayMode confidenceDisplayMode = SiriusProperties.getEnum(CONFIDENCE_DISPLAY_MODE_KEY, null, ConfidenceDisplayMode.APPROXIMATE);
 
     public synchronized void setConfidenceDisplayMode(@NotNull ConfidenceDisplayMode confidenceDisplayMode) {
         @NotNull ConfidenceDisplayMode old = this.confidenceDisplayMode;
@@ -69,6 +70,39 @@ public final class GuiProperties implements PropertyChangeOrator {
 
     public synchronized void switchConfidenceDisplayMode() {
         setConfidenceDisplayMode(isConfidenceViewMode(ConfidenceDisplayMode.EXACT) ? ConfidenceDisplayMode.APPROXIMATE : ConfidenceDisplayMode.EXACT);
+    }
+    //endregion
+
+    // region MolecularStructuresDisplayColors
+    public static final @NotNull String MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY = "de.unijena.bioinf.sirius.ui.molecularStructuresDisplayColors";
+
+    @NotNull
+    private MolecularStructuresDisplayColors molecularStructureDisplayColors = SiriusProperties.getEnum(MOLECULAR_STRUCTURES_DISPLAY_COLORS_KEY, null, MolecularStructuresDisplayColors.CPK);
+
+    public synchronized void setMolecularStructureDisplayColors(@NotNull MolecularStructuresDisplayColors molecularStructuresDisplayColors) {
+        @NotNull MolecularStructuresDisplayColors old = this.molecularStructureDisplayColors;
+        this.molecularStructureDisplayColors = molecularStructuresDisplayColors;
+        pcs.firePropertyChange("molecularStructuresDisplayColors", old, this.molecularStructureDisplayColors);
+    }
+
+    public synchronized MolecularStructuresDisplayColors getMolecularStructureDisplayColors() {
+        return molecularStructureDisplayColors;
+    }
+    //endregion
+
+    // region showSpectraView
+    public static final @NotNull String SHOW_SPECTRA_MATCH_PANEL_KEY = "de.unijena.bioinf.sirius.spectraMatchPanel.show";
+    private boolean showSpectraMatchPanel = SiriusProperties.getBoolean(SHOW_SPECTRA_MATCH_PANEL_KEY, null, false);
+
+    public synchronized boolean isShowSpectraMatchPanel() {
+        return showSpectraMatchPanel;
+    }
+
+    public synchronized void setShowSpectraMatchPanel(boolean showSpectraMatchPanel) {
+        boolean old = this.showSpectraMatchPanel;
+        this.showSpectraMatchPanel = showSpectraMatchPanel;
+        pcs.firePropertyChange("showSpectraMatchPanel", old, this.showSpectraMatchPanel);
+
     }
     //endregion
 }
