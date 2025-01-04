@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-6.0.7-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-6.1.0-informational.svg)](https://shields.io/)
 [![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 [![Join community chat at https://gitter.im/sirius-ms/general](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sirius-ms/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -28,19 +28,13 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.7 (2024-10-21)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.1.0 (2025-01-03)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64.zip)
-- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64.zip)
-- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-linux64.zip)
-
-<!--
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.7 (2024-10-21)
-##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64-headless.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-win64-headless.zip)
-- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64-headless.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-osx64-headless.zip)
-- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.7/sirius-6.0.7-linux64-headless.zip)
--->
+- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-win-x64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-win-x64.zip)
+- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-macos-x64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-macos-x64.zip)
+- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-macos-arm64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-macos-arm64.zip)
+- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-linux-x64.zip)
+- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.1.0/sirius-6.1.0-linux-arm64.zip)
 
 
 <!--end download-->
@@ -48,14 +42,8 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 All (including previous) releases can be found [here](https://github.com/sirius-ms/sirius/releases).
 
 ### [Installation](https://v6.docs.sirius-ms.io/install)
-For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
-
-Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
-an unknown source" on Windows/MacOS when using the installers provided by the Böcker group.
-Therefore, we highly recommend using the [**signed** installers](https://github.com/bright-giant/sirius/releases) provided by
-[Bright Giant](https://bright-giant.com) (also linked above).
-These installers ease the installation process by triggering no (or less) security issues of the respective OS.
-
+For Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
+These installer packages are signed by [Bright Giant](https://bright-giant.com) to verify the package provider’s identity, and should therefore trigger no or only mild security warnings from the operating system during installation.
 See the [documentation](https://v6.docs.sirius-ms.io/install) for details.
 
 
@@ -68,8 +56,8 @@ may be required.
 
 ### [Sources on GitHub](https://github.com/sirius-ms)
 - [SIRIUS](https://github.com/sirius-ms/sirius)
-- [SIRIUS-API Java SDK](sirius-sdk/README.md)
 - [SIRIUS-API SDKs](https://github.com/sirius-ms/sirius-client-openAPI)
+- [SIRIUS-API Java SDK](sirius-sdk/README.md)
 
 ### [Changelog](https://v6.docs.sirius-ms.io/changelog/)
 
