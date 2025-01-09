@@ -327,12 +327,24 @@ subprojects {
                     name = "GitLab"
                     url = "https://gitlab.com/api/v4/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
 
-                    credentials(HttpHeaderCredentials) {
-                        name = "Private-Token"
-                        value = System.getenv("CI_JOB_TOKEN")
-                    }
-                    authentication {
-                        header(HttpHeaderAuthentication)
+                    if (System.getenv("CI_JOB_TOKEN") != null) {
+                        credentials(HttpHeaderCredentials) {
+                            name = "Job-Token"
+                            value = System.getenv("CI_JOB_TOKEN")
+                        }
+                        authentication {
+                            header(HttpHeaderAuthentication)
+                        }
+                    }else{
+                        credentials(PasswordCredentials) {
+                            username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                            password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                            // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                            // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                        }
+                        authentication {
+                            basic(BasicAuthentication)
+                        }
                     }
                 }
             }
