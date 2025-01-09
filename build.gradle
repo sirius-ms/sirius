@@ -323,6 +323,18 @@ subprojects {
                     name = "BG-maven-public"
                     url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
                 }
+                maven {
+                    name = "GitLab"
+                    url = "https://gitlab.com/api/v4/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
+
+                    credentials(HttpHeaderCredentials) {
+                        name = "Private-Token"
+                        value = System.getenv("CI_JOB_TOKEN")
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                }
             }
         }
     }
