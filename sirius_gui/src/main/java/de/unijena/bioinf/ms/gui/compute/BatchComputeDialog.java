@@ -81,7 +81,7 @@ public class BatchComputeDialog extends JDialog {
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
     // main parts
-    private Box centerPanel;
+    private final Box centerPanel;
     private JCheckBox recomputeBox;
     private JButton showCommand;
 
@@ -95,12 +95,10 @@ public class BatchComputeDialog extends JDialog {
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
 
-    protected JButton toggleAdvancedMode;
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
     private final JPanel main;
-    private final LoadablePanel loadableWrapper;
 
     private PropertyChangeListener connectionListener;
 
@@ -120,7 +118,7 @@ public class BatchComputeDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         main = new JPanel(new BorderLayout());
-        loadableWrapper = new LoadablePanel(main, "Initializing...");
+        LoadablePanel loadableWrapper = new LoadablePanel(main, "Initializing...");
         loadableWrapper.setLoading(true, true);
 
         add(loadableWrapper, BorderLayout.CENTER);
@@ -136,7 +134,17 @@ public class BatchComputeDialog extends JDialog {
 
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.add(makeBanners(), BorderLayout.NORTH);
-        northPanel.add(makePresetPanel(), BorderLayout.CENTER);
+
+        JPanel topLine = new JPanel();
+        topLine.setLayout(new BoxLayout(topLine, BoxLayout.LINE_AXIS));
+
+        JPanel topRight = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        topRight.add(makeAdvancedModeToggle());
+
+        topLine.add(makePresetPanel());
+        topLine.add(topRight);
+
+        northPanel.add(topLine, BorderLayout.CENTER);
         add(northPanel, BorderLayout.NORTH);
         main.add(northPanel, BorderLayout.NORTH);
 
@@ -212,21 +220,6 @@ public class BatchComputeDialog extends JDialog {
                 if (isSingleCompound()) recomputeBox.setSelected(true);
 
                 JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-                final String SHOW_ADVANCED = "Show advanced settings";
-                final String HIDE_ADVANCED = "Hide advanced settings";
-                toggleAdvancedMode = new JButton(SHOW_ADVANCED);
-                isAdvancedView = false;
-                toggleAdvancedMode.addActionListener(e -> {
-                    isAdvancedView = !isAdvancedView;
-                    if (isAdvancedView) {
-                        toggleAdvancedMode.setText(HIDE_ADVANCED);
-                    } else {
-                        toggleAdvancedMode.setText(SHOW_ADVANCED);
-                    }
-
-                    formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
-                    zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
-                });
 
                 showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
@@ -254,7 +247,6 @@ public class BatchComputeDialog extends JDialog {
                 showJson.setToolTipText("Open current parameters in a JSON viewer.");
                 showJson.addActionListener(e -> viewJobJsonDialog());
 
-                csouthPanel.add(toggleAdvancedMode);
                 csouthPanel.add(showCommand);
                 csouthPanel.add(showJson);
 
@@ -662,6 +654,25 @@ public class BatchComputeDialog extends JDialog {
         presetWarningBanner.setVisible(false);
     }
 
+    private JButton makeAdvancedModeToggle() {
+        final String SHOW_ADVANCED = "Show advanced settings";
+        final String HIDE_ADVANCED = "Hide advanced settings";
+        JButton toggleAdvancedMode = new JButton(SHOW_ADVANCED);
+        isAdvancedView = false;
+        toggleAdvancedMode.addActionListener(e -> {
+            isAdvancedView = !isAdvancedView;
+            if (isAdvancedView) {
+                toggleAdvancedMode.setText(HIDE_ADVANCED);
+            } else {
+                toggleAdvancedMode.setText(SHOW_ADVANCED);
+            }
+
+            formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
+            zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
+        });
+        return toggleAdvancedMode;
+    }
+
     private JPanel makePresetPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.add(new JLabel("Preset"));
@@ -872,7 +883,6 @@ public class BatchComputeDialog extends JDialog {
     private void viewJobJsonDialog() {
         try {
             String json = toJson(makeJobSubmission());
-            String presetName = (String) presetDropdown.getSelectedItem();
 
             JTextArea textArea = new JTextArea(json);
             textArea.setEditable(false);
