@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -654,23 +655,20 @@ public class BatchComputeDialog extends JDialog {
         presetWarningBanner.setVisible(false);
     }
 
-    private JButton makeAdvancedModeToggle() {
-        final String SHOW_ADVANCED = "Show advanced settings";
-        final String HIDE_ADVANCED = "Hide advanced settings";
-        JButton toggleAdvancedMode = new JButton(SHOW_ADVANCED);
-        isAdvancedView = false;
-        toggleAdvancedMode.addActionListener(e -> {
+    private JPanel makeAdvancedModeToggle() {
+        JToggleSwitch toggle = new JToggleSwitch();
+        toggle.addEventToggleSelected(selected -> {
             isAdvancedView = !isAdvancedView;
-            if (isAdvancedView) {
-                toggleAdvancedMode.setText(HIDE_ADVANCED);
-            } else {
-                toggleAdvancedMode.setText(SHOW_ADVANCED);
-            }
 
             formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
             zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
         });
-        return toggleAdvancedMode;
+
+        JPanel panel = new JPanel();
+        panel.add(toggle);
+        panel.add(new JLabel("Advanced parameters"));
+
+        return panel;
     }
 
     private JPanel makePresetPanel() {
