@@ -9,7 +9,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "gradle.plugin.com.google.cloud.artifactregistry:artifactregistry-gradle-plugin:2.2.2"
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
@@ -134,7 +133,6 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
-    apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
 
     targetCompatibility = 21
 
@@ -147,12 +145,10 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        //this is for public sirius-ms dependencies
-        maven {
-            name "sirius-ms-maven-public"
-            url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
-        }
-        //this is just needed to load non-public test for acceptance testing.
+
+        //this is just needed to load sirius-ms dependencies.
+        //All artifacts needed to build SIRIUS should be public.
+        //however some acceptance test data is not.
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -165,7 +161,9 @@ allprojects {
                     authentication {
                         header(HttpHeaderAuthentication)
                     }
-                } else {
+                } else if (project.findProperty("com.bright-giant.build.gitlab.username") != null
+                        && project.findProperty("com.bright-giant.build.gitlab.token") != null
+                ) {
                     credentials(PasswordCredentials) {
                         username = project.findProperty("com.bright-giant.build.gitlab.username") as String
                         password = project.findProperty("com.bright-giant.build.gitlab.token") as String
@@ -325,9 +323,9 @@ subprojects {
                 }
                 maven {
                     name = "GitLab"
-                    url = "https://gitlab.com/api/v4/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
 
                     if (System.getenv("CI_JOB_TOKEN") != null) {
+                        url = "https://gitlab.com/api/v4/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
                         credentials(HttpHeaderCredentials) {
                             name = "Job-Token"
                             value = System.getenv("CI_JOB_TOKEN")
@@ -335,7 +333,8 @@ subprojects {
                         authentication {
                             header(HttpHeaderAuthentication)
                         }
-                    }else{
+                    } else {
+                        url = project.findProperty("io.sirius-ms.build.artifactory.url") as String
                         credentials(PasswordCredentials) {
                             username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
                             password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
