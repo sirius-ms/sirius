@@ -34,12 +34,12 @@ build_test_publish_libs:
       echo "===> Running Integration Tests"
       ./gradlew integrationTest --stacktrace
     - |
-      if [ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable"]; then
+      if [[ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable" ]]; then
          echo "===> Publishing Libraries to Gitlab Registry"
         ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
       fi
     - |
-      if [ "$CI_COMMIT_BRANCH" == "stable"]; then
+      if [[ "$CI_COMMIT_BRANCH" == "stable" ]]; then
         echo "===> Publishing Sirius SDK Public Gitlab Registry"
        ./gradlew :sirius-sdk:publishMavenJavaPublicationToGitLabBGPublicRepository --stacktrace
       fi
