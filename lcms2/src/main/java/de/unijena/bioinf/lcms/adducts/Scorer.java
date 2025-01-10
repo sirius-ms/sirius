@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
@@ -12,65 +13,75 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
-import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
-import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.ModifiedCosine;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import org.apache.commons.math.stat.correlation.PearsonsCorrelation;
 
 import java.util.List;
 import java.util.Optional;
 
 public class Scorer {
 
-    private final static double DEFAULT_SCORE = 1;
-
-    public final static float SCORE_BONUS_FOR_SIMPLE_EDGES = 1;
-
-    public Scorer() {
-    }
-
-    public double computeScore(ProjectSpaceTraceProvider provider, AdductEdge edge) {
-        AlignedFeatures left = edge.left.getFeature();
-        AlignedFeatures right = edge.right.features;
-        if (left.getTraceReference().isPresent() && right.getTraceReference().isPresent()) {
-            return computeScoreFromCorrelation(provider, edge, left, right);
-        } else {
-            return computeScoreWithoutCorrelation(left, right);
+    public static record Correlation(double correlation, int datapoints) {
+        short n() {
+            if (datapoints>Short.MAX_VALUE) return Short.MAX_VALUE;
+            else return (short)datapoints;
+        }
+        float p() {
+            return (float)correlation;
         }
     }
 
-    private double computeScoreWithoutCorrelation(AlignedFeatures left, AlignedFeatures right) {
-        if (left.getRetentionTime().compareTo(right.getRetentionTime())==0) {
-            return DEFAULT_SCORE;
-        } else return Double.NEGATIVE_INFINITY;
+    private final static double DEFAULT_SCORE = 1;
+
+    public final static float SCORE_BONUS_FOR_SIMPLE_EDGES = 2;
+
+    private final NormalDistribution rtDist;
+
+    public Scorer(double rtStandardDeviation) {
+        rtDist = new NormalDistribution(0, rtStandardDeviation*rtStandardDeviation);
     }
 
-    public double computeScoreFromCorrelation(ProjectSpaceTraceProvider provider, AdductEdge edge, AlignedFeatures left, AlignedFeatures right) {
+    public void computeScore(ProjectSpaceTraceProvider provider, AdductEdge edge) {
+        AlignedFeatures left = edge.left.getFeature();
+        AlignedFeatures right = edge.right.features;
+        // simple rtScore
+
+        edge.rtScore = (float)(rtDist.getErrorProbability(edge.left.getRetentionTime() - edge.right.getRetentionTime()));
+
+        if (left.getTraceReference().isPresent() && right.getTraceReference().isPresent()) {
+            computeScoreFromCorrelation(provider, edge, left, right);
+        }
+    }
+
+    public void computeScoreFromCorrelation(ProjectSpaceTraceProvider provider, AdductEdge edge, AlignedFeatures left, AlignedFeatures right) {
         // there are two types of correlation we can use:
 
         // 1.) we correlate the ratios between each feature across all samples
         Long2DoubleMap leftInts = provider.getIntensities(left);
         Long2DoubleMap rightInts = provider.getIntensities(right);
-        double logProb = correlateAcrossSamples(leftInts, rightInts);
-        edge.ratioScore = (float)logProb;
+        Correlation acrossSamples = correlateAcrossSamples(leftInts, rightInts);
+        edge.extraSampleCorrelation = acrossSamples.p();
+        edge.extraSampleCorrelationCount = acrossSamples.n();
         // 2.) we correlate the merged traces with each other
         Optional<MergedTrace> l = provider.getMergeTrace(left);
         Optional<MergedTrace> r = provider.getMergeTrace(right);
         if (l.isPresent() && r.isPresent()) {
-            double pearson = correlateTraces(left.getTraceReference().get(),  l.get(), right.getTraceReference().get(), r.get());
-            edge.correlationScore = (float)pearson;
+            Correlation pearson = correlateTraces(left.getTraceReference().get(),  l.get(), right.getTraceReference().get(), r.get());
+            edge.interSampleCorrelation = pearson.p();
+            edge.interSampleCorrelationCount = pearson.n();
         }
         // 3.) we correlate the most-intensive representatives of both
-        edge.representativeCorrelationScore = correlateRepresentatives(provider, left, right, leftInts, rightInts);
-
-        return 0d;
+        Correlation repr = correlateRepresentatives(provider, left, right, leftInts, rightInts);
+        edge.interSampleCorrelationRepresentative = repr.p();
+        edge.interSampleCorrelationRepresentativeCount = repr.n();
     }
 
-    public static float correlateRepresentatives(TraceProvider provider, AbstractAlignedFeatures left, AbstractAlignedFeatures right, Long2DoubleMap leftInts, Long2DoubleMap rightInts) {
+    public static Correlation correlateRepresentatives(TraceProvider provider, AbstractAlignedFeatures left, AbstractAlignedFeatures right, Long2DoubleMap leftInts, Long2DoubleMap rightInts) {
         LongOpenHashSet ks = new LongOpenHashSet(leftInts.keySet());
         ks.retainAll(rightInts.keySet());
         double maxIntens = 0d;
@@ -86,13 +97,13 @@ public class Scorer {
             Optional<Pair<TraceRef, SourceTrace>> l = provider.getSourceTrace(left, bestRun);
             Optional<Pair<TraceRef, SourceTrace>> r = provider.getSourceTrace(right, bestRun);
             if (l.isPresent() && r.isPresent()) {
-                return (float)correlateTraces(l.get().left(), l.get().right(), r.get().left(), r.get().right());
+                return correlateTraces(l.get().left(), l.get().right(), r.get().left(), r.get().right());
             }
         }
-        return Float.NaN;
+        return new Correlation(Double.NaN, 0);
     }
 
-    public static double correlateAcrossSamples(Long2DoubleMap left, Long2DoubleMap right) {
+    public static Correlation correlateAcrossSamples(Long2DoubleMap left, Long2DoubleMap right) {
         DoubleArrayList xs = new DoubleArrayList(), ys = new DoubleArrayList();
         left.keySet().forEach(key->{
             xs.add(left.getOrDefault(key,0d));
@@ -104,8 +115,29 @@ public class Scorer {
                 ys.add(right.getOrDefault(key, 0d));
             }
         });
-        if (xs.size() <= 0 || ys.size()<=0) return Float.NEGATIVE_INFINITY;
-        if (xs.size() <= 2 || ys.size() <= 2) return 0f;
+        if (xs.size() <= 1 || ys.size()<=1) return new Correlation(Double.NaN, 0);
+        // normalize both vectors
+        double xsum = xs.doubleStream().sum(), ysum = ys.doubleStream().sum();
+        for (int k=0; k < xs.size(); ++k) {
+            xs.set(k, xs.getDouble(k)/xsum);
+            ys.set(k, ys.getDouble(k)/ysum);
+        }
+        return new Correlation(Statistics.pearson(xs.toDoubleArray(),ys.toDoubleArray()), xs.size());
+    }
+
+    public static Correlation correlateAcrossSamplesUsingMaximumLikelihood(Long2DoubleMap left, Long2DoubleMap right) {
+        DoubleArrayList xs = new DoubleArrayList(), ys = new DoubleArrayList();
+        left.keySet().forEach(key->{
+            xs.add(left.getOrDefault(key,0d));
+            ys.add(right.getOrDefault(key,0d));
+        });
+        right.keySet().forEach(key->{
+            if (!left.containsKey(key)) {
+                xs.add(0d);
+                ys.add(right.getOrDefault(key, 0d));
+            }
+        });
+        if (xs.size() <= 0 || ys.size()<=0) return new Correlation(Float.NEGATIVE_INFINITY, 0);
         // normalize both vectors
         double xsum = xs.doubleStream().sum(), ysum = ys.doubleStream().sum();
         for (int k=0; k < xs.size(); ++k) {
@@ -127,11 +159,11 @@ public class Scorer {
             final double sigma = larger*2*sigmaR + 2*sigmaA;
             logProb += Math.log(peakProbability) - Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + larger*larger*sigmaR*sigmaR)))/(2*Math.PI*larger*sigmaR*sigmaR));
         }
-        if (disjoint>=0.5) return Float.NEGATIVE_INFINITY;
-        return logProb;
+        if (disjoint>=0.5) return new Correlation(Float.NEGATIVE_INFINITY, 0);
+        return new Correlation(logProb, xs.size());
     }
 
-    private static double correlateLargerWithSmaller(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
+    private static Correlation correlateLargerWithSmaller(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
         // we first define the range where we do correlation
         // we use the maximum of the minimum range and the FWHM-Range of the larger trace
         int offsetL = refLeft.getStart();
@@ -153,6 +185,16 @@ public class Scorer {
             offsetL = l;
             endL = r;
         }
+
+        // special case: if traces are massively different in length, we do not correlate them
+        // because correlation might be very misleading here. Think of a very long trace that has a
+        // rectangular shape and a tiny trace with a normal peak shape. The missing ends of the tiny peak
+        // will be filled with zeros, giving the tiny peak a "rectangular" shape, too. Such two totally different
+        // peaks would get a high correlation, although they should have a low one.
+        final int lengthA = endL-offsetL+1;
+        final int lengthB = refRight.getEnd()-refRight.getStart()+1;
+        if (lengthA > 4*lengthB) return new Correlation(Double.NaN, 0);
+
         ///////////////////////
         // start correlation
         ///////////////////////
@@ -163,7 +205,7 @@ public class Scorer {
         int absoluteEnd = endL + refLeft.getScanIndexOffsetOfTrace();
         {
             int apexRight = refRight.getApex() + refRight.getScanIndexOffsetOfTrace();
-            if (apexRight < absoluteStart || apexRight > absoluteEnd) return Double.NaN;
+            if (apexRight < absoluteStart || apexRight > absoluteEnd) return new Correlation(Double.NaN, 0);
         }
         for (int i= absoluteStart; i <= absoluteEnd; ++i) {
             int lindex = i-refLeft.getScanIndexOffsetOfTrace();
@@ -174,12 +216,12 @@ public class Scorer {
             if (rindex >= 0 && rindex < right.getIntensities().size()) ys.add(right.getIntensities().getFloat(rindex));
             else ys.add(0d);
         }
-        return Statistics.pearson(xs.toDoubleArray(), ys.toDoubleArray());
+        return new Correlation(Statistics.pearson(xs.toDoubleArray(), ys.toDoubleArray()), xs.size());
 
 
     }
 
-    public static double correlateTraces(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
+    public static Correlation correlateTraces(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
         if (left.getIntensities().getFloat(refLeft.getApex()) > right.getIntensities().getFloat(refRight.getApex())) {
             return correlateLargerWithSmaller(refLeft, left, refRight, right);
         } else {

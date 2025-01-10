@@ -8,7 +8,7 @@ class JobSubmissionTest {
 
     @Test
     void mergeCombinedConfigMap() {
-        JobSubmission defaultConfig = JobSubmission.createDefaultInstance(true);
+        JobSubmission defaultConfig = JobSubmission.createDefaultInstance(true, false);
         assertNotNull(defaultConfig.getConfigMap());
         assertEquals("default", defaultConfig.getConfigMap().get("AlgorithmProfile"));
         defaultConfig.mergeCombinedConfigMap();

@@ -25,44 +25,25 @@ ext {
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
-        nativeLibs = 'l64'
-        osName = 'linux64'
-        zosName = 'linux'
-        msName = 'linux'
+        osName = siriusTargetPlatform == SiriusPlatform.LINUX_x86_64 ? 'linux-x64' : 'linux-arm64'
         installerNameType = 'deb'
-        installerAppendix = "_${version}-1_amd64.$installerNameType"
+        installerAppendix = "_${version}-1_${siriusTargetPlatform == SiriusPlatform.LINUX_x86_64 ? 'amd64' : 'arm64'}.$installerNameType"
     } else if (siriusTargetPlatform.isWin()) {
-        nativeLibs = 'w64'
-        osName = 'win64'
-        zosName = 'win'
-        msName = 'windows'
+        osName = siriusTargetPlatform == SiriusPlatform.WIN_x86_64 ? 'win-x64' : 'win-arm64'
         installerNameType = 'msi'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     } else if (siriusTargetPlatform.isMac()) {
-        nativeLibs = 'osx'
-        osName = 'osx64'
-        zosName = 'macosx'
-        msName = 'macos'
+        osName = siriusTargetPlatform == SiriusPlatform.MAC_x86_64 ? 'macos-x64' : 'macos-arm64'
         installerNameType = 'pkg'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     }
 
     // configure infos for bundled JRE
-    jre_version = '21.0.4'
+    jre_version = '21.0.5'
     jre_major = jre_version.split("[.]")[0]
 
-    // zulu config
-//    jre_distributor_version = '21.36.17'
-//    jre_mac_prefix = "zulu-${jre_major}.jre/Contents/Home/"
-//    jre_fname = "zulu${jre_distributor_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-//    jre_download_link = "https://cdn.azul.com/zulu/bin/"
-
-    // ms config
-//    jre_fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-//    jre_download_link = "https://aka.ms/download-jdk/"
-
     // liberica config
-    jre_distributor_version = '21.0.4+9'
+    jre_distributor_version = '21.0.5+11'
     jre_mac_prefix = null
     jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
     jre_download_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
@@ -333,162 +314,6 @@ subprojects {
 
         }
     }
-
-    /*tasks.register('distImageTestLocal', Test) {
-        enabled false
-        group 'verification'
-        dependsOn distImage
-        useJUnitPlatform()
-        testClassesDirs = project(':sirius_dist').sourceSets.test.output
-        filter.includeTestsMatching('*Local')
-
-        testLogging {
-            outputs.upToDateWhen { false }
-            showStandardStreams = true
-        }
-
-        doFirst {
-            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            // automatically adjust for gui_single_os, cli_single_os or service_single_os
-            String build_type = project.name.toString()
-            String sirius_exec
-            String sep
-
-
-            if (project.OS.isWindows() || project.OS.isLinux() || project.OS.isMacOsX()) {
-                sep = System.getProperty("file.separator")
-            } else {
-                throw new IllegalArgumentException("Could not determine the OS to build on")
-            }
-
-            if (project.OS.isWindows()) {
-                sirius_exec = abs_path + 'sirius_frontend\\sirius_dist\\' + build_type + '\\build\\distributions\\sirius\\sirius.exe'
-            } else if (project.OS.isLinux()) {
-                sirius_exec = abs_path + 'sirius_frontend/sirius_dist/' + build_type + '/build/distributions/sirius/bin/sirius'
-            } else {
-                sirius_exec = abs_path + 'sirius.app' + sep + 'Contents' + sep + 'MacOS' + sep + 'sirius'
-            }
-
-            String temp_res_path = abs_path + 'sirius_frontend' + sep + 'sirius_cli' + sep + 'build' + sep + 'test' + sep + 'temp_results'
-            String demo_path = abs_path + 'sirius_frontend' + sep + 'sirius_doc' + sep + 'manual' + sep + 'demo-data' + sep
-
-            delete(temp_res_path)
-
-            mkdir temp_res_path
-            mkdir temp_res_path + sep + 'mgf_temp_output'
-            mkdir temp_res_path + sep + 'mgf_temp_summary'
-            mkdir temp_res_path + sep + 'txt_temp_output'
-            mkdir temp_res_path + sep + 'txt_temp_summary'
-            mkdir temp_res_path + sep + 'ms_temp_output'
-            mkdir temp_res_path + sep + 'ms_temp_summary'
-
-            temp_res_path = temp_res_path + sep
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '--input', demo_path + 'mgf' + sep + 'laudanosine.mgf',
-                             '--output', temp_res_path + 'mgf_temp_output',
-                             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path + 'mgf_temp_summary'
-                ])
-            }
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '-1', demo_path + 'txt' + sep + 'chelidonine_ms.txt',
-                             '-2', demo_path + 'txt' + sep + 'chelidonine_msms1.txt' + ',' + demo_path + 'txt' + sep + 'chelidonine_msms2.txt',
-                             '-z', '354.134704589844', '-o', temp_res_path + 'txt_temp_output',
-                             'formula', '-p', 'orbitrap',
-                             'write-summaries', '--output', temp_res_path + 'txt_temp_summary'
-                ])
-            }
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '-o', temp_res_path + 'ms_temp_output',
-                             '-i', demo_path + 'ms' + sep + 'Bicuculline.ms',
-                             '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
-                             'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path + 'ms_temp_summary'
-                ])
-            }
-        }
-        doLast {
-            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String sep = System.getProperty("file.separator")
-            String temp_res_path = abs_path + 'sirius_frontend' + sep + 'sirius_cli' + sep + 'build' + sep + 'test' + sep + 'temp_results'
-            project.delete(temp_res_path)
-        }
-    }
-
-
-    tasks.register('distImageTestCICD', Test) {
-        enabled false
-        group 'verification'
-        useJUnitPlatform()
-        testClassesDirs = project(':sirius_dist').sourceSets.test.output
-        filter.includeTestsMatching('*Local')
-
-        testLogging {
-            outputs.upToDateWhen { false }
-            showStandardStreams = true
-        }
-
-        doFirst {
-            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            String sirius_exec = abs_path + 'sirius_frontend/unzipped/sirius/bin/sirius'
-            String temp_res_path = abs_path + 'sirius_frontend/sirius_cli/build/test/temp_results'
-            String demo_path = abs_path + 'sirius_frontend/sirius_doc/manual/demo-data/'
-            String sep = System.getProperty("file.separator")
-
-            delete(temp_res_path)
-
-            mkdir temp_res_path
-            mkdir temp_res_path + sep + 'mgf_temp_output'
-            mkdir temp_res_path + sep + 'mgf_temp_summary'
-            mkdir temp_res_path + sep + 'txt_temp_output'
-            mkdir temp_res_path + sep + 'txt_temp_summary'
-            mkdir temp_res_path + sep + 'ms_temp_output'
-            mkdir temp_res_path + sep + 'ms_temp_summary'
-
-            temp_res_path = temp_res_path + sep
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '--input', demo_path + 'mgf' + sep + 'laudanosine.mgf',
-                             '--output', temp_res_path + 'mgf_temp_output',
-                             'formula', '-p', 'orbitrap', 'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path + 'mgf_temp_summary'
-                ])
-            }
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '-1', demo_path + 'txt' + sep + 'chelidonine_ms.txt',
-                             '-2', demo_path + 'txt' + sep + 'chelidonine_msms1.txt' + ',' + demo_path + 'txt' + sep + 'chelidonine_msms2.txt',
-                             '-z', '354.134704589844', '-o', temp_res_path + 'txt_temp_output',
-                             'formula', '-p', 'orbitrap',
-                             'write-summaries', '--output', temp_res_path + 'txt_temp_summary'
-                ])
-            }
-
-            project.exec {
-                commandLine([sirius_exec,
-                             '-o', temp_res_path + 'ms_temp_output',
-                             '-i', demo_path + 'ms' + sep + 'Bicuculline.ms',
-                             '--ignore-formula', 'formula', '-p', 'orbitrap', '-c', '5',
-                             'fingerprint', 'structure', 'compound-classes',
-                             'write-summaries', '--output', temp_res_path + 'ms_temp_summary'
-                ])
-            }
-        }
-        doLast {
-            String abs_path = project.projectDir.toString().split('sirius_frontend')[0]
-            project.delete(abs_path + 'sirius_frontend/sirius_cli/build/test/temp_results')
-            project.delete(abs_path + 'sirius_frontend/unzipped')
-        }
-    }*/
-
 
     tasks.register('signDistImage') {
         group 'jpDist'

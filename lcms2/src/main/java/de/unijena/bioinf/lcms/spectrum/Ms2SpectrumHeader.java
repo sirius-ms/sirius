@@ -13,7 +13,7 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     protected final CollisionEnergy energy;
 
     @Nullable protected final IsolationWindow isolationWindow;
-    @Getter protected final int parentId;
+    @Getter protected final int parentId; // index
     @Getter  protected final double retentionTime;
     @Getter protected final double precursorMz;
     @Getter protected final double targetedMz;

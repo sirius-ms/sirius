@@ -20,7 +20,7 @@
 |**adduct** | **String** |  |  [optional] |
 |**exactMass** | **String** |  |  [optional] |
 |**smiles** | **String** |  |  [optional] |
-|**candidateInChiKey** | **String** |  |  |
+|**inchiKey** | **String** |  |  |
 |**referenceSpectrum** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |
 
 

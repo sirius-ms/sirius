@@ -232,7 +232,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Creating Project...", () ->
                     gui.getSiriusClient().projects()
-                            .createProjectSpace(projectId, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE))
+                            .createProject(projectId, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE))
                             .getProjectId()
 
             ).awaitResult();

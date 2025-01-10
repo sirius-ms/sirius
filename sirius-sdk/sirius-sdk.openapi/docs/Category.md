@@ -9,7 +9,7 @@
 |------------ | ------------- | ------------- | -------------|
 |**categoryName** | **String** |  |  [optional] |
 |**overallQuality** | **DataQuality** |  |  [optional] |
-|**items** | [**List&lt;Item&gt;**](Item.md) |  |  [optional] |
+|**items** | [**List&lt;QualityItem&gt;**](QualityItem.md) |  |  [optional] |
 
 
 
