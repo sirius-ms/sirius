@@ -232,7 +232,7 @@ public class BatchComputeDialog extends JDialog {
                 JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
                 JButton compute = new JButton("Compute");
                 if (compoundsToProcess.isEmpty()) {
-                    compute.setEnabled(false);
+                    compute.setVisible(false);
                 }
                 compute.addActionListener(e -> startComputing());
                 JButton abort = new JButton("Cancel");
