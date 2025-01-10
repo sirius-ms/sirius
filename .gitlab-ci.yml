@@ -27,39 +27,29 @@ build_test_publish_libs:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: libs
   script:
-    - echo "===> Running Unit Tests"
-    - ./gradlew test --stacktrace
-    - echo "===> Running Integration Tests"
-    - ./gradlew integrationTest --stacktrace
-    - echo "===> Publishing Libraries to Gitlab Registry"
-    - ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "stable"'
+    - |
+      echo "===> Running Unit Tests"
+      ./gradlew test --stacktrace
+    - |
+      echo "===> Running Integration Tests"
+      ./gradlew integrationTest --stacktrace
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable"]; then
+         echo "===> Publishing Libraries to Gitlab Registry"
+        ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
+      fi
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "stable"]; then
+        echo "===> Publishing Sirius SDK Public Gitlab Registry"
+       ./gradlew :sirius-sdk:publishMavenJavaPublicationToGitLabBGPublicRepository --stacktrace
+      fi
+
   artifacts:
     when: on_failure
     reports:
       junit:
         - "**/build/test-results/test/TEST-*.xml"
         - "**/build/test-results/integrationTest/TEST-*.xml"
-
-build_test_libs:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: libs
-  script:
-    - echo "===> Running Unit Tests"
-    - ./gradlew test --stacktrace
-    - echo "===> Running Integration Tests"
-    - ./gradlew integrationTest --stacktrace
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master" && $CI_COMMIT_BRANCH != "stable"'
-  artifacts:
-    when: on_failure
-    reports:
-      junit:
-        - "**/build/test-results/test/TEST-*.xml"
-        - "**/build/test-results/integrationTest/TEST-*.xml"
-
 #unitTests:
 #  variables:
 #    GRADLE_OPTS: "-Dorg.gradle.daemon=false"

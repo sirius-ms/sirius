@@ -152,7 +152,7 @@ allprojects {
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
-                name "GitLab"
+                name "BG GitLab"
                 if (System.getenv("CI_JOB_TOKEN") != null) {
                     credentials(HttpHeaderCredentials) {
                         name = "Job-Token"
@@ -318,14 +318,10 @@ subprojects {
             }
             repositories {
                 maven {
-                    name = "BG-maven-public"
-                    url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
-                }
-                maven {
                     name = "GitLab"
 
                     if (System.getenv("CI_JOB_TOKEN") != null) {
-                        url = "https://gitlab.com/api/v4/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
+                        url = "${System.getenv('CI_API_V4_URL')}/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
                         credentials(HttpHeaderCredentials) {
                             name = "Job-Token"
                             value = System.getenv("CI_JOB_TOKEN")
