@@ -29,7 +29,7 @@ apply plugin: 'java-library'
 
 allprojects {
     group = 'io.sirius-ms'
-    version =  "3.0+sirius$siriusFrontendVersion"
+    version = "3.0+sirius$siriusFrontendVersion"
 
     ext {
         reactor_version = "3.4.3"
@@ -45,6 +45,21 @@ allprojects {
                             name = 'GNU Lesser General Public License, Version 3.0'
                             url = 'https://www.gnu.org/licenses/lgpl-3.0.txt'
                         }
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name = "GitLabBGPublic"
+                if (System.getenv("CI_JOB_TOKEN") != null) {
+                    url = 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+                    credentials(HttpHeaderCredentials) {
+                        name = "Job-Token"
+                        value = System.getenv("CI_JOB_TOKEN")
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
                     }
                 }
             }
