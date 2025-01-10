@@ -227,16 +227,7 @@ public class BatchComputeDialog extends JDialog {
                     formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
                     zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
                 });
-                csouthPanel.add(toggleAdvancedMode);
 
-                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-                JButton compute = new JButton("Compute");
-                if (compoundsToProcess.isEmpty()) {
-                    compute.setVisible(false);
-                }
-                compute.addActionListener(e -> startComputing());
-                JButton abort = new JButton("Cancel");
-                abort.addActionListener(e -> dispose());
                 showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
                     final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
@@ -259,7 +250,23 @@ public class BatchComputeDialog extends JDialog {
                     };
                 });
 
-                rsouthPanel.add(showCommand);
+                JButton showJson = new JButton("Show JSON");
+                showJson.setToolTipText("Open current parameters in a JSON viewer.");
+                showJson.addActionListener(e -> viewJobJsonDialog());
+
+                csouthPanel.add(toggleAdvancedMode);
+                csouthPanel.add(showCommand);
+                csouthPanel.add(showJson);
+
+                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+                JButton compute = new JButton("Compute");
+                if (compoundsToProcess.isEmpty()) {
+                    compute.setVisible(false);
+                }
+                compute.addActionListener(e -> startComputing());
+                JButton abort = new JButton("Cancel");
+                abort.addActionListener(e -> dispose());
+
                 rsouthPanel.add(compute);
                 rsouthPanel.add(abort);
 
@@ -681,15 +688,11 @@ public class BatchComputeDialog extends JDialog {
             saveAsPreset.setToolTipText("Save current selection as a new preset");
         }
 
-        JButton viewPreset = new JButton("View");
-        viewPreset.addActionListener(e -> viewPresetDialog());
-
         JButton removePreset = new JButton("Remove");
         removePreset.setEnabled(false);
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
-        panel.add(viewPreset);
         panel.add(removePreset);
 
         presetDropdown.addItemListener(event -> {
@@ -866,9 +869,9 @@ public class BatchComputeDialog extends JDialog {
         showCommand.setEnabled(true);
     }
 
-    private void viewPresetDialog() {
+    private void viewJobJsonDialog() {
         try {
-            String json = toJson(preset);
+            String json = toJson(makeJobSubmission());
             String presetName = (String) presetDropdown.getSelectedItem();
 
             JTextArea textArea = new JTextArea(json);
@@ -879,7 +882,7 @@ public class BatchComputeDialog extends JDialog {
             JScrollPane scrollPane = new JScrollPane(textArea);
             scrollPane.setPreferredSize(new Dimension(600, 600));
 
-            JOptionPane.showMessageDialog(this, scrollPane, "Preset source: " + presetName, JOptionPane.PLAIN_MESSAGE);
+            JOptionPane.showMessageDialog(this, scrollPane, "Computation parameters", JOptionPane.PLAIN_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), null, JOptionPane.ERROR_MESSAGE);
         }
