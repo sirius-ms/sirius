@@ -147,9 +147,9 @@ public class GuiProjectManager implements Closeable {
                         { //compute jobs handling, just to updated compute state in gui without delay.
                             Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs()
                                     .stream()
-                                    .filter(j -> j.getJobEffect() == Job.JobEffectEnum.COMPUTATION)
+                                    .filter(j -> j.getJobEffect() == JobEffect.COMPUTATION)
                                     .filter(j -> j.getAffectedAlignedFeatureIds() != null)
-                                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
+                                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= io.sirius.ms.sdk.model.JobState.RUNNING.ordinal())))
                                     .collect(Collectors.toMap(Pair::key, Pair::value));
 
                             if (!idsToComputeState.isEmpty()) {
@@ -256,11 +256,11 @@ public class GuiProjectManager implements Closeable {
     }
 
     public String getProjectLocation() {
-        return siriusClient.projects().getProjectSpace(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
+        return siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
     }
 
     public ProjectInfo getProjectInfo() {
-        return siriusClient.projects().getProjectSpace(
+        return siriusClient.projects().getProject(
                 projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
     }
 

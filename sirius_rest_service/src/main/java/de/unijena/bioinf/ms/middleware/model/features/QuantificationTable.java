@@ -12,21 +12,23 @@ import lombok.Setter;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(name = "QuantificationTableExperimental",
+        description = "EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.")
 public class QuantificationTable {
 
-    @Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
+    @Schema(name = "QuantificationMeasure")
     public enum QuantificationType {
         // the only supported quantification type at the moment
         APEX_HEIGHT;
     }
 
-    @Schema(enumAsRef = false, name = "RowType", nullable = false)
+    @Schema(name = "QuantificationRowType")
     public enum RowType {
         // the only supported row type at the moment
         FEATURES;
     }
 
-    @Schema(enumAsRef = false, name = "ColumnType", nullable = false)
+    @Schema(name = "QuantificationColumnType")
     public enum ColumnType {
         // the only supported column type at the moment
         SAMPLES;

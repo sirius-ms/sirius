@@ -209,8 +209,12 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                         else return;
                     }
                 }
-                spec.spectrum.setIonization(ion.getIonization());
-                spec.ionType = ion;
+                if (spec.ionType == null || spec.ionType.isIonizationUnknown()) {
+                    spec.spectrum.setIonization(ion.getIonization());
+                    spec.ionType = ion;
+                } else if (!ion.isIonizationUnknown() && !spec.ionType.equals(ion.isIonizationUnknown())) {
+                    LoggerFactory.getLogger(MgfParser.class).warn("Contradicting adduct annotations: " + ion + " vs " + spec.ionType);
+                }
             } else if (keyword.contains("SPECTYPE")) {
                 if (value.toUpperCase().contains("CORRELATED")) {
                     spec.type = SpecType.CORRELATED;
@@ -391,7 +395,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
             } else {
                 exp.getMs2Spectra().add(new MutableMs2Spectrum(spec.spectrum));
             }
-            if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isUnknownNoCharge()) {
+            if (exp.getPrecursorIonType() == null || exp.getPrecursorIonType().isIonizationUnknown()) {
                 exp.setPrecursorIonType(spec.ionType);
                 if (!spec.ionType.isIonizationUnknown())
                     exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, spec.ionType));

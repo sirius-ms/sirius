@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
@@ -110,13 +111,15 @@ public class QualityReport {
         }
     }
 
-    public static enum Weight {
+    @Schema(name = "QualityWeight")
+    public enum Weight {
         MINOR, MAJOR, CRITICAL;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Getter
     @Setter
+    @Schema(name = "QualityItem")
     public static class Item {
 
         private String description;

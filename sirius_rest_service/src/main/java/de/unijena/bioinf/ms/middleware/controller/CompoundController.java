@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,8 +77,8 @@ public class CompoundController {
 
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Compound> getCompoundsPaged(@PathVariable String projectId, @ParameterObject Pageable pageable,
-                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
-                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+                                       @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
@@ -91,8 +92,8 @@ public class CompoundController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Compound> getCompounds(@PathVariable String projectId,
-                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
-                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+                                       @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return getCompoundsPaged(projectId, globalConfig.unpaged(), optFields, optFieldsFeatures)
                 .stream().toList();
     }
@@ -110,8 +111,8 @@ public class CompoundController {
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
                                        @RequestParam(required = false) InstrumentProfile profile,
-                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
-                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
+                                       @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
         List<Compound> importedCompounds = projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
 
@@ -133,11 +134,26 @@ public class CompoundController {
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
-                                @RequestParam(required = false, defaultValue = "") EnumSet<Compound.OptField> optFields,
-                                @RequestParam(required = false, defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+                                @RequestParam(required = false, defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                @RequestParam(required = false, defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
+    /**
+     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention
+     * time axis. All the returned traces are 'projected', which means they refer not to the original retention time axis,
+     * but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.
+     * However, this also means that all traces can be directly compared against each other, as they all lie in the same
+     * retention time axis.
+
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
+     * @return Traces of the given compound.
+     */
+    @Operation(
+            operationId = "getCompoundTracesExperimental",
+            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
+    )
     @GetMapping(value = "/{compoundId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getCompoundTraces(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(required = false, defaultValue = "") String featureId) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForCompound(compoundId, featureId.isBlank() ? Optional.empty() : Optional.of(featureId));

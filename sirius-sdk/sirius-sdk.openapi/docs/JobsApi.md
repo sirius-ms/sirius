@@ -16,7 +16,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
-| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input. |
+| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**startJob**](JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters. |
 | [**startJobFromConfig**](JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config. |
 
@@ -229,7 +229,7 @@ No authorization required
 
 ## getDefaultJobConfig
 
-> JobSubmission getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap)
+> JobSubmission getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch)
 
 Request default job configuration
 
@@ -253,8 +253,9 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true, generic configmap with-defaults will be included
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
+        Boolean includeCustomDbsForStructureSearch = false; // Boolean | if true, default database selection of structure db search contains also all available custom DB.
         try {
-            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap);
+            JobSubmission result = apiInstance.getDefaultJobConfig(includeConfigMap, moveParametersToConfigMap, includeCustomDbsForStructureSearch);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getDefaultJobConfig");
@@ -274,6 +275,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **includeConfigMap** | **Boolean**| if true, generic configmap with-defaults will be included | [optional] [default to false] |
 | **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
+| **includeCustomDbsForStructureSearch** | **Boolean**| if true, default database selection of structure db search contains also all available custom DB. | [optional] [default to false] |
 
 ### Return type
 
@@ -367,7 +369,7 @@ No authorization required
 
 ## getJobConfig
 
-> JobSubmission getJobConfig(name, includeConfigMap, moveParametersToConfigMap)
+> StoredJobSubmission getJobConfig(name, moveParametersToConfigMap)
 
 Request job configuration with given name.
 
@@ -390,10 +392,9 @@ public class Example {
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
-        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters
         try {
-            JobSubmission result = apiInstance.getJobConfig(name, includeConfigMap, moveParametersToConfigMap);
+            StoredJobSubmission result = apiInstance.getJobConfig(name, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfig");
@@ -412,12 +413,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **name** | **String**| name of the job-config to return | |
-| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
 | **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters | [optional] [default to false] |
 
 ### Return type
 
-[**JobSubmission**](JobSubmission.md)
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -499,7 +499,7 @@ No authorization required
 
 ## getJobConfigs
 
-> List&lt;JobSubmission&gt; getJobConfigs(includeConfigMap)
+> List&lt;StoredJobSubmission&gt; getJobConfigs()
 
 Request all available job configurations
 
@@ -521,9 +521,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
-        Boolean includeConfigMap = false; // Boolean | if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release
         try {
-            List<JobSubmission> result = apiInstance.getJobConfigs(includeConfigMap);
+            List<StoredJobSubmission> result = apiInstance.getJobConfigs();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobConfigs");
@@ -538,14 +537,11 @@ public class Example {
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **includeConfigMap** | **Boolean**| if true, the generic configmap will be part of the output. DEPRECATED: this parameter will be removed in a future release | [optional] [default to false] |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**List&lt;JobSubmission&gt;**](JobSubmission.md)
+[**List&lt;StoredJobSubmission&gt;**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -633,7 +629,7 @@ No authorization required
 
 ## getJobsPaged
 
-> PageJob getJobsPaged(projectId, page, size, sort, optFields)
+> PagedModelJob getJobsPaged(projectId, page, size, sort, optFields)
 
 Get Page of jobs with information such as current state and progress (if available).
 
@@ -661,7 +657,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
+            PagedModelJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#getJobsPaged");
@@ -687,7 +683,7 @@ public class Example {
 
 ### Return type
 
-[**PageJob**](PageJob.md)
+[**PagedModelJob**](PagedModelJob.md)
 
 ### Authorization
 
@@ -773,7 +769,7 @@ No authorization required
 
 ## saveJobConfig
 
-> String saveJobConfig(name, jobSubmission, overrideExisting)
+> StoredJobSubmission saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap)
 
 Add new job configuration with given name.
 
@@ -798,8 +794,9 @@ public class Example {
         String name = "name_example"; // String | name of the job-config to add
         JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | to add
         Boolean overrideExisting = false; // Boolean | 
+        Boolean moveParametersToConfigMap = false; // Boolean | if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object
         try {
-            String result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting);
+            StoredJobSubmission result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling JobsApi#saveJobConfig");
@@ -820,10 +817,11 @@ public class Example {
 | **name** | **String**| name of the job-config to add | |
 | **jobSubmission** | [**JobSubmission**](JobSubmission.md)| to add | |
 | **overrideExisting** | **Boolean**|  | [optional] [default to false] |
+| **moveParametersToConfigMap** | **Boolean**| if true, object-based parameters will be converted to and added to the generic configMap parameters in the return object | [optional] [default to false] |
 
 ### Return type
 
-**String**
+[**StoredJobSubmission**](StoredJobSubmission.md)
 
 ### Authorization
 
@@ -832,20 +830,20 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: text/plain, application/problem+json
+- **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Probably modified name of the config (to ensure filesystem path compatibility). |  -  |
+| **200** | StoredJobSubmission that contains the JobSubmission and the probably modified name of the config (to ensure path compatibility). |  -  |
 
 
 ## startCommand
 
 > Job startCommand(projectId, commandSubmission, optFields)
 
-Start computation for given command and input.
+DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 Start computation for given command and input.
 
@@ -908,7 +906,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |  -  |
+| **200** | Job of the command to be executed. |  -  |
 
 
 ## startJob

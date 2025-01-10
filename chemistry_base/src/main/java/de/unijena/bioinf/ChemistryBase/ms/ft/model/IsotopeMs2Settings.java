@@ -22,11 +22,12 @@ package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @DefaultProperty
 public class IsotopeMs2Settings implements Ms2ExperimentAnnotation {
-
-    public static enum Strategy {
+    @Schema(name = "IsotopeMs2Strategy")
+    public enum Strategy {
         IGNORE,FILTER,SCORE;
     }
 

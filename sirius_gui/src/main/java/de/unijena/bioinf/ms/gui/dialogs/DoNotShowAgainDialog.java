@@ -62,8 +62,10 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         northPanel.add(new JLabel(makeDialogIcon()));
         {
             textPane = new JTextPane();
+            textPane.setCursor(null);
             textPane.setEditable(false); // as before
             textPane.setContentType("text/html"); // let the text pane know this is what you want
+            textPane.setFocusable(false);
             textPane.setText(messageSupplier.get());
             textPane.setBorder(null);
             textPane.setOpaque(false);

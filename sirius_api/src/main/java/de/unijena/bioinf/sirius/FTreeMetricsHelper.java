@@ -30,7 +30,7 @@ import de.unijena.bioinf.sirius.plugins.IsotopePatternInMs1Plugin;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
-import gnu.trove.list.array.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +103,7 @@ public class FTreeMetricsHelper {
      * @return
      */
     private Deviation getMedianMassDeviation(boolean useAbsoluteValues) {
-        TDoubleArrayList ppms = new TDoubleArrayList(), mzs = new TDoubleArrayList();
+        DoubleArrayList ppms = new DoubleArrayList(), mzs = new DoubleArrayList();
         for (Fragment f : tree) {
             final Deviation dev = tree.getMassError(f);
             if (dev != Deviation.NULL_DEVIATION) {

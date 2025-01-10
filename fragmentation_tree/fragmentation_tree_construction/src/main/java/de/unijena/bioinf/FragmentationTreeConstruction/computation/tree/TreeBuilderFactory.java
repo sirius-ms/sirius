@@ -25,6 +25,7 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.Abst
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.ILPSolverException;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.ilp.IlpFactory;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public final class TreeBuilderFactory {
 
     private static TreeBuilderFactory INSTANCE = null;
 
+    @Schema(name = "Solver")
     public enum DefaultBuilder {GUROBI, CPLEX, GLPK, CLP}
 
     private TreeBuilderFactory() {

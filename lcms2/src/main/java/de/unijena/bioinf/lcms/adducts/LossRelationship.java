@@ -9,21 +9,37 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 public class LossRelationship implements KnownMassDelta{
 
     protected MolecularFormula formula;
+    protected boolean coversAdduct;
+
+    private LossRelationship(MolecularFormula formula, boolean cov) {
+        this.formula=formula;
+        this.coversAdduct=cov;
+    }
 
     public LossRelationship(MolecularFormula formula) {
-        this.formula = formula;
+        this(formula,false);
     }
 
     @Override
     public boolean isCompatible(IonType left, IonType right) {
-        if (!(left.ionType.equals(right.ionType) && (int)left.multimere==(int)right.multimere))
-            return false;
-        return left.insource.subtract(right.insource).equals(formula);
+        return left.ionType.getIonization().equals(right.ionType.getIonization()) && (int)(left.multimere)==(int)(right.multimere);
+    }
+
+    /**
+     * @return true if the mass delta of this loss coincidences with the mass delta of two adducts
+     */
+    public boolean coversPotentialAdduct() {
+        return coversAdduct;
+    }
+
+    public LossRelationship coveringAdduct() {
+        return new LossRelationship(formula, true);
     }
 
     public MolecularFormula getFormula() {
         return formula;
     }
+
 
     @Override
     public String toString() {

@@ -100,7 +100,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
                     if (sourceCandidate.getFormulaId().equals(pce.getFormulaId())) {
-                        if (pce.getEventType() == ProjectChangeEvent.EventTypeEnum.RESULT_UPDATED) {
+                        if (pce.getEventType() == ProjectEventType.RESULT_UPDATED) {
                             synchronized (FormulaResultBean.this) {
                                 FormulaResultBean.this.sourceCandidate = null;
                                 FormulaResultBean.this.canopusResults = null;
@@ -288,7 +288,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     public synchronized Optional<String> getFTreeJson() {
         if (this.ftreeJson == null)
             this.ftreeJson = Optional.ofNullable(withIds((pid, fid, foid) ->
-                    getClient().features().getSiriusFragTreeWithResponseSpec(pid, fid, foid)
+                    getClient().features().getSiriusFragTreeInternalWithResponseSpec(pid, fid, foid)
                             .bodyToMono(String.class).onErrorComplete().block()
             ));
 

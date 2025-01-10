@@ -59,7 +59,7 @@ public class LcmsSubmissionParameters {
     /**
      * Specifies filter algorithm to suppress noise.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true, hidden = true)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", hidden = true)
     protected DataSmoothing filter = DataSmoothing.AUTO;
 
     /**
