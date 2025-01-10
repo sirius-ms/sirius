@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
 import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
-import io.sirius.ms.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -65,7 +65,7 @@ public class LCMSWebview extends JFXPanel {
                     } else {
                         this.webView.getEngine().executeScript("document.setDark()");
                     }
-                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
+                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('lc')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
@@ -74,7 +74,7 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
+    public void setInstance(TraceSetExperimental peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
@@ -82,7 +82,7 @@ public class LCMSWebview extends JFXPanel {
                 if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
                     f.call("loadString", json);
                 } else {
-                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                    f.call("loadStringForCompound", json,  featureId);
                 }
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -153,7 +153,7 @@ public class LCMSWebview extends JFXPanel {
         }
 
         public void log(JSObject msg) {
-            System.err.println(msg);
+            System.err.println(msg.getMember("test"));
         }
 
     }

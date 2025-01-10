@@ -19,7 +19,7 @@ ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compa
 ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = okhttp_version
 
-version =  siriusFrontendVersion
+version = siriusFrontendVersion
 
 dependencies {
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
@@ -35,7 +35,7 @@ dependencies {
 
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
-    implementation("org.springframework.boot:spring-boot-starter-web"){
+    implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
     }
 
@@ -71,7 +71,7 @@ dependencies {
     implementation "org.apache.commons:commons-text:$commons_text_version"
 }
 //todo use logback instead of java util logging! => needs support in jjobs
-configurations.each {Configuration conf ->
+configurations.each { Configuration conf ->
     //replaced by log4j-over-slf4j
     conf.exclude group: "log4j", module: "log4j"
     //replaced by jcl-over-slf4j
@@ -105,14 +105,30 @@ bootJar {
 openApi {
     apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("$projectDir"))
-    outputFileName.set("openapi-spec.json")
     waitTimeInSeconds.set(20)
 
+    outputFileName = "openapi-spec-enums-as-ref.json"
     customBootRun {
-        args = ["rest", "-s", "-p", "8888", "--api-mode", "BASIC"]
+        args = ["rest", "-s", "-p", "8888", "--api-mode", "BASIC", "--enums-as-ref"]
     }
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
+
+
+tasks.register("generateOpenApiDocsEnumsAsString") {
+    description "Creates the api docs with enums treated as strings which seems to be mor compatible with some languages."
+    group "openApi"
+    doFirst {
+        openApi {
+            outputFileName = "openapi-spec-enums-as-string.json"
+            customBootRun {
+                args = ["rest", "-s", "-p", "8888", "--api-mode", "BASIC"]
+            }
+        }
+    }
+    finalizedBy "generateOpenApiDocs"
+}
+
 
 // Javadoc cannot recognize lombok builder
 javadoc {
