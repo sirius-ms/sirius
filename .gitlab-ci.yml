@@ -3,7 +3,8 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-jdk-lapack:ubuntu-zulu-21
+  image: gradle:8.12-jdk21
+#  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-jdk-lapack:ubuntu-zulu-21
   tags: [$RUNNER_TAGS]
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness
@@ -18,30 +19,44 @@ stages:
   - test-app
   - publish-app
 
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  GRADLE_USER_HOME: $CI_PROJECT_DIR/.gradle
+
+cache:
+  # Cache for Gradle Wrapper
+  - key: "wrapper-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .gradle/wrapper/
+
+  # Cache for Gradle Dependencies
+  - key: "dependencies-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - .gradle/caches/
+
 before_script:
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
+  - echo "Using Gradle user home at $GRADLE_USER_HOME"
 
 
 build_test_publish_libs:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: libs
   script:
     - |
       echo "===> Running Unit Tests"
-      ./gradlew test --stacktrace
+      gradle test --stacktrace
     - |
       echo "===> Running Integration Tests"
-      ./gradlew integrationTest --stacktrace
+      gradle integrationTest --stacktrace
     - |
       if [[ "$CI_COMMIT_BRANCH" == "master" ||  "$CI_COMMIT_BRANCH" == "stable" ]]; then
          echo "===> Publishing Libraries to Gitlab Registry"
-        ./gradlew publishMavenJavaPublicationToGitLabRepository --stacktrace
+         gradle publishMavenJavaPublicationToGitLabRepository --stacktrace
       fi
     - |
       if [[ "$CI_COMMIT_BRANCH" == "stable" ]]; then
         echo "===> Publishing Sirius SDK Public Gitlab Registry"
-       ./gradlew :sirius-sdk:publishMavenJavaPublicationToGitLabBGPublicRepository --stacktrace
+       gradle :sirius-sdk:publishMavenJavaPublicationToGitLabBGPublicRepository --stacktrace
       fi
 
   artifacts:
@@ -73,12 +88,10 @@ build_test_publish_libs:
 #      junit: "**/build/test-results/integrationTest/TEST-*.xml"
 
 acceptanceTests:
-  variables:
-    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: test-app
   when: manual
   script:
-    - ./gradlew acceptanceTest --stacktrace
+    - gradle acceptanceTest --stacktrace
   artifacts:
     when: on_failure
     reports:
