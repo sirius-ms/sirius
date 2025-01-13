@@ -139,11 +139,8 @@ public class BatchComputeDialog extends JDialog {
         JPanel topLine = new JPanel();
         topLine.setLayout(new BoxLayout(topLine, BoxLayout.LINE_AXIS));
 
-        JPanel topRight = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        topRight.add(makeAdvancedModeToggle());
-
         topLine.add(makePresetPanel());
-        topLine.add(topRight);
+        topLine.add(makeAdvancedModeToggle());
 
         northPanel.add(topLine, BorderLayout.CENTER);
         add(northPanel, BorderLayout.NORTH);
@@ -289,7 +286,7 @@ public class BatchComputeDialog extends JDialog {
             gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
         });
 
-        setPreferredSize(new Dimension(1125, 1024));
+        setPreferredSize(new Dimension(1150, 1024));
         //finalize panel build
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         if (getMaximumSize().width < getPreferredSize().width)
@@ -657,6 +654,8 @@ public class BatchComputeDialog extends JDialog {
 
     private JPanel makeAdvancedModeToggle() {
         JToggleSwitch toggle = new JToggleSwitch();
+        toggle.setToolTipText("Show/Hide advanced parameters.");
+        toggle.setPreferredSize(new Dimension(40, 28));
         toggle.addEventToggleSelected(selected -> {
             isAdvancedView = !isAdvancedView;
 
@@ -664,9 +663,9 @@ public class BatchComputeDialog extends JDialog {
             zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
         });
 
-        JPanel panel = new JPanel();
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panel.add(toggle);
-        panel.add(new JLabel("Advanced parameters"));
+        panel.add(new JLabel("Advanced"));
 
         return panel;
     }
