@@ -171,7 +171,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         addNamed("", openSwaggerInBrowser);
         openSwaggerInBrowser.addActionListener(evt -> {
             try {
-                Desktop.getDesktop().browse(URI.create(gui.getSiriusClient().getApiClient().getBasePath()));
+                GuiUtils.openURL(SwingUtilities.getWindowAncestor(gui.getMainFrame()), URI.create(gui.getSiriusClient().getApiClient().getBasePath()));
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("Cannot open API in browser.", e);
             }
