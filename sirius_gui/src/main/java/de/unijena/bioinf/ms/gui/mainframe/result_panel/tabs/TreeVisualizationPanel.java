@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -388,69 +389,16 @@ public class TreeVisualizationPanel extends JPanel implements
     public void saveTree() {
         // carried over from
         // de.unijena.bioinf.sirius.gui.mainframe.TreeVisualizationPanel
-        abstract class FTreeFilter extends FileFilter {
-
-            private String fileSuffix, description;
-
-            public FTreeFilter(String fileSuffix, String description) {
-                this.fileSuffix = fileSuffix;
-                this.description = description;
-            }
-
-            @Override
-            public boolean accept(File f) {
-                if (f.isDirectory()) return true;
-                String name = f.getName();
-                return name.endsWith(fileSuffix);
-            }
-
-            @Override
-            public String getDescription() {
-                return description;
-            }
-
-        }
-
-        class FTreeDotFilter extends FTreeFilter {
-
-            public FTreeDotFilter() {
-                super(".dot", "Dot");
-            }
-
-        }
-
-        class FTreeSVGFilter extends FTreeFilter {
-
-            public FTreeSVGFilter() {
-                super(".svg", "SVG");
-            }
-
-        }
-
-        class FTreePDFFilter extends FTreeFilter {
-
-            public FTreePDFFilter() {
-                super(".pdf", "PDF");
-            }
-
-        }
-
-        class FTreeJSONFilter extends FTreeFilter {
-
-            public FTreeJSONFilter() {
-                super(".json", "JSON");
-            }
-        }
 
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
 
-        FileFilter svgFilter = new FTreeSVGFilter();
-        FileFilter pdfFilter = new FTreePDFFilter();
-        FileFilter dotFilter = new FTreeDotFilter();
-        FileFilter jsonFilter = new FTreeJSONFilter();
+        FileFilter svgFilter = new FileNameExtensionFilter("SVG", "svg");
+        FileFilter pdfFilter = new FileNameExtensionFilter("PDF", "pdf");
+        FileFilter dotFilter = new FileNameExtensionFilter("Dot", "dot");
+        FileFilter jsonFilter = new FileNameExtensionFilter("JSON", "json");
 
 
         jfc.addChoosableFileFilter(dotFilter);
