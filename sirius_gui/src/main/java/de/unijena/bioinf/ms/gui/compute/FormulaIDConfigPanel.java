@@ -229,7 +229,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     }
 
     protected boolean isBatchDialog() {
-        return ecs.size() > 1; //should never be 0
+        return ecs.size() != 1;
     }
 
     private void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
@@ -247,6 +247,13 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
      * @param addBaseIonizationForDetected add the base ionization for each detected adduct to the list of selected
      */
     private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> fallbackSelection, boolean forceFallback, boolean addBaseIonizationForDetected) {
+
+        if (ecs.isEmpty()) {  // get adducts from settings
+            Set<PrecursorIonType> possible = PeriodicTable.getInstance().getAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toCollection(HashSet::new));
+            possible.addAll(fallbackSelection);
+            return Pair.of(possible,fallbackSelection);
+        }
+
         Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream()
                 .map(InstanceBean::getDetectedAdductsOrCharge)
                 .flatMap(Set::stream)
