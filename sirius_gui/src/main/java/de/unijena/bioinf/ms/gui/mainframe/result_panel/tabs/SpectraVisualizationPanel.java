@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -723,60 +724,15 @@ public class SpectraVisualizationPanel extends JPanel implements
     public void saveSpectra() {
         // adapted from
         // de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPanel
-        abstract class SpectraFilter extends FileFilter {
-
-            private String fileSuffix, description;
-
-            public SpectraFilter(String fileSuffix, String description) {
-                this.fileSuffix = fileSuffix;
-                this.description = description;
-            }
-
-            @Override
-            public boolean accept(File f) {
-                if (f.isDirectory()) return true;
-                String name = f.getName();
-                return name.endsWith(fileSuffix);
-            }
-
-            @Override
-            public String getDescription() {
-                return description;
-            }
-
-        }
-
-        class SpectraSVGFilter extends SpectraFilter {
-
-            public SpectraSVGFilter() {
-                super(".svg", "SVG");
-            }
-
-        }
-
-        class SpectraPDFFilter extends SpectraFilter {
-
-            public SpectraPDFFilter() {
-                super(".pdf", "PDF");
-            }
-
-        }
-
-        class SpectraJSONFilter extends SpectraFilter {
-
-            public SpectraJSONFilter() {
-                super(".json", "JSON");
-            }
-        }
 
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_TREE_EXPORT_PATH));
         jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
 
-        FileFilter svgFilter = new SpectraSVGFilter();
-        FileFilter pdfFilter = new SpectraPDFFilter();
-        FileFilter jsonFilter = new SpectraJSONFilter();
+        FileFilter svgFilter = new FileNameExtensionFilter("SVG", "svg");
+        FileFilter pdfFilter = new FileNameExtensionFilter("PDF", "pdf");
+        FileFilter jsonFilter = new FileNameExtensionFilter("JSON", "json");
 
 
         jfc.addChoosableFileFilter(svgFilter);
