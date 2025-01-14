@@ -213,12 +213,17 @@ public class GuiUtils {
                 new ExceptionDialog((Frame) owner, "Cannot open empty URL!");
 
         if (useSystemBrowser) {
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(url);
-                return;
-            } else {
-                String message = "Could not Open URL in System Browser. Trying SIRIUS WebView or Please visit Page Manually" + url;
-                LoggerFactory.getLogger(GuiUtils.class).error(message);
+            try {
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().browse(url);
+                    return;
+                } else {
+                    LoggerFactory.getLogger(GuiUtils.class).error(
+                            "Could not Open URL in System Browser. Trying SIRIUS WebView or  try visit page manually: {}", url);
+                }
+            } catch (Exception e) {
+                LoggerFactory.getLogger(GuiUtils.class).error(
+                        "Unexpected Error when opening URL in System Browser. Trying SIRIUS WebView or  try visit page manually: {}", url, e);
             }
         }
 

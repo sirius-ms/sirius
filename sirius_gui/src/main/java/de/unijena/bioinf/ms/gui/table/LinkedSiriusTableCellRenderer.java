@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.table;
 
 
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -82,9 +83,9 @@ public class LinkedSiriusTableCellRenderer extends MouseAdapter implements Table
             URI url = linker.makeLink(table.getModel().getValueAt(row, col));
             if (url != null) {
                 try {
-                    Desktop.getDesktop().browse(url);
+                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(table), url);
                 } catch (IOException e1) {
-                    LoggerFactory.getLogger(getClass()).error("Error opening link: " + url.toString(), e1);
+                    LoggerFactory.getLogger(getClass()).error("Error opening link: {}", url, e1);
                 }
             }
         }
