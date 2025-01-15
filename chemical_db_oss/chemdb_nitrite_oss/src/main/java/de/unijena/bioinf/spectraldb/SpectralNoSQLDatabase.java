@@ -78,7 +78,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                 ).setOptionalFields(Ms2ReferenceSpectrum.class, "spectrum", "querySpectrum")
 
                 .addRepository(ReferenceFragmentationTree.class)
-                .addRepository(MergedReferenceSpectrum.class, Index.unique("candidateInChiKey", "precursorIonType"));
+                .addRepository(MergedReferenceSpectrum.class, Index.unique("candidateInChiKey", "precursorIonType"), Index.nonUnique("precursorMz"));
     }
 
     public abstract <O> Doctype asDocument(O object);
