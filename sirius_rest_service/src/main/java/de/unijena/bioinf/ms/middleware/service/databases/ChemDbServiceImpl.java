@@ -66,8 +66,7 @@ public class ChemDbServiceImpl implements ChemDbService {
             //request fingerprint version to init db and check compatibility
             final CdkFingerprintVersion version = version();
             //loads all current available dbs
-            @NotNull List<CustomDatabase> dbs = CustomDatabases.getCustomDatabases(version);
-            log.info("...found: " + dbs.stream().map(CustomDatabase::name).collect(Collectors.joining(", ")));
+            CustomDatabases.load(version);
         } catch (Exception e) {
             log.error("Error when loading Custom databases", e);
         }
