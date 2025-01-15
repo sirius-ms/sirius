@@ -22,12 +22,14 @@ package de.unijena.bionf.spectral_alignment;
 
 import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 @Builder
 @Jacksonized
-public class SpectralSimilarity {
+public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
     public final double similarity;
     public final int sharedPeaks;
 
@@ -57,5 +59,12 @@ public class SpectralSimilarity {
     @Override
     public int hashCode() {
         return Objects.hash(similarity, sharedPeaks);
+    }
+
+    @Override
+    public int compareTo(@NotNull SpectralSimilarity o) {
+        int c = Double.compare(similarity,o.similarity);
+        if (c==0) return Integer.compare(sharedPeaks,o.sharedPeaks);
+        else return c;
     }
 }

@@ -27,10 +27,13 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabases;
+import de.unijena.bioinf.spectraldb.LibraryHit;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,6 +233,28 @@ public class WebWithCustomDatabase {
             try {
                 return StreamSupport.stream(speclib.lookupSpectra(formula, withData).spliterator(), false);
             } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).toList();
+    }
+
+
+    public List<LibraryHit> queryAgainstLibraryWithPrecursorMass(List<ReferenceLibrarySpectrum> query, double precursorMass, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
+        return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
+            try {
+                return StreamSupport.stream(speclib.queryAgainstLibraryWithPrecursorMass(precursorMass, chargeAndPolarity, settings, query).spliterator(), false);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).toList();
+    }
+    public List<LibraryHit> queryAgainstLibrary(List<ReferenceLibrarySpectrum> query, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
+        return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
+            try {
+                return StreamSupport.stream(speclib.queryAgainstLibrary(chargeAndPolarity, settings, query).spliterator(), false);
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 

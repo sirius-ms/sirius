@@ -38,6 +38,7 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.spectraldb.SpectraLibraryUpdateManager;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
@@ -69,8 +70,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
-    private WriteableSpectralLibrary databaseAsSpecLib;
-
+    //private WriteableSpectralLibrary databaseAsSpecLib;
+    private SpectraLibraryUpdateManager specLibManager;
     private final Queue<Listener> listeners = new LinkedList<>();
 
     // molecule buffer:  used to bundle molecular formula requests
@@ -143,7 +144,14 @@ public class CustomDatabaseImporter {
         try {
             flushAll();
         } finally {
+            performSpectraMergingIfNecessary();
             updateStatistics();
+        }
+    }
+
+    private void performSpectraMergingIfNecessary() {
+        if (specLibManager != null) {
+            SiriusJobs.getGlobalJobManager().submitJob(specLibManager.finishWriting()).takeResult();
         }
     }
 
@@ -306,9 +314,9 @@ public class CustomDatabaseImporter {
     }
 
     protected void flushSpectraBuffer() throws ChemicalDatabaseException {
-        if (databaseAsSpecLib == null)
+        if (specLibManager == null)
             try {
-                databaseAsSpecLib = database.toWriteableSpectralLibraryOrThrow();
+                specLibManager = new SpectraLibraryUpdateManager(database.toWriteableSpectralLibraryOrThrow(), database.toSpectralLibraryOrThrow());
             } catch (IOException e) {
                 throw new IllegalArgumentException("Structure db cannot be converted to spectral library", e);
             }
@@ -320,7 +328,7 @@ public class CustomDatabaseImporter {
             spectraBuffer.clear();
         }
         if (!spectra.isEmpty())
-            SpectralUtils.importSpectra(databaseAsSpecLib, spectra, spectra.size());
+            SpectralUtils.importSpectra(specLibManager, spectra, spectra.size());
 
     }
 
