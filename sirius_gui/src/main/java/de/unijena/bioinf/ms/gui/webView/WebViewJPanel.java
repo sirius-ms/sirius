@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -36,7 +37,7 @@ import org.w3c.dom.events.EventListener;
 import org.w3c.dom.events.EventTarget;
 import org.w3c.dom.html.HTMLAnchorElement;
 
-import java.awt.*;
+import javax.swing.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -69,8 +70,7 @@ public class WebViewJPanel extends JFXPanel {
                                 evt.preventDefault();
                                 Jobs.runInBackground(() -> {
                                     try {
-                                        URI address = new URI(href);
-                                        Desktop.getDesktop().browse(address);
+                                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(WebViewJPanel.this), new URI(href));
                                     } catch (URISyntaxException | IOException e) {
                                         LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
                                     }

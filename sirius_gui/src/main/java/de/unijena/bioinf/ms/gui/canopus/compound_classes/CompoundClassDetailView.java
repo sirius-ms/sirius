@@ -274,7 +274,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
-                Desktop.getDesktop().browse(URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())));
+                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())));
             } catch (IOException ex) {
                 LoggerFactory.getLogger(CompoundClassDetailView.class).error("Failed to open webbrowser");
             }

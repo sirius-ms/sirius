@@ -9,7 +9,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "gradle.plugin.com.google.cloud.artifactregistry:artifactregistry-gradle-plugin:2.2.2"
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
@@ -134,7 +133,6 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
-    apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
 
     targetCompatibility = 21
 
@@ -147,16 +145,14 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        //this is for public sirius-ms dependencies
-        maven {
-            name "sirius-ms-maven-public"
-            url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
-        }
-        //this is just needed to load non-public test for acceptance testing.
+
+        //this is just needed to load sirius-ms dependencies.
+        //All artifacts needed to build SIRIUS should be public.
+        //however some acceptance test data is not.
         repositories {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
-                name "GitLab"
+                name "BG GitLab"
                 if (System.getenv("CI_JOB_TOKEN") != null) {
                     credentials(HttpHeaderCredentials) {
                         name = "Job-Token"
@@ -165,7 +161,9 @@ allprojects {
                     authentication {
                         header(HttpHeaderAuthentication)
                     }
-                } else {
+                } else if (project.findProperty("com.bright-giant.build.gitlab.username") != null
+                        && project.findProperty("com.bright-giant.build.gitlab.token") != null
+                ) {
                     credentials(PasswordCredentials) {
                         username = project.findProperty("com.bright-giant.build.gitlab.username") as String
                         password = project.findProperty("com.bright-giant.build.gitlab.token") as String
@@ -320,8 +318,29 @@ subprojects {
             }
             repositories {
                 maven {
-                    name = "BG-maven-public"
-                    url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
+                    name = "GitLab"
+
+                    if (System.getenv("CI_JOB_TOKEN") != null) {
+                        url = "${System.getenv('CI_API_V4_URL')}/projects/${System.getenv('CI_PROJECT_ID')}/packages/maven"
+                        credentials(HttpHeaderCredentials) {
+                            name = "Job-Token"
+                            value = System.getenv("CI_JOB_TOKEN")
+                        }
+                        authentication {
+                            header(HttpHeaderAuthentication)
+                        }
+                    } else {
+                        url = project.findProperty("io.sirius-ms.build.artifactory.url") as String
+                        credentials(PasswordCredentials) {
+                            username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                            password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                            // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                            // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                        }
+                        authentication {
+                            basic(BasicAuthentication)
+                        }
+                    }
                 }
             }
         }
@@ -340,22 +359,18 @@ tasks.register('refreshDownloadLinks') {
         List<String> lines = [
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64.zip)",
 
-                "",
-                "<!--", //DISABLED ->  enable if needed
-                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
-                "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64-headless.zip)",
-                "-->", //DISABLED ->  enable if needed
+                "- for Windows (x86-64/amd64/x64): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win-x64.zip)",
+
+                "- for Mac (x86-64/amd64/x64): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-x64.zip)",
+                "- for Mac (arm64/aarch64/apple silicon): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-macos-arm64.zip)",
+
+                "- for Linux (x86-64/amd64/x64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-x64.zip)",
+                "- for Linux (arm64/aarch64): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux-arm64.zip)",
+
                 ""
         ] as List
 
