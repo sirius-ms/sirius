@@ -34,6 +34,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SearchResult {
+    public static class SearchResult implements Comparable<SearchResult> {
         @Builder.Default
         private int rank = -1;
 
@@ -97,5 +98,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
          */
         private String candidateInChiKey;
 
+        @Override
+        public int compareTo(@NotNull SpectralSearchResult.SearchResult o) {
+            return similarity.compareTo(o.similarity);
+        }
     }
 }

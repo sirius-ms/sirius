@@ -21,26 +21,30 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
-import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.*;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragment;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -50,6 +54,11 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
     public SpectraSearchSubtoolJob(JobSubmitter jobSubmitter) {
         super(jobSubmitter);
+        try {
+            CustomDatabases.getCustomDatabases(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
@@ -83,25 +92,37 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
+        if (!inst.hasMsMs()) {
+            return;
+        }
         final Ms2Experiment exp = inst.getExperiment();
+        final FastCosine fastCosine =new FastCosine();
         Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
         double precursorMz = exp.getIonMass();
         boolean isPositive = exp.getPrecursorIonType().isPositive();
+        final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x->fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
 
-        final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
-                .lookupSpectraStr(precursorMz, precursorDev, true, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs)
-                        .filter(s -> s.getPrecursorIonType().isPositive() == isPositive) //todo we might want to filter this by an indexed database field in the future but this need db schema conversion to be written first.
-                        .toList()
+        final SpectralLibrarySearchSettings settings = SpectralLibrarySearchSettings.conservativeDefaultForCosine();
+        settings.setPrecursorDeviation(precursorDev);
+        settings.setTargetType(SpectrumType.SPECTRUM);
+        // now compare against all these reference spectra
+
+        List<LibraryHit> hits = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
+                        .queryAgainstLibraryWithPrecursorMass(queries, precursorMz, exp.getPrecursorIonType().getCharge(), settings, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs)
                 , this::checkForInterruption);
-        SpectraMatchingJJob job = new SpectraMatchingJJob(references, exp);
-        job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
-        SpectralSearchResult result = submitJob(job).awaitResult();
 
-        checkForInterruption();
-
-        if (result == null)
+        if (hits == null || hits.isEmpty())
             return;
+        hits = hits.stream().sorted().toList();
+        List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
+        for (int k=0; k < hits.size(); ++k) {
+            LibraryHit hit = hits.get(k);
+            rankedHits.add(new SpectralSearchResult.SearchResult(k+1, hit.getSimilarity(), hit.getQueryIndex(), hit.getDbName(), hit.getDbId(),
+                    hit.getUuid(), hit.getSplash(), hit.getMolecularFormula(), hit.getAdduct(), hit.getExactMass(), hit.getSmiles(), hit.getCandidateInChiKey()));
+        }
+
+        SpectralSearchResult result = new SpectralSearchResult(settings.getPrecursorDeviation(), peakDev, settings.getMatchingType(), rankedHits);
 
         inst.saveSpectraSearchResult(result);
 
@@ -117,10 +138,10 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         builder.append("\nPeak deviation: ").append(peakDev);
         builder.append("\nExperiment: ").append(exp.getName());
 
-        List<MutableMs2Spectrum> queries = exp.getMs2Spectra();
+        List<MutableMs2Spectrum> ms2Queries = exp.getMs2Spectra();
         Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
         for (Integer queryIndex : resultMap.keySet()) {
-            MutableMs2Spectrum query = queries.get(queryIndex);
+            MutableMs2Spectrum query = ms2Queries.get(queryIndex);
             builder.append("\n").append(getQueryName(query, queryIndex));
             builder.append("\nSimilarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB name | DB link | Splash");
             List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);

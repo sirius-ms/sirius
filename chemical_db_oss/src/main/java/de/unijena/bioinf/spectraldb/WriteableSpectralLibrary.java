@@ -20,7 +20,11 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,5 +35,7 @@ public interface WriteableSpectralLibrary {
     int upsertSpectra(List<Ms2ReferenceSpectrum> data) throws IOException;
 
     void updateSpectraMatchingSmiles(Consumer<Ms2ReferenceSpectrum> updater, String smiles) throws IOException;
+
+    void insertMergedSpecAndTree(MergedReferenceSpectrum merged, ReferenceFragmentationTree refTree) throws IOException;
 
 }
