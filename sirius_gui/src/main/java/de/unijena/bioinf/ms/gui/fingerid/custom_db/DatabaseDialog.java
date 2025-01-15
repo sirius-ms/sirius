@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -169,7 +169,7 @@ public class DatabaseDialog extends JDialog {
         deleteDB.addActionListener(deleteSelectedDb);
 
         JFileChooser openDbFileChooser = new JFileChooser();
-        openDbFileChooser.setFileFilter(new CustomDbFileFilter());
+        openDbFileChooser.setFileFilter(new FileNameExtensionFilter("SIRIUS custom database files", CustomDatabases.CUSTOM_DB_SUFFIX.replace(".", "")));
         openDbFileChooser.setMultiSelectionEnabled(true);
         openDB.addActionListener(e -> {
             if (openDbFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -283,19 +283,6 @@ public class DatabaseDialog extends JDialog {
                 content.setText("Empty custom database.");
                 content.setToolTipText(null);
             }
-        }
-    }
-
-    public static class CustomDbFileFilter extends FileFilter {
-
-        @Override
-        public boolean accept(File f) {
-            return f.isDirectory() || f.getName().endsWith(CustomDatabases.CUSTOM_DB_SUFFIX);
-        }
-
-        @Override
-        public String getDescription() {
-            return "SIRIUS custom database files";
         }
     }
 

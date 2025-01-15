@@ -429,7 +429,7 @@ public class BayesianScoringUtils {
         Fingerprint[] specificRefFPs;
         ProbabilityFingerprint[] specificPredFPs;
         long startTime = System.currentTimeMillis();
-        if (useBiotransformations()){
+        if (useBiotransformations()) {
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
             specificRefFPs = getTrueReferenceFingerprintsByFormula(biotransF);
             specificPredFPs = getPredictedReferenceFingerprintsByFormula(biotransF);
@@ -454,7 +454,7 @@ public class BayesianScoringUtils {
         } else {
             scoringFormulaSpecific = BayesnetScoringFormulaSpecificBuilder.createScoringMethod(trainingData.predictionPerformances, specificPredFPs, specificRefFPs, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly(), generalDataWeight);
         }
-        FingerprintStatistics statistics = makeFingerprintStatistics(scoringFormulaSpecific.nodeList, candidates);
+        FingerprintStatistics statistics = makeFingerprintStatistics((MaskedFingerprintVersion) scoringFormulaSpecific.getFpVersion(), scoringFormulaSpecific.nodeList, candidates);
         scoringFormulaSpecific.setStatistics(statistics);
 
         endTime = System.currentTimeMillis();
@@ -462,16 +462,19 @@ public class BayesianScoringUtils {
         return scoringFormulaSpecific;
     }
 
-    private FingerprintStatistics makeFingerprintStatistics(BayesnetScoring.AbstractCorrelationTreeNode[] nodes, List<FingerprintCandidate> candidates) {
+    private FingerprintStatistics makeFingerprintStatistics(MaskedFingerprintVersion maskedVersion, BayesnetScoring.AbstractCorrelationTreeNode[] nodes, List<FingerprintCandidate> candidates) {
         if (candidates == null || candidates.isEmpty())
             throw new IllegalStateException("Database candidates are empty, Should not be possible since tree topology has already been computed.");
-        final FingerprintVersion version = candidates.iterator().next().getFingerprint().getFingerprintVersion();
-        FingerprintStatistics statistics = new FingerprintStatistics(candidates.size(), version.size());
+
+        FingerprintStatistics statistics = new FingerprintStatistics(candidates.size(), maskedVersion.size());
+        Log.info("Creating FPStatistics for {} candidates and Masked FP cardinality {}.", candidates.size(), maskedVersion.size());
 
         // count overall bits that are set
-        candidates.stream().map(FingerprintCandidate::getFingerprint).forEach(fp ->
-                fp.presentFingerprints().forEach(prop ->
-                        statistics.incrementPropertyAbundance(version.getRelativeIndexOf(prop.getIndex()))));
+        candidates.stream()
+                .map(FingerprintCandidate::getFingerprint)
+                .map(maskedVersion::mask)
+                .forEach(fp -> fp.presentFingerprints().forEach(prop ->
+                        statistics.incrementPropertyAbundance(maskedVersion.getRelativeIndexOf(prop.getIndex()))));
 
         // count dependent bits that are set
         for (BayesnetScoring.AbstractCorrelationTreeNode node : nodes) {
@@ -479,12 +482,25 @@ public class BayesianScoringUtils {
             if (node.numberOfParents() > 0) {
                 int parentIndex = node.getParents()[0].getFingerprintIndex();
                 statistics.setParentIndex(childIndex, parentIndex);
-                candidates.stream().map(FingerprintCandidate::getFingerprint).forEach(fp -> {
-                    if (fp.isSet(version.getAbsoluteIndexOf(childIndex))
-                            && fp.isSet(version.getAbsoluteIndexOf(parentIndex)))
-                        statistics.incrementPropertyAbundanceWithParent(childIndex);
-                });
+                candidates.stream()
+                        .map(FingerprintCandidate::getFingerprint)
+                        .forEach(fp -> {
+                            if (fp.isSet(maskedVersion.getAbsoluteIndexOf(childIndex))
+                                    && fp.isSet(maskedVersion.getAbsoluteIndexOf(parentIndex)))
+                                statistics.incrementPropertyAbundanceWithParent(childIndex);
+                        });
             }
+        }
+        // validation
+        assert  statistics.getPropertyAbundances().length == maskedVersion.size();
+        assert  statistics.getPropertyAbundanceWithParent().length == maskedVersion.size();
+        assert  statistics.getParentIndeces().length == maskedVersion.size();
+
+        for (int i = 0; i < statistics.getPropertyAbundances().length; i++) {
+            int abundance = statistics.getPropertyAbundances()[i];
+            int abundanceWithPatent = statistics.getPropertyAbundances()[i];
+            if (abundanceWithPatent > abundance)
+                Log.warn("Abundance with parent is larger than solo abundance. Should not be possible!");
         }
 
         return statistics;
@@ -517,7 +533,7 @@ public class BayesianScoringUtils {
             scoringDefault = BayesnetScoringBuilder.createScoringMethod(trainingData.predictionPerformances, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly());
         }
 
-        FingerprintStatistics statistics = makeFingerprintStatistics(scoringDefault.nodeList, candidates);
+        FingerprintStatistics statistics = makeFingerprintStatistics((MaskedFingerprintVersion) scoringDefault.getFpVersion(), scoringDefault.nodeList, candidates);
         scoringDefault.setStatistics(statistics);
         return scoringDefault;
     }
