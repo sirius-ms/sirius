@@ -54,11 +54,6 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
     public SpectraSearchSubtoolJob(JobSubmitter jobSubmitter) {
         super(jobSubmitter);
-        try {
-            CustomDatabases.getCustomDatabases(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
@@ -111,7 +106,6 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         List<LibraryHit> hits = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
                         .queryAgainstLibraryWithPrecursorMass(queries, precursorMz, exp.getPrecursorIonType().getCharge(), settings, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs)
                 , this::checkForInterruption);
-
         if (hits == null || hits.isEmpty())
             return;
         hits = hits.stream().sorted().toList();
