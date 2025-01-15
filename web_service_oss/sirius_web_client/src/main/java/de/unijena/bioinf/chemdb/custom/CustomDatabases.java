@@ -72,6 +72,19 @@ public class CustomDatabases {
         }
     }
 
+    private static volatile boolean loaded = false;
+
+    public static void load(CdkFingerprintVersion version) {
+        if (!loaded) {
+            synchronized (CustomDatabases.class) {
+                if (!loaded) {
+                    @NotNull List<CustomDatabase> dbs = openAll(true, version);
+                    log.info("Loaded custom databases: {}", dbs.stream().map(CustomDatabase::name).collect(Collectors.joining(", ")));
+                    loaded = true;
+                }
+            }
+        }
+    }
 
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name, CdkFingerprintVersion version) {
@@ -114,6 +127,7 @@ public class CustomDatabases {
     public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, CdkFingerprintVersion version) {
         return getCustomDatabaseByPathOrThrow(dbDir, true, version);
     }
+
     @NotNull
     public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, boolean up2date, CdkFingerprintVersion version) {
         try {
@@ -127,6 +141,7 @@ public class CustomDatabases {
     public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, CdkFingerprintVersion version) {
         return getCustomDatabaseByPathOrThrow(Path.of(db.location()), version);
     }
+
     public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, boolean up2date, CdkFingerprintVersion version) {
         return getCustomDatabaseByPathOrThrow(Path.of(db.location()), up2date, version);
     }
@@ -225,6 +240,7 @@ public class CustomDatabases {
     public static boolean remove(String dbId) {
         return CustomDataSources.removeCustomSource(dbId);
     }
+
     public static void remove(CustomDatabase db, boolean delete) {
         if (delete) {
             try {
