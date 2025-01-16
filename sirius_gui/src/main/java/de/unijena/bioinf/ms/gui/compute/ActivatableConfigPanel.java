@@ -90,8 +90,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         add(activationButton, content);
 
         if (checkServerConnection) {
-            listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
-            gui.getConnectionMonitor().addConnectionStateListener(listener);
+            listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionEvent) evt).getConnectionCheck());
+            gui.getConnectionMonitor().addConnectionListener(listener);
             @Nullable ConnectionCheck check = gui.getConnectionMonitor().getCurrentCheckResult();
             if (check != null) {
                 processConnectionCheck(check);

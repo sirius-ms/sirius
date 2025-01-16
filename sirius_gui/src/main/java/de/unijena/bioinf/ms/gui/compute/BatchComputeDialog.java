@@ -280,10 +280,10 @@ public class BatchComputeDialog extends JDialog {
             updateConnectionBanner(checkResult);
 
             connectionListener = evt -> {
-                if (evt instanceof ConnectionMonitor.ConnectionStateEvent stateEvent)
+                if (evt instanceof ConnectionMonitor.ConnectionEvent stateEvent)
                     Jobs.runEDTLater(() -> updateConnectionBanner(stateEvent.getConnectionCheck()));
             };
-            gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
+            gui.getConnectionMonitor().addConnectionListener(connectionListener);
         });
 
         setPreferredSize(new Dimension(1150, 1024));
