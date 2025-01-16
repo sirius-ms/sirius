@@ -768,8 +768,8 @@ public class BatchComputeDialog extends JDialog {
         allPresets = new HashMap<>();
         List<StoredJobSubmission> configsFromServer = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigs());
         for (StoredJobSubmission c : configsFromServer) {
-            presetDropdown.addItem(c.getName());
             allPresets.put(c.getName(), c);
+            presetDropdown.addItem(c.getName());
         }
     }
 
