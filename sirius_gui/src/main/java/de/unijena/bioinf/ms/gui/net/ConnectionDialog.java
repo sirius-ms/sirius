@@ -75,7 +75,7 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
 
         connectionCheck = new ConnectionCheckPanel(this, gui, check);
         connectionCheck.setBackground(getBackground());
-        gui.getConnectionMonitor().addConnectionStateListener(connectionCheck);
+        gui.getConnectionMonitor().addConnectionListener(connectionCheck);
         add(connectionCheck, BorderLayout.CENTER);
 
         //south
