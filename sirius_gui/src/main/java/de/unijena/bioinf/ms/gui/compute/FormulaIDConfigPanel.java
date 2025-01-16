@@ -340,7 +340,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         return formulaSearchStrategy.getFormulaSearchDBs();
     }
 
-    public void applyValuesFromPreset(Map<String, String> preset, boolean defaultPreset) {
+    public void applyValuesFromPreset(Map<String, String> preset) {
         String profileString = preset.get("AlgorithmProfile");
         Instrument instrument = Arrays.stream(Instrument.values()).filter(i -> i.profile.equalsIgnoreCase(profileString)).findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not parse algorithm profile " + profileString + "."));

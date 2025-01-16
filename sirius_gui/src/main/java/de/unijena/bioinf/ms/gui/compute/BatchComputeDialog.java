@@ -78,7 +78,10 @@ public class BatchComputeDialog extends JDialog {
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
     public static final String DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS = "de.unijena.bioinf.sirius.computeDialog.preset.hiddenParameters.dontAskAgain";
 
-    public static final String DEFAULT_PRESET_DISPLAY_NAME = "default";
+    // should be the same as returned by the server
+    public static final String DEFAULT_PRESET_NAME = "Default";
+    public static final String MS1_PRESET_NAME = "MS1";
+
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
     // main parts
@@ -104,6 +107,7 @@ public class BatchComputeDialog extends JDialog {
     private PropertyChangeListener connectionListener;
 
     private JComboBox<String> presetDropdown;
+    private Map<String, StoredJobSubmission> allPresets;
     private JobSubmission preset;
     private boolean presetFrozen;
     private MessageBanner presetInfoBanner;
@@ -276,7 +280,7 @@ public class BatchComputeDialog extends JDialog {
                 checkResult = gui.getConnectionMonitor().checkConnection();
             }
 
-            activatePreset(DEFAULT_PRESET_DISPLAY_NAME);
+            activatePreset(ms2 ? DEFAULT_PRESET_NAME : MS1_PRESET_NAME);
             updateConnectionBanner(checkResult);
 
             connectionListener = evt -> {
@@ -708,9 +712,9 @@ public class BatchComputeDialog extends JDialog {
                 String presetName = (String)event.getItem();
                 activatePreset(presetName);
 
-                boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-                savePreset.setEnabled(!defaultSelected && !presetFrozen && !isSingleCompound());
-                removePreset.setEnabled(!defaultSelected);
+                boolean editable = allPresets.get(presetName).isEditable();
+                savePreset.setEnabled(editable && !presetFrozen && !isSingleCompound());
+                removePreset.setEnabled(editable);
             }
         });
 
@@ -761,26 +765,24 @@ public class BatchComputeDialog extends JDialog {
      */
     private void reloadPresets() {
         presetDropdown.removeAllItems();
-        List<String> presetNames = new ArrayList<>();
-        presetNames.add(DEFAULT_PRESET_DISPLAY_NAME);
-        presetNames.addAll(gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigNames()));
-        presetNames.forEach(presetDropdown::addItem);
+        allPresets = new HashMap<>();
+        List<StoredJobSubmission> configsFromServer = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigs());
+        for (StoredJobSubmission c : configsFromServer) {
+            presetDropdown.addItem(c.getName());
+            allPresets.put(c.getName(), c);
+        }
     }
 
     private void activatePreset(String presetName) {
         presetUnfreeze();
         try {
-            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true,true, false));
-            boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-            if (defaultSelected) {
-                preset = defaultPreset;
-            } else {
-
+            preset = allPresets.get(presetName).getJobSubmission();
+            JobSubmission defaultPreset = allPresets.get(DEFAULT_PRESET_NAME).getJobSubmission();
+            if (allPresets.get(presetName).isEditable()) {
                 // If custom DBs change, preset will have an outdated list that causes a warning,
                 // they will be all selected anyway, so we can ignore it
                 Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
 
-                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true)).getJobSubmission();
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
@@ -802,16 +804,12 @@ public class BatchComputeDialog extends JDialog {
                 }
             }
 
-            // all parameters of the presets are part of the configmap, ensured via `moveParametersToConfigMap`.
-            // however user might save a simple preset without config map (e.g. using api).
-            // Missing values in the map will fallback to default during computation.
-            // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
-            // This is the same as falling back to default, but we can fill the gui panel correctly.
+            // Fall back to default parameters in the GUI if they are missing in the selected preset
             final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
 
-            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
+            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
             boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
