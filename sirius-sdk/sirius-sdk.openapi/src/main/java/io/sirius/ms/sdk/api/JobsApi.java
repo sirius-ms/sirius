@@ -539,12 +539,14 @@ public class JobsApi {
         return getJobConfigRequestCreation(name, moveParametersToConfigMap);
     }
     /**
-     * Get all (non-default) job configuration names
+     * DEPRECATED: use /job-configs to get all configs with names.
      * Get all (non-default) job configuration names
      * <p><b>200</b> - OK
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec getJobConfigNamesRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
@@ -569,7 +571,7 @@ public class JobsApi {
     }
 
     /**
-     * Get all (non-default) job configuration names
+     * DEPRECATED: use /job-configs to get all configs with names.
      * Get all (non-default) job configuration names
      * <p><b>200</b> - OK
      * @return List&lt;String&gt;
@@ -581,7 +583,7 @@ public class JobsApi {
     }
 
     /**
-     * Get all (non-default) job configuration names
+     * DEPRECATED: use /job-configs to get all configs with names.
      * Get all (non-default) job configuration names
      * <p><b>200</b> - OK
      * @return ResponseEntity&lt;List&lt;String&gt;&gt;
@@ -593,7 +595,7 @@ public class JobsApi {
     }
 
     /**
-     * Get all (non-default) job configuration names
+     * DEPRECATED: use /job-configs to get all configs with names.
      * Get all (non-default) job configuration names
      * <p><b>200</b> - OK
      * @return ResponseSpec
