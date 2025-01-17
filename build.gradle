@@ -149,7 +149,7 @@ allprojects {
         // This is just needed to load sirius-ms testing dependencies.
         // All artifacts needed to build SIRIUS should be public.
         // however some acceptance test data is not.
-        if ((System.getenv("CI_JOB_TOKEN") != null) || (project.findProperty("com.bright-giant.build.gitlab.username") != null
+        /*if ((System.getenv("CI_JOB_TOKEN") != null) || (project.findProperty("com.bright-giant.build.gitlab.username") != null
                 && project.findProperty("com.bright-giant.build.gitlab.token") != null)) {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -176,7 +176,7 @@ allprojects {
                     }
                 }
             }
-        }
+        }*/
 
         maven {
             url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
