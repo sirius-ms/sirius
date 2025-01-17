@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -17,6 +18,7 @@ import java.awt.event.ItemListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public class StructureSearchStrategy extends JPanel {
@@ -25,6 +27,8 @@ public class StructureSearchStrategy extends JPanel {
     protected DBSelectionListPanel searchDBList;
     protected SiriusGui gui;
     public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
+
+    private ItemListener divergingDatabaseListener;
 
     public StructureSearchStrategy(SiriusGui gui, @Nullable final FormulaSearchStrategy syncStrategy, Supplier<Boolean> isPubchemAsFallbackSelected) {
         this.gui = gui;
@@ -57,23 +61,20 @@ public class StructureSearchStrategy extends JPanel {
                     searchDBList.checkBoxList.uncheck(pubChemDB);
                 }
             });
-            addDivergingDatabasesNote(syncStrategy);
+            createDivergingDatabasesListener(syncStrategy);
         }
     }
 
-    private void addDivergingDatabasesNote(FormulaSearchStrategy syncStrategy) {
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
-            ItemListener dbSelectionChangeListener = new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    if (syncStrategy.getSelectedStrategy() == FormulaSearchStrategy.Strategy.DATABASE && !syncStrategy.getSearchDBList().checkBoxList.isSelectionEqual(searchDBList.checkBoxList)) {
-                        new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
-                        searchDBList.checkBoxList.removeCheckBoxListener(this);
-                    }
+    private void createDivergingDatabasesListener(FormulaSearchStrategy syncStrategy) {
+        divergingDatabaseListener = new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (syncStrategy.getSelectedStrategy() == FormulaSearchStrategy.Strategy.DATABASE && !syncStrategy.getSearchDBList().checkBoxList.isSelectionEqual(searchDBList.checkBoxList)) {
+                    new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
+                    searchDBList.checkBoxList.removeCheckBoxListener(this);
                 }
-            };
-            searchDBList.checkBoxList.addCheckBoxListener(dbSelectionChangeListener);
-        }
+            }
+        };
     }
 
 
@@ -97,5 +98,27 @@ public class StructureSearchStrategy extends JPanel {
 
     public List<SearchableDatabase> getStructureSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
+    }
+
+    public void applyValuesFromPreset(Map<String, String> preset) {
+        removeDivergingDatabaseListener();
+        searchDBList.checkBoxList.uncheckAll();
+        searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("StructureSearchDB")));
+        addDivergingDatabaseListener();
+        checkDivergingDatabases();
+    }
+
+    private void addDivergingDatabaseListener() {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
+            searchDBList.checkBoxList.addCheckBoxListener(divergingDatabaseListener);
+        }
+    }
+
+    private void removeDivergingDatabaseListener() {
+        searchDBList.checkBoxList.removeCheckBoxListener(divergingDatabaseListener);
+    }
+
+    private void checkDivergingDatabases() {
+        divergingDatabaseListener.itemStateChanged(null);
     }
 }
