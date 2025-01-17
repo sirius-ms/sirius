@@ -130,7 +130,6 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             confidenceModeBox.setSelectedItem(expansiveMode);
         }
 
-        structureSearchStrategy.getSearchDBList().checkBoxList.uncheckAll();
-        structureSearchStrategy.getSearchDBList().select(SearchableDBAnnotation.makeDB(preset.get("StructureSearchDB")));
+        structureSearchStrategy.applyValuesFromPreset(preset);
     }
 }
