@@ -774,6 +774,10 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private void activatePreset(String presetName) {
+        if (!Objects.equals(presetDropdown.getSelectedItem(), presetName)) {
+            presetDropdown.getModel().setSelectedItem(presetName);
+            return;
+        }
         presetUnfreeze();
         try {
             preset = allPresets.get(presetName).getJobSubmission();
