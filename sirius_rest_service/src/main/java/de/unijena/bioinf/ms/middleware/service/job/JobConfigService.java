@@ -43,7 +43,8 @@ public class JobConfigService {
 
     private StoredJobSubmission createMS1Config() {
         JobSubmission js = getDefaultJobConfig(false);
-        js.getFormulaIdParams().setPerformDenovoBelowMz(0d);
+        js.getFormulaIdParams().setPerformDenovoBelowMz(Double.POSITIVE_INFINITY);
+        js.getFormulaIdParams().setPerformBottomUpSearch(false);
         js.getFingerprintPredictionParams().setEnabled(false);
         js.getCanopusParams().setEnabled(false);
         js.getStructureDbSearchParams().setEnabled(false);
