@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
@@ -42,23 +43,24 @@ public class JobConfigService {
 
     private StoredJobSubmission createMS1Config() {
         JobSubmission js = getDefaultJobConfig(false);
-        js.getFormulaIdParams().setEnabled(true);
         js.getFormulaIdParams().setPerformDenovoBelowMz(0d);
+        js.getFingerprintPredictionParams().setEnabled(false);
+        js.getCanopusParams().setEnabled(false);
+        js.getStructureDbSearchParams().setEnabled(false);
+
         return wrapSubmission(MS1_CONFIG_NAME, false, js);
     }
 
     private StoredJobSubmission createDBSearchConfig() {
         JobSubmission js = getDefaultJobConfig(false);
 
-        js.getFormulaIdParams().setEnabled(true);
         js.getFormulaIdParams().setPerformDenovoBelowMz(0d);
         js.getFormulaIdParams().setPerformBottomUpSearch(false);
 
-        List<CustomDataSources.Source> defaultDBs = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs;
+        // Same DBs as by default in GUI
+        Set<CustomDataSources.Source> defaultDBs = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
+        defaultDBs.addAll(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
         js.getFormulaIdParams().setFormulaSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
-
-        js.getFingerprintPredictionParams().setEnabled(true);
-        js.getMsNovelistParams().setEnabled(true);
 
         return wrapSubmission(DB_SEARCH_CONFIG_NAME, false, js);
     }
