@@ -143,13 +143,47 @@ allprojects {
     group = 'io.sirius-ms'
 
     repositories {
-        mavenLocal()
+//        mavenLocal()
         mavenCentral()
+
+        maven {
+            url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+            name "BG GitLab Common Public"
+        }
+
+        maven {
+            url 'https://gitlab.com/api/v4/projects/66035483/packages/maven'
+            name "BG GitLab Java CBC"
+        }
+
+        maven {
+            url 'https://gitlab.com/api/v4/projects/66016354/packages/maven'
+            name "BG GitLab JJobs"
+        }
+
+        maven {
+            url 'https://gitlab.com/api/v4/projects/66036281/packages/maven'
+            name "BG Java native utils"
+        }
+
+        maven {
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+        }
+
+        maven {
+            url "https://repo1.maven.org/maven2/" //glazed lists
+        }
+
+        maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
+        }
+
 
         // This is just needed to load sirius-ms testing dependencies.
         // All artifacts needed to build SIRIUS should be public.
         // however some acceptance test data is not.
-        /*if ((System.getenv("CI_JOB_TOKEN") != null) || (project.findProperty("com.bright-giant.build.gitlab.username") != null
+        if ((System.getenv("CI_JOB_TOKEN") != null) || (project.findProperty("com.bright-giant.build.gitlab.username") != null
                 && project.findProperty("com.bright-giant.build.gitlab.token") != null)) {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
@@ -176,24 +210,6 @@ allprojects {
                     }
                 }
             }
-        }*/
-
-        maven {
-            url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
-            name "BG GitLab Common Public"
-        }
-
-        maven {
-            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-        }
-
-        maven {
-            url "https://repo1.maven.org/maven2/" //glazed lists
-        }
-
-        maven {
-            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
-            allowInsecureProtocol = true
         }
     }
 
