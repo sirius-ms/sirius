@@ -201,7 +201,7 @@ public class BatchComputeDialog extends JDialog {
                     msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
 
                     // computing formulaId will discard fingerprints, so we need to enable it for structure search
-                    formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> {
+                    formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                         if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
                             fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
                             fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
