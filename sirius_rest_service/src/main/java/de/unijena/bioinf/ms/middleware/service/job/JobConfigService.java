@@ -61,7 +61,9 @@ public class JobConfigService {
         // Same DBs as by default in GUI
         Set<CustomDataSources.Source> defaultDBs = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
         defaultDBs.addAll(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
+        // set formula and structure search dbs to the same database by default.
         js.getFormulaIdParams().setFormulaSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
+        js.getStructureDbSearchParams().setStructureSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
 
         return wrapSubmission(DB_SEARCH_CONFIG_NAME, false, js);
     }
