@@ -813,6 +813,8 @@ public class BatchComputeDialog extends JDialog {
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
 
+            csiSearchConfigs.getContent().getStructureSearchStrategy().removeDivergingDatabaseListener();
+
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
