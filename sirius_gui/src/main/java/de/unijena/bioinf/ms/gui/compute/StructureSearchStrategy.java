@@ -108,14 +108,15 @@ public class StructureSearchStrategy extends JPanel {
         checkDivergingDatabases();
     }
 
-    private void addDivergingDatabaseListener() {
-        if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
+    public void addDivergingDatabaseListener() {
+        if (divergingDatabaseListener != null && !PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
             searchDBList.checkBoxList.addCheckBoxListener(divergingDatabaseListener);
         }
     }
 
-    private void removeDivergingDatabaseListener() {
-        searchDBList.checkBoxList.removeCheckBoxListener(divergingDatabaseListener);
+    public void removeDivergingDatabaseListener() {
+        if (divergingDatabaseListener != null)
+            searchDBList.checkBoxList.removeCheckBoxListener(divergingDatabaseListener);
     }
 
     private void checkDivergingDatabases() {
