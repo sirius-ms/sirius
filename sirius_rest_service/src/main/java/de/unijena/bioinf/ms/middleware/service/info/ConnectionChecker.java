@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.middleware.model.login.Subscription;
+import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
@@ -116,6 +117,18 @@ public final class ConnectionChecker {
             try {
                 //enrich license info with consumables
                 ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
+
+                if (Boolean.TRUE.equals(ll.getSubscription().isCountQueries()) && ll.getSubscription().hasInstanceLimit()){
+                    final int limit = ll.getSubscription().getInstanceLimit();
+                    final int consumed = Optional.ofNullable(ll.getConsumables())
+                            .map(SubscriptionConsumables::getCountedCompounds).orElse(-1);
+                    if (consumed >= limit){
+                        errors.computeIfAbsent(ConnectionError.Klass.LICENSE, k -> new LinkedHashSet<>())
+                                .add(new ConnectionError(56,
+                                        "Query Limit ("+ consumed + "/" + limit + ") of this subscription has been Reached! Please upgrade subscription." ,
+                                        ConnectionError.Klass.LICENSE, null, ConnectionError.Type.WARNING));
+                    }
+                }
             } catch (Exception e) {
                 errors.computeIfAbsent(ConnectionError.Klass.APP_SERVER, k -> new LinkedHashSet<>())
                         .add(new ConnectionError(93,
