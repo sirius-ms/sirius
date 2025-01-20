@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe;
 
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.sdk.model.ConnectionCheck;
@@ -75,7 +76,15 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
                         .map(SubscriptionConsumables::getCountedCompounds).orElse(-1);
 
                 final String current = consumed < 0 ? "N/A" : String.valueOf(consumed);
-                consumedQueries.setText("<html>Quota: <b>" + current + "/" + max + "</b> (per " + (hasLimit ? "Year" : "Month") + ")</html>");
+
+                Color fontColor = Colors.GOOD;
+                if (hasLimit && (consumed  >= sub.getInstanceLimit()))
+                    fontColor = Colors.ERROR;
+                else if (hasLimit && (consumed  >= sub.getInstanceLimit()* .8))
+                    fontColor = Colors.WARN;
+
+                String limit = "<font color=\""+ Colors.asHex(fontColor) +"\"> " +  current + "/" + max + " </font>";
+                consumedQueries.setText("<html>Quota: <b>" + limit + "</b> (per " + (hasLimit ? "Year" : "Month") + ")</html>");
             } else {
                 consumedQueries.setText("<html>Quota: <b>UNLIMITED</b></html>");
             }
