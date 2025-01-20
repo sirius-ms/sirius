@@ -102,7 +102,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             return "APPROXIMATE";
         });
 
-        pubChemFallback.addActionListener(e -> {
+        pubChemFallback.addChangeListener(e -> {
             List.of(confLabel, confidenceModeBox).forEach(c -> c.setVisible(pubChemFallback.isSelected()));
             refreshPubChem();
         });

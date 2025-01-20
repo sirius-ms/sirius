@@ -52,13 +52,13 @@ public class StructureSearchStrategy extends JPanel {
             syncCheckBoxList.addCheckBoxListener(e -> {
                 @SuppressWarnings("unchecked")
                 SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+                if (item.equals(pubChemDB) && isPubchemAsFallbackSelected.get()) {
+                    return;
+                }
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     searchDBList.checkBoxList.check(item);
                 } else {
                     searchDBList.checkBoxList.uncheck(item);
-                }
-                if (isPubchemAsFallbackSelected.get()) {
-                    searchDBList.checkBoxList.uncheck(pubChemDB);
                 }
             });
             createDivergingDatabasesListener(syncStrategy);
