@@ -56,8 +56,9 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
@@ -98,6 +99,7 @@ public class BatchComputeDialog extends JDialog {
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
+    private boolean ms2;
 
     protected boolean isAdvancedView = false;
 
@@ -113,6 +115,7 @@ public class BatchComputeDialog extends JDialog {
     private MessageBanner presetInfoBanner;
     private MessageBanner presetWarningBanner;
     private MessageBanner connectionMessage;
+    private ItemListener presetChangeListener;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
@@ -151,7 +154,7 @@ public class BatchComputeDialog extends JDialog {
         main.add(northPanel, BorderLayout.NORTH);
 
         loadableWrapper.runInBackgroundAndLoad(() -> {
-            final boolean ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs) || compoundsToProcess.isEmpty();  // Empty compounds if the dialog is opened to edit presets, ms2 UI should be active
+            ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs) || compoundsToProcess.isEmpty();  // Empty compounds if the dialog is opened to edit presets, ms2 UI should be active
             {
                 // make subtool config panels
                 formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
@@ -280,7 +283,8 @@ public class BatchComputeDialog extends JDialog {
                 checkResult = gui.getConnectionMonitor().checkConnection();
             }
 
-            activatePreset(ms2 ? DEFAULT_PRESET_NAME : MS1_PRESET_NAME);
+            reloadPresets();
+            activateDefaultPreset();
             updateConnectionBanner(checkResult);
 
             connectionListener = evt -> {
@@ -298,6 +302,10 @@ public class BatchComputeDialog extends JDialog {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private void activateDefaultPreset() {
+        activatePreset(ms2 ? DEFAULT_PRESET_NAME : MS1_PRESET_NAME);
     }
 
     private boolean isSingleCompound() {
@@ -679,7 +687,6 @@ public class BatchComputeDialog extends JDialog {
         panel.add(new JLabel("Preset"));
 
         presetDropdown = new JComboBox<>();
-        reloadPresets();
 
         panel.add(presetDropdown);
 
@@ -707,7 +714,7 @@ public class BatchComputeDialog extends JDialog {
         panel.add(saveAsPreset);
         panel.add(removePreset);
 
-        presetDropdown.addItemListener(event -> {
+        presetChangeListener = event -> {
             if (event.getStateChange() == ItemEvent.SELECTED) {
                 String presetName = (String)event.getItem();
                 activatePreset(presetName);
@@ -716,12 +723,13 @@ public class BatchComputeDialog extends JDialog {
                 savePreset.setEnabled(editable && !presetFrozen && !isSingleCompound());
                 removePreset.setEnabled(editable);
             }
-        });
+        };
 
         savePreset.addActionListener(e -> {
             String presetName = (String) presetDropdown.getSelectedItem();
             JobSubmission currentConfig = makeJobSubmission();
             gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true, false));
+            reloadPresets();
             activatePreset(presetName);
         });
 
@@ -755,15 +763,18 @@ public class BatchComputeDialog extends JDialog {
             String presetName = (String) presetDropdown.getSelectedItem();
             gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobConfig(presetName));
             reloadPresets();
+            activateDefaultPreset();
         });
 
         return panel;
     }
 
     /**
-     * Removes all current presets from the preset dropdown and loads them again
+     * Removes all current presets from the preset dropdown and loads them again.
+     * Some preset should be activated after calling this method, otherwise the UI will be in an inconsistent state
      */
     private void reloadPresets() {
+        presetDropdown.removeItemListener(presetChangeListener);  // the first item added to the combobox gets selected, and we don't want to activate it immediately
         presetDropdown.removeAllItems();
         allPresets = new HashMap<>();
         List<StoredJobSubmission> configsFromServer = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigs());
@@ -771,6 +782,7 @@ public class BatchComputeDialog extends JDialog {
             allPresets.put(c.getName(), c);
             presetDropdown.addItem(c.getName());
         }
+        presetDropdown.addItemListener(presetChangeListener);
     }
 
     private void activatePreset(String presetName) {
