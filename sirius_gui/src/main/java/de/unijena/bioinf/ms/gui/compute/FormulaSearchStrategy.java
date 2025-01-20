@@ -613,8 +613,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             elementFilterForBottomUp.setSelected(applyElementFilterToBottomUp);
         }
 
-        searchDBList.checkBoxList.uncheckAll();
         if (s == Strategy.DATABASE) {
+            searchDBList.checkBoxList.uncheckAll();
             searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("FormulaSearchDB")));
             elementFilterForDatabase.setSelected(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
         }
