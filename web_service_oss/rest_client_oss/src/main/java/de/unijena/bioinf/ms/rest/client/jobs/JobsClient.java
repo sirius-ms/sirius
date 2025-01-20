@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.json.FTreeSerializer;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.*;
+import de.unijena.bioinf.rest.HttpErrorResponseException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -88,15 +89,44 @@ public class JobsClient extends AbstractCsiClient {
 
 
     public EnumMap<JobTable, List<JobUpdate<?>>> postJobs(JobInputs submission, @NotNull OkHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder()
-                        .url(buildVersionSpecificWebapiURI("/jobs/" + CID).build())
-                        .post(RequestBody.create(postJobMapper
-                                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                                .writeValueAsBytes(submission), APPLICATION_JSON)
-                        ), new TypeReference<>() {
-                }
-        );
+        try {
+            return executeFromJson(client,
+                    () -> new Request.Builder()
+                            .url(buildVersionSpecificWebapiURI("/jobs/" + CID).build())
+                            .post(RequestBody.create(postJobMapper
+                                    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                                    .writeValueAsBytes(submission), APPLICATION_JSON)
+                            ), new TypeReference<>() {
+                    }
+            );
+        } catch (HttpErrorResponseException e) {
+            ProblemResponse errorJson = e.getErrorResponse();
+            if (errorJson != null && errorJson.getStatus() == 403) {
+                EnumMap<JobTable, List<JobUpdate<?>>> response = new EnumMap<>(JobTable.class);
+                if (!submission.hasJobs())
+                    return response;
+
+                if (submission.hasFingerprintJobs())
+                   putJobSubmissionError(response, JobTable.JOBS_FINGERID, errorJson.getDetail(), submission.getFingerprintJobInputs().size());
+                if (submission.hasCovtreeJobs())
+                    putJobSubmissionError(response, JobTable.JOBS_COVTREE, errorJson.getDetail(), submission.getCovtreeJobInputs().size());
+                if (submission.hasCanopusJobs())
+                    putJobSubmissionError(response, JobTable.JOBS_CANOPUS, errorJson.getDetail(), submission.getCanopusJobInputs().size());
+                if (submission.hasMsNovelistJobs())
+                    putJobSubmissionError(response, JobTable.JOBS_MSNOVELIST, errorJson.getDetail(), submission.getMsNovelistJobInputs().size());
+
+                return response;
+            }
+            throw e;
+        }
+    }
+
+    private static void putJobSubmissionError(EnumMap<JobTable, List<JobUpdate<?>>> response, JobTable table, String message, int number){
+        List<JobUpdate<?>> failedJobs = new ArrayList<>(number);
+        for (int i = 0; i < number; i++)
+             failedJobs.add(new JobUpdate<>(-1L, JobState.CRASHED, table, message, null));
+
+        response.put(table, failedJobs);
     }
 
     /**
