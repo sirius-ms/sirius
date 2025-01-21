@@ -125,7 +125,7 @@ public final class ConnectionChecker {
                     if (consumed >= limit){
                         errors.computeIfAbsent(ConnectionError.Klass.LICENSE, k -> new LinkedHashSet<>())
                                 .add(new ConnectionError(56,
-                                        "Query Limit ("+ consumed + "/" + limit + ") of this subscription has been Reached! Please upgrade subscription." ,
+                                        "Query limit of this subscription has been reached ("+ consumed + "/" + limit + ")! Please upgrade subscription." ,
                                         ConnectionError.Klass.LICENSE, null, ConnectionError.Type.WARNING));
                     }
                 }
