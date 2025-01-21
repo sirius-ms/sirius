@@ -77,11 +77,11 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
 
                 final String current = consumed < 0 ? "N/A" : String.valueOf(consumed);
 
-                Color fontColor = Colors.GOOD;
+                Color fontColor = Colors.FOREGROUND_INTERFACE;
                 if (hasLimit && (consumed  >= sub.getInstanceLimit()))
-                    fontColor = Colors.ERROR;
+                    fontColor = Colors.TEXT_ERROR;
                 else if (hasLimit && (consumed  >= sub.getInstanceLimit()* .8))
-                    fontColor = Colors.WARN;
+                    fontColor = Colors.TEXT_WARN_ORANGE;
 
                 String limit = "<font color=\""+ Colors.asHex(fontColor) +"\"> " +  current + "/" + max + " </font>";
                 consumedQueries.setText("<html>Quota: <b>" + limit + "</b> (per " + (hasLimit ? "Year" : "Month") + ")</html>");
