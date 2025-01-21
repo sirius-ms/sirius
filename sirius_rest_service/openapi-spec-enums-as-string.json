@@ -3,7 +3,7 @@
   "info": {
     "title": "SIRIUS Nightsky API",
     "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6",
-    "version": "3.0"
+    "version": "3.1"
   },
   "servers": [
     {
@@ -5274,7 +5274,7 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "Get all (non-default) job configuration names",
+        "summary": "DEPRECATED: use /job-configs to get all configs with names.",
         "description": "Get all (non-default) job configuration names",
         "operationId": "getJobConfigNames",
         "responses": {
@@ -5291,7 +5291,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/info": {
@@ -7933,6 +7934,7 @@
       },
       "StoredJobSubmission": {
         "required": [
+          "editable",
           "jobSubmission",
           "name"
         ],
@@ -7941,6 +7943,10 @@
           "name": {
             "type": "string",
             "description": "Unique name to identify this JobSubmission (job config)."
+          },
+          "editable": {
+            "type": "boolean",
+            "description": "False for predefined configs which are not editable and not removable."
           },
           "jobSubmission": {
             "$ref": "#/components/schemas/JobSubmission"
