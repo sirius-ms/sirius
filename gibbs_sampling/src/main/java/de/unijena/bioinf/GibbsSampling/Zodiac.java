@@ -22,14 +22,19 @@ package de.unijena.bioinf.GibbsSampling;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.GibbsSampling.model.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.InterruptionCheck;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.MasterJJob;
+import de.unijena.bioinf.sirius.annotations.NoiseThresholdSettings;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -327,6 +332,7 @@ public class Zodiac {
     private void init(){
         Map<String, List<FragmentsCandidate>> candidatesMap = new HashMap<>();
         Set<String> experimentIDSet = new HashSet<>();
+        initializeExtraNodes();
         for (Map.Entry<Ms2Experiment, List<FTree>> result : siriusScoredTrees.entrySet()) {
             Ms2Experiment experiment = result.getKey();
             List<FTree> trees = new ArrayList<>(result.getValue());
@@ -400,7 +406,27 @@ public class Zodiac {
 
     }
 
-
+    private void initializeExtraNodes() {
+        // just add them as boring experiments with a single candidate
+        for (FTree extra : extraNodes) {
+            MutableMs2Experiment extraExp = new MutableMs2Experiment();
+            // merged query spectra are already thresholded
+            extraExp.setAnnotation(NoiseThresholdSettings.class, new NoiseThresholdSettings(0, 60, NoiseThresholdSettings.BASE_PEAK.NOT_PRECURSOR, 0d));
+            extraExp.setAnnotation(CompoundQuality.class, new CompoundQuality(CompoundQuality.CompoundQualityFlag.Good));
+            extraExp.setName("ARTIFICIAL_NODE");
+            extraExp.setPrecursorIonType(extra.getAnnotation(PrecursorIonType.class).get());
+            extraExp.setMolecularFormula(extra.getRoot().getFormula());
+            extraExp.setIonMass(extra.getRoot().getFormula().getMass()+extra.getRoot().getIonization().getMass());
+            this.siriusScoredTrees.put(extraExp, Collections.singletonList(extra));
+            final SimpleMutableSpectrum buf = new SimpleMutableSpectrum();
+            FragmentAnnotation<AnnotatedPeak> pk = extra.getFragmentAnnotationOrThrow(AnnotatedPeak.class);
+            for (Fragment f : extra) buf.addPeak(pk.get(f).getMass(), pk.get(f).getRelativeIntensity());
+            extraExp.setMs2Spectra(new ArrayList<>());
+            extraExp.getMs2Spectra().add(new MutableMs2Spectrum(buf, extra.getRoot().getFormula().getMass()+extra.getRoot().getIonization().getMass(),
+                    CollisionEnergy.none(), 2));
+        }
+        LoggerFactory.getLogger(Zodiac.class).warn("Use " + extraNodes.size() + " additional nodes for ZODIAC");
+    }
 
 
     private void setKnownCompounds(Map<String, List<FragmentsCandidate>> candidatesMap, Set<MolecularFormula> allowedDifferences) {
@@ -461,4 +487,8 @@ public class Zodiac {
         return instanceToCluster;
     }
 
+    private List<FTree> extraNodes = new ArrayList<>();
+    public void addExtraNodes(List<FTree> nodes) {
+        extraNodes.addAll(nodes);
+    }
 }
