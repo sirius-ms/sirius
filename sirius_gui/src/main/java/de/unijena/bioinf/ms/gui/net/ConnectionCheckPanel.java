@@ -303,7 +303,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt instanceof ConnectionMonitor.ConnectionStateEvent cEvt)
+        if (evt instanceof ConnectionMonitor.ConnectionEvent cEvt)
             refreshPanel(cEvt.getConnectionCheck());
     }
 }

@@ -39,12 +39,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   StoredJobSubmission.JSON_PROPERTY_NAME,
+  StoredJobSubmission.JSON_PROPERTY_EDITABLE,
   StoredJobSubmission.JSON_PROPERTY_JOB_SUBMISSION
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StoredJobSubmission {
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
+
+  public static final String JSON_PROPERTY_EDITABLE = "editable";
+  private Boolean editable;
 
   public static final String JSON_PROPERTY_JOB_SUBMISSION = "jobSubmission";
   private JobSubmission jobSubmission;
@@ -75,6 +79,31 @@ public class StoredJobSubmission {
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setName(String name) {
     this.name = name;
+  }
+
+  public StoredJobSubmission editable(Boolean editable) {
+    
+    this.editable = editable;
+    return this;
+  }
+
+   /**
+   * False for predefined configs which are not editable and not removable.
+   * @return editable
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isEditable() {
+    return editable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EDITABLE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setEditable(Boolean editable) {
+    this.editable = editable;
   }
 
   public StoredJobSubmission jobSubmission(JobSubmission jobSubmission) {
@@ -112,12 +141,13 @@ public class StoredJobSubmission {
     }
     StoredJobSubmission storedJobSubmission = (StoredJobSubmission) o;
     return Objects.equals(this.name, storedJobSubmission.name) &&
+        Objects.equals(this.editable, storedJobSubmission.editable) &&
         Objects.equals(this.jobSubmission, storedJobSubmission.jobSubmission);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, jobSubmission);
+    return Objects.hash(name, editable, jobSubmission);
   }
 
   @Override
@@ -125,6 +155,7 @@ public class StoredJobSubmission {
     StringBuilder sb = new StringBuilder();
     sb.append("class StoredJobSubmission {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("    jobSubmission: ").append(toIndentedString(jobSubmission)).append("\n");
     sb.append("}");
     return sb.toString();
