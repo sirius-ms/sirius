@@ -128,7 +128,8 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         defaultConfigOptions.changeOption("RecomputeResults", para);
     }
 
-    @Option(names = "--maxmz", description = "Only considers compounds with a precursor m/z lower or equal [--maxmz]. All other compounds in the input will be skipped.", defaultValue = "Infinity", order = 110)
+    @Deprecated(forRemoval = true) //sirius 7
+    @Option(names = "--maxmz", description = "[DEPRECATED] Only considers compounds with a precursor m/z lower or equal [--maxmz] when importing peak-list data into project. All other features in the input data will be skipped.", defaultValue = "Infinity", order = 110, hidden = true)
     public double maxMz;
 
 
