@@ -38,10 +38,14 @@ ext {
     file("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties").withReader("UTF8", {
         props.load(it)
     })
+    file("${projectDir}/sirius_rest_service/src/main/resources/application.properties").withReader("UTF8", {
+        props.load(it)
+    })
 
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
+    siriusAPIVersion = props.getProperty('de.unijena.bioinf.siriusNightsky.version')
     appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 

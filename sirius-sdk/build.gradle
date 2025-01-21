@@ -29,7 +29,7 @@ apply plugin: 'java-library'
 
 allprojects {
     group = 'io.sirius-ms'
-    version = "3.0+sirius$siriusFrontendVersion"
+    version = "${siriusAPIVersion}+sirius${siriusFrontendVersion}"
 
     ext {
         reactor_version = "3.4.3"
