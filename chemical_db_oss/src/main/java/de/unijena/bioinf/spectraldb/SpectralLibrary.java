@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 
 import java.io.IOException;
@@ -73,6 +74,8 @@ public interface SpectralLibrary {
     /*
     Other methods
      */
+
+    ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException;
 
     Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException;
 

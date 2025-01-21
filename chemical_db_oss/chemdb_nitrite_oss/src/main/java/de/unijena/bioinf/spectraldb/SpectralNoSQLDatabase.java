@@ -151,6 +151,18 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         }
     }
 
+
+    @Override
+    public ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException {
+        try {
+            Iterator<ReferenceFragmentationTree> specs = this.storage.find(Filter.where("uuid").eq(uuid), ReferenceFragmentationTree.class).iterator();
+            if (specs.hasNext()) return specs.next();
+            else throw new ChemicalDatabaseException("No tree with uuid " + uuid + " found.");
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
     @Override
     public Ms2ReferenceSpectrum queryAgainstIndividualSpectrum(long uuid) throws ChemicalDatabaseException {
         try {
@@ -188,7 +200,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
      @Override
      public synchronized void insertMergedSpecAndTree(MergedReferenceSpectrum merged, ReferenceFragmentationTree refTree) throws IOException {
          Optional<MergedReferenceSpectrum> first = storage.findStr(
-                 Filter.and(Filter.where("candidateInChiKey").eq(merged.getCandidateInChiKey()), Filter.where("precursorIonType").eq(merged.getPrecursorIonType())),
+                 Filter.and(Filter.where("candidateInChiKey").eq(merged.getCandidateInChiKey()), Filter.where("precursorIonType").eq(merged.getPrecursorIonType().toString())),
                  MergedReferenceSpectrum.class).findFirst();
 
          if (first.isPresent()) {
@@ -249,12 +261,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         };
     }
 
-
-    private MergedReferenceSpectrum withMergedLib(MergedReferenceSpectrum mergedSpec) {
-        fillLibrary(mergedSpec);
-        return mergedSpec;
-    }
-
     @Override
     public Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException {
         double abs = settings.getPrecursorDeviation().absoluteFor(precursorMz);
@@ -282,7 +288,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             return hits.stream();
         } else {
             // only search in merged spectra
-            return mergedQuery.flatMap(mergedSpec->getHits(query, withMergedLib(mergedSpec), settings).stream());
+            return mergedQuery.flatMap(mergedSpec->getHits(query, fillLibrary(mergedSpec), settings).stream());
         }
     }
 
@@ -324,16 +330,16 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer) throws IOException {
-        this.storage.findAllStr(Ms2ReferenceSpectrum.class).forEach(consumer);
+        this.storage.findAllStr(Ms2ReferenceSpectrum.class).map(this::fillLibrary).forEach(consumer);
     }
 
     @Override
     public void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer, boolean withData) throws IOException {
-        this.storage.findAllStr(Ms2ReferenceSpectrum.class,"querySpectrum").forEach(consumer);
+        this.storage.findAllStr(Ms2ReferenceSpectrum.class,"querySpectrum").map(this::fillLibrary).forEach(consumer);
     }
 
     @Override
     public void forEachMergedSpectrum(Consumer<MergedReferenceSpectrum> consumer) throws IOException {
-        this.storage.findAllStr(MergedReferenceSpectrum.class).forEach(consumer);
+        this.storage.findAllStr(MergedReferenceSpectrum.class).map(this::fillLibrary).forEach(consumer);
     }
 }

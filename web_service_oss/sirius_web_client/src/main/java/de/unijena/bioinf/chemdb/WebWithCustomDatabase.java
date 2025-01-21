@@ -30,7 +30,9 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.spectraldb.LibraryHit;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
@@ -265,6 +267,13 @@ public class WebWithCustomDatabase {
     public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
         return getReferenceSpectrum(db, uuid, false);
     }
+    public ReferenceFragmentationTree getReferenceTree(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
+        try {
+            return asCustomDB(db).toSpectralLibraryOrThrow().getReferenceTree(uuid);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
 
     public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
@@ -272,6 +281,17 @@ public class WebWithCustomDatabase {
         if (withData)
             spectralLibrary.getSpectralData(spec);
         return spec;
+    }
+    public List<MergedReferenceSpectrum> getMergedSpectra(Collection<CustomDataSources.Source> db) throws IOException {
+        final ArrayList<MergedReferenceSpectrum> spectra = new ArrayList<>();
+        extractReqCustomSpectraDBs(db).forEach(x-> {
+            try {
+                x.forEachMergedSpectrum(spectra::add);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return spectra;
     }
 
     private List<AbstractChemicalDatabase> extractNonReqCustomStructureDBs(Collection<CustomDataSources.Source> dbs) {
