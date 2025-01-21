@@ -166,7 +166,7 @@ public class LandingPage extends JPanel {
     private ConnectionCheckPanel connectionCheckPanel(SiriusGui gui) {
         ConnectionCheckPanel connectionCheckPanel = new ConnectionCheckPanel(gui, null, true);
         connectionCheckPanel.setBackground(getBackground());
-        gui.getConnectionMonitor().addConnectionStateListener(connectionCheckPanel);
+        gui.getConnectionMonitor().addConnectionListener(connectionCheckPanel);
         return connectionCheckPanel;
     }
 
