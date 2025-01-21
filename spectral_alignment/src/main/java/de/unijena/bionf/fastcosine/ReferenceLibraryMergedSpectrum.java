@@ -21,10 +21,12 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
 
     protected static class Builder {
         private final double parentmass;
+        private double parentIntensity;
         private final List<MergedPeak> peaks;
 
-        public Builder(double parentmass) {
+        public Builder(double parentmass, double parentIntensity) {
             this.parentmass = parentmass;
+            this.parentIntensity = parentIntensity;
             this.peaks = new ArrayList<>();
         }
 
@@ -34,8 +36,16 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
 
         ReferenceLibraryMergedSpectrum done() {
             // renormalize intensities
-            double norm = Math.sqrt(peaks.stream().limit(peaks.size()-1).mapToDouble(x->x.intensity*x.intensity).sum());
             peaks.sort(Comparator.comparingDouble(x->x.mz));
+
+            // ensure parent peak is not in there
+            final double precursorMzThreshold = parentmass-0.5d;
+            for (int j=peaks.size()-1; j>=0; --j ) {
+                if (peaks.get(j).mz() >= precursorMzThreshold) peaks.remove(j);
+                else break;
+            }
+
+            double norm = Math.sqrt(peaks.stream().mapToDouble(x->x.intensity*x.intensity).sum());
             final double[] mz = new double[peaks.size()];
             final float[] intens = new float[peaks.size()];
             final float[] qintens = new float[peaks.size()];
@@ -46,21 +56,21 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
                 qintens[k] = p.queryIntensity;
             }
 
-            return new ReferenceLibraryMergedSpectrum(parentmass, mz, intens, qintens);
+            return new ReferenceLibraryMergedSpectrum(parentmass, (float)(parentIntensity/norm), mz, intens, qintens);
         }
     }
 
-    @JsonCreator ReferenceLibraryMergedSpectrum(@JsonProperty("parentMass") double parentMass, @JsonProperty("mz") double[] mz, @JsonProperty("intensities") float[] intensities,
+    @JsonCreator ReferenceLibraryMergedSpectrum(@JsonProperty("parentMass") double parentMass, @JsonProperty("parentIntensity") float parentIntensity, @JsonProperty("mz") double[] mz, @JsonProperty("intensities") float[] intensities,
                                                 @JsonProperty("mergedMaxIntensities") float[] mergedMaxIntensities) {
-        super(parentMass, mz, intensities);
+        super(parentMass, parentIntensity, mz, intensities);
         this.mergedMaxIntensities = mergedMaxIntensities;
     }
 
     public ReferenceLibrarySpectrum asReferenceLibrarySpectrum() {
-        return new ReferenceLibrarySpectrum(getParentMass(), mz, intensities);
+        return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, intensities);
     }
 
     public ReferenceLibrarySpectrum getUpperboundQuery() {
-        return new ReferenceLibrarySpectrum(getParentMass(), mz, mergedMaxIntensities);
+        return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, mergedMaxIntensities);
     }
 }
