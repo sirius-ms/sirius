@@ -51,9 +51,9 @@ allprojects {
         }
         repositories {
             maven {
-                name = "GitLabBGPublic"
+                name = "GitLabPublic"
                 if (System.getenv("CI_JOB_TOKEN") != null) {
-                    url = 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+                    url = System.getenv('PUBLIC_REGISTRY_URL')
                     credentials(HttpHeaderCredentials) {
                         name = "Job-Token"
                         value = System.getenv("CI_JOB_TOKEN")
