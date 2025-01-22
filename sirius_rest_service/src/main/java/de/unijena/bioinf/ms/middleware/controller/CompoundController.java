@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
-import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
 import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
@@ -30,11 +29,9 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.QuantificationTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
-import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Getter;
@@ -140,7 +137,7 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      * @return
      */
     @GetMapping(value = "/{compoundId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
+    public QuantificationTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationMeasure type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantificationTable.RowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
@@ -154,7 +151,7 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      * @return
      */
     @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationType type) {
+    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationMeasure type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.COMPOUNDS);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();

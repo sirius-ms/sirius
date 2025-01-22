@@ -20,16 +20,11 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
-import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
-import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
@@ -38,19 +33,16 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -62,9 +54,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @NotNull
     PSM getProjectSpaceManager();
 
-    Optional<QuantificationTable> getQuantification(QuantificationType type, QuantificationTable.RowType rowType);
+    Optional<QuantificationTable> getQuantification(QuantificationMeasure type, QuantificationTable.RowType rowType);
 
-    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationType type, QuantificationTable.RowType rowType);
+    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationMeasure type, QuantificationTable.RowType rowType);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
@@ -160,13 +152,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteTagGroup(String name);
 
-    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationType quantification);
+    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationMeasure quantification);
 
     <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
 
     <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
 
-    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationType quantification);
+    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationMeasure quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 
