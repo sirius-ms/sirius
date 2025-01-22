@@ -20,7 +20,7 @@ Detailed documentation about the different endpoints can be found [here]().
         try (SiriusSDK sirius = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, false)) {
             // print some infos about the SIRIUS instance
             System.out.println(sirius.infos().getInfo(null, null));
-            ProjectInfo project = sirius.projects().createProjectSpace("myProject", "/tmp/" + UUID.randomUUID(), null);
+            ProjectInfo project = sirius.projects().createProject("myProject", "/tmp/" + UUID.randomUUID(), null);
 
             // Import peak-list data from files.
             sirius.projects().importPreprocessedData(project.getProjectId(), true, true, List.of(
@@ -112,18 +112,14 @@ The `sirius-sdk` is available as maven artifact.
 Insert following snippet into your `build.gradle` to add this package as dependency:
 
 ```groovy
-plugins {
-  id "com.google.cloud.artifactregistry.gradle-plugin" version "2.2.0"
-}
-
-repositories {
-  maven {
-    url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
-  }
+  repositories {
+    maven {
+        url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+    }
 }
 
 dependencies {
-    implementation 'io.sirius-ms:sirius-sdk:6.0.6'
+    implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0-SNAPSHOT"
 }
 ```
 
@@ -131,33 +127,17 @@ dependencies {
 Insert following snippet into your project's POM to add this package as dependency:
 
 ```xml
-<project>
-  <repositories>
-    <repository>
-      <id>artifact-registry</id>
-      <url>artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-    </repository>
-  </repositories>
+<repositories>
+  <repository>
+    <id>gitlab-maven</id>
+    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
+  </repository>
+</repositories>
 
-  <build>
-    <extensions>
-      <extension>
-        <groupId>com.google.cloud.artifactregistry</groupId>
-        <artifactId>artifactregistry-maven-wagon</artifactId>
-        <version>2.2.0</version>
-      </extension>
-    </extensions>
-  </build>
-
-  <dependencies>
-    <dependency>
-        <groupId>io.sirius-ms</groupId>
-        <artifactId>sirius-sdk</artifactId>
-        <version>6.0.6</version>
-    </dependency>
-  </dependencies>
-</project>
+<dependency>
+  <groupId>io.sirius-ms</groupId>
+  <artifactId>sirius-sdk.openapi</artifactId>
+  <version>3.1+sirius6.2.0-SNAPSHOT</version>
+  <scope>compile</scope>
+</dependency>
 ```
