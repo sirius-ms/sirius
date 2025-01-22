@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
+  workflow_dispatch:
 
 jobs:
   distGUI:
