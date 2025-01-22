@@ -63,22 +63,25 @@ public class FastCosine {
         // 1. sort peaks by mass
         List<ProcessedPeak> mergedPeaks = input.getMergedPeaks();
         mergedPeaks.sort(Comparator.comparingDouble(ProcessedPeak::getMass));
+        // delete parent peak
+        final double precursorMzThreshold = input.getParentPeak().getMass() - 0.5d;
+        for (int j=mergedPeaks.size()-1; j>=0; --j ) {
+            if (mergedPeaks.get(j).getMass() >= precursorMzThreshold) mergedPeaks.remove(j);
+            else break;
+        }
         // 2. extract mz and intensity
         double[] mz = mergedPeaks.stream().mapToDouble(ProcessedPeak::getMass).toArray();
         float[] intensity = new float[mz.length];
         double norm = 0d;
         for (int k=0; k < mergedPeaks.size(); ++k) {
             intensity[k] = (float) (useSquareRootTransform ? Math.sqrt(mergedPeaks.get(k).getRelativeIntensity()) : mergedPeaks.get(k).getRelativeIntensity());
-            // do not normalize the parent peak!
-            if (k<mergedPeaks.size()-1) {
-                norm += intensity[k] * intensity[k];
-            }
+            norm += intensity[k] * intensity[k];
         }
         norm = Math.sqrt(norm);
         for (int k=0; k < mergedPeaks.size(); ++k) {
             intensity[k] /= norm;
         }
-        return new ReferenceLibrarySpectrum(input.getParentPeak().getMass(), mz, intensity);
+        return new ReferenceLibrarySpectrum(input.getParentPeak().getMass(), (float)(Math.sqrt(input.getParentPeak().getRelativeIntensity())/norm), mz, intensity);
     }
 
     public ReferenceLibraryMergedSpectrum prepareMergedQuery(List<ReferenceLibrarySpectrum> spectra) {
@@ -94,12 +97,12 @@ public class FastCosine {
         int i = 0, j = 0;
         double similarity = 0d;
         int matchedPeaks = 0;
-        final double parentMassLeft = left.getParentMass();
-        final double parentMassRight = right.getParentMass();;
+        final double thresholdLeft = left.getParentMass()-0.1d;
+        final double thresholdRight = right.getParentMass()-0.1d;
         while (i < left.size() && j < right.size()) {
             double l = left.getMzAt(i);
             double r = right.getMzAt(j);
-            if (l >= parentMassLeft || r >= parentMassRight) break; // do not count the parent peak
+            if (l >= thresholdLeft || r >= thresholdRight) break; // do not count the parent peak
             double delta = l - r;
             // use minimum to ensure unique assignment. This is not really a constraint as l and r are always extremely close,
             // so it doesn't matter if you use minimum or maximum. The difference should be neglectable.
@@ -126,7 +129,7 @@ public class FastCosine {
         while (i < left.size() && j < right.size()) {
             double l = left.getParentMass() - left.getMzAt(i);
             double r = right.getParentMass() - right.getMzAt(j);
-            if (l==0 || r==0) break; // hit parent peak
+            if (l<=0.1 || r<=0.1) break; // hit parent peak
             double delta = l - r;
             // use minimum to ensure unique assignment. This is not really a constraint as l and r are always extremely close,
             // so it doesn't matter if you use minimum or maximum. The difference should be neglectable.
@@ -147,15 +150,17 @@ public class FastCosine {
     }
 
     public SpectralSimilarity fastModifiedCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
+        if (maxDeviation.inErrorWindow(left.getParentMass(),right.getParentMass())) return fastCosine(left,right); // use faster cosine if both have same mass
         return new ModifiedCosine(maxDeviation).score(left, right, left.getParentMass(), right.getParentMass(), 1d);
     }
 
     private ReferenceLibraryMergedSpectrum performPeakMerging(List<ReferenceLibrarySpectrum> spectra) {
         final double parentMass = spectra.stream().mapToDouble(ReferenceLibrarySpectrum::getParentMass).average().orElse(0d);
+        final double parentIntensity = spectra.stream().mapToDouble(ReferenceLibrarySpectrum::getParentIntensity).average().orElse(0d);
         final SimpleSpectrum merged = Spectrums.mergeSpectra(spectra);
         final Spectrum<Peak> intensityOrdered = Spectrums.getIntensityOrderedSpectrum(merged);
         final BitSet alreadyMerged = new BitSet(merged.size());
-        final ReferenceLibraryMergedSpectrum.Builder mergedSpectrum = new ReferenceLibraryMergedSpectrum.Builder(parentMass);
+        final ReferenceLibraryMergedSpectrum.Builder mergedSpectrum = new ReferenceLibraryMergedSpectrum.Builder(parentMass, parentIntensity);
         for (int k=0; k < intensityOrdered.size(); ++k) {
             final double mz = intensityOrdered.getMzAt(k);
             final int index = Spectrums.binarySearch(merged, mz);

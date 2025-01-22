@@ -108,7 +108,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 , this::checkForInterruption);
         if (hits == null || hits.isEmpty())
             return;
-        hits = hits.stream().sorted().toList();
+        hits = hits.stream().sorted(Comparator.reverseOrder()).toList();
         List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
         for (int k=0; k < hits.size(); ++k) {
             LibraryHit hit = hits.get(k);
