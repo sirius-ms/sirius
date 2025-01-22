@@ -30,7 +30,13 @@ import java.util.Objects;
  */
 //todo this should be a Experiment Annotation!
 public final class UnconsideredCandidatesUpperBound implements TreeAnnotation {
+    /*
+    parameter used by Zodiac to calculate the probability of the 'dummy' node for all unconsidered candidates
+     */
     private final int numberOfUnconsideredCandidates;
+    /*
+    parameter used by Zodiac to calculate the probability of the 'dummy' node for all unconsidered candidates
+     */
     private final double lowestConsideredCandidateScore;
 
     private static UnconsideredCandidatesUpperBound NO_RANKING_INVOLVED = new UnconsideredCandidatesUpperBound(-1, Double.NEGATIVE_INFINITY);

@@ -95,7 +95,7 @@ public class FingerprinterWorkflow implements Workflow {
         if (versionFile != null) {
             LoggerFactory.getLogger(getClass()).info("Writing fingerprint definition file to '" + versionFile.toString() + "'...");
             try (BufferedWriter bw1 = Files.newBufferedWriter(versionFile)) {
-                FingerIdData.write(bw1, fdata);
+                FingerIdData.write(bw1, fdata, true);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error(String.valueOf(e));
             }

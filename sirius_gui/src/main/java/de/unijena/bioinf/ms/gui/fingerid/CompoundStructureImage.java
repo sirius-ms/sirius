@@ -26,11 +26,11 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
 import org.openscience.cdk.renderer.color.IAtomColorer;
-import org.openscience.cdk.renderer.color.UniColor;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -140,11 +140,25 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
 
     private void setAtomColoring(MolecularStructuresDisplayColors mode) {
         if (mode == MolecularStructuresDisplayColors.MONOCHROME) {
-            Color chosenColor = Colors.MolecularStructures.SELECTED_SUBSTRUCTURE;
-            IAtomColorer atomColorer = new UniColor(chosenColor);
+            IAtomColorer atomColorer = new UniColorHighlightingAware();
             renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, atomColorer);
         } else {
             renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class, new ThemedAtomColors());
         }
+    }
+
+    private static class UniColorHighlightingAware implements IAtomColorer {
+
+        @Override
+        public Color getAtomColor(IAtom atom) {
+            if (atom.getProperty(StandardGenerator.HIGHLIGHT_COLOR) == null) {
+                //normal atom without highlighting
+                return Colors.MolecularStructures.SELECTED_SUBSTRUCTURE;
+            } else {
+                //with substructure highlighting
+                return Colors.MolecularStructures.SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT;
+            }
+        }
+
     }
 }

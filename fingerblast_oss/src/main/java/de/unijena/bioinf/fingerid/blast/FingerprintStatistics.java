@@ -30,10 +30,25 @@ import java.util.Arrays;
 public class FingerprintStatistics {
     @Getter
     private final int numOfCandidates;
+
+    /**
+     * Contains parent index of given child index (relative index).
+     * Length of the array is the length of the masked fingerprint
+     */
     @Getter
-    private final int[] parentIndeces;
+    private final int[] parentIndeces; // 0-18029 (absolute) indeces but want 0 - 4999
+
+    /**
+     * Abundance of properties of masked fingerprint (relative index)
+     * Length of the array is the length of the masked fingerprint
+     */
     @Getter
-    private final int[] propertyAbundance;
+    private final int[] propertyAbundances; //absolute but want relative
+
+    /**
+     * Abundance where properties of masked fingerprint occur together with their parent (relative index)
+     * Length of the array is the length of the masked fingerprint
+     */
     @Getter
     private final int[] propertyAbundanceWithParent;
 
@@ -41,14 +56,18 @@ public class FingerprintStatistics {
     private FingerprintStatistics() {
         numOfCandidates = 0;
         parentIndeces = null;
-        propertyAbundance = null;
+        propertyAbundances = null;
         propertyAbundanceWithParent = null;
     }
 
-    public FingerprintStatistics(int numOfCandidates, int fpCardinality) {
+    /**
+     * @param numOfCandidates number of candidates
+     * @param fpCardinality masked cardinality
+     */
+    public FingerprintStatistics(int numOfCandidates, int fpCardinality ) {
         this.numOfCandidates = numOfCandidates;
         this.parentIndeces = new int[fpCardinality];
-        this.propertyAbundance = new int[fpCardinality];
+        this.propertyAbundances = new int[fpCardinality];
         this.propertyAbundanceWithParent = new int[fpCardinality];
         Arrays.fill(this.parentIndeces, -1);
     }
@@ -60,7 +79,7 @@ public class FingerprintStatistics {
 
     @JsonIgnore
     void incrementPropertyAbundance(int fpIndex) {
-        this.propertyAbundance[fpIndex]++;
+        this.propertyAbundances[fpIndex]++;
     }
 
     @JsonIgnore
@@ -70,7 +89,7 @@ public class FingerprintStatistics {
 
     @JsonIgnore
     public double getMarginalProbability(int fpIndex){
-        return ((double) propertyAbundance[fpIndex]) / (double) numOfCandidates;
+        return ((double) propertyAbundances[fpIndex]) / (double) numOfCandidates;
     }
 
     @JsonIgnore
@@ -79,6 +98,9 @@ public class FingerprintStatistics {
         if (parentIndex < 0)
             return getMarginalProbability(fpIndex);
 
-        return (((double) propertyAbundanceWithParent[fpIndex]) / (double) numOfCandidates) / getMarginalProbability(parentIndex);
+        if (propertyAbundances[parentIndex] == 0)
+            return 0d;
+
+        return (((double) propertyAbundanceWithParent[fpIndex]) / propertyAbundances[parentIndex]);
     }
 }

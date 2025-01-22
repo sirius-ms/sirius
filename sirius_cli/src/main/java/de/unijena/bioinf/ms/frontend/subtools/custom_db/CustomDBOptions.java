@@ -161,7 +161,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         protected Boolean compute() throws Exception {
             final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
             //loads all current available dbs
-            final @NotNull List<CustomDatabase> dbs = CustomDatabases.getCustomDatabases(version);
+            CustomDatabases.load(version);
 
             if (mode.importParas != null) {
                 if (mode.importParas.location == null || mode.importParas.location.isBlank()) {
@@ -258,13 +258,15 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 return true;
             } else if (mode.showParas != null) {
                 if (mode.showParas.db == null) {
-                    if (dbs.isEmpty()) {
+                    List<CustomDataSources.CustomSource> sources = CustomDataSources.getCustomSources();
+
+                    if (sources.isEmpty()) {
                         logWarn("\n==> No Custom database found!\n");
                         return false;
                     }
 
-                    dbs.forEach(db -> {
-                        printDBInfo(db);
+                    sources.forEach(source -> {
+                        printDBInfo(CustomDatabases.getCustomDatabaseBySource(source, version));
                         System.out.println();
                         System.out.println();
                     });

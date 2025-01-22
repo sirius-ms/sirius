@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
-import io.sirius.ms.sdk.model.PageSpectralLibraryMatch;
+import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -98,7 +98,7 @@ public class SpectralMatchingCache {
             currentPageContent = (from < to) ? allMatches.subList(from, to) : List.of();
         } else {
             List<SpectralLibraryMatch> matches = instanceBean
-                    .withIds((pid, fid) -> instanceBean.getClient().features().getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, pg, PAGE_SIZE, List.of("similarity,desc", "sharedPeaks,desc"), MIN_SHARED_PEAKS, MIN_SIMILARITY, inchiKey, List.of()).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block()).getContent();
+                    .withIds((pid, fid) -> instanceBean.getClient().features().getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, pg, PAGE_SIZE, List.of("similarity,desc", "sharedPeaks,desc"), MIN_SHARED_PEAKS, MIN_SIMILARITY, inchiKey, List.of()).bodyToMono(PagedModelSpectralLibraryMatch.class).onErrorComplete().block()).getContent();
             currentPageContent = (matches != null) ? matches.stream().map(match -> new SpectralMatchBean(match, instanceBean)).sorted().toList() : List.of();
         }
         currentPage = pg;
@@ -127,7 +127,7 @@ public class SpectralMatchingCache {
     public synchronized List<SpectralMatchBean> getAll() {
         if (allMatches == null) {
             List<SpectralLibraryMatch> matches = instanceBean
-                    .withIds((pid, fid) -> instanceBean.getClient().features().getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, 0, Integer.MAX_VALUE, List.of("similarity,desc", "sharedPeaks,desc"), MIN_SHARED_PEAKS, MIN_SIMILARITY, inchiKey, List.of()).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block()).getContent();
+                    .withIds((pid, fid) -> instanceBean.getClient().features().getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, 0, Integer.MAX_VALUE, List.of("similarity,desc", "sharedPeaks,desc"), MIN_SHARED_PEAKS, MIN_SIMILARITY, inchiKey, List.of()).bodyToMono(PagedModelSpectralLibraryMatch.class).onErrorComplete().block()).getContent();
             allMatches = (matches != null) ? matches.stream().map(match -> new SpectralMatchBean(match, instanceBean)).sorted().toList() : List.of();
         }
         return allMatches;

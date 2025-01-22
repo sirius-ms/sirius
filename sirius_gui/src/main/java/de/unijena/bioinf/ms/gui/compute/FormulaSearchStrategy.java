@@ -614,6 +614,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         if (s == Strategy.DATABASE) {
+            searchDBList.checkBoxList.uncheckAll();
             searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("FormulaSearchDB")));
             elementFilterForDatabase.setSelected(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
         }

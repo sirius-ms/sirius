@@ -4,21 +4,54 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 public class IonType {
 
+    private static Set<PrecursorIonType> FREQUENT_ION_TYPES = Set.of(
+
+    );
+    private static Set<PrecursorIonType> POSSIBLE_ION_TYPES = Set.of(
+            PrecursorIonType.getPrecursorIonType("[M+NH4]+"),
+            PrecursorIonType.getPrecursorIonType("[M-H2O+H]+")
+    );
+
+
+    /**
+     * I have to think more about this, but for the moment, we just use some rule of thumb.
+     */
+    public enum Frequency {
+        // always trust FREQUENT adducts
+        FREQUENT, // plain ionizations and NH4+
+        // only trust POSSIBLE adducts if you see a direct edge
+        POSSIBLE, // water loss and similar stuff, multimeres
+        // only trust UNLIKELY adducts if you see at least two edges
+        UNLIKELY; // other weird adducts
+
+        // if not trust, add plain ionization as fallback
+    }
+
     protected PrecursorIonType ionType;
-    protected float multimere; // 0 = unknown
-    protected MolecularFormula insource; // null = unknown
+    @Deprecated protected float multimere; // 0 = unknown
+    @Deprecated protected MolecularFormula insource; // null = unknown
 
     public IonType(PrecursorIonType ionType, float multimere, MolecularFormula insource) {
         this.ionType = ionType;
         this.multimere = multimere;
         this.insource = insource;
+    }
+
+    public Frequency getAdductFrequency() {
+        if (ionType.getMultimereCount()!=1) {
+            if (ionType.getModification().isEmpty()) return Frequency.POSSIBLE;
+            else return Frequency.UNLIKELY;
+        } else {
+            if (ionType.isPlainProtonationOrDeprotonation()) return Frequency.FREQUENT;
+            if (FREQUENT_ION_TYPES.contains(ionType)) return Frequency.FREQUENT;
+            if (POSSIBLE_ION_TYPES.contains(ionType)) return Frequency.POSSIBLE;
+            return Frequency.UNLIKELY;
+        }
     }
 
     public IonType withMultimere(float multimere) {

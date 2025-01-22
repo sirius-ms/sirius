@@ -19,15 +19,16 @@ import de.unijena.bioinf.lcms.msms.*;
 import de.unijena.bioinf.lcms.projectspace.PickFeaturesAndImportToSirius;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
+import de.unijena.bioinf.lcms.quality.CheckMs2Quality;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.*;
-import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
+import de.unijena.bioinf.lcms.utils.TrackFeatureToFile;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
@@ -41,6 +42,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -99,7 +101,7 @@ public class LCMSProcessing {
     @Getter @Setter private SiriusDatabaseAdapter siriusDatabaseAdapter;
 
     @Getter @Setter private TraceSegmentationStrategy mergedTraceSegmentationStrategy =
-        new PersistentHomology(new GaussFilter(0.5), 2.0, 0.1, 0.8);
+        new PersistentHomology();
 
     @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
             new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
@@ -118,7 +120,7 @@ public class LCMSProcessing {
     private LongList importedFeatureIds = new LongArrayList();
 
     @Getter @Setter
-    private Tracker tracker = //new TrackFeatureToFile(new File("/home/kaidu/Downloads/debug_lcms/log.txt"),            Range.of(127.0387,127.0389), Range.of(0d,100d));
+    private Tracker tracker = //new TrackFeatureToFile(new File("/home/kaidu/Downloads/debug_lcms/log.txt"),            Range.of(193.0341,193.0348), Range.of(180d,220d));
             new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
@@ -360,7 +362,6 @@ public class LCMSProcessing {
         for (int idx = 0, n = sample.getMapping().length(); idx < n; ++idx) {
             calc.processMs1(sample.getStorage().getSpectrumStorage().ms1SpectrumHeader(idx), sample.getStorage().getSpectrumStorage().getSpectrum(idx));
         }
-
         for (Ms2SpectrumHeader h : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
             SimpleSpectrum ms2 = sample.getStorage().getSpectrumStorage().getMs2Spectrum(h.getUid());
             calc.processMs2(h, ms2);
@@ -386,6 +387,16 @@ public class LCMSProcessing {
         for (Ms2SpectrumHeader ms2SpectrumHeader : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
             Optional<MsMsTraceReference> traceId = ms2TraceStrategy.getTraceFor(sample, ms2SpectrumHeader);
             if (traceId.isPresent()) {
+
+                ///
+                SimpleSpectrum ms2Spectrum = sample.getStorage().getSpectrumStorage().getMs2Spectrum(ms2SpectrumHeader.getUid());
+                if (ms2Spectrum.isEmpty()) continue;
+                CheckMs2Quality.PeakStats peakStats = CheckMs2Quality.peaksWithCommonMassDeltas(ms2SpectrumHeader.getPrecursorMz(), ms2Spectrum).mergeMax(CheckMs2Quality.signalPeaks(ms2Spectrum));
+                if (peakStats.numberOfPeaks()<3 && peakStats.ratioOfIntensity()<0.25) {
+                    continue;
+                }
+                ///
+
                 sample.getStorage().getTraceStorage().assignTraceForMs2(traceId.get());
             } else {
                 LoggerFactory.getLogger(LCMSProcessing.class).debug("No suitable trace found for MSMS " + ms2SpectrumHeader);
@@ -433,7 +444,6 @@ public class LCMSProcessing {
         } else {
             moi.setIsotopePeakFlag(true);
         }
-        sample.getStorage().commit();
     }
 
     public MergedTrace collectMergedTrace(ProcessedSample merged, int uid) {

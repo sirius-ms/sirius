@@ -25,17 +25,16 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
-import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
-import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
-import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -44,13 +43,13 @@ import java.util.function.Function;
 public class CandidateCellRenderer extends JPanel implements ListCellRenderer<FingerprintCandidateBean> {
     public static final int MIN_CELL_SIZE = 5;
     public final static int CELL_SIZE = 15;
-    private static Color LOW = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_LOW_PROBABILITY, MED = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_MEDIUM_PROBABILITY, HIGH = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_HIGH_PROBABILITY;
+
+    private  final static Color LOW = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_LOW_PROBABILITY, MED = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_MEDIUM_PROBABILITY, HIGH = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_HIGH_PROBABILITY;
     private final static Color EVEN = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1;
     private final static Color ODD = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_2;
 
-
-    protected static final int maxRankFontSize = 30;
-    protected static final int minRankFontSize = 10;
+    protected final static int maxRankFontSize = 30;
+    protected final static int minRankFontSize = 10;
     protected final static Font nameFont, propertyFont, rankFont, headlineFont;
 
     static {
@@ -64,13 +63,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             nameFont = propertyFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
 
-        headlineFont = nameFont.deriveFont(Map.of(
-                TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON,
-                TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD
-        ));
+        headlineFont = nameFont/*.deriveFont(Map.of(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON))*/;
     }
 
-    private final Function<FingerprintCandidateBean, Boolean> isBest;
 
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
@@ -79,16 +74,15 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private FingerprintCandidateBean currentCandidate;
 
-    private final DoubleListStats stats;
 
     private final JLabel nameLabel, rankLabel;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
+    private final Function<FingerprintCandidateBean, Boolean> isBest;
 
-    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList, SiriusGui gui, Function<FingerprintCandidateBean, Boolean> isBest) {
+    public CandidateCellRenderer(CandidateListDetailView candidateJList, SiriusGui gui, Function<FingerprintCandidateBean, Boolean> isBest) {
         this.candidateJList = candidateJList;
-        this.stats = stats;
         this.gui = gui;
         this.isBest = isBest;
         setLayout(new BorderLayout());
@@ -132,7 +126,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     @Override
     public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
         if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
-            nameLabel.setText(value.getName());
+            nameLabel.setText(GuiUtils.normalizeIUPACName(value.getName()));
         } else {
             nameLabel.setText("-");
         }
@@ -275,7 +269,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public DatabasePanel() {
             setOpaque(false);
-            setLayout(new FlowLayout(FlowLayout.LEFT, 2, 2));
+            setLayout(new WrapLayout(FlowLayout.LEFT, 2, 2));
             setPreferredSize(new Dimension(Integer.MAX_VALUE,
                     ((int) (new TextLayout("W", DB_PANEL_FONT, new FontRenderContext(null, true, false)).getBounds().getHeight()) + 2 * DB_LABEL_PADDING + 10) * 3));
         }
@@ -284,15 +278,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             removeAll();
             if (candidate == null || candidate.getCandidate() == null) return;
 
-            for (DatabaseLabel label : candidate.labels) {
-                JPanel wrapper = new JPanel();
-                wrapper.setOpaque(false);
-                wrapper.setLayout(new FlowLayout(FlowLayout.CENTER)); // center horizontally in wrapper - else different label names might move the label
-                DatabaseLabelPanel labelPanel = new DatabaseLabelPanel(label);
-                wrapper.add(labelPanel);
-                wrapper.setPreferredSize(new Dimension((int) labelPanel.getPreferredSize().getWidth(), (int) getPreferredSize().getHeight()));
-                add(wrapper);
-            }
+            for (DatabaseLabel label : candidate.labels)
+                add(new DatabaseLabelPanel(label));
         }
     }
 
@@ -469,39 +456,39 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
     }
 
-    public class ReferenceMatchPanel extends JPanel {
-        private Box innerBox = null;
+    public static class ReferenceMatchPanel extends JPanel {
+        private DatabaseLabelPanel databaseLabePanel;
+        private LabelPanel labelPanel;
 
         public ReferenceMatchPanel() {
-            super(new BorderLayout());
+            super(new MigLayout()); // Center alignment, single column wrap
             setOpaque(false);
+
+            JLabel refLabel = new JLabel("Reference Spectra");
+            refLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            refLabel.setFont(headlineFont);
+            add(refLabel, "north, wrap, alignx left"); // Place the label at the top
         }
 
         public void setCompound(FingerprintCandidateBean value) {
-            if (innerBox != null)
-                remove(innerBox);
+            // Remove any existing components below the label (if applicable)
+            if (databaseLabePanel != null)
+                remove(databaseLabePanel);
+            if (labelPanel != null)
+                remove(labelPanel);
+
+
             if (value != null && value.bestRefMatchLabel != null) {
-                innerBox = Box.createVerticalBox();
-                innerBox.setAlignmentY(Component.TOP_ALIGNMENT);
-                innerBox.setAlignmentX(Component.CENTER_ALIGNMENT);
-                innerBox.setOpaque(false);
+                setVisible(true);
+                databaseLabePanel = new DatabaseLabelPanel(value.bestRefMatchLabel, false);
+                add(databaseLabePanel, "alignx left, wrap");
 
-                JLabel refLabel = new JLabel("Reference Spectra");
-                refLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-                refLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-                refLabel.setFont(headlineFont);
-                innerBox.add(refLabel);
-                innerBox.add(Box.createVerticalStrut(2));
-                LabelPanel lp = new DatabaseLabelPanel(value.bestRefMatchLabel, false);
-                lp.setAlignmentX(Component.CENTER_ALIGNMENT);
-                innerBox.add(lp);
-
-                // check if we have more matches
-                if (value.moreRefMatchesLabel != null)
-                    innerBox.add(new LabelPanel(value.moreRefMatchesLabel));
-                innerBox.add(Box.createVerticalGlue());
-
-                add(innerBox, BorderLayout.NORTH);
+                if (value.moreRefMatchesLabel != null) {
+                    labelPanel = new LabelPanel(value.moreRefMatchesLabel);
+                    add(labelPanel,"wrap, alignx left, aligny top");
+                }
+            } else {
+                setVisible(false);
             }
         }
     }

@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,7 +126,7 @@ public interface Instance {
     void deletePassatuttoResult();
 
 
-    void saveSiriusResult(List<FTree> treesSortedByScore);
+    void saveSiriusResult(List<IdentificationResult> idResultsSortedByScore);
     boolean hasSiriusResult();
     void deleteSiriusResult();
 
