@@ -16,15 +16,21 @@ public class ReferenceLibrarySpectrum implements OrderedSpectrum<Peak>, Serializ
     protected final float[] intensities;
     protected final double[] mz;
     private final double parentMass;
+    private final float parentIntensity; // not used for cosine. Set to 0 if no parent peak in spectrum
 
-    @JsonCreator ReferenceLibrarySpectrum(@JsonProperty("parentMass")  double parentMass, @JsonProperty("mz") double[] mz,  @JsonProperty("intensities") float[] intensities) {
+    @JsonCreator ReferenceLibrarySpectrum(@JsonProperty("parentMass")  double parentMass, @JsonProperty("parentIntensity") float parentIntensity, @JsonProperty("mz") double[] mz,  @JsonProperty("intensities") float[] intensities) {
         this.parentMass = parentMass;
+        this.parentIntensity = parentIntensity;
         this.mz = mz;
         this.intensities = intensities;
     }
 
     public double getParentMass() {
         return parentMass;
+    }
+
+    public float getParentIntensity() {
+        return parentIntensity;
     }
 
     @Override
