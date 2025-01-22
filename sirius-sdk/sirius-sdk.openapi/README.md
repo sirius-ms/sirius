@@ -39,10 +39,17 @@ Refer to the [OSSRH Guide](http://central.sonatype.org/pages/ossrh-guide.html) f
 Add this dependency to your project's POM:
 
 ```xml
+<repositories>
+  <repository>
+    <id>gitlab-maven</id>
+    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
+  </repository>
+</repositories>
+
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.0+sirius6.1.1</version>
+  <version>3.1+sirius6.1.1</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -53,12 +60,13 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
-    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
+    maven {
+      url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+    }
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.0+sirius6.1.1"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.1.1"
   }
 ```
 
@@ -72,7 +80,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.0+sirius6.1.1.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.1.1.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
