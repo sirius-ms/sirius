@@ -41,6 +41,6 @@ public abstract class Statistics {
 
     protected AggregationType aggregation;
 
-    protected QuantificationType quantification;
+    protected QuantificationMeasure quantification;
 
 }

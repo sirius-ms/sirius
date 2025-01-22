@@ -23,8 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.statistics;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.Statistics;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -37,19 +36,19 @@ import lombok.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatisticsTable {
 
-    @Schema(enumAsRef = false, name = "RowType", nullable = false)
+    @Schema
     public enum StatisticsType {
         FOLD_CHANGE
     }
 
-    @Schema(enumAsRef = false, name = "RowType", nullable = false)
+    @Schema
     public enum RowType {
         FEATURES, COMPOUNDS
     }
 
     private StatisticsType statisticsType;
     private AggregationType aggregationType;
-    private QuantificationType quantificationType;
+    private QuantificationMeasure quantificationMeasure;
     private RowType rowType;
 
     private long[] rowIds;
