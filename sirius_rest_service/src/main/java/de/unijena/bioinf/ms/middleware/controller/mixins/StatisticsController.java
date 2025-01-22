@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import org.jetbrains.annotations.NotNull;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -63,7 +63,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
             @NotNull @RequestParam String left,
             @NotNull @RequestParam String right,
             @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification,
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationMeasure quantification,
             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
             ) {
         return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), left, right, aggregation, quantification, getTarget(), removeNone(optFields));
@@ -83,7 +83,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
     default StatisticsTable getFoldChangeTable(
             @PathVariable String projectId,
             @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationMeasure quantification
     ) {
         return getProjectsProvider().getProjectOrThrow(projectId).getFoldChangeTable(getTarget(), aggregation, quantification);
     }
@@ -139,7 +139,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
             @NotNull @RequestParam String left,
             @NotNull@RequestParam String right,
             @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationType quantification
+            @RequestParam(defaultValue = "APEX_INTENSITY") QuantificationMeasure quantification
     ) {
         getProjectsProvider().getProjectOrThrow(projectId).deleteFoldChange(getTarget(), left, right, aggregation, quantification);
     }

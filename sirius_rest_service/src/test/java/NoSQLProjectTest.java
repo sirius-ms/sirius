@@ -41,19 +41,14 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
-import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
-import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
-import org.apache.lucene.search.Query;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.domain.Page;
@@ -62,11 +57,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -433,7 +425,7 @@ public class NoSQLProjectTest {
             project.addTagGroup("sample", "category:sample AND text:sample", "type1");
             project.addTagGroup("blank", "category:sample AND text:blank", "type1");
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
             List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
             Assert.assertEquals(1, fc.size());
@@ -454,20 +446,20 @@ public class NoSQLProjectTest {
             Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
             ps.getStorage().insertAll(List.of(f21, f22));
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
-            StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantificationType.APEX_INTENSITY);
-            StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantificationType.APEX_INTENSITY);
-            StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantificationType.APEX_INTENSITY);
+            StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY);
+            StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY);
+            StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantificationMeasure.APEX_INTENSITY);
 
             Assert.assertEquals(AggregationType.AVG, table1.getAggregationType());
             Assert.assertEquals(AggregationType.MAX, table2.getAggregationType());
             Assert.assertEquals(AggregationType.MIN, table3.getAggregationType());
 
-            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table1.getQuantificationType());
-            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table2.getQuantificationType());
-            Assert.assertEquals(QuantificationType.APEX_INTENSITY, table3.getQuantificationType());
+            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table1.getQuantificationMeasure());
+            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table2.getQuantificationMeasure());
+            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table3.getQuantificationMeasure());
 
             Assert.assertEquals(StatisticsTable.RowType.FEATURES, table1.getRowType());
             Assert.assertEquals(StatisticsTable.RowType.FEATURES, table2.getRowType());
@@ -517,8 +509,8 @@ public class NoSQLProjectTest {
 
             Assert.assertEquals(0, table3.getValues().length);
 
-            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantificationType.APEX_INTENSITY);
-            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantificationType.APEX_INTENSITY);
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY);
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY);
             fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
             Assert.assertEquals(0, fc.size());
         }

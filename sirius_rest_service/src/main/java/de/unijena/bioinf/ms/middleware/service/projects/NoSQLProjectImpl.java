@@ -62,7 +62,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
@@ -150,7 +150,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantification(QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantificationTable> getQuantification(QuantificationMeasure type, QuantificationTable.RowType rowType) {
         Optional<QuantificationTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
@@ -174,7 +174,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationMeasure type, QuantificationTable.RowType rowType) {
         Optional<QuantificationTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
@@ -189,7 +189,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 return Optional.empty();
 
             addToTable(alignedFeature.get(), values, rowIds, rowNames, table.get());
-        } else {
+        } else { //must be COMPOUND
             Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> compound = storage().getByPrimaryKey(Long.parseLong(objectId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
             if (compound.isEmpty())
                 return Optional.empty();
@@ -204,7 +204,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return table;
     }
 
-    private Optional<QuantificationTable> initQuantTable(QuantificationType type, QuantificationTable.RowType rowType) throws IOException {
+    private Optional<QuantificationTable> initQuantTable(QuantificationMeasure type, QuantificationTable.RowType rowType) throws IOException {
         List<LCMSRun> runs = storage().findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
 
         if (runs.isEmpty())
@@ -220,7 +220,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return Optional.of(QuantificationTable
                 .builder()
                 .rowType(rowType)
-                .quantificationType(type)
+                .quantificationMeasure(type)
                 .columnType(QuantificationTable.ColumnType.SAMPLES)
                 .columnIds(runIds)
                 .columnNames(runNames)
@@ -262,7 +262,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         double[] row = new double[table.getColumnIds().length];
         for (int i = 0; i < row.length; i++) {
             if (features.containsKey(table.getColumnIds()[i])) {
-                row[i] = switch (table.getQuantificationType()) {
+                row[i] = switch (table.getQuantificationMeasure()) {
                     case APEX_INTENSITY -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
                     case AREA_UNDER_CURVE -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).average().orElse(Double.NaN);
                 };
@@ -1919,10 +1919,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationType quantification) {
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationMeasure quantification) {
         StatisticsTable table = StatisticsTable.builder()
                 .statisticsType(StatisticsTable.StatisticsType.FOLD_CHANGE)
-                .quantificationType(quantification)
+                .quantificationMeasure(quantification)
                 .aggregationType(aggregation)
                 .build();
 
@@ -1938,7 +1938,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return table;
     }
 
-    private <F extends de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange> void fillFoldChangeTable(StatisticsTable table, Class<F> fcClass, AggregationType aggregation, QuantificationType quantification) throws IOException {
+    private <F extends de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange> void fillFoldChangeTable(StatisticsTable table, Class<F> fcClass, AggregationType aggregation, QuantificationMeasure quantification) throws IOException {
         List<F> foldChanges = storage().findStr(Filter.and(
                 Filter.where("aggregation").eq(aggregation.toString()),
                 Filter.where("quantification").eq(quantification.toString())
@@ -2034,7 +2034,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationType quantification) {
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) {
         if (AlignedFeature.class.equals(target)) {
             storage().removeAll(
                     Filter.and(

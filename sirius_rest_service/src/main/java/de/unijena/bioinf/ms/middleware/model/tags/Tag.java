@@ -79,7 +79,6 @@ public class Tag {
                 return super.date(date);
             }
 
-            @Override
             public TagBuilder time(@Nullable String time) {
                 try {
                     TagController.TIME_FORMAT.parse(time);
@@ -90,7 +89,6 @@ public class Tag {
             }
 
             @SneakyThrows
-            @Override
             public Tag build() {
                 Tag tag = super.build();
 

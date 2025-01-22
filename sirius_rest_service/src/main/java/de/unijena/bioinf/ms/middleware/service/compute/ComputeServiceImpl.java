@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.projectspace.Instance;
@@ -280,7 +280,7 @@ public class ComputeServiceImpl implements ComputeService {
     }
 
     @Override
-    public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target, @NotNull EnumSet<Job.OptField> optFields) {
+    public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, Class<?> target, @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChange(left, right, aggregation, quantification, target);
         registerServerJobEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);

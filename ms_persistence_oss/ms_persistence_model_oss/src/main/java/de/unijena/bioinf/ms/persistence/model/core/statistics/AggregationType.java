@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.statistics;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
+@Schema
 public enum AggregationType {
     AVG, MIN, MAX, MEDIAN
 }
