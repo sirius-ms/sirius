@@ -54,14 +54,14 @@ public class ProjectsApiTest {
     }
 
     @Test
-    public void closeProjectSpaceTest() {
+    public void closeProjectTest() {
         try {
             String projectId = project.getProjectId();
-            ProjectInfo pid = instance.getProjectSpace(projectId, null);
+            ProjectInfo pid = instance.getProject(projectId, null);
             assertNotNull(pid);
 
-            instance.closeProjectSpace(projectId);
-            WebClientResponseException ex = assertThrows(WebClientResponseException.class, () -> instance.getProjectSpace(projectId, null));
+            instance.closeProject(projectId);
+            WebClientResponseException ex = assertThrows(WebClientResponseException.class, () -> instance.getProject(projectId, null));
             assertEquals(404, ex.getStatusCode().value());
         } catch (WebClientResponseException e) {
             fail("API exception occurred: " + e.getMessage());
@@ -69,10 +69,10 @@ public class ProjectsApiTest {
     }
 
     @Test
-    public void createProjectSpaceTest() {
+    public void createProjectTest() {
         String projectId = UUID.randomUUID().toString();
         String pathToProject = TestSetup.getInstance().getTempDir().resolve(projectId + ".sirius").toString();
-        ProjectInfo response = instance.createProjectSpace(projectId, pathToProject, null);
+        ProjectInfo response = instance.createProject(projectId, pathToProject, null);
         assertNotNull(response);
         assertEquals(projectId, response.getProjectId());
 
@@ -83,10 +83,10 @@ public class ProjectsApiTest {
     }
 
     @Test
-    public void getProjectSpaceTest() {
+    public void getProjectTest() {
         try {
             String projectId = project.getProjectId();
-            ProjectInfo pid = instance.getProjectSpace(projectId, null);
+            ProjectInfo pid = instance.getProject(projectId, null);
             assertNotNull(pid);
             assertEquals(projectId, pid.getProjectId());
         } catch (Exception e) {
@@ -95,9 +95,9 @@ public class ProjectsApiTest {
     }
 
     @Test
-    public void getProjectSpacesTest() {
+    public void getProjectsTest() {
         try {
-            List<ProjectInfo> response = instance.getProjectSpaces();
+            List<ProjectInfo> response = instance.getProjects();
             assertNotNull(response);
             assertFalse(response.isEmpty());
         } catch (Exception e) {
@@ -106,19 +106,19 @@ public class ProjectsApiTest {
     }
 
     @Test
-    public void openProjectSpaceTest() {
+    public void openProjectTest() {
         try {
             String projectId = "open";
             String pathToProject = TestSetup.getInstance().getProjectSourceToOpen().toAbsolutePath().toString();
-            ProjectInfo response = instance.openProjectSpace(projectId, pathToProject, null);
+            ProjectInfo response = instance.openProject(projectId, pathToProject, null);
             assertNotNull(response);
             assertEquals(projectId, response.getProjectId());
 
-            ProjectInfo projectInfo = instance.getProjectSpace(projectId, null);
+            ProjectInfo projectInfo = instance.getProject(projectId, null);
             assertNotNull(projectInfo);
             assertEquals(projectId, projectInfo.getProjectId());
 
-            instance.closeProjectSpace(projectId);
+            instance.closeProject(projectId);
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }
@@ -129,14 +129,14 @@ public class ProjectsApiTest {
         String projectId = "fingerid-data";
         try {
             Path location = TestSetup.getInstance().getProjectSourceToOpen();
-            instance.openProjectSpace(projectId, location.toAbsolutePath().toString(), null);
+            instance.openProject(projectId, location.toAbsolutePath().toString(), null);
             String response = instance.getFingerIdData(projectId, 1);
             assertNotNull(response);
             // Expected behavior: Empty string if no fingerprints in PS, non-empty string otherwise.
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }finally {
-           instance.closeProjectSpace(projectId);
+           instance.closeProject(projectId);
         }
     }
 

@@ -131,7 +131,7 @@ public class WebJJob<I, O, R, ID> extends WaiterJJob<R> implements InputJJob<I, 
             throw new IllegalArgumentException("Update jobsId differs from jobId: " + jobId + " vs. " + update.getID());
     }
 
-    public boolean updateState(@NotNull final JobUpdate<O, ID> update) {
+    private boolean updateState(@NotNull final JobUpdate<O, ID> update) {
         checkIdOrThrow(update);
         if (runningSince == null && update.getState() == de.unijena.bioinf.ms.rest.model.JobState.FETCHED.ordinal())
             runningSince = System.currentTimeMillis();

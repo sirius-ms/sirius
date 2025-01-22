@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import io.sirius.ms.sdk.model.Info;
@@ -78,7 +79,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
-                        Desktop.getDesktop().browse(e.getURL().toURI());
+                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(UpdatePanel.this), e.getURL().toURI());
                     } catch (Exception error) {
                         LoggerFactory.getLogger(this.getClass()).error(error.getMessage(), error);
                     }
@@ -104,7 +105,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
         downloadButton.addActionListener(evt -> {
             try {
                 if (info.getLatestSiriusLink() != null)
-                    Desktop.getDesktop().browse(URI.create(info.getLatestSiriusLink()));
+                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(UpdatePanel.this), URI.create(info.getLatestSiriusLink()));
             } catch (IOException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }

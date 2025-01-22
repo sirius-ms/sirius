@@ -42,7 +42,7 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
 
-    @Schema(enumAsRef = true, name = "AlignedFeatureOptField", nullable = true)
+    @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo, computedTools}
 
     // identifier

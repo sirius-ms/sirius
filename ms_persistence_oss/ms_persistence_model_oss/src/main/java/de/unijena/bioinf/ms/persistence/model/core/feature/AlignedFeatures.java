@@ -79,6 +79,12 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
 
     protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
 
+    /**
+     * points to an ion network
+     */
+    protected Long adductNetworkId;
+
+
     @JsonIgnore
     public boolean hasDetectedAdducts(){
         return detectedAdducts != null && detectedAdducts.hasDetectedAdduct();

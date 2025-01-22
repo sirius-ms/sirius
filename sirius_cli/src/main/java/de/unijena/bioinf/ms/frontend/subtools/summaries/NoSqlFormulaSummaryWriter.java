@@ -40,6 +40,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
             "adduct",
             "precursorFormula",
             "ZodiacScore",
+            "SiriusScoreNormalized",
             "SiriusScore",
             "TreeScore",
             "IsotopeScore",
@@ -79,6 +80,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(fc.getAdduct().toString());
         row.add(fc.getPrecursorFormulaWithCharge());
         row.add(fc.getZodiacScore());
+        row.add(fc.getSiriusScoreNormalized());
         row.add(fc.getSiriusScore());
         row.add(fc.getTreeScore());
         row.add(fc.getIsotopeScore());

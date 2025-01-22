@@ -33,10 +33,10 @@ public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase>
             checkBoxList.uncheckAll();
             select(bioDB);});
 
-        Arrays.stream(all.getActionListeners()).forEach(l -> all.removeActionListener(l));
+        Arrays.stream(all.getActionListeners()).forEach(all::removeActionListener);
         all.addActionListener(e -> {
             checkBoxList.checkAll();
-            deactivatedDBs.get().stream().forEach(db -> checkBoxList.uncheck(db));
+            deactivatedDBs.get().forEach(checkBoxList::uncheck);
         });
     }
 
@@ -67,11 +67,11 @@ public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase>
     }
 
     public void selectFormulaSearchDBs() {
-        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
+        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
     }
 
     public void selectStructureSearchDBs() {
-        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
+        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
     }
 
 

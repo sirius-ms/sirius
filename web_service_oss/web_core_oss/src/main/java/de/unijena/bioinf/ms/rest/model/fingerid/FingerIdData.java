@@ -30,6 +30,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Has to be set by CLI when first running CSI via WebAPI call
@@ -90,26 +91,43 @@ public class FingerIdData implements FingerprintData<CdkFingerprintVersion> {
     }
 
     public static void write(@NotNull Writer writer, @NotNull final FingerIdData clientData) throws IOException {
-        final String[] header = new String[]{"relativeIndex", "absoluteIndex", "description", "TP", "FP", "TN", "FN", "Acc", "MCC", "F1", "Recall", "Precision", "Count"};
-        final String[] row = header.clone();
-        FileUtils.writeTable(writer, header, Arrays.stream(clientData.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex -> {
-            final MolecularProperty property = clientData.fingerprintVersion.getMolecularProperty(absoluteIndex);
-            final int relativeIndex = clientData.fingerprintVersion.getRelativeIndexOf(absoluteIndex);
-            row[0] = String.valueOf(relativeIndex);
-            row[1] = String.valueOf(absoluteIndex);
-            row[2] = property.getDescription();
-            PredictionPerformance P = clientData.performances[relativeIndex];
-            row[3] = String.valueOf(P.getTp());
-            row[4] = String.valueOf(P.getFp());
-            row[5] = String.valueOf(P.getTn());
-            row[6] = String.valueOf(P.getFn());
-            row[7] = String.valueOf(P.getAccuracy());
-            row[8] = String.valueOf(P.getMcc());
-            row[9] = String.valueOf(P.getF());
-            row[10] = String.valueOf(P.getRecall());
-            row[11] = String.valueOf(P.getPrecision());
-            row[12] = String.valueOf(P.getCount());
-            return row;
-        })::iterator);
+        write(writer, clientData, false);
+    }
+
+    public static void write(@NotNull Writer writer, @NotNull final FingerIdData clientData, boolean addFpTypes) throws IOException {
+        List<String> header = new ArrayList<>(List.of("relativeIndex", "absoluteIndex", "description", "TP", "FP", "TN", "FN", "Acc", "MCC", "F1", "Recall", "Precision", "Count"));
+        if (addFpTypes) {
+            header.add("Type");
+            header.add("TypeName");
+        }
+
+        final String[] row = new String[header.size()];
+
+        FileUtils.writeTable(writer,
+                header.toArray(String[]::new),
+                Arrays.stream(clientData.fingerprintVersion.allowedIndizes()).mapToObj(absoluteIndex -> {
+                    final MolecularProperty property = clientData.fingerprintVersion.getMolecularProperty(absoluteIndex);
+                    final int relativeIndex = clientData.fingerprintVersion.getRelativeIndexOf(absoluteIndex);
+                    CdkFingerprintVersion.USED_FINGERPRINTS type = clientData.cdkFingerprintVersion.getFingerprintTypeFor(absoluteIndex);
+                    row[0] = String.valueOf(relativeIndex);
+                    row[1] = String.valueOf(absoluteIndex);
+                    row[2] = property.getDescription();
+                    PredictionPerformance P = clientData.performances[relativeIndex];
+                    row[3] = String.valueOf(P.getTp());
+                    row[4] = String.valueOf(P.getFp());
+                    row[5] = String.valueOf(P.getTn());
+                    row[6] = String.valueOf(P.getFn());
+                    row[7] = String.valueOf(P.getAccuracy());
+                    row[8] = String.valueOf(P.getMcc());
+                    row[9] = String.valueOf(P.getF());
+                    row[10] = String.valueOf(P.getRecall());
+                    row[11] = String.valueOf(P.getPrecision());
+                    row[12] = String.valueOf(P.getCount());
+                    if (addFpTypes) {
+                        row[13] = type.name();
+                        row[14] = type.getDisplayName();
+                    }
+                    return row;
+                })::iterator);
     }
 }

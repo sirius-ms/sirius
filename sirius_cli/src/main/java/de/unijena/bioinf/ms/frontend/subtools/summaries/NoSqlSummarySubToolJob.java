@@ -141,6 +141,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                     NoSqlCanopusSummaryWriter canopusFormula = options.topHitSummary
                             ? initCanopusSummaryWriter(location, "canopus_formula_summary") : null;
+                    NoSqlCanopusSummaryWriter canopusFormulaAll = options.fullSummary
+                            ? initCanopusSummaryWriter(location, "canopus_formula_summary_all") : null;
+                    NoSqlCanopusSummaryWriter canopusFormulaTopK = options.topK > 0
+                            ? initCanopusSummaryWriter(location, "canopus_formula_summary-" + options.topK) : null;
+
+                    // we do not stor top k or all for canopus structure since it would be redundant to the formula results.
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
                             ? initCanopusSummaryWriter(location, "canopus_structure_summary") : null;
 
@@ -179,6 +185,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                     .map(FTreeResult::getFTree)
                                     .orElseThrow();
 
+                            // write top hits
                             if (formulaTopHit != null && first) {
                                 formulaTopHit.writeFormulaCandidate(f, fc, ftree);
                                 nothingWritten = false;
@@ -194,14 +201,33 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                 lastPrecursorFormula = currentPrecursorFormula;
                                 nothingWritten = false;
                             }
+
+
+                            // write top k hits
                             if (formulaTopK != null && fc.getFormulaRank() <= options.getTopK()) {
                                 formulaTopK.writeFormulaCandidate(f, fc, ftree);
                                 nothingWritten = false;
                             }
+                            if(canopusFormulaTopK != null && fc.getFormulaRank() <= options.getTopK()){
+                                CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
+                                if (cp != null)
+                                    canopusFormulaTopK.writeCanopusPredictions(f, fc, cp);
+                                nothingWritten = false;
+                            }
+
+                            // write top all hits
                             if (formulaAll != null) {
                                 formulaAll.writeFormulaCandidate(f, fc, ftree);
                                 nothingWritten = false;
                             }
+                            if(canopusFormulaAll != null){
+                                CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
+                                if (cp != null)
+                                    canopusFormulaAll.writeCanopusPredictions(f, fc, cp);
+                                nothingWritten = false;
+                            }
+
+
                             if (nothingWritten)
                                 break;
 

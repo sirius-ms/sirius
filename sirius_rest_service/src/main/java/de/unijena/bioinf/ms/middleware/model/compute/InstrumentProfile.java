@@ -25,5 +25,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.
  */
-@Schema(enumAsRef = true, nullable = true)
+@Schema(nullable = true)
 public enum InstrumentProfile {QTOF, ORBITRAP}

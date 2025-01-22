@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -55,8 +56,9 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
@@ -70,18 +72,19 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 @Slf4j
 public class BatchComputeDialog extends JDialog {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
-    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
-    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
     public static final String DO_NOT_SHOW_PRESET_HIDDEN_PARAMETERS = "de.unijena.bioinf.sirius.computeDialog.preset.hiddenParameters.dontAskAgain";
 
-    public static final String DEFAULT_PRESET_DISPLAY_NAME = "default";
+    // should be the same as returned by the server
+    public static final String DEFAULT_PRESET_NAME = "Default";
+    public static final String MS1_PRESET_NAME = "MS1";
+
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
     // main parts
-    private Box centerPanel;
+    private final Box centerPanel;
     private JCheckBox recomputeBox;
     private JButton showCommand;
 
@@ -94,25 +97,26 @@ public class BatchComputeDialog extends JDialog {
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
+    private boolean ms2;
 
-    protected JButton toggleAdvancedMode;
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
     private final JPanel main;
-    private final LoadablePanel loadableWrapper;
 
     private PropertyChangeListener connectionListener;
 
     private JComboBox<String> presetDropdown;
+    private Map<String, StoredJobSubmission> allPresets;
     private JobSubmission preset;
     private boolean presetFrozen;
     private MessageBanner presetInfoBanner;
     private MessageBanner presetWarningBanner;
     private MessageBanner connectionMessage;
+    private ItemListener presetChangeListener;
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
-        super(gui.getMainFrame(), "Compute", true);
+        super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
         gui.getConnectionMonitor().checkConnectionInBackground();
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
@@ -120,7 +124,7 @@ public class BatchComputeDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         main = new JPanel(new BorderLayout());
-        loadableWrapper = new LoadablePanel(main, "Initializing...");
+        LoadablePanel loadableWrapper = new LoadablePanel(main, "Initializing...");
         loadableWrapper.setLoading(true, true);
 
         add(loadableWrapper, BorderLayout.CENTER);
@@ -136,45 +140,31 @@ public class BatchComputeDialog extends JDialog {
 
         JPanel northPanel = new JPanel(new BorderLayout());
         northPanel.add(makeBanners(), BorderLayout.NORTH);
-        northPanel.add(makePresetPanel(), BorderLayout.CENTER);
+
+        JPanel topLine = new JPanel();
+        topLine.setLayout(new BoxLayout(topLine, BoxLayout.LINE_AXIS));
+
+        topLine.add(makePresetPanel());
+        topLine.add(makeAdvancedModeToggle());
+
+        northPanel.add(topLine, BorderLayout.CENTER);
         add(northPanel, BorderLayout.NORTH);
         main.add(northPanel, BorderLayout.NORTH);
 
         loadableWrapper.runInBackgroundAndLoad(() -> {
-            final boolean ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs);
+            ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs) || compoundsToProcess.isEmpty();  // Empty compounds if the dialog is opened to edit presets, ms2 UI should be active
             {
                 // make subtool config panels
                 formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
-                zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
+                zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView, compoundsToProcess.size());
                 fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
                 csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
                 msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
                 if (!isSingleCompound() && ms2) {
-                    zodiacConfigs.addEnableChangeListener((s, enabled) -> {
-                        if (enabled) {
-                            if (new QuestionDialog(mf(), "Low number of Compounds",
-                                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP, ReturnValue.Success).isCancel()) {
-                                zodiacConfigs.activationButton.setSelected(false);
-                                return;
-                            }
-
-
-                            if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
-                                if (new QuestionDialog(mf(), "High Memory Consumption",
-                                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM, ReturnValue.Success).isCancel()) {
-                                    zodiacConfigs.activationButton.setSelected(false);
-                                }
-                            }
-                        }
-
-
-                    });
                     addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
                     zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
                 }
@@ -191,7 +181,7 @@ public class BatchComputeDialog extends JDialog {
                     msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
 
                     // computing formulaId will discard fingerprints, so we need to enable it for structure search
-                    formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> {
+                    formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                         if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
                             fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
                             fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
@@ -212,28 +202,7 @@ public class BatchComputeDialog extends JDialog {
                 if (isSingleCompound()) recomputeBox.setSelected(true);
 
                 JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-                final String SHOW_ADVANCED = "Show advanced settings";
-                final String HIDE_ADVANCED = "Hide advanced settings";
-                toggleAdvancedMode = new JButton(SHOW_ADVANCED);
-                isAdvancedView = false;
-                toggleAdvancedMode.addActionListener(e -> {
-                    isAdvancedView = !isAdvancedView;
-                    if (isAdvancedView) {
-                        toggleAdvancedMode.setText(HIDE_ADVANCED);
-                    } else {
-                        toggleAdvancedMode.setText(SHOW_ADVANCED);
-                    }
 
-                    formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
-                    zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
-                });
-                csouthPanel.add(toggleAdvancedMode);
-
-                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-                JButton compute = new JButton("Compute");
-                compute.addActionListener(e -> startComputing());
-                JButton abort = new JButton("Cancel");
-                abort.addActionListener(e -> dispose());
                 showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
                     final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
@@ -256,7 +225,22 @@ public class BatchComputeDialog extends JDialog {
                     };
                 });
 
-                rsouthPanel.add(showCommand);
+                JButton showJson = new JButton("Show JSON");
+                showJson.setToolTipText("Open current parameters in a JSON viewer.");
+                showJson.addActionListener(e -> viewJobJsonDialog());
+
+                csouthPanel.add(showCommand);
+                csouthPanel.add(showJson);
+
+                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+                JButton compute = new JButton("Compute");
+                if (compoundsToProcess.isEmpty()) {
+                    compute.setVisible(false);
+                }
+                compute.addActionListener(e -> startComputing());
+                JButton abort = new JButton("Cancel");
+                abort.addActionListener(e -> dispose());
+
                 rsouthPanel.add(compute);
                 rsouthPanel.add(abort);
 
@@ -276,17 +260,18 @@ public class BatchComputeDialog extends JDialog {
                 checkResult = gui.getConnectionMonitor().checkConnection();
             }
 
-            activatePreset(DEFAULT_PRESET_DISPLAY_NAME);
+            reloadPresets();
+            activateDefaultPreset();
             updateConnectionBanner(checkResult);
 
             connectionListener = evt -> {
-                if (evt instanceof ConnectionMonitor.ConnectionStateEvent stateEvent)
+                if (evt instanceof ConnectionMonitor.ConnectionEvent stateEvent)
                     Jobs.runEDTLater(() -> updateConnectionBanner(stateEvent.getConnectionCheck()));
             };
-            gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
+            gui.getConnectionMonitor().addConnectionListener(connectionListener);
         });
 
-        setPreferredSize(new Dimension(1125, 1024));
+        setPreferredSize(new Dimension(1150, 1024));
         //finalize panel build
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
         if (getMaximumSize().width < getPreferredSize().width)
@@ -294,6 +279,10 @@ public class BatchComputeDialog extends JDialog {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private void activateDefaultPreset() {
+        activatePreset(ms2 ? DEFAULT_PRESET_NAME : MS1_PRESET_NAME);
     }
 
     private boolean isSingleCompound() {
@@ -652,12 +641,29 @@ public class BatchComputeDialog extends JDialog {
         presetWarningBanner.setVisible(false);
     }
 
+    private JPanel makeAdvancedModeToggle() {
+        JToggleSwitch toggle = new JToggleSwitch();
+        toggle.setToolTipText("Show/Hide advanced parameters.");
+        toggle.setPreferredSize(new Dimension(40, 28));
+        toggle.addEventToggleSelected(selected -> {
+            isAdvancedView = !isAdvancedView;
+
+            formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
+            zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
+        });
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panel.add(toggle);
+        panel.add(new JLabel("Advanced"));
+
+        return panel;
+    }
+
     private JPanel makePresetPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel.add(new JLabel("Preset"));
 
         presetDropdown = new JComboBox<>();
-        reloadPresets();
 
         panel.add(presetDropdown);
 
@@ -678,32 +684,29 @@ public class BatchComputeDialog extends JDialog {
             saveAsPreset.setToolTipText("Save current selection as a new preset");
         }
 
-        JButton viewPreset = new JButton("View");
-        viewPreset.addActionListener(e -> viewPresetDialog());
-
         JButton removePreset = new JButton("Remove");
         removePreset.setEnabled(false);
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
-        panel.add(viewPreset);
         panel.add(removePreset);
 
-        presetDropdown.addItemListener(event -> {
+        presetChangeListener = event -> {
             if (event.getStateChange() == ItemEvent.SELECTED) {
                 String presetName = (String)event.getItem();
                 activatePreset(presetName);
 
-                boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-                savePreset.setEnabled(!defaultSelected && !presetFrozen && !isSingleCompound());
-                removePreset.setEnabled(!defaultSelected);
+                boolean editable = allPresets.get(presetName).isEditable();
+                savePreset.setEnabled(editable && !presetFrozen && !isSingleCompound());
+                removePreset.setEnabled(editable);
             }
-        });
+        };
 
         savePreset.addActionListener(e -> {
             String presetName = (String) presetDropdown.getSelectedItem();
             JobSubmission currentConfig = makeJobSubmission();
-            gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true));
+            gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(presetName, currentConfig, true, false));
+            reloadPresets();
             activatePreset(presetName);
         });
 
@@ -721,9 +724,9 @@ public class BatchComputeDialog extends JDialog {
             if (newPresetName != null && !newPresetName.isBlank()) {
                 JobSubmission currentConfig = makeJobSubmission();
                 try {
-                    String createdPresetName = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false));
+                    StoredJobSubmission createdPreset = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false, false));
                     reloadPresets();
-                    presetDropdown.setSelectedItem(createdPresetName);
+                    presetDropdown.setSelectedItem(createdPreset.getName());
                 } catch (Exception ex) {
                     String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
                             .map(SiriusSDKErrorResponse::getMessage)
@@ -737,36 +740,42 @@ public class BatchComputeDialog extends JDialog {
             String presetName = (String) presetDropdown.getSelectedItem();
             gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobConfig(presetName));
             reloadPresets();
+            activateDefaultPreset();
         });
 
         return panel;
     }
 
     /**
-     * Removes all current presets from the preset dropdown and loads them again
+     * Removes all current presets from the preset dropdown and loads them again.
+     * Some preset should be activated after calling this method, otherwise the UI will be in an inconsistent state
      */
     private void reloadPresets() {
+        presetDropdown.removeItemListener(presetChangeListener);  // the first item added to the combobox gets selected, and we don't want to activate it immediately
         presetDropdown.removeAllItems();
-        List<String> presetNames = new ArrayList<>();
-        presetNames.add(DEFAULT_PRESET_DISPLAY_NAME);
-        presetNames.addAll(gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigNames()));
-        presetNames.forEach(presetDropdown::addItem);
+        allPresets = new HashMap<>();
+        List<StoredJobSubmission> configsFromServer = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfigs());
+        for (StoredJobSubmission c : configsFromServer) {
+            allPresets.put(c.getName(), c);
+            presetDropdown.addItem(c.getName());
+        }
+        presetDropdown.addItemListener(presetChangeListener);
     }
 
     private void activatePreset(String presetName) {
+        if (!Objects.equals(presetDropdown.getSelectedItem(), presetName)) {
+            presetDropdown.getModel().setSelectedItem(presetName);
+            return;
+        }
         presetUnfreeze();
         try {
-            JobSubmission defaultPreset = gui.applySiriusClient((c, pid) -> c.jobs().getDefaultJobConfig(true, true));
-            boolean defaultSelected = presetName.equals(DEFAULT_PRESET_DISPLAY_NAME);
-            if (defaultSelected) {
-                preset = defaultPreset;
-            } else {
-
+            preset = allPresets.get(presetName).getJobSubmission();
+            JobSubmission defaultPreset = allPresets.get(DEFAULT_PRESET_NAME).getJobSubmission();
+            if (allPresets.get(presetName).isEditable()) {
                 // If custom DBs change, preset will have an outdated list that causes a warning,
                 // they will be all selected anyway, so we can ignore it
                 Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
 
-                preset = gui.applySiriusClient((c, pid) -> c.jobs().getJobConfig(presetName, true, true));
                 Set<String> uiParameters = getAllUIParameterBindings().keySet();
                 List<String> hiddenParameters = preset.getConfigMap().entrySet().stream()
                         .filter(e -> !uiParameters.contains(e.getKey()))
@@ -788,16 +797,14 @@ public class BatchComputeDialog extends JDialog {
                 }
             }
 
-            // all parameters of the presets are part of the configmap, ensured via `moveParametersToConfigMap`.
-            // however user might save a simple preset without config map (e.g. using api).
-            // Missing values in the map will fallback to default during computation.
-            // To ensure we have all config values we need for the GUI panel, we will load the default config map as base an override it with the preset value.
-            // This is the same as falling back to default, but we can fill the gui panel correctly.
+            // Fall back to default parameters in the GUI if they are missing in the selected preset
             final Map<String, String> configMap = defaultPreset.getConfigMap() != null ? new HashMap<>(defaultPreset.getConfigMap()) : new HashMap<>();
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
 
-            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap, defaultSelected);
+            csiSearchConfigs.getContent().getStructureSearchStrategy().removeDivergingDatabaseListener();
+
+            formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
             boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
@@ -863,10 +870,9 @@ public class BatchComputeDialog extends JDialog {
         showCommand.setEnabled(true);
     }
 
-    private void viewPresetDialog() {
+    private void viewJobJsonDialog() {
         try {
-            String json = toJson(preset);
-            String presetName = (String) presetDropdown.getSelectedItem();
+            String json = toJson(makeJobSubmission());
 
             JTextArea textArea = new JTextArea(json);
             textArea.setEditable(false);
@@ -876,7 +882,7 @@ public class BatchComputeDialog extends JDialog {
             JScrollPane scrollPane = new JScrollPane(textArea);
             scrollPane.setPreferredSize(new Dimension(600, 600));
 
-            JOptionPane.showMessageDialog(this, scrollPane, "Preset source: " + presetName, JOptionPane.PLAIN_MESSAGE);
+            JOptionPane.showMessageDialog(this, scrollPane, "Computation parameters", JOptionPane.PLAIN_MESSAGE);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), null, JOptionPane.ERROR_MESSAGE);
         }

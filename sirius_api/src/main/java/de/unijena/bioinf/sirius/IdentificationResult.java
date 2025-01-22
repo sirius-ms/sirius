@@ -26,34 +26,13 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 
 //this is basically just a scored tree
 public final class IdentificationResult extends SScored<FTree, FormulaScore> implements Cloneable {
-
-    public static IdentificationResult withPrecursorIonType(IdentificationResult ir, PrecursorIonType ionType, boolean preserveOriginalTreeScore) {
-
-        PrecursorIonType adduct = ir.getTree().getAnnotationOrNull(PrecursorIonType.class);
-        if (adduct==null || !adduct.equals(ionType)) {
-            FTree newTree = new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType, preserveOriginalTreeScore);
-            FormulaScore scoredObject = ir.getScoreObject();
-            FormulaScore s;
-            if (!preserveOriginalTreeScore){
-                if (scoredObject instanceof SiriusScore) {
-                    s = new SiriusScore(FTreeMetricsHelper.getSiriusScore(newTree));
-                } else if (scoredObject instanceof TreeScore) {
-                    s = new TreeScore(new FTreeMetricsHelper(newTree).getTreeScore());
-                } else {
-                    s = scoredObject;
-                }
-            } else s = scoredObject;
-            return new IdentificationResult(newTree, s);
-        }
-
-        else return ir;
-    }
+    /*
+    normalized SIRIUS score. This is stored in the IdentificationResult after tree computations to assign it to the FormulaCandidate
+     */
+    private double normalizedScore = Double.NaN;
 
     public IdentificationResult(IdentificationResult ir) {
         this(ir.getCandidate(), ir.getScoreObject());
@@ -61,6 +40,14 @@ public final class IdentificationResult extends SScored<FTree, FormulaScore> imp
 
     public IdentificationResult(FTree tree, FormulaScore score) {
         super(tree, score);
+    }
+
+    void setNormalizedScore(double normalizedScore) {
+        this.normalizedScore = normalizedScore;
+    }
+
+    public double getNormalizedScore() {
+        return normalizedScore;
     }
 
     public MolecularFormula getMolecularFormula() {

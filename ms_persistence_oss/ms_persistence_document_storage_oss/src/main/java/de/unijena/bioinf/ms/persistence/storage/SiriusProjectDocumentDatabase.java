@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
+    int SIRIUS_PROJECT_SCHEMA_VERSION = 1;
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
     String PROJECT_PROPERTIES_COLLECTION = "PROJECT_PROPERTIES";
@@ -62,6 +63,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
+                .schemaVersion(SIRIUS_PROJECT_SCHEMA_VERSION)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
                 .addCollection(PROJECT_PROPERTIES_COLLECTION, Index.unique("key"))
 

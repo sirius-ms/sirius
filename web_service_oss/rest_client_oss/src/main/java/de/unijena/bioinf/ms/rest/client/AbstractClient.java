@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.utils.HTTPSupplier;
+import de.unijena.bioinf.ms.rest.model.ProblemResponse;
 import de.unijena.bioinf.ms.rest.model.SecurityService;
 import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.rest.NetUtils;
@@ -48,6 +49,7 @@ public abstract class AbstractClient {
     protected static final String CID = SecurityService.generateSecurityToken();
 
     public static final MediaType APPLICATION_JSON = MediaType.parse("application/json;charset=UTF-8");
+    protected final ObjectMapper objectMapper = new ObjectMapper();
 
     @NotNull
     private Supplier<URI> serverUrl;
@@ -100,11 +102,20 @@ public abstract class AbstractClient {
         return serverUrl.get();
     }
 
-    protected void isSuccessful(Response response, Request sourceRequest) throws IOException {
+    protected void isSuccessful(Response response) throws IOException {
         if (response.code() >= 400) {
+            ProblemResponse body = null;
+            try (ResponseBody responseBody = response.body()) {
+                if (responseBody != null) {
+                    try (InputStream s = response.body().byteStream()) {
+                        body = objectMapper.readValue(s, ProblemResponse.class);
+                    }
+                }
+            }
             throw new HttpErrorResponseException(response.code(), response.message(),
                     Optional.ofNullable(response.header("WWW-Authenticate")).orElse("NULL"),
-                    response.request().method() + ": " + response.request().url(), "No Content");
+                    response.request().method() + ": " + response.request().url(), body);
+
         }
     }
 
@@ -128,7 +139,7 @@ public abstract class AbstractClient {
         for (IOFunctions.IOConsumer<Request.Builder> requestDecorator : requestDecorators)
             requestDecorator.accept(request);
         return executeWithResponse(client, request, response -> {
-            isSuccessful(response, response.request());
+            isSuccessful(response);
             try (ResponseBody body = response.body()) {
                 if (body != null) {
                     try (final BufferedReader reader = new BufferedReader(body.charStream())) {
@@ -177,10 +188,12 @@ public abstract class AbstractClient {
             requestDecorator.accept(request);
 
         try (Response response = client.newCall(request.build()).execute()) {
-            isSuccessful(response, response.request());
+            isSuccessful(response);
             try (ResponseBody body = response.body()) {
                 if (body != null) {
-                    return respHandling.apply(body.byteStream());
+                    try (InputStream s = body.byteStream()) {
+                        return respHandling.apply(s);
+                    }
                 }
             }
         }

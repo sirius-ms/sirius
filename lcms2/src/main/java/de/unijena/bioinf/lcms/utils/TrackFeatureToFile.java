@@ -17,6 +17,7 @@ import org.apache.commons.lang3.Range;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class TrackFeatureToFile implements Tracker{
@@ -42,7 +43,7 @@ public class TrackFeatureToFile implements Tracker{
     @Override
     public void tracePicked(double mz, double rt, ProcessedSample sample, ContiguousTrace trace) {
         if (tracked(mz, rt)) {
-            this.out.println(String.format(Locale.US,"trace picked with m/z = %f, rt = %f, in sample %s", mz, rt, sample.getRun().getName()));
+            this.out.println(String.format(Locale.US,"trace picked with m/z = %f, rt = %f, in sample %s. Trace has the following segments: %s", mz, rt, sample.getRun().getName(), Arrays.toString(trace.getSegments())));
         }
     }
 
@@ -122,7 +123,7 @@ public class TrackFeatureToFile implements Tracker{
         double rtA = merged.getMapping().getRetentionTimeAt(projectedTrace.getProjectedStartId());
         double rtB = merged.getMapping().getRetentionTimeAt(projectedTrace.getProjectedEndId());
         if (tracked(projectedTrace.getAveragedMz(), rtA, rtB)) {
-            this.out.println(String.format(Locale.US,"merge trace m/z = %f, rt = %f..%f in sample %s ASSIGN MS/MS: %s", projectedTrace.getAveragedMz(), rtA, rtB, sample.getRun().getName(), ids.toString()));
+            this.out.println(String.format(Locale.US,"merge trace m/z = %f, rt = %f..%f in sample %s ASSIGN MS/MS: %s", projectedTrace.getAveragedMz(), rtA, rtB, sample.getRun().getName(), Arrays.toString(ids)));
         }
     }
 

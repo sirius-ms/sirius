@@ -85,7 +85,7 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         FileChooserPanel summaryLocation = new FileChooserPanel(
                 outputLocation, "",
                 JFileChooser.FILES_AND_DIRECTORIES,JFileChooser.SAVE_DIALOG);
-        summaryLocation.field.setPlaceholder("Leave empty or pick a directory");
+        summaryLocation.field.setPlaceholder("Project location or pick a directory");
         parameterBindings.put("output", summaryLocation::getFilePath);
         getOptionTooltip("output").ifPresent(summaryLocation::setToolTipText);
         summaryLocation.field.setPreferredSize(new Dimension(300, summaryLocation.field.getPreferredSize().height));

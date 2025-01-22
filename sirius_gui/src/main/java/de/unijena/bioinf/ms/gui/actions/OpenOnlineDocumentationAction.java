@@ -27,7 +27,7 @@ import java.awt.*;
 
 public class OpenOnlineDocumentationAction extends OpenInDocsAction {
     public OpenOnlineDocumentationAction(Frame popupOwner) {
-        super("Docu", popupOwner);
+        super("Docs", popupOwner);
         putValue(Action.LARGE_ICON_KEY, Icons.HELP.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Open online documentation.");
     }

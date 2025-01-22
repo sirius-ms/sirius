@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEdi
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -109,7 +110,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui, getSource().getBestFunc()));
+        candidateList.setCellRenderer(new CandidateCellRenderer(this, gui, getSource().getBestFunc()));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -186,7 +187,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
-                Desktop.getDesktop().browse(new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
+                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
@@ -198,9 +199,11 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 return;
                             try {
                                 if (s.URI().contains("%s")) {
-                                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
+                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
                                 } else {
-                                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))));
+                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))));
                                 }
                             } catch (IOException | URISyntaxException e1) {
                                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
@@ -343,22 +346,22 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 if (lmIds != null && !lmIds.isEmpty()) {
                                     lmIds.forEach(lmId -> {
                                         try {
-                                            Desktop.getDesktop().browse(URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))));
+                                            GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))));
                                         } catch (IOException e) {
                                             LoggerFactory.getLogger(getClass()).error("Error when opening lipid maps URL.", e);
                                         }
                                     });
                                 } else {
-                                    Desktop.getDesktop().browse(LipidClass.makeLipidMapsFuzzySearchLink(id));
+                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), LipidClass.makeLipidMapsFuzzySearchLink(id));
                                 }
                             } catch (Exception ex) {
                                 LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
                             }
                         });
                     } else if (s.URI().contains("%s")) {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))));
+                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))));
                     } else {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))));
+                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))));
                     }
                 }
             } catch (IOException | URISyntaxException e1) {

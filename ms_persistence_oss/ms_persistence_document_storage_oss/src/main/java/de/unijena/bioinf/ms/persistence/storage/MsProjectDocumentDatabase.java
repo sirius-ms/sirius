@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
@@ -106,6 +107,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(AlignedIsotopicFeatures.class,
                         Index.nonUnique("alignedFeatureId")
                 )
+
+                .addRepository(AdductNetwork.class)
 
                 .addRepository(CorrelatedIonPair.class,
                         Index.nonUnique("alignedFeatureId1"),

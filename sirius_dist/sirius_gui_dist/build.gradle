@@ -68,7 +68,6 @@ dependencies {
     for (m in javaFX_modules) // add (native) javaFX dependencies to build
         implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
     //tests
-    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 

@@ -7,21 +7,59 @@
     <!-- Load D3.js from CDN -->
     <style>
         #lc-plot {
-            padding: 10px;
+            padding: 5px;
         }
-        #lclegend-container {
+        #lc-legend {
             width: 80%;
-            height: 300px;
+            height: 450px;
             overflow-y: auto;
             border: 1px solid #ccc;
             padding: 10px;
             box-sizing: border-box;
         }
+        .ms2ano {
+            stroke-width: 3px;
+            fill:none;
+        }
+
+
+#lc-graph {
+    display:flex;
+    flex-direction: row;
+}
+#lc-graph svg {
+    border: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-grow: 1;
+    width:70%;
+    height:400px;
+}
+#lc-graph div {
+    flex-grow: 1;
+    width:30%;
+    height:400px;
+}
+#lc-graph svg rect, #lc-graph svg text {
+    cursor: pointer;
+}
+#lc-graph lc-adductbox-main {
+    fill:orange;
+}
+#lc-graph lc-adductbox-isotope {
+    fill:gray;
+}
+#lc-graph lc-adductbox-adduct {
+    fill:steelblue;
+}
+
     </style>
 </head>
 <body>
     <svg id="lc-plot" width="80%" height="500px"></svg>
-    <div id="lclegend-container">
+    <div id="lc-legend">
+        <div id="lc-graph">
+        </div>
     </div>
 </body>
 </html>
