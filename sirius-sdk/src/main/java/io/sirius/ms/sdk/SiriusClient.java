@@ -25,7 +25,6 @@ import io.sirius.ms.sdk.api.*;
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.JobProgress;
 import io.sirius.ms.sdk.model.JobState;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvent;

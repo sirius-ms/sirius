@@ -2,7 +2,7 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
-import io.sirius.ms.sdk.model.PageRun;
+import io.sirius.ms.sdk.model.PagedModelRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
 import io.sirius.ms.sdk.model.Tag;
@@ -748,7 +748,7 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getRunsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
@@ -781,7 +781,7 @@ public class RunsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/runs/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -794,11 +794,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageRun getRunsPaged(String projectId, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public PagedModelRun getRunsPaged(String projectId, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return getRunsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -811,11 +811,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageRun&gt;
+     * @return ResponseEntity&lt;PagedModelRun&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageRun> getRunsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public ResponseEntity<PagedModelRun> getRunsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return getRunsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -844,7 +844,7 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec objectsByGroupRequestCreation(String projectId, String group, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
@@ -882,7 +882,7 @@ public class RunsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/runs/grouped", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -896,11 +896,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageRun objectsByGroup(String projectId, String group, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public PagedModelRun objectsByGroup(String projectId, String group, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return objectsByGroupRequestCreation(projectId, group, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -914,11 +914,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageRun&gt;
+     * @return ResponseEntity&lt;PagedModelRun&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageRun> objectsByGroupWithHttpInfo(String projectId, String group, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public ResponseEntity<PagedModelRun> objectsByGroupWithHttpInfo(String projectId, String group, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return objectsByGroupRequestCreation(projectId, group, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -948,7 +948,7 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec objectsByTagRequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
@@ -982,7 +982,7 @@ public class RunsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/runs/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -996,11 +996,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageRun
+     * @return PagedModelRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageRun objectsByTag(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public PagedModelRun objectsByTag(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return objectsByTagRequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -1014,11 +1014,11 @@ public class RunsApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageRun&gt;
+     * @return ResponseEntity&lt;PagedModelRun&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageRun> objectsByTagWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
+    public ResponseEntity<PagedModelRun> objectsByTagWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<RunOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelRun> localVarReturnType = new ParameterizedTypeReference<PagedModelRun>() {};
         return objectsByTagRequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 

@@ -935,7 +935,7 @@ No authorization required
 
 ## getQuantification
 
-> QuantificationTable getQuantification(projectId, type)
+> QuantificationTableExperimental getQuantification(projectId, type)
 
 Returns the full quantification table.
 
@@ -958,9 +958,9 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String type = "APEX_INTENSITY"; // String | quantification type.
+        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
         try {
-            QuantificationTable result = apiInstance.getQuantification(projectId, type);
+            QuantificationTableExperimental result = apiInstance.getQuantification(projectId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getQuantification");
@@ -979,11 +979,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTable**](QuantificationTable.md)
+[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
 
 ### Authorization
 
@@ -1003,7 +1003,7 @@ No authorization required
 
 ## getQuantificationRow
 
-> QuantificationTable getQuantificationRow(projectId, compoundId, type)
+> QuantificationTableExperimental getQuantificationRow(projectId, compoundId, type)
 
 Returns a single quantification table row for the given feature.
 
@@ -1027,9 +1027,9 @@ public class Example {
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String compoundId = "compoundId_example"; // String | compound which should be read out
-        String type = "APEX_INTENSITY"; // String | quantification type.
+        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
         try {
-            QuantificationTable result = apiInstance.getQuantificationRow(projectId, compoundId, type);
+            QuantificationTableExperimental result = apiInstance.getQuantificationRow(projectId, compoundId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getQuantificationRow");
@@ -1049,11 +1049,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **compoundId** | **String**| compound which should be read out | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTable**](QuantificationTable.md)
+[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
 
 ### Authorization
 
@@ -1073,7 +1073,7 @@ No authorization required
 
 ## objectsByGroup1
 
-> PageCompound objectsByGroup1(projectId, group, page, size, sort, optFields)
+> PagedModelCompound objectsByGroup1(projectId, group, page, size, sort, optFields)
 
 **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
 
@@ -1102,7 +1102,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageCompound result = apiInstance.objectsByGroup1(projectId, group, page, size, sort, optFields);
+            PagedModelCompound result = apiInstance.objectsByGroup1(projectId, group, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#objectsByGroup1");
@@ -1129,7 +1129,7 @@ public class Example {
 
 ### Return type
 
-[**PageCompound**](PageCompound.md)
+[**PagedModelCompound**](PagedModelCompound.md)
 
 ### Authorization
 
@@ -1149,7 +1149,7 @@ No authorization required
 
 ## objectsByTag1
 
-> PageCompound objectsByTag1(projectId, filter, page, size, sort, optFields)
+> PagedModelCompound objectsByTag1(projectId, filter, page, size, sort, optFields)
 
 **EXPERIMENTAL** Get compounds (group of ion identities) by tag
 
@@ -1178,7 +1178,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageCompound result = apiInstance.objectsByTag1(projectId, filter, page, size, sort, optFields);
+            PagedModelCompound result = apiInstance.objectsByTag1(projectId, filter, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#objectsByTag1");
@@ -1205,7 +1205,7 @@ public class Example {
 
 ### Return type
 
-[**PageCompound**](PageCompound.md)
+[**PagedModelCompound**](PagedModelCompound.md)
 
 ### Authorization
 

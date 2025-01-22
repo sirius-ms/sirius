@@ -7,5 +7,7 @@
 
 * `FEATURES` (value: `"FEATURES"`)
 
+* `COMPOUNDS` (value: `"COMPOUNDS"`)
+
 
 
