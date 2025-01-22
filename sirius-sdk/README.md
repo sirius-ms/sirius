@@ -119,7 +119,7 @@ Insert following snippet into your `build.gradle` to add this package as depende
 }
 
 dependencies {
-    implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0-SNAPSHOT"
+    implementation "io.sirius-ms:sirius-sdk:3.1+sirius6.2.0-SNAPSHOT"
 }
 ```
 
@@ -136,7 +136,7 @@ Insert following snippet into your project's POM to add this package as dependen
 
 <dependency>
   <groupId>io.sirius-ms</groupId>
-  <artifactId>sirius-sdk.openapi</artifactId>
+  <artifactId>sirius-sdk</artifactId>
   <version>3.1+sirius6.2.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
