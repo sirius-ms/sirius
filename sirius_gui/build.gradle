@@ -53,8 +53,8 @@ dependencies {
 
     if (excludeJFX)
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
-            compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+            compileOnly "org.openjfx:$m:$jre_version:${siriusTargetPlatform.jfxClassifier().get()}"
     else
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
-            implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+            implementation "org.openjfx:$m:$jre_version:${siriusTargetPlatform.jfxClassifier().get()}"
 }

@@ -66,7 +66,7 @@ licenseReport {
 dependencies {
     implementation project(':sirius_rest_service')
     for (m in javaFX_modules) // add (native) javaFX dependencies to build
-        implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+        implementation "org.openjfx:$m:$jre_version:${siriusTargetPlatform.jfxClassifier().get()}"
     //tests
     testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }

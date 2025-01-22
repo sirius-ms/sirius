@@ -22,7 +22,7 @@ plugins {
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper {
-    gradleVersion = '8.8'
+    gradleVersion = '8.12'
 }
 
 //Global Properties
@@ -50,6 +50,7 @@ ext {
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
     //version for external libraries
+    jre_version = '21.0.5'
     jjobs_version = '0.10.0'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
@@ -138,7 +139,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    targetCompatibility = 21
+    sourceCompatibility = 21
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
