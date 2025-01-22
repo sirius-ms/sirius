@@ -16,6 +16,13 @@ public class StoredJobSubmission {
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
+
+    /**
+     * False for predefined configs which are not editable and not removable.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private boolean editable;
+
     /**
      * The JobSubmission identified by the name
      */

@@ -20,49 +20,37 @@
 
 package de.unijena.bioinf.rest;
 
+import de.unijena.bioinf.ms.rest.model.ProblemResponse;
+import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 
 public class HttpErrorResponseException extends IOException {
+    @Getter
     private final int errorCode;
+    @Getter
     private final String bearerToken;
-    private final String request;
-    private final String content;
+    @Getter
+    private final String requestUrl;
+    @Getter
+    private final ProblemResponse errorResponse;
 
-    public HttpErrorResponseException(int errorCode, String reasonPhrase, String bearerToken, String request, String content) {
+    public HttpErrorResponseException(int errorCode, String reasonPhrase, @Nullable String bearerToken, @Nullable String requestUrl, @Nullable ProblemResponse errorResponse) {
         super(reasonPhrase);
         this.errorCode = errorCode;
         this.bearerToken = bearerToken;
-        this.request = request;
-        this.content = content;
+        this.requestUrl = requestUrl;
+        this.errorResponse = errorResponse;
     }
 
     @Override
     public String getMessage() {
         return "Error when querying REST service. Bad HTTP Response Code: "
-                + getErrorCode() + " | HTTP-Message: " + super.getMessage() + " | HTTP-Request: " + getRequest();
-    }
-
-    private String getRequest() {
-        return request;
-    }
-
-    public String getMessageWithBody() {
-        return getMessage() + " | HTTP-Body: " + getContent();
-    }
-
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-    public String getBearerToken() {
-        return bearerToken;
-    }
-
-    public String getContent() {
-        return content;
+                + getErrorCode() + " | HTTP-Message: " + (errorResponse == null ? super.getMessage() : errorResponse.getDetail()) + " | HTTP-Request: " + getRequestUrl();
     }
 
     public String getReasonPhrase(){
-        return super.getMessage();
+        return (errorResponse == null ? super.getMessage() : errorResponse.getDetail()) ;
     }
 }
