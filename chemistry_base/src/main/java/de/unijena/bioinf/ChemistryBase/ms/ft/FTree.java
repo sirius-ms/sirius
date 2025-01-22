@@ -25,6 +25,8 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.graphUtils.tree.*;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 
@@ -35,12 +37,16 @@ public class FTree extends AbstractFragmentationGraph implements ResultAnnotatio
     /**
      * The total score of the tree. This is the sum of scores of all losses plus the root score
      */
+    @Setter
+    @Getter
     protected double treeWeight;
 
     /**
      * Due to a very bad design decision, we cannot assign scores to fragments. Thus, we have to store
      * the score of the root separately.
      */
+    @Setter
+    @Getter
     protected double rootScore;
 
     public FTree(MolecularFormula rootFormula, Ionization ionization) {
@@ -93,48 +99,6 @@ public class FTree extends AbstractFragmentationGraph implements ResultAnnotatio
         root = f;
         return f;
     }
-
-    public double getRootScore() {
-        return rootScore;
-    }
-
-    public void setRootScore(double score) {
-        this.rootScore = score;
-    }
-
-    public double getTreeWeight() {
-        return treeWeight;
-    }
-
-    public void setTreeWeight(double weight) {
-        this.treeWeight = weight;
-    }
-
-    /*
-    public void swapRoot(Fragment f) {
-        if (!isOwnFragment(f)) throw new IllegalArgumentException("Expect a fragment of the same tree as parameter");
-        fragments.set(0, f);
-        fragments.set(f.vertexId, root);
-        root.setVertexId(f.vertexId);
-        f.setVertexId(0);
-        invertPathsForRootSwapping(f);
-        root = f;
-    }
-
-    protected void invertPathsForRootSwapping(Fragment v) {
-        // all incoming egdes become outgoing edges
-        final ArrayList<Loss> incomingLosses = new ArrayList<Loss>(v.getIncomingEdges());
-        for (Loss l : incomingLosses) {
-            final Fragment u = l.getSource();
-            // u becomes child of v
-            invertPathsForRootSwapping(u);
-            // delete edge u->v
-            deleteLoss(getLoss(u, v));
-            // add new edge v<-u
-            swapLoss(u, v);
-        }
-    }
-    */
 
     public TreeAdapter<Fragment> treeAdapter() {
         return treeAdapterStatic();

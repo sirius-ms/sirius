@@ -97,15 +97,15 @@ public class TestSetup {
 
         if (sourceProject != null) {
             copySiriusProject(sourceProject, path);
-            return siriusClient.projects().openProjectSpace(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().openProject(uid, path.toAbsolutePath().toString(), null);
         } else {
-            return siriusClient.projects().createProjectSpace(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().createProject(uid, path.toAbsolutePath().toString(), null);
         }
     }
 
     public void deleteTestProject(ProjectInfo projectSpace) {
         try {
-            siriusClient.projects().closeProjectSpace(projectSpace.getProjectId());
+            siriusClient.projects().closeProject(projectSpace.getProjectId());
             Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
         } catch (IOException e) {
             e.printStackTrace();

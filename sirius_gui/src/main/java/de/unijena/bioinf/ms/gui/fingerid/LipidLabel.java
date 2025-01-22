@@ -122,14 +122,10 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
 
     private void open(URI uri) {
         if (uri != null) {
-            if (Desktop.isDesktopSupported()) {
-                try {
-                    Desktop.getDesktop().browse(uri);
-                } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when opening link '" + uri + ".", e);
-                }
-            } else {
-                LoggerFactory.getLogger(getClass()).error("No Browser found.");
+            try {
+                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), uri);
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Error when opening link '{}.", uri, e);
             }
         } else {
             LoggerFactory.getLogger(getClass()).warn("No link to be opened.");

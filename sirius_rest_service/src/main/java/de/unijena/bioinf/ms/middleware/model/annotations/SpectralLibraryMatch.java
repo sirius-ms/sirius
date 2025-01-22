@@ -38,7 +38,7 @@ import java.util.List;
 @Jacksonized
 public class SpectralLibraryMatch {
 
-    @Schema(enumAsRef = true, name = "SpectralLibraryMatchOptField", nullable = true)
+    @Schema(name = "SpectralLibraryMatchOptField", nullable = true)
     public enum OptField {none, referenceSpectrum}
 
     public final String specMatchId;
@@ -70,7 +70,7 @@ public class SpectralLibraryMatch {
     private final String smiles;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private final String candidateInChiKey;
+    private final String inchiKey;
 
     @Schema(nullable = true)
     @Setter
@@ -95,7 +95,7 @@ public class SpectralLibraryMatch {
                 .splash(result.getSplash())
                 .exactMass(Double.toString(result.getExactMass()))
                 .smiles(result.getSmiles())
-                .candidateInChiKey(result.getCandidateInChiKey());
+                .inchiKey(result.getCandidateInChiKey());
 
         if (result.getMolecularFormula() != null) {
             builder.molecularFormula(result.getMolecularFormula().toString());

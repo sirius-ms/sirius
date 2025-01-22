@@ -28,11 +28,8 @@ import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.HyperlinkJTextPane;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
-import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.ConnectionError;
-import io.sirius.ms.sdk.model.Subscription;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.sirius.ms.sdk.model.*;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +44,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.toLinks;
-import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum;
-import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum.*;
+import static io.sirius.ms.sdk.model.ConnectionErrorClass.*;
 
 public class ConnectionCheckPanel extends LoadablePanel implements PropertyChangeListener {
     public static final String READ_MORE_LICENSING = "<br> <a href=\""
@@ -126,7 +122,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
         String licensee = sub.map(Subscription::getSubscriberName).orElse("N/A");
         String description = sub.map(Subscription::getName).orElse(null);
         String userEmail = check.getLicenseInfo().getUserEmail();
-        Set<ErrorKlassEnum> errorTypes = check.getErrors().stream().map(ConnectionError::getErrorKlass).collect(Collectors.toSet());
+        Set<ConnectionErrorClass> errorTypes = check.getErrors().stream().map(ConnectionError::getErrorKlass).collect(Collectors.toSet());
 
         internet.setState(!errorTypes.contains(INTERNET));
         authServer.setState(!errorTypes.contains(LOGIN_SERVER));
@@ -181,12 +177,12 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
         final List<ConnectionError> errors = check.getErrors();
 
-        if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(ConnectionError.ErrorTypeEnum.WARNING)).findAny().isEmpty()) {
+        if (errors.isEmpty()) {
             //case 0 NO ERROR
             resultPanel.add(makeHTMLTextPanel("Connection to SIRIUS web services successfully established!", Colors.TEXT_GOOD), BorderLayout.CENTER);
         } else {
             ConnectionError err = errors.getFirst();
-            ErrorKlassEnum mainError = err.getErrorKlass();
+            ConnectionErrorClass mainError = err.getErrorKlass();
             //check if internet error is not just internet check unreachable
             if (mainError == INTERNET){
                 if (errors.size() > 1 &&
@@ -236,11 +232,23 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                     if (!noLoginButtons)
                         resultPanel.add(new JButton(SiriusActions.SIGN_IN.getInstance(gui, true)), BorderLayout.SOUTH);
                     break;
-                case LICENSE:
-                    resultPanel.add(makeHTMLTextPanel(
-                            err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
-                    ), BorderLayout.CENTER);
+                case LICENSE:{
+                    if (err.getSiriusErrorCode() == 56){
+                        //limit reached
+                        resultPanel.add(
+                                makeHTMLTextPanel(err.getSiriusMessage() + addHtmlErrorText(err), Colors.TEXT_WARN),
+                                BorderLayout.CENTER
+                        );
+                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                                evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                                SiriusActions.MANAGE_ACCOUNT.getInstance(gui, true))), BorderLayout.SOUTH);
+                    } else {
+                        resultPanel.add(makeHTMLTextPanel(
+                                err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
+                        ), BorderLayout.CENTER);
+                    }
                     break;
+                }
                 case TERMS:
                     resultPanel.add(makeHTMLTextPanel(
                             err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
@@ -304,7 +312,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt instanceof ConnectionMonitor.ConnectionStateEvent cEvt)
+        if (evt instanceof ConnectionMonitor.ConnectionEvent cEvt)
             refreshPanel(cEvt.getConnectionCheck());
     }
 }

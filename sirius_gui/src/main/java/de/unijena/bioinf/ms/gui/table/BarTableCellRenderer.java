@@ -27,26 +27,20 @@ import java.text.NumberFormat;
  */
 public class BarTableCellRenderer extends AbstractBarTableCellRenderer {
 
-    private double min = Double.MIN_VALUE;
-    private double max = Double.MAX_VALUE;
+    private final double min;
+    private final double max;
+    private final double sum;
 
 
-    public BarTableCellRenderer(int highlightColumn, float min, float max, boolean percentage) {
-        this(highlightColumn, percentage);
-        setMin(min);
-        setMax(max);
+    protected BarTableCellRenderer(int highlightColumn, float min, float max, float sum, PercentageMode percentage) {
+        this(highlightColumn, min, max, sum, percentage, false, null);
     }
 
-    public BarTableCellRenderer(int highlightColumn, boolean percentage) {
-        this(highlightColumn, percentage, false,null);
-    }
-
-    public BarTableCellRenderer(int highlightColumn, boolean percentage, boolean printValue, NumberFormat lableFormat) {
+    protected BarTableCellRenderer(int highlightColumn, float min, float max, float sum, PercentageMode percentage, boolean printValue, NumberFormat lableFormat) {
         super(highlightColumn, percentage, printValue, lableFormat);
-    }
-
-    public BarTableCellRenderer() {
-        this(-1, false);
+        this.min = min;
+        this.max = max;
+        this.sum = sum;
     }
 
     @Override
@@ -59,11 +53,28 @@ public class BarTableCellRenderer extends AbstractBarTableCellRenderer {
         return min;
     }
 
-    public void setMin(float min) {
-        this.min = min;
+    @Override
+    protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
+        return sum;
     }
 
-    public void setMax(float max) {
-        this.max = max;
+    public static BarTableCellRenderer newRawValueBar(int highlightColumn, float min, float max){
+        return new BarTableCellRenderer(highlightColumn, min, max, Float.NaN, PercentageMode.DEACTIVATED);
+    }
+
+    public static BarTableCellRenderer newProbabilityBar(int highlightColumn){
+        return new BarTableCellRenderer(highlightColumn, 0, 1, Float.NaN, PercentageMode.MULTIPLY_PROBABILITIES);
+    }
+
+    public static BarTableCellRenderer newPercentageBar(int highlightColumn){
+        return new BarTableCellRenderer(highlightColumn, 0, 100, Float.NaN, PercentageMode.NO_TRANFORMATION);
+    }
+
+    public static BarTableCellRenderer newMaxNormalizedPercentageBar(int highlightColumn, float min, float max){
+        return new BarTableCellRenderer(highlightColumn, min, max, Float.NaN, PercentageMode.NORMALIZE_TO_MAXIMUM);
+    }
+
+    public static BarTableCellRenderer newSumNormalizedPercentageBar(int highlightColumn, float min, float max, float sum){
+        return new BarTableCellRenderer(highlightColumn, min, max, sum, PercentageMode.NORMALIZE_TO_SUM);
     }
 }

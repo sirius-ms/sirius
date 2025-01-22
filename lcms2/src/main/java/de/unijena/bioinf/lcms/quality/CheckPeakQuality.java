@@ -6,6 +6,8 @@ import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatList;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -38,12 +40,14 @@ public class CheckPeakQuality implements FeatureQualityChecker{
         }
 
         // 2. Peak should be not too short
-        final int dp = feature.getTraceRef().getEnd()-feature.getTraceRef().getStart()+1;
-        if (dp <= 4) {
+        int traceStart = feature.getTraceRef().getStart();
+        int traceEnd = feature.getTraceRef().getEnd();
+        final int dp = feature.getTraceRef().getEnd()- traceStart +1;
+        if (dp <= 10) {
             peakQuality.getItems().add(new QualityReport.Item(
                     String.format(Locale.US, "peak has too few data points (%d datapoints in merged trace)", dp), DataQuality.BAD, QualityReport.Weight.MAJOR
             ));
-        } else if (dp <= 8) {
+        } else if (dp <= 20) {
             peakQuality.getItems().add(new QualityReport.Item(
                     String.format(Locale.US, "peak has few data points (%d datapoints in merged trace)", dp), DataQuality.DECENT, QualityReport.Weight.MAJOR
             ));
@@ -82,13 +86,15 @@ public class CheckPeakQuality implements FeatureQualityChecker{
             ));
         }
 
+
         // minors
 
 
         // 1. peak should have clearly defined start and end points
         final MergedTrace trace = traceProvider.getMergeTrace(feature).orElse(null);
         if (trace!=null) {
-            float start = trace.getIntensities().getFloat(feature.getTraceRef().getStart());
+
+            float start = trace.getIntensities().getFloat(traceStart);
             float end = trace.getIntensities().getFloat(feature.getTraceRef().getEnd());
             double ratioStart = feature.getApexIntensity()/ start;
             double ratioEnd = feature.getApexIntensity() / end;

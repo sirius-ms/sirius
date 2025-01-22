@@ -111,12 +111,15 @@ public class InstanceBean implements SiriusPCS {
         this.listener = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue() != null) {
-                    if (("project.updateInstance" + getFeatureId()).equals(evt.getPropertyName())) {
+                if (("project.updateInstance" + getFeatureId()).equals(evt.getPropertyName())) {
+                    if (evt.getNewValue() != null) {
                         clearCache(evt.getNewValue());
                     } else {
-                        LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", evt.getPropertyName(), getFeatureId());
+                        if (pcsEnabled.get()) //fire without invalidation, e.g. if some in memory updates happened.
+                            pcs.firePropertyChange("instance.updated", null, null);
                     }
+                } else {
+                    LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", evt.getPropertyName(), getFeatureId());
                 }
             }
         };
@@ -226,9 +229,9 @@ public class InstanceBean implements SiriusPCS {
         return getSourceFeature().getQuality();
     }
 
-    public AlignedFeatureQuality getQualityReport() {
-        return withIds((pid, fid) -> getClient().features().getAlignedFeaturesQualityWithResponseSpec(pid, fid)
-                .bodyToMono(AlignedFeatureQuality.class).onErrorComplete().block());
+    public AlignedFeatureQualityExperimental getQualityReport() {
+        return withIds((pid, fid) -> getClient().features().getAlignedFeaturesQualityExperimentalWithResponseSpec(pid, fid)
+                .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().block());
     }
 
     public PrecursorIonType getIonType() {
@@ -399,11 +402,11 @@ public class InstanceBean implements SiriusPCS {
         return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
     }
 
-    public PageStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
+    public PagedModelStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
         return getStructureCandidatesPage(0, topK, fp);
     }
 
-    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
+    public PagedModelStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
@@ -415,18 +418,18 @@ public class InstanceBean implements SiriusPCS {
     }
 
 
-    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK, boolean fp) {
+    public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK, boolean fp) {
         return getDeNovoStructureCandidatesPage(0, topK, fp);
     }
 
-    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
+    public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
                         fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
     }
 
     @Nullable
-    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page, boolean isDatabase, boolean isDeNovo) {
+    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PagedModelStructureCandidateFormula page, boolean isDatabase, boolean isDeNovo) {
         if (page.getContent() == null)
             return null; //this does usually not happen?!
         if (page.getContent().isEmpty())

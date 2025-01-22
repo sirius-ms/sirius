@@ -24,18 +24,10 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.awt.*;
-import java.util.Map;
 
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
     public ActFormulaIDConfigPanel(SiriusGui gui, Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, owner, ecs, ms2, displayAdvancedParameters));
-    }
-
-    public void applyValuesFromPreset(boolean enable, Map<String, String> preset, boolean defaultPreset) {
-        if (enable != isToolSelected()) {
-            activationButton.doClick(0);
-        }
-        content.applyValuesFromPreset(preset, defaultPreset);
     }
 }

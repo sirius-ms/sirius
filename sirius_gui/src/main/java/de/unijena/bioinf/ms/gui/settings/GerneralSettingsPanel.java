@@ -22,8 +22,10 @@ package de.unijena.bioinf.ms.gui.settings;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.properties.MolecularStructuresDisplayColors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -39,6 +41,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -48,6 +51,8 @@ import static de.unijena.bioinf.ms.gui.properties.GuiProperties.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPanel {
+    public static final String DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB = "de.unijena.bioinf.sirius.settings.activateSpectralLibraryTab.dontAskAgain";
+
     private Properties props;
     final JSpinner scalingSpinner;
     final int scaling;
@@ -103,9 +108,25 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         add(new JLabel("Molecular structures display color"), molecularStructuresDisplayColors);
 
         showSpectraMatchPanel = new JCheckBox();
-        showSpectraMatchPanel.setToolTipText("Show a result tab with all spectral library matches for selected features.");
+        showSpectraMatchPanel.setToolTipText("Show a result tab with all spectral library matches for the selected features.");
         showSpectraMatchPanel.setSelected(gui.getProperties().isShowSpectraMatchPanel());
         addNamed("Show \"Library Matches\" tab", showSpectraMatchPanel);
+        showSpectraMatchPanel.addActionListener(evt -> {
+            if (showSpectraMatchPanel.isSelected()) {
+                new WarningDialog(gui.getMainFrame(),
+                        "Activate spectral library results tab",
+                        GuiUtils.formatToolTip(
+                                "SIRIUS automatically searches in your spectral libraries as part of the molecular formula annotation step. " +
+                                "Library hits can be viewed via the \"Structures\" tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
+                                "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"Structures\" tab.", "",
+                                "NOTE: In SIRIUS, each spectral library is also a molecular structure database. ANY hit in this library can also be found via CSI:FingerID structure database search. " +
+                                        "Since structure database results depend on the selected molecular formula, SIRIUS ensures that molecular structures with a formula corresponding to a good spectral library hit are considered - even if this molecular formula receives a low score. " +
+                                        "In this way, molecular structures of well-matching reference spectra are automatically included in the structure database search.", "",
+                                        "To ensure that the database search is performed on all your spectral libraries and CSI:FingerID does not miss a candidate, you still need to select these libraries (databases) in the database search step."),
+                        DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB);
+            }
+        });
+
 
 
         add(new JXTitledSeparator("ILP solver"));
@@ -137,13 +158,20 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         });
         addNamed("", clearDBCache);
 
+        add(new JXTitledSeparator("Presets"));
+        JButton editPresets = new JButton("Edit Presets");
+        addNamed("", editPresets);
+        editPresets.addActionListener(evt -> {
+            new BatchComputeDialog(gui, List.of());
+        });
+
         add(new JXTitledSeparator("REST API"));
         JButton openSwaggerInBrowser = new JButton("Open API in browser");
         openSwaggerInBrowser.setToolTipText("Open URL of the REST API in the browser.");
         addNamed("", openSwaggerInBrowser);
         openSwaggerInBrowser.addActionListener(evt -> {
             try {
-                Desktop.getDesktop().browse(URI.create(gui.getSiriusClient().getApiClient().getBasePath()));
+                GuiUtils.openURL(SwingUtilities.getWindowAncestor(gui.getMainFrame()), URI.create(gui.getSiriusClient().getApiClient().getBasePath()));
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("Cannot open API in browser.", e);
             }

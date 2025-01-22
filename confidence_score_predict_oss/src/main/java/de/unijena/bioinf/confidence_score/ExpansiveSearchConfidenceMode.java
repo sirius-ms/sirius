@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class ExpansiveSearchConfidenceMode implements Ms2ExperimentAnnotation {
 
 
-    @Schema(enumAsRef = true, name = "ConfidenceMode")
+    @Schema(name = "ConfidenceMode")
     public enum Mode implements DescriptiveOptions {
         OFF("No expansive search is performed."),
         EXACT("Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification."),//todo NewWorkflow: change description -> should be javadoc instead to allow for automatic usage in config files, CLI and GUI

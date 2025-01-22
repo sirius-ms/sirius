@@ -39,10 +39,10 @@ public class ConnectionError implements Comparable<ConnectionError> {
         return c.compare(this, o);
     }
 
+    @Schema(name = "ConnectionErrorType")
     public enum Type {WARNING, ERROR}
 
     /**
-     * ######### error classes ##########
      * 0. Unknown Error
      * 1. Internet
      * 2. login server
@@ -53,6 +53,7 @@ public class ConnectionError implements Comparable<ConnectionError> {
      * 7. Terms not accepted
      * 8. Service not reachable
      */
+    @Schema(name = "ConnectionErrorClass")
     public enum Klass {UNKNOWN, INTERNET, LOGIN_SERVER, LICENSE_SERVER, TOKEN, LOGIN, LICENSE, TERMS, APP_SERVER}
 
     @NotNull
