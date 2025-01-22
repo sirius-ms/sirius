@@ -10,7 +10,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getDefaultJobConfig**](JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration |
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
-| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | Get all (non-default) job configuration names |
+| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | DEPRECATED: use /job-configs to get all configs with names. |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
 | [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
@@ -439,7 +439,7 @@ No authorization required
 
 > List&lt;String&gt; getJobConfigNames()
 
-Get all (non-default) job configuration names
+DEPRECATED: use /job-configs to get all configs with names.
 
 Get all (non-default) job configuration names
 

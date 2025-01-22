@@ -2,7 +2,7 @@
 
 SIRIUS Nightsky API
 
-- API version: 3.0
+- API version: 3.1
 
 - Generator version: 7.6.0
 
@@ -39,10 +39,17 @@ Refer to the [OSSRH Guide](http://central.sonatype.org/pages/ossrh-guide.html) f
 Add this dependency to your project's POM:
 
 ```xml
+<repositories>
+  <repository>
+    <id>gitlab-maven</id>
+    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
+  </repository>
+</repositories>
+
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.0+sirius6.1.0-SNAPSHOT</version>
+  <version>3.1+sirius6.2.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -53,12 +60,13 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
-    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
+    maven {
+      url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+    }
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.0+sirius6.1.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0-SNAPSHOT"
   }
 ```
 
@@ -72,7 +80,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.0+sirius6.1.0-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.2.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -170,7 +178,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
-*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | Get all (non-default) job configuration names
+*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | DEPRECATED: use /job-configs to get all configs with names.
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).

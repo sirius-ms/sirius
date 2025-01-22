@@ -38,10 +38,14 @@ ext {
     file("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties").withReader("UTF8", {
         props.load(it)
     })
+    file("${projectDir}/sirius_rest_service/src/main/resources/application.properties").withReader("UTF8", {
+        props.load(it)
+    })
 
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
+    siriusAPIVersion = props.getProperty('de.unijena.bioinf.siriusNightsky.version')
     appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
@@ -143,13 +147,33 @@ allprojects {
     group = 'io.sirius-ms'
 
     repositories {
-        mavenLocal()
+//        mavenLocal()
         mavenCentral()
 
-        //this is just needed to load sirius-ms dependencies.
-        //All artifacts needed to build SIRIUS should be public.
-        //however some acceptance test data is not.
-        repositories {
+        maven {
+            url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+            name "BG GitLab Common Public"
+        }
+
+        maven {
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+        }
+
+        maven {
+            url "https://repo1.maven.org/maven2/" //glazed lists
+        }
+
+        maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
+        }
+
+
+        // This is just needed to load sirius-ms testing dependencies.
+        // All artifacts needed to build SIRIUS should be public.
+        // however some acceptance test data is not.
+        if ((System.getenv("CI_JOB_TOKEN") != null) || (project.findProperty("com.bright-giant.build.gitlab.username") != null
+                && project.findProperty("com.bright-giant.build.gitlab.token") != null)) {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
                 name "BG GitLab"
@@ -175,16 +199,6 @@ allprojects {
                     }
                 }
             }
-        }
-        maven {
-            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-        }
-        maven {
-            url "https://repo1.maven.org/maven2/" //glazed lists
-        }
-        maven {
-            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
-            allowInsecureProtocol = true
         }
     }
 

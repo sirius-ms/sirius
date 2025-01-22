@@ -1113,7 +1113,6 @@ public class NitriteDatabase implements Database<Document> {
                 case LT -> FluentFilter.where(literal.getField()).lt((Comparable<?>) literal.getValues()[0]);
                 case LTE -> FluentFilter.where(literal.getField()).lte((Comparable<?>) literal.getValues()[0]);
                 case BETWEEN -> new RangeFilter(literal.getField(), (Comparable) literal.getValues()[0], (Comparable) literal.getValues()[1],(boolean)literal.getValues()[2], (boolean)literal.getValues()[3]);
-                        //FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
                 case TEXT -> FluentFilter.where(literal.getField()).text((String) literal.getValues()[0]);
                 case REGEX -> FluentFilter.where(literal.getField()).regex((String) literal.getValues()[0]);
                 case IN ->
