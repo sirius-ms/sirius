@@ -43,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * EXPERIMENTAL: This schema is experimental and may be changed (or even removed) without notice until it is declared stable.
  */
 @JsonPropertyOrder({
-  QuantificationTableExperimental.JSON_PROPERTY_QUANTIFICATION_TYPE,
+  QuantificationTableExperimental.JSON_PROPERTY_QUANTIFICATION_MEASURE,
   QuantificationTableExperimental.JSON_PROPERTY_ROW_TYPE,
   QuantificationTableExperimental.JSON_PROPERTY_COLUMN_TYPE,
   QuantificationTableExperimental.JSON_PROPERTY_ROW_IDS,
@@ -54,8 +54,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class QuantificationTableExperimental {
-  public static final String JSON_PROPERTY_QUANTIFICATION_TYPE = "quantificationType";
-  private QuantificationMeasure quantificationType;
+  public static final String JSON_PROPERTY_QUANTIFICATION_MEASURE = "quantificationMeasure";
+  private QuantificationMeasure quantificationMeasure;
 
   public static final String JSON_PROPERTY_ROW_TYPE = "rowType";
   private QuantificationRowType rowType;
@@ -81,29 +81,29 @@ public class QuantificationTableExperimental {
   public QuantificationTableExperimental() {
   }
 
-  public QuantificationTableExperimental quantificationType(QuantificationMeasure quantificationType) {
+  public QuantificationTableExperimental quantificationMeasure(QuantificationMeasure quantificationMeasure) {
     
-    this.quantificationType = quantificationType;
+    this.quantificationMeasure = quantificationMeasure;
     return this;
   }
 
    /**
-   * Get quantificationType
-   * @return quantificationType
+   * Get quantificationMeasure
+   * @return quantificationMeasure
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_TYPE)
+  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QuantificationMeasure getQuantificationType() {
-    return quantificationType;
+  public QuantificationMeasure getQuantificationMeasure() {
+    return quantificationMeasure;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_TYPE)
+  @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantificationType(QuantificationMeasure quantificationType) {
-    this.quantificationType = quantificationType;
+  public void setQuantificationMeasure(QuantificationMeasure quantificationMeasure) {
+    this.quantificationMeasure = quantificationMeasure;
   }
 
   public QuantificationTableExperimental rowType(QuantificationRowType rowType) {
@@ -330,7 +330,7 @@ public class QuantificationTableExperimental {
       return false;
     }
     QuantificationTableExperimental quantificationTableExperimental = (QuantificationTableExperimental) o;
-    return Objects.equals(this.quantificationType, quantificationTableExperimental.quantificationType) &&
+    return Objects.equals(this.quantificationMeasure, quantificationTableExperimental.quantificationMeasure) &&
         Objects.equals(this.rowType, quantificationTableExperimental.rowType) &&
         Objects.equals(this.columnType, quantificationTableExperimental.columnType) &&
         Objects.equals(this.rowIds, quantificationTableExperimental.rowIds) &&
@@ -342,14 +342,14 @@ public class QuantificationTableExperimental {
 
   @Override
   public int hashCode() {
-    return Objects.hash(quantificationType, rowType, columnType, rowIds, columnIds, rowNames, columnNames, values);
+    return Objects.hash(quantificationMeasure, rowType, columnType, rowIds, columnIds, rowNames, columnNames, values);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class QuantificationTableExperimental {\n");
-    sb.append("    quantificationType: ").append(toIndentedString(quantificationType)).append("\n");
+    sb.append("    quantificationMeasure: ").append(toIndentedString(quantificationMeasure)).append("\n");
     sb.append("    rowType: ").append(toIndentedString(rowType)).append("\n");
     sb.append("    columnType: ").append(toIndentedString(columnType)).append("\n");
     sb.append("    rowIds: ").append(toIndentedString(rowIds)).append("\n");

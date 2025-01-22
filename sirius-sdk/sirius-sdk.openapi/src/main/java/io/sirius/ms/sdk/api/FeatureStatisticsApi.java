@@ -2,10 +2,12 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
+import io.sirius.ms.sdk.model.AggregationType;
 import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.PageAlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.PagedModelAlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.QuantificationMeasure;
 import io.sirius.ms.sdk.model.StatisticsTable;
 
 import java.util.HashMap;
@@ -63,7 +65,7 @@ public class FeatureStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeFoldChange1RequestCreation(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec computeFoldChange1RequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -119,7 +121,7 @@ public class FeatureStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeFoldChange1(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeFoldChange1(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -137,7 +139,7 @@ public class FeatureStatisticsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeFoldChange1WithHttpInfo(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeFoldChange1WithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
     }
@@ -155,7 +157,7 @@ public class FeatureStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeFoldChange1WithResponseSpec(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec computeFoldChange1WithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         return computeFoldChange1RequestCreation(projectId, left, right, aggregation, quantification, optFields);
     }
     /**
@@ -169,7 +171,7 @@ public class FeatureStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteFoldChange1RequestCreation(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    private ResponseSpec deleteFoldChange1RequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -220,7 +222,7 @@ public class FeatureStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteFoldChange1(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public void deleteFoldChange1(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -236,7 +238,7 @@ public class FeatureStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteFoldChange1WithHttpInfo(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteFoldChange1WithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -253,7 +255,7 @@ public class FeatureStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteFoldChange1WithResponseSpec(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseSpec deleteFoldChange1WithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         return deleteFoldChange1RequestCreation(projectId, left, right, aggregation, quantification);
     }
     /**
@@ -349,7 +351,7 @@ public class FeatureStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFoldChangeTable1RequestCreation(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    private ResponseSpec getFoldChangeTable1RequestCreation(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -391,7 +393,7 @@ public class FeatureStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StatisticsTable getFoldChangeTable1(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    public StatisticsTable getFoldChangeTable1(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -406,7 +408,7 @@ public class FeatureStatisticsApi {
      * @return ResponseEntity&lt;StatisticsTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StatisticsTable> getFoldChangeTable1WithHttpInfo(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseEntity<StatisticsTable> getFoldChangeTable1WithHttpInfo(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -421,7 +423,7 @@ public class FeatureStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFoldChangeTable1WithResponseSpec(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseSpec getFoldChangeTable1WithResponseSpec(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
         return getFoldChangeTable1RequestCreation(projectId, aggregation, quantification);
     }
     /**
@@ -432,7 +434,7 @@ public class FeatureStatisticsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageAlignedFeatureFoldChange
+     * @return PagedModelAlignedFeatureFoldChange
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec listFoldChange1RequestCreation(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
@@ -464,7 +466,7 @@ public class FeatureStatisticsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+        ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/statistics/foldchange/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -476,11 +478,11 @@ public class FeatureStatisticsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageAlignedFeatureFoldChange
+     * @return PagedModelAlignedFeatureFoldChange
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageAlignedFeatureFoldChange listFoldChange1(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+    public PagedModelAlignedFeatureFoldChange listFoldChange1(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange>() {};
         return listFoldChange1RequestCreation(projectId, page, size, sort).bodyToMono(localVarReturnType).block();
     }
 
@@ -492,11 +494,11 @@ public class FeatureStatisticsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return ResponseEntity&lt;PageAlignedFeatureFoldChange&gt;
+     * @return ResponseEntity&lt;PagedModelAlignedFeatureFoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageAlignedFeatureFoldChange> listFoldChange1WithHttpInfo(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeatureFoldChange>() {};
+    public ResponseEntity<PagedModelAlignedFeatureFoldChange> listFoldChange1WithHttpInfo(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeatureFoldChange>() {};
         return listFoldChange1RequestCreation(projectId, page, size, sort).toEntity(localVarReturnType).block();
     }
 

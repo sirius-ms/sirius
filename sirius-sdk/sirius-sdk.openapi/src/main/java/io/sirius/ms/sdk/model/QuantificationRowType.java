@@ -36,7 +36,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum QuantificationRowType {
   
-  FEATURES("FEATURES");
+  FEATURES("FEATURES"),
+  
+  COMPOUNDS("COMPOUNDS");
 
   private String value;
 

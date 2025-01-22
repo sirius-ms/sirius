@@ -32,17 +32,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets QuantificationMeasure
+ * Gets or Sets RowType
  */
-public enum QuantificationMeasure {
+public enum RowType {
   
-  APEX_INTENSITY("APEX_INTENSITY"),
+  FEATURES("FEATURES"),
   
-  AREA_UNDER_CURVE("AREA_UNDER_CURVE");
+  COMPOUNDS("COMPOUNDS");
 
   private String value;
 
-  QuantificationMeasure(String value) {
+  RowType(String value) {
     this.value = value;
   }
 
@@ -57,8 +57,8 @@ public enum QuantificationMeasure {
   }
 
   @JsonCreator
-  public static QuantificationMeasure fromValue(String value) {
-    for (QuantificationMeasure b : QuantificationMeasure.values()) {
+  public static RowType fromValue(String value) {
+    for (RowType b : RowType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

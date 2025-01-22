@@ -30,104 +30,88 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.PageMetadata;
+import io.sirius.ms.sdk.model.Run;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TagGroup
+ * PagedModelRun
  */
 @JsonPropertyOrder({
-  TagGroup.JSON_PROPERTY_NAME,
-  TagGroup.JSON_PROPERTY_LUCENE_QUERY,
-  TagGroup.JSON_PROPERTY_GROUP_TYPE
+  PagedModelRun.JSON_PROPERTY_CONTENT,
+  PagedModelRun.JSON_PROPERTY_PAGE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TagGroup {
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
+public class PagedModelRun {
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<Run> content = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_LUCENE_QUERY = "luceneQuery";
-  private String luceneQuery;
+  public static final String JSON_PROPERTY_PAGE = "page";
+  private PageMetadata page;
 
-  public static final String JSON_PROPERTY_GROUP_TYPE = "groupType";
-  private String groupType;
-
-  public TagGroup() {
+  public PagedModelRun() {
   }
 
-  public TagGroup name(String name) {
+  public PagedModelRun content(List<Run> content) {
     
-    this.name = name;
+    this.content = content;
+    return this;
+  }
+
+  public PagedModelRun addContentItem(Run contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
     return this;
   }
 
    /**
-   * Get name
-   * @return name
+   * Get content
+   * @return content
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getName() {
-    return name;
+  public List<Run> getContent() {
+    return content;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
+  public void setContent(List<Run> content) {
+    this.content = content;
   }
 
-  public TagGroup luceneQuery(String luceneQuery) {
+  public PagedModelRun page(PageMetadata page) {
     
-    this.luceneQuery = luceneQuery;
+    this.page = page;
     return this;
   }
 
    /**
-   * Get luceneQuery
-   * @return luceneQuery
+   * Get page
+   * @return page
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LUCENE_QUERY)
+  @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getLuceneQuery() {
-    return luceneQuery;
+  public PageMetadata getPage() {
+    return page;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_LUCENE_QUERY)
+  @JsonProperty(JSON_PROPERTY_PAGE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLuceneQuery(String luceneQuery) {
-    this.luceneQuery = luceneQuery;
-  }
-
-  public TagGroup groupType(String groupType) {
-    
-    this.groupType = groupType;
-    return this;
-  }
-
-   /**
-   * Get groupType
-   * @return groupType
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_GROUP_TYPE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getGroupType() {
-    return groupType;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_GROUP_TYPE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setGroupType(String groupType) {
-    this.groupType = groupType;
+  public void setPage(PageMetadata page) {
+    this.page = page;
   }
 
   @Override
@@ -138,24 +122,22 @@ public class TagGroup {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TagGroup tagGroup = (TagGroup) o;
-    return Objects.equals(this.name, tagGroup.name) &&
-        Objects.equals(this.luceneQuery, tagGroup.luceneQuery) &&
-        Objects.equals(this.groupType, tagGroup.groupType);
+    PagedModelRun pagedModelRun = (PagedModelRun) o;
+    return Objects.equals(this.content, pagedModelRun.content) &&
+        Objects.equals(this.page, pagedModelRun.page);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, luceneQuery, groupType);
+    return Objects.hash(content, page);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TagGroup {\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    luceneQuery: ").append(toIndentedString(luceneQuery)).append("\n");
-    sb.append("    groupType: ").append(toIndentedString(groupType)).append("\n");
+    sb.append("class PagedModelRun {\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
+    sb.append("    page: ").append(toIndentedString(page)).append("\n");
     sb.append("}");
     return sb.toString();
   }

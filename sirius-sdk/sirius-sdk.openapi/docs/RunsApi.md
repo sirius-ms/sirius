@@ -570,7 +570,7 @@ No authorization required
 
 ## getRunsPaged
 
-> PageRun getRunsPaged(projectId, page, size, sort, optFields)
+> PagedModelRun getRunsPaged(projectId, page, size, sort, optFields)
 
 **EXPERIMENTAL** Get all available runs in the given project-space.
 
@@ -598,7 +598,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageRun result = apiInstance.getRunsPaged(projectId, page, size, sort, optFields);
+            PagedModelRun result = apiInstance.getRunsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#getRunsPaged");
@@ -624,7 +624,7 @@ public class Example {
 
 ### Return type
 
-[**PageRun**](PageRun.md)
+[**PagedModelRun**](PagedModelRun.md)
 
 ### Authorization
 
@@ -644,7 +644,7 @@ No authorization required
 
 ## objectsByGroup
 
-> PageRun objectsByGroup(projectId, group, page, size, sort, optFields)
+> PagedModelRun objectsByGroup(projectId, group, page, size, sort, optFields)
 
 **EXPERIMENTAL** Get runs by tag group
 
@@ -673,7 +673,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageRun result = apiInstance.objectsByGroup(projectId, group, page, size, sort, optFields);
+            PagedModelRun result = apiInstance.objectsByGroup(projectId, group, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#objectsByGroup");
@@ -700,7 +700,7 @@ public class Example {
 
 ### Return type
 
-[**PageRun**](PageRun.md)
+[**PagedModelRun**](PagedModelRun.md)
 
 ### Authorization
 
@@ -720,7 +720,7 @@ No authorization required
 
 ## objectsByTag
 
-> PageRun objectsByTag(projectId, filter, page, size, sort, optFields)
+> PagedModelRun objectsByTag(projectId, filter, page, size, sort, optFields)
 
 **EXPERIMENTAL** Get runs by tag
 
@@ -749,7 +749,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageRun result = apiInstance.objectsByTag(projectId, filter, page, size, sort, optFields);
+            PagedModelRun result = apiInstance.objectsByTag(projectId, filter, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#objectsByTag");
@@ -776,7 +776,7 @@ public class Example {
 
 ### Return type
 
-[**PageRun**](PageRun.md)
+[**PagedModelRun**](PagedModelRun.md)
 
 ### Authorization
 

@@ -32,17 +32,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets QuantificationMeasure
+ * Gets or Sets StatisticsType
  */
-public enum QuantificationMeasure {
+public enum StatisticsType {
   
-  APEX_INTENSITY("APEX_INTENSITY"),
-  
-  AREA_UNDER_CURVE("AREA_UNDER_CURVE");
+  FOLD_CHANGE("FOLD_CHANGE");
 
   private String value;
 
-  QuantificationMeasure(String value) {
+  StatisticsType(String value) {
     this.value = value;
   }
 
@@ -57,8 +55,8 @@ public enum QuantificationMeasure {
   }
 
   @JsonCreator
-  public static QuantificationMeasure fromValue(String value) {
-    for (QuantificationMeasure b : QuantificationMeasure.values()) {
+  public static StatisticsType fromValue(String value) {
+    for (StatisticsType b : StatisticsType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

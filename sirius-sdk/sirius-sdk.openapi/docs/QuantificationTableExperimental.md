@@ -8,7 +8,7 @@ EXPERIMENTAL: This schema is experimental and may be changed (or even removed) w
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**quantificationType** | **QuantificationMeasure** |  |  [optional] |
+|**quantificationMeasure** | **QuantificationMeasure** |  |  [optional] |
 |**rowType** | **QuantificationRowType** |  |  [optional] |
 |**columnType** | **QuantificationColumnType** |  |  [optional] |
 |**rowIds** | **List&lt;Long&gt;** |  |  [optional] |

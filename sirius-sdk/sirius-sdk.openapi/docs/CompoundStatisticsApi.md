@@ -39,8 +39,8 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to compute the fold change in.
         String left = "left_example"; // String | name of the left tag group.
         String right = "right_example"; // String | name of the right tag group.
-        String aggregation = "AVG"; // String | aggregation type.
-        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
+        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
         try {
             Job result = apiInstance.computeFoldChange(projectId, left, right, aggregation, quantification, optFields);
@@ -64,8 +64,8 @@ public class Example {
 | **projectId** | **String**| project-space to compute the fold change in. | |
 | **left** | **String**| name of the left tag group. | |
 | **right** | **String**| name of the right tag group. | |
-| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
 
 ### Return type
@@ -115,8 +115,8 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to delete from.
         String left = "left_example"; // String | name of the left group.
         String right = "right_example"; // String | name of the right group.
-        String aggregation = "AVG"; // String | aggregation type.
-        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
+        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
         try {
             apiInstance.deleteFoldChange(projectId, left, right, aggregation, quantification);
         } catch (ApiException e) {
@@ -138,8 +138,8 @@ public class Example {
 | **projectId** | **String**| project-space to delete from. | |
 | **left** | **String**| name of the left group. | |
 | **right** | **String**| name of the right group. | |
-| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
@@ -254,8 +254,8 @@ public class Example {
 
         CompoundStatisticsApi apiInstance = new CompoundStatisticsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String aggregation = "AVG"; // String | aggregation type.
-        String quantification = "APEX_INTENSITY"; // String | quantification type.
+        AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
+        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
         try {
             StatisticsTable result = apiInstance.getFoldChangeTable(projectId, aggregation, quantification);
             System.out.println(result);
@@ -276,8 +276,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **aggregation** | **String**| aggregation type. | [optional] [default to AVG] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | **String**| quantification type. | [optional] [default to APEX_INTENSITY] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
@@ -301,7 +301,7 @@ No authorization required
 
 ## listFoldChange
 
-> PageCompoundFoldChange listFoldChange(projectId, page, size, sort)
+> PagedModelCompoundFoldChange listFoldChange(projectId, page, size, sort)
 
 **EXPERIMENTAL** Page of all fold changes in the project space
 
@@ -328,7 +328,7 @@ public class Example {
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         try {
-            PageCompoundFoldChange result = apiInstance.listFoldChange(projectId, page, size, sort);
+            PagedModelCompoundFoldChange result = apiInstance.listFoldChange(projectId, page, size, sort);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundStatisticsApi#listFoldChange");
@@ -353,7 +353,7 @@ public class Example {
 
 ### Return type
 
-[**PageCompoundFoldChange**](PageCompoundFoldChange.md)
+[**PagedModelCompoundFoldChange**](PagedModelCompoundFoldChange.md)
 
 ### Authorization
 
