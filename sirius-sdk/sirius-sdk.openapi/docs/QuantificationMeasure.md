@@ -5,7 +5,9 @@
 ## Enum
 
 
-* `APEX_HEIGHT` (value: `"APEX_HEIGHT"`)
+* `APEX_INTENSITY` (value: `"APEX_INTENSITY"`)
+
+* `AREA_UNDER_CURVE` (value: `"AREA_UNDER_CURVE"`)
 
 
 

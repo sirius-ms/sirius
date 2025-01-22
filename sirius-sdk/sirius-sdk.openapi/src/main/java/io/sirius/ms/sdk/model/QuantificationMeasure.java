@@ -36,7 +36,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum QuantificationMeasure {
   
-  APEX_HEIGHT("APEX_HEIGHT");
+  APEX_INTENSITY("APEX_INTENSITY"),
+  
+  AREA_UNDER_CURVE("AREA_UNDER_CURVE");
 
   private String value;
 
