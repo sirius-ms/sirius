@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -58,7 +58,7 @@ public class AlignedFeatureFoldChange {
   private AggregationType aggregation;
 
   public static final String JSON_PROPERTY_QUANTIFICATION = "quantification";
-  private QuantificationMeasure quantification;
+  private QuantMeasure quantification;
 
   public static final String JSON_PROPERTY_FOLD_CHANGE = "foldChange";
   private Double foldChange;
@@ -144,7 +144,7 @@ public class AlignedFeatureFoldChange {
     this.aggregation = aggregation;
   }
 
-  public AlignedFeatureFoldChange quantification(QuantificationMeasure quantification) {
+  public AlignedFeatureFoldChange quantification(QuantMeasure quantification) {
     
     this.quantification = quantification;
     return this;
@@ -158,14 +158,14 @@ public class AlignedFeatureFoldChange {
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QuantificationMeasure getQuantification() {
+  public QuantMeasure getQuantification() {
     return quantification;
   }
 
 
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantification(QuantificationMeasure quantification) {
+  public void setQuantification(QuantMeasure quantification) {
     this.quantification = quantification;
   }
 

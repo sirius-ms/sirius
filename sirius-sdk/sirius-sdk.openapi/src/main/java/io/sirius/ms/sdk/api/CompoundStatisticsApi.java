@@ -7,7 +7,7 @@ import io.sirius.ms.sdk.model.CompoundFoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.PagedModelCompoundFoldChange;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import io.sirius.ms.sdk.model.StatisticsTable;
 
 import java.util.HashMap;
@@ -65,7 +65,7 @@ public class CompoundStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeFoldChangeRequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec computeFoldChangeRequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -121,7 +121,7 @@ public class CompoundStatisticsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeFoldChange(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeFoldChange(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
     }
@@ -139,7 +139,7 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeFoldChangeWithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeFoldChangeWithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
         return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
     }
@@ -157,7 +157,7 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeFoldChangeWithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseSpec computeFoldChangeWithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields);
     }
     /**
@@ -171,7 +171,7 @@ public class CompoundStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteFoldChangeRequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    private ResponseSpec deleteFoldChangeRequestCreation(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -222,7 +222,7 @@ public class CompoundStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteFoldChange(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public void deleteFoldChange(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -238,7 +238,7 @@ public class CompoundStatisticsApi {
      * @param quantification quantification type.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteFoldChangeWithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteFoldChangeWithHttpInfo(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
         return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -255,7 +255,7 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteFoldChangeWithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public ResponseSpec deleteFoldChangeWithResponseSpec(String projectId, String left, String right, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification);
     }
     /**
@@ -351,7 +351,7 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFoldChangeTableRequestCreation(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    private ResponseSpec getFoldChangeTableRequestCreation(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -393,7 +393,7 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StatisticsTable getFoldChangeTable(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public StatisticsTable getFoldChangeTable(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getFoldChangeTableRequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
@@ -408,7 +408,7 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;StatisticsTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StatisticsTable> getFoldChangeTableWithHttpInfo(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public ResponseEntity<StatisticsTable> getFoldChangeTableWithHttpInfo(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
         return getFoldChangeTableRequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
     }
@@ -423,7 +423,7 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFoldChangeTableWithResponseSpec(String projectId, AggregationType aggregation, QuantificationMeasure quantification) throws WebClientResponseException {
+    public ResponseSpec getFoldChangeTableWithResponseSpec(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         return getFoldChangeTableRequestCreation(projectId, aggregation, quantification);
     }
     /**

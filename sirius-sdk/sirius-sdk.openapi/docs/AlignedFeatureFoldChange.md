@@ -10,7 +10,7 @@
 |**leftGroup** | **String** |  |  [optional] |
 |**rightGroup** | **String** |  |  [optional] |
 |**aggregation** | **AggregationType** |  |  [optional] |
-|**quantification** | **QuantificationMeasure** |  |  [optional] |
+|**quantification** | **QuantMeasure** |  |  [optional] |
 |**foldChange** | **Double** |  |  [optional] |
 |**alignedFeatureId** | **String** |  |  [optional] |
 

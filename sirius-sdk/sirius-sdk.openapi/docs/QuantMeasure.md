@@ -1,6 +1,6 @@
 
 
-# QuantificationMeasure
+# QuantMeasure
 
 ## Enum
 

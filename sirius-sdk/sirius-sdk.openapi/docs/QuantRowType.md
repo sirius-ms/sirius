@@ -1,6 +1,6 @@
 
 
-# QuantificationRowType
+# QuantRowType
 
 ## Enum
 
