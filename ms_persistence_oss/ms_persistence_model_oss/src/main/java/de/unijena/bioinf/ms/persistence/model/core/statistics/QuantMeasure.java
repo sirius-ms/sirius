@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.statistics;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(name = "QuantificationMeasure")
-public enum QuantificationMeasure {
+@Schema
+public enum QuantMeasure {
     APEX_INTENSITY, AREA_UNDER_CURVE
 }

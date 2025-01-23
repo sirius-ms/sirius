@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +54,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @NotNull
     PSM getProjectSpaceManager();
 
-    Optional<QuantificationTable> getQuantification(QuantificationMeasure type, QuantificationTable.RowType rowType);
+    Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType);
 
-    Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationMeasure type, QuantificationTable.RowType rowType);
+    Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
@@ -152,13 +152,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteTagGroup(String name);
 
-    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationMeasure quantification);
+    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification);
 
     <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
 
     <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
 
-    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationMeasure quantification);
+    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 
