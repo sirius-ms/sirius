@@ -24,10 +24,7 @@ import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
 import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
-import de.unijena.bioinf.ms.middleware.model.features.MsData;
-import de.unijena.bioinf.ms.middleware.model.features.Run;
+import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
@@ -41,7 +38,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -425,7 +422,7 @@ public class NoSQLProjectTest {
             project.addTagGroup("sample", "category:sample AND text:sample", "type1");
             project.addTagGroup("blank", "category:sample AND text:blank", "type1");
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
             List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
             Assert.assertEquals(1, fc.size());
@@ -446,24 +443,24 @@ public class NoSQLProjectTest {
             Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
             ps.getStorage().insertAll(List.of(f21, f22));
 
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
-            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+            new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
-            StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY);
-            StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY);
-            StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantificationMeasure.APEX_INTENSITY);
+            StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+            StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
+            StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantMeasure.APEX_INTENSITY);
 
             Assert.assertEquals(AggregationType.AVG, table1.getAggregationType());
             Assert.assertEquals(AggregationType.MAX, table2.getAggregationType());
             Assert.assertEquals(AggregationType.MIN, table3.getAggregationType());
 
-            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table1.getQuantificationMeasure());
-            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table2.getQuantificationMeasure());
-            Assert.assertEquals(QuantificationMeasure.APEX_INTENSITY, table3.getQuantificationMeasure());
+            Assert.assertEquals(QuantMeasure.APEX_INTENSITY, table1.getQuantificationMeasure());
+            Assert.assertEquals(QuantMeasure.APEX_INTENSITY, table2.getQuantificationMeasure());
+            Assert.assertEquals(QuantMeasure.APEX_INTENSITY, table3.getQuantificationMeasure());
 
-            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table1.getRowType());
-            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table2.getRowType());
-            Assert.assertEquals(StatisticsTable.RowType.FEATURES, table3.getRowType());
+            Assert.assertEquals(QuantRowType.FEATURES, table1.getRowType());
+            Assert.assertEquals(QuantRowType.FEATURES, table2.getRowType());
+            Assert.assertEquals(QuantRowType.FEATURES, table3.getRowType());
 
             Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table1.getStatisticsType());
             Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table2.getStatisticsType());
@@ -509,8 +506,8 @@ public class NoSQLProjectTest {
 
             Assert.assertEquals(0, table3.getValues().length);
 
-            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantificationMeasure.APEX_INTENSITY);
-            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantificationMeasure.APEX_INTENSITY);
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+            project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
             fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
             Assert.assertEquals(0, fc.size());
         }
