@@ -23,13 +23,7 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.PagedModelAlignedFeatureFoldChange;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.StatisticsTable;
+import io.sirius.ms.sdk.model.*;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -59,7 +53,7 @@ public class FeatureStatisticsApiTest {
         String left = null;
         String right = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         List<JobOptField> optFields = null;
         Job response = api.computeFoldChange1(projectId, left, right, aggregation, quantification, optFields);
 
@@ -77,7 +71,7 @@ public class FeatureStatisticsApiTest {
         String left = null;
         String right = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         api.deleteFoldChange1(projectId, left, right, aggregation, quantification);
 
         // TODO: test validations
@@ -106,7 +100,7 @@ public class FeatureStatisticsApiTest {
     public void getFoldChangeTable1Test()  {
         String projectId = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         StatisticsTable response = api.getFoldChangeTable1(projectId, aggregation, quantification);
 
         // TODO: test validations
