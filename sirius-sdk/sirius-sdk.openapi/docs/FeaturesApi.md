@@ -2234,7 +2234,7 @@ No authorization required
 
 ## getQuantification1
 
-> QuantificationTableExperimental getQuantification1(projectId, type)
+> QuantTableExperimental getQuantification1(projectId, type)
 
 Returns the full quantification table.
 
@@ -2257,9 +2257,9 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantificationTableExperimental result = apiInstance.getQuantification1(projectId, type);
+            QuantTableExperimental result = apiInstance.getQuantification1(projectId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getQuantification1");
@@ -2278,11 +2278,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **type** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
+[**QuantTableExperimental**](QuantTableExperimental.md)
 
 ### Authorization
 
@@ -2302,7 +2302,7 @@ No authorization required
 
 ## getQuantificationExperimental
 
-> QuantificationTableExperimental getQuantificationExperimental(projectId, alignedFeatureId, type)
+> QuantTableExperimental getQuantificationExperimental(projectId, alignedFeatureId, type)
 
 EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable.
 
@@ -2326,9 +2326,9 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which quantity should be read out
-        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
         try {
-            QuantificationTableExperimental result = apiInstance.getQuantificationExperimental(projectId, alignedFeatureId, type);
+            QuantTableExperimental result = apiInstance.getQuantificationExperimental(projectId, alignedFeatureId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getQuantificationExperimental");
@@ -2348,11 +2348,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature which quantity should be read out | |
-| **type** | [**QuantificationMeasure**](.md)| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantMeasure**](.md)| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
+[**QuantTableExperimental**](QuantTableExperimental.md)
 
 ### Authorization
 

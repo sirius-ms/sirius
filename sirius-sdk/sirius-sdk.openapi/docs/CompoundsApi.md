@@ -935,7 +935,7 @@ No authorization required
 
 ## getQuantification
 
-> QuantificationTableExperimental getQuantification(projectId, type)
+> QuantTableExperimental getQuantification(projectId, type)
 
 Returns the full quantification table.
 
@@ -958,9 +958,9 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantificationTableExperimental result = apiInstance.getQuantification(projectId, type);
+            QuantTableExperimental result = apiInstance.getQuantification(projectId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getQuantification");
@@ -979,11 +979,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **type** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
+[**QuantTableExperimental**](QuantTableExperimental.md)
 
 ### Authorization
 
@@ -1003,7 +1003,7 @@ No authorization required
 
 ## getQuantificationRow
 
-> QuantificationTableExperimental getQuantificationRow(projectId, compoundId, type)
+> QuantTableExperimental getQuantificationRow(projectId, compoundId, type)
 
 Returns a single quantification table row for the given feature.
 
@@ -1027,9 +1027,9 @@ public class Example {
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String compoundId = "compoundId_example"; // String | compound which should be read out
-        QuantificationMeasure type = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
-            QuantificationTableExperimental result = apiInstance.getQuantificationRow(projectId, compoundId, type);
+            QuantTableExperimental result = apiInstance.getQuantificationRow(projectId, compoundId, type);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getQuantificationRow");
@@ -1049,11 +1049,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **compoundId** | **String**| compound which should be read out | |
-| **type** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTableExperimental**](QuantificationTableExperimental.md)
+[**QuantTableExperimental**](QuantTableExperimental.md)
 
 ### Authorization
 

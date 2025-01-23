@@ -40,7 +40,7 @@ public class Example {
         String left = "left_example"; // String | name of the left tag group.
         String right = "right_example"; // String | name of the right tag group.
         AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
-        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
         try {
             Job result = apiInstance.computeFoldChange1(projectId, left, right, aggregation, quantification, optFields);
@@ -65,7 +65,7 @@ public class Example {
 | **left** | **String**| name of the left tag group. | |
 | **right** | **String**| name of the right tag group. | |
 | **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
 
 ### Return type
@@ -116,7 +116,7 @@ public class Example {
         String left = "left_example"; // String | name of the left group.
         String right = "right_example"; // String | name of the right group.
         AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
-        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
             apiInstance.deleteFoldChange1(projectId, left, right, aggregation, quantification);
         } catch (ApiException e) {
@@ -139,7 +139,7 @@ public class Example {
 | **left** | **String**| name of the left group. | |
 | **right** | **String**| name of the right group. | |
 | **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
@@ -255,7 +255,7 @@ public class Example {
         FeatureStatisticsApi apiInstance = new FeatureStatisticsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
-        QuantificationMeasure quantification = QuantificationMeasure.fromValue("APEX_INTENSITY"); // QuantificationMeasure | quantification type.
+        QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
         try {
             StatisticsTable result = apiInstance.getFoldChangeTable1(projectId, aggregation, quantification);
             System.out.println(result);
@@ -277,7 +277,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
-| **quantification** | [**QuantificationMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 

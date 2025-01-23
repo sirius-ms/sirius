@@ -22,8 +22,8 @@ import io.sirius.ms.sdk.model.PagedModelFormulaCandidate;
 import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.QuantificationTableExperimental;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.QuantTableExperimental;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
@@ -2884,10 +2884,10 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantification1RequestCreation(String projectId, QuantificationMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantification1RequestCreation(String projectId, QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2914,7 +2914,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -2924,11 +2924,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTableExperimental getQuantification1(String projectId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public QuantTableExperimental getQuantification1(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantification1RequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
     }
 
@@ -2938,11 +2938,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return ResponseEntity&lt;QuantificationTableExperimental&gt;
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTableExperimental> getQuantification1WithHttpInfo(String projectId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public ResponseEntity<QuantTableExperimental> getQuantification1WithHttpInfo(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantification1RequestCreation(projectId, type).toEntity(localVarReturnType).block();
     }
 
@@ -2955,7 +2955,7 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantification1WithResponseSpec(String projectId, QuantificationMeasure type) throws WebClientResponseException {
+    public ResponseSpec getQuantification1WithResponseSpec(String projectId, QuantMeasure type) throws WebClientResponseException {
         return getQuantification1RequestCreation(projectId, type);
     }
     /**
@@ -2965,10 +2965,10 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantificationExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3000,7 +3000,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -3011,11 +3011,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTableExperimental getQuantificationExperimental(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public QuantTableExperimental getQuantificationExperimental(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
 
@@ -3026,11 +3026,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
-     * @return ResponseEntity&lt;QuantificationTableExperimental&gt;
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTableExperimental> getQuantificationExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public ResponseEntity<QuantTableExperimental> getQuantificationExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
 
@@ -3044,7 +3044,7 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationExperimentalWithResponseSpec(String projectId, String alignedFeatureId, QuantificationMeasure type) throws WebClientResponseException {
+    public ResponseSpec getQuantificationExperimentalWithResponseSpec(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
         return getQuantificationExperimentalRequestCreation(projectId, alignedFeatureId, type);
     }
     /**

@@ -8,8 +8,8 @@ import io.sirius.ms.sdk.model.CompoundImport;
 import io.sirius.ms.sdk.model.CompoundOptField;
 import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.PagedModelCompound;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.QuantificationTableExperimental;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.QuantTableExperimental;
 import io.sirius.ms.sdk.model.Tag;
 import io.sirius.ms.sdk.model.TagGroup;
 import io.sirius.ms.sdk.model.TraceSetExperimental;
@@ -1208,10 +1208,10 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationRequestCreation(String projectId, QuantificationMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantificationRequestCreation(String projectId, QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1238,7 +1238,7 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/compounds/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -1248,11 +1248,11 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTableExperimental getQuantification(String projectId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public QuantTableExperimental getQuantification(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
     }
 
@@ -1262,11 +1262,11 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return ResponseEntity&lt;QuantificationTableExperimental&gt;
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTableExperimental> getQuantificationWithHttpInfo(String projectId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public ResponseEntity<QuantTableExperimental> getQuantificationWithHttpInfo(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationRequestCreation(projectId, type).toEntity(localVarReturnType).block();
     }
 
@@ -1279,7 +1279,7 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationWithResponseSpec(String projectId, QuantificationMeasure type) throws WebClientResponseException {
+    public ResponseSpec getQuantificationWithResponseSpec(String projectId, QuantMeasure type) throws WebClientResponseException {
         return getQuantificationRequestCreation(projectId, type);
     }
     /**
@@ -1289,10 +1289,10 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantificationRowRequestCreation(String projectId, String compoundId, QuantificationMeasure type) throws WebClientResponseException {
+    private ResponseSpec getQuantificationRowRequestCreation(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1324,7 +1324,7 @@ public class CompoundsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/compounds/{compoundId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -1335,11 +1335,11 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
-     * @return QuantificationTableExperimental
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTableExperimental getQuantificationRow(String projectId, String compoundId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public QuantTableExperimental getQuantificationRow(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationRowRequestCreation(projectId, compoundId, type).bodyToMono(localVarReturnType).block();
     }
 
@@ -1350,11 +1350,11 @@ public class CompoundsApi {
      * @param projectId project-space to read from.
      * @param compoundId compound which should be read out
      * @param type quantification type.
-     * @return ResponseEntity&lt;QuantificationTableExperimental&gt;
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTableExperimental> getQuantificationRowWithHttpInfo(String projectId, String compoundId, QuantificationMeasure type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantificationTableExperimental>() {};
+    public ResponseEntity<QuantTableExperimental> getQuantificationRowWithHttpInfo(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
         return getQuantificationRowRequestCreation(projectId, compoundId, type).toEntity(localVarReturnType).block();
     }
 
@@ -1368,7 +1368,7 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationRowWithResponseSpec(String projectId, String compoundId, QuantificationMeasure type) throws WebClientResponseException {
+    public ResponseSpec getQuantificationRowWithResponseSpec(String projectId, String compoundId, QuantMeasure type) throws WebClientResponseException {
         return getQuantificationRowRequestCreation(projectId, compoundId, type);
     }
     /**

@@ -9,8 +9,8 @@
 |------------ | ------------- | ------------- | -------------|
 |**statisticsType** | **StatisticsType** |  |  [optional] |
 |**aggregationType** | **AggregationType** |  |  [optional] |
-|**quantificationMeasure** | **QuantificationMeasure** |  |  [optional] |
-|**rowType** | **RowType** |  |  [optional] |
+|**quantificationMeasure** | **QuantMeasure** |  |  [optional] |
+|**rowType** | **QuantRowType** |  |  [optional] |
 |**rowIds** | **List&lt;Long&gt;** |  |  [optional] |
 |**columnNames** | **List&lt;String&gt;** |  |  [optional] |
 |**columnLeftGroups** | **List&lt;String&gt;** |  |  [optional] |
