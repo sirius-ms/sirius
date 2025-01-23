@@ -23,13 +23,7 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.CompoundFoldChange;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.PagedModelCompoundFoldChange;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.StatisticsTable;
+import io.sirius.ms.sdk.model.*;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -59,7 +53,7 @@ public class CompoundStatisticsApiTest {
         String left = null;
         String right = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         List<JobOptField> optFields = null;
         Job response = api.computeFoldChange(projectId, left, right, aggregation, quantification, optFields);
 
@@ -77,7 +71,7 @@ public class CompoundStatisticsApiTest {
         String left = null;
         String right = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         api.deleteFoldChange(projectId, left, right, aggregation, quantification);
 
         // TODO: test validations
@@ -106,7 +100,7 @@ public class CompoundStatisticsApiTest {
     public void getFoldChangeTableTest()  {
         String projectId = null;
         AggregationType aggregation = null;
-        QuantificationMeasure quantification = null;
+        QuantMeasure quantification = null;
         StatisticsTable response = api.getFoldChangeTable(projectId, aggregation, quantification);
 
         // TODO: test validations
