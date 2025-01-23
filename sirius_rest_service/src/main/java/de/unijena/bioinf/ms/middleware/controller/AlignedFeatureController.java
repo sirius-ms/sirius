@@ -32,7 +32,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -814,8 +814,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
             summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
     )
     @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationMeasure type) {
-        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantificationTable.RowType.FEATURES);
+    public QuantTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
     }
@@ -828,8 +828,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * @return
      */
     @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantificationTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationMeasure type) {
-        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantificationTable.RowType.FEATURES);
+    public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
     }

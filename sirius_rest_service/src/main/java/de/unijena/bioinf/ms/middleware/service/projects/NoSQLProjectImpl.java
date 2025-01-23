@@ -62,7 +62,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
@@ -150,8 +150,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantification(QuantificationMeasure type, QuantificationTable.RowType rowType) {
-        Optional<QuantificationTable> table = initQuantTable(type, rowType);
+    public Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType) {
+        Optional<QuantTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
 
@@ -159,7 +159,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         LongList rowIds = new LongArrayList();
         List<String> rowNames = new ArrayList<>();
 
-        if (rowType == QuantificationTable.RowType.FEATURES) {
+        if (rowType == QuantRowType.FEATURES) {
             storage().findAllStr(AlignedFeatures.class).forEach(alignedFeatures -> addToTable(alignedFeatures, values, rowIds, rowNames, table.get()));
         } else {
             storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class).forEach(compound -> addToTable(compound, values, rowIds, rowNames, table.get()));
@@ -174,8 +174,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationMeasure type, QuantificationTable.RowType rowType) {
-        Optional<QuantificationTable> table = initQuantTable(type, rowType);
+    public Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType) {
+        Optional<QuantTable> table = initQuantTable(type, rowType);
         if (table.isEmpty())
             return Optional.empty();
 
@@ -183,7 +183,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         LongList rowIds = new LongArrayList();
         List<String> rowNames = new ArrayList<>();
 
-        if (rowType == QuantificationTable.RowType.FEATURES) {
+        if (rowType == QuantRowType.FEATURES) {
             Optional<AlignedFeatures> alignedFeature = storage().getByPrimaryKey(Long.parseLong(objectId), AlignedFeatures.class);
             if (alignedFeature.isEmpty())
                 return Optional.empty();
@@ -204,7 +204,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return table;
     }
 
-    private Optional<QuantificationTable> initQuantTable(QuantificationMeasure type, QuantificationTable.RowType rowType) throws IOException {
+    private Optional<QuantTable> initQuantTable(QuantMeasure type, QuantRowType rowType) throws IOException {
         List<LCMSRun> runs = storage().findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
 
         if (runs.isEmpty())
@@ -217,11 +217,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             runNames[i] = runs.get(i).getName();
         }
 
-        return Optional.of(QuantificationTable
+        return Optional.of(QuantTable
                 .builder()
                 .rowType(rowType)
                 .quantificationMeasure(type)
-                .columnType(QuantificationTable.ColumnType.SAMPLES)
                 .columnIds(runIds)
                 .columnNames(runNames)
                 .build()
@@ -229,7 +228,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @SneakyThrows
-    private <T> void addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantificationTable table) {
+    private <T> void addToTable(T parent, List<double[]> values, LongList rowIds, List<String> rowNames, QuantTable table) {
         Long2ObjectMap<List<Feature>> features = new Long2ObjectOpenHashMap<>();
         if (parent instanceof AlignedFeatures alignedFeature) {
             rowIds.add(alignedFeature.getAlignedFeatureId());
@@ -258,7 +257,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         values.add(getQuantTableRow(features, table));
     }
 
-    private double[] getQuantTableRow(Long2ObjectMap<List<Feature>> features, QuantificationTable table) {
+    private double[] getQuantTableRow(Long2ObjectMap<List<Feature>> features, QuantTable table) {
         double[] row = new double[table.getColumnIds().length];
         for (int i = 0; i < row.length; i++) {
             if (features.containsKey(table.getColumnIds()[i])) {
@@ -1919,7 +1918,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationMeasure quantification) {
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
         StatisticsTable table = StatisticsTable.builder()
                 .statisticsType(StatisticsTable.StatisticsType.FOLD_CHANGE)
                 .quantificationMeasure(quantification)
@@ -1927,10 +1926,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .build();
 
         if (AlignedFeature.class.equals(target)) {
-            table.setRowType(StatisticsTable.RowType.FEATURES);
+            table.setRowType(QuantRowType.FEATURES);
             fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class, aggregation, quantification);
         } else if (Compound.class.equals(target)) {
-            table.setRowType(StatisticsTable.RowType.COMPOUNDS);
+            table.setRowType(QuantRowType.COMPOUNDS);
             fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class, aggregation, quantification);
         } else {
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
@@ -1938,7 +1937,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return table;
     }
 
-    private <F extends de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange> void fillFoldChangeTable(StatisticsTable table, Class<F> fcClass, AggregationType aggregation, QuantificationMeasure quantification) throws IOException {
+    private <F extends de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange> void fillFoldChangeTable(StatisticsTable table, Class<F> fcClass, AggregationType aggregation, QuantMeasure quantification) throws IOException {
         List<F> foldChanges = storage().findStr(Filter.and(
                 Filter.where("aggregation").eq(aggregation.toString()),
                 Filter.where("quantification").eq(quantification.toString())
@@ -2034,7 +2033,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) {
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
         if (AlignedFeature.class.equals(target)) {
             storage().removeAll(
                     Filter.and(

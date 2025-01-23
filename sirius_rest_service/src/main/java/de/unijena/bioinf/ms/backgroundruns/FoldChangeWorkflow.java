@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -61,11 +61,11 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
     private final AggregationType aggregation;
 
-    private final QuantificationMeasure quantification;
+    private final QuantMeasure quantification;
 
     private final Class<?> target;
 
-    public FoldChangeWorkflow(ProjectSpaceManager psm, String left, String right, AggregationType aggregation, QuantificationMeasure quantification, Class<?> target) {
+    public FoldChangeWorkflow(ProjectSpaceManager psm, String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
         this.target = target;
         if (!(psm instanceof NoSQLProjectSpaceManager)) {
             throw new IllegalArgumentException("Project space type not supported!");

@@ -60,7 +60,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -130,12 +130,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantification(QuantificationMeasure type, QuantificationTable.RowType rowType) {
+    public Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationMeasure type, QuantificationTable.RowType rowType) {
+    public Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
@@ -351,7 +351,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationMeasure quantification) {
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 
@@ -366,7 +366,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationMeasure quantification) {
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 
