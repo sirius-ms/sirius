@@ -31,8 +31,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.QuantificationMeasure;
-import io.sirius.ms.sdk.model.RowType;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.QuantRowType;
 import io.sirius.ms.sdk.model.StatisticsType;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,10 +63,10 @@ public class StatisticsTable {
   private AggregationType aggregationType;
 
   public static final String JSON_PROPERTY_QUANTIFICATION_MEASURE = "quantificationMeasure";
-  private QuantificationMeasure quantificationMeasure;
+  private QuantMeasure quantificationMeasure;
 
   public static final String JSON_PROPERTY_ROW_TYPE = "rowType";
-  private RowType rowType;
+  private QuantRowType rowType;
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
   private List<Long> rowIds = new ArrayList<>();
@@ -136,7 +136,7 @@ public class StatisticsTable {
     this.aggregationType = aggregationType;
   }
 
-  public StatisticsTable quantificationMeasure(QuantificationMeasure quantificationMeasure) {
+  public StatisticsTable quantificationMeasure(QuantMeasure quantificationMeasure) {
     
     this.quantificationMeasure = quantificationMeasure;
     return this;
@@ -150,18 +150,18 @@ public class StatisticsTable {
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QuantificationMeasure getQuantificationMeasure() {
+  public QuantMeasure getQuantificationMeasure() {
     return quantificationMeasure;
   }
 
 
   @JsonProperty(JSON_PROPERTY_QUANTIFICATION_MEASURE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuantificationMeasure(QuantificationMeasure quantificationMeasure) {
+  public void setQuantificationMeasure(QuantMeasure quantificationMeasure) {
     this.quantificationMeasure = quantificationMeasure;
   }
 
-  public StatisticsTable rowType(RowType rowType) {
+  public StatisticsTable rowType(QuantRowType rowType) {
     
     this.rowType = rowType;
     return this;
@@ -175,14 +175,14 @@ public class StatisticsTable {
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public RowType getRowType() {
+  public QuantRowType getRowType() {
     return rowType;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ROW_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowType(RowType rowType) {
+  public void setRowType(QuantRowType rowType) {
     this.rowType = rowType;
   }
 
