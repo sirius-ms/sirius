@@ -52,6 +52,7 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import picocli.CommandLine;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -59,6 +60,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
@@ -670,25 +673,33 @@ public class BatchComputeDialog extends JDialog {
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
         if (isSingleCompound()) {
-            savePreset.setToolTipText("Cannot save presets in single compound mode");
+            savePreset.setToolTipText("Cannot save presets in single compound mode.");
         } else {
-            savePreset.setToolTipText("Update current preset with selected parameters");
+            savePreset.setToolTipText("Update current preset with selected parameters.");
         }
 
 
         JButton saveAsPreset = new JButton("Save as");
         if (isSingleCompound()) {
-            saveAsPreset.setToolTipText("Cannot save presets in single compound mode");
+            saveAsPreset.setToolTipText("Cannot save presets in single compound mode.");
             saveAsPreset.setEnabled(false);
         } else {
-            saveAsPreset.setToolTipText("Save current selection as a new preset");
+            saveAsPreset.setToolTipText("Save current selection as a new preset.");
         }
+
+        JButton exportPreset = new JButton("Export");
+        exportPreset.setToolTipText("Export the selected preset as JSON\n(NOT the current selection).");
+
+        JButton importPreset = new JButton("Import");
+        importPreset.setToolTipText("Import a preset JSON file.");
 
         JButton removePreset = new JButton("Remove");
         removePreset.setEnabled(false);
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
+        panel.add(exportPreset);
+        panel.add(importPreset);
         panel.add(removePreset);
 
         presetChangeListener = event -> {
@@ -711,27 +722,61 @@ public class BatchComputeDialog extends JDialog {
         });
 
         saveAsPreset.addActionListener(e -> {
+            StoredJobSubmission newJobSubmission = savePresetAs(makeJobSubmission(), presetDropdown.getSelectedItem() + "_copy");
+            if (newJobSubmission != null) {
+                reloadPresets();
+                activatePreset(newJobSubmission.getName());
+            }
+        });
 
-            String newPresetName = (String)JOptionPane.showInputDialog(
-                    this,
-                    "New preset name",
-                    null,
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    null,
-                    presetDropdown.getSelectedItem() + "_copy");
-
-            if (newPresetName != null && !newPresetName.isBlank()) {
-                JobSubmission currentConfig = makeJobSubmission();
+        exportPreset.addActionListener(e -> {
+            String fileName = presetDropdown.getSelectedItem() + ".json";
+            File file = new File(gui.getProjectManager().getProjectLocation(), fileName);
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setSelectedFile(file);
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                if (fileToSave.exists()) {
+                    if (JOptionPane.showOptionDialog(this,
+                            "File " + fileName + " already exists. Overwrite?",
+                            null,
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null,
+                            new Object[]{"Overwrite", "Cancel"},
+                            null) != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
                 try {
-                    StoredJobSubmission createdPreset = gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, currentConfig, false, false));
-                    reloadPresets();
-                    presetDropdown.setSelectedItem(createdPreset.getName());
-                } catch (Exception ex) {
-                    String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
-                            .map(SiriusSDKErrorResponse::getMessage)
-                            .orElse(ex.getMessage());
-                    Jobs.runEDTLater(() -> new StacktraceDialog(this, errorMessage, ex));
+                    new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(fileToSave, preset);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        importPreset.addActionListener(e -> {
+            JFileChooser presetFileChooser = new JFileChooser(gui.getProjectManager().getProjectLocation());
+            presetFileChooser.setFileFilter(new FileNameExtensionFilter("JSON files", "json"));
+            if (presetFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File presetFile = presetFileChooser.getSelectedFile();
+                String presetName = stripExtension(presetFile.getName());
+                try {
+                    JobSubmission importedPreset = new ObjectMapper().readValue(presetFile, JobSubmission.class);
+                    StoredJobSubmission newJobSubmission = savePresetAs(importedPreset, presetName);
+
+                    if (newJobSubmission != null) {
+                        reloadPresets();
+                        if (JOptionPane.showConfirmDialog(this,
+                                "Switch to the new preset?",
+                                null,
+                                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                            activatePreset(newJobSubmission.getName());
+                        }
+                    }
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -746,11 +791,66 @@ public class BatchComputeDialog extends JDialog {
         return panel;
     }
 
+    private static String stripExtension(String name) {
+        int lastDotIndex = name.lastIndexOf('.');
+        if (lastDotIndex == -1) {
+            return name;
+        }
+        return name.substring(0, lastDotIndex);
+    }
+
+    private StoredJobSubmission savePresetAs(JobSubmission js, String suggestedName) {
+        String newPresetName = (String)JOptionPane.showInputDialog(
+                this,
+                "New preset name",
+                null,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                suggestedName);
+
+        if (newPresetName == null || newPresetName.isBlank()) {
+            return null;
+        }
+
+        boolean overwrite = false;
+        if (allPresets.containsKey(newPresetName)) {
+            if (allPresets.get(newPresetName).isEditable()) {
+                if (JOptionPane.showOptionDialog(this,
+                        "Preset " + newPresetName + " already exists. Overwrite?",
+                        null,
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        new Object[]{"Overwrite", "Cancel"},
+                        null) != JOptionPane.YES_OPTION) {
+                    return null;
+                } else {
+                    overwrite = true;
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Preset " + newPresetName + " already exists, and is not editable.", null, JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+        }
+        final boolean finalOverwrite = overwrite;  // lambda requires final variable
+        try {
+            return gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, js, finalOverwrite, false));
+        } catch (Exception ex) {
+            String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
+                    .map(SiriusSDKErrorResponse::getMessage)
+                    .orElse(ex.getMessage());
+            Jobs.runEDTLater(() -> new StacktraceDialog(this, errorMessage, ex));
+            return null;
+        }
+    }
+
     /**
-     * Removes all current presets from the preset dropdown and loads them again.
-     * Some preset should be activated after calling this method, otherwise the UI will be in an inconsistent state
+     * Removes all current presets from the preset dropdown and loads them again, preserving selection if possible.
+     * If the previously selected preset was removed, some other preset should be activated after calling this method, otherwise the UI will be in an inconsistent state
      */
     private void reloadPresets() {
+        String oldSelection = (String) presetDropdown.getSelectedItem();
         presetDropdown.removeItemListener(presetChangeListener);  // the first item added to the combobox gets selected, and we don't want to activate it immediately
         presetDropdown.removeAllItems();
         allPresets = new HashMap<>();
@@ -758,6 +858,9 @@ public class BatchComputeDialog extends JDialog {
         for (StoredJobSubmission c : configsFromServer) {
             allPresets.put(c.getName(), c);
             presetDropdown.addItem(c.getName());
+        }
+        if (oldSelection != null && allPresets.containsKey(oldSelection)) {
+            presetDropdown.setSelectedItem(oldSelection);
         }
         presetDropdown.addItemListener(presetChangeListener);
     }
