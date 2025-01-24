@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
@@ -697,9 +698,10 @@ public class BatchComputeDialog extends JDialog {
 
         panel.add(savePreset);
         panel.add(saveAsPreset);
+        panel.add(removePreset);
+        panel.add(Box.createRigidArea(new Dimension(GuiUtils.MEDIUM_GAP, 0)));
         panel.add(exportPreset);
         panel.add(importPreset);
-        panel.add(removePreset);
 
         presetChangeListener = event -> {
             if (event.getStateChange() == ItemEvent.SELECTED) {
@@ -730,7 +732,7 @@ public class BatchComputeDialog extends JDialog {
 
         exportPreset.addActionListener(e -> {
             String fileName = presetDropdown.getSelectedItem() + ".json";
-            File file = new File(gui.getProjectManager().getProjectLocation(), fileName);
+            File file = new File(PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH), fileName);
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setSelectedFile(file);
             if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
@@ -756,7 +758,7 @@ public class BatchComputeDialog extends JDialog {
         });
 
         importPreset.addActionListener(e -> {
-            JFileChooser presetFileChooser = new JFileChooser(gui.getProjectManager().getProjectLocation());
+            JFileChooser presetFileChooser = new JFileChooser(PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
             presetFileChooser.setFileFilter(new FileNameExtensionFilter("JSON files", "json"));
             if (presetFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File presetFile = presetFileChooser.getSelectedFile();
