@@ -194,17 +194,16 @@ public class BatchComputeDialog extends JDialog {
             }
             // make south panel with Recompute/Compute/Abort
             {
-                JPanel southPanel = new JPanel();
-                southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
+                JPanel southPanel = new JPanel(new GridLayout(1, 3));
 
-                JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+                JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
                 recomputeBox = new JCheckBox("Recompute already computed tasks?", false);
                 recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
                 lsouthPanel.add(recomputeBox);
 
                 if (isSingleCompound()) recomputeBox.setSelected(true);
 
-                JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+                JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
                 showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
@@ -235,7 +234,7 @@ public class BatchComputeDialog extends JDialog {
                 csouthPanel.add(showCommand);
                 csouthPanel.add(showJson);
 
-                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                 JButton compute = new JButton("Compute");
                 if (compoundsToProcess.isEmpty()) {
                     compute.setVisible(false);
