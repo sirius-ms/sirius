@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +35,17 @@ import java.util.List;
 @SuperBuilder
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TagCategoryImport {
+public class TagDefinitionImport {
 
     public enum ValueType {
         NONE, BOOLEAN, INTEGER, DOUBLE, STRING, DATE, TIME
     }
 
+    /**
+     * Name of this tag defined by this definition (key)
+     */
     @NotNull
-    protected String name;
+    protected String tagName;
 
     @Nullable
     protected String description;
@@ -53,10 +56,13 @@ public class TagCategoryImport {
     @Nullable
     protected List<?> possibleValues;
 
+    /**
+     * A simple string based identifier to specify the scope of this tag.
+     */
     @Nullable
-    protected String categoryType;
+    protected String tagScope;
 
-    public abstract static class TagCategoryImportBuilder<C extends TagCategoryImport, B extends TagCategoryImportBuilder<C, B>> {
+    public abstract static class TagDefinitionImportBuilder<C extends TagDefinitionImport, B extends TagDefinitionImportBuilder<C, B>> {
 
         private boolean possibleValuesChecked = false;
 
@@ -112,7 +118,7 @@ public class TagCategoryImport {
                         for (Object o : possibleValues) {
                             if (o instanceof String s) {
                                 try {
-                                    TagController.DATE_FORMAT.parse(s);
+                                    TaggableController.DATE_FORMAT.parse(s);
                                 } catch (ParseException e) {
                                     throw new IllegalArgumentException(o + " is not a date in format yyyy-MM-dd");
                                 }
@@ -125,7 +131,7 @@ public class TagCategoryImport {
                         for (Object o : possibleValues) {
                             if (o instanceof String s) {
                                 try {
-                                    TagController.TIME_FORMAT.parse(s);
+                                    TaggableController.TIME_FORMAT.parse(s);
                                 } catch (ParseException e) {
                                     throw new IllegalArgumentException(o + " is not a date in format yyyy-MM-dd");
                                 }

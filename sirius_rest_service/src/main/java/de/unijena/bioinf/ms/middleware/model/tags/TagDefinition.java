@@ -32,7 +32,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TagCategory extends TagCategoryImport {
+public class TagDefinition extends TagDefinitionImport {
 
     @Builder.Default
     protected boolean editable = true;

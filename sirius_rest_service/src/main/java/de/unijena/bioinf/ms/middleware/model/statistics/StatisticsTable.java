@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 @Setter
@@ -36,11 +35,6 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StatisticsTable {
-
-    @Schema(name = "StatisticsType")
-    public enum StatisticsType {
-        FOLD_CHANGE
-    }
 
     private StatisticsType statisticsType;
     private AggregationType aggregationType;

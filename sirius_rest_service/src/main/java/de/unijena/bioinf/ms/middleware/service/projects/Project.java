@@ -29,8 +29,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
@@ -40,9 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -126,19 +124,23 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
 
-    void deleteTagsFromObject(String objectId, List<String> categoryNames);
+    void removeTagsFromObject(String objectId, List<String> tagNames);
 
-    List<TagCategory> findCategories();
+    List<TagDefinition> findTags();
 
-    List<TagCategory> findCategoriesByType(String categoryType);
+    List<TagDefinition> findTagsByScope(String tagScope);
 
-    TagCategory findCategoryByName(String categoryName);
+    TagDefinition findTagByName(String tagName);
 
-    List<TagCategory> addCategories(List<TagCategoryImport> categories, boolean editable);
+    List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable);
 
-    void deleteCategory(String categoryName);
+    default List<TagDefinition> createTag(TagDefinitionImport tagDefinition, boolean editable) {
+        return createTags(List.of(tagDefinition), editable);
+    }
 
-    TagCategory addPossibleValuesToCategory(String categoryName, List<?> values);
+    void deleteTags(String tagName);
+
+    TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values);
 
     <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
 
