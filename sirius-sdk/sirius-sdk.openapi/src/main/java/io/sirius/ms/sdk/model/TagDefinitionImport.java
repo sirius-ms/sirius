@@ -38,19 +38,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TagCategoryImport
+ * TagDefinitionImport
  */
 @JsonPropertyOrder({
-  TagCategoryImport.JSON_PROPERTY_NAME,
-  TagCategoryImport.JSON_PROPERTY_DESCRIPTION,
-  TagCategoryImport.JSON_PROPERTY_VALUE_TYPE,
-  TagCategoryImport.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagCategoryImport.JSON_PROPERTY_CATEGORY_TYPE
+  TagDefinitionImport.JSON_PROPERTY_TAG_NAME,
+  TagDefinitionImport.JSON_PROPERTY_DESCRIPTION,
+  TagDefinitionImport.JSON_PROPERTY_VALUE_TYPE,
+  TagDefinitionImport.JSON_PROPERTY_POSSIBLE_VALUES,
+  TagDefinitionImport.JSON_PROPERTY_TAG_SCOPE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TagCategoryImport {
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
+public class TagDefinitionImport {
+  public static final String JSON_PROPERTY_TAG_NAME = "tagName";
+  private String tagName;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
@@ -61,38 +61,38 @@ public class TagCategoryImport {
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
   private List<Object> possibleValues = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_CATEGORY_TYPE = "categoryType";
-  private String categoryType;
+  public static final String JSON_PROPERTY_TAG_SCOPE = "tagScope";
+  private String tagScope;
 
-  public TagCategoryImport() {
+  public TagDefinitionImport() {
   }
 
-  public TagCategoryImport name(String name) {
+  public TagDefinitionImport tagName(String tagName) {
     
-    this.name = name;
+    this.tagName = tagName;
     return this;
   }
 
    /**
-   * Get name
-   * @return name
+   * Name of this tag defined by this definition (key)
+   * @return tagName
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getName() {
-    return name;
+  public String getTagName() {
+    return tagName;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
+  public void setTagName(String tagName) {
+    this.tagName = tagName;
   }
 
-  public TagCategoryImport description(String description) {
+  public TagDefinitionImport description(String description) {
     
     this.description = description;
     return this;
@@ -117,7 +117,7 @@ public class TagCategoryImport {
     this.description = description;
   }
 
-  public TagCategoryImport valueType(ValueType valueType) {
+  public TagDefinitionImport valueType(ValueType valueType) {
     
     this.valueType = valueType;
     return this;
@@ -142,13 +142,13 @@ public class TagCategoryImport {
     this.valueType = valueType;
   }
 
-  public TagCategoryImport possibleValues(List<Object> possibleValues) {
+  public TagDefinitionImport possibleValues(List<Object> possibleValues) {
     
     this.possibleValues = possibleValues;
     return this;
   }
 
-  public TagCategoryImport addPossibleValuesItem(Object possibleValuesItem) {
+  public TagDefinitionImport addPossibleValuesItem(Object possibleValuesItem) {
     if (this.possibleValues == null) {
       this.possibleValues = new ArrayList<>();
     }
@@ -175,29 +175,29 @@ public class TagCategoryImport {
     this.possibleValues = possibleValues;
   }
 
-  public TagCategoryImport categoryType(String categoryType) {
+  public TagDefinitionImport tagScope(String tagScope) {
     
-    this.categoryType = categoryType;
+    this.tagScope = tagScope;
     return this;
   }
 
    /**
-   * Get categoryType
-   * @return categoryType
+   * A simple string based identifier to specify the scope of this tag.
+   * @return tagScope
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getCategoryType() {
-    return categoryType;
+  public String getTagScope() {
+    return tagScope;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCategoryType(String categoryType) {
-    this.categoryType = categoryType;
+  public void setTagScope(String tagScope) {
+    this.tagScope = tagScope;
   }
 
   @Override
@@ -208,28 +208,28 @@ public class TagCategoryImport {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TagCategoryImport tagCategoryImport = (TagCategoryImport) o;
-    return Objects.equals(this.name, tagCategoryImport.name) &&
-        Objects.equals(this.description, tagCategoryImport.description) &&
-        Objects.equals(this.valueType, tagCategoryImport.valueType) &&
-        Objects.equals(this.possibleValues, tagCategoryImport.possibleValues) &&
-        Objects.equals(this.categoryType, tagCategoryImport.categoryType);
+    TagDefinitionImport tagDefinitionImport = (TagDefinitionImport) o;
+    return Objects.equals(this.tagName, tagDefinitionImport.tagName) &&
+        Objects.equals(this.description, tagDefinitionImport.description) &&
+        Objects.equals(this.valueType, tagDefinitionImport.valueType) &&
+        Objects.equals(this.possibleValues, tagDefinitionImport.possibleValues) &&
+        Objects.equals(this.tagScope, tagDefinitionImport.tagScope);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, valueType, possibleValues, categoryType);
+    return Objects.hash(tagName, description, valueType, possibleValues, tagScope);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TagCategoryImport {\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("class TagDefinitionImport {\n");
+    sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
-    sb.append("    categoryType: ").append(toIndentedString(categoryType)).append("\n");
+    sb.append("    tagScope: ").append(toIndentedString(tagScope)).append("\n");
     sb.append("}");
     return sb.toString();
   }

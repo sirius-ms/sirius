@@ -23,7 +23,12 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.StatisticsTable;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -43,81 +48,68 @@ public class FeatureStatisticsApiTest {
 
     
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
      *
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void computeFoldChange1Test()  {
+    public void computeAlignedFeatureFoldChangesExperimentalTest()  {
         String projectId = null;
-        String left = null;
-        String right = null;
+        String leftGroupName = null;
+        String rightGroupName = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
         List<JobOptField> optFields = null;
-        Job response = api.computeFoldChange1(projectId, left, right, aggregation, quantification, optFields);
+        Job response = api.computeAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Delete fold change
+     * [EXPERIMENTAL] Delete fold changes
      *
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void deleteFoldChange1Test()  {
+    public void deleteAlignedFeatureFoldChangesExperimentalTest()  {
         String projectId = null;
-        String left = null;
-        String right = null;
+        String leftGroupName = null;
+        String rightGroupName = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
-        api.deleteFoldChange1(projectId, left, right, aggregation, quantification);
+        api.deleteAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs)
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
      *
-     * **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void getFoldChange1Test()  {
-        String projectId = null;
-        String alignedFeatureId = null;
-        List<AlignedFeatureFoldChange> response = api.getFoldChange1(projectId, alignedFeatureId);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     *
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void getFoldChangeTable1Test()  {
+    public void getAlignedFeatureFoldChangeTableExperimentalTest()  {
         String projectId = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
-        StatisticsTable response = api.getFoldChangeTable1(projectId, aggregation, quantification);
+        StatisticsTable response = api.getAlignedFeatureFoldChangeTableExperimental(projectId, aggregation, quantification);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
+     * [EXPERIMENTAL] Get fold changes
      *
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void listFoldChange1Test()  {
+    public void getAlignedFeatureFoldChangesExperimentalTest()  {
         String projectId = null;
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
-        PagedModelAlignedFeatureFoldChange response = api.listFoldChange1(projectId, page, size, sort);
+        String leftGroupName = null;
+        String rightGroupName = null;
+        AggregationType aggregation = null;
+        QuantMeasure quantification = null;
+        List<AlignedFeatureFoldChange> response = api.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }
