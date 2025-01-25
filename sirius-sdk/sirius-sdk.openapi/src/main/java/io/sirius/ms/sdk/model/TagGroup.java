@@ -62,7 +62,7 @@ public class TagGroup {
   }
 
    /**
-   * Get name
+   * Name of this Grouping query.
    * @return name
   **/
   @jakarta.annotation.Nullable
@@ -87,7 +87,7 @@ public class TagGroup {
   }
 
    /**
-   * Get luceneQuery
+   * Query used to group the entities in lucene format.
    * @return luceneQuery
   **/
   @jakarta.annotation.Nullable
