@@ -635,7 +635,7 @@ No authorization required
 
 ## getTags
 
-> List&lt;TagDefinition&gt; getTags(projectId, tagScope)
+> List&lt;TagDefinition&gt; getTags(projectId, tagType)
 
 [EXPERIMENTAL] Get all tag definitions in the given project-space
 
@@ -658,9 +658,9 @@ public class Example {
 
         TagsApi apiInstance = new TagsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String tagScope = "tagScope_example"; // String | scope of the tag (optional)
+        String tagType = "tagType_example"; // String | scope of the tag (optional)
         try {
-            List<TagDefinition> result = apiInstance.getTags(projectId, tagScope);
+            List<TagDefinition> result = apiInstance.getTags(projectId, tagType);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling TagsApi#getTags");
@@ -679,7 +679,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **tagScope** | **String**| scope of the tag (optional) | [optional] |
+| **tagType** | **String**| scope of the tag (optional) | [optional] |
 
 ### Return type
 

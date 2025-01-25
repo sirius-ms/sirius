@@ -817,11 +817,11 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
      * @param projectId project-space to read from.
-     * @param tagScope scope of the tag (optional)
+     * @param tagType scope of the tag (optional)
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTagsRequestCreation(String projectId, String tagScope) throws WebClientResponseException {
+    private ResponseSpec getTagsRequestCreation(String projectId, String tagType) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -837,7 +837,7 @@ public class TagsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tagScope", tagScope));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tagType", tagType));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -857,13 +857,13 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
      * @param projectId project-space to read from.
-     * @param tagScope scope of the tag (optional)
+     * @param tagType scope of the tag (optional)
      * @return List&lt;TagDefinition&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<TagDefinition> getTags(String projectId, String tagScope) throws WebClientResponseException {
+    public List<TagDefinition> getTags(String projectId, String tagType) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
-        return getTagsRequestCreation(projectId, tagScope).bodyToFlux(localVarReturnType).collectList().block();
+        return getTagsRequestCreation(projectId, tagType).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -871,13 +871,13 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
      * @param projectId project-space to read from.
-     * @param tagScope scope of the tag (optional)
+     * @param tagType scope of the tag (optional)
      * @return ResponseEntity&lt;List&lt;TagDefinition&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<TagDefinition>> getTagsWithHttpInfo(String projectId, String tagScope) throws WebClientResponseException {
+    public ResponseEntity<List<TagDefinition>> getTagsWithHttpInfo(String projectId, String tagType) throws WebClientResponseException {
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
-        return getTagsRequestCreation(projectId, tagScope).toEntityList(localVarReturnType).block();
+        return getTagsRequestCreation(projectId, tagType).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -885,11 +885,11 @@ public class TagsApi {
      * [EXPERIMENTAL] Get all tag definitions in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Tag definitions.
      * @param projectId project-space to read from.
-     * @param tagScope scope of the tag (optional)
+     * @param tagType scope of the tag (optional)
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTagsWithResponseSpec(String projectId, String tagScope) throws WebClientResponseException {
-        return getTagsRequestCreation(projectId, tagScope);
+    public ResponseSpec getTagsWithResponseSpec(String projectId, String tagType) throws WebClientResponseException {
+        return getTagsRequestCreation(projectId, tagType);
     }
 }
