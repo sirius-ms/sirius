@@ -158,7 +158,9 @@ public class JobController {
     }
 
     /**
-     * Start computation for given command and input.
+     * [DEPRECATED] Start computation for given command and input.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId         project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -166,9 +168,6 @@ public class JobController {
      * @return Job of the command to be executed.
      */
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
-    )
     @PostMapping(value = "/projects/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
                             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
@@ -255,14 +254,14 @@ public class JobController {
     }
 
     /**
-     * Get all (non-default) job configuration names
+     * [DEPRECATED] Get all (non-default) job configuration names
+     * <p>
+     * [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
+     *
      */
     @GetMapping(value = "/job-config-names", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: use /job-configs to get all configs with names."
-    )
     public List<String> getJobConfigNames() {
         return getJobConfigs().stream()
                 .map(StoredJobSubmission::getName)

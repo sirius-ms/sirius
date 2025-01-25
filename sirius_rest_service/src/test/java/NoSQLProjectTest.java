@@ -21,16 +21,17 @@
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
@@ -229,37 +230,37 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            Map<String, TagCategoryImport> catIn = Map.of(
-                    "c0", TagCategoryImport.builder().name("c0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).categoryType("foo").build(),
-                    "c1", TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(true, false)).build(),
-                    "c2", TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, List.of(0, 1)).build(),
-                    "c3", TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
-                    "c4", TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
+            Map<String, TagDefinitionImport> catIn = Map.of(
+                    "c0", TagDefinitionImport.builder().tagName("c0").valueTypeAndPossibleValues(TagDefinition.ValueType.NONE, null).tagScope("foo").build(),
+                    "c1", TagDefinitionImport.builder().tagName("c1").valueTypeAndPossibleValues(TagDefinition.ValueType.BOOLEAN, List.of(true, false)).build(),
+                    "c2", TagDefinitionImport.builder().tagName("c2").valueTypeAndPossibleValues(TagDefinition.ValueType.INTEGER, List.of(0, 1)).build(),
+                    "c3", TagDefinitionImport.builder().tagName("c3").valueTypeAndPossibleValues(TagDefinition.ValueType.DOUBLE, null).build(),
+                    "c4", TagDefinitionImport.builder().tagName("c4").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, null).build()
             );
 
-            Assert.assertThrows(IllegalArgumentException.class, () -> project.addCategories(
-                    List.of(TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, List.of(0, 1)).build()), true)
+            Assert.assertThrows(IllegalArgumentException.class, () -> project.createTags(
+                    List.of(TagDefinitionImport.builder().tagName("c1").valueTypeAndPossibleValues(TagDefinition.ValueType.BOOLEAN, List.of(0, 1)).build()), true)
             );
 
-            Map<String, TagCategory> cats0 = project.addCategories(new ArrayList<>(catIn.values()), true).stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
-            Map<String, TagCategory> cats1 = project.findCategories().stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
-            Map<String, TagCategory> cats2 = catIn.keySet().stream().map(project::findCategoryByName).collect(Collectors.toMap(TagCategory::getName, Function.identity()));
+            Map<String, TagDefinition> cats0 = project.createTags(new ArrayList<>(catIn.values()), true).stream().collect(Collectors.toMap(TagDefinition::getTagName, Function.identity()));
+            Map<String, TagDefinition> cats1 = project.findTags().stream().collect(Collectors.toMap(TagDefinition::getTagName, Function.identity()));
+            Map<String, TagDefinition> cats2 = catIn.keySet().stream().map(project::findTagByName).collect(Collectors.toMap(TagDefinition::getTagName, Function.identity()));
 
-            List<TagCategory> cats3 = project.findCategoriesByType("foo");
+            List<TagDefinition> cats3 = project.findTagsByScope("foo");
             Assert.assertEquals(1, cats3.size());
-            Assert.assertEquals("c0", cats3.getFirst().getName());
+            Assert.assertEquals("c0", cats3.getFirst().getTagName());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.findCategoryByName("foo"));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findTagByName("foo"));
 
             Assert.assertEquals(catIn.size(), cats0.size());
             Assert.assertEquals(catIn.size(), cats1.size());
             Assert.assertEquals(catIn.size(), cats2.size());
 
             for (String name : catIn.keySet()) {
-                TagCategoryImport c = catIn.get(name);
-                for (Map<String, TagCategory> comparison : List.of(cats0, cats1, cats2)) {
-                    TagCategory cc = comparison.get(name);
-                    Assert.assertEquals(c.getName(), cc.getName());
+                TagDefinitionImport c = catIn.get(name);
+                for (Map<String, TagDefinition> comparison : List.of(cats0, cats1, cats2)) {
+                    TagDefinition cc = comparison.get(name);
+                    Assert.assertEquals(c.getTagName(), cc.getTagName());
                     Assert.assertEquals(c.getValueType(), cc.getValueType());
                     Assert.assertEquals(c.getPossibleValues(), cc.getPossibleValues());
                     if (c.getPossibleValues() != null && cc.getPossibleValues() != null) {
@@ -268,32 +269,32 @@ public class NoSQLProjectTest {
                 }
             }
 
-            Assert.assertNull(project.addCategories(
-                    List.of(TagCategoryImport.builder().name("cfoo0").valueTypeAndPossibleValues(TagCategory.ValueType.NONE, null).build()), true
+            Assert.assertNull(project.createTags(
+                    List.of(TagDefinitionImport.builder().tagName("cfoo0").valueTypeAndPossibleValues(TagDefinition.ValueType.NONE, null).build()), true
             ).getFirst().getPossibleValues());
-            Assert.assertNull(project.addCategories(
-                    List.of(TagCategoryImport.builder().name("cfoo1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, null).build()), false
+            Assert.assertNull(project.createTags(
+                    List.of(TagDefinitionImport.builder().tagName("cfoo1").valueTypeAndPossibleValues(TagDefinition.ValueType.BOOLEAN, null).build()), false
             ).getFirst().getPossibleValues());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteCategory("foo"));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteCategory("cfoo1"));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteTags("foo"));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.deleteTags("cfoo1"));
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo0", List.of(true, false)));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToTagDefinition("cfoo0", List.of(true, false)));
 
-            List<String> before = project.findCategories().stream().map(TagCategory::getName).toList();
-            project.deleteCategory("cfoo0");
-            List<String> after = project.findCategories().stream().map(TagCategory::getName).toList();
+            List<String> before = project.findTags().stream().map(TagDefinition::getTagName).toList();
+            project.deleteTags("cfoo0");
+            List<String> after = project.findTags().stream().map(TagDefinition::getTagName).toList();
 
             Assert.assertEquals(before.size() - 1, after.size());
             Assert.assertFalse(after.contains("cfoo0"));
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo0", List.of(true, false)));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToCategory("cfoo1", List.of(true, false)));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToTagDefinition("cfoo0", List.of(true, false)));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addPossibleValuesToTagDefinition("cfoo1", List.of(true, false)));
 
-            project.addPossibleValuesToCategory("c4", List.of("sample", "blank"));
-            Assert.assertArrayEquals(new String[]{"sample", "blank"}, project.findCategoryByName("c4").getPossibleValues().toArray(String[]::new));
-            project.addPossibleValuesToCategory("c4", List.of("qq"));
-            Assert.assertArrayEquals(new String[]{"sample", "blank", "qq"}, project.findCategoryByName("c4").getPossibleValues().toArray(String[]::new));
+            project.addPossibleValuesToTagDefinition("c4", List.of("sample", "blank"));
+            Assert.assertArrayEquals(new String[]{"sample", "blank"}, project.findTagByName("c4").getPossibleValues().toArray(String[]::new));
+            project.addPossibleValuesToTagDefinition("c4", List.of("qq"));
+            Assert.assertArrayEquals(new String[]{"sample", "blank", "qq"}, project.findTagByName("c4").getPossibleValues().toArray(String[]::new));
 
         }
 
@@ -307,8 +308,8 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            project.addCategories(List.of(
-                    TagCategoryImport.builder().name("sample").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("sample", "blank", "control")).build()
+            project.createTags(List.of(
+                    TagDefinitionImport.builder().tagName("sample").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, List.of("sample", "blank", "control")).build()
             ), true);
 
             List<LCMSRun> runs = List.of(
@@ -333,9 +334,9 @@ public class NoSQLProjectTest {
             );
 
             ps.getStorage().insertAll(runs);
-            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("sample").build()));
-            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("blank").build()));
-            project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("control").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("sample").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("blank").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("control").build()));
 
             project.addTagGroup("group1", "category:sample AND text:sample", "type1");
             project.addTagGroup("group2", "category:sample AND text:blank", "type1");
@@ -389,8 +390,8 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            project.addCategories(List.of(
-                    TagCategoryImport.builder().name("sample").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("sample", "blank", "control")).build()
+            project.createTags(List.of(
+                    TagDefinitionImport.builder().tagName("sample").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, List.of("sample", "blank", "control")).build()
             ), true);
 
             List<LCMSRun> runs = List.of(
@@ -409,8 +410,8 @@ public class NoSQLProjectTest {
             );
 
             ps.getStorage().insertAll(runs);
-            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("sample").build()));
-            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().category("sample").valueType(TagCategoryImport.ValueType.STRING).text("blank").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("sample").build()));
+            project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("blank").build()));
 
             AlignedFeatures af = AlignedFeatures.builder().name("af").build();
             ps.getStorage().insert(af);
@@ -462,9 +463,9 @@ public class NoSQLProjectTest {
             Assert.assertEquals(QuantRowType.FEATURES, table2.getRowType());
             Assert.assertEquals(QuantRowType.FEATURES, table3.getRowType());
 
-            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table1.getStatisticsType());
-            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table2.getStatisticsType());
-            Assert.assertEquals(StatisticsTable.StatisticsType.FOLD_CHANGE, table3.getStatisticsType());
+            Assert.assertEquals(StatisticsType.FOLD_CHANGE, table1.getStatisticsType());
+            Assert.assertEquals(StatisticsType.FOLD_CHANGE, table2.getStatisticsType());
+            Assert.assertEquals(StatisticsType.FOLD_CHANGE, table3.getStatisticsType());
 
             Assert.assertEquals(1, table1.getColumnNames().length);
             Assert.assertEquals("sample / blank", table1.getColumnNames()[0]);
@@ -541,52 +542,52 @@ public class NoSQLProjectTest {
             ps.getStorage().insertAll(runs);
             final Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
 
-            project.addCategories(List.of(TagCategoryImport.builder().name("c1").valueTypeAndPossibleValues(TagCategory.ValueType.BOOLEAN, null).build()), true);
+            project.createTags(List.of(TagDefinitionImport.builder().tagName("c1").valueTypeAndPossibleValues(TagDefinition.ValueType.BOOLEAN, null).build()), true);
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category("c1").bool(true).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.BOOLEAN).tagName("c1").bool(true).build()));
             Map<String, ? extends Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(true, tags.get("c1").getBool());
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category("c1").bool(false).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.BOOLEAN).tagName("c1").bool(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category("c2").bool(false).build())));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.DOUBLE).category("c1").real(2.0).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.BOOLEAN).tagName("c2").bool(false).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.DOUBLE).tagName("c1").real(2.0).build())));
 
-            project.addCategories(List.of(
-                    TagCategoryImport.builder().name("c2").valueTypeAndPossibleValues(TagCategory.ValueType.INTEGER, null).build(),
-                    TagCategoryImport.builder().name("c3").valueTypeAndPossibleValues(TagCategory.ValueType.DOUBLE, null).build(),
-                    TagCategoryImport.builder().name("c4").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, null).build()
+            project.createTags(List.of(
+                    TagDefinitionImport.builder().tagName("c2").valueTypeAndPossibleValues(TagDefinition.ValueType.INTEGER, null).build(),
+                    TagDefinitionImport.builder().tagName("c3").valueTypeAndPossibleValues(TagDefinition.ValueType.DOUBLE, null).build(),
+                    TagDefinitionImport.builder().tagName("c4").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, null).build()
             ), true);
 
             project.addTagsToObject(Run.class, run.getRunId(), List.of(
-                    Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category("c1").bool(false).build(),
-                    Tag.builder().valueType(TagCategoryImport.ValueType.INTEGER).category("c2").integer(42).build(),
-                    Tag.builder().valueType(TagCategoryImport.ValueType.DOUBLE).category("c3").real(42.0).build(),
-                    Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category("c4").text("42").build()
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.BOOLEAN).tagName("c1").bool(false).build(),
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.INTEGER).tagName("c2").integer(42).build(),
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.DOUBLE).tagName("c3").real(42.0).build(),
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.STRING).tagName("c4").text("42").build()
             ));
 
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(4, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-            Assert.assertEquals(TagCategoryImport.ValueType.INTEGER, tags.get("c2").getValueType());
-            Assert.assertEquals(TagCategoryImport.ValueType.DOUBLE, tags.get("c3").getValueType());
-            Assert.assertEquals(TagCategoryImport.ValueType.STRING, tags.get("c4").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.DOUBLE, tags.get("c3").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.STRING, tags.get("c4").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getInteger());
             Assert.assertEquals(Double.valueOf(42.0), tags.get("c3").getReal());
             Assert.assertEquals("42", tags.get("c4").getText());
 
-            project.deleteTagsFromObject(run.getRunId(), List.of("c3", "c4"));
+            project.removeTagsFromObject(run.getRunId(), List.of("c3", "c4"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(2, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-            Assert.assertEquals(TagCategoryImport.ValueType.INTEGER, tags.get("c2").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getInteger());
 
@@ -594,16 +595,16 @@ public class NoSQLProjectTest {
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
             Assert.assertEquals(2, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
-            Assert.assertEquals(TagCategoryImport.ValueType.INTEGER, tags.get("c2").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.INTEGER, tags.get("c2").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getInteger());
 
-            project.deleteCategory("c2");
-            project.deleteCategory("c3");
+            project.deleteTags("c2");
+            project.deleteTags("c3");
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
 
             page = project.findObjectsByTag(Run.class, "category:c1", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
@@ -611,18 +612,18 @@ public class NoSQLProjectTest {
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
 
-            project.addCategories(List.of(
-                    TagCategoryImport.builder().name("date").valueTypeAndPossibleValues(TagCategory.ValueType.DATE, null).build(),
-                    TagCategoryImport.builder().name("time").valueTypeAndPossibleValues(TagCategory.ValueType.TIME, null).build()
+            project.createTags(List.of(
+                    TagDefinitionImport.builder().tagName("date").valueTypeAndPossibleValues(TagDefinition.ValueType.DATE, null).build(),
+                    TagDefinitionImport.builder().tagName("time").valueTypeAndPossibleValues(TagDefinition.ValueType.TIME, null).build()
             ), true);
 
             final Run run2 = project.findRunById(Long.toString(runs.get(1).getRunId()));
             project.addTagsToObject(Run.class, run2.getRunId(), List.of(
-                    Tag.builder().valueType(TagCategoryImport.ValueType.DATE).category("date").date("2024-12-31").build(),
-                    Tag.builder().valueType(TagCategoryImport.ValueType.TIME).category("time").time("12:00:00").build()
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.DATE).tagName("date").date("2024-12-31").build(),
+                    Tag.builder().valueType(TagDefinitionImport.ValueType.TIME).tagName("time").time("12:00:00").build()
             ));
 
             page = project.findObjectsByTag(Run.class, "date:[2024-12-01 TO 2025-12-31] OR time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
@@ -630,9 +631,9 @@ public class NoSQLProjectTest {
             Assert.assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
             Assert.assertEquals(2, tags.size());
-            Assert.assertEquals(TagCategoryImport.ValueType.DATE, tags.get("date").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.DATE, tags.get("date").getValueType());
             Assert.assertEquals("2024-12-31", tags.get("date").getDate());
-            Assert.assertEquals(TagCategoryImport.ValueType.TIME, tags.get("time").getValueType());
+            Assert.assertEquals(TagDefinitionImport.ValueType.TIME, tags.get("time").getValueType());
             Assert.assertEquals("12:00:00", tags.get("time").getTime());
 
             Assert.assertThrows(ResponseStatusException.class, () -> project.findObjectsByTag(Run.class, "", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
@@ -663,21 +664,21 @@ public class NoSQLProjectTest {
             List<Run> blank = runs.subList(runs.size() / 3, 2 * runs.size() / 3);
             List<Run> sample = runs.subList(2 * runs.size() / 3, runs.size());
 
-            project.addCategories(List.of(
-                    TagCategoryImport.builder().categoryType("sampleCat").name("sample type").valueTypeAndPossibleValues(TagCategory.ValueType.STRING, List.of("control", "blank", "sample")).build()
+            project.createTags(List.of(
+                    TagDefinitionImport.builder().tagScope("sampleCat").tagName("sample type").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, List.of("control", "blank", "sample")).build()
             ), true);
 
             StopWatch watch = new StopWatch();
             watch.start();
 
             for (Run run : control) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category("sample type").text("control").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.STRING).tagName("sample type").text("control").build()));
             }
             for (Run run : blank) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category("sample type").text("blank").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.STRING).tagName("sample type").text("blank").build()));
             }
             for (Run run : sample) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category("sample type").text("sample").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().valueType(TagDefinitionImport.ValueType.STRING).tagName("sample type").text("sample").build()));
             }
 
             watch.stop();
@@ -699,12 +700,12 @@ public class NoSQLProjectTest {
         Filter filter = LuceneUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
         Assert.assertEquals(
                 "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
-                        "int64:[" + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
-                        "int64:[" + TagController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TagController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
-                        "int64:[" + Long.MIN_VALUE + ", " + (TagController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
-                        "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TagController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
-                        "int64:[" + TagController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TagController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
-                        "int64:[" + Long.MIN_VALUE + ", " + (TagController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
+                        "int64:[" + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
+                        "int64:[" + TaggableController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
+                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
+                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
+                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TaggableController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
+                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
                 filter.toString()
         );
     }
