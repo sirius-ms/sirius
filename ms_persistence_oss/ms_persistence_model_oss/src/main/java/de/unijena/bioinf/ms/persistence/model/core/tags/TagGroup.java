@@ -34,7 +34,7 @@ public class TagGroup {
     @Id
     private long id;
 
-    private String name;
+    private String groupName;
 
     private String luceneQuery;
 

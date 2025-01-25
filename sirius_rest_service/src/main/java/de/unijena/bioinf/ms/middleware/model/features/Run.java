@@ -64,7 +64,7 @@ public class Run {
     protected List<String> massAnalyzers;
 
     /**
-     * Key: tag category, value: tag
+     * Key: tagName, value: tag
      */
     @Schema(nullable = true)
     protected Map<String, ? extends Tag> tags;

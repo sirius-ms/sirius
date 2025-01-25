@@ -270,7 +270,7 @@
             }
           },
           {
-            "name": "tagScope",
+            "name": "tagType",
             "in": "query",
             "description": "scope of the tag (optional)",
             "required": false,
@@ -7663,9 +7663,9 @@
               "type": "object"
             }
           },
-          "tagScope": {
+          "tagType": {
             "type": "string",
-            "description": "A simple string based identifier to specify the scope of this tag."
+            "description": "A simple string based identifier to specify the type/scope/purpose of this tag."
           }
         }
       },
@@ -7700,9 +7700,9 @@
               "type": "object"
             }
           },
-          "tagScope": {
+          "tagType": {
             "type": "string",
-            "description": "A simple string based identifier to specify the scope of this tag."
+            "description": "A simple string based identifier to specify the type/scope/purpose of this tag."
           },
           "editable": {
             "type": "boolean"
@@ -7744,7 +7744,7 @@
       "TagGroup": {
         "type": "object",
         "properties": {
-          "name": {
+          "groupName": {
             "type": "string",
             "description": "Name of this Grouping query."
           },
@@ -9996,7 +9996,7 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/Tag"
             },
-            "description": "Key: tag category, value: tag",
+            "description": "Key: tagName, value: tag",
             "nullable": true
           }
         }

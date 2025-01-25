@@ -37,7 +37,7 @@ public class TagGroup {
     /**
      * Name of this Grouping query.
      */
-    private String name;
+    private String groupName;
 
     /**
      * Query used to group the entities in lucene format.

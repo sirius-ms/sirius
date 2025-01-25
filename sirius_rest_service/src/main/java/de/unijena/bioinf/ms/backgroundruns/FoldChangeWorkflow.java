@@ -112,11 +112,11 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                 @Override
                 protected Boolean compute() throws Exception {
                     TagGroup leftGroup = psm.getProject().getStorage()
-                            .findStr(Filter.where("name").eq(left), TagGroup.class)
+                            .findStr(Filter.where("groupName").eq(left), TagGroup.class)
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("No such tag category group: " + left));
                     TagGroup rightGroup = psm.getProject().getStorage()
-                            .findStr(Filter.where("name").eq(right), TagGroup.class)
+                            .findStr(Filter.where("groupName").eq(right), TagGroup.class)
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("No such tag category group: " + right));
 

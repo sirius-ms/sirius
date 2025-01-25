@@ -128,7 +128,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     List<TagDefinition> findTags();
 
-    List<TagDefinition> findTagsByScope(String tagScope);
+    List<TagDefinition> findTagsByType(String tagType);
 
     TagDefinition findTagByName(String tagName);
 

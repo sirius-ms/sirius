@@ -223,7 +223,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testCategories() throws IOException {
+    public void testTagDefinitions() throws IOException {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
@@ -231,7 +231,7 @@ public class NoSQLProjectTest {
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
             Map<String, TagDefinitionImport> catIn = Map.of(
-                    "c0", TagDefinitionImport.builder().tagName("c0").valueTypeAndPossibleValues(TagDefinition.ValueType.NONE, null).tagScope("foo").build(),
+                    "c0", TagDefinitionImport.builder().tagName("c0").valueTypeAndPossibleValues(TagDefinition.ValueType.NONE, null).tagType("foo").build(),
                     "c1", TagDefinitionImport.builder().tagName("c1").valueTypeAndPossibleValues(TagDefinition.ValueType.BOOLEAN, List.of(true, false)).build(),
                     "c2", TagDefinitionImport.builder().tagName("c2").valueTypeAndPossibleValues(TagDefinition.ValueType.INTEGER, List.of(0, 1)).build(),
                     "c3", TagDefinitionImport.builder().tagName("c3").valueTypeAndPossibleValues(TagDefinition.ValueType.DOUBLE, null).build(),
@@ -246,7 +246,7 @@ public class NoSQLProjectTest {
             Map<String, TagDefinition> cats1 = project.findTags().stream().collect(Collectors.toMap(TagDefinition::getTagName, Function.identity()));
             Map<String, TagDefinition> cats2 = catIn.keySet().stream().map(project::findTagByName).collect(Collectors.toMap(TagDefinition::getTagName, Function.identity()));
 
-            List<TagDefinition> cats3 = project.findTagsByScope("foo");
+            List<TagDefinition> cats3 = project.findTagsByType("foo");
             Assert.assertEquals(1, cats3.size());
             Assert.assertEquals("c0", cats3.getFirst().getTagName());
 
@@ -338,11 +338,11 @@ public class NoSQLProjectTest {
             project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("blank").build()));
             project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().tagName("sample").valueType(TagDefinitionImport.ValueType.STRING).text("control").build()));
 
-            project.addTagGroup("group1", "category:sample AND text:sample", "type1");
-            project.addTagGroup("group2", "category:sample AND text:blank", "type1");
-            project.addTagGroup("group3", "category:sample AND text:control", "type2");
+            project.addTagGroup("group1", "tagName:sample AND text:sample", "type1");
+            project.addTagGroup("group2", "tagName:sample AND text:blank", "type1");
+            project.addTagGroup("group3", "tagName:sample AND text:control", "type2");
 
-            Map<String, TagGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagGroup::getName, Function.identity()));
+            Map<String, TagGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagGroup::getGroupName, Function.identity()));
 
             Assert.assertEquals(3, groups.size());
             Assert.assertTrue(groups.containsKey("group1"));
@@ -365,10 +365,10 @@ public class NoSQLProjectTest {
             Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroup("foo"));
             TagGroup group = project.findTagGroup("group1");
             Assert.assertNotNull(group);
-            Assert.assertEquals("group1", group.getName());
+            Assert.assertEquals("group1", group.getGroupName());
 
             Assert.assertThrows(ResponseStatusException.class, () -> project.findTagGroupsByType("foo"));
-            List<String> groupNames = project.findTagGroupsByType("type1").stream().map(TagGroup::getName).toList();
+            List<String> groupNames = project.findTagGroupsByType("type1").stream().map(TagGroup::getGroupName).toList();
             Assert.assertEquals(2, groupNames.size());
             Assert.assertTrue(groupNames.contains("group1"));
             Assert.assertTrue(groupNames.contains("group2"));
@@ -377,7 +377,7 @@ public class NoSQLProjectTest {
 
             project.deleteTagGroup("group2");
             project.deleteTagGroup("group3");
-            groupNames = project.findTagGroups().stream().map(TagGroup::getName).toList();
+            groupNames = project.findTagGroups().stream().map(TagGroup::getGroupName).toList();
             Assert.assertEquals(1, groupNames.size());
             Assert.assertEquals("group1", groupNames.getFirst());
         }
@@ -420,8 +420,8 @@ public class NoSQLProjectTest {
             Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
             ps.getStorage().insertAll(List.of(f1, f2));
 
-            project.addTagGroup("sample", "category:sample AND text:sample", "type1");
-            project.addTagGroup("blank", "category:sample AND text:blank", "type1");
+            project.addTagGroup("sample", "tagName:sample AND text:sample", "type1");
+            project.addTagGroup("blank", "tagName:sample AND text:blank", "type1");
 
             new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
@@ -591,7 +591,7 @@ public class NoSQLProjectTest {
             Assert.assertEquals(false, tags.get("c1").getBool());
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getInteger());
 
-            Page<Run> page = project.findObjectsByTag(Run.class, "category:c2 AND integer:{12 TO 43}", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Page<Run> page = project.findObjectsByTag(Run.class, "tagName:c2 AND integer:{12 TO 43}", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
             Assert.assertEquals(2, tags.size());
@@ -607,7 +607,7 @@ public class NoSQLProjectTest {
             Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getBool());
 
-            page = project.findObjectsByTag(Run.class, "category:c1", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTag(Run.class, "tagName:c1", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
@@ -665,7 +665,7 @@ public class NoSQLProjectTest {
             List<Run> sample = runs.subList(2 * runs.size() / 3, runs.size());
 
             project.createTags(List.of(
-                    TagDefinitionImport.builder().tagScope("sampleCat").tagName("sample type").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, List.of("control", "blank", "sample")).build()
+                    TagDefinitionImport.builder().tagType("sampleCat").tagName("sample type").valueTypeAndPossibleValues(TagDefinition.ValueType.STRING, List.of("control", "blank", "sample")).build()
             ), true);
 
             StopWatch watch = new StopWatch();
@@ -687,7 +687,7 @@ public class NoSQLProjectTest {
             watch = new StopWatch();
             watch.start();
 
-            project.findObjectsByTag(Run.class, "category:\"sample type\" AND text:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            project.findObjectsByTag(Run.class, "tagName:\"sample type\" AND text:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
 
             watch.stop();
             System.out.println("FIND OBJ BY TAGS: " + watch);

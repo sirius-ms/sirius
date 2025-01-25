@@ -31,7 +31,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class TagCategory {
+public class TagDefinition {
 
     @Getter
     @AllArgsConstructor
@@ -41,9 +41,9 @@ public class TagCategory {
     }
 
     @Id
-    private long categoryId;
+    private long tagId;
 
-    private String name;
+    private String tagName;
 
     private String description;
 
@@ -51,7 +51,7 @@ public class TagCategory {
 
     private List<?> possibleValues;
 
-    private String categoryType;
+    private String tagType;
 
     @Builder.Default
     private boolean editable = true;

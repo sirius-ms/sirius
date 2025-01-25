@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
@@ -62,11 +62,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("taggedObjectId", "category"), Index.nonUnique("taggedObjectClass", "category", "value"))
+                .addRepository(Tag.class, Index.unique("taggedObjectId", "tagName"), Index.nonUnique("taggedObjectClass", "tagName", "value"))
 
-                .addRepository(TagCategory.class, Index.unique("name"), Index.nonUnique("categoryType"))
+                .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
 
-                .addRepository(TagGroup.class, Index.unique("name"), Index.nonUnique("groupType"))
+                .addRepository(TagGroup.class, Index.unique("groupName"), Index.nonUnique("groupType"))
 
                 .addRepository(FoldChange.CompoundFoldChange.class, Index.nonUnique("foreignId"))
 
