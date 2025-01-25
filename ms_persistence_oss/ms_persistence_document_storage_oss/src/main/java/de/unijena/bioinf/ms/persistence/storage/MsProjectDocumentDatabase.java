@@ -62,7 +62,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("taggedObjectId", "tagName"), Index.nonUnique("taggedObjectClass", "tagName", "value"))
+                .addRepository(Tag.class, Index.unique("taggedObjectId", "tagName"))
 
                 .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
 
