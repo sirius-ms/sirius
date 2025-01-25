@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
@@ -61,7 +61,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
-public class AlignedFeatureController implements TagController<AlignedFeature, AlignedFeature.OptField> {
+public class AlignedFeatureController implements TaggableController<AlignedFeature, AlignedFeature.OptField> {
 
     @Getter
     private final ProjectsProvider<?> projectsProvider;
@@ -530,8 +530,12 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey
+     * <p>
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result
      * These annotations are only available if a fragmentation tree is available.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -540,10 +544,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * @param spectrumIndex    index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
-    @Operation(
-            operationId = "getStructureAnnotatedSpectrumExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable."
-    )
+    @Operation(operationId = "getStructureAnnotatedSpectrumExperimental")
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedSpectrum getStructureAnnotatedSpectrum(@PathVariable String projectId,
                                                            @PathVariable String alignedFeatureId,
@@ -562,9 +563,13 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.
+     * <p>
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses
      * for the given formula result identifier and structure candidate inChIKey.
      * These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -572,10 +577,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
-    @Operation(
-            operationId = "getStructureAnnotatedMsDataExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental because it produces return values that are not yet stable."
-    )
+    @Operation(operationId = "getStructureAnnotatedMsDataExperimental")
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
     public AnnotatedMsMsData getStructureAnnotatedMsData(@PathVariable String projectId,
                                                          @PathVariable String alignedFeatureId,
@@ -594,19 +596,17 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
 
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS' internal format.
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS' internal format.
+     * <p>
+     * [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree in internal format.
-     * <p>
      *
      */
-    @Operation(
-            operationId = "getSiriusFragTreeInternal",
-            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
-    )
+    @Operation(operationId = "getSiriusFragTreeInternal")
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(formulaId, alignedFeatureId);
@@ -617,6 +617,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
 
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier
+     * <p>
      * This tree is used to rank formula candidates (treeScore).
      *
      * @param projectId        project-space to read from.
@@ -636,6 +637,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
 
     /**
      * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier
+     * <p>
      * These annotations are only available if a fragmentation tree is available.
      *
      * @param projectId        project-space to read from.
@@ -660,6 +662,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.
+     * <p>
      * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses
      * for the given formula result identifier
      * These annotations are only available if a fragmentation tree and the structure candidate are available.
@@ -685,6 +689,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
+     * Returns Isotope pattern information for given formulaId
+     * <p>
      * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)
      * for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      *
@@ -704,7 +710,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
+     * Returns Lipid annotation (ElGordo) for the given formulaId.
+     * <p>
      * ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      *
      * @param projectId        project-space to read from.
@@ -723,7 +730,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)
+     * <p>
      * This fingerprint is used to perform structure database search and predict compound classes.
      *
      * @param projectId        project-space to read from.
@@ -760,7 +768,8 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
-     * Best matching compound classes,
+     * Return Best matching compound classes for given formulaId.
+     * <p>
      * Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      *
      * @param projectId        project-space to read from.
@@ -779,16 +788,17 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)
+     * <p>
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId      project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
-    @Operation(
-            operationId = "getAlignedFeaturesQualityExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
+    @Operation(operationId = "getAlignedFeatureQualityExperimental")
     @GetMapping(value = "/{alignedFeatureId}/quality-report", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeatureQuality getAlignedFeaturesQuality(
             @PathVariable String projectId, @PathVariable String alignedFeatureId
@@ -801,19 +811,19 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      */
 
     /**
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantity of the feature within all
-     * samples it is contained in.
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).
+     * <p>
+     * The quantification table contains a quantity of the feature within all samples it is contained in.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
      * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return Quant table row for this feature
      */
-    @Operation(
-            operationId = "getQuantificationExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
-    @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(operationId = "getQuantTableRowExperimental")
+    @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
     public QuantTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
@@ -821,20 +831,30 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).
+     * <p>
      * Returns the full quantification table. The quantification table contains a quantities of the features within all
      * runs they are contained in.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
      * @param projectId project-space to read from.
      * @param type quantification type.
-     * @return
+     * @return Quant table if akk feature in this project
      */
-    @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(operationId = "getFeatureQuantTableExperimental")
     public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
         if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
         else return quantificationForAlignedFeature.get();
     }
 
+
     /**
+     *
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).
+     * <p>
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention
      * time axis. All the returned traces are 'projected', which means they refer not to the original retention time axis,
      * but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.
@@ -842,15 +862,15 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * retention time axis.
      * By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,
      * it also includes samples in which the same trace appears in.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return Traces of the given feature.
      */
-    @Operation(
-            operationId = "getTracesExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
+    @Operation(operationId = "getTracesExperimental")
     @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll ) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId, includeAll);
@@ -859,14 +879,14 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
     }
 
     /**
-     * Returns the adduct network for a given aligned feature id together with all merged traces contained in the network.
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
      * @param projectId project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      */
-    @Operation(
-            operationId = "getAdductNetworkWithMergedTracesExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
+    @Operation(operationId = "getAdductNetworkWithMergedTracesExperimental")
     @GetMapping(value = "/{alignedFeatureId}/adducts", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getAdductNetworkWithMergedTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetsForFeatureWithCorrelatedIons(alignedFeatureId);
@@ -874,22 +894,10 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
         else return traceSet.get();
     }
 
-    protected static String idString(String pid, String fid) {
-        return "'" + pid + "/" + fid + "'";
-    }
-
-    protected static String idString(String pid, String fid, String foId) {
-        return "'" + pid + "/" + fid + "/" + foId + "'";
-    }
-
-    @Override
-    public Class<AlignedFeature> getTagTarget() {
-        return AlignedFeature.class;
-    }
-
+    //region tags
     /**
      *
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag.
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -897,7 +905,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * by a field name. Possible field names are:</p>
      *
      * <ul>
-     *   <li><strong>category</strong> - category name</li>
+     *   <li><strong>tagName</strong> - name of the tag</li>
      *   <li><strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value</li>
      * </ul>
      *
@@ -905,7 +913,7 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      *
      * <p>A clause may be:</p>
      * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code category:my_category}</li>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tagName:my_tag}</li>
      *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
      *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
@@ -918,9 +926,9 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
-     * <p>{@code (category:hello || category:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
+     * <p>{@code (tagName:hello || tagName:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
      *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId    project space to get features (aligned over runs) from.
      * @param filter       tag filter.
@@ -928,47 +936,50 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
      */
+    @Operation(operationId = "getAlignedFeaturesByTagExperimental")
     @Override
-    public Page<AlignedFeature> objectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TagController.super.objectsByTag(projectId, filter, pageable, optFields);
+    public Page<AlignedFeature> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
     }
 
     /**
      *
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId  project-space to add to.
      * @param alignedFeatureId      run to add tags to.
      * @param tags       tags to add.
      * @return the tags that have been added
      */
+    @Operation(operationId = "addTagsToAlignedFeatureExperimental")
     @PutMapping(value = "/tags/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
     public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
-        return TagController.super.addTags(projectId, alignedFeatureId, tags);
+        return TaggableController.super.addTags(projectId, alignedFeatureId, tags);
     }
 
     /**
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId        project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param categoryName     category name of the tag to delete.
+     * @param tagName     name of the tag to delete.
      */
+    @Operation(operationId = "removeTagFromAlignedFeatureExperimental")
+    @DeleteMapping(value = "/tags/{alignedFeatureId}/{tagName}")
     @Override
-    @DeleteMapping(value = "/tags/{alignedFeatureId}/{categoryName}")
-    public void deleteTags(String projectId, String alignedFeatureId, String categoryName) {
-        TagController.super.deleteTags(projectId, alignedFeatureId, categoryName);
+    public void removeTags(String projectId, String alignedFeatureId, String tagName) {
+        TaggableController.super.removeTags(projectId, alignedFeatureId, tagName);
     }
 
     /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
      * @param group     tag group name.
@@ -976,9 +987,28 @@ public class AlignedFeatureController implements TagController<AlignedFeature, A
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
      */
+
+    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
     @Override
-    public Page<AlignedFeature> objectsByGroup(String projectId, String group, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TagController.super.objectsByGroup(projectId, group, pageable, optFields);
+    public Page<AlignedFeature> getObjectsByGroup(String projectId, String group, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+        return TaggableController.super.getObjectsByGroup(projectId, group, pageable, optFields);
     }
+
+    @Override
+    public Class<AlignedFeature> getTagTarget() {
+        return AlignedFeature.class;
+    }
+    //endregion
+
+    //region helpers
+    protected static String idString(String pid, String fid) {
+        return "'" + pid + "/" + fid + "'";
+    }
+
+    protected static String idString(String pid, String fid, String foId) {
+        return "'" + pid + "/" + fid + "/" + foId + "'";
+    }
+    // endregion
+
 }
 

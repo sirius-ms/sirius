@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
@@ -58,7 +58,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
         + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
         + "corresponding annotation results (which are usually computed on a per-feature basis)")
-public class CompoundController implements TagController<Compound, Compound.OptField> {
+public class CompoundController implements TaggableController<Compound, Compound.OptField> {
 
     @Getter
     private final ProjectsProvider<?> projectsProvider;
@@ -130,35 +130,6 @@ public class CompoundController implements TagController<Compound, Compound.OptF
     }
 
     /**
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all
-     * samples it is contained in.
-     * @param projectId project-space to read from.
-     * @param compoundId compound which should be read out
-     * @param type quantification type.
-     * @return
-     */
-    @GetMapping(value = "/{compoundId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantificationRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantRowType.COMPOUNDS);
-        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type );
-        else return quantificationForAlignedFeature.get();
-    }
-
-    /**
-     * Returns the full quantification table. The quantification table contains a quantification of the features within all
-     * runs they are contained in.
-     * @param projectId project-space to read from.
-     * @param type quantification type.
-     * @return
-     */
-    @GetMapping(value = "/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
-    public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
-        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.COMPOUNDS);
-        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
-        else return quantificationForAlignedFeature.get();
-    }
-
-    /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      *
      * @param projectId  project-space to read from.
@@ -174,29 +145,6 @@ public class CompoundController implements TagController<Compound, Compound.OptF
     }
 
     /**
-     * Returns the traces of the given compound. A trace consists of m/z and intensity values over the retention
-     * time axis. All the returned traces are 'projected', which means they refer not to the original retention time axis,
-     * but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.
-     * However, this also means that all traces can be directly compared against each other, as they all lie in the same
-     * retention time axis.
-
-     * @param projectId project-space to read from.
-     * @param compoundId compound which intensities should be read out
-     * @return Traces of the given compound.
-     */
-    @Operation(
-            operationId = "getCompoundTracesExperimental",
-            summary = "EXPERIMENTAL: This endpoint is experimental and may be changed (or even removed) without notice until it is declared stable."
-    )
-    @GetMapping(value = "/{compoundId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TraceSet getCompoundTraces(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(required = false, defaultValue = "") String featureId) {
-        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForCompound(compoundId, featureId.isBlank() ? Optional.empty() : Optional.of(featureId));
-        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for project id = " + projectId + " and compound id = " + compoundId );
-        else return traceSet.get();
-    }
-
-
-    /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the
      * specified project-space.
      *
@@ -208,18 +156,72 @@ public class CompoundController implements TagController<Compound, Compound.OptF
         projectsProvider.getProjectOrThrow(projectId).deleteCompoundById(compoundId);
     }
 
-    protected static String idString(String pid, String cid) {
-        return "'" + pid + "/" + cid + "'";
+    /**
+     * [EXPERIMENTAL] Returns a single quantification table row for the given compound.
+     * <p>
+     * The quantification table contains a quantification of the feature within all
+     * samples it is contained in.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+     * 
+     * @param projectId project-space to read from.
+     * @param compoundId compound which should be read out
+     * @param type quantification type.
+     * @return
+     */
+    @Operation(operationId = "getCompoundQuantTableRowExperimental")
+    @GetMapping(value = "/{compoundId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantTable getQuantTableRow(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(compoundId, type, QuantRowType.COMPOUNDS);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, compoundId) + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
     }
 
-    @Override
-    public Class<Compound> getTagTarget() {
-        return Compound.class;
+    /**
+     * [EXPERIMENTAL] Returns the full quantification table of compounds.
+     * <p>
+     * The quantification table contains a quantification of the features within all
+     * runs they are contained in.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+     *
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return
+     */
+    @Operation(operationId = "getCompoundQuantTableExperimental")
+    @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantTable getQuantTable(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
+        Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.COMPOUNDS);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
+    }
+
+    /**
+     * [EXPERIMENTAL] Returns the traces of the given compound.
+     * <p>
+     * A trace consists of m/z and intensity values over the retention
+     * time axis. All the returned traces are 'projected', which means they refer not to the original retention time axis,
+     * but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.
+     * However, this also means that all traces can be directly compared against each other, as they all lie in the same
+     * retention time axis.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.*
+     * @param projectId project-space to read from.
+     * @param compoundId compound which intensities should be read out
+     * @return Traces of the given compound.
+     */
+    @Operation(operationId = "getCompoundTracesExperimental")
+    @GetMapping(value = "/{compoundId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TraceSet getCompoundTraces(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(required = false, defaultValue = "") String featureId) {
+        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForCompound(compoundId, featureId.isBlank() ? Optional.empty() : Optional.of(featureId));
+        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for project id = " + projectId + " and compound id = " + compoundId );
+        else return traceSet.get();
     }
 
     /**
      *
-     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag.
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag.
      *
      * <h2>Supported filter syntax</h2>
      *
@@ -227,7 +229,7 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      * by a field name. Possible field names are:</p>
      *
      * <ul>
-     *   <li><strong>category</strong> - category name</li>
+     *   <li><strong>tagName</strong> - name of the tag</li>
      *   <li><strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value</li>
      * </ul>
      *
@@ -235,7 +237,7 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      *
      * <p>A clause may be:</p>
      * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code category:my_category}</li>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tagName:my_name}</li>
      *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
      *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
      *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
@@ -248,9 +250,9 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      *
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
-     * <p>{@code (category:hello || category:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
+     * <p>{@code (tagName:hello || tagName:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
      *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId    project space to get compounds (group of ion identities) from.
      * @param filter       tag filter.
@@ -258,47 +260,50 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged compounds (group of ion identities)
      */
+    @Operation(operationId = "getCompoundsByTagExperimental")
     @Override
-    public Page<Compound> objectsByTag(String projectId, String filter, Pageable pageable, EnumSet<Compound.OptField> optFields) {
-        return TagController.super.objectsByTag(projectId, filter, pageable, optFields);
+    public Page<Compound> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<Compound.OptField> optFields) {
+        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
     }
 
     /**
      *
-     * Tags with the same category name will be overwritten.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId  project-space to add to.
      * @param compoundId compound (group of ion identities) to add tags to.
      * @param tags       tags to add.
      * @return the tags that have been added
      */
+    @Operation(operationId = "addTagsToCompoundExperimental")
     @PutMapping(value = "/tags/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
     public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String compoundId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
-        return TagController.super.addTags(projectId, compoundId, tags);
+        return TaggableController.super.addTags(projectId, compoundId, tags);
     }
 
     /**
-     * **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId     project-space to delete from.
      * @param compoundId    compound (group of ion identities) to delete tag from.
-     * @param categoryName  category name of the tag to delete.
+     * @param tagName  name of the tag to delete.
      */
-    @DeleteMapping(value = "/tags/{compoundId}/{categoryName}")
+    @Operation(operationId = "removeTagFromCompoundExperimental")
+    @DeleteMapping(value = "/tags/{compoundId}/{tagName}")
     @Override
-    public void deleteTags(String projectId, String compoundId, String categoryName) {
-        TagController.super.deleteTags(projectId, compoundId, categoryName);
+    public void removeTags(String projectId, String compoundId, String tagName) {
+        TaggableController.super.removeTags(projectId, compoundId, tagName);
     }
 
     /**
-     * **EXPERIMENTAL** Get compounds (group of ion identities) by tag group.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
      * @param group     tag group name.
@@ -306,9 +311,21 @@ public class CompoundController implements TagController<Compound, Compound.OptF
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged compounds (group of ion identities)
      */
+    @Operation(operationId = "getCompoundsByGroupExperimental")
     @Override
-    public Page<Compound> objectsByGroup(String projectId, String group, Pageable pageable, EnumSet<Compound.OptField> optFields) {
-        return TagController.super.objectsByGroup(projectId, group, pageable, optFields);
+    public Page<Compound> getObjectsByGroup(String projectId, String group, Pageable pageable, EnumSet<Compound.OptField> optFields) {
+        return TaggableController.super.getObjectsByGroup(projectId, group, pageable, optFields);
     }
+
+    @Override
+    public Class<Compound> getTagTarget() {
+        return Compound.class;
+    }
+
+    //region helpers
+    protected static String idString(String pid, String cid) {
+        return "'" + pid + "/" + cid + "'";
+    }
+    //endregion
 
 }

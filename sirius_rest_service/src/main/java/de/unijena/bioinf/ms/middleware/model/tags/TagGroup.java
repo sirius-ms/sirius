@@ -34,9 +34,16 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TagGroup {
 
+    /**
+     * Name of this Grouping query.
+     */
     private String name;
 
+    /**
+     * Query used to group the entities in lucene format.
+     */
     private String luceneQuery;
+
 
     private String groupType;
 

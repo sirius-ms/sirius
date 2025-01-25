@@ -31,7 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -44,9 +44,10 @@ import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
@@ -1103,7 +1104,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                     .filter(tag -> categories.containsKey(tag.getCategory()))
                     .map(tag -> convertToApiTag(tag, categories.get(tag.getCategory())))
-                    .collect(Collectors.toMap(Tag::getCategory, Function.identity())));
+                    .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         }
 
         return builder.build();
@@ -1111,13 +1112,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag tag, de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category) {
         return switch (category.getValueType()) {
-            case NONE -> Tag.builder().valueType(TagCategoryImport.ValueType.NONE).category(category.getName()).build();
-            case BOOLEAN -> Tag.builder().valueType(TagCategoryImport.ValueType.BOOLEAN).category(category.getName()).bool(tag.isBool()).build();
-            case INTEGER -> Tag.builder().valueType(TagCategoryImport.ValueType.INTEGER).category(category.getName()).integer(tag.getInt32()).build();
-            case DOUBLE -> Tag.builder().valueType(TagCategoryImport.ValueType.DOUBLE).category(category.getName()).real(tag.getReal()).build();
-            case STRING -> Tag.builder().valueType(TagCategoryImport.ValueType.STRING).category(category.getName()).text(tag.getText()).build();
-            case DATE -> Tag.builder().valueType(TagCategoryImport.ValueType.DATE).category(category.getName()).date(TagController.DATE_FORMAT.format(new Date(tag.getInt64()))).build();
-            case TIME -> Tag.builder().valueType(TagCategoryImport.ValueType.TIME).category(category.getName()).time(TagController.TIME_FORMAT.format(new Date(tag.getInt64()))).build();
+            case NONE -> Tag.builder().valueType(TagDefinitionImport.ValueType.NONE).tagName(category.getName()).build();
+            case BOOLEAN -> Tag.builder().valueType(TagDefinitionImport.ValueType.BOOLEAN).tagName(category.getName()).bool(tag.isBool()).build();
+            case INTEGER -> Tag.builder().valueType(TagDefinitionImport.ValueType.INTEGER).tagName(category.getName()).integer(tag.getInt32()).build();
+            case DOUBLE -> Tag.builder().valueType(TagDefinitionImport.ValueType.DOUBLE).tagName(category.getName()).real(tag.getReal()).build();
+            case STRING -> Tag.builder().valueType(TagDefinitionImport.ValueType.STRING).tagName(category.getName()).text(tag.getText()).build();
+            case DATE -> Tag.builder().valueType(TagDefinitionImport.ValueType.DATE).tagName(category.getName()).date(TaggableController.DATE_FORMAT.format(new Date(tag.getInt64()))).build();
+            case TIME -> Tag.builder().valueType(TagDefinitionImport.ValueType.TIME).tagName(category.getName()).time(TaggableController.TIME_FORMAT.format(new Date(tag.getInt64()))).build();
         };
     }
 
@@ -1129,14 +1130,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             case STRING: projectTag.setText(apiTag.getText()); break;
             case DATE:
                 try {
-                    projectTag.setInt64(TagController.DATE_FORMAT.parse(apiTag.getDate()).getTime());
+                    projectTag.setInt64(TaggableController.DATE_FORMAT.parse(apiTag.getDate()).getTime());
                 } catch (Exception e) {
                     projectTag.setInt64(0);
                 }
                 break;
             case TIME:
                 try {
-                    projectTag.setInt64(TagController.TIME_FORMAT.parse(apiTag.getTime()).getTime());
+                    projectTag.setInt64(TaggableController.TIME_FORMAT.parse(apiTag.getTime()).getTime());
                 } catch (Exception e) {
                     projectTag.setInt64(0);
                 }
@@ -1148,28 +1149,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private de.unijena.bioinf.ms.persistence.model.core.tags.Tag convertToProjectTag(Tag tag, long taggedObjectId, String taggedObjectClass) throws ParseException {
         de.unijena.bioinf.ms.persistence.model.core.tags.Tag projectTag = de.unijena.bioinf.ms.persistence.model.core.tags.Tag.builder()
                 .taggedObjectId(taggedObjectId)
-                .category(tag.getCategory())
+                .category(tag.getTagName())
                 .taggedObjectClass(taggedObjectClass).build();
 
         return setProjectTagValue(projectTag, tag);
     }
 
-    private TagCategory convertToApiCategory(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category) {
-        return TagCategory.builder()
-                .name(category.getName())
-                .categoryType(category.getCategoryType())
+    private TagDefinition convertToApiCategory(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category) {
+        return TagDefinition.builder()
+                .tagName(category.getName())
+                .tagScope(category.getCategoryType())
                 .valueTypeAndPossibleValues(switch (category.getValueType()) {
-                    case NONE -> TagCategory.ValueType.NONE;
-                    case BOOLEAN -> TagCategory.ValueType.BOOLEAN;
-                    case INTEGER -> TagCategory.ValueType.INTEGER;
-                    case DOUBLE -> TagCategory.ValueType.DOUBLE;
-                    case STRING -> TagCategory.ValueType.STRING;
-                    case DATE -> TagCategory.ValueType.DATE;
-                    case TIME -> TagCategory.ValueType.TIME;
+                    case NONE -> TagDefinition.ValueType.NONE;
+                    case BOOLEAN -> TagDefinition.ValueType.BOOLEAN;
+                    case INTEGER -> TagDefinition.ValueType.INTEGER;
+                    case DOUBLE -> TagDefinition.ValueType.DOUBLE;
+                    case STRING -> TagDefinition.ValueType.STRING;
+                    case DATE -> TagDefinition.ValueType.DATE;
+                    case TIME -> TagDefinition.ValueType.TIME;
                 }, category.getPossibleValues()).build();
     }
 
-    private de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory convertToProjectCategory(TagCategoryImport category, boolean editable) {
+    private de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory convertToProjectCategory(TagDefinitionImport category, boolean editable) {
         de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType valueType = switch (category.getValueType()) {
             case NONE -> de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.NONE;
             case BOOLEAN -> de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.BOOLEAN;
@@ -1181,17 +1182,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         };
 
         de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.TagCategoryBuilder builder = de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.builder()
-                .name(category.getName())
-                .categoryType(category.getCategoryType())
+                .name(category.getTagName())
+                .categoryType(category.getTagScope())
                 .valueType(valueType)
                 .editable(editable);
 
-        if (category.getValueType() != TagCategory.ValueType.NONE) {
+        if (category.getValueType() != TagDefinition.ValueType.NONE) {
             List<?> values = category.getPossibleValues();
             if (values != null) {
                 for (Object value : values) {
                     if (value.getClass() != valueType.getValueClass()) {
-                        throw new ResponseStatusException(BAD_REQUEST, "Wrong values provided for category " + category.getName() + ".");
+                        throw new ResponseStatusException(BAD_REQUEST, "Wrong values provided for category " + category.getTagName() + ".");
                     }
                 }
                 builder.possibleValues(values);
@@ -1647,14 +1648,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             case STRING -> tag.getText();
             case DATE -> {
                 try {
-                    yield TagController.DATE_FORMAT.parse(tag.getDate()).getTime();
+                    yield TaggableController.DATE_FORMAT.parse(tag.getDate()).getTime();
                 } catch (Exception e) {
                     yield 0L;
                 }
             }
             case TIME -> {
                 try {
-                    yield TagController.TIME_FORMAT.parse(tag.getTime()).getTime();
+                    yield TaggableController.TIME_FORMAT.parse(tag.getTime()).getTime();
                 } catch (Exception e) {
                     yield 0L;
                 }
@@ -1675,26 +1676,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     .collect(Collectors.toMap(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory::getName, Function.identity()));
 
             for (Tag tag : tags) {
-                if (!categories.containsKey(tag.getCategory())) {
-                    throw new ResponseStatusException(NOT_FOUND, "There is no category '" + tag.getCategory() + "' in project " + projectId + ".");
+                if (!categories.containsKey(tag.getTagName())) {
+                    throw new ResponseStatusException(NOT_FOUND, "There is no category '" + tag.getTagName() + "' in project " + projectId + ".");
                 }
-                de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategory());
+                de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getTagName());
                 if (switch (category.getValueType()) {
-                    case STRING -> tag.getValueType() != TagCategoryImport.ValueType.STRING;
-                    case BOOLEAN -> tag.getValueType() != TagCategoryImport.ValueType.BOOLEAN;
-                    case INTEGER -> tag.getValueType() != TagCategoryImport.ValueType.INTEGER;
-                    case DOUBLE -> tag.getValueType() != TagCategoryImport.ValueType.DOUBLE;
-                    case DATE -> tag.getValueType() != TagCategoryImport.ValueType.DATE;
-                    case TIME -> tag.getValueType() != TagCategoryImport.ValueType.TIME;
-                    case NONE -> tag.getValueType() != TagCategoryImport.ValueType.NONE;
+                    case STRING -> tag.getValueType() != TagDefinitionImport.ValueType.STRING;
+                    case BOOLEAN -> tag.getValueType() != TagDefinitionImport.ValueType.BOOLEAN;
+                    case INTEGER -> tag.getValueType() != TagDefinitionImport.ValueType.INTEGER;
+                    case DOUBLE -> tag.getValueType() != TagDefinitionImport.ValueType.DOUBLE;
+                    case DATE -> tag.getValueType() != TagDefinitionImport.ValueType.DATE;
+                    case TIME -> tag.getValueType() != TagDefinitionImport.ValueType.TIME;
+                    case NONE -> tag.getValueType() != TagDefinitionImport.ValueType.NONE;
                 }) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Wrong tag type '" + tag.getClass() + " for category " + tag.getCategory() + ".");
+                    throw new ResponseStatusException(BAD_REQUEST, "Wrong tag type '" + tag.getClass() + " for category " + tag.getTagName() + ".");
                 }
                 if (category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.NONE &&
                         category.getPossibleValues() != null &&
                         !category.getPossibleValues().isEmpty() &&
                         !category.getPossibleValues().contains(getValueFromTag(tag))) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + getValueFromTag(tag) + " for category " + tag.getCategory() + ".");
+                    throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + getValueFromTag(tag) + " for category " + tag.getTagName() + ".");
                 }
             }
 
@@ -1704,9 +1705,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
             for (Tag tag : tags) {
-                if (existingTags.containsKey(tag.getCategory())) {
-                    de.unijena.bioinf.ms.persistence.model.core.tags.Tag old = existingTags.get(tag.getCategory());
-                    de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategory());
+                if (existingTags.containsKey(tag.getTagName())) {
+                    de.unijena.bioinf.ms.persistence.model.core.tags.Tag old = existingTags.get(tag.getTagName());
+                    de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getTagName());
                     switch (category.getValueType()) {
                         case NONE:
                             break;
@@ -1760,8 +1761,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void deleteTagsFromObject(String objectId, List<String> categoryNames) {
-        for (de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category : storage ().find(Filter.where("name").in(categoryNames.toArray(String[]::new)), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)) {
+    public void removeTagsFromObject(String objectId, List<String> tagNames) {
+        for (de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category : storage ().find(Filter.where("name").in(tagNames.toArray(String[]::new)), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)) {
             storage().removeAll(Filter.and(
                     Filter.where("taggedObjectId").eq(Long.parseLong(objectId)),
                     Filter.where("category").eq(category.getName())
@@ -1771,35 +1772,35 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public List<TagCategory> findCategories() {
+    public List<TagDefinition> findTags() {
         return storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
                 .map(this::convertToApiCategory).toList();
     }
 
     @SneakyThrows
     @Override
-    public List<TagCategory> findCategoriesByType(String categoryType) {
-        return storage().findStr(Filter.where("categoryType").eq(categoryType), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
+    public List<TagDefinition> findTagsByScope(String tagScope) {
+        return storage().findStr(Filter.where("categoryType").eq(tagScope), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
                 .map(this::convertToApiCategory).toList();
     }
 
     @SneakyThrows
     @Override
-    public TagCategory findCategoryByName(String categoryName) {
-        return storage().findStr(Filter.where("name").eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
+    public TagDefinition findTagByName(String tagName) {
+        return storage().findStr(Filter.where("name").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
                 .findFirst()
                 .map(this::convertToApiCategory)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no tag category '" + categoryName + "' in project " + projectId + "."));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no tag category '" + tagName + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
     @Override
-    public List<TagCategory> addCategories(List<TagCategoryImport> categories, boolean editable) {
+    public List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable) {
         Set<String> existingNames = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory::getName)
                 .collect(Collectors.toSet());
-        List<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> filtered = categories.stream()
-                .filter(category -> !existingNames.contains(category.getName()))
+        List<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> filtered = tagDefinitions.stream()
+                .filter(category -> !existingNames.contains(category.getTagName()))
                 .map(category -> convertToProjectCategory(category, editable)).toList();
         storage().insertAll(filtered);
         return filtered.stream().map(this::convertToApiCategory).toList();
@@ -1807,37 +1808,37 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void deleteCategory(String categoryName) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> category = storage().findStr(Filter.where("name").eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class).findFirst();
+    public void deleteTags(String tagName) {
+        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> category = storage().findStr(Filter.where("name").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class).findFirst();
         if (category.isEmpty()) {
-            throw new ResponseStatusException(NOT_FOUND, "No such category: " + categoryName);
+            throw new ResponseStatusException(NOT_FOUND, "No such category: " + tagName);
         }
         if (!category.get().isEditable()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Category can not be edited: " + categoryName);
+            throw new ResponseStatusException(BAD_REQUEST, "Category can not be edited: " + tagName);
         }
-        storage().removeAll(Filter.where("category").eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
+        storage().removeAll(Filter.where("category").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
         storage().remove(category.get());
     }
 
     @SuppressWarnings("unchecked")
     @SneakyThrows
     @Override
-    public TagCategory addPossibleValuesToCategory(String categoryName, List<?> values) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> category = storage().findStr(Filter.where("name").eq(categoryName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class).findFirst();
+    public TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values) {
+        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory> category = storage().findStr(Filter.where("name").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.class).findFirst();
         if (category.isEmpty()) {
-            throw new ResponseStatusException(NOT_FOUND, "No such category: " + categoryName);
+            throw new ResponseStatusException(NOT_FOUND, "No such category: " + tagName);
         }
         if (!category.get().isEditable()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Category can not be edited: " + categoryName);
+            throw new ResponseStatusException(BAD_REQUEST, "Category can not be edited: " + tagName);
         }
         if (category.get().getValueType() == de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.NONE) {
-            throw new ResponseStatusException(BAD_REQUEST, "Can not add values to NONE type category " + categoryName);
+            throw new ResponseStatusException(BAD_REQUEST, "Can not add values to NONE type category " + tagName);
         }
         List<Object> possibleValues = category.get().getPossibleValues() != null ? (List<Object>) category.get().getPossibleValues() : new ArrayList<>();
         List<?> filtered = values.stream().filter(value -> !possibleValues.contains(value)).toList();
         for (Object value : filtered) {
             if (value.getClass() != category.get().getValueType().getValueClass()) {
-                throw new ResponseStatusException(BAD_REQUEST, "Wrong values provided for category " + categoryName + ".");
+                throw new ResponseStatusException(BAD_REQUEST, "Wrong values provided for category " + tagName + ".");
             }
             possibleValues.add(value);
         }
@@ -1920,7 +1921,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
         StatisticsTable table = StatisticsTable.builder()
-                .statisticsType(StatisticsTable.StatisticsType.FOLD_CHANGE)
+                .statisticsType(StatisticsType.FOLD_CHANGE)
                 .quantificationMeasure(quantification)
                 .aggregationType(aggregation)
                 .build();

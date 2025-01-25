@@ -55,8 +55,8 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -286,37 +286,37 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void deleteTagsFromObject(String objectId, List<String> categoryNames) {
+    public void removeTagsFromObject(String objectId, List<String> tagNames) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> findCategories() {
+    public List<TagDefinition> findTags() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> findCategoriesByType(String categoryType) {
+    public List<TagDefinition> findTagsByScope(String tagScope) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategory findCategoryByName(String categoryName) {
+    public TagDefinition findTagByName(String tagName) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> addCategories(List<TagCategoryImport> categories, boolean editable) {
+    public List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void deleteCategory(String categoryName) {
+    public void deleteTags(String tagName) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategory addPossibleValuesToCategory(String categoryName, List<?> values) {
+    public TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values) {
         throw new UnsupportedOperationException();
     }
 

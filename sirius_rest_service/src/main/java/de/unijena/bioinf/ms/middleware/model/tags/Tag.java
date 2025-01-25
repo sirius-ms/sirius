@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,16 +37,17 @@ import org.jetbrains.annotations.Nullable;
 public class Tag {
 
     /**
-     * Name of the tag category
+     * Name of the tag as defined by the corresponding TagDefinition
+     * Links tag object to their definition.
      */
     @NotNull
-    private String category;
+    private String tagName;
 
     /**
-     *
+     * Type of the value of the tag as defined in the corresponding tag definition.
      */
     @NotNull
-    private TagCategoryImport.ValueType valueType;
+    private TagDefinitionImport.ValueType valueType;
 
     @Nullable
     private Boolean bool;
@@ -72,7 +73,7 @@ public class Tag {
             @Override
             public TagBuilder date(@Nullable String date) {
                 try {
-                    TagController.DATE_FORMAT.parse(date);
+                    TaggableController.DATE_FORMAT.parse(date);
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Illegal date value: " + date);
                 }
@@ -81,7 +82,7 @@ public class Tag {
 
             public TagBuilder time(@Nullable String time) {
                 try {
-                    TagController.TIME_FORMAT.parse(time);
+                    TaggableController.TIME_FORMAT.parse(time);
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Illegal time value: " + time);
                 }
