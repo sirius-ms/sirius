@@ -296,7 +296,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<TagDefinition> findTagsByScope(String tagScope) {
+    public List<TagDefinition> findTagsByType(String tagType) {
         throw new UnsupportedOperationException();
     }
 
