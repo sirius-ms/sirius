@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagDefinition.JSON_PROPERTY_DESCRIPTION,
   TagDefinition.JSON_PROPERTY_VALUE_TYPE,
   TagDefinition.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagDefinition.JSON_PROPERTY_TAG_SCOPE,
+  TagDefinition.JSON_PROPERTY_TAG_TYPE,
   TagDefinition.JSON_PROPERTY_EDITABLE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
@@ -62,8 +62,8 @@ public class TagDefinition {
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
   private List<Object> possibleValues = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_TAG_SCOPE = "tagScope";
-  private String tagScope;
+  public static final String JSON_PROPERTY_TAG_TYPE = "tagType";
+  private String tagType;
 
   public static final String JSON_PROPERTY_EDITABLE = "editable";
   private Boolean editable;
@@ -179,29 +179,29 @@ public class TagDefinition {
     this.possibleValues = possibleValues;
   }
 
-  public TagDefinition tagScope(String tagScope) {
+  public TagDefinition tagType(String tagType) {
     
-    this.tagScope = tagScope;
+    this.tagType = tagType;
     return this;
   }
 
    /**
-   * A simple string based identifier to specify the scope of this tag.
-   * @return tagScope
+   * A simple string based identifier to specify the type/scope/purpose of this tag.
+   * @return tagType
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getTagScope() {
-    return tagScope;
+  public String getTagType() {
+    return tagType;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTagScope(String tagScope) {
-    this.tagScope = tagScope;
+  public void setTagType(String tagType) {
+    this.tagType = tagType;
   }
 
   public TagDefinition editable(Boolean editable) {
@@ -242,13 +242,13 @@ public class TagDefinition {
         Objects.equals(this.description, tagDefinition.description) &&
         Objects.equals(this.valueType, tagDefinition.valueType) &&
         Objects.equals(this.possibleValues, tagDefinition.possibleValues) &&
-        Objects.equals(this.tagScope, tagDefinition.tagScope) &&
+        Objects.equals(this.tagType, tagDefinition.tagType) &&
         Objects.equals(this.editable, tagDefinition.editable);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, description, valueType, possibleValues, tagScope, editable);
+    return Objects.hash(tagName, description, valueType, possibleValues, tagType, editable);
   }
 
   @Override
@@ -259,7 +259,7 @@ public class TagDefinition {
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
-    sb.append("    tagScope: ").append(toIndentedString(tagScope)).append("\n");
+    sb.append("    tagType: ").append(toIndentedString(tagType)).append("\n");
     sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("}");
     return sb.toString();

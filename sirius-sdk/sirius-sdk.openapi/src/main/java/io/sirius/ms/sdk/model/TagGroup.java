@@ -37,14 +37,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * TagGroup
  */
 @JsonPropertyOrder({
-  TagGroup.JSON_PROPERTY_NAME,
+  TagGroup.JSON_PROPERTY_GROUP_NAME,
   TagGroup.JSON_PROPERTY_LUCENE_QUERY,
   TagGroup.JSON_PROPERTY_GROUP_TYPE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TagGroup {
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
+  public static final String JSON_PROPERTY_GROUP_NAME = "groupName";
+  private String groupName;
 
   public static final String JSON_PROPERTY_LUCENE_QUERY = "luceneQuery";
   private String luceneQuery;
@@ -55,29 +55,29 @@ public class TagGroup {
   public TagGroup() {
   }
 
-  public TagGroup name(String name) {
+  public TagGroup groupName(String groupName) {
     
-    this.name = name;
+    this.groupName = groupName;
     return this;
   }
 
    /**
    * Name of this Grouping query.
-   * @return name
+   * @return groupName
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_GROUP_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getName() {
-    return name;
+  public String getGroupName() {
+    return groupName;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_GROUP_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
+  public void setGroupName(String groupName) {
+    this.groupName = groupName;
   }
 
   public TagGroup luceneQuery(String luceneQuery) {
@@ -139,21 +139,21 @@ public class TagGroup {
       return false;
     }
     TagGroup tagGroup = (TagGroup) o;
-    return Objects.equals(this.name, tagGroup.name) &&
+    return Objects.equals(this.groupName, tagGroup.groupName) &&
         Objects.equals(this.luceneQuery, tagGroup.luceneQuery) &&
         Objects.equals(this.groupType, tagGroup.groupType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, luceneQuery, groupType);
+    return Objects.hash(groupName, luceneQuery, groupType);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class TagGroup {\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    luceneQuery: ").append(toIndentedString(luceneQuery)).append("\n");
     sb.append("    groupType: ").append(toIndentedString(groupType)).append("\n");
     sb.append("}");
