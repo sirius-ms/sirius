@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TagDefinitionImport.JSON_PROPERTY_DESCRIPTION,
   TagDefinitionImport.JSON_PROPERTY_VALUE_TYPE,
   TagDefinitionImport.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagDefinitionImport.JSON_PROPERTY_TAG_SCOPE
+  TagDefinitionImport.JSON_PROPERTY_TAG_TYPE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TagDefinitionImport {
@@ -61,8 +61,8 @@ public class TagDefinitionImport {
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
   private List<Object> possibleValues = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_TAG_SCOPE = "tagScope";
-  private String tagScope;
+  public static final String JSON_PROPERTY_TAG_TYPE = "tagType";
+  private String tagType;
 
   public TagDefinitionImport() {
   }
@@ -175,29 +175,29 @@ public class TagDefinitionImport {
     this.possibleValues = possibleValues;
   }
 
-  public TagDefinitionImport tagScope(String tagScope) {
+  public TagDefinitionImport tagType(String tagType) {
     
-    this.tagScope = tagScope;
+    this.tagType = tagType;
     return this;
   }
 
    /**
-   * A simple string based identifier to specify the scope of this tag.
-   * @return tagScope
+   * A simple string based identifier to specify the type/scope/purpose of this tag.
+   * @return tagType
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getTagScope() {
-    return tagScope;
+  public String getTagType() {
+    return tagType;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTagScope(String tagScope) {
-    this.tagScope = tagScope;
+  public void setTagType(String tagType) {
+    this.tagType = tagType;
   }
 
   @Override
@@ -213,12 +213,12 @@ public class TagDefinitionImport {
         Objects.equals(this.description, tagDefinitionImport.description) &&
         Objects.equals(this.valueType, tagDefinitionImport.valueType) &&
         Objects.equals(this.possibleValues, tagDefinitionImport.possibleValues) &&
-        Objects.equals(this.tagScope, tagDefinitionImport.tagScope);
+        Objects.equals(this.tagType, tagDefinitionImport.tagType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, description, valueType, possibleValues, tagScope);
+    return Objects.hash(tagName, description, valueType, possibleValues, tagType);
   }
 
   @Override
@@ -229,7 +229,7 @@ public class TagDefinitionImport {
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
-    sb.append("    tagScope: ").append(toIndentedString(tagScope)).append("\n");
+    sb.append("    tagType: ").append(toIndentedString(tagType)).append("\n");
     sb.append("}");
     return sb.toString();
   }
