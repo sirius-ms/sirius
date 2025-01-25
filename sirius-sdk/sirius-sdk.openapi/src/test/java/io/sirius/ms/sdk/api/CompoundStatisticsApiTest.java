@@ -23,7 +23,12 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.CompoundFoldChange;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.StatisticsTable;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -43,81 +48,68 @@ public class CompoundStatisticsApiTest {
 
     
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
      *
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void computeFoldChangeTest()  {
+    public void computeCompoundFoldChangesExperimentalTest()  {
         String projectId = null;
-        String left = null;
-        String right = null;
+        String leftGroupName = null;
+        String rightGroupName = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
         List<JobOptField> optFields = null;
-        Job response = api.computeFoldChange(projectId, left, right, aggregation, quantification, optFields);
+        Job response = api.computeCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Delete fold change
+     * [EXPERIMENTAL] Delete fold changes
      *
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void deleteFoldChangeTest()  {
+    public void deleteCompoundFoldChangesExperimentalTest()  {
         String projectId = null;
-        String left = null;
-        String right = null;
+        String leftGroupName = null;
+        String rightGroupName = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
-        api.deleteFoldChange(projectId, left, right, aggregation, quantification);
+        api.deleteCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
      *
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void getFoldChangeTest()  {
-        String projectId = null;
-        String compoundId = null;
-        List<CompoundFoldChange> response = api.getFoldChange(projectId, compoundId);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     *
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void getFoldChangeTableTest()  {
+    public void getCompoundFoldChangeTableExperimentalTest()  {
         String projectId = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
-        StatisticsTable response = api.getFoldChangeTable(projectId, aggregation, quantification);
+        StatisticsTable response = api.getCompoundFoldChangeTableExperimental(projectId, aggregation, quantification);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
+     * [EXPERIMENTAL] Get fold changes
      *
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void listFoldChangeTest()  {
+    public void getCompoundFoldChangesExperimentalTest()  {
         String projectId = null;
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
-        PagedModelCompoundFoldChange response = api.listFoldChange(projectId, page, size, sort);
+        String leftGroupName = null;
+        String rightGroupName = null;
+        AggregationType aggregation = null;
+        QuantMeasure quantification = null;
+        List<CompoundFoldChange> response = api.getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }

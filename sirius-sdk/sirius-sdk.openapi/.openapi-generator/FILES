@@ -77,9 +77,7 @@ docs/MsData.md
 docs/MsNovelist.md
 docs/PageMetadata.md
 docs/PagedModelAlignedFeature.md
-docs/PagedModelAlignedFeatureFoldChange.md
 docs/PagedModelCompound.md
-docs/PagedModelCompoundFoldChange.md
 docs/PagedModelFormulaCandidate.md
 docs/PagedModelJob.md
 docs/PagedModelRun.md
@@ -125,10 +123,10 @@ docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
 docs/Tag.md
-docs/TagCategoriesApi.md
-docs/TagCategory.md
-docs/TagCategoryImport.md
+docs/TagDefinition.md
+docs/TagDefinitionImport.md
 docs/TagGroup.md
+docs/TagsApi.md
 docs/Term.md
 docs/Timeout.md
 docs/TraceAnnotationExperimental.md
@@ -151,7 +149,7 @@ src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
 src/main/java/io/sirius/ms/sdk/api/ProjectsApi.java
 src/main/java/io/sirius/ms/sdk/api/RunsApi.java
 src/main/java/io/sirius/ms/sdk/api/SearchableDatabasesApi.java
-src/main/java/io/sirius/ms/sdk/api/TagCategoriesApi.java
+src/main/java/io/sirius/ms/sdk/api/TagsApi.java
 src/main/java/io/sirius/ms/sdk/client/ApiClient.java
 src/main/java/io/sirius/ms/sdk/client/RFC3339DateFormat.java
 src/main/java/io/sirius/ms/sdk/client/ServerConfiguration.java
@@ -230,9 +228,7 @@ src/main/java/io/sirius/ms/sdk/model/MsData.java
 src/main/java/io/sirius/ms/sdk/model/MsNovelist.java
 src/main/java/io/sirius/ms/sdk/model/PageMetadata.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelAlignedFeature.java
-src/main/java/io/sirius/ms/sdk/model/PagedModelAlignedFeatureFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelCompound.java
-src/main/java/io/sirius/ms/sdk/model/PagedModelCompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelFormulaCandidate.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelJob.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelRun.java
@@ -274,8 +270,8 @@ src/main/java/io/sirius/ms/sdk/model/StructureDbSearch.java
 src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
 src/main/java/io/sirius/ms/sdk/model/Tag.java
-src/main/java/io/sirius/ms/sdk/model/TagCategory.java
-src/main/java/io/sirius/ms/sdk/model/TagCategoryImport.java
+src/main/java/io/sirius/ms/sdk/model/TagDefinition.java
+src/main/java/io/sirius/ms/sdk/model/TagDefinitionImport.java
 src/main/java/io/sirius/ms/sdk/model/TagGroup.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
@@ -287,3 +283,4 @@ src/main/java/io/sirius/ms/sdk/model/ValueType.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
+src/test/java/io/sirius/ms/sdk/api/RunsApiTest.java

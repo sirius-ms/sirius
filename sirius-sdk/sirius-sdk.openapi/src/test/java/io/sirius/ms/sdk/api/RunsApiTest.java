@@ -27,7 +27,6 @@ import io.sirius.ms.sdk.model.PagedModelRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
 import io.sirius.ms.sdk.model.Tag;
-import io.sirius.ms.sdk.model.TagGroup;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -47,170 +46,99 @@ public class RunsApiTest {
 
     
     /**
-     * **EXPERIMENTAL** Group tags in the project
+     * [EXPERIMENTAL] Add tags to a run in the project
      *
-     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void addGroupTest()  {
-        String projectId = null;
-        String groupName = null;
-        String filter = null;
-        String type = null;
-        TagGroup response = api.addGroup(projectId, groupName, filter, type);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Add tags to a run in the project
-     *
-     * **EXPERIMENTAL** Add tags to a run in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void addTagsTest()  {
+    public void addTagsToRunExperimentalTest()  {
         String projectId = null;
         String runId = null;
         List<Tag> tag = null;
-        List<Tag> response = api.addTags(projectId, runId, tag);
+        List<Tag> response = api.addTagsToRunExperimental(projectId, runId, tag);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space
      *
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get run with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void deleteGroupTest()  {
-        String projectId = null;
-        String groupName = null;
-        api.deleteGroup(projectId, groupName);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
-     *
-     * **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void deleteTagsTest()  {
-        String projectId = null;
-        String runId = null;
-        String categoryName = null;
-        api.deleteTags(projectId, runId, categoryName);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get tag group by name in the given project-space
-     *
-     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void getGroupByNameTest()  {
-        String projectId = null;
-        String groupName = null;
-        TagGroup response = api.getGroupByName(projectId, groupName);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space
-     *
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void getGroupsTest()  {
-        String projectId = null;
-        List<TagGroup> response = api.getGroups(projectId);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space
-     *
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     */
-    @Test
-    public void getGroupsByTypeTest()  {
-        String projectId = null;
-        String groupType = null;
-        List<TagGroup> response = api.getGroupsByType(projectId, groupType);
-
-        // TODO: test validations
-    }
-    
-    /**
-     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
-     *
-     * **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
-     */
-    @Test
-    public void getRunTest()  {
+    public void getRunExperimentalTest()  {
         String projectId = null;
         String runId = null;
         List<RunOptField> optFields = null;
-        Run response = api.getRun(projectId, runId, optFields);
+        Run response = api.getRunExperimental(projectId, runId, optFields);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * [EXPERIMENTAL] Get all available runs in the given project-space
      *
-     * **EXPERIMENTAL** Get all available runs in the given project-space.
+     * [EXPERIMENTAL] Get all available runs in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void getRunsPagedTest()  {
+    public void getRunPageExperimentalTest()  {
         String projectId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
         List<RunOptField> optFields = null;
-        PagedModelRun response = api.getRunsPaged(projectId, page, size, sort, optFields);
+        PagedModelRun response = api.getRunPageExperimental(projectId, page, size, sort, optFields);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Get runs by tag group
+     * [EXPERIMENTAL] Get runs by tag group
      *
-     * **EXPERIMENTAL** Get runs by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get runs by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void objectsByGroupTest()  {
+    public void getRunsByGroupExperimentalTest()  {
         String projectId = null;
         String group = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
         List<RunOptField> optFields = null;
-        PagedModelRun response = api.objectsByGroup(projectId, group, page, size, sort, optFields);
+        PagedModelRun response = api.getRunsByGroupExperimental(projectId, group, page, size, sort, optFields);
 
         // TODO: test validations
     }
     
     /**
-     * **EXPERIMENTAL** Get runs by tag
+     * [EXPERIMENTAL] Get runs by tag
      *
-     * **EXPERIMENTAL** Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get runs by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;tagName&lt;/strong&gt; - Name of the tag&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tagName:my_name&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(tagName:hello || tagName:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      */
     @Test
-    public void objectsByTagTest()  {
+    public void getRunsByTagExperimentalTest()  {
         String projectId = null;
         String filter = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
         List<RunOptField> optFields = null;
-        PagedModelRun response = api.objectsByTag(projectId, filter, page, size, sort, optFields);
+        PagedModelRun response = api.getRunsByTagExperimental(projectId, filter, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
+     *
+     * [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     */
+    @Test
+    public void removeTagFromRunExperimentalTest()  {
+        String projectId = null;
+        String runId = null;
+        String tagName = null;
+        api.removeTagFromRunExperimental(projectId, runId, tagName);
 
         // TODO: test validations
     }

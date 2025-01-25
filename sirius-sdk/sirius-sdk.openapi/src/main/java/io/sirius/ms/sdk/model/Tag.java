@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Tag
  */
 @JsonPropertyOrder({
-  Tag.JSON_PROPERTY_CATEGORY,
+  Tag.JSON_PROPERTY_TAG_NAME,
   Tag.JSON_PROPERTY_VALUE_TYPE,
   Tag.JSON_PROPERTY_BOOL,
   Tag.JSON_PROPERTY_INTEGER,
@@ -49,8 +49,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Tag {
-  public static final String JSON_PROPERTY_CATEGORY = "category";
-  private String category;
+  public static final String JSON_PROPERTY_TAG_NAME = "tagName";
+  private String tagName;
 
   public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
   private ValueType valueType;
@@ -76,29 +76,29 @@ public class Tag {
   public Tag() {
   }
 
-  public Tag category(String category) {
+  public Tag tagName(String tagName) {
     
-    this.category = category;
+    this.tagName = tagName;
     return this;
   }
 
    /**
-   * Name of the tag category
-   * @return category
+   * Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition.
+   * @return tagName
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getCategory() {
-    return category;
+  public String getTagName() {
+    return tagName;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCategory(String category) {
-    this.category = category;
+  public void setTagName(String tagName) {
+    this.tagName = tagName;
   }
 
   public Tag valueType(ValueType valueType) {
@@ -285,7 +285,7 @@ public class Tag {
       return false;
     }
     Tag tag = (Tag) o;
-    return Objects.equals(this.category, tag.category) &&
+    return Objects.equals(this.tagName, tag.tagName) &&
         Objects.equals(this.valueType, tag.valueType) &&
         Objects.equals(this.bool, tag.bool) &&
         Objects.equals(this.integer, tag.integer) &&
@@ -297,14 +297,14 @@ public class Tag {
 
   @Override
   public int hashCode() {
-    return Objects.hash(category, valueType, bool, integer, real, text, date, time);
+    return Objects.hash(tagName, valueType, bool, integer, real, text, date, time);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Tag {\n");
-    sb.append("    category: ").append(toIndentedString(category)).append("\n");
+    sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    bool: ").append(toIndentedString(bool)).append("\n");
     sb.append("    integer: ").append(toIndentedString(integer)).append("\n");

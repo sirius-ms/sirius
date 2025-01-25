@@ -1,17 +1,17 @@
 
 
-# TagCategory
+# TagDefinition
 
 
 ## Properties
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**name** | **String** |  |  [optional] |
+|**tagName** | **String** | Name of this tag defined by this definition (key) |  [optional] |
 |**description** | **String** |  |  [optional] |
 |**valueType** | **ValueType** |  |  [optional] |
 |**possibleValues** | **List&lt;Object&gt;** |  |  [optional] |
-|**categoryType** | **String** |  |  [optional] |
+|**tagScope** | **String** | A simple string based identifier to specify the scope of this tag. |  [optional] |
 |**editable** | **Boolean** |  |  [optional] |
 
 

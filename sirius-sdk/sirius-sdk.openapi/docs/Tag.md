@@ -7,7 +7,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**category** | **String** | Name of the tag category |  [optional] |
+|**tagName** | **String** | Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition. |  [optional] |
 |**valueType** | **ValueType** |  |  [optional] |
 |**bool** | **Boolean** |  |  [optional] |
 |**integer** | **Integer** |  |  [optional] |

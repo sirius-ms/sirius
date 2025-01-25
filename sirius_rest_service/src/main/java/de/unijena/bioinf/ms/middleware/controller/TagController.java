@@ -34,7 +34,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}")
-@Tag(name = "Tags and Groups", description = "[EXPERIMENTAL] This API allows managing tags and tag based data groupings. " +
+@Tag(name = "Tags", description = "[EXPERIMENTAL] This API allows managing tags and tag based data groupings. " +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
 public class TagController {

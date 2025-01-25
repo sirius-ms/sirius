@@ -82,7 +82,7 @@ public class SiriusClient implements AutoCloseable {
 
     protected final SearchableDatabasesApi databases;
 
-    protected final TagCategoriesApi tagCategories;
+    protected final TagsApi tags;
 
     protected final InfoApi infos;
 
@@ -117,7 +117,7 @@ public class SiriusClient implements AutoCloseable {
         projects = new ProjectsApi(apiClient);
         runs = new RunsApi(apiClient);
         databases = new SearchableDatabasesApi(apiClient);
-        tagCategories = new TagCategoriesApi(apiClient);
+        tags = new TagsApi(apiClient);
         infos = new InfoApi(apiClient);
     }
 
@@ -294,8 +294,8 @@ public class SiriusClient implements AutoCloseable {
         return databases;
     }
 
-    public TagCategoriesApi categories() {
-        return tagCategories;
+    public TagsApi tags() {
+        return tags;
     }
 
     public InfoApi infos() {

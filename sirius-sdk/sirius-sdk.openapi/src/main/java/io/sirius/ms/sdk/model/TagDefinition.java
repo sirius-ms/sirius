@@ -38,20 +38,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TagCategory
+ * TagDefinition
  */
 @JsonPropertyOrder({
-  TagCategory.JSON_PROPERTY_NAME,
-  TagCategory.JSON_PROPERTY_DESCRIPTION,
-  TagCategory.JSON_PROPERTY_VALUE_TYPE,
-  TagCategory.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagCategory.JSON_PROPERTY_CATEGORY_TYPE,
-  TagCategory.JSON_PROPERTY_EDITABLE
+  TagDefinition.JSON_PROPERTY_TAG_NAME,
+  TagDefinition.JSON_PROPERTY_DESCRIPTION,
+  TagDefinition.JSON_PROPERTY_VALUE_TYPE,
+  TagDefinition.JSON_PROPERTY_POSSIBLE_VALUES,
+  TagDefinition.JSON_PROPERTY_TAG_SCOPE,
+  TagDefinition.JSON_PROPERTY_EDITABLE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TagCategory {
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
+public class TagDefinition {
+  public static final String JSON_PROPERTY_TAG_NAME = "tagName";
+  private String tagName;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
@@ -62,41 +62,41 @@ public class TagCategory {
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
   private List<Object> possibleValues = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_CATEGORY_TYPE = "categoryType";
-  private String categoryType;
+  public static final String JSON_PROPERTY_TAG_SCOPE = "tagScope";
+  private String tagScope;
 
   public static final String JSON_PROPERTY_EDITABLE = "editable";
   private Boolean editable;
 
-  public TagCategory() {
+  public TagDefinition() {
   }
 
-  public TagCategory name(String name) {
+  public TagDefinition tagName(String tagName) {
     
-    this.name = name;
+    this.tagName = tagName;
     return this;
   }
 
    /**
-   * Get name
-   * @return name
+   * Name of this tag defined by this definition (key)
+   * @return tagName
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getName() {
-    return name;
+  public String getTagName() {
+    return tagName;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TAG_NAME)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
+  public void setTagName(String tagName) {
+    this.tagName = tagName;
   }
 
-  public TagCategory description(String description) {
+  public TagDefinition description(String description) {
     
     this.description = description;
     return this;
@@ -121,7 +121,7 @@ public class TagCategory {
     this.description = description;
   }
 
-  public TagCategory valueType(ValueType valueType) {
+  public TagDefinition valueType(ValueType valueType) {
     
     this.valueType = valueType;
     return this;
@@ -146,13 +146,13 @@ public class TagCategory {
     this.valueType = valueType;
   }
 
-  public TagCategory possibleValues(List<Object> possibleValues) {
+  public TagDefinition possibleValues(List<Object> possibleValues) {
     
     this.possibleValues = possibleValues;
     return this;
   }
 
-  public TagCategory addPossibleValuesItem(Object possibleValuesItem) {
+  public TagDefinition addPossibleValuesItem(Object possibleValuesItem) {
     if (this.possibleValues == null) {
       this.possibleValues = new ArrayList<>();
     }
@@ -179,32 +179,32 @@ public class TagCategory {
     this.possibleValues = possibleValues;
   }
 
-  public TagCategory categoryType(String categoryType) {
+  public TagDefinition tagScope(String tagScope) {
     
-    this.categoryType = categoryType;
+    this.tagScope = tagScope;
     return this;
   }
 
    /**
-   * Get categoryType
-   * @return categoryType
+   * A simple string based identifier to specify the scope of this tag.
+   * @return tagScope
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getCategoryType() {
-    return categoryType;
+  public String getTagScope() {
+    return tagScope;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonProperty(JSON_PROPERTY_TAG_SCOPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setCategoryType(String categoryType) {
-    this.categoryType = categoryType;
+  public void setTagScope(String tagScope) {
+    this.tagScope = tagScope;
   }
 
-  public TagCategory editable(Boolean editable) {
+  public TagDefinition editable(Boolean editable) {
     
     this.editable = editable;
     return this;
@@ -237,29 +237,29 @@ public class TagCategory {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TagCategory tagCategory = (TagCategory) o;
-    return Objects.equals(this.name, tagCategory.name) &&
-        Objects.equals(this.description, tagCategory.description) &&
-        Objects.equals(this.valueType, tagCategory.valueType) &&
-        Objects.equals(this.possibleValues, tagCategory.possibleValues) &&
-        Objects.equals(this.categoryType, tagCategory.categoryType) &&
-        Objects.equals(this.editable, tagCategory.editable);
+    TagDefinition tagDefinition = (TagDefinition) o;
+    return Objects.equals(this.tagName, tagDefinition.tagName) &&
+        Objects.equals(this.description, tagDefinition.description) &&
+        Objects.equals(this.valueType, tagDefinition.valueType) &&
+        Objects.equals(this.possibleValues, tagDefinition.possibleValues) &&
+        Objects.equals(this.tagScope, tagDefinition.tagScope) &&
+        Objects.equals(this.editable, tagDefinition.editable);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, valueType, possibleValues, categoryType, editable);
+    return Objects.hash(tagName, description, valueType, possibleValues, tagScope, editable);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TagCategory {\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("class TagDefinition {\n");
+    sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
-    sb.append("    categoryType: ").append(toIndentedString(categoryType)).append("\n");
+    sb.append("    tagScope: ").append(toIndentedString(tagScope)).append("\n");
     sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("}");
     return sb.toString();
