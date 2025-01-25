@@ -52,14 +52,14 @@ public class TagController {
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to read from.
-     * @param tagScope scope of the tag (optional)
+     * @param tagType scope of the tag (optional)
      * @return Tag definitions.
      */
     @GetMapping(value = "/tags", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagDefinition> getTags(@PathVariable String projectId, @RequestParam(required = false) String tagScope) {
-        if (tagScope == null || tagScope.isBlank())
+    public List<TagDefinition> getTags(@PathVariable String projectId, @RequestParam(required = false) String tagType) {
+        if (tagType == null || tagType.isBlank())
             return projectsProvider.getProjectOrThrow(projectId).findTags();
-        return projectsProvider.getProjectOrThrow(projectId).findTagsByScope(tagScope);
+        return projectsProvider.getProjectOrThrow(projectId).findTagsByType(tagType);
     }
 
     /**

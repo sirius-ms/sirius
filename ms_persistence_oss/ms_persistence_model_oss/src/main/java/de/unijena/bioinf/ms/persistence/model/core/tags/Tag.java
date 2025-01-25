@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Id;
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 @Builder
 @NoArgsConstructor
@@ -42,7 +43,8 @@ public class Tag {
 
     private long taggedObjectId;
 
-    private String category;
+    @NotNull
+    private String tagName;
 
     private boolean bool;
 

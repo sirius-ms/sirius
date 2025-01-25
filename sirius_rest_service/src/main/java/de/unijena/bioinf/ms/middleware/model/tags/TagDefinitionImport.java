@@ -57,10 +57,10 @@ public class TagDefinitionImport {
     protected List<?> possibleValues;
 
     /**
-     * A simple string based identifier to specify the scope of this tag.
+     * A simple string based identifier to specify the type/scope/purpose of this tag.
      */
     @Nullable
-    protected String tagScope;
+    protected String tagType;
 
     public abstract static class TagDefinitionImportBuilder<C extends TagDefinitionImport, B extends TagDefinitionImportBuilder<C, B>> {
 
