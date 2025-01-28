@@ -7779,6 +7779,22 @@
           "smiles": {
             "type": "string"
           },
+          "target": {
+            "type": "string",
+            "default": "SPECTRUM",
+            "enum": [
+              "SPECTRUM",
+              "MERGED"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "default": "COSINE",
+            "enum": [
+              "COSINE",
+              "ANALOG"
+            ]
+          },
           "inchiKey": {
             "type": "string"
           },

@@ -39,13 +39,6 @@ Refer to the [OSSRH Guide](http://central.sonatype.org/pages/ossrh-guide.html) f
 Add this dependency to your project's POM:
 
 ```xml
-<repositories>
-  <repository>
-    <id>gitlab-maven</id>
-    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
-  </repository>
-</repositories>
-
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
@@ -60,9 +53,8 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    maven {
-      url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
-    }
+    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
+    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
   }
 
   dependencies {
@@ -288,6 +280,7 @@ Class | Method | HTTP request | Description
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LipidAnnotation](docs/LipidAnnotation.md)
  - [LossEdge](docs/LossEdge.md)
+ - [MatchType](docs/MatchType.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
  - [PageMetadata](docs/PageMetadata.md)
@@ -330,6 +323,7 @@ Class | Method | HTTP request | Description
  - [StructureDbSearch](docs/StructureDbSearch.md)
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
+ - [TargetType](docs/TargetType.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
  - [TraceAnnotationExperimental](docs/TraceAnnotationExperimental.md)
