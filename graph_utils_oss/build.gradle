@@ -21,4 +21,4 @@
 group = 'de.unijena.bioinf'
 version =  1.2
 // PUBLISHING DISABLED
-tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
+tasks.withType(PublishToMavenRepository).configureEach { it.enabled = true }
