@@ -16,7 +16,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MergedReferenceSpectrum {
+public class MergedReferenceSpectrum implements ReferenceSpectrum {
 
     @Id
     private long uuid;
