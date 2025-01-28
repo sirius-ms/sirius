@@ -27,11 +27,14 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -247,6 +250,7 @@ public class AlignedFeatureController {
      * @param minSharedPeaks    min threshold of shared peaks.
      * @param minSimilarity     min spectral similarity threshold.
      * @param inchiKey 2D inchi key of the compound in the structure database.
+     *
      * @return Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/summary", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -297,10 +301,8 @@ public class AlignedFeatureController {
             matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
-
-
+                            Ms2ReferenceSpectrum spec = chemDbService.db().getMs2ReferenceSpectrum(db, match.getUuid(), true);
+                            match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
                         } catch (ChemicalDatabaseException e) {
                             LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
                         }
@@ -348,8 +350,8 @@ public class AlignedFeatureController {
            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+                            ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
+                            if (spec.getQuerySpectrum()!=null) match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
 
 
                         } catch (ChemicalDatabaseException e) {
