@@ -233,6 +233,7 @@ public class Colors {
     public final static Color ERROR = CUSTOM_PINK;
 
     public final static Color TEXT_WARN = CUSTOM_BLUE; //CUSTOM_ORANGE; (orange not good in light theme)
+    public final static Color TEXT_WARN_ORANGE = CUSTOM_ORANGE; //for specific text where contras is good enough and a true warning color is required.
     public final static Color TEXT_ERROR = Menu.BUTTON_HIGHLIGHT_PINK;
     public final static Color TEXT_GOOD = CUSTOM_GREEN;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
