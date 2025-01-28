@@ -339,7 +339,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             Ms2ReferenceSpectrum reference;
                             try {
                                 if (sources.containsKey(match.getDbName())) {
-                                    reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(sources.get(match.getDbName()), match.getUuid());
+                                    reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(sources.get(match.getDbName()), match.getUuid());
                                 } else {
                                     reference = null;
                                 }

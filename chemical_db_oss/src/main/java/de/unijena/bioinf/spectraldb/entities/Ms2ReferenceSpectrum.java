@@ -40,7 +40,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Ms2ReferenceSpectrum {
+public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
 
     @Id
     private long uuid;

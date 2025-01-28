@@ -30,9 +30,11 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.spectraldb.LibraryHit;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
@@ -264,8 +266,8 @@ public class WebWithCustomDatabase {
     }
 
 
-    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
-        return getReferenceSpectrum(db, uuid, false);
+    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
+        return getMs2ReferenceSpectrum(db, uuid, false);
     }
     public ReferenceFragmentationTree getReferenceTree(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
         try {
@@ -275,7 +277,13 @@ public class WebWithCustomDatabase {
         }
     }
 
-    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
+    public ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid, SpectrumType spectrumType) throws ChemicalDatabaseException {
+        SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
+        ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid, spectrumType);
+        return spec;
+    }
+
+    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
         Ms2ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid);
         if (withData)

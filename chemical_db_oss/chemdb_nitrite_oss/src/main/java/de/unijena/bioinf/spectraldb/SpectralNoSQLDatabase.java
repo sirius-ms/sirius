@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
@@ -150,6 +151,23 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             throw new ChemicalDatabaseException(e);
         }
     }
+    @Override
+    public ReferenceSpectrum getReferenceSpectrum(long uuid, SpectrumType type) throws ChemicalDatabaseException {
+        try {
+            if (type==SpectrumType.SPECTRUM) {
+                Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class, "querySpectrum").iterator();
+                if (specs.hasNext()) return fillLibrary(specs.next());
+                else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
+            } else if (type ==SpectrumType.MERGED_SPECTRUM) {
+                Iterator<MergedReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), MergedReferenceSpectrum.class).iterator();
+                if (specs.hasNext()) return fillLibrary(specs.next());
+                else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
+            } else throw new ChemicalDatabaseException("Unknown spectrum type: " + type);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
 
 
     @Override
@@ -311,7 +329,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         for (int i=0; i < left.size(); ++i) {
             SpectralSimilarity sim = spectralSimilarity(left.get(i), right.getQuerySpectrum(), settings);
             if (settings.exceeded(sim)) {
-                hits.add(new LibraryHit(i, sim, right));
+                hits.add(new LibraryHit(i, sim, right, settings.getMatchingType()==SpectralMatchingType.MODIFIED_COSINE));
             }
         }
         return hits;
@@ -321,7 +339,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         for (int i=0; i < left.size(); ++i) {
             SpectralSimilarity sim = spectralSimilarity(left.get(i), right.getQuerySpectrum(), settings);
             if (settings.exceeded(sim)) {
-                hits.add(new LibraryHit(i, sim, right));
+                hits.add(new LibraryHit(i, sim, right, settings.getMatchingType()==SpectralMatchingType.MODIFIED_COSINE));
             }
         }
         return hits;
