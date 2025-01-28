@@ -29,7 +29,7 @@ apply plugin: 'java-library'
 
 allprojects {
     group = 'io.sirius-ms'
-    version = "3.0+sirius$siriusFrontendVersion"
+    version = "${siriusAPIVersion}+sirius${siriusFrontendVersion}"
 
     ext {
         reactor_version = "3.4.3"
@@ -51,15 +51,26 @@ allprojects {
         }
         repositories {
             maven {
-                name = "GitLabBGPublic"
+                name = "GitLabPublic"
                 if (System.getenv("CI_JOB_TOKEN") != null) {
-                    url = 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+                    url = System.getenv('PUBLIC_REGISTRY_URL')
                     credentials(HttpHeaderCredentials) {
                         name = "Job-Token"
                         value = System.getenv("CI_JOB_TOKEN")
                     }
                     authentication {
                         header(HttpHeaderAuthentication)
+                    }
+                } else {
+                    url = project.findProperty("io.sirius-ms.build.artifactory.public.url") as String
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                        password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                    }
+                    authentication {
+                        basic(BasicAuthentication)
                     }
                 }
             }

@@ -72,8 +72,6 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 @Slf4j
 public class BatchComputeDialog extends JDialog {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
-    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_COMP = "de.unijena.bioinf.sirius.computeDialog.zodiac.compounds.dontAskAgain";
-    public static final String DO_NOT_SHOW_AGAIN_KEY_Z_MEM = "de.unijena.bioinf.sirius.computeDialog.zodiac.memory.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_NO_FP_CHECK = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.na.dontAskAgain";
@@ -161,33 +159,12 @@ public class BatchComputeDialog extends JDialog {
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
-                zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
+                zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView, compoundsToProcess.size());
                 fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
                 csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
                 msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
                 if (!isSingleCompound() && ms2) {
-                    zodiacConfigs.addEnableChangeListener((s, enabled) -> {
-                        if (enabled) {
-                            if (new QuestionDialog(mf(), "Low number of Compounds",
-                                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP, ReturnValue.Success).isCancel()) {
-                                zodiacConfigs.activationButton.setSelected(false);
-                                return;
-                            }
-
-
-                            if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
-                                if (new QuestionDialog(mf(), "High Memory Consumption",
-                                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM, ReturnValue.Success).isCancel()) {
-                                    zodiacConfigs.activationButton.setSelected(false);
-                                }
-                            }
-                        }
-
-
-                    });
                     addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
                     zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
                 }

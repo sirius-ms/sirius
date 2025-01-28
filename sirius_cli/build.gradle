@@ -61,5 +61,5 @@ dependencies {
 
     //test
     testImplementation project(":utils")
-    testImplementation "com.bright-giant:sirius-test-data:1.0-SNAPSHOT"
+//    testImplementation "com.bright-giant:sirius-test-data:1.0-SNAPSHOT"
 }
