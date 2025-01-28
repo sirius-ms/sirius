@@ -51,8 +51,10 @@ import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
+import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
@@ -140,61 +142,102 @@ public class ZodiacSubToolJob extends DataSetJob {
                 settings.setMatchingType(SpectralMatchingType.MODIFIED_COSINE);
                 settings.setMinCosine(0.6f);
                 settings.setMinimumNumberOfPeaks(6);
-                List<MergedReferenceSpectrum> mergedSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(CustomDataSources.getAllSelectableDbs());
+
+                List<CustomDataSources.Source> allSelectableDbs = CustomDataSources.getAllSelectableDbs();
+                List<MergedReferenceSpectrum> mergedSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(allSelectableDbs);
                 final HashMap<String, LongOpenHashSet> ids = new HashMap<>();
-                final List<BasicJJob<de.unijena.bioinf.spectraldb.LibraryHit>> jobs = new ArrayList<>();
+                final List<BasicJJob<List<de.unijena.bioinf.spectraldb.LibraryHit>>> jobs = new ArrayList<>();
                 final List<Ms2Experiment> exps = new ArrayList<>();
                 for (Ms2Experiment exp : ms2ExperimentToInstance.keySet()) {
-                    jobs.add(submitSubJob(new BasicJJob<de.unijena.bioinf.spectraldb.LibraryHit>() {
+                    jobs.add(submitSubJob(new BasicJJob<List<de.unijena.bioinf.spectraldb.LibraryHit>>() {
                         @Override
-                        protected de.unijena.bioinf.spectraldb.LibraryHit compute() throws Exception {
-                            SpectralSimilarity max = new SpectralSimilarity(0.6f, 6);
-                            SpectralSimilarity maxExact = new SpectralSimilarity(0.7f, 4);
-                            de.unijena.bioinf.spectraldb.LibraryHit exactMatch = null;
-                            de.unijena.bioinf.spectraldb.LibraryHit bestHit = null;
+                        protected List<de.unijena.bioinf.spectraldb.LibraryHit> compute() throws Exception {
                             final ReferenceLibrarySpectrum spec = fastCosine.prepareQuery(exp);
+                            // only trust analog matches if they have a high number of shared peaks
+                            final int analogMinNumberOfPeaks = Math.max(6, (int)Math.min(spec.size() * 0.33f, 12));
+                            // also do exact m/z search
+                            List<de.unijena.bioinf.spectraldb.LibraryHit> allHits = new ArrayList<>();
+                            // search through merged spectra
                             for (MergedReferenceSpectrum db : mergedSpectra) {
                                 SpectralSimilarity sim = fastCosine.fastModifiedCosine(spec, db.getQuerySpectrum());
                                 if (sim.similarity>1) {
                                     if (sim.similarity > 1.1) {
-                                        System.err.println("WTF???? " + sim.similarity);
-                                    } else {
+                                        throw new RuntimeException("Cosine similarity above 1: " + sim);
+                                    } else { // due to rounding errors, the cosine similarity can be slightly above 1
                                         sim = new SpectralSimilarity(1d, sim.sharedPeaks);
                                     }
+                                } else if (sim.similarity < 0) {
+                                    if (sim.similarity < -0.1) {
+                                        throw new RuntimeException("Cosine similarity below 0: " + sim);
+                                    } else { // due to rounding errors, the cosine similarity can be slightly below 0
+                                        sim = new SpectralSimilarity(0d, sim.sharedPeaks);
+                                    }
                                 }
-                                if (sim.sharedPeaks>=6 && sim.similarity>max.similarity) {
-                                    max = sim;
-                                    bestHit = new de.unijena.bioinf.spectraldb.LibraryHit(0, sim, db);
-                                }
-                                if (sim.sharedPeaks>=4 && sim.similarity>=maxExact.similarity && dev.inErrorWindow(db.getPrecursorMz(), spec.getParentMass())) {
-                                    maxExact=sim;
-                                    exactMatch=new de.unijena.bioinf.spectraldb.LibraryHit(0, sim, db);
+
+                                if (sim.sharedPeaks >= 6 && sim.similarity >= 0.6) {
+                                    final boolean analog = !dev.inErrorWindow(db.getPrecursorMz(), spec.getParentMass());
+                                    if (!analog || sim.sharedPeaks>=analogMinNumberOfPeaks) {
+                                        allHits.add(new de.unijena.bioinf.spectraldb.LibraryHit(0, sim, db, analog));
+                                    }
                                 }
                             }
-                            return exactMatch!=null ? exactMatch : bestHit;
+                            // also add individual spectra
+                            allHits.addAll(ApplicationCore.WEB_API.getChemDB().queryAgainstLibraryWithPrecursorMass(
+                                fastCosine.prepareQueriesFromAllMsMs(exp), exp.getIonMass(), exp.getPrecursorIonType().getCharge(),
+                                    SpectralLibrarySearchSettings.conservativeDefaultForCosine(), allSelectableDbs
+                            ));
+                            // get best overall match
+                            allHits.sort(Comparator.comparingDouble(x->-x.getSimilarity().similarity));
+                            return allHits;
                         }
                     }));
                     exps.add(exp);
                 }
-
+                int expWithMatch = 0;
                 for (int i=0; i < exps.size(); ++i) {
-                    de.unijena.bioinf.spectraldb.LibraryHit hit = jobs.get(i).takeResult();
-                    if (hit==null) continue;
-                    if (dev.inErrorWindow(exps.get(i).getIonMass(), hit.getExactMass())) {
+                    List<de.unijena.bioinf.spectraldb.LibraryHit> hits = jobs.get(i).takeResult();
+                    if (hits==null || hits.isEmpty()) continue;
+                    ++expWithMatch;
+                    final de.unijena.bioinf.spectraldb.LibraryHit bestHit = hits.get(0);
+
+                    if (dev.inErrorWindow(exps.get(i).getIonMass(), bestHit.getExactMass())) {
                         anchors.add(new LibraryHit(
-                                exps.get(i), hit.getMolecularFormula(), hit.getSmiles(), hit.getAdduct(), hit.getSimilarity().similarity, hit.getSimilarity().sharedPeaks,
-                                LibraryHitQuality.Gold, hit.getExactMass()
+                                exps.get(i), bestHit.getMolecularFormula(), bestHit.getSmiles(), bestHit.getAdduct(), bestHit.getSimilarity().similarity, bestHit.getSimilarity().sharedPeaks,
+                                LibraryHitQuality.Gold, bestHit.getExactMass()
                         ));
                     } else {
-                        ids.computeIfAbsent(hit.getDbName(), x -> new LongOpenHashSet()).add(hit.getUuid());
+                        ids.computeIfAbsent(bestHit.getDbName(), x -> new LongOpenHashSet()).add(bestHit.getUuid());
                     }
+                    // for analog search, we only store the top 10 in database
+                    int topKAnalog = 0;
+                    ListIterator<de.unijena.bioinf.spectraldb.LibraryHit> iter = hits.listIterator();
+                    while (iter.hasNext()) {
+                        if (iter.next().isAnalog()) {
+                            if (++topKAnalog>=10) iter.remove();
+                        }
+                    }
+                    // store the top hits in database
+                    {
+                        Instance instance = ms2ExperimentToInstance.get(exps.get(i));
+                        List<SpectralSearchResult.SearchResult> rs = new ArrayList<>();
+                        for (int r=0; r < hits.size(); ++r) {
+                            rs.add(new SpectralSearchResult.SearchResult(hits.get(r), r+1));
+                        }
+                        instance.deleteSpectraSearchResult();
+                        instance.saveSpectraSearchResult(new SpectralSearchResult(
+                                fastCosine.getMaxDeviation(),
+                                fastCosine.getMaxDeviation(),
+                                SpectralMatchingType.MODIFIED_COSINE,
+                                rs
+                        ));
+                    }
+
                     if (i % 50 == 0) {
                         long idcount = ids.values().stream().mapToLong(x->x.size()).sum();
-                        System.out.println(i + " / " + exps.size()+ " compounds searched. " + idcount + " analogues and " + anchors.size() + " exact hits so far.");
+                        System.out.println(i + " / " + exps.size()+ " compounds searched with " + expWithMatch + " having any match. " + idcount + " analogues and " + anchors.size() + " exact hits so far.");
                     }
                 }
 
-                ;
                 {
                     WebWithCustomDatabase chemDB = ApplicationCore.WEB_API.getChemDB();
                     List<FTree> trees = new ArrayList<>();
