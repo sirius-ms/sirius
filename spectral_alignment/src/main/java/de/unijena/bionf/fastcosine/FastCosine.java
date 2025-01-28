@@ -59,6 +59,10 @@ public class FastCosine {
         return prepareQuery(processedInput);
     }
 
+    public List<ReferenceLibrarySpectrum> prepareQueriesFromAllMsMs(Ms2Experiment ms2data) {
+        return ms2data.getMs2Spectra().stream().map(x->prepareQuery(ms2data.getIonMass(), x)).toList();
+    }
+
     private ReferenceLibrarySpectrum prepareQuery(ProcessedInput input) {
         // 1. sort peaks by mass
         List<ProcessedPeak> mergedPeaks = input.getMergedPeaks();
