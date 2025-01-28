@@ -68,6 +68,7 @@ docs/LicenseInfo.md
 docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
+docs/MatchType.md
 docs/MsData.md
 docs/MsNovelist.md
 docs/PageMetadata.md
@@ -112,6 +113,7 @@ docs/StructureCandidateScored.md
 docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
+docs/TargetType.md
 docs/Term.md
 docs/Timeout.md
 docs/TraceAnnotationExperimental.md
@@ -201,6 +203,7 @@ src/main/java/io/sirius/ms/sdk/model/LcmsSubmissionParameters.java
 src/main/java/io/sirius/ms/sdk/model/LicenseInfo.java
 src/main/java/io/sirius/ms/sdk/model/LipidAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/LossEdge.java
+src/main/java/io/sirius/ms/sdk/model/MatchType.java
 src/main/java/io/sirius/ms/sdk/model/MsData.java
 src/main/java/io/sirius/ms/sdk/model/MsNovelist.java
 src/main/java/io/sirius/ms/sdk/model/PageMetadata.java
@@ -242,6 +245,7 @@ src/main/java/io/sirius/ms/sdk/model/StructureCandidateScored.java
 src/main/java/io/sirius/ms/sdk/model/StructureDbSearch.java
 src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
+src/main/java/io/sirius/ms/sdk/model/TargetType.java
 src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationExperimental.java
