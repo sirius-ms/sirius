@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.BasicSpectrum;
+import io.sirius.ms.sdk.model.MatchType;
+import io.sirius.ms.sdk.model.TargetType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -51,6 +53,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_ADDUCT,
   SpectralLibraryMatch.JSON_PROPERTY_EXACT_MASS,
   SpectralLibraryMatch.JSON_PROPERTY_SMILES,
+  SpectralLibraryMatch.JSON_PROPERTY_TARGET,
+  SpectralLibraryMatch.JSON_PROPERTY_TYPE,
   SpectralLibraryMatch.JSON_PROPERTY_INCHI_KEY,
   SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM
 })
@@ -94,6 +98,12 @@ public class SpectralLibraryMatch {
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
   private String smiles;
+
+  public static final String JSON_PROPERTY_TARGET = "target";
+  private TargetType target = TargetType.SPECTRUM;
+
+  public static final String JSON_PROPERTY_TYPE = "type";
+  private MatchType type = MatchType.COSINE;
 
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -429,6 +439,56 @@ public class SpectralLibraryMatch {
     this.smiles = smiles;
   }
 
+  public SpectralLibraryMatch target(TargetType target) {
+    
+    this.target = target;
+    return this;
+  }
+
+   /**
+   * Get target
+   * @return target
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TARGET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public TargetType getTarget() {
+    return target;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TARGET)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTarget(TargetType target) {
+    this.target = target;
+  }
+
+  public SpectralLibraryMatch type(MatchType type) {
+    
+    this.type = type;
+    return this;
+  }
+
+   /**
+   * Get type
+   * @return type
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public MatchType getType() {
+    return type;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setType(MatchType type) {
+    this.type = type;
+  }
+
   public SpectralLibraryMatch inchiKey(String inchiKey) {
     
     this.inchiKey = inchiKey;
@@ -501,13 +561,15 @@ public class SpectralLibraryMatch {
         Objects.equals(this.adduct, spectralLibraryMatch.adduct) &&
         Objects.equals(this.exactMass, spectralLibraryMatch.exactMass) &&
         Objects.equals(this.smiles, spectralLibraryMatch.smiles) &&
+        Objects.equals(this.target, spectralLibraryMatch.target) &&
+        Objects.equals(this.type, spectralLibraryMatch.type) &&
         Objects.equals(this.inchiKey, spectralLibraryMatch.inchiKey) &&
         Objects.equals(this.referenceSpectrum, spectralLibraryMatch.referenceSpectrum);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, inchiKey, referenceSpectrum);
+    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, target, type, inchiKey, referenceSpectrum);
   }
 
   @Override
@@ -527,6 +589,8 @@ public class SpectralLibraryMatch {
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
+    sb.append("    target: ").append(toIndentedString(target)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    inchiKey: ").append(toIndentedString(inchiKey)).append("\n");
     sb.append("    referenceSpectrum: ").append(toIndentedString(referenceSpectrum)).append("\n");
     sb.append("}");

@@ -21,6 +21,7 @@ public class LibraryHit implements Comparable<LibraryHit> {
 
     private int queryIndex;
     private SpectrumType spectrumType;
+    private boolean analog;
     private SpectralSimilarity similarity;
     private String dbName, dbId;
     private long uuid;
@@ -36,10 +37,11 @@ public class LibraryHit implements Comparable<LibraryHit> {
     private double exactMass;
     private String smiles;
 
-    public LibraryHit(int queryIndex, SpectralSimilarity similarity, Ms2ReferenceSpectrum spectrum) {
+    public LibraryHit(int queryIndex, SpectralSimilarity similarity, Ms2ReferenceSpectrum spectrum, boolean analog) {
         this.queryIndex = queryIndex;
         this.similarity = similarity;
         this.spectrumType = SpectrumType.SPECTRUM;
+        this.analog = analog;
         this.dbId = spectrum.getLibraryId();
         this.dbName = spectrum.getLibraryName();
         this.uuid = spectrum.getUuid();
@@ -51,7 +53,7 @@ public class LibraryHit implements Comparable<LibraryHit> {
         this.candidateInChiKey = spectrum.getCandidateInChiKey();
     }
 
-    public LibraryHit(int queryIndex, SpectralSimilarity similarity, MergedReferenceSpectrum spectrum) {
+    public LibraryHit(int queryIndex, SpectralSimilarity similarity, MergedReferenceSpectrum spectrum, boolean analog) {
         this.queryIndex = queryIndex;
         this.similarity = similarity;
         this.spectrumType = SpectrumType.MERGED_SPECTRUM;
@@ -64,6 +66,7 @@ public class LibraryHit implements Comparable<LibraryHit> {
         this.exactMass = spectrum.getExactMass();
         this.smiles = spectrum.getSmiles();
         this.candidateInChiKey = spectrum.getCandidateInChiKey();
+        this.analog = analog;
     }
 
     /**

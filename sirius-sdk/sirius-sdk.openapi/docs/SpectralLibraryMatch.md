@@ -20,6 +20,8 @@
 |**adduct** | **String** |  |  [optional] |
 |**exactMass** | **String** |  |  [optional] |
 |**smiles** | **String** |  |  [optional] |
+|**target** | **TargetType** |  |  [optional] |
+|**type** | **MatchType** |  |  [optional] |
 |**inchiKey** | **String** |  |  |
 |**referenceSpectrum** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |
 
