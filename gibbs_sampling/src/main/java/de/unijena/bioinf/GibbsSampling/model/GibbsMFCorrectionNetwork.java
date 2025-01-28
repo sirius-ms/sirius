@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.*;
 
@@ -89,7 +90,10 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
         this.active = new boolean[this.graph.getSize()];
         int z = 0;
 
+        final IntArrayList mostLikely = new IntArrayList();
+        final double delta = 1e-6;
         for(int i = 0; i < this.graph.numberOfCompounds(); ++i) {
+            mostLikely.clear();
             Scored[] possibleFormulasArray = this.graph.getPossibleFormulas(i);
             int idx = Integer.MIN_VALUE;
             //set best explanation active
@@ -97,11 +101,17 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
                 double maxScore = Double.NEGATIVE_INFINITY;
                 for (int j = 0; j < possibleFormulasArray.length; j++) {
                     double score = possibleFormulasArray[j].getScore();
-                    if (score>maxScore){
+                    if (score-delta>=maxScore){
+                        if (maxScore-delta < score) {
+                            mostLikely.clear();
+                        }
                         maxScore = score;
                         idx = j;
+                        mostLikely.add(idx);
                     }
                 }
+                idx = mostLikely.getInt(random.nextInt(mostLikely.size()));
+
             } else {
                 double[] scores = new double[possibleFormulasArray.length];
                 double sum = 0;
@@ -352,7 +362,7 @@ public class GibbsMFCorrectionNetwork<C extends Candidate<?>> extends BasicMaste
         double probSum = this.posteriorProbSums[peakIdx];
         int absIdx = this.getRandomIdx(min, max, probSum, this.posteriorProbs);
         if(this.currentRound > this.burnInRounds) {
-            if((double)(this.currentRound - this.burnInRounds) % DEFAULT_CORRELATION_STEPSIZE == 0.0D) {
+            if((this.currentRound - this.burnInRounds) % DEFAULT_CORRELATION_STEPSIZE == 0) {
                 ++this.overallAssignmentFreq[absIdx];
             }
         }
