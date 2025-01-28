@@ -462,7 +462,9 @@ public class Zodiac {
     }
 
     public Map<Ms2Experiment, Map<FTree, ZodiacScore>> getZodiacScoredTrees() {
-        return zodiacScoredTrees;
+        Map<Ms2Experiment, Map<FTree, ZodiacScore>> noArt = new HashMap<>();
+        zodiacScoredTrees.entrySet().stream().filter(x->!x.getKey().getName().equals("ARTIFICIAL_NODE")).forEach(x->noArt.put(x.getKey(),x.getValue()));
+        return noArt;
     }
 
     /**
