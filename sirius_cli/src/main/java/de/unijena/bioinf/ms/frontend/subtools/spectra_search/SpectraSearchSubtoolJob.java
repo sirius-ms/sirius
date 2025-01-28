@@ -21,10 +21,8 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -32,9 +30,7 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.spectraldb.*;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.ReferenceFragment;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -43,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -112,8 +107,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
         for (int k=0; k < hits.size(); ++k) {
             LibraryHit hit = hits.get(k);
-            rankedHits.add(new SpectralSearchResult.SearchResult(k+1, hit.getSimilarity(), hit.getQueryIndex(), hit.getDbName(), hit.getDbId(),
-                    hit.getUuid(), hit.getSplash(), hit.getMolecularFormula(), hit.getAdduct(), hit.getExactMass(), hit.getSmiles(), hit.getCandidateInChiKey()));
+            rankedHits.add(new SpectralSearchResult.SearchResult(hit, k+1));
         }
 
         SpectralSearchResult result = new SpectralSearchResult(settings.getPrecursorDeviation(), peakDev, settings.getMatchingType(), rankedHits);
@@ -143,7 +137,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 SpectralSimilarity similarity = r.getSimilarity();
 
                 try {
-                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
+                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                             similarity.similarity,
                             similarity.sharedPeaks,
