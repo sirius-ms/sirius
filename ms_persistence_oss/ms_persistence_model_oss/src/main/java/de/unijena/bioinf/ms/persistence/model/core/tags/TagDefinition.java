@@ -56,19 +56,19 @@ public class TagDefinition {
     private boolean editable = true;
 
     @JsonIgnore
-    public Tag<?> newTagWithFormattedValue(@Nullable Object formattedValue, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
+    public Tag newTagWithFormattedValue(@Nullable Object formattedValue, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
         return setFormattedValueOfTag(newTag(taggedObjectClass, taggedObjectId), formattedValue);
 
     }
 
     @JsonIgnore
-    public <T> Tag<T> newTagWithValue(@Nullable T value, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
-         return setValueOfTag((Tag<T>) newTag(taggedObjectClass, taggedObjectId), value);
+    public Tag newTagWithValue(@Nullable Object value, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
+         return setValueOfTag(newTag(taggedObjectClass, taggedObjectId), value);
     }
 
     @SneakyThrows
-    private Tag<?> newTag(@NotNull Class<?> taggedObjectClass, long taggedObjectId) {
-        Tag<?> tag = new Tag<>(valueDefinition.getValueType(), valueDefinition.getValueType().getTagValueClass());
+    private Tag newTag(@NotNull Class<?> taggedObjectClass, long taggedObjectId) {
+        Tag tag = new Tag(valueDefinition.getValueType());
         tag.setTagName(getTagName());
         tag.setTaggedObjectId(taggedObjectId);
         tag.setTaggedObjectClass(taggedObjectClass);
@@ -76,7 +76,7 @@ public class TagDefinition {
     }
 
     @JsonIgnore
-    public <T> Tag<T> setValueOfTag(Tag<T> tag, T value) throws IllegalArgumentException {
+    public Tag setValueOfTag(Tag tag, Object value) throws IllegalArgumentException {
         if (!tag.getTagName().equals(tagName))
             new IllegalArgumentException("The given tag does not match the TagDefinition! Expected: " + tagName + ". Found: " + tag.getTagName() + ".");
         if (valueDefinition != null && !valueDefinition.isValueValid(value))
@@ -87,11 +87,11 @@ public class TagDefinition {
     }
 
     @JsonIgnore
-    public <T> Tag<T> setFormattedValueOfTag(Tag<T> tag, Object formattedValue) throws IllegalArgumentException {
+    public Tag setFormattedValueOfTag(Tag tag, Object formattedValue) throws IllegalArgumentException {
         if (!tag.getTagName().equals(tagName))
             new IllegalArgumentException("The given tag does not match the TagDefinition! Expected: " + tagName + ". Found: " + tag.getTagName() + ".");
 
-        T value = (T) getValueDefinition().getValueType().getFormatter().fromFormattedGeneric(formattedValue);
+        Object value = getValueDefinition().getValueType().getFormatter().fromFormattedGeneric(formattedValue);
 
         if (valueDefinition != null && !valueDefinition.isValueValid(value))
             throw new IllegalArgumentException("Value '" + value + "' is not valid for tag '" + tagName + "' which expects types of type: " + valueDefinition.getValueType() + ".");

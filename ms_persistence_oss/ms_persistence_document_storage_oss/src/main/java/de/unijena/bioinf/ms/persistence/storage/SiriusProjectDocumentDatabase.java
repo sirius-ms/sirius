@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends StatsAndTaggingSupport, NetworkingProjectDocumentDatabase<Storage>, MsProjectDocumentDatabase<Storage> {
+public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends StatsAndTaggingSupport<Storage>, NetworkingProjectDocumentDatabase<Storage>, MsProjectDocumentDatabase<Storage> {
     int SIRIUS_PROJECT_SCHEMA_VERSION = 1;
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";

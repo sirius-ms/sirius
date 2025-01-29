@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -66,17 +67,17 @@ public class TagDefinitionImport {
 
     @Nullable
     @Getter
-    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     @Builder.Default
     private List<Object> possibleValues = List.of();
 
     @Nullable
     @Getter
-    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Object minValue;
 
     @Nullable
     @Getter
-    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Object maxValue;
 }

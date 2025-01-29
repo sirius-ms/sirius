@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.sirius.ms.sdk.model.ValueType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -39,39 +38,15 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   Tag.JSON_PROPERTY_TAG_NAME,
-  Tag.JSON_PROPERTY_VALUE_TYPE,
-  Tag.JSON_PROPERTY_BOOL,
-  Tag.JSON_PROPERTY_INTEGER,
-  Tag.JSON_PROPERTY_REAL,
-  Tag.JSON_PROPERTY_TEXT,
-  Tag.JSON_PROPERTY_DATE,
-  Tag.JSON_PROPERTY_TIME
+  Tag.JSON_PROPERTY_VALUE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Tag {
   public static final String JSON_PROPERTY_TAG_NAME = "tagName";
   private String tagName;
 
-  public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
-  private ValueType valueType;
-
-  public static final String JSON_PROPERTY_BOOL = "bool";
-  private Boolean bool;
-
-  public static final String JSON_PROPERTY_INTEGER = "integer";
-  private Integer integer;
-
-  public static final String JSON_PROPERTY_REAL = "real";
-  private Double real;
-
-  public static final String JSON_PROPERTY_TEXT = "text";
-  private String text;
-
-  public static final String JSON_PROPERTY_DATE = "date";
-  private String date;
-
-  public static final String JSON_PROPERTY_TIME = "time";
-  private String time;
+  public static final String JSON_PROPERTY_VALUE = "value";
+  private Object value;
 
   public Tag() {
   }
@@ -86,9 +61,9 @@ public class Tag {
    * Name of the tag as defined by the corresponding TagDefinition  Links tag object to their definition.
    * @return tagName
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTagName() {
     return tagName;
@@ -96,184 +71,34 @@ public class Tag {
 
 
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTagName(String tagName) {
     this.tagName = tagName;
   }
 
-  public Tag valueType(ValueType valueType) {
+  public Tag value(Object value) {
     
-    this.valueType = valueType;
+    this.value = value;
     return this;
   }
 
    /**
-   * Get valueType
-   * @return valueType
+   * Optional value of the tag.  &lt;p&gt;  Generic value of the tag as defined by the corresponding TagDefinition.  Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
+   * @return value
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
+  @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public ValueType getValueType() {
-    return valueType;
+  public Object getValue() {
+    return value;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
+  @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValueType(ValueType valueType) {
-    this.valueType = valueType;
-  }
-
-  public Tag bool(Boolean bool) {
-    
-    this.bool = bool;
-    return this;
-  }
-
-   /**
-   * Get bool
-   * @return bool
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_BOOL)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isBool() {
-    return bool;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_BOOL)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setBool(Boolean bool) {
-    this.bool = bool;
-  }
-
-  public Tag integer(Integer integer) {
-    
-    this.integer = integer;
-    return this;
-  }
-
-   /**
-   * Get integer
-   * @return integer
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INTEGER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getInteger() {
-    return integer;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_INTEGER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInteger(Integer integer) {
-    this.integer = integer;
-  }
-
-  public Tag real(Double real) {
-    
-    this.real = real;
-    return this;
-  }
-
-   /**
-   * Get real
-   * @return real
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_REAL)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getReal() {
-    return real;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_REAL)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setReal(Double real) {
-    this.real = real;
-  }
-
-  public Tag text(String text) {
-    
-    this.text = text;
-    return this;
-  }
-
-   /**
-   * Get text
-   * @return text
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TEXT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getText() {
-    return text;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_TEXT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setText(String text) {
-    this.text = text;
-  }
-
-  public Tag date(String date) {
-    
-    this.date = date;
-    return this;
-  }
-
-   /**
-   * Get date
-   * @return date
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_DATE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getDate() {
-    return date;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_DATE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setDate(String date) {
-    this.date = date;
-  }
-
-  public Tag time(String time) {
-    
-    this.time = time;
-    return this;
-  }
-
-   /**
-   * Get time
-   * @return time
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TIME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getTime() {
-    return time;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_TIME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTime(String time) {
-    this.time = time;
+  public void setValue(Object value) {
+    this.value = value;
   }
 
   @Override
@@ -286,18 +111,12 @@ public class Tag {
     }
     Tag tag = (Tag) o;
     return Objects.equals(this.tagName, tag.tagName) &&
-        Objects.equals(this.valueType, tag.valueType) &&
-        Objects.equals(this.bool, tag.bool) &&
-        Objects.equals(this.integer, tag.integer) &&
-        Objects.equals(this.real, tag.real) &&
-        Objects.equals(this.text, tag.text) &&
-        Objects.equals(this.date, tag.date) &&
-        Objects.equals(this.time, tag.time);
+        Objects.equals(this.value, tag.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, valueType, bool, integer, real, text, date, time);
+    return Objects.hash(tagName, value);
   }
 
   @Override
@@ -305,13 +124,7 @@ public class Tag {
     StringBuilder sb = new StringBuilder();
     sb.append("class Tag {\n");
     sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
-    sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
-    sb.append("    bool: ").append(toIndentedString(bool)).append("\n");
-    sb.append("    integer: ").append(toIndentedString(integer)).append("\n");
-    sb.append("    real: ").append(toIndentedString(real)).append("\n");
-    sb.append("    text: ").append(toIndentedString(text)).append("\n");
-    sb.append("    date: ").append(toIndentedString(date)).append("\n");
-    sb.append("    time: ").append(toIndentedString(time)).append("\n");
+    sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();
   }
