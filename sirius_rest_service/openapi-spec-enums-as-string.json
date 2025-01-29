@@ -461,7 +461,7 @@
           "Tags"
         ],
         "summary": "[EXPERIMENTAL] Delete tag definition with the given name from the specified project-space",
-        "description": "[EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "description": "[EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.\n \u003cp\u003e\n This will also remove all tags belonging to this definition from every tagged entity.\n \u003c/p\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "deleteTag",
         "parameters": [
           {
@@ -2298,7 +2298,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": [
@@ -2320,7 +2321,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -2390,7 +2392,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": [
@@ -2413,7 +2416,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -2486,7 +2490,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -2557,7 +2562,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -3783,7 +3789,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": [
@@ -3805,7 +3812,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -4044,7 +4052,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": []
@@ -4393,7 +4402,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": [
@@ -4415,7 +4425,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -4513,7 +4524,8 @@
                   "none",
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
-                  "customAnnotations"
+                  "customAnnotations",
+                  "tags"
                 ]
               },
               "default": [
@@ -4623,7 +4635,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -6904,7 +6917,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": []
@@ -7254,7 +7268,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -7353,7 +7368,8 @@
                   "msData",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
-                  "computedTools"
+                  "computedTools",
+                  "tags"
                 ]
               },
               "default": [
@@ -8094,6 +8110,10 @@
         }
       },
       "TagDefinitionImport": {
+        "required": [
+          "tagName",
+          "valueType"
+        ],
         "type": "object",
         "properties": {
           "tagName": {
@@ -8101,7 +8121,14 @@
             "description": "Name of this tag defined by this definition (key)"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A human-readable description about the purpose of this tag.",
+            "nullable": true
+          },
+          "tagType": {
+            "type": "string",
+            "description": "A simple string based identifier to specify the type/scope/purpose of this tag.",
+            "nullable": true
           },
           "valueType": {
             "type": "string",
@@ -8109,25 +8136,35 @@
               "NONE",
               "BOOLEAN",
               "INTEGER",
-              "DOUBLE",
-              "STRING",
+              "REAL",
+              "TEXT",
               "DATE",
               "TIME"
             ]
           },
           "possibleValues": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "type": "object"
+              "type": "object",
+              "nullable": true
             }
           },
-          "tagType": {
-            "type": "string",
-            "description": "A simple string based identifier to specify the type/scope/purpose of this tag."
+          "minValue": {
+            "type": "object",
+            "nullable": true
+          },
+          "maxValue": {
+            "type": "object",
+            "nullable": true
           }
         }
       },
       "TagDefinition": {
+        "required": [
+          "tagName",
+          "valueType"
+        ],
         "type": "object",
         "properties": {
           "tagName": {
@@ -8135,7 +8172,14 @@
             "description": "Name of this tag defined by this definition (key)"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A human-readable description about the purpose of this tag.",
+            "nullable": true
+          },
+          "tagType": {
+            "type": "string",
+            "description": "A simple string based identifier to specify the type/scope/purpose of this tag.",
+            "nullable": true
           },
           "valueType": {
             "type": "string",
@@ -8143,21 +8187,27 @@
               "NONE",
               "BOOLEAN",
               "INTEGER",
-              "DOUBLE",
-              "STRING",
+              "REAL",
+              "TEXT",
               "DATE",
               "TIME"
             ]
           },
           "possibleValues": {
             "type": "array",
+            "nullable": true,
             "items": {
-              "type": "object"
+              "type": "object",
+              "nullable": true
             }
           },
-          "tagType": {
-            "type": "string",
-            "description": "A simple string based identifier to specify the type/scope/purpose of this tag."
+          "minValue": {
+            "type": "object",
+            "nullable": true
+          },
+          "maxValue": {
+            "type": "object",
+            "nullable": true
           },
           "editable": {
             "type": "boolean"
@@ -8165,44 +8215,19 @@
         }
       },
       "Tag": {
+        "required": [
+          "tagName"
+        ],
         "type": "object",
         "properties": {
           "tagName": {
             "type": "string",
             "description": "Name of the tag as defined by the corresponding TagDefinition\n Links tag object to their definition."
           },
-          "valueType": {
-            "type": "string",
-            "description": "Type of the value of the tag as defined in the corresponding tag definition.",
-            "enum": [
-              "NONE",
-              "BOOLEAN",
-              "INTEGER",
-              "DOUBLE",
-              "STRING",
-              "DATE",
-              "TIME"
-            ]
-          },
-          "bool": {
-            "type": "boolean"
-          },
-          "integer": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "real": {
-            "type": "number",
-            "format": "double"
-          },
-          "text": {
-            "type": "string"
-          },
-          "date": {
-            "type": "string"
-          },
-          "time": {
-            "type": "string"
+          "value": {
+            "type": "object",
+            "description": "Optional value of the tag.\n \u003cp\u003e\n Generic value of the tag as defined by the corresponding TagDefinition.\n Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).",
+            "nullable": true
           }
         }
       },
@@ -9274,6 +9299,14 @@
           },
           "computedTools": {
             "$ref": "#/components/schemas/ComputedSubtools"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "description": "Key: tagName, value: tag",
+            "nullable": true
           }
         },
         "description": "The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information\n that might be displayed in some summary view."
@@ -9440,6 +9473,14 @@
           },
           "customAnnotations": {
             "$ref": "#/components/schemas/ConsensusAnnotationsCSI"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "description": "Key: tagName, value: tag",
+            "nullable": true
           }
         }
       },
