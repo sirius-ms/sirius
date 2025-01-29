@@ -21,131 +21,62 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
-import lombok.*;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.ParseException;
 import java.util.List;
 
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TagDefinitionImport {
-
-    public enum ValueType {
-        NONE, BOOLEAN, INTEGER, DOUBLE, STRING, DATE, TIME
-    }
 
     /**
      * Name of this tag defined by this definition (key)
      */
     @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected String tagName;
 
+    /**
+     * A human-readable description about the purpose of this tag.
+     */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected String description;
-
-    @NotNull
-    protected ValueType valueType;
-
-    @Nullable
-    protected List<?> possibleValues;
 
     /**
      * A simple string based identifier to specify the type/scope/purpose of this tag.
      */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected String tagType;
 
-    public abstract static class TagDefinitionImportBuilder<C extends TagDefinitionImport, B extends TagDefinitionImportBuilder<C, B>> {
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected ValueType valueType;
 
-        private boolean possibleValuesChecked = false;
 
-        public B valueType(ValueType valueType) {
-            if (!possibleValuesChecked) {
-                throw new UnsupportedOperationException("Please use 'valueTypeAndPossibleValues' instead!");
-            }
-            this.valueType = valueType;
-            return self();
-        }
+    @Nullable
+    @Getter
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    @Builder.Default
+    private List<Object> possibleValues = List.of();
 
-        public B possibleValues(List<?> possibleValues) {
-            if (!possibleValuesChecked) {
-                throw new UnsupportedOperationException("Please use 'valueTypeAndPossibleValues' instead!");
-            }
-            this.possibleValues = possibleValues;
-            return self();
-        }
+    @Nullable
+    @Getter
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    private Object minValue;
 
-        public B valueTypeAndPossibleValues(@NotNull ValueType valueType, @Nullable List<?> possibleValues) {
-            if (possibleValues != null && !possibleValues.isEmpty()) {
-                switch (valueType) {
-                    case NONE: throw new IllegalArgumentException("No possible values allowed.");
-                    case BOOLEAN:
-                        for (Object o : possibleValues) {
-                            if (!(o instanceof Boolean)) {
-                                throw new IllegalArgumentException(o + " is not a boolean");
-                            }
-                        }
-                        break;
-                    case INTEGER:
-                        for (Object o : possibleValues) {
-                            if (!(o instanceof Integer)) {
-                                throw new IllegalArgumentException(o + " is not an integer");
-                            }
-                        }
-                        break;
-                    case DOUBLE:
-                        for (Object o : possibleValues) {
-                            if (!(o instanceof Double)) {
-                                throw new IllegalArgumentException(o + " is not a double");
-                            }
-                        }
-                        break;
-                    case STRING:
-                        for (Object o : possibleValues) {
-                            if (!(o instanceof String)) {
-                                throw new IllegalArgumentException(o + " is not a String");
-                            }
-                        }
-                        break;
-                    case DATE:
-                        for (Object o : possibleValues) {
-                            if (o instanceof String s) {
-                                try {
-                                    TaggableController.DATE_FORMAT.parse(s);
-                                } catch (ParseException e) {
-                                    throw new IllegalArgumentException(o + " is not a date in format yyyy-MM-dd");
-                                }
-                            } else {
-                                throw new IllegalArgumentException(o + " is not a String");
-                            }
-                        }
-                        break;
-                    case TIME:
-                        for (Object o : possibleValues) {
-                            if (o instanceof String s) {
-                                try {
-                                    TaggableController.TIME_FORMAT.parse(s);
-                                } catch (ParseException e) {
-                                    throw new IllegalArgumentException(o + " is not a date in format yyyy-MM-dd");
-                                }
-                            } else {
-                                throw new IllegalArgumentException(o + " is not a String");
-                            }
-                        }
-                        break;
-                }
-            }
-            possibleValuesChecked = true;
-            return valueType(valueType).possibleValues(possibleValues);
-        }
-
-    }
-
+    @Nullable
+    @Getter
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, oneOf = { Integer.class, Long.class, Double.class, Boolean.class, String.class })
+    private Object maxValue;
 }

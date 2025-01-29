@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,6 +40,16 @@ public class Utils {
     public static final Comparator<String> ALPHANUMERIC_COMPARATOR_NULL_LAST = Comparator.nullsLast(new AlphanumComparator());
     public static final Comparator<Double> DOUBLE_DESC_NULL_LAST = Comparator.nullsLast(Comparator.reverseOrder());
     public static final Comparator<Double> DOUBLE_ASC_NULL_LAST = Comparator.nullsLast(Comparator.naturalOrder());
+
+    public static ZonedDateTime epochLongToZonedDateTime(long epochMillis) {
+        return epochLongToZonedDateTime(epochMillis, ZoneId.systemDefault());
+    }
+    public static ZonedDateTime epochLongToZonedDateTime(long epochMillis, ZoneId zone) {
+        // Convert milliseconds to Instant
+        Instant instant = Instant.ofEpochMilli(epochMillis);
+        // Convert Instant to ZonedDateTime
+        return instant.atZone(zone);
+    }
 
     public static int[] shortsToInts(short[] shorts){
         int[] ints = new int[shorts.length];
