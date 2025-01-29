@@ -43,9 +43,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   TagDefinition.JSON_PROPERTY_TAG_NAME,
   TagDefinition.JSON_PROPERTY_DESCRIPTION,
+  TagDefinition.JSON_PROPERTY_TAG_TYPE,
   TagDefinition.JSON_PROPERTY_VALUE_TYPE,
   TagDefinition.JSON_PROPERTY_POSSIBLE_VALUES,
-  TagDefinition.JSON_PROPERTY_TAG_TYPE,
+  TagDefinition.JSON_PROPERTY_MIN_VALUE,
+  TagDefinition.JSON_PROPERTY_MAX_VALUE,
   TagDefinition.JSON_PROPERTY_EDITABLE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
@@ -56,14 +58,20 @@ public class TagDefinition {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
 
+  public static final String JSON_PROPERTY_TAG_TYPE = "tagType";
+  private String tagType;
+
   public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
   private ValueType valueType;
 
   public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
-  private List<Object> possibleValues = new ArrayList<>();
+  private List<Object> possibleValues;
 
-  public static final String JSON_PROPERTY_TAG_TYPE = "tagType";
-  private String tagType;
+  public static final String JSON_PROPERTY_MIN_VALUE = "minValue";
+  private Object minValue;
+
+  public static final String JSON_PROPERTY_MAX_VALUE = "maxValue";
+  private Object maxValue;
 
   public static final String JSON_PROPERTY_EDITABLE = "editable";
   private Boolean editable;
@@ -81,9 +89,9 @@ public class TagDefinition {
    * Name of this tag defined by this definition (key)
    * @return tagName
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public String getTagName() {
     return tagName;
@@ -91,7 +99,7 @@ public class TagDefinition {
 
 
   @JsonProperty(JSON_PROPERTY_TAG_NAME)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setTagName(String tagName) {
     this.tagName = tagName;
   }
@@ -103,7 +111,7 @@ public class TagDefinition {
   }
 
    /**
-   * Get description
+   * A human-readable description about the purpose of this tag.
    * @return description
   **/
   @jakarta.annotation.Nullable
@@ -121,6 +129,31 @@ public class TagDefinition {
     this.description = description;
   }
 
+  public TagDefinition tagType(String tagType) {
+    
+    this.tagType = tagType;
+    return this;
+  }
+
+   /**
+   * A simple string based identifier to specify the type/scope/purpose of this tag.
+   * @return tagType
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getTagType() {
+    return tagType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTagType(String tagType) {
+    this.tagType = tagType;
+  }
+
   public TagDefinition valueType(ValueType valueType) {
     
     this.valueType = valueType;
@@ -131,9 +164,9 @@ public class TagDefinition {
    * Get valueType
    * @return valueType
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public ValueType getValueType() {
     return valueType;
@@ -141,7 +174,7 @@ public class TagDefinition {
 
 
   @JsonProperty(JSON_PROPERTY_VALUE_TYPE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setValueType(ValueType valueType) {
     this.valueType = valueType;
   }
@@ -179,29 +212,54 @@ public class TagDefinition {
     this.possibleValues = possibleValues;
   }
 
-  public TagDefinition tagType(String tagType) {
+  public TagDefinition minValue(Object minValue) {
     
-    this.tagType = tagType;
+    this.minValue = minValue;
     return this;
   }
 
    /**
-   * A simple string based identifier to specify the type/scope/purpose of this tag.
-   * @return tagType
+   * Get minValue
+   * @return minValue
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonProperty(JSON_PROPERTY_MIN_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getTagType() {
-    return tagType;
+  public Object getMinValue() {
+    return minValue;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TAG_TYPE)
+  @JsonProperty(JSON_PROPERTY_MIN_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTagType(String tagType) {
-    this.tagType = tagType;
+  public void setMinValue(Object minValue) {
+    this.minValue = minValue;
+  }
+
+  public TagDefinition maxValue(Object maxValue) {
+    
+    this.maxValue = maxValue;
+    return this;
+  }
+
+   /**
+   * Get maxValue
+   * @return maxValue
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MAX_VALUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Object getMaxValue() {
+    return maxValue;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MAX_VALUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMaxValue(Object maxValue) {
+    this.maxValue = maxValue;
   }
 
   public TagDefinition editable(Boolean editable) {
@@ -240,15 +298,17 @@ public class TagDefinition {
     TagDefinition tagDefinition = (TagDefinition) o;
     return Objects.equals(this.tagName, tagDefinition.tagName) &&
         Objects.equals(this.description, tagDefinition.description) &&
+        Objects.equals(this.tagType, tagDefinition.tagType) &&
         Objects.equals(this.valueType, tagDefinition.valueType) &&
         Objects.equals(this.possibleValues, tagDefinition.possibleValues) &&
-        Objects.equals(this.tagType, tagDefinition.tagType) &&
+        Objects.equals(this.minValue, tagDefinition.minValue) &&
+        Objects.equals(this.maxValue, tagDefinition.maxValue) &&
         Objects.equals(this.editable, tagDefinition.editable);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tagName, description, valueType, possibleValues, tagType, editable);
+    return Objects.hash(tagName, description, tagType, valueType, possibleValues, minValue, maxValue, editable);
   }
 
   @Override
@@ -257,9 +317,11 @@ public class TagDefinition {
     sb.append("class TagDefinition {\n");
     sb.append("    tagName: ").append(toIndentedString(tagName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    tagType: ").append(toIndentedString(tagType)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
     sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
-    sb.append("    tagType: ").append(toIndentedString(tagType)).append("\n");
+    sb.append("    minValue: ").append(toIndentedString(minValue)).append("\n");
+    sb.append("    maxValue: ").append(toIndentedString(maxValue)).append("\n");
     sb.append("    editable: ").append(toIndentedString(editable)).append("\n");
     sb.append("}");
     return sb.toString();

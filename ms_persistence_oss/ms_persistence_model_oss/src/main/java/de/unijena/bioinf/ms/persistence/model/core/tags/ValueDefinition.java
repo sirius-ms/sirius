@@ -16,11 +16,11 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+@Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ValueDefinition<T extends Comparable<T>> {
     @NotNull
-    @Getter
     private final ValueType valueType;
 
     @JsonIgnore
@@ -29,7 +29,6 @@ public class ValueDefinition<T extends Comparable<T>> {
     }
 
     @NotNull
-    @Getter
     private final LinkedHashSet<T> possibleValues;
 
     public void addPossibleValue(Object value) throws IllegalArgumentException {
@@ -38,11 +37,9 @@ public class ValueDefinition<T extends Comparable<T>> {
     }
 
     @Nullable
-    @Getter
     private T minValue = null;
 
     @Nullable
-    @Getter
     private T maxValue = null;
 
     public ValueDefinition(

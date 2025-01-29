@@ -42,9 +42,9 @@ public enum ValueType {
   
   INTEGER("INTEGER"),
   
-  DOUBLE("DOUBLE"),
+  REAL("REAL"),
   
-  STRING("STRING"),
+  TEXT("TEXT"),
   
   DATE("DATE"),
   

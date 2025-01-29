@@ -859,9 +859,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return sort(sort, Pair.of("structureRank", Database.SortOrder.ASCENDING), Function.identity());
     }
 
-    private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
-                                     @NotNull EnumSet<Compound.OptField> optFields,
-                                     @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    private Compound convertToApiCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
+                                          @NotNull EnumSet<Compound.OptField> optFields,
+                                          @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Compound.CompoundBuilder builder = Compound.builder()
                 .compoundId(String.valueOf(compound.getCompoundId()))
                 .name(compound.getName())
@@ -897,16 +897,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(Compound.OptField.customAnnotations))
             builder.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
 
+        if (optFields.contains(Compound.OptField.tags)) {
+            builder.tags(project()
+                    .findTagsForObject(compound.getCompoundId())
+                    .map(this::convertToApiTag)
+                    .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
+        }
+
         //remove optionals if not requested
         if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotations))
             features.forEach(f -> f.setTopAnnotations(null));
         if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             features.forEach(f -> f.setTopAnnotationsDeNovo(null));
 
+
+
         return builder.build();
     }
 
-    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
+    private de.unijena.bioinf.ms.persistence.model.core.Compound convertToProjectCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
         List<AlignedFeatures> features = compoundImport.getFeatures().stream()
                 .map(f -> convertToProjectFeature(f, profile))
                 .toList();
@@ -1056,6 +1065,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             .findFirst().orElseGet(() -> ComputedSubtools.builder().build())
             );
 
+        if (optFields.contains(AlignedFeature.OptField.tags)) {
+            builder.tags(project()
+                    .findTagsForObject(features.getAlignedFeatureId())
+                    .map(this::convertToApiTag)
+                    .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
+        }
         return builder.build();
     }
 
@@ -1098,9 +1113,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.massAnalyzers(run.getMassAnalyzers().stream().map(InstrumentConfig::getFullName).toList());
 
         if (optFields.contains(Run.OptField.tags)) {
-            builder.tags(storage()
-                    .findStr(Filter.where("taggedObjectId").eq(run.getRunId()),
-                            de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
+            builder.tags(project()
+                    .findTagsForObject(run.getRunId())
                     .map(this::convertToApiTag)
                     .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         }
@@ -1108,7 +1122,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag<?> tag) {
+    private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag tag) {
         return Tag.builder().tagName(tag.getTagName()).value(tag.getValue()).build();
     }
 
@@ -1325,7 +1339,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
         }
 
-        List<Compound> compounds = stream.map(c -> convertCompound(c, optFields, optFeatureFields)).toList();
+        List<Compound> compounds = stream.map(c -> convertToApiCompound(c, optFields, optFeatureFields)).toList();
 
         long total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
@@ -1351,9 +1365,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         setProjectTypeOrThrow(project());
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertCompound(ci, profile)).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
         project().importCompounds(dbc);
-        return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();
+        return dbc.stream().map(c -> convertToApiCompound(c, optFields, optFieldsFeatures)).toList();
     }
 
     @SneakyThrows
@@ -1366,7 +1380,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
                         c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
                     }
-                    return convertCompound(c, optFields, optFeatureFields);
+                    return convertToApiCompound(c, optFields, optFeatureFields);
                 })
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
@@ -1577,8 +1591,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     .findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
                     .collect(Collectors.toMap(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition::getTagName, Function.identity()));
 
-            List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag<?>> upsertTags = new ArrayList<>();
-            List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag<?>> insertTags = new ArrayList<>();
+            List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
+            List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
             for (Tag tag : tags) {
                 if (!tagDefintions.containsKey(tag.getTagName())) {
@@ -1926,7 +1940,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         long total = 0;
         Set<String> compoundSet = new HashSet<>();
         SpectraMatch bestMatch = null;
-        for (SpectraMatch match : project().getStorage().find(filter, SpectraMatch.class, "searchResult.similarity.similarity", Database.SortOrder.DESCENDING)) {
+        for (SpectraMatch match : storage().find(filter, SpectraMatch.class, "searchResult.similarity.similarity", Database.SortOrder.DESCENDING)) {
             refSpecSet.add(match.getUuid());
             compoundSet.add(match.getCandidateInChiKey());
             if (bestMatch == null) {

@@ -407,7 +407,7 @@ public class TagsApi {
     }
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
-     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
@@ -447,7 +447,7 @@ public class TagsApi {
 
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
-     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
@@ -460,7 +460,7 @@ public class TagsApi {
 
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
-     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.
@@ -473,7 +473,7 @@ public class TagsApi {
 
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
-     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.  &lt;p&gt;  This will also remove all tags belonging to this definition from every tagged entity.  &lt;/p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
      * @param tagName name of the tag definition to delete.

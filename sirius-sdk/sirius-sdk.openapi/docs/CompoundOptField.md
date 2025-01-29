@@ -13,5 +13,7 @@
 
 * `CUSTOMANNOTATIONS` (value: `"customAnnotations"`)
 
+* `TAGS` (value: `"tags"`)
+
 
 

@@ -11,9 +11,9 @@
 
 * `INTEGER` (value: `"INTEGER"`)
 
-* `DOUBLE` (value: `"DOUBLE"`)
+* `REAL` (value: `"REAL"`)
 
-* `STRING` (value: `"STRING"`)
+* `TEXT` (value: `"TEXT"`)
 
 * `DATE` (value: `"DATE"`)
 

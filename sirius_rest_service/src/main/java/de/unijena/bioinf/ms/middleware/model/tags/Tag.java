@@ -22,16 +22,17 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
-@Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
@@ -41,6 +42,7 @@ public class Tag {
      * Links tag object to their definition.
      */
     @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private String tagName;
 
     /**
@@ -49,13 +51,7 @@ public class Tag {
      * Generic value of the tag as defined by the corresponding TagDefinition.
      * Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
      */
-    @Schema(oneOf = { Integer.class, Double.class, Boolean.class, String.class},
-            nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED
-    )
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Object value;
-
-
-
-
 }

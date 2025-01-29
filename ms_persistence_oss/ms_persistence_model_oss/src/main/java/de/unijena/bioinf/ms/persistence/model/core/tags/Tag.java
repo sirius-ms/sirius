@@ -39,7 +39,7 @@ import static de.unijena.bioinf.ms.persistence.model.core.tags.ValueType.*;
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Tag<Value> {
+public class Tag {
     @Id
     @Setter(AccessLevel.PACKAGE)
     protected long tagId;
@@ -61,14 +61,10 @@ public class Tag<Value> {
 
     @Setter(AccessLevel.PACKAGE)
     @Nullable
-    protected Value value;
+    protected Object value;
 
-    public Tag(@NotNull ValueType valueType, Class<Value> valueClass) {
+    public Tag(@NotNull ValueType valueType) {
         this.valueType = valueType;
-    }
-
-    public void setValueAsObject(@Nullable Object value) {
-        setValue((Value) value);
     }
 
     public static class Serializer extends JsonSerializer<Tag> {
@@ -121,20 +117,20 @@ public class Tag<Value> {
     public static class Deserializer extends JsonDeserializer<Tag> {
 
         @Override
-        public Tag<?> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+        public Tag deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
             // Read the entire JSON node for this ValueDefinition
             JsonNode node = jsonParser.getCodec().readTree(jsonParser);
 
-            Tag<?> tag = new Tag<>(NONE, NONE.getTagValueClass());
+            Tag tag = new Tag(NONE);
             for (ValueType type : ValueType.values()) {
                 if (type.hasValue() && node.has(type.getValueFieldName())) {
-                    tag = new Tag<>(type, type.getTagValueClass());
+                    tag = new Tag(type);
                     switch (type) {
-                        case BOOLEAN -> tag.setValueAsObject(node.findValue(type.getValueFieldName()).asBoolean());
-                        case INTEGER, TIME -> tag.setValueAsObject(node.findValue(type.getValueFieldName()).asInt());
-                        case REAL -> tag.setValueAsObject(node.findValue(type.getValueFieldName()).asDouble());
-                        case TEXT -> tag.setValueAsObject(node.findValue(type.getValueFieldName()).asText());
-                        case DATE -> tag.setValueAsObject(node.findValue(type.getValueFieldName()).asLong());
+                        case BOOLEAN -> tag.setValue(node.findValue(type.getValueFieldName()).asBoolean());
+                        case INTEGER, TIME -> tag.setValue(node.findValue(type.getValueFieldName()).asInt());
+                        case REAL -> tag.setValue(node.findValue(type.getValueFieldName()).asDouble());
+                        case TEXT -> tag.setValue(node.findValue(type.getValueFieldName()).asText());
+                        case DATE -> tag.setValue(node.findValue(type.getValueFieldName()).asLong());
                     }
                     break;
                 }
