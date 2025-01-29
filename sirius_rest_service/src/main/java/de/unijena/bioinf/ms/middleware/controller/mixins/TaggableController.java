@@ -28,16 +28,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.SimpleDateFormat;
 import java.util.EnumSet;
 import java.util.List;
 
 public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidingController {
-
-    SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-
-    SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
-
     Class<T> getTagTarget();
 
     /**

@@ -20,40 +20,84 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.tags;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@SuperBuilder
+@Jacksonized
 @Getter
-@Setter
 @ToString
 public class TagDefinition {
-
-    @Getter
-    @AllArgsConstructor
-    public enum ValueType {
-        NONE(Void.class), BOOLEAN(Boolean.class), INTEGER(Integer.class), DOUBLE(Double.class), STRING(String.class), DATE(Long.class), TIME(Long.class);
-        private final Class<?> valueClass;
-    }
-
     @Id
-    private long tagId;
+    private long tagDefId;
 
     private String tagName;
 
+    private String tagType;
+
     private String description;
 
-    private ValueType valueType;
-
-    private List<?> possibleValues;
-
-    private String tagType;
+    @JsonSerialize(using = ValueDefinition.Serializer.class)
+    @JsonDeserialize(using = ValueDefinition.Deserializer.class)
+    private ValueDefinition<?> valueDefinition;
 
     @Builder.Default
     private boolean editable = true;
 
+    @JsonIgnore
+    public Tag<?> newTagWithFormattedValue(@Nullable Object formattedValue, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
+        return setFormattedValueOfTag(newTag(taggedObjectClass, taggedObjectId), formattedValue);
+
+    }
+
+    @JsonIgnore
+    public <T> Tag<T> newTagWithValue(@Nullable T value, @NotNull Class<?> taggedObjectClass, long taggedObjectId) throws IllegalArgumentException {
+         return setValueOfTag((Tag<T>) newTag(taggedObjectClass, taggedObjectId), value);
+    }
+
+    @SneakyThrows
+    private Tag<?> newTag(@NotNull Class<?> taggedObjectClass, long taggedObjectId) {
+        Tag<?> tag = new Tag<>(valueDefinition.getValueType(), valueDefinition.getValueType().getTagValueClass());
+        tag.setTagName(getTagName());
+        tag.setTaggedObjectId(taggedObjectId);
+        tag.setTaggedObjectClass(taggedObjectClass);
+        return tag;
+    }
+
+    @JsonIgnore
+    public <T> Tag<T> setValueOfTag(Tag<T> tag, T value) throws IllegalArgumentException {
+        if (!tag.getTagName().equals(tagName))
+            new IllegalArgumentException("The given tag does not match the TagDefinition! Expected: " + tagName + ". Found: " + tag.getTagName() + ".");
+        if (valueDefinition != null && !valueDefinition.isValueValid(value))
+            throw new IllegalArgumentException("Value '" + value + "' is not valid for tag '" + tagName + "' which expects types of type: " + valueDefinition.getValueType() + ".");
+
+        tag.setValue(value);
+        return tag;
+    }
+
+    @JsonIgnore
+    public <T> Tag<T> setFormattedValueOfTag(Tag<T> tag, Object formattedValue) throws IllegalArgumentException {
+        if (!tag.getTagName().equals(tagName))
+            new IllegalArgumentException("The given tag does not match the TagDefinition! Expected: " + tagName + ". Found: " + tag.getTagName() + ".");
+
+        T value = (T) getValueDefinition().getValueType().getFormatter().fromFormattedGeneric(formattedValue);
+
+        if (valueDefinition != null && !valueDefinition.isValueValid(value))
+            throw new IllegalArgumentException("Value '" + value + "' is not valid for tag '" + tagName + "' which expects types of type: " + valueDefinition.getValueType() + ".");
+
+        tag.setValue(value);
+
+        return tag;
+    }
 }

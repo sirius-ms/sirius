@@ -96,6 +96,8 @@ public class TagController {
     /**
      * [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space.
      * <p>
+     * This will also remove all tags belonging to this definition from every tagged entity.
+     * </p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId     project-space to delete from.

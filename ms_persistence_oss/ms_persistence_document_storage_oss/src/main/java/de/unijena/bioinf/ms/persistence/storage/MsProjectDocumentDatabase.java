@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -33,9 +34,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
-import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
+import de.unijena.bioinf.ms.persistence.model.core.tags.*;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -62,16 +61,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("taggedObjectId", "tagName"))
-
-                .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
-
-                .addRepository(TagGroup.class, Index.unique("groupName"), Index.nonUnique("groupType"))
-
-                .addRepository(FoldChange.CompoundFoldChange.class, Index.nonUnique("foreignId"))
-
-                .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("foreignId"))
-
                 .addRepository(LCMSRun.class,
                         Index.nonUnique("name"))
 
