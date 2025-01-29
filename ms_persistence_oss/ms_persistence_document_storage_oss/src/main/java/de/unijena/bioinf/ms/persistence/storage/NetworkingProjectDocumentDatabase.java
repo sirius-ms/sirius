@@ -34,7 +34,6 @@ public interface NetworkingProjectDocumentDatabase<Storage extends Database<?>> 
     }
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
-        MsProjectDocumentDatabase.buildMetadata(sourceMetadata);
         return sourceMetadata; //todo fill me with result Objects
 //                .addRepository(SourceFile.class,
 //                        new Index("fileName", IndexType.UNIQUE))
