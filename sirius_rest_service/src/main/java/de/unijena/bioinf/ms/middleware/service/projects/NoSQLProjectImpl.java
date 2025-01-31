@@ -49,6 +49,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -86,8 +87,10 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.*;
+import jakarta.persistence.Id;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.jetbrains.annotations.NotNull;
@@ -97,11 +100,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -119,13 +124,27 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
+    private final SearchService searchService;
+
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
     @SneakyThrows
-    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
+    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, SearchService searchService, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
         this.computeStateProvider = computeStateProvider;
+        this.searchService = searchService;
+
+        if (searchService != null) {
+           storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagDefinition(projectId, tagDef));
+           storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagDefinition(projectId, tagDef.getTagName()));
+
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
+            System.out.println("Start caching tags...");
+            searchService.indexProject(projectId, projectSpaceManager.getProject());
+            System.out.println("Caching tags done in " + stopWatch);
+        }
     }
 
     //using private methods instead of references for easier refactoring or changes.
@@ -1123,7 +1142,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag tag) {
-        return Tag.builder().tagName(tag.getTagName()).value(tag.getValue()).build();
+        return Tag.builder().tagName(tag.getTagName()).value(tag.getValueType().getFormatter().toFormattedGeneric(tag.getValue())).build();
     }
 
     @SneakyThrows
@@ -1531,29 +1550,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SuppressWarnings("unchecked")
     public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
-        //todo Implement search
-        throw new ResponseStatusException(BAD_REQUEST, "Implement search");
-        /*Class<?> taggedObjectClass = getTaggedObjectClass(target);
+        Class<?> taggedObjectClass = convertToProjectObjectClass(target);
+
+        // find id field of tagged object.
         AtomicReference<String> fieldName = new AtomicReference<>(null);
         ReflectionUtils.doWithFields(
                 taggedObjectClass,
-                field -> {
-                    fieldName.set(field.getName());
-                },
+                field -> fieldName.set(field.getName()),
                 field -> field.getAnnotation(Id.class) != null);
         if (fieldName.get() == null)
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "No @Id field in " + taggedObjectClass);
 
         Filter tagFilter;
         try {
-            tagFilter = LuceneUtils.translateTagFilter(filter);
+            tagFilter = searchService.parseFindTagsByObjectType(getProjectId(), taggedObjectClass, filter);
         } catch (Exception e) {
             throw new ResponseStatusException(BAD_REQUEST, "Parse error: " + filter);
         }
-        tagFilter = Filter.and(
-                Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()),
-                tagFilter
-        );
+
+        List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> all = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).toList();
+
         Long[] objectIds = storage().findStr(tagFilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 
@@ -1561,7 +1577,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Page.empty();
 
         Filter objectFilter = Filter.where(fieldName.get()).in(objectIds);
-        return (Page<T>) findRunsByFilter(pageable, objectFilter, (EnumSet<Run.OptField>) optFields);*/
+        return (Page<T>) findRunsByFilter(pageable, objectFilter, (EnumSet<Run.OptField>) optFields);
     }
 
     private Class<?> convertToProjectObjectClass(Class<?> taggable) {
@@ -1727,9 +1743,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(group), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty();
-        //todo Implement search
-        throw new ResponseStatusException(BAD_REQUEST, "Implement search");
-//        return findObjectsByTag(target, tagGroup.get().getLuceneQuery(), pageable, optFields);
+        return findObjectsByTag(target, tagGroup.get().getLuceneQuery(), pageable, optFields);
     }
 
     @SneakyThrows

@@ -46,7 +46,23 @@ public class Tag {
 
     @NotNull
     @Setter(AccessLevel.PACKAGE)
-    protected Class<?> taggedObjectClass;
+    protected String taggedObjectClass;
+
+    @SneakyThrows
+    @JsonIgnore
+    public @NotNull Class<?> getTaggedObjectClassInstance() {
+        return getClass().getClassLoader().loadClass(taggedObjectClass);
+    }
+
+    @JsonIgnore
+    public void setTaggedObjectClass(@NotNull Class<?> taggedObjectClass) {
+        setTaggedObjectClass(taggedObjectClass.getName());;
+    }
+
+    @JsonIgnore
+    public void setTaggedObjectClass(@NotNull String taggedObjectClass) {
+        this.taggedObjectClass = taggedObjectClass;
+    }
 
     @Setter(AccessLevel.PACKAGE)
     protected long taggedObjectId;
@@ -75,7 +91,7 @@ public class Tag {
 
             gen.writeNumberField("tagId", tag.getTagId());
             gen.writeStringField("tagName", tag.getTagName());
-            gen.writeStringField("taggedObjectClass", tag.getTaggedObjectClass() != null ? tag.getTaggedObjectClass().getName() : null);
+            gen.writeStringField("taggedObjectClass", tag.getTaggedObjectClass());
             gen.writeNumberField("taggedObjectId", tag.getTaggedObjectId());
 
             switch (valueType) {
@@ -140,12 +156,8 @@ public class Tag {
                 tag.setTagId(node.findValue("tagId").asLong(-1L));
             if (node.has("tagName"))
                 tag.setTagName(node.findValue("tagName").asText(null));
-            try {
-                if (node.has("taggedObjectClass"))
-                    tag.setTaggedObjectClass(tag.getClass().getClassLoader().loadClass(node.findValue("taggedObjectClass").asText(null)));
-            } catch (ClassNotFoundException e) {
-                throw new IOException("Cannot load class from class name stored in 'taggedObjectClass'!", e);
-            }
+            if (node.has("taggedObjectClass"))
+                tag.setTaggedObjectClass(node.findValue("taggedObjectClass").asText(null));
             if (node.has("taggedObjectId"))
                 tag.setTaggedObjectId(node.findValue("taggedObjectId").asLong(-1));
 

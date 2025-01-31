@@ -280,9 +280,9 @@ public class ValueDefinition<T extends Comparable<T>> {
             Class<?> clz = valueType.getTagValueClass();
 
             // Handling Tag.Void or Boolean (no values)
-            if (clz == Void.class) {
+            if (clz == ValueType.Void.class) {
                 // These types do not hold any possible values or min/max constraints
-                return new ValueDefinition<>(valueType, (Collection<Void>) null, null, null);
+                return new ValueDefinition<>(valueType, (Collection<ValueType.Void>) null, null, null);
             } else if (clz == Boolean.class) {
                 return new ValueDefinition<>(valueType, (LinkedHashSet<Boolean>) null, null, null);
             } else if (clz == Double.class) {

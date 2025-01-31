@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public enum ValueType {
     NONE(Void.class, new ValueFormatter.Null<>(), null),
-    BOOLEAN(Boolean.class, new ValueFormatter.NoFormatting<>(), "booValue"),
+    BOOLEAN(Boolean.class, new ValueFormatter.NoFormatting<>(), "boolValue"),
     INTEGER(Integer.class, new ValueFormatter.NoFormatting<>(), "intValue"),
     REAL(Double.class, new ValueFormatter.NoFormatting<>(), "realValue"),
     TEXT(String.class, new ValueFormatter.NoFormatting<>(), "textValue"),
