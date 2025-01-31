@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
@@ -66,7 +67,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -133,7 +134,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -192,7 +193,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             LCMSRun runIn = LCMSRun.builder()
                     .name("run1")
@@ -223,7 +224,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             Map<String, TagDefinitionImport> catIn = Map.of(
                     "c0", TagDefinitionImport.builder().tagName("c0").valueType(ValueType.NONE).tagType("foo").build(),
@@ -301,7 +302,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -333,9 +334,9 @@ public class NoSQLProjectTest {
             project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
             project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().tagName("sample").value("control").build()));
 
-            project.addTagGroup("group1", "tagName:sample AND text:sample", "type1");
-            project.addTagGroup("group2", "tagName:sample AND text:blank", "type1");
-            project.addTagGroup("group3", "tagName:sample AND text:control", "type2");
+            project.addTagGroup("group1", "tags.sample:sample", "type1");
+            project.addTagGroup("group2", "tags.sample:blank", "type1");
+            project.addTagGroup("group3", "tags.sample:control", "type2");
 
             Map<String, TagGroup> groups = project.findTagGroups().stream().collect(Collectors.toMap(TagGroup::getGroupName, Function.identity()));
 
@@ -383,7 +384,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -415,8 +416,8 @@ public class NoSQLProjectTest {
             Feature f2 = Feature.builder().alignedFeatureId(af.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
             ps.getStorage().insertAll(List.of(f1, f2));
 
-            project.addTagGroup("sample", "tagName:sample AND text:sample", "type1");
-            project.addTagGroup("blank", "tagName:sample AND text:blank", "type1");
+            project.addTagGroup("sample", "tags.sample:sample", "type1");
+            project.addTagGroup("blank", "tags.sample:blank", "type1");
 
             new BackgroundRuns(psm, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
 
@@ -515,7 +516,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             List<LCMSRun> runs = List.of(
                     LCMSRun.builder()
@@ -587,7 +588,7 @@ public class NoSQLProjectTest {
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getValue());
 
             //todo Implement search
-            Page<Run> page = project.findObjectsByTag(Run.class, "tagName:c2 AND integer:{12 TO 43}", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Page<Run> page = project.findObjectsByTag(Run.class, "tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
             Assert.assertEquals(2, tags.size());
@@ -603,7 +604,7 @@ public class NoSQLProjectTest {
 //            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getValue());
 
-            page = project.findObjectsByTag(Run.class, "tagName:c1", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTag(Run.class, "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
@@ -622,7 +623,7 @@ public class NoSQLProjectTest {
                     Tag.builder().tagName("time").value("12:00:00").build()
             ));
 
-            page = project.findObjectsByTag(Run.class, "date:[2024-12-01 TO 2025-12-31] OR time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTag(Run.class, "tags.date:[2024-12-01 TO 2025-12-31] OR tags.time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
@@ -643,7 +644,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new FakeLuceneSearchService(), (a, b) -> false);
 
             List<LCMSRun> lcmsRuns = IntStream.range(0, 10000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
                     .name("run" + i)
@@ -661,51 +662,49 @@ public class NoSQLProjectTest {
             List<Run> sample = runs.subList(2 * runs.size() / 3, runs.size());
 
             project.createTags(List.of(
-                    TagDefinitionImport.builder().tagType("sampleCat").tagName("sample type").valueType(ValueType.TEXT).possibleValues(List.of("control", "blank", "sample")).build()
+                    TagDefinitionImport.builder().tagType("sampleCat").tagName("sample-type").valueType(ValueType.TEXT).possibleValues(List.of("control", "blank", "sample")).build()
             ), true);
 
             StopWatch watch = new StopWatch();
             watch.start();
 
             for (Run run : control) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample type").value("control").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
             }
             for (Run run : blank) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample type").value("blank").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
             }
             for (Run run : sample) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample type").value("sample").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
             }
 
             watch.stop();
             System.out.println("CREATE TAGS: " + watch);
 
-            //todo Implement search
-//            watch = new StopWatch();
-//            watch.start();
-//
-//            project.findObjectsByTag(Run.class, "tagName:\"sample type\" AND text:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
-//
-//            watch.stop();
-//            System.out.println("FIND OBJ BY TAGS: " + watch);
+            watch = new StopWatch();
+            watch.start();
+
+            project.findObjectsByTag(Run.class, "tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+
+            watch.stop();
+            System.out.println("FIND OBJ BY TAGS: " + watch);
         }
 
     }
 
-    //todo reenable after filters have been fixed
-   /* @Test
-    public void testFilterTranslation() throws IOException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
-        Filter filter = LuceneUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
-        Assert.assertEquals(
-                "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
-                        "int64:[" + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
-                        "int64:[" + TaggableController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
-                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
-                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
-                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TaggableController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
-                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
-                filter.toString()
-        );
-    }*/
+//    @Test
+//    public void testFilterTranslation() throws IOException, QueryNodeException, InvocationTargetException, IllegalAccessException, ParseException {
+//        Filter filter = LuceneUtils.translateTagFilter("(test || bla) && \"new york\" AND /[mb]oat/ AND integer:[1 TO *] OR real<=3 date:2024-01-01 date:[2023-10-01 TO 2023-12-24] date<2022-01-01 time:12\\:00\\:00 time:[12\\:00\\:00 TO 14\\:00\\:00} time<10\\:00\\:00");
+//        Assert.assertEquals(
+//                "(((text==test OR text==bla) AND text==new york AND text~=/[mb]oat/ AND int32:[1, " + Integer.MAX_VALUE + "]) OR real:[-Infinity, 3.0] OR " +
+//                        "int64:[" + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2024-01-01").getTime() + "] OR " +
+//                        "int64:[" + TaggableController.DATE_FORMAT.parse("2023-10-01").getTime() + ", " + TaggableController.DATE_FORMAT.parse("2023-12-24").getTime() + "] OR " +
+//                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.DATE_FORMAT.parse("2022-01-01").getTime() - 1) + "] OR " +
+//                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + "] OR " +
+//                        "int64:[" + TaggableController.TIME_FORMAT.parse("12:00:00").getTime() + ", " + (TaggableController.TIME_FORMAT.parse("14:00:00").getTime() - 1) + "] OR " +
+//                        "int64:[" + Long.MIN_VALUE + ", " + (TaggableController.TIME_FORMAT.parse("10:00:00").getTime() - 1) + "])",
+//                filter.toString()
+//        );
+//    }
 
 }

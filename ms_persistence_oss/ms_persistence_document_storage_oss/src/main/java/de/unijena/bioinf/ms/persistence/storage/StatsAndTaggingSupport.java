@@ -28,13 +28,6 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                         Index.nonUnique("tagName"),
                         Index.nonUnique("taggedObjectClass","tagName"))
 
-//                //todo TAGS: add load of indexes for each of teh fields.
-//                .addRepository(Tag.class,  Stream.concat(Stream.of(Index.unique("taggedObjectId", "tagName")),
-//                        Arrays.stream(ValueType.values()).filter(ValueType::hasValue)
-//                                .map(ValueType::getValueFieldName)
-//                                .map(field -> Index.nonUnique("tagName", field, "taggedObjectId"))
-//                ).toArray(Index[]::new))
-
                 .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
                 .addRepository(TagGroup.class, Index.unique("groupName"), Index.nonUnique("groupType"))
 
@@ -42,6 +35,16 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                 .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("foreignId"))
 
                 ;
+    }
+
+    @SneakyThrows
+    default Stream<TagDefinition> findAllTagDefinitionsStr() {
+        return getStorage().findAllStr(TagDefinition.class);
+    }
+
+    @SneakyThrows
+    default Iterable<TagDefinition> findAllTagDefinitions() {
+        return getStorage().findAll(TagDefinition.class);
     }
 
     @SneakyThrows

@@ -168,26 +168,6 @@ public class SimpleSerializers {
 
     }
 
-
-    public static final class ClassDeserializer extends FromStringDeserializer<Class<?>> {
-        @Override
-        public Class<?> getObject(String text) throws IOException {
-            try {
-                return getClass().getClassLoader().loadClass(text);
-            } catch (ClassNotFoundException e) {
-                throw new IOException("Could not load class by name: " + text, e);
-            }
-        }
-    }
-
-    public static final class ClassSerializer extends JsonSerializer<Class<?>> {
-        @Override
-        public void serialize(Class<?> value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeString(value != null ? value.getName() : null);
-        }
-    }
-
-
     public static class EnumAsNumberSerializer<E extends Enum<E>> extends JsonSerializer<E> {
         @Override
         public void serialize(E value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
