@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -40,14 +41,17 @@ import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
@@ -120,24 +124,31 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("No such tag category group: " + right));
 
+                    //todo can be make use  definitions from cache here somehow?
+                    HashMap<String,TagDefinition> definitionMap = new HashMap<>();
+                    Stream<TagDefinition> definitions = psm.getProject().findAllTagDefinitionsStr()
+                            .peek(tagDef -> definitionMap.put(tagDef.getTagName(), tagDef));
+                    StandardQueryParser parser = LuceneUtils.makeDefaultQueryParser(definitions);
+
+
                     LongSet leftRuns = new LongRBTreeSet();
                     LongSet rightRuns = new LongRBTreeSet();
 
                     Filter leftTagFilter;
                     Filter rightTagFilter;
                     try {
-                        leftTagFilter = LuceneUtils.translateTagFilter(leftGroup.getLuceneQuery());
-                        rightTagFilter = LuceneUtils.translateTagFilter(rightGroup.getLuceneQuery());
+                        leftTagFilter = LuceneUtils.translateTagFilter(leftGroup.getLuceneQuery(), parser, definitionMap);
+                        rightTagFilter = LuceneUtils.translateTagFilter(rightGroup.getLuceneQuery(), parser, definitionMap);
                     } catch (Exception e) {
                         throw new IllegalArgumentException("Parse error: " + leftGroup.getLuceneQuery());
                     }
 
                     Long[] leftObjectIds = psm.getProject().getStorage().findStr(Filter.and(
-                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), leftTagFilter
+                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()), leftTagFilter
                             ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
                     Long[] rightObjectIds = psm.getProject().getStorage().findStr(Filter.and(
-                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), rightTagFilter
+                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()), rightTagFilter
                             ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 

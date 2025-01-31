@@ -52,6 +52,11 @@ public class TagDefinition {
     @JsonDeserialize(using = ValueDefinition.Deserializer.class)
     private ValueDefinition<?> valueDefinition;
 
+    @JsonIgnore
+    public ValueType getValueType() {
+        return valueDefinition.getValueType();
+    }
+
     @Builder.Default
     private boolean editable = true;
 

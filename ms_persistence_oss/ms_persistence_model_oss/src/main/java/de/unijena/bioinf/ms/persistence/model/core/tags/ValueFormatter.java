@@ -1,16 +1,15 @@
 package de.unijena.bioinf.ms.persistence.model.core.tags;
 
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public interface ValueFormatter<Value extends Comparable<Value>, FormattedValue> {
-    DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    DateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
     default FormattedValue toFormattedGeneric(Object value){
         return toFormatted((Value) value);
@@ -54,15 +53,16 @@ public interface ValueFormatter<Value extends Comparable<Value>, FormattedValue>
         public String toFormatted(@Nullable Long value) {
             if (value == null)
                 return null;
-            return Utils.epochLongToZonedDateTime(value).toLocalDate().format(DATE_FORMAT);
+            return DATE_FORMAT.format(new Date(value));
         }
 
+        @SneakyThrows
         @Override
         public Long fromFormatted(@Nullable String formattedValue) {
             if (formattedValue == null)
                 return null;
-            return LocalDateTime.parse(formattedValue, DATE_FORMAT).withNano(0)
-                    .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            Date date = DATE_FORMAT.parse(formattedValue);
+            return date == null ? null : date.getTime();
         }
     }
 
@@ -71,15 +71,15 @@ public interface ValueFormatter<Value extends Comparable<Value>, FormattedValue>
         public String toFormatted(@Nullable Integer value) {
             if (value == null)
                 return null;
-            return LocalTime.ofNanoOfDay(value * 1_000_000).format(TIME_FORMAT);
+            return TIME_FORMAT.format(new Date(value));
         }
 
+        @SneakyThrows
         @Override
         public Integer fromFormatted(@Nullable String formattedValue) {
             if (formattedValue == null)
                 return null;
-            LocalTime time = LocalTime.parse(formattedValue, TIME_FORMAT);
-            return time.toSecondOfDay() * 1000 + time.getNano() / 1_000_000;
+            return (int) TIME_FORMAT.parse(formattedValue).getTime();
         }
     }
 }
