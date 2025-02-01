@@ -33,7 +33,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +53,11 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     @Getter
     @NotNull
-    private LongList importedFeatureIds = LongList.of();
+    private LongLinkedOpenHashSet importedFeatureIds = new LongLinkedOpenHashSet();
 
     @Getter
     @NotNull
-    private LongList importedCompoundIds = LongList.of();
+    private LongLinkedOpenHashSet importedCompoundIds = new LongLinkedOpenHashSet();
 
     private final boolean saveImportedCompounds;
 
@@ -99,8 +99,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
-        importedFeatureIds = LongList.of();
-        importedCompoundIds = LongList.of();
+        importedFeatureIds = new LongLinkedOpenHashSet();
+        importedCompoundIds = new LongLinkedOpenHashSet();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
         if (inputResources != null && !inputResources.isEmpty()) {
             try {

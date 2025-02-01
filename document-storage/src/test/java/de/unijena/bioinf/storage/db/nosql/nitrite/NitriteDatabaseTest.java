@@ -76,6 +76,17 @@ public class NitriteDatabaseTest {
 
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    private static class NitriteEntryWithDoubleKey {
+        @Id long primaryKey;
+        double otherKey;
+        String someProperty;
+
+    }
+
     private static class TestSerializer extends JsonSerializer<NitriteTestEntry> {
 
         @Override
@@ -250,10 +261,12 @@ public class NitriteDatabaseTest {
                     Filter.where("a").regex("foo"),
                     Filter.where("a").in("foo", "bar"),
                     Filter.where("a").notIn("foo", "bar"),
-                    Filter.where("a").between(41, 43),
-                    Filter.where("a").betweenLeftInclusive(41, 43),
-                    Filter.where("a").betweenRightInclusive(41, 43),
-                    Filter.where("a").betweenBothInclusive(41, 43),
+                    /*
+                    Filter.where("a").beetween(41, 43),
+                    Filter.where("a").beetweenLeftInclusive(41, 43),
+                    Filter.where("a").beetweenRightInclusive(41, 43),
+                    Filter.where("a").beetweenBothInclusive(41, 43),
+                     */
                     Filter.where("a").elemMatch().eq(42),
                     Filter.where("a").elemMatch().elemMatch().eq(42),
                     // CONJUGATE FILTERS
@@ -279,10 +292,12 @@ public class NitriteDatabaseTest {
                     FluentFilter.where("a").regex("foo"),
                     FluentFilter.where("a").in("foo", "bar"),
                     FluentFilter.where("a").notIn("foo", "bar"),
+                    /*
                     FluentFilter.where("a").between(41, 43, false),
                     FluentFilter.where("a").between(41, 43, true, false),
                     FluentFilter.where("a").between(41, 43, false, true),
                     FluentFilter.where("a").between(41, 43),
+                     */
                     FluentFilter.where("a").elemMatch(FluentFilter.$.eq(42)),
                     FluentFilter.where("a").elemMatch(FluentFilter.$.elemMatch(FluentFilter.$.eq(42))),
 //                    // CONJUGATE FILTERS
@@ -302,6 +317,41 @@ public class NitriteDatabaseTest {
         }
 
     }
+
+    @Test
+    public void testRangeFilter() throws IOException {
+
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+        try (NitriteDatabase db = new NitriteDatabase(file,
+                Metadata.build().addRepository(NitriteEntryWithDoubleKey.class, Index.nonUnique("otherKey")))) {
+            NitriteEntryWithDoubleKey[] entries = new NitriteEntryWithDoubleKey[]{
+                new NitriteEntryWithDoubleKey(1, 123.01, "a"),
+                    new NitriteEntryWithDoubleKey(2, 133.03, "b"),
+                    new NitriteEntryWithDoubleKey(3, 115.5, "c"),
+                    new NitriteEntryWithDoubleKey(4, 117.4, "d"),
+                    new NitriteEntryWithDoubleKey(5, 76.2, "e"),
+                    new NitriteEntryWithDoubleKey(6, 155.5, "f"),
+                    new NitriteEntryWithDoubleKey(7, 330.2, "g"),
+                    new NitriteEntryWithDoubleKey(8, 410.2, "h"),
+                    new NitriteEntryWithDoubleKey(9, 110.3, "i"),
+                    new NitriteEntryWithDoubleKey(10, 129.4, "j")
+            };
+            for (NitriteEntryWithDoubleKey k : entries) {
+                db.insert(k);
+            }
+            List<NitriteEntryWithDoubleKey> xs = db.findStr(Filter.where("otherKey").betweenRightInclusive(115.5, 129.4), NitriteEntryWithDoubleKey.class).toList();
+            List<String> letters = new ArrayList<>();
+            for (NitriteEntryWithDoubleKey x : xs) {
+                assertTrue(x.otherKey > 115.5);
+                assertTrue(x.otherKey <= 129.4);
+                letters.add(x.someProperty);
+            }
+            letters.sort(null);
+            assertEquals("adj",  letters.stream().collect(Collectors.joining("")));
+        }
+    }
+
 
     @Test
     public void testCRUD() throws IOException {

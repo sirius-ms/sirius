@@ -22,100 +22,36 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.controller.mixins.TagController;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
-@Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
 
     /**
-     * Name of the tag category
+     * Name of the tag as defined by the corresponding TagDefinition
+     * Links tag object to their definition.
      */
     @NotNull
-    private String category;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    private String tagName;
 
     /**
-     *
+     * Optional value of the tag.
+     * <p>
+     * Generic value of the tag as defined by the corresponding TagDefinition.
+     * Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).
      */
-    @NotNull
-    private TagCategoryImport.ValueType valueType;
-
     @Nullable
-    private Boolean bool;
-
-    @Nullable
-    private Integer integer;
-
-    @Nullable
-    private Double real;
-
-    @Nullable
-    private String text;
-
-    @Nullable
-    private String date;
-
-    @Nullable
-    private String time;
-
-    public static TagBuilder builder() {
-        return new TagBuilder() {
-
-            @Override
-            public TagBuilder date(@Nullable String date) {
-                try {
-                    TagController.DATE_FORMAT.parse(date);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Illegal date value: " + date);
-                }
-                return super.date(date);
-            }
-
-            @Override
-            public TagBuilder time(@Nullable String time) {
-                try {
-                    TagController.TIME_FORMAT.parse(time);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Illegal time value: " + time);
-                }
-                return super.time(time);
-            }
-
-            @SneakyThrows
-            @Override
-            public Tag build() {
-                Tag tag = super.build();
-
-                int fieldSet = 0;
-                if (tag.getBool() != null) fieldSet |= 0x000001;
-                if (tag.getInteger() != null) fieldSet |= 0x000010;
-                if (tag.getReal() != null) fieldSet |= 0x000100;
-                if (tag.getText() != null) fieldSet |= 0x001000;
-                if (tag.getDate() != null) fieldSet |= 0x010000;
-                if (tag.getTime() != null) fieldSet |= 0x100000;
-
-                switch (tag.getValueType()) {
-                    case NONE: if (fieldSet != 0) throw new IllegalArgumentException("No values allowed."); break;
-                    case BOOLEAN: if (fieldSet != 0x000001) throw new IllegalArgumentException("Only boolean values allowed."); break;
-                    case INTEGER: if (fieldSet != 0x000010) throw new IllegalArgumentException("Only integer values allowed."); break;
-                    case DOUBLE: if (fieldSet != 0x000100) throw new IllegalArgumentException("Only floating point values allowed."); break;
-                    case STRING: if (fieldSet != 0x001000) throw new IllegalArgumentException("Only string values allowed."); break;
-                    case DATE: if (fieldSet != 0x010000) throw new IllegalArgumentException("Only date values allowed."); break;
-                    case TIME: if (fieldSet != 0x100000) throw new IllegalArgumentException("Only time values allowed."); break;
-                }
-
-                return tag;
-            }
-        };
-
-    }
-
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    private Object value;
 }

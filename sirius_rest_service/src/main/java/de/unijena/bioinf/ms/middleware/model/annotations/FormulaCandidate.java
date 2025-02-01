@@ -39,7 +39,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
-    @Schema(enumAsRef = true, name = "FormulaCandidateOptField", nullable = true)
+    @Schema(name = "FormulaCandidateOptField", nullable = true)
     public enum OptField {none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
@@ -56,6 +56,13 @@ public class FormulaCandidate {
     protected String adduct;
 
     protected Integer rank;
+    /**
+     * Normalized Sirius Score of the formula candidate.
+     * If NULL result is not available
+     */
+    @Schema(nullable = true)
+    protected Double siriusScoreNormalized;
+
     /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available

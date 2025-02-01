@@ -22,25 +22,30 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.EnumSet;
 import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/compounds/statistics")
-@Tag(name = "Compound Statistics", description = "**EXPERIMENTAL** This compound based API allows allows computing and accessing statistics for compounds (also known as a group of ion identities). " +
+@Tag(name = "Compound Statistics", description = "[EXPERIMENTAL] This compound based API allows allows computing and accessing statistics for compounds (also known as a group of ion identities). " +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
-public class CompoundStatisticsController implements StatisticsController<Compound, FoldChange.CompoundFoldChange> {
+public class CompoundStatisticsController implements StatisticsController<Compound> {
 
     @Getter
     private final ComputeService computeService;
@@ -59,19 +64,27 @@ public class CompoundStatisticsController implements StatisticsController<Compou
         return Compound.class;
     }
 
-    /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
-     *
-     * @param projectId  project-space to read from.
-     * @param compoundId id of the compound (group of ion identities) the fold changes are assigned to.
-     * @return fold changes
-     */
-    @GetMapping(value = "/foldchange/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(operationId = "computeCompoundFoldChangesExperimental")
     @Override
-    public List<FoldChange.CompoundFoldChange> getFoldChange(String projectId, String compoundId) {
-        return StatisticsController.super.getFoldChange(projectId, compoundId);
+    public Job computeFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification, EnumSet<Job.OptField> optFields) {
+        return StatisticsController.super.computeFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
     }
 
+    @Operation(operationId = "getCompoundFoldChangesExperimental")
+    @Override
+    public List<FoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+        return StatisticsController.super.getFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+    }
+
+    @Operation(operationId = "deleteCompoundFoldChangesExperimental")
+    @Override
+    public void deleteFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+        StatisticsController.super.deleteFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+    }
+
+    @Operation(operationId = "getCompoundFoldChangeTableExperimental")
+    @Override
+    public StatisticsTable getFoldChangeTable(String projectId, AggregationType aggregation, QuantMeasure quantification) {
+        return StatisticsController.super.getFoldChangeTable(projectId, aggregation, quantification);
+    }
 }

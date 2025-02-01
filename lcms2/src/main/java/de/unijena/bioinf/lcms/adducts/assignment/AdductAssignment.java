@@ -39,6 +39,14 @@ public class AdductAssignment {
         this.probabilities = probabilities;
     }
 
+    public IonType[] getIonTypes() {
+        return ionTypes;
+    }
+
+    public double[] getProbabilities() {
+        return probabilities;
+    }
+
     public IonType mostLikelyAdduct() {
         return ionTypes.length==0 ? null : ionTypes[0];
     }
@@ -76,4 +84,17 @@ public class AdductAssignment {
         return buf.toString();
     }
 
+    public AdductAssignment withAdded(IonType ionTypeLeft) {
+        for (IonType tp : ionTypes) {
+            if (tp.equals(ionTypeLeft)) return this;
+        }
+        IonType[] newIonTypes = Arrays.copyOf(ionTypes, ionTypes.length + 1);
+        double[] newProbs = Arrays.copyOf(probabilities, probabilities.length+1);
+        newIonTypes[ionTypes.length] = ionTypeLeft;
+        newProbs[probabilities.length] = 1d;
+        double sum = 0d;
+        for (double prob : newProbs) sum += prob;
+        for (int i=0; i < newProbs.length; ++i) newProbs[i] /= sum;
+        return new AdductAssignment(newIonTypes, newProbs);
+    }
 }

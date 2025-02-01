@@ -110,12 +110,6 @@ public class SiriusSubToolJob extends InstanceJob {
         }
         updateProgress(5);
         checkForInterruption();
-
-//        if (adductsOnlyMulti(exp)) {
-//            logError("Skipping instance " + inst.getId() +": SIRIUS does not support multimere or multiple charged adducts.");
-//            return;
-//        }
-
         //todo improve progress with progress merger
         final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadProjectConfig()
                 .map(c -> c.getConfigValue("AlgorithmProfile")).orElse(null));
@@ -127,7 +121,7 @@ public class SiriusSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //write results to project space
-        inst.saveSiriusResult(results.stream().map(IdentificationResult::getTree).toList());
+        inst.saveSiriusResult(results);
 
         updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.nitrite.filters.RangeFilter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.joining.JoinedReflectionIterable;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStream;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedObjectStream;
@@ -140,6 +141,7 @@ public class NitriteDatabase implements Database<Document> {
 
         return Nitrite.builder().loadModule(storeModule)
                 .loadModule(new JacksonMapperModule(module))
+                .schemaVersion(meta.getSchemaVersion())
                 .openOrCreate();
     }
 
@@ -1110,8 +1112,7 @@ public class NitriteDatabase implements Database<Document> {
                 case GTE -> FluentFilter.where(literal.getField()).gte((Comparable<?>) literal.getValues()[0]);
                 case LT -> FluentFilter.where(literal.getField()).lt((Comparable<?>) literal.getValues()[0]);
                 case LTE -> FluentFilter.where(literal.getField()).lte((Comparable<?>) literal.getValues()[0]);
-                case BETWEEN ->
-                        FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
+                case BETWEEN -> new RangeFilter(literal.getField(), (Comparable) literal.getValues()[0], (Comparable) literal.getValues()[1],(boolean)literal.getValues()[2], (boolean)literal.getValues()[3]);
                 case TEXT -> FluentFilter.where(literal.getField()).text((String) literal.getValues()[0]);
                 case REGEX -> FluentFilter.where(literal.getField()).regex((String) literal.getValues()[0]);
                 case IN ->

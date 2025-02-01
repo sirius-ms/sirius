@@ -53,6 +53,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected PropertyChangeListener listener;
     protected final SiriusGui gui;
 
+    protected boolean suppressDependencyListeners = false;
+
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
     protected Set<String> disabledReasons = new HashSet<>();
@@ -90,8 +92,8 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         add(activationButton, content);
 
         if (checkServerConnection) {
-            listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck());
-            gui.getConnectionMonitor().addConnectionStateListener(listener);
+            listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionEvent) evt).getConnectionCheck());
+            gui.getConnectionMonitor().addConnectionListener(listener);
             @Nullable ConnectionCheck check = gui.getConnectionMonitor().getCurrentCheckResult();
             if (check != null) {
                 processConnectionCheck(check);
@@ -107,9 +109,12 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         setButtonEnabled(isConnected(check), notConnectedMessage);
     }
 
-    protected void setComponentsEnabled(final boolean enabled){
+    protected void setComponentsEnabled(final boolean enabled) {
         GuiUtils.setEnabled(content, enabled);
-        listeners.forEach(e -> e.onChange(content, enabled));
+        listeners.forEach(e -> {
+            if (e instanceof ActivatableConfigPanel.ToolDependencyListener<C> && suppressDependencyListeners) return;
+            e.onChange(content, enabled);
+        });
     }
 
     protected void setButtonEnabled(final boolean enabled, @Nullable String reason) {
@@ -149,6 +154,13 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         listeners.add(listener);
     }
 
+    /**
+     * Add a listener for auto enabling tools
+     */
+    public void addToolDependencyListener(ToolDependencyListener<C> listener) {
+        addEnableChangeListener(listener);
+    }
+
 
     @FunctionalInterface
     public interface EnableChangeListener<C extends ConfigPanel> {
@@ -156,18 +168,23 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
     /**
+     * Separate interface to distinguish and suppress dependency listeners
+     */
+    public interface ToolDependencyListener<C extends ConfigPanel> extends EnableChangeListener<C> {}
+
+    /**
      * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
      * @param upstreamTool the tool which produces the data required for this tool
      * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
      */
     public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
-        this.addEnableChangeListener((c, enabled) -> {
+        this.addToolDependencyListener((c, enabled) -> {
             if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
                 upstreamTool.activationButton.doClick(0);
                 showAutoEnableInfoDialog("The '" + upstreamTool.toolName + "' tool is enabled because not all selected features contain its results, but the '" + this.toolName + "' tool needs them as input.");
             }
         });
-        upstreamTool.addEnableChangeListener((c, enabled) -> {
+        upstreamTool.addToolDependencyListener((c, enabled) -> {
             if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
                 this.activationButton.doClick(0);
                 showAutoEnableInfoDialog("The '" + this.toolName + "' tool is also disabled because it needs the results from the '" + upstreamTool.toolName + "' tool as input.");
@@ -187,10 +204,11 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
      */
     public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
         if (enable != isToolSelected()) {
+            suppressDependencyListeners = true;  // avoid annoying dialogs in the middle of preset activation
             activationButton.doClick(0);
+            suppressDependencyListeners = false;
         }
         content.applyValuesFromPreset(preset);
     }
-
 }
 

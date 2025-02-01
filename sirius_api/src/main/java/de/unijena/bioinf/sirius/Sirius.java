@@ -643,6 +643,9 @@ public class Sirius {
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
                 List<IdentificationResult> r = createIdentificationResultsAndResolveAdducts(fr, instance);//postprocess results
+                // adds normalized scores to identification results
+                FTreeMetricsHelper.computeNormalizedSiriusScores(r, fr.maxTreeWeight, fr.remainingCandidatesTreeWeightExpSumEstimate);
+
                 return r;
             } catch (RuntimeException e) {
                 LoggerFactory.getLogger(Sirius.class).error("Error in instance " + experiment.getSourceString() + ": " + e.getMessage());

@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -30,6 +29,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.SearchableDatabase;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 //here we can show fingerid options. If it becomes too much, we can change this to a setting like tabbed pane
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
+    @Getter
     private final StructureSearchStrategy structureSearchStrategy;
     private final JCheckBox pubChemFallback;
     private final JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox;
@@ -101,7 +102,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             return "APPROXIMATE";
         });
 
-        pubChemFallback.addActionListener(e -> {
+        pubChemFallback.addChangeListener(e -> {
             List.of(confLabel, confidenceModeBox).forEach(c -> c.setVisible(pubChemFallback.isSelected()));
             refreshPubChem();
         });
@@ -130,7 +131,6 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             confidenceModeBox.setSelectedItem(expansiveMode);
         }
 
-        structureSearchStrategy.getSearchDBList().checkBoxList.uncheckAll();
-        structureSearchStrategy.getSearchDBList().select(SearchableDBAnnotation.makeDB(preset.get("StructureSearchDB")));
+        structureSearchStrategy.applyValuesFromPreset(preset);
     }
 }

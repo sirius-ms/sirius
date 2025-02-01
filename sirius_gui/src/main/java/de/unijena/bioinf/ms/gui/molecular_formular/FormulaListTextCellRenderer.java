@@ -155,6 +155,11 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         }
 
         @Override
+        public Optional<Double> getSiriusScoreNormalized() {
+            return getScoreValue();
+        }
+
+        @Override
         public Optional<Double> getSiriusScore() {
             return getScoreValue();
         }

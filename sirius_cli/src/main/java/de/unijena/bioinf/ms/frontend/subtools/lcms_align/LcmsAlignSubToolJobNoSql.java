@@ -60,8 +60,7 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
@@ -90,11 +89,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Getter
     @Nullable
-    private LongList importedFeatureIds = null;
+    private LongLinkedOpenHashSet importedFeatureIds = null;
 
     @Getter
     @Nullable
-    private LongList importedCompoundIds = null;
+    private LongLinkedOpenHashSet importedCompoundIds = null;
+
 
     private final boolean saveImportedCompounds;
 
@@ -204,7 +204,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 updateProgress(totalProgress, progress, "No features");
                 return;
             }
-            importedFeatureIds = processing.getImportedFeatureIds();
+            importedFeatureIds.addAll(processing.getImportedFeatureIds());
 
             updateProgress(totalProgress, ++progress, "Detecting adducts");
             System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
@@ -242,11 +242,22 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         .filter(f -> f.getApexIntensity() != null)
                         .filter(AbstractFeature::isRTInterval)
                         .toArray(AlignedFeatures[]::new);
-                AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation);
+                AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation, bac.getStatistics().getExpectedRetentionTimeDeviation());
                 network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-                network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
-                        (compound) -> groupFeaturesToCompound(ps.getStorage(), compound, importedCids));
-                importedCompoundIds = importedCids;
+                //network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
+
+
+                network.assignNetworksAndAdductsToFeatures(
+                        SiriusJobs.getGlobalJobManager(),
+                        new OptimalAssignmentViaBeamSearch(),
+                        merged.getPolarity(),
+                        x->ps.getStorage().upsert(x),
+                        (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
+                        (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
+                );
+
+                importedCompoundIds.addAll(importedCids);
             }
 
             updateProgress(totalProgress, ++progress, "Assessing data quality");
@@ -330,8 +341,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Override
     protected NoSQLProjectSpaceManager compute() throws Exception {
-        importedFeatureIds = null;
-        importedCompoundIds = null;
+        importedFeatureIds = new LongLinkedOpenHashSet();
+        importedCompoundIds = new LongLinkedOpenHashSet();
 
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();

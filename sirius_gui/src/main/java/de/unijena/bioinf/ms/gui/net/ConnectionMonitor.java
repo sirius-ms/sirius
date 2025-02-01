@@ -24,8 +24,10 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.LicenseInfo;
 import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.ConnectionErrorClass;
+import io.sirius.ms.sdk.model.LicenseInfo;
+import lombok.Getter;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -117,6 +120,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
         fireNullAsEqualPropertyChange(new ConnectionStateEvent(old, checkResult));
+        fireNullAsEqualPropertyChange(new ConnectionEvent(old, checkResult));
     }
 
     protected void fireNullAsEqualPropertyChange(PropertyChangeEvent evt) {
@@ -130,6 +134,10 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
     public void addConnectionStateListener(PropertyChangeListener listener) {
         addPropertyChangeListener(ConnectionStateEvent.KEY, listener);
+    }
+
+    public void addConnectionListener(PropertyChangeListener listener) {
+        addPropertyChangeListener(ConnectionEvent.KEY, listener);
     }
 
     private class CheckJob extends TinyBackgroundJJob<ConnectionCheck> {
@@ -171,6 +179,28 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     }
 
 
+    public class ConnectionEvent extends PropertyChangeEvent {
+        public static final String KEY = "connection";
+
+        public ConnectionEvent(final ConnectionCheck oldCheck, final ConnectionCheck newCheck) {
+            super(ConnectionMonitor.this, KEY, new ConnectionCheckWrapper(oldCheck), new ConnectionCheckWrapper(newCheck));
+        }
+
+        @Override
+        public ConnectionCheckWrapper getNewValue() {
+            return (ConnectionCheckWrapper) super.getNewValue();
+        }
+
+        @Override
+        public ConnectionCheckWrapper getOldValue() {
+            return (ConnectionCheckWrapper) super.getOldValue();
+        }
+
+        public ConnectionCheck getConnectionCheck() {
+            return getNewValue().getConnectionCheck();
+        }
+    }
+
     public class ConnectionStateEvent extends PropertyChangeEvent {
         public static final String KEY = "connection-state";
 
@@ -185,13 +215,13 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getNewValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getNewValue();
+        public ConnectionErrorClass getNewValue() {
+            return (ConnectionErrorClass) super.getNewValue();
         }
 
         @Override
-        public ConnectionError.ErrorKlassEnum getOldValue() {
-            return (ConnectionError.ErrorKlassEnum) super.getOldValue();
+        public ConnectionErrorClass getOldValue() {
+            return (ConnectionErrorClass) super.getOldValue();
         }
 
         public ConnectionCheck getConnectionCheck() {
@@ -218,6 +248,59 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
         public ConnectionCheck getConnectionCheck() {
             return getNewValue();
+        }
+    }
+
+
+    @Getter
+    public static class ConnectionCheckWrapper {
+        private final ConnectionCheck connectionCheck;
+
+        public ConnectionCheckWrapper(ConnectionCheck connectionCheck) {
+            this.connectionCheck = connectionCheck;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof ConnectionCheckWrapper that)) return false;
+
+            if (connectionCheck == null && that.connectionCheck == null)
+                return true;
+
+            if (!(connectionCheck != null && that.connectionCheck != null))
+                return false;
+
+            if (!Objects.equals(connectionCheck.getErrors(), that.connectionCheck.getErrors()))
+                return false;
+
+            if (connectionCheck.getLicenseInfo() == null && that.connectionCheck.getLicenseInfo() == null)
+                return true;
+
+            if (!(connectionCheck.getLicenseInfo() != null && that.connectionCheck.getLicenseInfo() != null))
+                return false;
+
+            return Objects.equals(connectionCheck.getLicenseInfo().getSubscription(), that.connectionCheck.getLicenseInfo().getSubscription())
+                    && Objects.equals(connectionCheck.getLicenseInfo().getUserId(), that.connectionCheck.getLicenseInfo().getUserId())
+                    && Objects.equals(connectionCheck.getLicenseInfo().getUserEmail(), that.connectionCheck.getLicenseInfo().getUserEmail())
+                    && Objects.equals(connectionCheck.getLicenseInfo().getTerms(), that.connectionCheck.getLicenseInfo().getTerms());
+        }
+
+        @Override
+        public int hashCode() {
+            if (connectionCheck == null)
+                return 0;
+
+            LicenseInfo licenseInfo = connectionCheck.getLicenseInfo();
+            if (licenseInfo == null)
+                return Objects.hashCode(connectionCheck.getErrors());
+
+            return Objects.hash(
+                    connectionCheck.getErrors(),
+                    licenseInfo.getSubscription(),
+                    licenseInfo.getUserId(),
+                    licenseInfo.getUserEmail(),
+                    licenseInfo.getTerms()
+            );
         }
     }
 

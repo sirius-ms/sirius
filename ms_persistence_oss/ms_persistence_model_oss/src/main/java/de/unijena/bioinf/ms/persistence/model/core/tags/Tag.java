@@ -20,38 +20,150 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.tags;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.*;
 import jakarta.persistence.Id;
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
+import java.io.IOException;
+import static de.unijena.bioinf.ms.persistence.model.core.tags.ValueType.*;
+
 @ToString
+@Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Tag {
-
     @Id
-    private long tagId;
+    @Setter(AccessLevel.PACKAGE)
+    protected long tagId;
 
-    private String taggedObjectClass;
+    @NotNull
+    @Setter(AccessLevel.PACKAGE)
+    protected String taggedObjectClass;
 
-    private long taggedObjectId;
+    @SneakyThrows
+    @JsonIgnore
+    public @NotNull Class<?> getTaggedObjectClassInstance() {
+        return getClass().getClassLoader().loadClass(taggedObjectClass);
+    }
 
-    private String category;
+    @JsonIgnore
+    public void setTaggedObjectClass(@NotNull Class<?> taggedObjectClass) {
+        setTaggedObjectClass(taggedObjectClass.getName());;
+    }
 
-    private boolean bool;
+    @JsonIgnore
+    public void setTaggedObjectClass(@NotNull String taggedObjectClass) {
+        this.taggedObjectClass = taggedObjectClass;
+    }
 
-    private int int32;
+    @Setter(AccessLevel.PACKAGE)
+    protected long taggedObjectId;
 
-    private long int64;
+    @NotNull
+    @Setter(AccessLevel.PACKAGE)
+    protected String tagName;
 
-    private double real;
+    @NotNull
+    @JsonIgnore
+    protected final ValueType valueType;
 
-    private String text;
+    @Setter(AccessLevel.PACKAGE)
+    @Nullable
+    protected Object value;
+
+    public Tag(@NotNull ValueType valueType) {
+        this.valueType = valueType;
+    }
+
+    public static class Serializer extends JsonSerializer<Tag> {
+        @Override
+        public void serialize(Tag tag, JsonGenerator gen, SerializerProvider serializerProvider) throws IOException {
+            ValueType valueType = tag.getValueType();
+            gen.writeStartObject();
+
+            gen.writeNumberField("tagId", tag.getTagId());
+            gen.writeStringField("tagName", tag.getTagName());
+            gen.writeStringField("taggedObjectClass", tag.getTaggedObjectClass());
+            gen.writeNumberField("taggedObjectId", tag.getTaggedObjectId());
+
+            switch (valueType) {
+                case BOOLEAN -> {
+                    if (tag.getValue() != null)
+                        gen.writeBooleanField(valueType.getValueFieldName(), (Boolean) tag.getValue());
+                    else
+                        gen.writeNullField(valueType.getValueFieldName());
+                }
+                case INTEGER, TIME -> {
+                    if (tag.getValue() != null)
+                        gen.writeNumberField(valueType.getValueFieldName(), (Integer) tag.getValue());
+                    else
+                        gen.writeNullField(valueType.getValueFieldName());
+                }
+                case REAL -> {
+                    if (tag.getValue() != null)
+                        gen.writeNumberField(valueType.getValueFieldName(), (Double) tag.getValue());
+                    else
+                        gen.writeNullField(valueType.getValueFieldName());
+                }
+                case TEXT -> {
+                    if (tag.getValue() != null)
+                        gen.writeStringField(valueType.getValueFieldName(), (String) tag.getValue());
+                    else
+                        gen.writeNullField(valueType.getValueFieldName());
+                }
+                case DATE -> {
+                    if (tag.getValue() != null)
+                        gen.writeNumberField(valueType.getValueFieldName(), (Long) tag.getValue());
+                    else
+                        gen.writeNullField(valueType.getValueFieldName());
+                }
+
+            }
+        }
+    }
+
+    public static class Deserializer extends JsonDeserializer<Tag> {
+
+        @Override
+        public Tag deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+            // Read the entire JSON node for this ValueDefinition
+            JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+
+            Tag tag = new Tag(NONE);
+            for (ValueType type : ValueType.values()) {
+                if (type.hasValue() && node.has(type.getValueFieldName())) {
+                    tag = new Tag(type);
+                    switch (type) {
+                        case BOOLEAN -> tag.setValue(node.findValue(type.getValueFieldName()).asBoolean());
+                        case INTEGER, TIME -> tag.setValue(node.findValue(type.getValueFieldName()).asInt());
+                        case REAL -> tag.setValue(node.findValue(type.getValueFieldName()).asDouble());
+                        case TEXT -> tag.setValue(node.findValue(type.getValueFieldName()).asText());
+                        case DATE -> tag.setValue(node.findValue(type.getValueFieldName()).asLong());
+                    }
+                    break;
+                }
+            }
+
+            if (node.has("tagId"))
+                tag.setTagId(node.findValue("tagId").asLong(-1L));
+            if (node.has("tagName"))
+                tag.setTagName(node.findValue("tagName").asText(null));
+            if (node.has("taggedObjectClass"))
+                tag.setTaggedObjectClass(node.findValue("taggedObjectClass").asText(null));
+            if (node.has("taggedObjectId"))
+                tag.setTaggedObjectId(node.findValue("taggedObjectId").asLong(-1));
+
+            return tag;
+        }
+    }
+
 
 }

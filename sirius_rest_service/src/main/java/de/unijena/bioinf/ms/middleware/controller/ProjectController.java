@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
@@ -42,11 +40,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -68,7 +63,7 @@ public class ProjectController {
      * List opened project spaces.
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<ProjectInfo> getProjectSpaces() {
+    public List<ProjectInfo> getProjects() {
         return projectsProvider.listAllProjectSpaces();
     }
 
@@ -78,7 +73,7 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) {
+    public ProjectInfo getProject(@PathVariable String projectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) {
         return projectsProvider.getProjectInfoOrThrow(projectId, removeNone(optFields));
     }
 
@@ -89,9 +84,9 @@ public class ProjectController {
      * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo openProjectSpace(@PathVariable String projectId,
-                                        @Deprecated @RequestParam(required = false) String pathToProject,
-                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+    public ProjectInfo openProject(@PathVariable String projectId,
+                                   @Deprecated(forRemoval = true) @RequestParam(required = false) String pathToProject,
+                                   @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
         return projectsProvider.openProject(projectId, pathToProject, removeNone(optFields));
     }
@@ -103,9 +98,9 @@ public class ProjectController {
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo createProjectSpace(@PathVariable String projectId,
-                                          @Deprecated @RequestParam(required = false) String pathToProject,
-                                          @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+    public ProjectInfo createProject(@PathVariable String projectId,
+                                     @Deprecated(forRemoval = true) @RequestParam(required = false) String pathToProject,
+                                     @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
         return projectsProvider.createProject(projectId, pathToProject, removeNone(optFields));
     }
@@ -119,7 +114,7 @@ public class ProjectController {
      * @param projectId unique name/identifier of the  project-space to be closed.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeProjectSpace(@PathVariable String projectId) throws Throwable {
+    public void closeProject(@PathVariable String projectId) throws Throwable {
         Project<?> ps = projectsProvider.getProject(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                         "Project space with identifier '" + projectId + "' not found!"));
@@ -177,7 +172,7 @@ public class ProjectController {
 
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.
      * Possible formats (mzML, mzXML)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -185,8 +180,9 @@ public class ProjectController {
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      Project-space to import into.
      * @param localFilePaths Local files to import into project.
@@ -213,7 +209,7 @@ public class ProjectController {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project
+     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project
      * Possible formats (mzML, mzXML)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -221,8 +217,9 @@ public class ProjectController {
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'ms-data-files' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      Project to import into.
      * @param localFilePaths Local files to import into project.
@@ -286,7 +283,7 @@ public class ProjectController {
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.
      * Possible formats (ms, mgf, cef, msp)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -294,15 +291,16 @@ public class ProjectController {
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId project-space to import into.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @Deprecated(forRemoval = true)
+    @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importPreprocessedDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localPaths,
                                            @RequestParam(defaultValue = "false") boolean ignoreFormulas,
@@ -318,7 +316,7 @@ public class ProjectController {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project
      * Possible formats (ms, mgf, cef, msp)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -326,14 +324,15 @@ public class ProjectController {
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
      * <p>
-     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      project-space to import into.
      * @param localFilePaths files to import into project
      */
-    @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @Deprecated(forRemoval = true)
+    @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importPreprocessedDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
                                                @RequestParam(defaultValue = "false") boolean ignoreFormulas,
@@ -348,19 +347,22 @@ public class ProjectController {
 
 
     /**
-     * Move an existing (opened) project-space to another location.
+     * [DEPRECATED] Move an existing (opened) project-space to another location.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
      * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
      * the source project otherwise
-     * <p>
-     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
+    @Operation(
+            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
+    )
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+    public ProjectInfo copyProject(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "none") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return projectsProvider.copyProject(projectId, pathToCopiedProject, copyProjectId, removeNone(optFields));
     }
 

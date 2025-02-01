@@ -25,7 +25,7 @@ import io.sirius.ms.sdk.api.*;
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.JobProgress;
+import io.sirius.ms.sdk.model.JobState;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvent;
 import io.sirius.ms.sse.FluxToFlowBroadcast;
@@ -82,7 +82,7 @@ public class SiriusClient implements AutoCloseable {
 
     protected final SearchableDatabasesApi databases;
 
-    protected final TagCategoriesApi tagCategories;
+    protected final TagsApi tags;
 
     protected final InfoApi infos;
 
@@ -117,7 +117,7 @@ public class SiriusClient implements AutoCloseable {
         projects = new ProjectsApi(apiClient);
         runs = new RunsApi(apiClient);
         databases = new SearchableDatabasesApi(apiClient);
-        tagCategories = new TagCategoriesApi(apiClient);
+        tags = new TagsApi(apiClient);
         infos = new InfoApi(apiClient);
     }
 
@@ -146,7 +146,7 @@ public class SiriusClient implements AutoCloseable {
             interruptionCheck.check();
 
 
-        while (jobUpdate.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal()) {
+        while (jobUpdate.getProgress().getState().ordinal() <= JobState.RUNNING.ordinal()) {
             try {
                 Thread.sleep(waitTimeInSec); //todo do not busy wait
             } catch (InterruptedException e) {
@@ -294,8 +294,8 @@ public class SiriusClient implements AutoCloseable {
         return databases;
     }
 
-    public TagCategoriesApi categories() {
-        return tagCategories;
+    public TagsApi tags() {
+        return tags;
     }
 
     public InfoApi infos() {

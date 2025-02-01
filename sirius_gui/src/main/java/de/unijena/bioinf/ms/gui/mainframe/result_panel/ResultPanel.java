@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
 import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
@@ -86,13 +87,13 @@ public class ResultPanel extends JTabbedPane {
         compoundList.getSortedSource().addListEventListener(evt -> {
             if (type == null && !evt.getSourceList().isEmpty()) {
                 type = gui.applySiriusClient((c, pid) ->
-                        c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE))).getType();
+                        c.projects().getProject(pid, List.of(ProjectInfoOptField.NONE))).getType();
                 showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
             }
         });
         //Check for first time if project has already a type.
         this.type = gui.applySiriusClient((c, pid) ->
-                c.projects().getProjectSpace(pid, List.of(ProjectInfoOptField.NONE))).getType();
+                c.projects().getProject(pid, List.of(ProjectInfoOptField.NONE))).getType();
         showLcmsTab(EnumSet.of(ProjectType.ALIGNED_RUNS, ProjectType.UNALIGNED_RUNS).contains(type));
 
 
@@ -174,6 +175,8 @@ public class ResultPanel extends JTabbedPane {
 
     public void showLcmsTab(boolean show) {
         int idx = indexOfTab("LC-MS");
+        SiriusActions.ORDER_BY_QUALITY.getInstance(gui, true).setEnabled(show);
+
         if (show && idx < 0) {
             addLcmsTab();
             setSelectedIndex(0);

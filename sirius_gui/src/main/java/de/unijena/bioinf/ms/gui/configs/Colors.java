@@ -112,6 +112,7 @@ public class Colors {
 
             public static class MolecularStructures {
                 public final static Color SELECTED_SUBSTRUCTURE = Color.decode("#000000");
+                public final static Color SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT = SELECTED_SUBSTRUCTURE;
                 public final static Color BACKGROUND_STRUCTURE = Color.decode("#d9d9d9");
                 public final static Color BREAKING_BOND = Color.decode("#f570a1"); //be aware that grey/pink contrast is not good with green deficiency
             }
@@ -186,6 +187,7 @@ public class Colors {
 
             public static class MolecularStructures {
                 public final static Color SELECTED_SUBSTRUCTURE = FOREGROUND_DATA;
+                public final static Color SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT = BACKGROUND;
                 public final static Color BACKGROUND_STRUCTURE = Color.decode("#666666");
                 public final static Color BREAKING_BOND = Color.decode("#f570a1"); //be aware that grey/pink contrast is not good with green deficiency
             }
@@ -231,6 +233,7 @@ public class Colors {
     public final static Color ERROR = CUSTOM_PINK;
 
     public final static Color TEXT_WARN = CUSTOM_BLUE; //CUSTOM_ORANGE; (orange not good in light theme)
+    public final static Color TEXT_WARN_ORANGE = CUSTOM_ORANGE; //for specific text where contras is good enough and a true warning color is required.
     public final static Color TEXT_ERROR = Menu.BUTTON_HIGHLIGHT_PINK;
     public final static Color TEXT_GOOD = CUSTOM_GREEN;
     public final static Color TEXT_LINK = CUSTOM_BLUE;
@@ -327,6 +330,7 @@ public class Colors {
 
     public static class MolecularStructures {
         public final static Color SELECTED_SUBSTRUCTURE = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.SELECTED_SUBSTRUCTURE : Themes.Dark.MolecularStructures.SELECTED_SUBSTRUCTURE);
+        public final static Color SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT : Themes.Dark.MolecularStructures.SELECTED_SUBSTRUCTURE_WITH_GLOW_HIGHLIGHT);
         public final static Color BACKGROUND_STRUCTURE = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.BACKGROUND_STRUCTURE : Themes.Dark.MolecularStructures.BACKGROUND_STRUCTURE);
         public final static Color BREAKING_BOND = (THEME == Theme.LIGHT ? Themes.Light.MolecularStructures.BREAKING_BOND : Themes.Dark.MolecularStructures.BREAKING_BOND);
 

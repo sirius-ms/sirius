@@ -32,40 +32,43 @@ public class ListStatBarTableCellRenderer<L extends ListStats> extends AbstractB
 
 
     public ListStatBarTableCellRenderer(L stats) {
-        this(stats, false);
+        this(stats, PercentageMode.DEACTIVATED);
     }
 
-    public ListStatBarTableCellRenderer( L stats, boolean percentage) {
+    public ListStatBarTableCellRenderer( L stats, PercentageMode percentage) {
         this(-1, stats, percentage, false, null);
     }
 
-    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, boolean percentage) {
+    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, PercentageMode percentage) {
         this(highlightColumn, stats, percentage, false, null);
     }
 
-    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, boolean percentage, boolean printMaxValue, NumberFormat lableFormat) {
+    public ListStatBarTableCellRenderer(int highlightColumn,  L stats, PercentageMode percentage, boolean printMaxValue, NumberFormat lableFormat) {
         super(highlightColumn, percentage, printMaxValue, lableFormat);
         this.stats = stats;
     }
 
     @Override
     protected double getMax(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return stats.getMax();
+        return stats.getRangeMax();
     }
 
     @Override
     protected double getMin(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return stats.getMin();
+        return stats.getRangeMin();
     }
-
 
     protected double getSum(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
-        return percentage ? stats.getSum() : Double.NaN;
+        return stats.getSum();
     }
 
-
-    @Override
     protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
-        return (value / getSum(table, isSelected, hasFocus, row, column) * 100d);
+        return switch (percentageMode) {
+            case NO_TRANFORMATION -> value;
+            case MULTIPLY_PROBABILITIES -> value * 100d;
+            case NORMALIZE_TO_MAXIMUM -> value / stats.getMax() * 100d;
+            case NORMALIZE_TO_SUM -> value / stats.getSum() * 100d;
+            default -> Double.NaN;
+        };
     }
 }

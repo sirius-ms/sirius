@@ -19,6 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.table.list_stats;
 
+import org.jetbrains.annotations.Nullable;
+import static java.util.Objects.requireNonNullElse;
+
 /**
  * Created by fleisch on 12.05.17.
  */
@@ -27,11 +30,26 @@ public class DoubleListStats implements ListStats {
     protected double minScoreValue;
     protected double maxScoreValue;
 
+    protected final double rangeMin;
+    protected final double rangeMax;
+
     public DoubleListStats(double[] values) {
+        this(values, null, null);
+    }
+
+    public DoubleListStats(double[] values, @Nullable Double rangeMin, @Nullable Double rangeMax) {
+        this.rangeMin = requireNonNullElse(rangeMin, Double.NaN);
+        this.rangeMax = requireNonNullElse(rangeMax, Double.NaN);
         update(values);
     }
 
     public DoubleListStats() {
+        this(null, null);
+    }
+
+    public DoubleListStats(@Nullable Double rangeMin, @Nullable Double rangeMax) {
+        this.rangeMin = requireNonNullElse(rangeMin, Double.NaN);
+        this.rangeMax = requireNonNullElse(rangeMax, Double.NaN);
         reset();
     }
 
@@ -48,6 +66,16 @@ public class DoubleListStats implements ListStats {
     @Override
     public double getSum() {
         return scoreSum;
+    }
+
+    @Override
+    public double getRangeMin() {
+        return Double.isNaN(rangeMin) ? getMin() : rangeMin;
+    }
+
+    @Override
+    public double getRangeMax() {
+        return Double.isNaN(rangeMax) ? getMax() : rangeMax;
     }
 
     public DoubleListStats update(double[] values) {

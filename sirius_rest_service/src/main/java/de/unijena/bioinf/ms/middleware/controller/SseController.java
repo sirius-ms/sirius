@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvent;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,15 @@ public class SseController {
         this.sseEventService = (SseEventService) eventService;
     }
 
+    /**
+     * [INTERNAL] Listen to SSE events for job updates, progress changes and imports.
+     * <p>
+     * [INTERNAL] This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     *
+     * @param eventsToListenOn list of event types to listen on
+     * @return SseEmitter that constantly listens to events sent from the server.
+     */
+    @Operation(operationId = "listenToEventsInternal")
     @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter listenToEvents(@RequestParam(defaultValue = "JOB,PROJECT") EnumSet<ServerEvent.Type> eventsToListenOn) {
         if (eventsToListenOn == null || eventsToListenOn.isEmpty())

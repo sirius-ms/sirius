@@ -34,7 +34,7 @@ import java.util.Objects;
 @Getter
 @Builder
 public final class ProjectInfo {
-    @Schema(enumAsRef = true, name = "ProjectInfoOptField", nullable = true)
+    @Schema(name = "ProjectInfoOptField", nullable = true)
     public enum OptField {none, compatibilityInfo, sizeInformation}
 
     /**
@@ -56,7 +56,7 @@ public final class ProjectInfo {
      * Type of this project.
      * NULL if project type has not yet been specified by importing data.
      */
-    @Schema(nullable = true, enumAsRef = true)
+    @Schema(nullable = true)
     public final @Nullable ProjectType type;
 
 

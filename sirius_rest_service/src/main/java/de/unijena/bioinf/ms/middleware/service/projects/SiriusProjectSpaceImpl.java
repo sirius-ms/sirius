@@ -55,12 +55,12 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -130,12 +130,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantification(QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantificationType type, QuantificationTable.RowType rowType) {
+    public Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
@@ -146,6 +146,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId) {
         throw new UnsupportedOperationException();
     }
 
@@ -271,7 +276,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
         throw new UnsupportedOperationException();
     }
 
@@ -281,37 +286,42 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void deleteTagsFromObject(String objectId, List<String> categoryNames) {
+    public void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> findCategories() {
+    public List<Tag> findTagsByObject(Class<?> target, String objectId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> findCategoriesByType(String categoryType) {
+    public List<TagDefinition> findTags() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategory findCategoryByName(String categoryName) {
+    public List<TagDefinition> findTagsByType(String tagType) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> addCategories(List<TagCategoryImport> categories, boolean editable) {
+    public TagDefinition findTagByName(String tagName) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void deleteCategory(String categoryName) {
+    public List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategory addPossibleValuesToCategory(String categoryName, List<?> values) {
+    public void deleteTags(String tagName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values) {
         throw new UnsupportedOperationException();
     }
 
@@ -346,7 +356,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantificationType quantification) {
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 
@@ -361,7 +371,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantificationType quantification) {
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 
@@ -794,7 +804,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     public void writeFingerIdData(@NotNull Writer writer, int charge) {
         projectSpaceManager.getFingerIdData(charge).ifPresent(data -> {
             try {
-                FingerIdData.write(writer, data);
+                FingerIdData.write(writer, data, true);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting FingerIdData from project '" + projectId + "'. Message: " + e.getMessage());
