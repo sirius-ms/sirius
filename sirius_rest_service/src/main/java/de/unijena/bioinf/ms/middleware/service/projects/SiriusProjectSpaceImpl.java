@@ -276,7 +276,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
         throw new UnsupportedOperationException();
     }
 
@@ -286,7 +286,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void removeTagsFromObject(String objectId, List<String> tagNames) {
+    public void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Tag> findTagsByObject(Class<?> target, String objectId) {
         throw new UnsupportedOperationException();
     }
 

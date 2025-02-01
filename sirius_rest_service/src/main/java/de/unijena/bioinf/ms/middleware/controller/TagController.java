@@ -117,7 +117,7 @@ public class TagController {
      * @param tagName the tag definition to add the values to
      * @return the definitions of the tags that have been added
      */
-    @PutMapping(value = "/tags/{tagName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/tags/{tagName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public TagDefinition addPossibleValuesToTagDefinition(
             @PathVariable String projectId,
             @PathVariable String tagName,
@@ -139,20 +139,6 @@ public class TagController {
     public List<TagGroup> getGroups(@PathVariable String projectId, @RequestParam(required = false) String groupType) {
         if (groupType == null || groupType.isBlank())
             return projectsProvider.getProjectOrThrow(projectId).findTagGroups();
-        return projectsProvider.getProjectOrThrow(projectId).findTagGroupsByType(groupType);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return Tag groups.
-     */
-    @GetMapping(value = "/groups/type/{groupType}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<TagGroup> getGroupsByType(@PathVariable String projectId, @PathVariable String groupType) {
         return projectsProvider.getProjectOrThrow(projectId).findTagGroupsByType(groupType);
     }
 
@@ -185,7 +171,7 @@ public class TagController {
      * @param type      type of the group
      * @return the tag group that was added
      */
-    @PutMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/groups/{groupName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public TagGroup addGroup(
             @PathVariable String projectId,
             @PathVariable String groupName,

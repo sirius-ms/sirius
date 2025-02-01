@@ -30,11 +30,11 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Getter;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +55,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/compounds")
-@Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Compounds", description = "This compound based API allows to retrieve all AlignedFeatures that belong to the same "
         + "compound (also known as a group of ion identities). It also provides for each AlignedFeature the "
         + "corresponding annotation results (which are usually computed on a per-feature basis)")
 public class CompoundController implements TaggableController<Compound, Compound.OptField> {
@@ -267,6 +267,20 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
+     * [EXPERIMENTAL] Get all tags associated with this Compound
+     *
+     * @param projectId project-space to get from.
+     * @param objectId  CompoundId to get tags for.
+     * @return the tags of the requested Compound
+     */
+    @Operation(operationId = "getTagsForRunExperimental")
+    @Override
+    public List<Tag> getTags(String projectId, String objectId) {
+        return TaggableController.super.getTags(projectId, objectId);
+    }
+
+
+    /**
      *
      * [EXPERIMENTAL] Tags with the same name will be overwritten.
      * <p>
@@ -280,7 +294,7 @@ public class CompoundController implements TaggableController<Compound, Compound
     @Operation(operationId = "addTagsToCompoundExperimental")
     @PutMapping(value = "/tags/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
-    public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String compoundId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
+    public List<Tag> addTags(String projectId, String compoundId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, compoundId, tags);
     }
 
@@ -306,15 +320,15 @@ public class CompoundController implements TaggableController<Compound, Compound
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
-     * @param group     tag group name.
+     * @param groupName     tag group name.
      * @param pageable  pageable.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged compounds (group of ion identities)
      */
     @Operation(operationId = "getCompoundsByGroupExperimental")
     @Override
-    public Page<Compound> getObjectsByGroup(String projectId, String group, Pageable pageable, EnumSet<Compound.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, group, pageable, optFields);
+    public Page<Compound> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Compound.OptField> optFields) {
+        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
     }
 
     @Override

@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -36,7 +37,6 @@ import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
-@Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
 public class AlignedFeatureController implements TaggableController<AlignedFeature, AlignedFeature.OptField> {
 
@@ -894,7 +894,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         else return traceSet.get();
     }
 
-    //region tags
+    //region tags and groups
     /**
      *
      * [EXPERIMENTAL] Get features (aligned over runs) by tag.
@@ -942,6 +942,20 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
     }
 
+
+    /**
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     *
+     * @param projectId project-space to get from.
+     * @param objectId  object to get tags for.
+     * @return the tags of the requested object
+     */
+    @Operation(operationId = "getTagsForAlignedFeaturesExperimental")
+    @Override
+    public List<Tag> getTags(String projectId, String objectId) {
+        return TaggableController.super.getTags(projectId, objectId);
+    }
+
     /**
      *
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
@@ -956,7 +970,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Operation(operationId = "addTagsToAlignedFeatureExperimental")
     @PutMapping(value = "/tags/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
-    public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
+    public List<Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, alignedFeatureId, tags);
     }
 
@@ -982,7 +996,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
-     * @param group     tag group name.
+     * @param groupName     tag group name.
      * @param pageable  pageable.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
@@ -990,8 +1004,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
     @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
     @Override
-    public Page<AlignedFeature> getObjectsByGroup(String projectId, String group, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, group, pageable, optFields);
+    public Page<AlignedFeature> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
+        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
     }
 
     @Override

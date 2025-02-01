@@ -579,7 +579,7 @@ public class NoSQLProjectTest {
             Assert.assertEquals(Double.valueOf(42.0), tags.get("c3").getValue());
             Assert.assertEquals("42", tags.get("c4").getValue());
 
-            project.removeTagsFromObject(run.getRunId(), List.of("c3", "c4"));
+            project.removeTagsFromObject(run.getClass(), run.getRunId(), List.of("c3", "c4"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(2, tags.size());
 //            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
@@ -588,7 +588,7 @@ public class NoSQLProjectTest {
             Assert.assertEquals(Integer.valueOf(42), tags.get("c2").getValue());
 
             //todo Implement search
-            Page<Run> page = project.findObjectsByTag(Run.class, "tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Page<Run> page = project.findObjectsByTagFilter(Run.class, "tags.c2:[12 TO 43]", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(Long.toString(runs.getFirst().getRunId()), page.getContent().getFirst().getRunId());
             Assert.assertEquals(2, tags.size());
@@ -604,7 +604,7 @@ public class NoSQLProjectTest {
 //            Assert.assertEquals(TagDefinitionImport.ValueType.BOOLEAN, tags.get("c1").getValueType());
             Assert.assertEquals(false, tags.get("c1").getValue());
 
-            page = project.findObjectsByTag(Run.class, "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTagFilter(Run.class, "tags.c1:false", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
@@ -623,7 +623,7 @@ public class NoSQLProjectTest {
                     Tag.builder().tagName("time").value("12:00:00").build()
             ));
 
-            page = project.findObjectsByTag(Run.class, "tags.date:[2024-12-01 TO 2025-12-31] OR tags.time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTagFilter(Run.class, "tags.date:[2024-12-01 TO 2025-12-31] OR tags.time:12\\:00\\:00", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run2.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
@@ -633,7 +633,7 @@ public class NoSQLProjectTest {
 //            Assert.assertEquals(ValueType.TIME.getTagValueClass(), tags.get("time").getValue().getClass());
             Assert.assertEquals("12:00:00", tags.get("time").getValue());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.findObjectsByTag(Run.class, "", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findObjectsByTagFilter(Run.class, "", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)));
         }
 
     }
@@ -684,7 +684,7 @@ public class NoSQLProjectTest {
             watch = new StopWatch();
             watch.start();
 
-            project.findObjectsByTag(Run.class, "tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            project.findObjectsByTagFilter(Run.class, "tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
 
             watch.stop();
             System.out.println("FIND OBJ BY TAGS: " + watch);

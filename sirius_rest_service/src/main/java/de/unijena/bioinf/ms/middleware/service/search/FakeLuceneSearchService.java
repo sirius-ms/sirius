@@ -10,8 +10,7 @@ import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
@@ -40,6 +39,26 @@ public class FakeLuceneSearchService implements SearchService {
             projectSpaceLock.writeLock().unlock();
         }
     }
+
+    @Override
+    public Stream<TagDefinition> getTagDefinitions(String projectId) {
+        projectSpaceLock.readLock().lock();
+        try {
+            return projectSearchContexts.get(projectId).tagDefinitions.values().stream();
+        } finally {
+            projectSpaceLock.readLock().unlock();
+        }
+    }
+
+    public TagDefinition getTagDefinition(String projectId, String tagName) {
+        projectSpaceLock.readLock().lock();
+        try {
+            return projectSearchContexts.get(projectId).getTagDefinition(tagName);
+        } finally {
+            projectSpaceLock.readLock().unlock();
+        }
+    }
+
 
     @Override
     public void addTagDefinition(String projectId, TagDefinition tagDefinition) {
@@ -122,6 +141,14 @@ public class FakeLuceneSearchService implements SearchService {
             }
         }
 
+        public TagDefinition getTagDefinition(String tagName) {
+            lock.readLock().lock();
+            try {
+                return tagDefinitions.get(tagName);
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
 
     }
 }
