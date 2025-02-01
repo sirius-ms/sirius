@@ -7,12 +7,15 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 public interface SearchService {
 
     void indexProject(String projectId, SiriusProjectDatabaseImpl<? extends Database<?>> project);
     void closeProject(String projectId);
 
+    TagDefinition getTagDefinition(String projectId, String tagName);
+    Stream<TagDefinition> getTagDefinitions(String projectId);
     void addTagDefinition(String projectId, TagDefinition tagDefinition);
     boolean removeTagDefinition(String projectId, String tagName);
 

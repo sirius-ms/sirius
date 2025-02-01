@@ -141,9 +141,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
-            System.out.println("Start caching tags...");
             searchService.indexProject(projectId, projectSpaceManager.getProject());
-            System.out.println("Caching tags done in " + stopWatch);
         }
     }
 
@@ -915,11 +913,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.consensusAnnotationsDeNovo(AnnotationUtils.buildConsensusAnnotationsDeNovo(features));
         if (optFields.contains(Compound.OptField.customAnnotations))
             builder.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
-
         if (optFields.contains(Compound.OptField.tags)) {
-            builder.tags(project()
-                    .findTagsForObject(compound.getCompoundId())
-                    .map(this::convertToApiTag)
+            builder.tags(findTagsByObject(compound.getClass(), compound.getCompoundId())
                     .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         }
 
@@ -1083,11 +1078,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     project().findByFeatureIdStr(features.getAlignedFeatureId(), ComputedSubtools.class)
                             .findFirst().orElseGet(() -> ComputedSubtools.builder().build())
             );
-
         if (optFields.contains(AlignedFeature.OptField.tags)) {
-            builder.tags(project()
-                    .findTagsForObject(features.getAlignedFeatureId())
-                    .map(this::convertToApiTag)
+            builder.tags(findTagsByObject(features.getClass(), features.getAlignedFeatureId())
                     .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         }
         return builder.build();
@@ -1132,9 +1124,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.massAnalyzers(run.getMassAnalyzers().stream().map(InstrumentConfig::getFullName).toList());
 
         if (optFields.contains(Run.OptField.tags)) {
-            builder.tags(project()
-                    .findTagsForObject(run.getRunId())
-                    .map(this::convertToApiTag)
+            builder.tags(findTagsByObject(run.getClass(), run.getRunId())
                     .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
         }
 
@@ -1549,7 +1539,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     @SuppressWarnings("unchecked")
-    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String luceneQuery, Pageable pageable, @NotNull EnumSet<O> optFields) {
         Class<?> taggedObjectClass = convertToProjectObjectClass(target);
 
         // find id field of tagged object.
@@ -1563,12 +1553,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Filter tagFilter;
         try {
-            tagFilter = searchService.parseFindTagsByObjectType(getProjectId(), taggedObjectClass, filter);
+            tagFilter = searchService.parseFindTagsByObjectType(getProjectId(), taggedObjectClass, luceneQuery);
         } catch (Exception e) {
-            throw new ResponseStatusException(BAD_REQUEST, "Parse error: " + filter);
+            throw new ResponseStatusException(BAD_REQUEST, "Parse error: " + luceneQuery);
         }
-
-        List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> all = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).toList();
 
         Long[] objectIds = storage().findStr(tagFilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
@@ -1602,25 +1590,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (!storage().containsPrimaryKey(objId, taggedObjectClass))
                 throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
 
-            //todo keep in memeory or trust storage caching?
-            final Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefintions = storage()
-                    .findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
-                    .collect(Collectors.toMap(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition::getTagName, Function.identity()));
-
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
             for (Tag tag : tags) {
-                if (!tagDefintions.containsKey(tag.getTagName())) {
+                de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = searchService.getTagDefinition(projectId, tag.getTagName());
+
+                if (tagDef == null)
                     throw new ResponseStatusException(NOT_FOUND, "There is no TagDefinition '" + tag.getTagName() + "' in project " + projectId + ".");
-                }
-                de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = tagDefintions.get(tag.getTagName());
+
                 try {
                     Filter.FilterClause filter = Filter.and(
+                            Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
                             Filter.where("taggedObjectId").eq(objId),
                             Filter.where("tagName").eq(tag.getTagName())
                     );
-
 
                     storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .findFirst().ifPresentOrElse(existing ->
@@ -1646,36 +1630,47 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public void removeTagsFromObject(String objectId, List<String> tagNames) {
-        for (de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDefinition : storage().find(Filter.where("tagName").in(tagNames.toArray(String[]::new)), de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)) {
-            storage().removeAll(Filter.and(
-                    Filter.where("taggedObjectId").eq(Long.parseLong(objectId)),
-                    Filter.where("tagName").eq(tagDefinition.getTagName())
-            ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
-        }
+    public void removeTagsFromObject(Class<?> taggedOobjectClass, String taggedObjectId, List<String> tagNames) {
+        storage().removeAll(Filter.and(
+                Filter.where("taggedObjectClass").eq(convertToProjectObjectClass(taggedOobjectClass).getName()),
+                Filter.where("taggedObjectId").eq(Long.parseLong(taggedObjectId)),
+                Filter.where("tagName").in(tagNames.toArray(String[]::new))
+        ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
     }
 
     @SneakyThrows
     @Override
     public List<TagDefinition> findTags() {
-        return storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
-                .map(this::convertToApiDefinition).toList();
+        return searchService.getTagDefinitions(projectId).map(this::convertToApiDefinition).toList();
+    }
+
+    @Override
+    public List<Tag> findTagsByObject(@NotNull Class<?> target, @NotNull String objectId) {
+            return findTagsByObject(target, Long.parseLong(objectId)).toList();
+    }
+
+    public Stream<Tag> findTagsByObject(Class<?> target, long objectId) {
+        return project()
+                .findTagsForObject(target, objectId)
+                .map(this::convertToApiTag);
     }
 
     @SneakyThrows
     @Override
-    public List<TagDefinition> findTagsByType(String tagType) {
-        return storage().findStr(Filter.where("tagType").eq(tagType), de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
+    public List<TagDefinition> findTagsByType(@NotNull String tagType) {
+        return searchService.getTagDefinitions(projectId)
+                .filter(tagDef -> tagType.equals(tagDef.getTagType()))
                 .map(this::convertToApiDefinition).toList();
     }
 
     @SneakyThrows
     @Override
     public TagDefinition findTagByName(String tagName) {
-        return storage().findStr(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
-                .findFirst()
-                .map(this::convertToApiDefinition)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no tag definition '" + tagName + "' in project " + projectId + "."));
+        de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = searchService.getTagDefinition(projectId, tagName);
+        if (tagDef == null)
+            throw new ResponseStatusException(NOT_FOUND, "There is no tag definition '" + tagName + "' in project " + projectId + ".");
+
+        return convertToApiDefinition(tagDef);
     }
 
     @SneakyThrows
@@ -1688,29 +1683,31 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .filter(tagDef -> !existingNames.contains(tagDef.getTagName()))
                 .map(tagDef -> convertToProjectDefinition(tagDef, editable)).toList();
         storage().insertAll(filtered);
+        storage().flush(); //flush to ensure search service cache is updated before returning.
+
         return filtered.stream().map(this::convertToApiDefinition).toList();
     }
 
     @SneakyThrows
     @Override
     public void deleteTags(String tagName) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDef = storage().findStr(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class).findFirst();
-        if (tagDef.isEmpty()) {
+        de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = searchService.getTagDefinition(projectId, tagName);
+        if (tagDef == null) {
             throw new ResponseStatusException(NOT_FOUND, "No such tag: " + tagName);
         }
-        if (!tagDef.get().isEditable()) {
+        if (!tagDef.isEditable()) {
             throw new ResponseStatusException(BAD_REQUEST, "TagDefinition can not be edited: " + tagName);
         }
         storage().removeAll(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
-        storage().remove(tagDef.get());
+        storage().remove(tagDef);
+        storage().flush(); //flush to ensure search service cache is updated before returning.
     }
 
     @SuppressWarnings("unchecked")
     @SneakyThrows
     @Override
     public TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> formattedPossibleValues) {
-        de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = storage().findStr(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class)
-                .findFirst().orElse(null);
+        de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = searchService.getTagDefinition(projectId, tagName);
         if (tagDef == null)
             throw new ResponseStatusException(NOT_FOUND, "No such tag: " + tagName);
 
@@ -1721,9 +1718,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (valueDef.getValueType() == ValueType.NONE)
             throw new ResponseStatusException(BAD_REQUEST, "Can not add values to NONE type tag definition " + tagName);
 
-
         ValueFormatter<?, ?> formatter = tagDef.getValueDefinition().getValueType().getFormatter();
-
         formattedPossibleValues.stream().map(formatter::fromFormattedGeneric).forEach(val -> {
             try {
                 valueDef.addPossibleValue(val);
@@ -1734,6 +1729,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
         storage().upsert(tagDef);
+        storage().flush(); //flush to ensure search service cache is updated before returning.
         return convertToApiDefinition(tagDef);
     }
 
@@ -1743,7 +1739,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(group), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty();
-        return findObjectsByTag(target, tagGroup.get().getLuceneQuery(), pageable, optFields);
+        return findObjectsByTagFilter(target, tagGroup.get().getLuceneQuery(), pageable, optFields);
     }
 
     @SneakyThrows

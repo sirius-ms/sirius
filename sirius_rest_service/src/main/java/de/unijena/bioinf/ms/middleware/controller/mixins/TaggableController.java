@@ -33,7 +33,7 @@ import java.util.List;
 
 public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidingController {
     Class<T> getTagTarget();
-
+    //todo get by tag and get by group should be merged with usual getObject with generic lucene search query.
     /**
      * Get objects by tag.
      *
@@ -78,10 +78,38 @@ public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidi
                                     @ParameterObject Pageable pageable,
                                     @RequestParam(defaultValue = "") EnumSet<O> optFields
     ) {
-        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTag(getTagTarget(), filter, pageable, optFields);
+        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTagFilter(getTagTarget(), filter, pageable, optFields);
     }
 
-    // TODO get tags for object? or add tags opt field to aligned features or compounds?
+    /**
+     * Get group of objects by previously defined group.
+     *
+     * @param projectId project-space to delete from.
+     * @param groupName     tag group name.
+     * @param pageable  pageable.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged objects
+     */
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    default Page<T> getObjectsByGroup(@PathVariable String projectId,
+                                      @RequestParam String groupName,
+                                      @ParameterObject Pageable pageable,
+                                      @RequestParam(defaultValue = "none") EnumSet<O> optFields
+    ) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTagGroup(getTagTarget(), groupName, pageable, optFields);
+    }
+
+    /**
+     * Get all tags associated with this Object
+     *
+     * @param projectId project-space to get from.
+     * @param objectId  object to get tags for.
+     * @return the tags of the requested object
+     */
+    @GetMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    default List<Tag> getTags(@PathVariable String projectId, @PathVariable String objectId) {
+        return getProjectsProvider().getProjectOrThrow(projectId).findTagsByObject(getTagTarget(), objectId);
+    }
 
     /**
      * Tags with the same name will be overwritten.
@@ -92,9 +120,10 @@ public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidi
      * @return the tags that have been added
      */
     @PutMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    default List<? extends Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
+    default List<Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
         return getProjectsProvider().getProjectOrThrow(projectId).addTagsToObject(getTagTarget(), objectId, tags);
     }
+
 
     /**
      * Remove tag with the given name from the object with the specified ID in the specified project-space.
@@ -108,24 +137,6 @@ public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidi
                             @PathVariable String objectId,
                             @PathVariable String tagName
     ) {
-        getProjectsProvider().getProjectOrThrow(projectId).removeTagsFromObject(objectId, List.of(tagName));
-    }
-
-    /**
-     * Get objects by tag group.
-     *
-     * @param projectId project-space to delete from.
-     * @param group     tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged objects
-     */
-    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
-    default Page<T> getObjectsByGroup(@PathVariable String projectId,
-                                      @RequestParam String group,
-                                      @ParameterObject Pageable pageable,
-                                      @RequestParam(defaultValue = "none") EnumSet<O> optFields
-    ) {
-        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTagGroup(getTagTarget(), group, pageable, optFields);
+        getProjectsProvider().getProjectOrThrow(projectId).removeTagsFromObject(getTagTarget(), objectId, List.of(tagName));
     }
 }
