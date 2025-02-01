@@ -11,7 +11,5 @@
 
 * `MAX` (value: `"MAX"`)
 
-* `MEDIAN` (value: `"MEDIAN"`)
-
 
 

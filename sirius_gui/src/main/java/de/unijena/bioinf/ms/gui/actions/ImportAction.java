@@ -155,7 +155,7 @@ public class ImportAction extends AbstractGuiAction {
             }
 
             if (hasLCMS) {
-                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunsPaged(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
                 if (runs != null && runs.size() > 1) {
                     new LCMSRunDialog(mainFrame, gui, runs, false);
                 }

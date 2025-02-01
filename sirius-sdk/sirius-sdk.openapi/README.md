@@ -120,6 +120,7 @@ Class | Method | HTTP request | Description
 *CompoundStatisticsApi* | [**deleteCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
 *CompoundStatisticsApi* | [**getCompoundFoldChangeTableExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *CompoundStatisticsApi* | [**getCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangesExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Get fold changes
+*CompoundStatisticsApi* | [**getFoldChangesByCompoundExperimental**](docs/CompoundStatisticsApi.md#getFoldChangesByCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**addTagsToCompoundExperimental**](docs/CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
@@ -137,6 +138,7 @@ Class | Method | HTTP request | Description
 *FeatureStatisticsApi* | [**deleteAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#deleteAlignedFeatureFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
 *FeatureStatisticsApi* | [**getAlignedFeatureFoldChangeTableExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *FeatureStatisticsApi* | [**getAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangesExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Get fold changes
+*FeatureStatisticsApi* | [**getFoldChangesByAlignedFeatureExperimental**](docs/FeatureStatisticsApi.md#getFoldChangesByAlignedFeatureExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -227,6 +229,7 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
 *RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
+*RunsApi* | [**computeFoldChangeForBlankSubtraction**](docs/RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
 *RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
 *RunsApi* | [**getRunPageExperimental**](docs/RunsApi.md#getRunPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get all available runs in the given project-space
 *RunsApi* | [**getRunsByGroupExperimental**](docs/RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group
@@ -344,6 +347,7 @@ Class | Method | HTTP request | Description
  - [QuantTableExperimental](docs/QuantTableExperimental.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
+ - [SampleTypeFoldChangeRequest](docs/SampleTypeFoldChangeRequest.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)

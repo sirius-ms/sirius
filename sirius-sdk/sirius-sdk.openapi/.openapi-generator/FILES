@@ -99,6 +99,7 @@ docs/QuantTableExperimental.md
 docs/Run.md
 docs/RunOptField.md
 docs/RunsApi.md
+docs/SampleTypeFoldChangeRequest.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -247,6 +248,7 @@ src/main/java/io/sirius/ms/sdk/model/QuantRowType.java
 src/main/java/io/sirius/ms/sdk/model/QuantTableExperimental.java
 src/main/java/io/sirius/ms/sdk/model/Run.java
 src/main/java/io/sirius/ms/sdk/model/RunOptField.java
+src/main/java/io/sirius/ms/sdk/model/SampleTypeFoldChangeRequest.java
 src/main/java/io/sirius/ms/sdk/model/SearchableDatabaseParameters.java
 src/main/java/io/sirius/ms/sdk/model/SimplePeak.java
 src/main/java/io/sirius/ms/sdk/model/Sirius.java
