@@ -3,7 +3,7 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.CompoundFoldChange;
+import io.sirius.ms.sdk.model.FoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.QuantMeasure;
@@ -351,7 +351,7 @@ public class CompoundStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return List&lt;CompoundFoldChange&gt;
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
@@ -392,7 +392,7 @@ public class CompoundStatisticsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -405,11 +405,11 @@ public class CompoundStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return List&lt;CompoundFoldChange&gt;
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<CompoundFoldChange> getCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
+    public List<FoldChange> getCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).bodyToFlux(localVarReturnType).collectList().block();
     }
 
@@ -422,11 +422,11 @@ public class CompoundStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return ResponseEntity&lt;List&lt;CompoundFoldChange&gt;&gt;
+     * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<CompoundFoldChange>> getCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
+    public ResponseEntity<List<FoldChange>> getCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).toEntityList(localVarReturnType).block();
     }
 

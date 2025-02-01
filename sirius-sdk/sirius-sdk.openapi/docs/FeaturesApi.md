@@ -44,6 +44,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesPaged**](FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
+| [**getTagsForAlignedFeaturesExperimental**](FeaturesApi.md#getTagsForAlignedFeaturesExperimental) | **GET** /api/projects/{projectId}/aligned-features/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Object |
 | [**getTracesExperimental**](FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId) |
 | [**removeTagFromAlignedFeatureExperimental**](FeaturesApi.md#removeTagFromAlignedFeatureExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space |
 
@@ -601,7 +602,7 @@ No authorization required
 
 ## getAlignedFeaturesByGroupExperimental
 
-> PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(projectId, group, page, size, sort, optFields)
+> PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, optFields)
 
 [EXPERIMENTAL] Get features (aligned over runs) by tag group
 
@@ -624,13 +625,13 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        String group = "group_example"; // String | tag group name.
+        String groupName = "groupName_example"; // String | tag group name.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByGroupExperimental(projectId, group, page, size, sort, optFields);
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesByGroupExperimental");
@@ -649,7 +650,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **group** | **String**| tag group name. | |
+| **groupName** | **String**| tag group name. | |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
@@ -681,7 +682,7 @@ No authorization required
 
 [EXPERIMENTAL] Get features (aligned over runs) by tag
 
-[EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;tagName&lt;/strong&gt; - name of the tag&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tagName:my_tag&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(tagName:hello || tagName:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+[EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -2921,6 +2922,74 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
+
+
+## getTagsForAlignedFeaturesExperimental
+
+> List&lt;Tag&gt; getTagsForAlignedFeaturesExperimental(projectId, objectId)
+
+[EXPERIMENTAL] Get all tags associated with this Object
+
+[EXPERIMENTAL] Get all tags associated with this Object
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to get from.
+        String objectId = "objectId_example"; // String | object to get tags for.
+        try {
+            List<Tag> result = apiInstance.getTagsForAlignedFeaturesExperimental(projectId, objectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getTagsForAlignedFeaturesExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to get from. | |
+| **objectId** | **String**| object to get tags for. | |
+
+### Return type
+
+[**List&lt;Tag&gt;**](Tag.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tags of the requested object |  -  |
 
 
 ## getTracesExperimental

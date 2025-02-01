@@ -3,7 +3,7 @@ package io.sirius.ms.sdk.api;
 import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.FoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.QuantMeasure;
@@ -351,7 +351,7 @@ public class FeatureStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return List&lt;AlignedFeatureFoldChange&gt;
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getAlignedFeatureFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
@@ -392,7 +392,7 @@ public class FeatureStatisticsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/statistics/foldchanges", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -405,11 +405,11 @@ public class FeatureStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return List&lt;AlignedFeatureFoldChange&gt;
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeatureFoldChange> getAlignedFeatureFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+    public List<FoldChange> getAlignedFeatureFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).bodyToFlux(localVarReturnType).collectList().block();
     }
 
@@ -422,11 +422,11 @@ public class FeatureStatisticsApi {
      * @param rightGroupName name of the right group.
      * @param aggregation The aggregation parameter
      * @param quantification The quantification parameter
-     * @return ResponseEntity&lt;List&lt;AlignedFeatureFoldChange&gt;&gt;
+     * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeatureFoldChange>> getAlignedFeatureFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureFoldChange> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureFoldChange>() {};
+    public ResponseEntity<List<FoldChange>> getAlignedFeatureFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
         return getAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).toEntityList(localVarReturnType).block();
     }
 

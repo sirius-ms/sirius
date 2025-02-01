@@ -232,7 +232,7 @@ No authorization required
 
 ## getAlignedFeatureFoldChangesExperimental
 
-> List&lt;AlignedFeatureFoldChange&gt; getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification)
+> List&lt;FoldChange&gt; getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification)
 
 [EXPERIMENTAL] Get fold changes
 
@@ -260,7 +260,7 @@ public class Example {
         AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | 
         QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | 
         try {
-            List<AlignedFeatureFoldChange> result = apiInstance.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+            List<FoldChange> result = apiInstance.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeatureStatisticsApi#getAlignedFeatureFoldChangesExperimental");
@@ -286,7 +286,7 @@ public class Example {
 
 ### Return type
 
-[**List&lt;AlignedFeatureFoldChange&gt;**](AlignedFeatureFoldChange.md)
+[**List&lt;FoldChange&gt;**](FoldChange.md)
 
 ### Authorization
 

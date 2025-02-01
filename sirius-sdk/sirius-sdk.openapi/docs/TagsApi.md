@@ -4,14 +4,13 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addGroup**](TagsApi.md#addGroup) | **PUT** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project |
-| [**addPossibleValuesToTagDefinition**](TagsApi.md#addPossibleValuesToTagDefinition) | **PUT** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project |
+| [**addGroup**](TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project |
+| [**addPossibleValuesToTagDefinition**](TagsApi.md#addPossibleValuesToTagDefinition) | **PATCH** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project |
 | [**createTags**](TagsApi.md#createTags) | **PUT** /api/projects/{projectId}/tags | [EXPERIMENTAL] Add tags to the project |
 | [**deleteGroup**](TagsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space |
 | [**deleteTag**](TagsApi.md#deleteTag) | **DELETE** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space |
 | [**getGroupByName**](TagsApi.md#getGroupByName) | **GET** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Get tag group by name in the given project-space |
 | [**getGroups**](TagsApi.md#getGroups) | **GET** /api/projects/{projectId}/groups | [EXPERIMENTAL] Get all tag based groups in the given project-space |
-| [**getGroupsByType**](TagsApi.md#getGroupsByType) | **GET** /api/projects/{projectId}/groups/type/{groupType} | [EXPERIMENTAL] Get tag groups by type in the given project-space |
 | [**getTag**](TagsApi.md#getTag) | **GET** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Get tag definition by its name in the given project-space |
 | [**getTags**](TagsApi.md#getTags) | **GET** /api/projects/{projectId}/tags | [EXPERIMENTAL] Get all tag definitions in the given project-space |
 
@@ -495,74 +494,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Groups. |  -  |
-
-
-## getGroupsByType
-
-> List&lt;TagGroup&gt; getGroupsByType(projectId, groupType)
-
-[EXPERIMENTAL] Get tag groups by type in the given project-space
-
-[EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.TagsApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        TagsApi apiInstance = new TagsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String groupType = "groupType_example"; // String | type of the group
-        try {
-            List<TagGroup> result = apiInstance.getGroupsByType(projectId, groupType);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling TagsApi#getGroupsByType");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **groupType** | **String**| type of the group | |
-
-### Return type
-
-[**List&lt;TagGroup&gt;**](TagGroup.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Tag groups. |  -  |
 
 
 ## getTag
