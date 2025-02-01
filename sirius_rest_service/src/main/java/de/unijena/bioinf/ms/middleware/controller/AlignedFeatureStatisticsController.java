@@ -46,7 +46,7 @@ import java.util.List;
         "[EXPERIMENTAL] This feature based API allows computing and accessing statistics for features (aligned over runs)." +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
-public class AlignedFeatureStatisticsController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange> {
+public class AlignedFeatureStatisticsController implements StatisticsController<AlignedFeature> {
 
     @Getter
     private final ComputeService computeService;
@@ -73,7 +73,7 @@ public class AlignedFeatureStatisticsController implements StatisticsController<
 
     @Operation(operationId = "getAlignedFeatureFoldChangesExperimental")
     @Override
-    public List<FoldChange.AlignedFeatureFoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+    public List<FoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
         return StatisticsController.super.getFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
 

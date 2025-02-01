@@ -36,7 +36,7 @@ import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
-public interface StatisticsController<T, F extends FoldChange> extends ProjectProvidingController, ComputeServiceController {
+public interface StatisticsController<T> extends ProjectProvidingController, ComputeServiceController {
 
 
     Class<T> getTarget();
@@ -78,7 +78,7 @@ public interface StatisticsController<T, F extends FoldChange> extends ProjectPr
      * @param rightGroupName          name of the right group.
      */
     @GetMapping(value = "/foldchanges")
-    default List<F>  getFoldChanges(
+    default List<FoldChange>  getFoldChanges(
             @PathVariable String projectId,
             @NotNull @RequestParam String leftGroupName,
             @NotNull @RequestParam String rightGroupName,

@@ -20,37 +20,47 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.statistics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
 @Getter
 @Setter
 @ToString
 public abstract class FoldChange extends Statistics implements ForeignKey {
 
-    protected long foreignId;
-
     protected double foldChange;
 
-    @AllArgsConstructor
+    @NoArgsConstructor
     @SuperBuilder
     @Getter
     @Setter
     @ToString
-    public static class CompoundFoldChange extends FoldChange implements CompoundForeignKey {
+    public static class CompoundFoldChange extends FoldChange {
+        protected long compoundId;
 
+        @JsonIgnore
+        @Override
+        public long getForeignId() {
+            return compoundId;
+        }
     }
 
-    @AllArgsConstructor
+    @NoArgsConstructor
     @SuperBuilder
     @Getter
     @Setter
     @ToString
-    public static class AlignedFeaturesFoldChange extends FoldChange implements AlignedFeaturesForeignKey {
+    public static class AlignedFeaturesFoldChange extends FoldChange {
+        protected long alignedFeatureId;
 
+        @JsonIgnore
+        @Override
+        public long getForeignId() {
+            return alignedFeatureId;
+        }
     }
 
 }
