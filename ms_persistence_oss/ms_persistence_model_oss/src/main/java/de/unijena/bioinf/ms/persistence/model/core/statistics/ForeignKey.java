@@ -20,24 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.statistics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public interface ForeignKey {
 
+    @JsonIgnore
     long getForeignId();
-
-    interface CompoundForeignKey extends ForeignKey {
-
-        default long getCompoundId() {
-            return getForeignId();
-        }
-
-    }
-
-    interface AlignedFeaturesForeignKey extends ForeignKey {
-
-        default long getAlignedFeatureId() {
-            return getForeignId();
-        }
-
-    }
-
 }

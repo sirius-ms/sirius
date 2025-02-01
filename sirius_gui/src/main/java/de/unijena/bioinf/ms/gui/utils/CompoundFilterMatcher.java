@@ -99,7 +99,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesFoldChangeFilter(item, filterModel)) return false;
 
         if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
-            AlignedFeatureQuality qualityReport = item.getQualityReport();
+            AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
             if (qualityReport != null) { //always allow to pass the filter if now quality data is available
                 Map<String, Category> categories = qualityReport.getCategories();
                 for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
@@ -149,7 +149,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (k == 0)
             return false;
 
-        final PageStructureCandidateFormula candidates = item.getStructureCandidatesPage(k, false);
+        final PagedModelStructureCandidateFormula candidates = item.getStructureCandidatesPage(k, false);
 
         if (candidates == null || candidates.getContent() == null || candidates.getContent().isEmpty())
             return false;

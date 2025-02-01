@@ -44,9 +44,11 @@ public class MultipleCharges {
             if (d.getIsotopePattern()!=null) {
                 decision = decision.combine(checkForMultipleCharges(d.getIsotopePattern()));
             }
+            /* We do not longer use MSMS for multiple charged detection
             if (d.getMsnSpectra()!=null && d.getMsnSpectra().size()>0) {
                 decision = decision.combine(checkForMultipleCharges(d.getMsnSpectra()));
             }
+             */
         }
         return decision;
     }

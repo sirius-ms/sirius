@@ -2,7 +2,7 @@
 
 SIRIUS Nightsky API
 
-- API version: 2.1
+- API version: 3.1
 
 - Generator version: 7.6.0
 
@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>6.1.0-SNAPSHOT</version>
+  <version>3.1+sirius6.2.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:6.1.0-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-6.1.0-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.2.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -116,79 +116,70 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *ActuatorApi* | [**health**](docs/ActuatorApi.md#health) | **GET** /actuator/health | Actuator web endpoint &#39;health&#39;
 *ActuatorApi* | [**shutdown**](docs/ActuatorApi.md#shutdown) | **POST** /actuator/shutdown | Actuator web endpoint &#39;shutdown&#39;
-*CompoundStatisticsApi* | [**computeFoldChange**](docs/CompoundStatisticsApi.md#computeFoldChange) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs
-*CompoundStatisticsApi* | [**deleteFoldChange**](docs/CompoundStatisticsApi.md#deleteFoldChange) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Delete fold change
-*CompoundStatisticsApi* | [**getFoldChange**](docs/CompoundStatisticsApi.md#getFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/{compoundId} | **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
-*CompoundStatisticsApi* | [**getFoldChangeTable**](docs/CompoundStatisticsApi.md#getFoldChangeTable) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space
-*CompoundStatisticsApi* | [**listFoldChange**](docs/CompoundStatisticsApi.md#listFoldChange) | **GET** /api/projects/{projectId}/compounds/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space
+*CompoundStatisticsApi* | [**computeCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#computeCompoundFoldChangesExperimental) | **PUT** /api/projects/{projectId}/compounds/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*CompoundStatisticsApi* | [**deleteCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*CompoundStatisticsApi* | [**getCompoundFoldChangeTableExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
+*CompoundStatisticsApi* | [**getCompoundFoldChangesExperimental**](docs/CompoundStatisticsApi.md#getCompoundFoldChangesExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Get fold changes
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
-*CompoundsApi* | [**addGroup1**](docs/CompoundsApi.md#addGroup1) | **PUT** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
-*CompoundsApi* | [**addTags1**](docs/CompoundsApi.md#addTags1) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | Tags with the same category name will be overwritten
+*CompoundsApi* | [**addTagsToCompoundExperimental**](docs/CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
-*CompoundsApi* | [**deleteGroup1**](docs/CompoundsApi.md#deleteGroup1) | **DELETE** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-*CompoundsApi* | [**deleteTags1**](docs/CompoundsApi.md#deleteTags1) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the compound (group of ion identities) with the specified ID in the specified project-space
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
-*CompoundsApi* | [**getCompoundTraces**](docs/CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | 
+*CompoundsApi* | [**getCompoundQuantTableExperimental**](docs/CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds
+*CompoundsApi* | [**getCompoundQuantTableRowExperimental**](docs/CompoundsApi.md#getCompoundQuantTableRowExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given compound
+*CompoundsApi* | [**getCompoundTracesExperimental**](docs/CompoundsApi.md#getCompoundTracesExperimental) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | [EXPERIMENTAL] Returns the traces of the given compound
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
+*CompoundsApi* | [**getCompoundsByGroupExperimental**](docs/CompoundsApi.md#getCompoundsByGroupExperimental) | **GET** /api/projects/{projectId}/compounds/grouped | [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
+*CompoundsApi* | [**getCompoundsByTagExperimental**](docs/CompoundsApi.md#getCompoundsByTagExperimental) | **GET** /api/projects/{projectId}/compounds/tagged | [EXPERIMENTAL] Get compounds (group of ion identities) by tag
 *CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
-*CompoundsApi* | [**getGroupByName1**](docs/CompoundsApi.md#getGroupByName1) | **GET** /api/projects/{projectId}/compounds/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space
-*CompoundsApi* | [**getGroups1**](docs/CompoundsApi.md#getGroups1) | **GET** /api/projects/{projectId}/compounds/groups | **EXPERIMENTAL** Get all tag category groups in the given project-space
-*CompoundsApi* | [**getGroupsByType1**](docs/CompoundsApi.md#getGroupsByType1) | **GET** /api/projects/{projectId}/compounds/groups/type/{groupType} | **EXPERIMENTAL** Get tag groups by type in the given project-space
-*CompoundsApi* | [**getQuantification**](docs/CompoundsApi.md#getQuantification) | **GET** /api/projects/{projectId}/compounds/quantification | Returns the full quantification table.
-*CompoundsApi* | [**getQuantificationRow**](docs/CompoundsApi.md#getQuantificationRow) | **GET** /api/projects/{projectId}/compounds/{compoundId}/quantification | Returns a single quantification table row for the given feature.
-*CompoundsApi* | [**objectsByGroup1**](docs/CompoundsApi.md#objectsByGroup1) | **GET** /api/projects/{projectId}/compounds/grouped | **EXPERIMENTAL** Get compounds (group of ion identities) by tag group
-*CompoundsApi* | [**objectsByTag1**](docs/CompoundsApi.md#objectsByTag1) | **GET** /api/projects/{projectId}/compounds/tagged | **EXPERIMENTAL** Get compounds (group of ion identities) by tag
-*FeatureStatisticsApi* | [**computeFoldChange1**](docs/FeatureStatisticsApi.md#computeFoldChange1) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | **EXPERIMENTAL** Compute the fold change between two groups of runs
-*FeatureStatisticsApi* | [**deleteFoldChange1**](docs/FeatureStatisticsApi.md#deleteFoldChange1) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Delete fold change
-*FeatureStatisticsApi* | [**getFoldChange1**](docs/FeatureStatisticsApi.md#getFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/{alignedFeatureId} | **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs)
-*FeatureStatisticsApi* | [**getFoldChangeTable1**](docs/FeatureStatisticsApi.md#getFoldChangeTable1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange | **EXPERIMENTAL** Get table of all fold changes in the project space
-*FeatureStatisticsApi* | [**listFoldChange1**](docs/FeatureStatisticsApi.md#listFoldChange1) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchange/page | **EXPERIMENTAL** Page of all fold changes in the project space
+*CompoundsApi* | [**getTagsForCompoundExperimental**](docs/CompoundsApi.md#getTagsForCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Compound
+*CompoundsApi* | [**removeTagFromCompoundExperimental**](docs/CompoundsApi.md#removeTagFromCompoundExperimental) | **DELETE** /api/projects/{projectId}/compounds/tags/{compoundId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the compound (group of ion identities) with the specified ID in the specified project-space
+*FeatureStatisticsApi* | [**computeAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#computeAlignedFeatureFoldChangesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs
+*FeatureStatisticsApi* | [**deleteAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#deleteAlignedFeatureFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes
+*FeatureStatisticsApi* | [**getAlignedFeatureFoldChangeTableExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
+*FeatureStatisticsApi* | [**getAlignedFeatureFoldChangesExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangesExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Get fold changes
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
-*FeaturesApi* | [**addGroup2**](docs/FeaturesApi.md#addGroup2) | **PUT** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
-*FeaturesApi* | [**addTags2**](docs/FeaturesApi.md#addTags2) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
+*FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
-*FeaturesApi* | [**deleteGroup2**](docs/FeaturesApi.md#deleteGroup2) | **DELETE** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-*FeaturesApi* | [**deleteTags2**](docs/FeaturesApi.md#deleteTags2) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
+*FeaturesApi* | [**getAdductNetworkWithMergedTracesExperimental**](docs/FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
+*FeaturesApi* | [**getAlignedFeatureQualityExperimental**](docs/FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
 *FeaturesApi* | [**getAlignedFeatures**](docs/FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space.
+*FeaturesApi* | [**getAlignedFeaturesByGroupExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group
+*FeaturesApi* | [**getAlignedFeaturesByTagExperimental**](docs/FeaturesApi.md#getAlignedFeaturesByTagExperimental) | **GET** /api/projects/{projectId}/aligned-features/tagged | [EXPERIMENTAL] Get features (aligned over runs) by tag
 *FeaturesApi* | [**getAlignedFeaturesPaged**](docs/FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space.
-*FeaturesApi* | [**getAlignedFeaturesQuality**](docs/FeaturesApi.md#getAlignedFeaturesQuality) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-*FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+*FeaturesApi* | [**getBestMatchingCompoundClasses**](docs/FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId
 *FeaturesApi* | [**getCanopusPrediction**](docs/FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
 *FeaturesApi* | [**getDeNovoStructureCandidates**](docs/FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
 *FeaturesApi* | [**getDeNovoStructureCandidatesByFormula**](docs/FeaturesApi.md#getDeNovoStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
 *FeaturesApi* | [**getDeNovoStructureCandidatesByFormulaPaged**](docs/FeaturesApi.md#getDeNovoStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page | Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
 *FeaturesApi* | [**getDeNovoStructureCandidatesPaged**](docs/FeaturesApi.md#getDeNovoStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/page | Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
-*FeaturesApi* | [**getFingerprintPrediction**](docs/FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
-*FeaturesApi* | [**getFormulaAnnotatedMsMsData**](docs/FeaturesApi.md#getFormulaAnnotatedMsMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata | Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
-*FeaturesApi* | [**getFormulaAnnotatedSpectrum**](docs/FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+*FeaturesApi* | [**getFeatureQuantTableExperimental**](docs/FeaturesApi.md#getFeatureQuantTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/quant-table | [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+*FeaturesApi* | [**getFingerprintPrediction**](docs/FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
+*FeaturesApi* | [**getFormulaAnnotatedMsMsData**](docs/FeaturesApi.md#getFormulaAnnotatedMsMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata | Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
+*FeaturesApi* | [**getFormulaAnnotatedSpectrum**](docs/FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e
 *FeaturesApi* | [**getFormulaCandidate**](docs/FeaturesApi.md#getFormulaCandidate) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId} | FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getFormulaCandidates**](docs/FeaturesApi.md#getFormulaCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas | List of FormulaResultContainers available for this feature with minimal information.
 *FeaturesApi* | [**getFormulaCandidatesPaged**](docs/FeaturesApi.md#getFormulaCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/page | Page of FormulaResultContainers available for this feature with minimal information.
-*FeaturesApi* | [**getFragTree**](docs/FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
-*FeaturesApi* | [**getGroupByName2**](docs/FeaturesApi.md#getGroupByName2) | **GET** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space
-*FeaturesApi* | [**getGroups2**](docs/FeaturesApi.md#getGroups2) | **GET** /api/projects/{projectId}/aligned-features/groups | **EXPERIMENTAL** Get all tag category groups in the given project-space
-*FeaturesApi* | [**getGroupsByType2**](docs/FeaturesApi.md#getGroupsByType2) | **GET** /api/projects/{projectId}/aligned-features/groups/type/{groupType} | **EXPERIMENTAL** Get tag groups by type in the given project-space
-*FeaturesApi* | [**getIsotopePatternAnnotation**](docs/FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-*FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
+*FeaturesApi* | [**getFragTree**](docs/FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier  
+*FeaturesApi* | [**getIsotopePatternAnnotation**](docs/FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information for given formulaId  
+*FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formulaId
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
-*FeaturesApi* | [**getQuantification1**](docs/FeaturesApi.md#getQuantification1) | **GET** /api/projects/{projectId}/aligned-features/quantification | Returns the full quantification table.
-*FeaturesApi* | [**getQuantificationRow1**](docs/FeaturesApi.md#getQuantificationRow1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature.
-*FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+*FeaturesApi* | [**getQuantTableRowExperimental**](docs/FeaturesApi.md#getQuantTableRowExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
+*FeaturesApi* | [**getSiriusFragTreeInternal**](docs/FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
 *FeaturesApi* | [**getSpectralLibraryMatch**](docs/FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesPaged**](docs/FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesSummary**](docs/FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-*FeaturesApi* | [**getStructureAnnotatedMsData**](docs/FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-*FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+*FeaturesApi* | [**getStructureAnnotatedMsDataExperimental**](docs/FeaturesApi.md#getStructureAnnotatedMsDataExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
+*FeaturesApi* | [**getStructureAnnotatedSpectrumExperimental**](docs/FeaturesApi.md#getStructureAnnotatedSpectrumExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormulaPaged**](docs/FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesPaged**](docs/FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
-*FeaturesApi* | [**getTraces**](docs/FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | Returns the traces of the given feature.
-*FeaturesApi* | [**objectsByGroup2**](docs/FeaturesApi.md#objectsByGroup2) | **GET** /api/projects/{projectId}/aligned-features/grouped | **EXPERIMENTAL** Get features (aligned over runs) by tag group
-*FeaturesApi* | [**objectsByTag2**](docs/FeaturesApi.md#objectsByTag2) | **GET** /api/projects/{projectId}/aligned-features/tagged | **EXPERIMENTAL** Get features (aligned over runs) by tag
+*FeaturesApi* | [**getTagsForAlignedFeaturesExperimental**](docs/FeaturesApi.md#getTagsForAlignedFeaturesExperimental) | **GET** /api/projects/{projectId}/aligned-features/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Object
+*FeaturesApi* | [**getTracesExperimental**](docs/FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+*FeaturesApi* | [**removeTagFromAlignedFeatureExperimental**](docs/FeaturesApi.md#removeTagFromAlignedFeatureExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
 *GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
@@ -200,13 +191,13 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.
-*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | Get all (non-default) job configuration names
+*JobsApi* | [**getJobConfigNames**](docs/JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names  
 *JobsApi* | [**getJobConfigs**](docs/JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**saveJobConfig**](docs/JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
-*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input.
+*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | [DEPRECATED] Start computation for given command and input
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
 *JobsApi* | [**startJobFromConfig**](docs/JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config.
 *LoginAndAccountApi* | [**getAccountInfo**](docs/LoginAndAccountApi.md#getAccountInfo) | **GET** /api/account/ | Get information about the account currently logged in.
@@ -218,65 +209,64 @@ Class | Method | HTTP request | Description
 *LoginAndAccountApi* | [**openPortal**](docs/LoginAndAccountApi.md#openPortal) | **GET** /api/account/openPortal | Open User portal in browser.
 *LoginAndAccountApi* | [**selectSubscription**](docs/LoginAndAccountApi.md#selectSubscription) | **PUT** /api/account/subscriptions/select-active | Select a subscription as active subscription to be used for computations.
 *LoginAndAccountApi* | [**signUp**](docs/LoginAndAccountApi.md#signUp) | **GET** /api/account/signUp | Open SignUp window in system browser and return signUp link.
-*ProjectsApi* | [**closeProjectSpace**](docs/ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application
-*ProjectsApi* | [**copyProjectSpace**](docs/ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | Move an existing (opened) project-space to another location.
-*ProjectsApi* | [**createProjectSpace**](docs/ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
+*ProjectsApi* | [**closeProject**](docs/ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application
+*ProjectsApi* | [**copyProject**](docs/ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+*ProjectsApi* | [**createProject**](docs/ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId.
 *ProjectsApi* | [**getCanopusClassyFireData**](docs/ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes
 *ProjectsApi* | [**getCanopusNpcData**](docs/ProjectsApi.md#getCanopusNpcData) | **GET** /api/projects/{projectId}/npc-data | Get CANOPUS prediction vector definition for NPC classes
 *ProjectsApi* | [**getFingerIdData**](docs/ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition
-*ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
-*ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
+*ProjectsApi* | [**getProject**](docs/ProjectsApi.md#getProject) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
+*ProjectsApi* | [**getProjects**](docs/ProjectsApi.md#getProjects) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 *ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
-*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job
-*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
+*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job
+*ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
 *ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
 *ProjectsApi* | [**importPreprocessedDataAsJob**](docs/ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job.
-*ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
-*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
-*ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*RunsApi* | [**addGroup**](docs/RunsApi.md#addGroup) | **PUT** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Group tags in the project
-*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | **EXPERIMENTAL** Add tags to a run in the project
-*RunsApi* | [**computeFoldChangeForBlankSubtraction**](docs/RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
-*RunsApi* | [**deleteGroup**](docs/RunsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-*RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the run with the specified ID in the specified project-space
-*RunsApi* | [**getGroupByName**](docs/RunsApi.md#getGroupByName) | **GET** /api/projects/{projectId}/runs/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space
-*RunsApi* | [**getGroups**](docs/RunsApi.md#getGroups) | **GET** /api/projects/{projectId}/runs/groups | **EXPERIMENTAL** Get all tag category groups in the given project-space
-*RunsApi* | [**getGroupsByType**](docs/RunsApi.md#getGroupsByType) | **GET** /api/projects/{projectId}/runs/groups/type/{groupType} | **EXPERIMENTAL** Get tag groups by type in the given project-space
-*RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | **EXPERIMENTAL** Get run with the given identifier from the specified project-space.
-*RunsApi* | [**getRunsPaged**](docs/RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | **EXPERIMENTAL** Get all available runs in the given project-space.
-*RunsApi* | [**objectsByGroup**](docs/RunsApi.md#objectsByGroup) | **GET** /api/projects/{projectId}/runs/grouped | **EXPERIMENTAL** Get runs by tag group
-*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **GET** /api/projects/{projectId}/runs/tagged | **EXPERIMENTAL** Get runs by tag
-*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
+*ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job
+*ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
+*ProjectsApi* | [**openProject**](docs/ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*RunsApi* | [**addTagsToRunExperimental**](docs/RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project
+*RunsApi* | [**getRunExperimental**](docs/RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space
+*RunsApi* | [**getRunPageExperimental**](docs/RunsApi.md#getRunPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get all available runs in the given project-space
+*RunsApi* | [**getRunsByGroupExperimental**](docs/RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group
+*RunsApi* | [**getRunsByTagExperimental**](docs/RunsApi.md#getRunsByTagExperimental) | **GET** /api/projects/{projectId}/runs/tagged | [EXPERIMENTAL] Get runs by tag
+*RunsApi* | [**getTagsForRunExperimental**](docs/RunsApi.md#getTagsForRunExperimental) | **GET** /api/projects/{projectId}/runs/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Run
+*RunsApi* | [**removeTagFromRunExperimental**](docs/RunsApi.md#removeTagFromRunExperimental) | **DELETE** /api/projects/{projectId}/runs/tags/{runId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the run with the specified ID in the specified project-space
+*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | DEPRECATED: this endpoint is based on local file paths and will likely be replaced in future versions of this API.
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
-*SearchableDatabasesApi* | [**importIntoDatabaseAsJob**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
-*TagCategoriesApi* | [**addCategories**](docs/TagCategoriesApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | **EXPERIMENTAL** Add tag categories to the project.
-*TagCategoriesApi* | [**addPossibleValuesToCategory**](docs/TagCategoriesApi.md#addPossibleValuesToCategory) | **PUT** /api/projects/{projectId}/categories/{categoryName} | **EXPERIMENTAL** Add a possible value to the tag category in the project.
-*TagCategoriesApi* | [**deleteCategories**](docs/TagCategoriesApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | **EXPERIMENTAL** Delete tag categories with the given name from the specified project-space.
-*TagCategoriesApi* | [**getCategories**](docs/TagCategoriesApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | **EXPERIMENTAL** Get all tag categories in the given project-space.
-*TagCategoriesApi* | [**getCategoriesByType**](docs/TagCategoriesApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | **EXPERIMENTAL** Get tag categories by type in the given project-space.
-*TagCategoriesApi* | [**getCategoryByName**](docs/TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | **EXPERIMENTAL** Get tag category by name in the given project-space.
+*TagsApi* | [**addGroup**](docs/TagsApi.md#addGroup) | **POST** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Group tags in the project
+*TagsApi* | [**addPossibleValuesToTagDefinition**](docs/TagsApi.md#addPossibleValuesToTagDefinition) | **PATCH** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Add a possible value to the tag definition in the project
+*TagsApi* | [**createTags**](docs/TagsApi.md#createTags) | **PUT** /api/projects/{projectId}/tags | [EXPERIMENTAL] Add tags to the project
+*TagsApi* | [**deleteGroup**](docs/TagsApi.md#deleteGroup) | **DELETE** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Delete tag groups with the given name from the specified project-space
+*TagsApi* | [**deleteTag**](docs/TagsApi.md#deleteTag) | **DELETE** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Delete tag definition with the given name from the specified project-space
+*TagsApi* | [**getGroupByName**](docs/TagsApi.md#getGroupByName) | **GET** /api/projects/{projectId}/groups/{groupName} | [EXPERIMENTAL] Get tag group by name in the given project-space
+*TagsApi* | [**getGroups**](docs/TagsApi.md#getGroups) | **GET** /api/projects/{projectId}/groups | [EXPERIMENTAL] Get all tag based groups in the given project-space
+*TagsApi* | [**getTag**](docs/TagsApi.md#getTag) | **GET** /api/projects/{projectId}/tags/{tagName} | [EXPERIMENTAL] Get tag definition by its name in the given project-space
+*TagsApi* | [**getTags**](docs/TagsApi.md#getTags) | **GET** /api/projects/{projectId}/tags | [EXPERIMENTAL] Get all tag definitions in the given project-space
 
 
 ## Documentation for Models
 
  - [AccountCredentials](docs/AccountCredentials.md)
  - [AccountInfo](docs/AccountInfo.md)
+ - [AdductEdgeExperimental](docs/AdductEdgeExperimental.md)
+ - [AdductNetworkExperimental](docs/AdductNetworkExperimental.md)
+ - [AdductNodeExperimental](docs/AdductNodeExperimental.md)
+ - [AggregationType](docs/AggregationType.md)
  - [AlignedFeature](docs/AlignedFeature.md)
- - [AlignedFeatureFoldChange](docs/AlignedFeatureFoldChange.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
- - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)
+ - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
- - [Annotation](docs/Annotation.md)
  - [Axes](docs/Axes.md)
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
  - [BasicSpectrum](docs/BasicSpectrum.md)
@@ -289,13 +279,14 @@ Class | Method | HTTP request | Description
  - [CompoundClass](docs/CompoundClass.md)
  - [CompoundClassType](docs/CompoundClassType.md)
  - [CompoundClasses](docs/CompoundClasses.md)
- - [CompoundFoldChange](docs/CompoundFoldChange.md)
  - [CompoundImport](docs/CompoundImport.md)
  - [CompoundOptField](docs/CompoundOptField.md)
  - [ComputedSubtools](docs/ComputedSubtools.md)
  - [ConfidenceMode](docs/ConfidenceMode.md)
  - [ConnectionCheck](docs/ConnectionCheck.md)
  - [ConnectionError](docs/ConnectionError.md)
+ - [ConnectionErrorClass](docs/ConnectionErrorClass.md)
+ - [ConnectionErrorType](docs/ConnectionErrorType.md)
  - [ConsensusAnnotationsCSI](docs/ConsensusAnnotationsCSI.md)
  - [ConsensusAnnotationsDeNovo](docs/ConsensusAnnotationsDeNovo.md)
  - [ConsensusCriterionCSI](docs/ConsensusCriterionCSI.md)
@@ -307,6 +298,7 @@ Class | Method | HTTP request | Description
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)
+ - [FoldChange](docs/FoldChange.md)
  - [FormulaCandidate](docs/FormulaCandidate.md)
  - [FormulaCandidateOptField](docs/FormulaCandidateOptField.md)
  - [FragmentNode](docs/FragmentNode.md)
@@ -315,11 +307,13 @@ Class | Method | HTTP request | Description
  - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
  - [InstrumentProfile](docs/InstrumentProfile.md)
+ - [IsotopeMs2Strategy](docs/IsotopeMs2Strategy.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
- - [Item](docs/Item.md)
  - [Job](docs/Job.md)
+ - [JobEffect](docs/JobEffect.md)
  - [JobOptField](docs/JobOptField.md)
  - [JobProgress](docs/JobProgress.md)
+ - [JobState](docs/JobState.md)
  - [JobSubmission](docs/JobSubmission.md)
  - [LcmsSubmissionParameters](docs/LcmsSubmissionParameters.md)
  - [LicenseInfo](docs/LicenseInfo.md)
@@ -327,32 +321,34 @@ Class | Method | HTTP request | Description
  - [LossEdge](docs/LossEdge.md)
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
- - [PageAlignedFeature](docs/PageAlignedFeature.md)
- - [PageAlignedFeatureFoldChange](docs/PageAlignedFeatureFoldChange.md)
- - [PageCompound](docs/PageCompound.md)
- - [PageCompoundFoldChange](docs/PageCompoundFoldChange.md)
- - [PageFormulaCandidate](docs/PageFormulaCandidate.md)
- - [PageJob](docs/PageJob.md)
- - [PageRun](docs/PageRun.md)
- - [PageSpectralLibraryMatch](docs/PageSpectralLibraryMatch.md)
- - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
- - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)
- - [PageableObject](docs/PageableObject.md)
+ - [PageMetadata](docs/PageMetadata.md)
+ - [PagedModelAlignedFeature](docs/PagedModelAlignedFeature.md)
+ - [PagedModelCompound](docs/PagedModelCompound.md)
+ - [PagedModelFormulaCandidate](docs/PagedModelFormulaCandidate.md)
+ - [PagedModelJob](docs/PagedModelJob.md)
+ - [PagedModelRun](docs/PagedModelRun.md)
+ - [PagedModelSpectralLibraryMatch](docs/PagedModelSpectralLibraryMatch.md)
+ - [PagedModelStructureCandidateFormula](docs/PagedModelStructureCandidateFormula.md)
+ - [PagedModelStructureCandidateScored](docs/PagedModelStructureCandidateScored.md)
  - [ParentPeak](docs/ParentPeak.md)
  - [PeakAnnotation](docs/PeakAnnotation.md)
  - [ProjectChangeEvent](docs/ProjectChangeEvent.md)
+ - [ProjectEventType](docs/ProjectEventType.md)
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
  - [ProjectType](docs/ProjectType.md)
- - [QuantificationTable](docs/QuantificationTable.md)
+ - [QualityItem](docs/QualityItem.md)
+ - [QualityWeight](docs/QualityWeight.md)
+ - [QuantMeasure](docs/QuantMeasure.md)
+ - [QuantRowType](docs/QuantRowType.md)
+ - [QuantTableExperimental](docs/QuantTableExperimental.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
- - [SampleTypeFoldChangeRequest](docs/SampleTypeFoldChangeRequest.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
- - [SortObject](docs/SortObject.md)
+ - [Solver](docs/Solver.md)
  - [SpectralLibraryMatch](docs/SpectralLibraryMatch.md)
  - [SpectralLibraryMatchOptField](docs/SpectralLibraryMatchOptField.md)
  - [SpectralLibraryMatchSummary](docs/SpectralLibraryMatchSummary.md)
@@ -360,6 +356,8 @@ Class | Method | HTTP request | Description
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
  - [StatisticsTable](docs/StatisticsTable.md)
+ - [StatisticsType](docs/StatisticsType.md)
+ - [StoredJobSubmission](docs/StoredJobSubmission.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)
@@ -368,14 +366,17 @@ Class | Method | HTTP request | Description
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
  - [Tag](docs/Tag.md)
- - [TagCategory](docs/TagCategory.md)
- - [TagCategoryImport](docs/TagCategoryImport.md)
+ - [TagDefinition](docs/TagDefinition.md)
+ - [TagDefinitionImport](docs/TagDefinitionImport.md)
  - [TagGroup](docs/TagGroup.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
- - [Trace](docs/Trace.md)
- - [TraceSet](docs/TraceSet.md)
+ - [TraceAnnotationExperimental](docs/TraceAnnotationExperimental.md)
+ - [TraceAnnotationTypeExperimental](docs/TraceAnnotationTypeExperimental.md)
+ - [TraceExperimental](docs/TraceExperimental.md)
+ - [TraceSetExperimental](docs/TraceSetExperimental.md)
  - [UseHeuristic](docs/UseHeuristic.md)
+ - [ValueType](docs/ValueType.md)
  - [Zodiac](docs/Zodiac.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)
  - [ZodiacEpochs](docs/ZodiacEpochs.md)

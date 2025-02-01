@@ -31,23 +31,25 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
 import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.longs.LongArraySet;
-import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.*;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
 
 public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
@@ -61,11 +63,11 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
     private final AggregationType aggregation;
 
-    private final QuantificationType quantification;
+    private final QuantMeasure quantification;
 
     private final Class<?> target;
 
-    public FoldChangeWorkflow(ProjectSpaceManager psm, String left, String right, AggregationType aggregation, QuantificationType quantification, Class<?> target) {
+    public FoldChangeWorkflow(ProjectSpaceManager psm, String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
         this.target = target;
         if (!(psm instanceof NoSQLProjectSpaceManager)) {
             throw new IllegalArgumentException("Project space type not supported!");
@@ -112,13 +114,20 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                 @Override
                 protected Boolean compute() throws Exception {
                     TagGroup leftGroup = psm.getProject().getStorage()
-                            .findStr(Filter.where("name").eq(left), TagGroup.class)
+                            .findStr(Filter.where("groupName").eq(left), TagGroup.class)
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("No such tag category group: " + left));
                     TagGroup rightGroup = psm.getProject().getStorage()
-                            .findStr(Filter.where("name").eq(right), TagGroup.class)
+                            .findStr(Filter.where("groupName").eq(right), TagGroup.class)
                             .findFirst()
                             .orElseThrow(() -> new IllegalArgumentException("No such tag category group: " + right));
+
+                    //todo can be make use  definitions from cache here somehow?
+                    HashMap<String,TagDefinition> definitionMap = new HashMap<>();
+                    Stream<TagDefinition> definitions = psm.getProject().findAllTagDefinitionsStr()
+                            .peek(tagDef -> definitionMap.put(tagDef.getTagName(), tagDef));
+                    StandardQueryParser parser = LuceneUtils.makeDefaultQueryParser(definitions);
+
 
                     LongSet leftRuns = new LongRBTreeSet();
                     LongSet rightRuns = new LongRBTreeSet();
@@ -126,18 +135,18 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     Filter leftTagFilter;
                     Filter rightTagFilter;
                     try {
-                        leftTagFilter = LuceneUtils.translateTagFilter(leftGroup.getLuceneQuery());
-                        rightTagFilter = LuceneUtils.translateTagFilter(rightGroup.getLuceneQuery());
+                        leftTagFilter = LuceneUtils.translateTagFilter(leftGroup.getLuceneQuery(), parser, definitionMap);
+                        rightTagFilter = LuceneUtils.translateTagFilter(rightGroup.getLuceneQuery(), parser, definitionMap);
                     } catch (Exception e) {
                         throw new IllegalArgumentException("Parse error: " + leftGroup.getLuceneQuery());
                     }
 
                     Long[] leftObjectIds = psm.getProject().getStorage().findStr(Filter.and(
-                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), leftTagFilter
+                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()), leftTagFilter
                             ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
                     Long[] rightObjectIds = psm.getProject().getStorage().findStr(Filter.and(
-                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), rightTagFilter
+                                    Filter.where("taggedObjectClass").eq(LCMSRun.class.getName()), rightTagFilter
                             ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 
@@ -202,18 +211,18 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         protected Boolean compute() throws Exception {
                             List<FoldChange.CompoundFoldChange> foldChanges = new ArrayList<>();
                             for (Compound c : compounds) {
-                                List<Feature> leftFeatures = new ArrayList<>();
-                                List<Feature> rightFeatures = new ArrayList<>();
+                                Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
+                                Long2ObjectMap<List<Feature>> rightFeatures = new Long2ObjectOpenHashMap<>(rightRuns.size());
                                 psm.getProject().fetchAdductFeatures(c);
                                 if (c.getAdductFeatures().isPresent()) {
                                     for (AlignedFeatures af : c.getAdductFeatures().get()) {
                                         psm.getProject().fetchFeatures(af);
                                         if (af.getFeatures().isPresent()) {
                                             for (Feature f : af.getFeatures().get()) {
-                                                if (leftRuns.contains(f.getRunId())) {
-                                                    leftFeatures.add(f);
-                                                } else if (rightRuns.contains(f.getRunId())) {
-                                                    rightFeatures.add(f);
+                                                if (leftRuns.contains((long) f.getRunId())) {
+                                                    leftFeatures.computeIfAbsent(f.getRunId(), k -> new ArrayList<>()).add(f);
+                                                } else if (rightRuns.contains((long) f.getRunId())) {
+                                                    rightFeatures.computeIfAbsent(f.getRunId(), k -> new ArrayList<>()).add(f);
                                                 }
                                             }
                                         }
@@ -230,7 +239,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                                 foldChanges.add(FoldChange.CompoundFoldChange
                                         .builder()
-                                        .foreignId(c.getCompoundId())
+                                        .compoundId(c.getCompoundId())
                                         .foldChange(foldChange)
                                         .leftGroup(left)
                                         .rightGroup(right)
@@ -254,14 +263,14 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         protected Boolean compute() throws Exception {
                             List<FoldChange.AlignedFeaturesFoldChange> foldChanges = new ArrayList<>();
                             for (long af : alignedFeatures) {
-                                List<Feature> leftFeatures = new ArrayList<>();
-                                List<Feature> rightFeatures = new ArrayList<>();
+                                Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
+                                Long2ObjectMap<List<Feature>> rightFeatures = new Long2ObjectOpenHashMap<>(rightRuns.size());
 
                                 psm.getProject().getStorage().findStr(Filter.where("alignedFeatureId").eq(af), Feature.class).forEach(f -> {
-                                    if (leftRuns.contains(f.getRunId())) {
-                                        leftFeatures.add(f);
-                                    } else if (rightRuns.contains(f.getRunId())) {
-                                        rightFeatures.add(f);
+                                    if (leftRuns.contains((long)f.getRunId())) {
+                                        leftFeatures.put((long) f.getRunId(), List.of(f));
+                                    } else if (rightRuns.contains((long)f.getRunId())) {
+                                        rightFeatures.put((long) f.getRunId(), List.of(f));
                                     }
                                 });
                                 updateProgress(total.get(), progress.addAndGet(1));
@@ -275,7 +284,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                                 foldChanges.add(FoldChange.AlignedFeaturesFoldChange
                                         .builder()
-                                        .foreignId(af)
+                                        .alignedFeatureId(af)
                                         .foldChange(foldChange)
                                         .leftGroup(left)
                                         .rightGroup(right)
@@ -293,10 +302,10 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     return job;
                 }
 
-                private DoubleStream quantify(List<Feature> features) {
-                    return features.stream().mapToDouble(feature -> switch (quantification) {
-                        case APEX_INTENSITY -> feature.getApexIntensity();
-                        case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
+                private DoubleStream quantify(Long2ObjectMap<List<Feature>> features) {
+                    return features.values().stream().mapToDouble(featuresPerRun -> switch (quantification) {
+                        case APEX_INTENSITY -> featuresPerRun.stream().mapToDouble(Feature::getApexIntensity).sum();
+                        case AREA_UNDER_CURVE -> featuresPerRun.stream().mapToDouble(Feature::getAreaUnderCurve).sum();
                     });
                 }
 

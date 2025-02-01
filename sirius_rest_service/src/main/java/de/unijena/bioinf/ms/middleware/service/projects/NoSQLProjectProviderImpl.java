@@ -22,13 +22,15 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.sirius.*;
+import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -36,6 +38,7 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -44,14 +47,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
+import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.*;
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 @Slf4j
 public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLProjectSpaceManager, NoSQLProjectImpl> {
+    @Nullable
+    private final SearchService searchService;
 
-    public NoSQLProjectProviderImpl(@NotNull ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
+
+    public NoSQLProjectProviderImpl(@NotNull ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService, @Nullable SearchService searchService) {
         super(projectSpaceManagerFactory, eventService, computeService);
+        this.searchService = searchService;
     }
 
     @Override
@@ -89,15 +96,6 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
     protected void registerEventListeners(@NotNull String id, @NotNull NoSQLProjectSpaceManager psm) {
         SiriusProjectDatabaseImpl<? extends Database<?>> project = psm.getProject();
 
-        //create is handled by import events
-        //we handle feature creation by import methods since they might be added and modified multiple times.
-        /*project.getStorage().onInsert(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
-                createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_CREATED)
-        ));*/
-
-        /*project.getStorage().onUpdate(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
-                createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_UPDATED)
-        ));*/
         project.getStorage().onRemove(AlignedFeatures.class, (AlignedFeatures features) -> eventService.sendEvent(
                 createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_DELETED)
         ));
@@ -115,14 +113,14 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     @Override
     protected NoSQLProjectImpl createProject(String projectId, NoSQLProjectSpaceManager psm) {
-        return new NoSQLProjectImpl(projectId, psm, computeService::isInstanceComputing);
+        return new NoSQLProjectImpl(projectId, psm, searchService, computeService::isInstanceComputing);
     }
 
     private ServerEventImpl<ProjectChangeEvent> createEvent(
             String projectId,
             Long compoundId,
             Long featureId,
-            ProjectChangeEvent.Type eventType
+            ProjectEventType eventType
     ) {
         return ServerEvents.newProjectEvent(
                 ProjectChangeEvent.builder().eventType(eventType)

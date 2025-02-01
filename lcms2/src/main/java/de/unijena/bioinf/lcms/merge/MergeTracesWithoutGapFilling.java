@@ -6,17 +6,20 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
+import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The MergeTraceWithGapFillingStrategy is iterating over all aligned MoIs takes their
@@ -200,92 +203,116 @@ public class MergeTracesWithoutGapFilling {
     }
 
     private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois, Tracker tracker) {
-        int isotopePeak = 1;
-        while (true) {
-            // if at least one MoI has an isotope peak with this nominal mass...
-            List<ContiguousTrace> isotopeTraces = new ArrayList<>();
-            // then extract isotope traces
-            for (MoI m : mois) {
-                if (m.getIsotopes()==null) continue;
-                int K = m.getIsotopes().getForNominalMass(m.getMz(), isotopePeak);
-                if (K<0) continue;
-                ContiguousTrace tid = sample.getStorage().getTraceStorage().getContigousTrace(m.getIsotopes().traceIds[K]);
-                if (tid.getUid() != m.getTraceId()) {
-                    isotopeTraces.add(tid);
-                }
-            }
-            if (!isotopeTraces.isEmpty()){
-                // TODO: in theory, isotopes could be larger than original trace. We might take this into consideration
-                int startId = projectedTrace.getRawStartId();
-                int endId = projectedTrace.getRawEndId();
-                final double[] mz = new double[endId-startId+1];
-                final float[] intensities = new float[endId-startId+1];
-                for (ContiguousTrace trace : isotopeTraces) {
-                    for (int k=Math.max(trace.startId(), startId), n=Math.min(trace.endId(), endId); k <=n; ++k) {
-                        mz[k-startId] += trace.mz(k)*trace.intensity(k);
-                        intensities[k-startId] += trace.intensity(k);
+
+        /*
+        Problem: a single trace might consists of multiple compounds, each compound might have a different charge.
+        Is that realistic? It feels wrong, as different charges are different masses and should be separate traces.
+        But it COULD happen. More likely is that the whole trace is only one charge but we do not detect the charge
+        for some compounds in the trace.
+
+        What is the solution here? For now I would suggest that we just pick all isotope peaks for all possible charges
+        and detect the charge state later. Feels wrong, but the alternative would mean to detect charges for a complete
+        trace without looking at the msms.
+         */
+
+
+        int[] chargeStates = Arrays.stream(mois).map(MoI::getIsotopes).filter(Objects::nonNull).mapToInt(x->x.charge==0 ? 1 : Math.abs(x.charge)).distinct().toArray();
+        for (final int chargeState : chargeStates) {
+            int isotopePeak = 1;
+            IntOpenHashSet alreadyPickedTraces = new IntOpenHashSet();
+            while (true) {
+                // if at least one MoI has an isotope peak with this nominal mass...
+                List<ContiguousTrace> isotopeTraces = new ArrayList<>();
+                // then extract isotope traces
+                int foundIsotopes = 0;
+                for (MoI m : mois) {
+                    if (m.getIsotopes()==null || (m.getIsotopes().charge!=0 && m.getIsotopes().charge!=chargeState)) continue;
+                    int K = m.getIsotopes().getForNominalMass(m.getMz(), isotopePeak);
+                    if (K<0) continue;
+                    if (m.getTraceId() != m.getIsotopes().traceIds[K]) {
+                        ++foundIsotopes;
+                        if (alreadyPickedTraces.add(m.getIsotopes().traceIds[K])) {
+                            ContiguousTrace tid = sample.getStorage().getTraceStorage().getContigousTrace(m.getIsotopes().traceIds[K]);
+                            isotopeTraces.add(tid);
+                        }
                     }
                 }
+                if (!isotopeTraces.isEmpty()){
+                    // TODO: in theory, isotopes could be larger than original trace. We might take this into consideration
+                    int startId = projectedTrace.getRawStartId();
+                    int endId = projectedTrace.getRawEndId();
+                    final double[] mz = new double[endId-startId+1];
+                    final float[] intensities = new float[endId-startId+1];
+                    for (ContiguousTrace trace : isotopeTraces) {
+                        for (int k=Math.max(trace.startId(), startId), n=Math.min(trace.endId(), endId); k <=n; ++k) {
+                            mz[k-startId] += trace.mz(k)*trace.intensity(k);
+                            intensities[k-startId] += trace.intensity(k);
+                        }
+                    }
 
-                // we might have to shorten the trace, as isotopes might be smaller than the monoisotopic
-                int shortenedStartId = startId;
-                while (shortenedStartId < endId && intensities[shortenedStartId-startId]<=0) ++shortenedStartId;
-                int shortenedEndId = endId;
-                while (shortenedEndId > startId && intensities[shortenedEndId-startId]<=0) --shortenedEndId;
+                    // we might have to shorten the trace, as isotopes might be smaller than the monoisotopic
+                    int shortenedStartId = startId;
+                    while (shortenedStartId < endId && intensities[shortenedStartId-startId]<=0) ++shortenedStartId;
+                    int shortenedEndId = endId;
+                    while (shortenedEndId > startId && intensities[shortenedEndId-startId]<=0) --shortenedEndId;
 
-                if (shortenedStartId>shortenedEndId) {
-                    // the trace is empty, there is no such isotope peak
-                    LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).error("Isotope trace disappearded during merging.");
+                    if (shortenedStartId>shortenedEndId) {
+                        // the trace is empty, there is no such isotope peak
+                        LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).error("Isotope trace disappearded during merging.");
+                        break;
+                    }
+
+                    double[] mzShortened = new double[shortenedEndId-shortenedStartId+1];
+                    float[] intensityShortened = new float[mzShortened.length];
+                    for (int k=shortenedStartId; k <= shortenedEndId; ++k) {
+                        intensityShortened[k-shortenedStartId] = intensities[k-startId];
+                        mzShortened[k-shortenedStartId] = mz[k-startId]/intensities[k-startId];
+                        if (!Double.isFinite(mz[k-shortenedStartId])) {
+                            throw new RuntimeException("should not happen!");
+                        }
+                    }
+
+                    ContiguousTrace T = new ContiguousTrace(
+                            sample.getMapping(), shortenedStartId, shortenedEndId, mzShortened, intensityShortened
+                    );
+
+                    // mergin trace
+                    ScanPointInterpolator mapper = sample.getScanPointInterpolator();
+                    final int newStartId = mapper.lowerIndex(T.startId());
+                    final int newEndId = mapper.largerIndex(T.endId());
+                    final double[] mzP = new double[newEndId-newStartId+1];
+                    Arrays.fill(mzP, Double.NaN);
+                    final float[] intP = new float[mzP.length];
+                    int newApex = newStartId;
+                    for (int k=newStartId; k <= newEndId; ++k) {
+                        final double projInt = mapper.interpolateIntensity(T, k, T.startId(), T.endId());
+                        if (projInt > 0) {
+                            mzP[k - newStartId] = mapper.interpolateMz(T, k, T.startId(), T.endId());
+                            if (mzP[k-newStartId] <= 0) {
+                                throw new RuntimeException("This should never happen!");
+                            }
+                            intP[k - newStartId] = (float)projInt;
+                            if (projInt > intP[newApex-newStartId]) newApex=k;
+                        }
+                    }
+
+                    ProjectedTrace projectedIsotopeTrace = new ProjectedTrace(sample.getUid(),
+                            T.startId(), T.endId(), T.apex(), newStartId, newEndId, newApex, mzShortened, mzP, intensityShortened, intP
+                    );
+
+                    // add ms2 data
+                    //addMs2ToProjectedTrace(sample, isotopeTraces.toArray(ContiguousTrace[]::new), projectedIsotopeTrace, tracker, merged);
+
+                    // update
+                    merged.getStorage().getMergeStorage().addIsotopeProjectedTrace(r.id, isotopePeak, sample.getUid(), projectedIsotopeTrace);
+                } else if (foundIsotopes==0) {
+                    // break if there is a gap within isotope pattern
                     break;
                 }
-
-                double[] mzShortened = new double[shortenedEndId-shortenedStartId+1];
-                float[] intensityShortened = new float[mzShortened.length];
-                for (int k=shortenedStartId; k <= shortenedEndId; ++k) {
-                    intensityShortened[k-shortenedStartId] = intensities[k-startId];
-                    mzShortened[k-shortenedStartId] = mz[k-startId]/intensities[k-startId];
-                    if (!Double.isFinite(mz[k-shortenedStartId])) {
-                        throw new RuntimeException("should not happen!");
-                    }
-                }
-
-                ContiguousTrace T = new ContiguousTrace(
-                        sample.getMapping(), shortenedStartId, shortenedEndId, mzShortened, intensityShortened
-                );
-
-                // mergin trace
-                ScanPointInterpolator mapper = sample.getScanPointInterpolator();
-                final int newStartId = mapper.lowerIndex(T.startId());
-                final int newEndId = mapper.largerIndex(T.endId());
-                final double[] mzP = new double[newEndId-newStartId+1];
-                Arrays.fill(mzP, Double.NaN);
-                final float[] intP = new float[mzP.length];
-                int newApex = newStartId;
-                for (int k=newStartId; k <= newEndId; ++k) {
-                    final double projInt = mapper.interpolateIntensity(T, k, T.startId(), T.endId());
-                    if (projInt > 0) {
-                        mzP[k - newStartId] = mapper.interpolateMz(T, k, T.startId(), T.endId());
-                        if (mzP[k-newStartId] <= 0) {
-                            throw new RuntimeException("This should never happen!");
-                        }
-                        intP[k - newStartId] = (float)projInt;
-                        if (projInt > intP[newApex-newStartId]) newApex=k;
-                    }
-                }
-
-                ProjectedTrace projectedIsotopeTrace = new ProjectedTrace(sample.getUid(),
-                        T.startId(), T.endId(), T.apex(), newStartId, newEndId, newApex, mzShortened, mzP, intensityShortened, intP
-                );
-
-                // add ms2 data
-                addMs2ToProjectedTrace(sample, isotopeTraces.toArray(ContiguousTrace[]::new), projectedIsotopeTrace, tracker, merged);
-
-                // update
-                merged.getStorage().getMergeStorage().addIsotopeProjectedTrace(r.id, isotopePeak, sample.getUid(), projectedIsotopeTrace);
-            } else break;
-
-            ++isotopePeak;
+                ++isotopePeak;
+            }
         }
+
     }
 
     private void addMs2ToProjectedTrace(ProcessedSample sample, ContiguousTrace[] sourceTraces, ProjectedTrace projectedTrace, Tracker tracker, ProcessedSample merged) {
@@ -296,6 +323,16 @@ public class MergeTracesWithoutGapFilling {
         MsMsTraceReference[] idsArray = ids.toArray(MsMsTraceReference[]::new);
         tracker.assignMs2ToMergedTrace(sample, sourceTraces, merged, projectedTrace, idsArray);
         projectedTrace.setMs2Refs(idsArray);
+        // double check assignment
+        for (MsMsTraceReference ref : idsArray) {
+            Ms2SpectrumHeader header = sample.getStorage().getSpectrumStorage().ms2SpectrumHeader(ref.ms2Uid);
+            if (!projectedTrace.inProjectedRange(sample.getScanPointInterpolator().roundIndex(header.getParentId()))) {
+                LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).warn("MSMS is not in projected trace but in source trace oO");
+            }
+        }
+
+
+
     }
 
 

@@ -39,7 +39,7 @@ public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
     public JCheckboxListPanel(JCheckBoxList<E> sourceList, String headline) {
         super(headline);
         checkBoxList = sourceList;
-        checkBoxList.setVisibleRowCount(6);
+        checkBoxList.setVisibleRowCount(5);
 
         JScrollPane sp = new JScrollPane(checkBoxList);
         sp.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
