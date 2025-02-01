@@ -136,8 +136,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.searchService = searchService;
 
         if (searchService != null) {
-           storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagDefinition(projectId, tagDef));
-           storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagDefinition(projectId, tagDef.getTagName()));
+            storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagDefinition(projectId, tagDef));
+            storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagDefinition(projectId, tagDef.getTagName()));
 
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
@@ -251,21 +251,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             rowIds.add(alignedFeature.getAlignedFeatureId());
             rowNames.add(alignedFeature.getName());
 
-            storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class).forEach(feature -> {
-                features.put(feature.getRunId(), List.of(feature));
-            });
+            storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
+                    .forEach(feature -> features.put((long) feature.getRunId(), List.of(feature)));
         } else if (parent instanceof de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
             rowIds.add(compound.getCompoundId());
             rowNames.add(compound.getName());
 
             storage().findStr(Filter.where("compoundId").eq(compound.getCompoundId()), AlignedFeature.class).forEach(alignedFeature -> {
                 try {
-                    storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class).forEach(feature -> {
-                        if (!features.containsKey(feature.getRunId())) {
-                            features.put(feature.getRunId(), new ArrayList<>());
-                        }
-                        features.get(feature.getRunId()).add(feature);
-                    });
+                    storage().findStr(Filter.where("alignedFeatureId").eq(alignedFeature.getAlignedFeatureId()), Feature.class)
+                            .forEach(feature -> features.computeIfAbsent((long) feature.getRunId(), k -> new ArrayList<>()).add(feature));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -279,8 +274,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (int i = 0; i < row.length; i++) {
             if (features.containsKey(table.getColumnIds()[i])) {
                 row[i] = switch (table.getQuantificationMeasure()) {
-                    case APEX_INTENSITY -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).average().orElse(Double.NaN);
-                    case AREA_UNDER_CURVE -> features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).average().orElse(Double.NaN);
+                    case APEX_INTENSITY ->
+                            features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getApexIntensity).sum();
+                    case AREA_UNDER_CURVE ->
+                            features.get(table.getColumnIds()[i]).stream().mapToDouble(Feature::getAreaUnderCurve).sum();
                 };
             } else {
                 row[i] = Double.NaN;
@@ -466,7 +463,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // also add isotopes
         {
             storage.fetchAllChildren(mainFeature, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
-            for (AlignedIsotopicFeatures g  : mainFeature.getIsotopicFeatures().orElse(Collections.emptyList())) {
+            for (AlignedIsotopicFeatures g : mainFeature.getIsotopicFeatures().orElse(Collections.emptyList())) {
                 Optional<MergedTrace> isotopicTrace = Optional.empty();
                 if (g.getTraceReference().isPresent()) {
                     isotopicTrace = storage.getByPrimaryKey(g.getTraceReference().get().getTraceId(), MergedTrace.class);
@@ -480,19 +477,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         LongOpenHashSet alreadyFetched = new LongOpenHashSet();
         alreadyFetched.add(maybeMergedTrace.get().getMergedTraceId());
-        if (mainFeature.getAdductNetworkId()!=null) {
+        if (mainFeature.getAdductNetworkId() != null) {
             Optional<AdductNetwork> maybeNetwork = storage.getByPrimaryKey(mainFeature.getAdductNetworkId(), AdductNetwork.class);
             if (maybeNetwork.isPresent()) {
                 AdductNetwork network = maybeNetwork.get();
                 for (AdductNode node : network.getNodes()) {
-                    if (node.getAlignedFeatureId()==mainFeature.getAlignedFeatureId()) continue;
+                    if (node.getAlignedFeatureId() == mainFeature.getAlignedFeatureId()) continue;
                     Optional<MergedTrace> tr = storage.getByPrimaryKey(node.getTraceId(), MergedTrace.class);
-                    Optional<AlignedFeatures> fr =storage.getByPrimaryKey(node.getAlignedFeatureId(), AlignedFeatures.class);
+                    Optional<AlignedFeatures> fr = storage.getByPrimaryKey(node.getAlignedFeatureId(), AlignedFeatures.class);
                     if (tr.isPresent() && fr.isPresent()) {
                         traces.add(TraceSet.Trace.of(String.format(Locale.US, "[CORRELATED] m/z = %.4f", fr.get().getAverageMass()), merged, fr.get(), tr.get(), retentionTimeAxis));
                         offsets.add(tr.get().getScanIndexOffset());
                         storage.fetchAllChildren(fr.get(), "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
-                        for (AlignedIsotopicFeatures g  : fr.get().getIsotopicFeatures().orElse(Collections.emptyList())) {
+                        for (AlignedIsotopicFeatures g : fr.get().getIsotopicFeatures().orElse(Collections.emptyList())) {
                             Optional<MergedTrace> isotopicTrace = Optional.empty();
                             if (g.getTraceReference().isPresent()) {
                                 isotopicTrace = storage.getByPrimaryKey(g.getTraceReference().get().getTraceId(), MergedTrace.class);
@@ -923,7 +920,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             features.forEach(f -> f.setTopAnnotations(null));
         if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             features.forEach(f -> f.setTopAnnotationsDeNovo(null));
-
 
 
         return builder.build();
@@ -1365,7 +1361,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     throw new ResponseStatusException(BAD_REQUEST, reason.getMessage(), reason);
                 }
             }
-        }else {
+        } else {
             ps.upsertProjectType(ProjectType.DIRECT_IMPORT);
         }
     }
@@ -1608,7 +1604,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                     storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .findFirst().ifPresentOrElse(existing ->
-                                upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
+                                            upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
                                     () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedObjectClass, objId)));
 
                 } catch (IllegalArgumentException e) {
@@ -1646,7 +1642,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public List<Tag> findTagsByObject(@NotNull Class<?> target, @NotNull String objectId) {
-            return findTagsByObject(target, Long.parseLong(objectId)).toList();
+        return findTagsByObject(target, Long.parseLong(objectId)).toList();
     }
 
     public Stream<Tag> findTagsByObject(Class<?> target, long objectId) {
@@ -1908,7 +1904,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     .map(this::convertToApiFoldChange)
                     .toList();
         } else if (Compound.class.equals(target)) {
-            return  (List<F>) storage()
+            return (List<F>) storage()
                     .findStr(Filter.where("foreignId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
                     .map(this::convertToApiFoldChange)
                     .toList();
@@ -1940,7 +1936,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     ),
                     de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class
             );
-        }else {
+        } else {
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
         }
     }
