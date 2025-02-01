@@ -45,7 +45,7 @@ import java.util.List;
 @Tag(name = "Compound Statistics", description = "[EXPERIMENTAL] This compound based API allows allows computing and accessing statistics for compounds (also known as a group of ion identities). " +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
-public class CompoundStatisticsController implements StatisticsController<Compound, FoldChange.CompoundFoldChange> {
+public class CompoundStatisticsController implements StatisticsController<Compound> {
 
     @Getter
     private final ComputeService computeService;
@@ -72,7 +72,7 @@ public class CompoundStatisticsController implements StatisticsController<Compou
 
     @Operation(operationId = "getCompoundFoldChangesExperimental")
     @Override
-    public List<FoldChange.CompoundFoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+    public List<FoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
         return StatisticsController.super.getFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
 

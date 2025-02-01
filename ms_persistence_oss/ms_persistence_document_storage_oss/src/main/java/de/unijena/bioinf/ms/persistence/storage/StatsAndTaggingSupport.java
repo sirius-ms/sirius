@@ -32,8 +32,8 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                 .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
                 .addRepository(TagGroup.class, Index.unique("groupName"), Index.nonUnique("groupType"))
 
-                .addRepository(FoldChange.CompoundFoldChange.class, Index.nonUnique("foreignId"))
-                .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("foreignId"))
+                .addRepository(FoldChange.CompoundFoldChange.class, Index.nonUnique("compoundId"))
+                .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("alignedFeatureId"))
 
                 ;
     }

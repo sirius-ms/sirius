@@ -229,7 +229,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                                 foldChanges.add(FoldChange.CompoundFoldChange
                                         .builder()
-                                        .foreignId(c.getCompoundId())
+                                        .compoundId(c.getCompoundId())
                                         .foldChange(foldChange)
                                         .leftGroup(left)
                                         .rightGroup(right)
@@ -274,7 +274,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                                 foldChanges.add(FoldChange.AlignedFeaturesFoldChange
                                         .builder()
-                                        .foreignId(af)
+                                        .alignedFeatureId(af)
                                         .foldChange(foldChange)
                                         .leftGroup(left)
                                         .rightGroup(right)

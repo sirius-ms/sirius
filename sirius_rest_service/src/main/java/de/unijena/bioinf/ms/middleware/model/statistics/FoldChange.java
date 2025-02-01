@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.model.statistics;
 
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,33 +34,16 @@ import org.jetbrains.annotations.NotNull;
 @SuperBuilder
 @Getter
 @Setter
-public abstract class FoldChange extends Statistics {
+public class FoldChange extends Statistics {
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected QuantRowType quantType;
 
     @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected String objectId;
+
+    @NotNull
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected Double foldChange;
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @SuperBuilder
-    @Getter
-    @Setter
-    public static class CompoundFoldChange extends FoldChange {
-
-        @NotNull
-        protected String compoundId;
-
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @SuperBuilder
-    @Getter
-    @Setter
-    public static class AlignedFeatureFoldChange extends FoldChange {
-
-        @NotNull
-        protected String alignedFeatureId;
-
-    }
-
 }
