@@ -37,9 +37,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.longs.LongArraySet;
-import it.unimi.dsi.fastutil.longs.LongRBTreeSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.*;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.jetbrains.annotations.Nullable;
@@ -203,18 +201,18 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         protected Boolean compute() throws Exception {
                             List<FoldChange.CompoundFoldChange> foldChanges = new ArrayList<>();
                             for (Compound c : compounds) {
-                                List<Feature> leftFeatures = new ArrayList<>();
-                                List<Feature> rightFeatures = new ArrayList<>();
+                                Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
+                                Long2ObjectMap<List<Feature>> rightFeatures = new Long2ObjectOpenHashMap<>(rightRuns.size());
                                 psm.getProject().fetchAdductFeatures(c);
                                 if (c.getAdductFeatures().isPresent()) {
                                     for (AlignedFeatures af : c.getAdductFeatures().get()) {
                                         psm.getProject().fetchFeatures(af);
                                         if (af.getFeatures().isPresent()) {
                                             for (Feature f : af.getFeatures().get()) {
-                                                if (leftRuns.contains(f.getRunId())) {
-                                                    leftFeatures.add(f);
-                                                } else if (rightRuns.contains(f.getRunId())) {
-                                                    rightFeatures.add(f);
+                                                if (leftRuns.contains((long) f.getRunId())) {
+                                                    leftFeatures.computeIfAbsent(f.getRunId(), k -> new ArrayList<>()).add(f);
+                                                } else if (rightRuns.contains((long) f.getRunId())) {
+                                                    rightFeatures.computeIfAbsent(f.getRunId(), k -> new ArrayList<>()).add(f);
                                                 }
                                             }
                                         }
@@ -255,14 +253,14 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                         protected Boolean compute() throws Exception {
                             List<FoldChange.AlignedFeaturesFoldChange> foldChanges = new ArrayList<>();
                             for (long af : alignedFeatures) {
-                                List<Feature> leftFeatures = new ArrayList<>();
-                                List<Feature> rightFeatures = new ArrayList<>();
+                                Long2ObjectMap<List<Feature>> leftFeatures = new Long2ObjectOpenHashMap<>(leftRuns.size());
+                                Long2ObjectMap<List<Feature>> rightFeatures = new Long2ObjectOpenHashMap<>(rightRuns.size());
 
                                 psm.getProject().getStorage().findStr(Filter.where("alignedFeatureId").eq(af), Feature.class).forEach(f -> {
-                                    if (leftRuns.contains(f.getRunId())) {
-                                        leftFeatures.add(f);
-                                    } else if (rightRuns.contains(f.getRunId())) {
-                                        rightFeatures.add(f);
+                                    if (leftRuns.contains((long)f.getRunId())) {
+                                        leftFeatures.put((long) f.getRunId(), List.of(f));
+                                    } else if (rightRuns.contains((long)f.getRunId())) {
+                                        rightFeatures.put((long) f.getRunId(), List.of(f));
                                     }
                                 });
                                 updateProgress(total.get(), progress.addAndGet(1));
@@ -294,10 +292,10 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                     return job;
                 }
 
-                private DoubleStream quantify(List<Feature> features) {
-                    return features.stream().mapToDouble(feature -> switch (quantification) {
-                        case APEX_INTENSITY -> feature.getApexIntensity();
-                        case AREA_UNDER_CURVE -> feature.getAreaUnderCurve();
+                private DoubleStream quantify(Long2ObjectMap<List<Feature>> features) {
+                    return features.values().stream().mapToDouble(featuresPerRun -> switch (quantification) {
+                        case APEX_INTENSITY -> featuresPerRun.stream().mapToDouble(Feature::getApexIntensity).sum();
+                        case AREA_UNDER_CURVE -> featuresPerRun.stream().mapToDouble(Feature::getAreaUnderCurve).sum();
                     });
                 }
 
