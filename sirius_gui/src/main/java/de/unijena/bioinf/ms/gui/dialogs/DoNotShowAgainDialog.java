@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +63,10 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         northPanel.add(new JLabel(makeDialogIcon()));
         {
             textPane = new JTextPane();
+            textPane.setCursor(null);
             textPane.setEditable(false); // as before
             textPane.setContentType("text/html"); // let the text pane know this is what you want
+            textPane.setFocusable(false);
             textPane.setText(messageSupplier.get());
             textPane.setBorder(null);
             textPane.setOpaque(false);
@@ -74,7 +77,7 @@ public abstract class DoNotShowAgainDialog extends JDialog {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                         try {
-                            Desktop.getDesktop().browse(e.getURL().toURI());
+                            GuiUtils.openURL(DoNotShowAgainDialog.this, e.getURL().toURI());
                         } catch (Exception error) {
                             LoggerFactory.getLogger(this.getClass()).error(error.getMessage(), error);
                         }

@@ -36,7 +36,7 @@ public class CompoundClass {
     /**
      * Defines compound class ontologies that are available.
      */
-    @Schema(enumAsRef = true, name = "CompoundClassType", nullable = true)
+    @Schema(name = "CompoundClassType", nullable = true)
     public enum Type {ClassyFire, NPC}
 
     /**
@@ -49,6 +49,12 @@ public class CompoundClass {
      */
     @Schema(nullable = true)
     protected String level;
+
+    /**
+     * Index of the level this compound class belongs to
+     */
+    @Schema(nullable = true)
+    protected Integer levelIndex;
 
     /**
      * Name of the compound class.
@@ -65,6 +71,7 @@ public class CompoundClass {
     /**
      * Unique id of the class. Might be undefined for certain classification ontologies.
      */
+    @Schema(nullable = true)
     protected Integer id;
     /**
      * prediction probability
@@ -76,27 +83,49 @@ public class CompoundClass {
      */
     protected Integer index;
 
+    /**
+     * Unique id of the parent class. Might be undefined for certain classification ontologies.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected Integer parentId;
+
+    /**
+     * Name of the parent compound class.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected String parentName;
+
+
     public static CompoundClass of(NPCFingerprintVersion.NPCProperty npcClass, Double probability, Integer index){
         return CompoundClass.builder()
                 .type(Type.NPC)
                 .level(npcClass.getLevel().name())
+                .levelIndex(npcClass.getLevel().level)
                 .name(npcClass.getName())
                 .description(npcClass.getDescription())
                 .id(npcClass.getNpcIndex())
                 .probability(probability)
                 .index(index)
                 .build();
+        //we do not parent annotations here because it's stored as hierarchie anyway.
     }
 
     public static CompoundClass of(ClassyfireProperty cfClass, Double probability, Integer index){
-        return CompoundClass.builder()
+        CompoundClassBuilder builder = CompoundClass.builder()
                 .type(Type.ClassyFire)
                 .level(CanopusLevels.getClassyFireLevelName(cfClass.getLevel()))
+                .levelIndex(cfClass.getLevel())
                 .name(cfClass.getName())
                 .description(cfClass.getDescription())
                 .id(cfClass.getChemOntId())
                 .probability(probability)
-                .index(index)
-                .build();
+                .index(index);
+
+        if (cfClass.getParent() != null) {
+            builder.parentName(cfClass.getParent().getName());
+            builder.parentId(cfClass.getParent().getChemOntId());
+        }
+
+        return builder.build();
     }
 }

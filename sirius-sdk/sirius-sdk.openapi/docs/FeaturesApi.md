@@ -5,51 +5,48 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
-| [**addGroup2**](FeaturesApi.md#addGroup2) | **PUT** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Group tags in the project |
-| [**addTags2**](FeaturesApi.md#addTags2) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project |
+| [**addTagsToAlignedFeatureExperimental**](FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
-| [**deleteGroup2**](FeaturesApi.md#deleteGroup2) | **DELETE** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space |
-| [**deleteTags2**](FeaturesApi.md#deleteTags2) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{categoryName} | **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space |
+| [**getAdductNetworkWithMergedTracesExperimental**](FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network |
 | [**getAlignedFeature**](FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space. |
+| [**getAlignedFeatureQualityExperimental**](FeaturesApi.md#getAlignedFeatureQualityExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)   |
 | [**getAlignedFeatures**](FeaturesApi.md#getAlignedFeatures) | **GET** /api/projects/{projectId}/aligned-features | Get all available features (aligned over runs) in the given project-space. |
+| [**getAlignedFeaturesByGroupExperimental**](FeaturesApi.md#getAlignedFeaturesByGroupExperimental) | **GET** /api/projects/{projectId}/aligned-features/grouped | [EXPERIMENTAL] Get features (aligned over runs) by tag group |
+| [**getAlignedFeaturesByTagExperimental**](FeaturesApi.md#getAlignedFeaturesByTagExperimental) | **GET** /api/projects/{projectId}/aligned-features/tagged | [EXPERIMENTAL] Get features (aligned over runs) by tag |
 | [**getAlignedFeaturesPaged**](FeaturesApi.md#getAlignedFeaturesPaged) | **GET** /api/projects/{projectId}/aligned-features/page | Get all available features (aligned over runs) in the given project-space. |
-| [**getAlignedFeaturesQuality**](FeaturesApi.md#getAlignedFeaturesQuality) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space |
-| [**getBestMatchingCompoundClasses**](FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology, |
+| [**getBestMatchingCompoundClasses**](FeaturesApi.md#getBestMatchingCompoundClasses) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes | Return Best matching compound classes for given formulaId |
 | [**getCanopusPrediction**](FeaturesApi.md#getCanopusPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction | All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities, |
 | [**getDeNovoStructureCandidates**](FeaturesApi.md#getDeNovoStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint. |
 | [**getDeNovoStructureCandidatesByFormula**](FeaturesApi.md#getDeNovoStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures | List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint. |
 | [**getDeNovoStructureCandidatesByFormulaPaged**](FeaturesApi.md#getDeNovoStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page | Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint. |
 | [**getDeNovoStructureCandidatesPaged**](FeaturesApi.md#getDeNovoStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/page | Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint. |
-| [**getFingerprintPrediction**](FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes. |
-| [**getFormulaAnnotatedMsMsData**](FeaturesApi.md#getFormulaAnnotatedMsMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata | Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available. |
-| [**getFormulaAnnotatedSpectrum**](FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
+| [**getFeatureQuantTableExperimental**](FeaturesApi.md#getFeatureQuantTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/quant-table | [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId) |
+| [**getFingerprintPrediction**](FeaturesApi.md#getFingerprintPrediction) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fingerprint | Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)   |
+| [**getFormulaAnnotatedMsMsData**](FeaturesApi.md#getFormulaAnnotatedMsMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata | Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId |
+| [**getFormulaAnnotatedSpectrum**](FeaturesApi.md#getFormulaAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum | Returns a fragmentation spectrum (e |
 | [**getFormulaCandidate**](FeaturesApi.md#getFormulaCandidate) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId} | FormulaResultContainers for the given &#39;formulaId&#39; with minimal information. |
 | [**getFormulaCandidates**](FeaturesApi.md#getFormulaCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas | List of FormulaResultContainers available for this feature with minimal information. |
 | [**getFormulaCandidatesPaged**](FeaturesApi.md#getFormulaCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/page | Page of FormulaResultContainers available for this feature with minimal information. |
-| [**getFragTree**](FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore). |
-| [**getGroupByName2**](FeaturesApi.md#getGroupByName2) | **GET** /api/projects/{projectId}/aligned-features/groups/{groupName} | **EXPERIMENTAL** Get tag group by name in the given project-space |
-| [**getGroups2**](FeaturesApi.md#getGroups2) | **GET** /api/projects/{projectId}/aligned-features/groups | **EXPERIMENTAL** Get all tag category groups in the given project-space |
-| [**getGroupsByType2**](FeaturesApi.md#getGroupsByType2) | **GET** /api/projects/{projectId}/aligned-features/groups/type/{groupType} | **EXPERIMENTAL** Get tag groups by type in the given project-space |
-| [**getIsotopePatternAnnotation**](FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. |
-| [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
+| [**getFragTree**](FeaturesApi.md#getFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier   |
+| [**getIsotopePatternAnnotation**](FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information for given formulaId   |
+| [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formulaId |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
-| [**getQuantification1**](FeaturesApi.md#getQuantification1) | **GET** /api/projects/{projectId}/aligned-features/quantification | Returns the full quantification table. |
-| [**getQuantificationRow1**](FeaturesApi.md#getQuantificationRow1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature. |
-| [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format. |
+| [**getQuantTableRowExperimental**](FeaturesApi.md#getQuantTableRowExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId) |
+| [**getSiriusFragTreeInternal**](FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format |
 | [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesSummary**](FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;. |
-| [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
-| [**getStructureAnnotatedSpectrum**](FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
+| [**getStructureAnnotatedMsDataExperimental**](FeaturesApi.md#getStructureAnnotatedMsDataExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey |
+| [**getStructureAnnotatedSpectrumExperimental**](FeaturesApi.md#getStructureAnnotatedSpectrumExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey   |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesPaged**](FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
-| [**getTraces**](FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | Returns the traces of the given feature. |
-| [**objectsByGroup2**](FeaturesApi.md#objectsByGroup2) | **GET** /api/projects/{projectId}/aligned-features/grouped | **EXPERIMENTAL** Get features (aligned over runs) by tag group |
-| [**objectsByTag2**](FeaturesApi.md#objectsByTag2) | **GET** /api/projects/{projectId}/aligned-features/tagged | **EXPERIMENTAL** Get features (aligned over runs) by tag |
+| [**getTagsForAlignedFeaturesExperimental**](FeaturesApi.md#getTagsForAlignedFeaturesExperimental) | **GET** /api/projects/{projectId}/aligned-features/tags/{objectId} | [EXPERIMENTAL] Get all tags associated with this Object |
+| [**getTracesExperimental**](FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId) |
+| [**removeTagFromAlignedFeatureExperimental**](FeaturesApi.md#removeTagFromAlignedFeatureExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space |
 
 
 
@@ -125,85 +122,13 @@ No authorization required
 | **200** | the Features that have been imported with specified optional fields |  -  |
 
 
-## addGroup2
+## addTagsToAlignedFeatureExperimental
 
-> TagGroup addGroup2(projectId, groupName, filter, type)
+> List&lt;Tag&gt; addTagsToAlignedFeatureExperimental(projectId, alignedFeatureId, tag)
 
-**EXPERIMENTAL** Group tags in the project
+[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 
-**EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to add to.
-        String groupName = "groupName_example"; // String | name of the new group
-        String filter = "filter_example"; // String | filter query to create the group
-        String type = "type_example"; // String | type of the group
-        try {
-            TagGroup result = apiInstance.addGroup2(projectId, groupName, filter, type);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#addGroup2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to add to. | |
-| **groupName** | **String**| name of the new group | |
-| **filter** | **String**| filter query to create the group | |
-| **type** | **String**| type of the group | |
-
-### Return type
-
-[**TagGroup**](TagGroup.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | the tag group that was added |  -  |
-
-
-## addTags2
-
-> List&lt;Tag&gt; addTags2(projectId, alignedFeatureId, tag)
-
-**EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
-
-**EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -225,10 +150,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | run to add tags to.
         List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
         try {
-            List<Tag> result = apiInstance.addTags2(projectId, alignedFeatureId, tag);
+            List<Tag> result = apiInstance.addTagsToAlignedFeatureExperimental(projectId, alignedFeatureId, tag);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#addTags2");
+            System.err.println("Exception when calling FeaturesApi#addTagsToAlignedFeatureExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -401,80 +326,13 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## deleteGroup2
+## getAdductNetworkWithMergedTracesExperimental
 
-> deleteGroup2(projectId, groupName)
+> TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId)
 
-**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
+[EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
 
-**EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to delete from.
-        String groupName = "groupName_example"; // String | name of group to delete.
-        try {
-            apiInstance.deleteGroup2(projectId, groupName);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#deleteGroup2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to delete from. | |
-| **groupName** | **String**| name of group to delete. | |
-
-### Return type
-
-null (empty response body)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-
-## deleteTags2
-
-> deleteTags2(projectId, alignedFeatureId, categoryName)
-
-**EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
-
-**EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+[EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -492,13 +350,13 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to delete from.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) to delete tag from.
-        String categoryName = "categoryName_example"; // String | category name of the tag to delete.
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | one feature that is considered the main feature of the adduct network
         try {
-            apiInstance.deleteTags2(projectId, alignedFeatureId, categoryName);
+            TraceSetExperimental result = apiInstance.getAdductNetworkWithMergedTracesExperimental(projectId, alignedFeatureId);
+            System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#deleteTags2");
+            System.err.println("Exception when calling FeaturesApi#getAdductNetworkWithMergedTracesExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -513,13 +371,12 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to delete from. | |
-| **alignedFeatureId** | **String**| feature (aligned over runs) to delete tag from. | |
-| **categoryName** | **String**| category name of the tag to delete. | |
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| one feature that is considered the main feature of the adduct network | |
 
 ### Return type
 
-null (empty response body)
+[**TraceSetExperimental**](TraceSetExperimental.md)
 
 ### Authorization
 
@@ -528,7 +385,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ### HTTP response details
@@ -607,6 +464,74 @@ No authorization required
 | **200** | AlignedFeature with additional annotations and MS/MS data (if specified). |  -  |
 
 
+## getAlignedFeatureQualityExperimental
+
+> AlignedFeatureQualityExperimental getAlignedFeatureQualityExperimental(projectId, alignedFeatureId)
+
+[EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
+
+[EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | identifier of feature (aligned over runs) to access.
+        try {
+            AlignedFeatureQualityExperimental result = apiInstance.getAlignedFeatureQualityExperimental(projectId, alignedFeatureId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getAlignedFeatureQualityExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| identifier of feature (aligned over runs) to access. | |
+
+### Return type
+
+[**AlignedFeatureQualityExperimental**](AlignedFeatureQualityExperimental.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | AlignedFeatureQuality quality information of the respective feature. |  -  |
+
+
 ## getAlignedFeatures
 
 > List&lt;AlignedFeature&gt; getAlignedFeatures(projectId, optFields)
@@ -675,9 +600,161 @@ No authorization required
 | **200** | AlignedFeatures with additional annotations and MS/MS data (if specified). |  -  |
 
 
+## getAlignedFeaturesByGroupExperimental
+
+> PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, optFields)
+
+[EXPERIMENTAL] Get features (aligned over runs) by tag group
+
+[EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String groupName = "groupName_example"; // String | tag group name.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesByGroupExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **groupName** | **String**| tag group name. | |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**PagedModelAlignedFeature**](PagedModelAlignedFeature.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | tagged features (aligned over runs) |  -  |
+
+
+## getAlignedFeaturesByTagExperimental
+
+> PagedModelAlignedFeature getAlignedFeaturesByTagExperimental(projectId, filter, page, size, sort, optFields)
+
+[EXPERIMENTAL] Get features (aligned over runs) by tag
+
+[EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project space to get features (aligned over runs) from.
+        String filter = ""; // String | tag filter.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByTagExperimental(projectId, filter, page, size, sort, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesByTagExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project space to get features (aligned over runs) from. | |
+| **filter** | **String**| tag filter. | [optional] [default to ] |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**PagedModelAlignedFeature**](PagedModelAlignedFeature.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | tagged features (aligned over runs) |  -  |
+
+
 ## getAlignedFeaturesPaged
 
-> PageAlignedFeature getAlignedFeaturesPaged(projectId, page, size, sort, optFields)
+> PagedModelAlignedFeature getAlignedFeaturesPaged(projectId, page, size, sort, optFields)
 
 Get all available features (aligned over runs) in the given project-space.
 
@@ -705,7 +782,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageAlignedFeature result = apiInstance.getAlignedFeaturesPaged(projectId, page, size, sort, optFields);
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesPaged");
@@ -731,7 +808,7 @@ public class Example {
 
 ### Return type
 
-[**PageAlignedFeature**](PageAlignedFeature.md)
+[**PagedModelAlignedFeature**](PagedModelAlignedFeature.md)
 
 ### Authorization
 
@@ -749,81 +826,13 @@ No authorization required
 | **200** | AlignedFeatures with additional annotations and MS/MS data (if specified). |  -  |
 
 
-## getAlignedFeaturesQuality
-
-> AlignedFeatureQuality getAlignedFeaturesQuality(projectId, alignedFeatureId)
-
-**EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-
-**EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | identifier of feature (aligned over runs) to access.
-        try {
-            AlignedFeatureQuality result = apiInstance.getAlignedFeaturesQuality(projectId, alignedFeatureId);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesQuality");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **alignedFeatureId** | **String**| identifier of feature (aligned over runs) to access. | |
-
-### Return type
-
-[**AlignedFeatureQuality**](AlignedFeatureQuality.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | AlignedFeatureQuality quality information of the respective feature. |  -  |
-
-
 ## getBestMatchingCompoundClasses
 
 > CompoundClasses getBestMatchingCompoundClasses(projectId, alignedFeatureId, formulaId)
 
-Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+Return Best matching compound classes for given formulaId
 
-Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
 
 ### Example
 
@@ -1101,7 +1110,7 @@ No authorization required
 
 ## getDeNovoStructureCandidatesByFormulaPaged
 
-> PageStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields)
+> PagedModelStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields)
 
 Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
 
@@ -1131,7 +1140,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateScored result = apiInstance.getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
+            PagedModelStructureCandidateScored result = apiInstance.getDeNovoStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getDeNovoStructureCandidatesByFormulaPaged");
@@ -1159,7 +1168,7 @@ public class Example {
 
 ### Return type
 
-[**PageStructureCandidateScored**](PageStructureCandidateScored.md)
+[**PagedModelStructureCandidateScored**](PagedModelStructureCandidateScored.md)
 
 ### Authorization
 
@@ -1179,7 +1188,7 @@ No authorization required
 
 ## getDeNovoStructureCandidatesPaged
 
-> PageStructureCandidateFormula getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
+> PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
 
 Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint.
 
@@ -1208,7 +1217,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateFormula result = apiInstance.getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+            PagedModelStructureCandidateFormula result = apiInstance.getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getDeNovoStructureCandidatesPaged");
@@ -1235,7 +1244,7 @@ public class Example {
 
 ### Return type
 
-[**PageStructureCandidateFormula**](PageStructureCandidateFormula.md)
+[**PagedModelStructureCandidateFormula**](PagedModelStructureCandidateFormula.md)
 
 ### Authorization
 
@@ -1253,13 +1262,81 @@ No authorization required
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
 
 
+## getFeatureQuantTableExperimental
+
+> QuantTableExperimental getFeatureQuantTableExperimental(projectId, type)
+
+[EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+
+[EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
+        try {
+            QuantTableExperimental result = apiInstance.getFeatureQuantTableExperimental(projectId, type);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getFeatureQuantTableExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **type** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+
+### Return type
+
+[**QuantTableExperimental**](QuantTableExperimental.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Quant table if akk feature in this project |  -  |
+
+
 ## getFingerprintPrediction
 
 > List&lt;Double&gt; getFingerprintPrediction(projectId, alignedFeatureId, formulaId)
 
-Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
 
-Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
 
 ### Example
 
@@ -1327,9 +1404,9 @@ No authorization required
 
 > AnnotatedMsMsData getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId)
 
-Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
 
-Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
 
 ### Example
 
@@ -1397,9 +1474,9 @@ No authorization required
 
 > AnnotatedSpectrum getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex)
 
-Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+Returns a fragmentation spectrum (e
 
-Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
 
 ### Example
 
@@ -1609,7 +1686,7 @@ No authorization required
 
 ## getFormulaCandidatesPaged
 
-> PageFormulaCandidate getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
+> PagedModelFormulaCandidate getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
 
 Page of FormulaResultContainers available for this feature with minimal information.
 
@@ -1638,7 +1715,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<FormulaCandidateOptField> optFields = Arrays.asList(); // List<FormulaCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageFormulaCandidate result = apiInstance.getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+            PagedModelFormulaCandidate result = apiInstance.getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaCandidatesPaged");
@@ -1665,7 +1742,7 @@ public class Example {
 
 ### Return type
 
-[**PageFormulaCandidate**](PageFormulaCandidate.md)
+[**PagedModelFormulaCandidate**](PagedModelFormulaCandidate.md)
 
 ### Authorization
 
@@ -1687,9 +1764,9 @@ No authorization required
 
 > FragmentationTree getFragTree(projectId, alignedFeatureId, formulaId)
 
-Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+Returns fragmentation tree (SIRIUS) for the given formula result identifier  
 
-Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
 
 ### Example
 
@@ -1753,215 +1830,13 @@ No authorization required
 | **200** | Fragmentation Tree |  -  |
 
 
-## getGroupByName2
-
-> TagGroup getGroupByName2(projectId, groupName)
-
-**EXPERIMENTAL** Get tag group by name in the given project-space
-
-**EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String groupName = "groupName_example"; // String | name of the group
-        try {
-            TagGroup result = apiInstance.getGroupByName2(projectId, groupName);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getGroupByName2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **groupName** | **String**| name of the group | |
-
-### Return type
-
-[**TagGroup**](TagGroup.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Tag group. |  -  |
-
-
-## getGroups2
-
-> List&lt;TagGroup&gt; getGroups2(projectId)
-
-**EXPERIMENTAL** Get all tag category groups in the given project-space
-
-**EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        try {
-            List<TagGroup> result = apiInstance.getGroups2(projectId);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getGroups2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-
-### Return type
-
-[**List&lt;TagGroup&gt;**](TagGroup.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Tag category groups. |  -  |
-
-
-## getGroupsByType2
-
-> List&lt;TagGroup&gt; getGroupsByType2(projectId, groupType)
-
-**EXPERIMENTAL** Get tag groups by type in the given project-space
-
-**EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String groupType = "groupType_example"; // String | type of the group
-        try {
-            List<TagGroup> result = apiInstance.getGroupsByType2(projectId, groupType);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getGroupsByType2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **groupType** | **String**| type of the group | |
-
-### Return type
-
-[**List&lt;TagGroup&gt;**](TagGroup.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Tag groups. |  -  |
-
-
 ## getIsotopePatternAnnotation
 
 > IsotopePatternAnnotation getIsotopePatternAnnotation(projectId, alignedFeatureId, formulaId)
 
-Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+Returns Isotope pattern information for given formulaId  
 
-Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
 
 ### Example
 
@@ -2029,9 +1904,9 @@ No authorization required
 
 > LipidAnnotation getLipidAnnotation(projectId, alignedFeatureId, formulaId)
 
-Returns Lipid annotation (ElGordo) for the given formula result identifier.
+Returns Lipid annotation (ElGordo) for the given formulaId
 
-Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
 
 ### Example
 
@@ -2163,81 +2038,13 @@ No authorization required
 | **200** | Mass Spec data of this feature (aligned over runs). |  -  |
 
 
-## getQuantification1
+## getQuantTableRowExperimental
 
-> QuantificationTable getQuantification1(projectId, type)
+> QuantTableExperimental getQuantTableRowExperimental(projectId, alignedFeatureId, type)
 
-Returns the full quantification table.
+[EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
 
-Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String type = "APEX_INTENSITY"; // String | quantification type.
-        try {
-            QuantificationTable result = apiInstance.getQuantification1(projectId, type);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getQuantification1");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
-
-### Return type
-
-[**QuantificationTable**](QuantificationTable.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-
-## getQuantificationRow1
-
-> QuantificationTable getQuantificationRow1(projectId, alignedFeatureId, type)
-
-Returns a single quantification table row for the given feature.
-
-Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
+[EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -2256,13 +2063,13 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which should be read out
-        String type = "APEX_INTENSITY"; // String | quantification type.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which quantity should be read out
+        QuantMeasure type = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
         try {
-            QuantificationTable result = apiInstance.getQuantificationRow1(projectId, alignedFeatureId, type);
+            QuantTableExperimental result = apiInstance.getQuantTableRowExperimental(projectId, alignedFeatureId, type);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getQuantificationRow1");
+            System.err.println("Exception when calling FeaturesApi#getQuantTableRowExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2278,12 +2085,12 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **alignedFeatureId** | **String**| feature which should be read out | |
-| **type** | **String**| quantification type. | [optional] [default to APEX_HEIGHT] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **alignedFeatureId** | **String**| feature which quantity should be read out | |
+| **type** | [**QuantMeasure**](.md)| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
 
-[**QuantificationTable**](QuantificationTable.md)
+[**QuantTableExperimental**](QuantTableExperimental.md)
 
 ### Authorization
 
@@ -2298,16 +2105,16 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | Quant table row for this feature |  -  |
 
 
-## getSiriusFragTree
+## getSiriusFragTreeInternal
 
-> String getSiriusFragTree(projectId, alignedFeatureId, formulaId)
+> String getSiriusFragTreeInternal(projectId, alignedFeatureId, formulaId)
 
-Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+[INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
 
-Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+[INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
 
 ### Example
 
@@ -2329,10 +2136,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         try {
-            String result = apiInstance.getSiriusFragTree(projectId, alignedFeatureId, formulaId);
+            String result = apiInstance.getSiriusFragTreeInternal(projectId, alignedFeatureId, formulaId);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getSiriusFragTree");
+            System.err.println("Exception when calling FeaturesApi#getSiriusFragTreeInternal");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2368,7 +2175,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API. |  -  |
+| **200** | Fragmentation Tree in internal format. |  -  |
 
 
 ## getSpectralLibraryMatch
@@ -2445,7 +2252,7 @@ No authorization required
 
 ## getSpectralLibraryMatches
 
-> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
+> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields)
 
 List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
@@ -2471,10 +2278,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
         Integer minSharedPeaks = 1; // Integer | 
         Double minSimilarity = 0.2D; // Double | 
-        String candidateInChiKey = ""; // String | 
+        String inchiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatches");
@@ -2496,7 +2303,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
 | **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
 | **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**|  | [optional] [default to ] |
+| **inchiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -2521,11 +2328,11 @@ No authorization required
 
 ## getSpectralLibraryMatchesPaged
 
-> PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
+> PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields)
 
 Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
-Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
 
 ### Example
 
@@ -2550,10 +2357,10 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         Integer minSharedPeaks = 1; // Integer | 
         Double minSimilarity = 0.2D; // Double | 
-        String candidateInChiKey = ""; // String | 
+        String inchiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+            PagedModelSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesPaged");
@@ -2578,12 +2385,12 @@ public class Example {
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
 | **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
 | **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**|  | [optional] [default to ] |
+| **inchiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
 
-[**PageSpectralLibraryMatch**](PageSpectralLibraryMatch.md)
+[**PagedModelSpectralLibraryMatch**](PagedModelSpectralLibraryMatch.md)
 
 ### Authorization
 
@@ -2603,11 +2410,11 @@ No authorization required
 
 ## getSpectralLibraryMatchesSummary
 
-> SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey)
+> SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey)
 
 Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
 
-Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
 
 ### Example
 
@@ -2629,9 +2436,9 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
         Integer minSharedPeaks = 1; // Integer | min threshold of shared peaks.
         Double minSimilarity = 0.2D; // Double | min spectral similarity threshold.
-        String candidateInChiKey = ""; // String | inchi key of the database compound.
+        String inchiKey = ""; // String | 2D inchi key of the compound in the structure database.
         try {
-            SpectralLibraryMatchSummary result = apiInstance.getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey);
+            SpectralLibraryMatchSummary result = apiInstance.getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesSummary");
@@ -2653,7 +2460,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
 | **minSharedPeaks** | **Integer**| min threshold of shared peaks. | [optional] [default to 1] |
 | **minSimilarity** | **Double**| min spectral similarity threshold. | [optional] [default to 0.2] |
-| **candidateInChiKey** | **String**| inchi key of the database compound. | [optional] [default to ] |
+| **inchiKey** | **String**| 2D inchi key of the compound in the structure database. | [optional] [default to ] |
 
 ### Return type
 
@@ -2675,13 +2482,13 @@ No authorization required
 | **200** | Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs). |  -  |
 
 
-## getStructureAnnotatedMsData
+## getStructureAnnotatedMsDataExperimental
 
-> AnnotatedMsMsData getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey)
+> AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey)
 
-Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+[EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
 
-Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+[EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -2704,10 +2511,10 @@ public class Example {
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
         try {
-            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey);
+            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsData");
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsDataExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2747,13 +2554,13 @@ No authorization required
 | **200** | Fragmentation spectrum annotated with fragments and sub-structures. |  -  |
 
 
-## getStructureAnnotatedSpectrum
+## getStructureAnnotatedSpectrumExperimental
 
-> AnnotatedSpectrum getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex)
+> AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex)
 
-Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+[EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
 
-Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+[EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -2777,10 +2584,10 @@ public class Example {
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
         Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
         try {
-            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
+            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrum");
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrumExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2965,7 +2772,7 @@ No authorization required
 
 ## getStructureCandidatesByFormulaPaged
 
-> PageStructureCandidateScored getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields)
+> PagedModelStructureCandidateScored getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields)
 
 Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 
@@ -2995,7 +2802,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateScored result = apiInstance.getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
+            PagedModelStructureCandidateScored result = apiInstance.getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureCandidatesByFormulaPaged");
@@ -3023,7 +2830,7 @@ public class Example {
 
 ### Return type
 
-[**PageStructureCandidateScored**](PageStructureCandidateScored.md)
+[**PagedModelStructureCandidateScored**](PagedModelStructureCandidateScored.md)
 
 ### Authorization
 
@@ -3043,7 +2850,7 @@ No authorization required
 
 ## getStructureCandidatesPaged
 
-> PageStructureCandidateFormula getStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
+> PagedModelStructureCandidateFormula getStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
 
 Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
 
@@ -3072,7 +2879,7 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateFormula result = apiInstance.getStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+            PagedModelStructureCandidateFormula result = apiInstance.getStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureCandidatesPaged");
@@ -3099,7 +2906,7 @@ public class Example {
 
 ### Return type
 
-[**PageStructureCandidateFormula**](PageStructureCandidateFormula.md)
+[**PagedModelStructureCandidateFormula**](PagedModelStructureCandidateFormula.md)
 
 ### Authorization
 
@@ -3117,13 +2924,81 @@ No authorization required
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
 
 
-## getTraces
+## getTagsForAlignedFeaturesExperimental
 
-> TraceSet getTraces(projectId, alignedFeatureId, includeAll)
+> List&lt;Tag&gt; getTagsForAlignedFeaturesExperimental(projectId, objectId)
 
-Returns the traces of the given feature.
+[EXPERIMENTAL] Get all tags associated with this Object
 
-Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
+[EXPERIMENTAL] Get all tags associated with this Object
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to get from.
+        String objectId = "objectId_example"; // String | object to get tags for.
+        try {
+            List<Tag> result = apiInstance.getTagsForAlignedFeaturesExperimental(projectId, objectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getTagsForAlignedFeaturesExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to get from. | |
+| **objectId** | **String**| object to get tags for. | |
+
+### Return type
+
+[**List&lt;Tag&gt;**](Tag.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tags of the requested object |  -  |
+
+
+## getTracesExperimental
+
+> TraceSetExperimental getTracesExperimental(projectId, alignedFeatureId, includeAll)
+
+[EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+
+[EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -3145,10 +3020,10 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
         Boolean includeAll = false; // Boolean | when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
         try {
-            TraceSet result = apiInstance.getTraces(projectId, alignedFeatureId, includeAll);
+            TraceSetExperimental result = apiInstance.getTracesExperimental(projectId, alignedFeatureId, includeAll);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getTraces");
+            System.err.println("Exception when calling FeaturesApi#getTracesExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -3169,7 +3044,7 @@ public class Example {
 
 ### Return type
 
-[**TraceSet**](TraceSet.md)
+[**TraceSetExperimental**](TraceSetExperimental.md)
 
 ### Authorization
 
@@ -3184,16 +3059,16 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | Traces of the given feature. |  -  |
 
 
-## objectsByGroup2
+## removeTagFromAlignedFeatureExperimental
 
-> PageAlignedFeature objectsByGroup2(projectId, group, page, size, sort, optFields)
+> removeTagFromAlignedFeatureExperimental(projectId, alignedFeatureId, tagName)
 
-**EXPERIMENTAL** Get features (aligned over runs) by tag group
+[EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
 
-**EXPERIMENTAL** Get features (aligned over runs) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+[EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -3212,16 +3087,12 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        String group = "group_example"; // String | tag group name.
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) to delete tag from.
+        String tagName = "tagName_example"; // String | name of the tag to delete.
         try {
-            PageAlignedFeature result = apiInstance.objectsByGroup2(projectId, group, page, size, sort, optFields);
-            System.out.println(result);
+            apiInstance.removeTagFromAlignedFeatureExperimental(projectId, alignedFeatureId, tagName);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#objectsByGroup2");
+            System.err.println("Exception when calling FeaturesApi#removeTagFromAlignedFeatureExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -3237,15 +3108,12 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **group** | **String**| tag group name. | |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **alignedFeatureId** | **String**| feature (aligned over runs) to delete tag from. | |
+| **tagName** | **String**| name of the tag to delete. | |
 
 ### Return type
 
-[**PageAlignedFeature**](PageAlignedFeature.md)
+null (empty response body)
 
 ### Authorization
 
@@ -3254,87 +3122,11 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
-- **Accept**: application/json
+- **Accept**: Not defined
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | tagged features (aligned over runs) |  -  |
-
-
-## objectsByTag2
-
-> PageAlignedFeature objectsByTag2(projectId, filter, page, size, sort, optFields)
-
-**EXPERIMENTAL** Get features (aligned over runs) by tag
-
-**EXPERIMENTAL** Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project space to get features (aligned over runs) from.
-        String filter = ""; // String | tag filter.
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
-        try {
-            PageAlignedFeature result = apiInstance.objectsByTag2(projectId, filter, page, size, sort, optFields);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#objectsByTag2");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project space to get features (aligned over runs) from. | |
-| **filter** | **String**| tag filter. | [optional] [default to ] |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-
-### Return type
-
-[**PageAlignedFeature**](PageAlignedFeature.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | tagged features (aligned over runs) |  -  |
+| **200** | OK |  -  |
 

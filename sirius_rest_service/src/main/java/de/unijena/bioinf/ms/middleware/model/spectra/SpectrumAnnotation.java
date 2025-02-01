@@ -60,6 +60,8 @@ public class SpectrumAnnotation {
     private Double massDeviationPpm;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation
      * Substructure highlighting (bond and atom indices) refer to this specific SMILES.
      * If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might
@@ -71,6 +73,8 @@ public class SpectrumAnnotation {
     private String structureAnnotationSmiles;
 
     /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     *
      * Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)
      *
      * Null if substructure annotation not available or not requested.

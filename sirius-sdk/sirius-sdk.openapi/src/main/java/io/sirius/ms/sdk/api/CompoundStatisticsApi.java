@@ -2,10 +2,11 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
-import io.sirius.ms.sdk.model.CompoundFoldChange;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.FoldChange;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.PageCompoundFoldChange;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import io.sirius.ms.sdk.model.StatisticsTable;
 
 import java.util.HashMap;
@@ -51,31 +52,31 @@ public class CompoundStatisticsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
+     * @param leftGroupName name of the left tag group.
+     * @param rightGroupName name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeFoldChangeRequestCreation(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec computeCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'left' is set
-        if (left == null) {
-            throw new WebClientResponseException("Missing the required parameter 'left' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'leftGroupName' is set
+        if (leftGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'leftGroupName' when calling computeCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'right' is set
-        if (right == null) {
-            throw new WebClientResponseException("Missing the required parameter 'right' when calling computeFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'rightGroupName' is set
+        if (rightGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'rightGroupName' when calling computeCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -87,8 +88,8 @@ public class CompoundStatisticsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
@@ -107,81 +108,81 @@ public class CompoundStatisticsApi {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
+     * @param leftGroupName name of the left tag group.
+     * @param rightGroupName name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeFoldChange(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
+        return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
+     * @param leftGroupName name of the left tag group.
+     * @param rightGroupName name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeFoldChangeWithHttpInfo(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
+        return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs
-     * **EXPERIMENTAL** Compute the fold change between two groups of runs.   The runs need to be tagged and grouped.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs
+     * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param left name of the left tag group.
-     * @param right name of the right tag group.
+     * @param leftGroupName name of the left tag group.
+     * @param rightGroupName name of the right tag group.
      * @param aggregation aggregation type.
      * @param quantification quantification type.
      * @param optFields job opt fields.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeFoldChangeWithResponseSpec(String projectId, String left, String right, String aggregation, String quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        return computeFoldChangeRequestCreation(projectId, left, right, aggregation, quantification, optFields);
+    public ResponseSpec computeCompoundFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+        return computeCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
     }
     /**
-     * **EXPERIMENTAL** Delete fold change
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteFoldChangeRequestCreation(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    private ResponseSpec deleteCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'left' is set
-        if (left == null) {
-            throw new WebClientResponseException("Missing the required parameter 'left' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'leftGroupName' is set
+        if (leftGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'leftGroupName' when calling deleteCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'right' is set
-        if (right == null) {
-            throw new WebClientResponseException("Missing the required parameter 'right' when calling deleteFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'rightGroupName' is set
+        if (rightGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'rightGroupName' when calling deleteCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -193,8 +194,8 @@ public class CompoundStatisticsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "left", left));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "right", right));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
         
@@ -206,142 +207,59 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * **EXPERIMENTAL** Delete fold change
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteFoldChange(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public void deleteCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).bodyToMono(localVarReturnType).block();
+        deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Delete fold change
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteFoldChangeWithHttpInfo(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification).toEntity(localVarReturnType).block();
+        return deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).toEntity(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Delete fold change
-     * **EXPERIMENTAL** Delete fold change.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Delete fold changes
+     * [EXPERIMENTAL] Delete fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param left name of the left group.
-     * @param right name of the right group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteFoldChangeWithResponseSpec(String projectId, String left, String right, String aggregation, String quantification) throws WebClientResponseException {
-        return deleteFoldChangeRequestCreation(projectId, left, right, aggregation, quantification);
+    public ResponseSpec deleteCompoundFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        return deleteCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
     /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
-     * @param projectId project-space to read from.
-     * @param compoundId id of the compound (group of ion identities) the fold changes are assigned to.
-     * @return List&lt;CompoundFoldChange&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getFoldChangeRequestCreation(String projectId, String compoundId) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'compoundId' is set
-        if (compoundId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling getFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("compoundId", compoundId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange/{compoundId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
-     * @param projectId project-space to read from.
-     * @param compoundId id of the compound (group of ion identities) the fold changes are assigned to.
-     * @return List&lt;CompoundFoldChange&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public List<CompoundFoldChange> getFoldChange(String projectId, String compoundId) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return getFoldChangeRequestCreation(projectId, compoundId).bodyToFlux(localVarReturnType).collectList().block();
-    }
-
-    /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
-     * @param projectId project-space to read from.
-     * @param compoundId id of the compound (group of ion identities) the fold changes are assigned to.
-     * @return ResponseEntity&lt;List&lt;CompoundFoldChange&gt;&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<List<CompoundFoldChange>> getFoldChangeWithHttpInfo(String projectId, String compoundId) throws WebClientResponseException {
-        ParameterizedTypeReference<CompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<CompoundFoldChange>() {};
-        return getFoldChangeRequestCreation(projectId, compoundId).toEntityList(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities)
-     * **EXPERIMENTAL** List all fold changes that are associated with a compound (group of ion identities).   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes
-     * @param projectId project-space to read from.
-     * @param compoundId id of the compound (group of ion identities) the fold changes are assigned to.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getFoldChangeWithResponseSpec(String projectId, String compoundId) throws WebClientResponseException {
-        return getFoldChangeRequestCreation(projectId, compoundId);
-    }
-    /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
@@ -349,11 +267,11 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFoldChangeTableRequestCreation(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    private ResponseSpec getCompoundFoldChangeTableExperimentalRequestCreation(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChangeTable", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompoundFoldChangeTableExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -378,12 +296,12 @@ public class CompoundStatisticsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges/stats-table", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
@@ -391,14 +309,14 @@ public class CompoundStatisticsApi {
      * @return StatisticsTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public StatisticsTable getFoldChangeTable(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    public StatisticsTable getCompoundFoldChangeTableExperimental(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
-        return getFoldChangeTableRequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
+        return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
@@ -406,14 +324,14 @@ public class CompoundStatisticsApi {
      * @return ResponseEntity&lt;StatisticsTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<StatisticsTable> getFoldChangeTableWithHttpInfo(String projectId, String aggregation, String quantification) throws WebClientResponseException {
+    public ResponseEntity<StatisticsTable> getCompoundFoldChangeTableExperimentalWithHttpInfo(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         ParameterizedTypeReference<StatisticsTable> localVarReturnType = new ParameterizedTypeReference<StatisticsTable>() {};
-        return getFoldChangeTableRequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
+        return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification).toEntity(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Get table of all fold changes in the project space
-     * **EXPERIMENTAL** Get table of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Get table of all fold changes in the project space
+     * [EXPERIMENTAL] Get table of all fold changes in the project space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - table of fold changes.
      * @param projectId project-space to read from.
      * @param aggregation aggregation type.
@@ -421,25 +339,34 @@ public class CompoundStatisticsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFoldChangeTableWithResponseSpec(String projectId, String aggregation, String quantification) throws WebClientResponseException {
-        return getFoldChangeTableRequestCreation(projectId, aggregation, quantification);
+    public ResponseSpec getCompoundFoldChangeTableExperimentalWithResponseSpec(String projectId, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        return getCompoundFoldChangeTableExperimentalRequestCreation(projectId, aggregation, quantification);
     }
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageCompoundFoldChange
+     * [EXPERIMENTAL] Get fold changes
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec listFoldChangeRequestCreation(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+    private ResponseSpec getCompoundFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling listFoldChange", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'leftGroupName' is set
+        if (leftGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'leftGroupName' when calling getCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'rightGroupName' is set
+        if (rightGroupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'rightGroupName' when calling getCompoundFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -451,12 +378,13 @@ public class CompoundStatisticsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
         
         final String[] localVarAccepts = { 
-            "application/json"
+            "*/*"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -464,54 +392,57 @@ public class CompoundStatisticsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchange/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/statistics/foldchanges", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageCompoundFoldChange
+     * [EXPERIMENTAL] Get fold changes
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
+     * @return List&lt;FoldChange&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageCompoundFoldChange listFoldChange(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return listFoldChangeRequestCreation(projectId, page, size, sort).bodyToMono(localVarReturnType).block();
+    public List<FoldChange> getCompoundFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return getCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return ResponseEntity&lt;PageCompoundFoldChange&gt;
+     * [EXPERIMENTAL] Get fold changes
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
+     * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageCompoundFoldChange> listFoldChangeWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageCompoundFoldChange> localVarReturnType = new ParameterizedTypeReference<PageCompoundFoldChange>() {};
-        return listFoldChangeRequestCreation(projectId, page, size, sort).toEntity(localVarReturnType).block();
+    public ResponseEntity<List<FoldChange>> getCompoundFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return getCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification).toEntityList(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Page of all fold changes in the project space
-     * **EXPERIMENTAL** Page of all fold changes in the project space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - fold changes.
-     * @param projectId project-space to read from.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * [EXPERIMENTAL] Get fold changes
+     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param leftGroupName name of the left group.
+     * @param rightGroupName name of the right group.
+     * @param aggregation The aggregation parameter
+     * @param quantification The quantification parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec listFoldChangeWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        return listFoldChangeRequestCreation(projectId, page, size, sort);
+    public ResponseSpec getCompoundFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
+        return getCompoundFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
 }

@@ -4,7 +4,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AlignedFeature;
 import io.sirius.ms.sdk.model.AlignedFeatureOptField;
-import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
 import io.sirius.ms.sdk.model.AnnotatedMsMsData;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.CanopusPrediction;
@@ -17,12 +17,13 @@ import io.sirius.ms.sdk.model.InstrumentProfile;
 import io.sirius.ms.sdk.model.IsotopePatternAnnotation;
 import io.sirius.ms.sdk.model.LipidAnnotation;
 import io.sirius.ms.sdk.model.MsData;
-import io.sirius.ms.sdk.model.PageAlignedFeature;
-import io.sirius.ms.sdk.model.PageFormulaCandidate;
-import io.sirius.ms.sdk.model.PageSpectralLibraryMatch;
-import io.sirius.ms.sdk.model.PageStructureCandidateFormula;
-import io.sirius.ms.sdk.model.PageStructureCandidateScored;
-import io.sirius.ms.sdk.model.QuantificationTable;
+import io.sirius.ms.sdk.model.PagedModelAlignedFeature;
+import io.sirius.ms.sdk.model.PagedModelFormulaCandidate;
+import io.sirius.ms.sdk.model.PagedModelSpectralLibraryMatch;
+import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
+import io.sirius.ms.sdk.model.PagedModelStructureCandidateScored;
+import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.QuantTableExperimental;
 import io.sirius.ms.sdk.model.SpectralLibraryMatch;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
@@ -30,8 +31,7 @@ import io.sirius.ms.sdk.model.StructureCandidateFormula;
 import io.sirius.ms.sdk.model.StructureCandidateOptField;
 import io.sirius.ms.sdk.model.StructureCandidateScored;
 import io.sirius.ms.sdk.model.Tag;
-import io.sirius.ms.sdk.model.TagGroup;
-import io.sirius.ms.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import java.util.HashMap;
 import java.util.List;
@@ -171,110 +171,8 @@ public class FeaturesApi {
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
     /**
-     * **EXPERIMENTAL** Group tags in the project
-     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - the tag group that was added
-     * @param projectId project-space to add to.
-     * @param groupName name of the new group
-     * @param filter filter query to create the group
-     * @param type type of the group
-     * @return TagGroup
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec addGroup2RequestCreation(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'groupName' is set
-        if (groupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling addGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'filter' is set
-        if (filter == null) {
-            throw new WebClientResponseException("Missing the required parameter 'filter' when calling addGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'type' is set
-        if (type == null) {
-            throw new WebClientResponseException("Missing the required parameter 'type' when calling addGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("groupName", groupName);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-        
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Group tags in the project
-     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - the tag group that was added
-     * @param projectId project-space to add to.
-     * @param groupName name of the new group
-     * @param filter filter query to create the group
-     * @param type type of the group
-     * @return TagGroup
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public TagGroup addGroup2(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return addGroup2RequestCreation(projectId, groupName, filter, type).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Group tags in the project
-     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - the tag group that was added
-     * @param projectId project-space to add to.
-     * @param groupName name of the new group
-     * @param filter filter query to create the group
-     * @param type type of the group
-     * @return ResponseEntity&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<TagGroup> addGroup2WithHttpInfo(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return addGroup2RequestCreation(projectId, groupName, filter, type).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Group tags in the project
-     * **EXPERIMENTAL** Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - the tag group that was added
-     * @param projectId project-space to add to.
-     * @param groupName name of the new group
-     * @param filter filter query to create the group
-     * @param type type of the group
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec addGroup2WithResponseSpec(String projectId, String groupName, String filter, String type) throws WebClientResponseException {
-        return addGroup2RequestCreation(projectId, groupName, filter, type);
-    }
-    /**
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param alignedFeatureId run to add tags to.
@@ -282,19 +180,19 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTags2RequestCreation(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    private ResponseSpec addTagsToAlignedFeatureExperimentalRequestCreation(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
         Object postBody = tag;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTagsToAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling addTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling addTagsToAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'tag' is set
         if (tag == null) {
-            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTagsToAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -323,8 +221,8 @@ public class FeaturesApi {
     }
 
     /**
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param alignedFeatureId run to add tags to.
@@ -332,14 +230,14 @@ public class FeaturesApi {
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> addTags2(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    public List<Tag> addTagsToAlignedFeatureExperimental(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTags2RequestCreation(projectId, alignedFeatureId, tag).bodyToFlux(localVarReturnType).collectList().block();
+        return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param alignedFeatureId run to add tags to.
@@ -347,14 +245,14 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> addTags2WithHttpInfo(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+    public ResponseEntity<List<Tag>> addTagsToAlignedFeatureExperimentalWithHttpInfo(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
         ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTags2RequestCreation(projectId, alignedFeatureId, tag).toEntityList(localVarReturnType).block();
+        return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag).toEntityList(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project
-     * **EXPERIMENTAL** Add tags to a feature (aligned over runs) in the project. Tags with the same category name will be overwritten.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param alignedFeatureId run to add tags to.
@@ -362,8 +260,8 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTags2WithResponseSpec(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
-        return addTags2RequestCreation(projectId, alignedFeatureId, tag);
+    public ResponseSpec addTagsToAlignedFeatureExperimentalWithResponseSpec(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
+        return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag);
     }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -523,169 +421,87 @@ public class FeaturesApi {
         return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
     }
     /**
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param groupName name of group to delete.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteGroup2RequestCreation(String projectId, String groupName) throws WebClientResponseException {
+    private ResponseSpec getAdductNetworkWithMergedTracesExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'groupName' is set
-        if (groupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling deleteGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("groupName", groupName);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param groupName name of group to delete.
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public void deleteGroup2(String projectId, String groupName) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteGroup2RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param groupName name of group to delete.
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<Void> deleteGroup2WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteGroup2RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space
-     * **EXPERIMENTAL** Delete tag groups with the given name from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param groupName name of group to delete.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec deleteGroup2WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
-        return deleteGroup2RequestCreation(projectId, groupName);
-    }
-    /**
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param categoryName category name of the tag to delete.
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec deleteTags2RequestCreation(String projectId, String alignedFeatureId, String categoryName) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAdductNetworkWithMergedTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling deleteTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'categoryName' is set
-        if (categoryName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling deleteTags2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAdductNetworkWithMergedTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
         pathParams.put("alignedFeatureId", alignedFeatureId);
-        pathParams.put("categoryName", categoryName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param categoryName category name of the tag to delete.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteTags2(String projectId, String alignedFeatureId, String categoryName) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteTags2RequestCreation(projectId, alignedFeatureId, categoryName).bodyToMono(localVarReturnType).block();
+    public TraceSetExperimental getAdductNetworkWithMergedTracesExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param categoryName category name of the tag to delete.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
+     * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteTags2WithHttpInfo(String projectId, String alignedFeatureId, String categoryName) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteTags2RequestCreation(projectId, alignedFeatureId, categoryName).toEntity(localVarReturnType).block();
+    public ResponseEntity<TraceSetExperimental> getAdductNetworkWithMergedTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space
-     * **EXPERIMENTAL** Delete tag with the given category from the feature (aligned over runs) with the specified ID in the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network
+     * [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
-     * @param projectId project-space to delete from.
-     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param categoryName category name of the tag to delete.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteTags2WithResponseSpec(String projectId, String alignedFeatureId, String categoryName) throws WebClientResponseException {
-        return deleteTags2RequestCreation(projectId, alignedFeatureId, categoryName);
+    public ResponseSpec getAdductNetworkWithMergedTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getAdductNetworkWithMergedTracesExperimentalRequestCreation(projectId, alignedFeatureId);
     }
     /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
@@ -777,6 +593,89 @@ public class FeaturesApi {
         return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, optFields);
     }
     /**
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQualityExperimental
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getAlignedFeatureQualityExperimentalRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeatureQualityExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAlignedFeatureQualityExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQualityExperimental
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public AlignedFeatureQualityExperimental getAlignedFeatureQualityExperimental(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
+        return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return ResponseEntity&lt;AlignedFeatureQualityExperimental&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<AlignedFeatureQualityExperimental> getAlignedFeatureQualityExperimentalWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<AlignedFeatureQualityExperimental> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQualityExperimental>() {};
+        return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
+     * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  &lt;p&gt;  Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getAlignedFeatureQualityExperimentalWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getAlignedFeatureQualityExperimentalRequestCreation(projectId, alignedFeatureId);
+    }
+    /**
      * Get all available features (aligned over runs) in the given project-space.
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
@@ -857,6 +756,210 @@ public class FeaturesApi {
         return getAlignedFeaturesRequestCreation(projectId, optFields);
     }
     /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PagedModelAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getAlignedFeaturesByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeaturesByGroupExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'groupName' is set
+        if (groupName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling getAlignedFeaturesByGroupExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "groupName", groupName));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/grouped", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PagedModelAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getAlignedFeaturesByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields);
+    }
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project space to get features (aligned over runs) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PagedModelAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getAlignedFeaturesByTagExperimentalRequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeaturesByTagExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project space to get features (aligned over runs) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return PagedModelAlignedFeature
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public PagedModelAlignedFeature getAlignedFeaturesByTagExperimental(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project space to get features (aligned over runs) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByTagExperimentalWithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
+        return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;   Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged features (aligned over runs)
+     * @param projectId project space to get features (aligned over runs) from.
+     * @param filter tag filter.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getAlignedFeaturesByTagExperimentalWithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesByTagExperimentalRequestCreation(projectId, filter, page, size, sort, optFields);
+    }
+    /**
      * Get all available features (aligned over runs) in the given project-space.
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
@@ -865,7 +968,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
+     * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getAlignedFeaturesPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
@@ -898,7 +1001,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -911,11 +1014,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
+     * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageAlignedFeature getAlignedFeaturesPaged(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+    public PagedModelAlignedFeature getAlignedFeaturesPaged(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -928,11 +1031,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageAlignedFeature&gt;
+     * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageAlignedFeature> getAlignedFeaturesPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -952,91 +1055,8 @@ public class FeaturesApi {
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getAlignedFeaturesQualityRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeaturesQuality", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'alignedFeatureId' is set
-        if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAlignedFeaturesQuality", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("alignedFeatureId", alignedFeatureId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public AlignedFeatureQuality getAlignedFeaturesQuality(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return ResponseEntity&lt;AlignedFeatureQuality&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<AlignedFeatureQuality> getAlignedFeaturesQualityWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space
-     * **EXPERIMENTAL** Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getAlignedFeaturesQualityWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId);
-    }
-    /**
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1084,8 +1104,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1099,8 +1119,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1114,8 +1134,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
-     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     * Return Best matching compound classes for given formulaId
+     * Return Best matching compound classes for given formulaId.  &lt;p&gt;  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
      * <p><b>200</b> - Best matching Predicted compound classes
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1416,7 +1436,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateScored
+     * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getDeNovoStructureCandidatesByFormulaPagedRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
@@ -1459,7 +1479,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -1474,11 +1494,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateScored
+     * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+    public PagedModelStructureCandidateScored getDeNovoStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -1493,11 +1513,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageStructureCandidateScored&gt;
+     * @return ResponseEntity&lt;PagedModelStructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateScored> getDeNovoStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+    public ResponseEntity<PagedModelStructureCandidateScored> getDeNovoStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getDeNovoStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -1528,7 +1548,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateFormula
+     * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getDeNovoStructureCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
@@ -1566,7 +1586,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -1580,11 +1600,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateFormula
+     * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateFormula getDeNovoStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+    public PagedModelStructureCandidateFormula getDeNovoStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -1598,11 +1618,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageStructureCandidateFormula&gt;
+     * @return ResponseEntity&lt;PagedModelStructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateFormula> getDeNovoStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+    public ResponseEntity<PagedModelStructureCandidateFormula> getDeNovoStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -1623,8 +1643,88 @@ public class FeaturesApi {
         return getDeNovoStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table if akk feature in this project
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return QuantTableExperimental
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFeatureQuantTableExperimentalRequestCreation(String projectId, QuantMeasure type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFeatureQuantTableExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/quant-table", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table if akk feature in this project
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return QuantTableExperimental
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantTableExperimental getFeatureQuantTableExperimental(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return getFeatureQuantTableExperimentalRequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table if akk feature in this project
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantTableExperimental> getFeatureQuantTableExperimentalWithHttpInfo(String projectId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return getFeatureQuantTableExperimentalRequestCreation(projectId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL]  Returns the full quantification table for the given feature (alignedFeatureId).  &lt;p&gt;  Returns the full quantification table. The quantification table contains a quantities of the features within all  runs they are contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table if akk feature in this project
+     * @param projectId project-space to read from.
+     * @param type quantification type.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFeatureQuantTableExperimentalWithResponseSpec(String projectId, QuantMeasure type) throws WebClientResponseException {
+        return getFeatureQuantTableExperimentalRequestCreation(projectId, type);
+    }
+    /**
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1672,8 +1772,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1687,8 +1787,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1702,8 +1802,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
-     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier (formulaId)  &lt;p&gt;  This fingerprint is used to perform structure database search and predict compound classes.
      * <p><b>200</b> - probabilistic fingerprint predicted by CSI:FingerID
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1715,8 +1815,8 @@ public class FeaturesApi {
         return getFingerprintPredictionRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1764,8 +1864,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1779,8 +1879,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1794,8 +1894,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
-     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
+     * Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId.  &lt;p&gt;  Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
      * <p><b>200</b> - Fragmentation spectra annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1807,8 +1907,8 @@ public class FeaturesApi {
         return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1859,8 +1959,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1875,8 +1975,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -1891,8 +1991,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * Returns a fragmentation spectrum (e
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  &lt;p&gt;  These annotations are only available if a fragmentation tree is available.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragment formulas and losses.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2101,7 +2201,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageFormulaCandidate
+     * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getFormulaCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
@@ -2139,7 +2239,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PageFormulaCandidate>() {};
+        ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -2153,11 +2253,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageFormulaCandidate
+     * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageFormulaCandidate getFormulaCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PageFormulaCandidate>() {};
+    public PagedModelFormulaCandidate getFormulaCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -2171,11 +2271,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageFormulaCandidate&gt;
+     * @return ResponseEntity&lt;PagedModelFormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PageFormulaCandidate>() {};
+    public ResponseEntity<PagedModelFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -2196,8 +2296,8 @@ public class FeaturesApi {
         return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2245,8 +2345,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2260,8 +2360,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2275,8 +2375,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  &lt;p&gt;  This tree is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Fragmentation Tree
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2288,248 +2388,8 @@ public class FeaturesApi {
         return getFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * **EXPERIMENTAL** Get tag group by name in the given project-space
-     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag group.
-     * @param projectId project-space to read from.
-     * @param groupName name of the group
-     * @return TagGroup
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getGroupByName2RequestCreation(String projectId, String groupName) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupByName2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'groupName' is set
-        if (groupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'groupName' when calling getGroupByName2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("groupName", groupName);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/{groupName}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag group by name in the given project-space
-     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag group.
-     * @param projectId project-space to read from.
-     * @param groupName name of the group
-     * @return TagGroup
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public TagGroup getGroupByName2(String projectId, String groupName) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupByName2RequestCreation(projectId, groupName).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag group by name in the given project-space
-     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag group.
-     * @param projectId project-space to read from.
-     * @param groupName name of the group
-     * @return ResponseEntity&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<TagGroup> getGroupByName2WithHttpInfo(String projectId, String groupName) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupByName2RequestCreation(projectId, groupName).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag group by name in the given project-space
-     * **EXPERIMENTAL** Get tag group by name in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag group.
-     * @param projectId project-space to read from.
-     * @param groupName name of the group
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getGroupByName2WithResponseSpec(String projectId, String groupName) throws WebClientResponseException {
-        return getGroupByName2RequestCreation(projectId, groupName);
-    }
-    /**
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag category groups.
-     * @param projectId project-space to read from.
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getGroups2RequestCreation(String projectId) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroups2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag category groups.
-     * @param projectId project-space to read from.
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public List<TagGroup> getGroups2(String projectId) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroups2RequestCreation(projectId).bodyToFlux(localVarReturnType).collectList().block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag category groups.
-     * @param projectId project-space to read from.
-     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<List<TagGroup>> getGroups2WithHttpInfo(String projectId) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroups2RequestCreation(projectId).toEntityList(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space
-     * **EXPERIMENTAL** Get all tag category groups in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag category groups.
-     * @param projectId project-space to read from.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getGroups2WithResponseSpec(String projectId) throws WebClientResponseException {
-        return getGroups2RequestCreation(projectId);
-    }
-    /**
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getGroupsByType2RequestCreation(String projectId, String groupType) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupsByType2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'groupType' is set
-        if (groupType == null) {
-            throw new WebClientResponseException("Missing the required parameter 'groupType' when calling getGroupsByType2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("groupType", groupType);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/groups/type/{groupType}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public List<TagGroup> getGroupsByType2(String projectId, String groupType) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupsByType2RequestCreation(projectId, groupType).bodyToFlux(localVarReturnType).collectList().block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<List<TagGroup>> getGroupsByType2WithHttpInfo(String projectId, String groupType) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupsByType2RequestCreation(projectId, groupType).toEntityList(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space
-     * **EXPERIMENTAL** Get tag groups by type in the given project-space.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getGroupsByType2WithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
-        return getGroupsByType2RequestCreation(projectId, groupType);
-    }
-    /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * Returns Isotope pattern information for given formulaId  
+     * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2577,8 +2437,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * Returns Isotope pattern information for given formulaId  
+     * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2592,8 +2452,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * Returns Isotope pattern information for given formulaId  
+     * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2607,8 +2467,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
-     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     * Returns Isotope pattern information for given formulaId  
+     * Returns Isotope pattern information for given formulaId  &lt;p&gt;  Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
      * <p><b>200</b> - Isotope pattern information
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2620,8 +2480,8 @@ public class FeaturesApi {
         return getIsotopePatternAnnotationRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     * Returns Lipid annotation (ElGordo) for the given formulaId
+     * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2669,8 +2529,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     * Returns Lipid annotation (ElGordo) for the given formulaId
+     * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2684,8 +2544,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     * Returns Lipid annotation (ElGordo) for the given formulaId
+     * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2699,8 +2559,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
-     * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     * Returns Lipid annotation (ElGordo) for the given formulaId
+     * Returns Lipid annotation (ElGordo) for the given formulaId.  &lt;p&gt;  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
      * <p><b>200</b> - LipidAnnotation
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -2795,104 +2655,24 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * Returns the full quantification table.
-     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
-     * @param type quantification type.
-     * @return QuantificationTable
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getQuantification1RequestCreation(String projectId, String type) throws WebClientResponseException {
+    private ResponseSpec getQuantTableRowExperimentalRequestCreation(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-        
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Returns the full quantification table.
-     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
-     * <p><b>200</b> - OK
-     * @param projectId project-space to read from.
-     * @param type quantification type.
-     * @return QuantificationTable
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public QuantificationTable getQuantification1(String projectId, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantification1RequestCreation(projectId, type).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Returns the full quantification table.
-     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
-     * <p><b>200</b> - OK
-     * @param projectId project-space to read from.
-     * @param type quantification type.
-     * @return ResponseEntity&lt;QuantificationTable&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<QuantificationTable> getQuantification1WithHttpInfo(String projectId, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantification1RequestCreation(projectId, type).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Returns the full quantification table.
-     * Returns the full quantification table. The quantification table contains a quantification of the features within all  runs they are contained in.
-     * <p><b>200</b> - OK
-     * @param projectId project-space to read from.
-     * @param type quantification type.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getQuantification1WithResponseSpec(String projectId, String type) throws WebClientResponseException {
-        return getQuantification1RequestCreation(projectId, type);
-    }
-    /**
-     * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which should be read out
-     * @param type quantification type.
-     * @return QuantificationTable
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getQuantificationRow1RequestCreation(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantificationRow1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantTableRowExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantificationRow1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantTableRowExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -2916,78 +2696,76 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which should be read out
-     * @param type quantification type.
-     * @return QuantificationTable
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @return QuantTableExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public QuantificationTable getQuantificationRow1(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+    public QuantTableExperimental getQuantTableRowExperimental(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which should be read out
-     * @param type quantification type.
-     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @return ResponseEntity&lt;QuantTableExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<QuantificationTable> getQuantificationRow1WithHttpInfo(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
-        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
-        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+    public ResponseEntity<QuantTableExperimental> getQuantTableRowExperimentalWithHttpInfo(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantTableExperimental> localVarReturnType = new ParameterizedTypeReference<QuantTableExperimental>() {};
+        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns a single quantification table row for the given feature.
-     * Returns a single quantification table row for the given feature. The quantification table contains a quantification of the feature within all  samples it is contained in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId).  &lt;p&gt;  The quantification table contains a quantity of the feature within all samples it is contained in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Quant table row for this feature
      * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which should be read out
-     * @param type quantification type.
+     * @param alignedFeatureId feature which quantity should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getQuantificationRow1WithResponseSpec(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
-        return getQuantificationRow1RequestCreation(projectId, alignedFeatureId, type);
+    public ResponseSpec getQuantTableRowExperimentalWithResponseSpec(String projectId, String alignedFeatureId, QuantMeasure type) throws WebClientResponseException {
+        return getQuantTableRowExperimentalRequestCreation(projectId, alignedFeatureId, type);
     }
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
+     * <p><b>200</b> - Fragmentation Tree in internal format.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     * @deprecated
      */
-    @Deprecated
-    private ResponseSpec getSiriusFragTreeRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    private ResponseSpec getSiriusFragTreeInternalRequestCreation(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSiriusFragTree", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getSiriusFragTreeInternal", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -3015,47 +2793,47 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
+     * <p><b>200</b> - Fragmentation Tree in internal format.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String getSiriusFragTree(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public String getSiriusFragTreeInternal(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
+     * <p><b>200</b> - Fragmentation Tree in internal format.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> getSiriusFragTreeWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+    public ResponseEntity<String> getSiriusFragTreeInternalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format
+     * [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.  &lt;p&gt;  [INTERNAL]: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time.
+     * <p><b>200</b> - Fragmentation Tree in internal format.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSiriusFragTreeWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
-        return getSiriusFragTreeRequestCreation(projectId, alignedFeatureId, formulaId);
+    public ResponseSpec getSiriusFragTreeInternalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId) throws WebClientResponseException {
+        return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
      * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
@@ -3163,12 +2941,12 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3191,7 +2969,7 @@ public class FeaturesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "inchiKey", inchiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -3215,14 +2993,14 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SpectralLibraryMatch> getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public List<SpectralLibraryMatch> getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -3233,14 +3011,14 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;List&lt;SpectralLibraryMatch&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).toEntityList(localVarReturnType).block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -3251,17 +3029,17 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey, optFields);
     }
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -3270,12 +3048,12 @@ public class FeaturesApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
-     * @return PageSpectralLibraryMatch
+     * @return PagedModelSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3301,7 +3079,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "inchiKey", inchiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -3313,13 +3091,13 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
+        ParameterizedTypeReference<PagedModelSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PagedModelSpectralLibraryMatch>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -3328,19 +3106,19 @@ public class FeaturesApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
-     * @return PageSpectralLibraryMatch
+     * @return PagedModelSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).bodyToMono(localVarReturnType).block();
+    public PagedModelSpectralLibraryMatch getSpectralLibraryMatchesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PagedModelSpectralLibraryMatch>() {};
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -3349,19 +3127,19 @@ public class FeaturesApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
-     * @return ResponseEntity&lt;PageSpectralLibraryMatch&gt;
+     * @return ResponseEntity&lt;PagedModelSpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).toEntity(localVarReturnType).block();
+    public ResponseEntity<PagedModelSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PagedModelSpectralLibraryMatch>() {};
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
@@ -3370,27 +3148,27 @@ public class FeaturesApi {
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param minSharedPeaks The minSharedPeaks parameter
      * @param minSimilarity The minSimilarity parameter
-     * @param candidateInChiKey The candidateInChiKey parameter
+     * @param inchiKey The inchiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String inchiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, inchiKey, optFields);
     }
     /**
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
      * @param minSimilarity min spectral similarity threshold.
-     * @param candidateInChiKey inchi key of the database compound.
+     * @param inchiKey 2D inchi key of the compound in the structure database.
      * @return SpectralLibraryMatchSummary
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesSummaryRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesSummaryRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3413,7 +3191,7 @@ public class FeaturesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "inchiKey", inchiKey));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -3430,56 +3208,56 @@ public class FeaturesApi {
 
     /**
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
      * @param minSimilarity min spectral similarity threshold.
-     * @param candidateInChiKey inchi key of the database compound.
+     * @param inchiKey 2D inchi key of the compound in the structure database.
      * @return SpectralLibraryMatchSummary
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+    public SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
-        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey).bodyToMono(localVarReturnType).block();
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
      * @param minSimilarity min spectral similarity threshold.
-     * @param candidateInChiKey inchi key of the database compound.
+     * @param inchiKey 2D inchi key of the compound in the structure database.
      * @return ResponseEntity&lt;SpectralLibraryMatchSummary&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SpectralLibraryMatchSummary> getSpectralLibraryMatchesSummaryWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+    public ResponseEntity<SpectralLibraryMatchSummary> getSpectralLibraryMatchesSummaryWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
-        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey).toEntity(localVarReturnType).block();
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey).toEntity(localVarReturnType).block();
     }
 
     /**
      * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
-     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;inchiKey&#39; (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param minSharedPeaks min threshold of shared peaks.
      * @param minSimilarity min spectral similarity threshold.
-     * @param candidateInChiKey inchi key of the database compound.
+     * @param inchiKey 2D inchi key of the compound in the structure database.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesSummaryWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
-        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey);
+    public ResponseSpec getSpectralLibraryMatchesSummaryWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String inchiKey) throws WebClientResponseException {
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, inchiKey);
     }
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3488,23 +3266,23 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedMsDataRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'inchiKey' is set
         if (inchiKey == null) {
-            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedMsData", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedMsDataExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -3533,8 +3311,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3543,14 +3321,14 @@ public class FeaturesApi {
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getStructureAnnotatedMsData(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3559,14 +3337,14 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
-     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
+     * [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey.  &lt;p&gt;  Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3575,12 +3353,12 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedMsDataWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
-        return getStructureAnnotatedMsDataRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
+    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
     }
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3590,23 +3368,23 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'formulaId' is set
         if (formulaId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'formulaId' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'inchiKey' is set
         if (inchiKey == null) {
-            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedSpectrum", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'inchiKey' when calling getStructureAnnotatedSpectrumExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -3637,8 +3415,8 @@ public class FeaturesApi {
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3648,14 +3426,14 @@ public class FeaturesApi {
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getStructureAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3665,14 +3443,14 @@ public class FeaturesApi {
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
-     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
+     * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  &lt;p&gt;  Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the selected formula result  These annotations are only available if a fragmentation tree is available.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - Fragmentation spectrum annotated with fragments and sub-structures.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
@@ -3682,8 +3460,8 @@ public class FeaturesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
-        return getStructureAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
+    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex) throws WebClientResponseException {
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
     }
     /**
      * List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
@@ -3883,7 +3661,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateScored
+     * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getStructureCandidatesByFormulaPagedRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
@@ -3926,7 +3704,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -3941,11 +3719,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateScored
+     * @return PagedModelStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateScored getStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+    public PagedModelStructureCandidateScored getStructureCandidatesByFormulaPaged(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -3960,11 +3738,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageStructureCandidateScored&gt;
+     * @return ResponseEntity&lt;PagedModelStructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateScored> getStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
+    public ResponseEntity<PagedModelStructureCandidateScored> getStructureCandidatesByFormulaPagedWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateScored>() {};
         return getStructureCandidatesByFormulaPagedRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -3995,7 +3773,7 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateFormula
+     * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec getStructureCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
@@ -4033,7 +3811,7 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -4047,11 +3825,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageStructureCandidateFormula
+     * @return PagedModelStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateFormula getStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+    public PagedModelStructureCandidateFormula getStructureCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
@@ -4065,11 +3843,11 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageStructureCandidateFormula&gt;
+     * @return ResponseEntity&lt;PagedModelStructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateFormula> getStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
+    public ResponseEntity<PagedModelStructureCandidateFormula> getStructureCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PagedModelStructureCandidateFormula>() {};
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
@@ -4090,24 +3868,107 @@ public class FeaturesApi {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * Returns the traces of the given feature.
-     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId feature which intensities should be read out
-     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return TraceSet
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * <p><b>200</b> - the tags of the requested object
+     * @param projectId project-space to get from.
+     * @param objectId object to get tags for.
+     * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTracesRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+    private ResponseSpec getTagsForAlignedFeaturesExperimentalRequestCreation(String projectId, String objectId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTagsForAlignedFeaturesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'objectId' is set
+        if (objectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling getTagsForAlignedFeaturesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("objectId", objectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags/{objectId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * <p><b>200</b> - the tags of the requested object
+     * @param projectId project-space to get from.
+     * @param objectId object to get tags for.
+     * @return List&lt;Tag&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Tag> getTagsForAlignedFeaturesExperimental(String projectId, String objectId) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * <p><b>200</b> - the tags of the requested object
+     * @param projectId project-space to get from.
+     * @param objectId object to get tags for.
+     * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Tag>> getTagsForAlignedFeaturesExperimentalWithHttpInfo(String projectId, String objectId) throws WebClientResponseException {
+        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
+        return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * [EXPERIMENTAL] Get all tags associated with this Object
+     * <p><b>200</b> - the tags of the requested object
+     * @param projectId project-space to get from.
+     * @param objectId object to get tags for.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getTagsForAlignedFeaturesExperimentalWithResponseSpec(String projectId, String objectId) throws WebClientResponseException {
+        return getTagsForAlignedFeaturesExperimentalRequestCreation(projectId, objectId);
+    }
+    /**
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Traces of the given feature.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
+     * @return TraceSetExperimental
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getTracesExperimentalRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTracesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -4131,255 +3992,138 @@ public class FeaturesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Returns the traces of the given feature.
-     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return TraceSet
+     * @return TraceSetExperimental
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getTraces(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
+    public TraceSetExperimental getTracesExperimental(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Returns the traces of the given feature.
-     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
-     * @return ResponseEntity&lt;TraceSet&gt;
+     * @return ResponseEntity&lt;TraceSetExperimental&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
+    public ResponseEntity<TraceSetExperimental> getTracesExperimentalWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSetExperimental> localVarReturnType = new ParameterizedTypeReference<TraceSetExperimental>() {};
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Returns the traces of the given feature.
-     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
-     * <p><b>200</b> - OK
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
+     * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).  &lt;p&gt;  Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Traces of the given feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
      * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTracesWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
-        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll);
+    public ResponseSpec getTracesExperimentalWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        return getTracesExperimentalRequestCreation(projectId, alignedFeatureId, includeAll);
     }
     /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param group tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
+     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
+     * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec objectsByGroup2RequestCreation(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec removeTagFromAlignedFeatureExperimentalRequestCreation(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling removeTagFromAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'group' is set
-        if (group == null) {
-            throw new WebClientResponseException("Missing the required parameter 'group' when calling objectsByGroup2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling removeTagFromAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'tagName' is set
+        if (tagName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tagName' when calling removeTagFromAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("tagName", tagName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "group", group));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
+        final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/grouped", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param group tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
+     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
+     * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageAlignedFeature objectsByGroup2(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return objectsByGroup2RequestCreation(projectId, group, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+    public void removeTagFromAlignedFeatureExperimental(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param group tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageAlignedFeature&gt;
+     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
+     * @param tagName name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageAlignedFeature> objectsByGroup2WithHttpInfo(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return objectsByGroup2RequestCreation(projectId, group, page, size, sort, optFields).toEntity(localVarReturnType).block();
+    public ResponseEntity<Void> removeTagFromAlignedFeatureExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName).toEntity(localVarReturnType).block();
     }
 
     /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag group.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
+     * [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param group tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param alignedFeatureId feature (aligned over runs) to delete tag from.
+     * @param tagName name of the tag to delete.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec objectsByGroup2WithResponseSpec(String projectId, String group, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return objectsByGroup2RequestCreation(projectId, group, page, size, sort, optFields);
-    }
-    /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter tag filter.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec objectsByTag2RequestCreation(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling objectsByTag2", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-        
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tagged", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter tag filter.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PageAlignedFeature
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public PageAlignedFeature objectsByTag2(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return objectsByTag2RequestCreation(projectId, filter, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter tag filter.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PageAlignedFeature&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<PageAlignedFeature> objectsByTag2WithHttpInfo(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return objectsByTag2RequestCreation(projectId, filter, page, size, sort, optFields).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag
-     * **EXPERIMENTAL** Get features (aligned over runs) by tag.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name. Possible field names are:&lt;/p&gt;   &lt;ul&gt;    &lt;li&gt;&lt;strong&gt;category&lt;/strong&gt; - category name&lt;/li&gt;    &lt;li&gt;&lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;category:my_category&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;text:&amp;quot;new york&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;text:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;integer&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;integer:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;(category:hello || category:world) &amp;amp;&amp;amp; text:&amp;quot;new york&amp;quot; AND text:/[mb]oat/ AND integer:[1 TO *] OR real&amp;lt;&#x3D;3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date&amp;lt;2022-01-01 OR time:12\\:00\\:00 OR time:[12\\:00\\:00 TO 14\\:00\\:00] OR time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
-     * <p><b>200</b> - tagged features (aligned over runs)
-     * @param projectId project space to get features (aligned over runs) from.
-     * @param filter tag filter.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec objectsByTag2WithResponseSpec(String projectId, String filter, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return objectsByTag2RequestCreation(projectId, filter, page, size, sort, optFields);
+    public ResponseSpec removeTagFromAlignedFeatureExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String tagName) throws WebClientResponseException {
+        return removeTagFromAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tagName);
     }
 }

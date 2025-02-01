@@ -25,7 +25,7 @@ dependencies {
     api platform('org.dizitart:nitrite-bom:4.3.0'){
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
-    implementation ('org.dizitart:nitrite-jackson-mapper') {
+    api ('org.dizitart:nitrite-jackson-mapper') {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
     api ('org.dizitart:nitrite-mvstore-adapter')

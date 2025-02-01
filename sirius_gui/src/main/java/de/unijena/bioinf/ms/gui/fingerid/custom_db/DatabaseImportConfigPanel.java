@@ -103,11 +103,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         add(createImportButton(), BorderLayout.SOUTH);
 
         connectionListener = evt -> {
-            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            ConnectionCheck check = ((ConnectionMonitor.ConnectionEvent) evt).getConnectionCheck();
             setLoggedIn(check);
         };
 
-        gui.getConnectionMonitor().addConnectionStateListener(connectionListener);
+        gui.getConnectionMonitor().addConnectionListener(connectionListener);
         Jobs.runInBackground(() -> setLoggedIn(gui.getConnectionMonitor().checkConnection()));
     }
 

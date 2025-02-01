@@ -21,27 +21,32 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.StatisticsController;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.EnumSet;
 import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features/statistics")
 @Tag(name = "Feature Statistics", description =
-        "**EXPERIMENTAL** This feature based API allows computing and accessing statistics for features (aligned over runs)." +
+        "[EXPERIMENTAL] This feature based API allows computing and accessing statistics for features (aligned over runs)." +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
-public class AlignedFeatureStatisticsController implements StatisticsController<AlignedFeature, FoldChange.AlignedFeatureFoldChange> {
+public class AlignedFeatureStatisticsController implements StatisticsController<AlignedFeature> {
 
     @Getter
     private final ComputeService computeService;
@@ -60,19 +65,27 @@ public class AlignedFeatureStatisticsController implements StatisticsController<
         return AlignedFeature.class;
     }
 
-    /**
-     * **EXPERIMENTAL** List all fold changes that are associated with a feature (aligned over runs).
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
-     *
-     * @param projectId        project-space to read from.
-     * @param alignedFeatureId id of the feature (aligend over runs) the fold changes are assigned to.
-     * @return fold changes
-     */
-    @GetMapping(value = "/foldchange/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(operationId = "computeAlignedFeatureFoldChangesExperimental")
     @Override
-    public List<FoldChange.AlignedFeatureFoldChange> getFoldChange(String projectId, String alignedFeatureId) {
-        return StatisticsController.super.getFoldChange(projectId, alignedFeatureId);
+    public Job computeFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification, EnumSet<Job.OptField> optFields) {
+        return StatisticsController.super.computeFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
     }
 
+    @Operation(operationId = "getAlignedFeatureFoldChangesExperimental")
+    @Override
+    public List<FoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+        return StatisticsController.super.getFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+    }
+
+    @Operation(operationId = "deleteAlignedFeatureFoldChangesExperimental")
+    @Override
+    public void deleteFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
+        StatisticsController.super.deleteFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+    }
+
+    @Operation(operationId = "getAlignedFeatureFoldChangeTableExperimental")
+    @Override
+    public StatisticsTable getFoldChangeTable(String projectId, AggregationType aggregation, QuantMeasure quantification) {
+        return StatisticsController.super.getFoldChangeTable(projectId, aggregation, quantification);
+    }
 }

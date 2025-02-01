@@ -2,11 +2,10 @@ package de.unijena.bioinf.lcms.adducts.assignment;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.adducts.*;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import java.util.*;
@@ -14,18 +13,19 @@ import java.util.*;
 public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
 
     @Override
-    public AdductAssignment[] resolve(AdductNode[] subnetwork, int charge) {
+    public AdductAssignment[] resolve(AdductManager manager, AdductNode[] subnetwork, int charge) {
 
         CompatibilityNode[] compatibilityNetwork = transformGraphIntoCompatibilityGraph(subnetwork);
         if (compatibilityNetwork == null) return null;
         // for debugging
         //compareBeamSearch(subnetwork, compatibilityNetwork, charge);
         //
-        return beamSearch(subnetwork, compatibilityNetwork, charge);
+        return beamSearch(manager, subnetwork, compatibilityNetwork, charge);
     }
 
-    private AdductAssignment[] resolveCompatibilityNetwork(AdductNode[] subnetwork, CompatibilityNode[] compatibilityNetwork, int[] bestPermutation, int charge) {
+    private AdductAssignment[] resolveCompatibilityNetwork(AdductManager manager, AdductNode[] subnetwork, CompatibilityNode[] compatibilityNetwork, int[] bestPermutation, int charge, double score) {
         // first we set each node to correct ion type
+
         Int2ObjectOpenHashMap<IonType> assignments = new Int2ObjectOpenHashMap<>();
         for (int c = 0; c < compatibilityNetwork.length; ++c) {
             int choice = bestPermutation[c];
@@ -36,73 +36,112 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
                 // we do not know anything about this adduct
                 basicIonType = new IonType(PrecursorIonType.unknown(charge), 1f, MolecularFormula.emptyFormula());
             }
-            /*
-            // apply incoming edges from compatibility graph
-            for (CompatibilityEdge edge : compatibilityNetwork[c].edgesPerIonType[choice-1]) {
-                // only use edges we already processed
-                if (edge.to.index < c) {
-                    int l = indizes.get(edge.underlyingEdge.getLeft().getIndex());
-                    int r = indizes.get(edge.underlyingEdge.getRight().getIndex());
-                    if (assignments[l]==null) {int i = indizes.get(u.getIndex());
-                assignments[i] = basicIonType;
-                        assignments[l] = basicIonType.withInsource(assignments[r].getInsource()).withMultimere(assignments[r].getMultimere());
-                    } else {
-                        assert assignments[r]==null;
-                        assignments[r] = basicIonType.withInsource(assignments[l].getInsource()).withMultimere(assignments[l].getMultimere());
-                    }
-                }
-             */
             // set inner nodes
             for (AdductNode u : compatibilityNetwork[c].subnodes) {
                 assignments.put(u.getIndex(), basicIonType);
             }
         }
         spreadMultimere(subnetwork, assignments);
-        spreadInsource(subnetwork, assignments);
+        // we might have multimeres of type M*0.25 or insource fragments with negative formula. We have to resolve them by adding an offset
+        float offsetMultiplicator = 1;
+        //MolecularFormula offsetFormula = MolecularFormula.emptyFormula();
+        for (AdductNode u : subnetwork) {
+            IonType type = assignments.get(u.getIndex());
+            offsetMultiplicator = Math.min(offsetMultiplicator, type.getMultimere());
+            /*
+            if (!type.getInsource().isAllPositiveOrZero()) {
+                offsetFormula = type.getInsource().negate().union(offsetFormula);
+            }
+             */
+        }
+        if (offsetMultiplicator != 1/* || !offsetFormula.isEmpty() */) {
+            offsetMultiplicator = 1 / offsetMultiplicator;
+            for (AdductNode u : subnetwork) {
+                assignments.put(u.getIndex(), assignments.get(u.getIndex()).multiplyMultimere(offsetMultiplicator)/*.addInsource(offsetFormula)*/);
+            }
+        }
+        AdductAssignment[] array = Arrays.stream(subnetwork).map(x -> new AdductAssignment(new IonType[]{assignments.get(x.getIndex())}, new double[]{1d})).toArray(AdductAssignment[]::new);
+        addMissingIonTypesByTransitiveEdges(manager, array, subnetwork, assignments);
+        addFallbackIonsForUnlikelyAdducts(manager, array, subnetwork, assignments);
+//        debugPrint(subnetwork, array, score);
+        return array;
 
-        /*
-            // next, apply the underlying insource and multimere edges
-            for (AdductNode u : compatibilityNetwork[c].subnodes) {
-                for (AdductEdge e : u.getEdges()) {
-                    if (!e.isAdductEdge()) {
-                        KnownMassDelta explanation = e.getExplanations()[0];
-                        if (explanation instanceof LossRelationship) {
-                            if (e.getLeft()==u) {
-                                assignments[indizes.get(u.getIndex())] = assignments[indizes.get(e.getRight().getIndex())].addInsource(((LossRelationship) explanation).getFormula());
-                            } else {
-                                assignments[indizes.get(u.getIndex())] = assignments[indizes.get(e.getLeft().getIndex())].addInsource(((LossRelationship) explanation).getFormula().negate());
+    }
+
+    private void addFallbackIonsForUnlikelyAdducts(AdductManager manager, AdductAssignment[] array, AdductNode[] subnetwork, Int2ObjectOpenHashMap<IonType> assignments) {
+        for (int i=0; i < subnetwork.length; ++i) {
+            AdductNode x = subnetwork[i];
+            IonType ion = assignments.get(x.getIndex());
+            IonType.Frequency freq = ion.getAdductFrequency();
+            if (freq== IonType.Frequency.UNLIKELY) {
+                int edgecount = 0;
+                outer:
+                for (AdductEdge e : x.getEdges()) {
+                    for (KnownMassDelta d : e.getExplanations()) {
+                        if (d instanceof AdductEdge && d.isCompatible(assignments.get(((AdductEdge) d).getLeft().getIndex()), assignments.get(((AdductEdge) d).getRight().getIndex()) )) {
+                            if (++edgecount>=2) break outer;
+                        }
+                    }
+                }
+                if (edgecount<2) {
+                    // add fallback if there are less than two edges
+                    array[i] = array[i].withAdded(new IonType(PrecursorIonType.getPrecursorIonType(ion.getIonType().getIonization()), 1, MolecularFormula.emptyFormula()));
+                }
+
+            }
+        }
+    }
+
+    private void debugPrint(AdductNode[] nodes, AdductAssignment[] array, double score) {
+        System.out.println("---------   " + score + "  -----  rt = " + nodes[0].getRetentionTime() + "   -------------");
+        for (int i=0; i < nodes.length; ++i) {
+            System.out.println(nodes[i] + "\t" + array[i]);
+        }
+        System.out.println("------------------");
+    }
+
+    /**
+     * We now handle loss relationships differently:
+     * if a loss relationships equals an adduct relation we omit the adduct relation AND the adduct relation has same ion type on both sides, then
+     * we omit the adduct relation and insert the loss relation instead. In this function we re-insert the adduct relations again.
+     * In this way, we avoid a lot of ambiguity.
+     */
+    private void addMissingIonTypesByTransitiveEdges(AdductManager manager, AdductAssignment[] array, AdductNode[] subnetwork, Int2ObjectOpenHashMap<IonType> assignments) {
+        final Deviation dev = new Deviation(10);
+        for (int i=0; i < subnetwork.length; ++i) {
+            for (int j=0; j < subnetwork.length; ++j) {
+                List<KnownMassDelta> knownMassDeltas = manager.retrieveMassDeltas(subnetwork[j].getMass() - subnetwork[i].getMass(), dev);
+                if (knownMassDeltas.stream().noneMatch(x->x instanceof LossRelationship)) continue;
+                for (KnownMassDelta delta : knownMassDeltas) {
+                    if (delta instanceof AdductRelationship) {
+                        IonType leftType = assignments.get(subnetwork[i].getIndex());
+                        IonType rightType = assignments.get(subnetwork[j].getIndex());
+                        if (leftType.getIonType().equals(rightType.getIonType())) {
+                            PrecursorIonType ionTypeLeft = ((AdductRelationship) delta).getLeft();
+                            PrecursorIonType ionTypeRight = ((AdductRelationship) delta).getRight();
+                            if (!assignments.get(subnetwork[i].getIndex()).getIonType().equals(ionTypeLeft)) {
+                                array[i] = array[i].withAdded(new IonType(ionTypeLeft, 1, MolecularFormula.emptyFormula()));
+                                // add fallback ionization
+                                PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(ionTypeLeft.getIonization());
+                                if (!assignments.get(subnetwork[i].getIndex()).getIonType().equals(ionization)) {
+                                    array[i] = array[i].withAdded(new IonType(ionization, 1, MolecularFormula.emptyFormula()));
+                                }
                             }
-                        } else if (explanation instanceof MultimereRelationship) {
-                            if (e.getLeft()==u) {
-                                assignments[indizes.get(u.getIndex())] = assignments[indizes.get(e.getRight().getIndex())].multiplyMultimere(((MultimereRelationship) explanation).getMultiplicator());
-                            } else {
-                                assignments[indizes.get(u.getIndex())] = assignments[indizes.get(e.getLeft().getIndex())].multiplyMultimere(1/(((MultimereRelationship) explanation).getMultiplicator()));
+                            if (!assignments.get(subnetwork[j].getIndex()).getIonType().equals(ionTypeRight)) {
+                                array[j] = array[j].withAdded(new IonType(ionTypeRight, 1, MolecularFormula.emptyFormula()));
+                                // add fallback ionization
+                                PrecursorIonType ionization = PrecursorIonType.getPrecursorIonType(ionTypeRight.getIonization());
+                                if (!assignments.get(subnetwork[j].getIndex()).getIonType().equals(ionization)) {
+                                    array[j] = array[j].withAdded(new IonType(ionization, 1, MolecularFormula.emptyFormula()));
+                                }
                             }
                         }
                     }
                 }
             }
-
-         */
-        // we might have multimeres of type M*0.25 or insource fragments with negative formula. We have to resolve them by adding an offset
-        float offsetMultiplicator = 1;
-        MolecularFormula offsetFormula = MolecularFormula.emptyFormula();
-        for (AdductNode u : subnetwork) {
-            IonType type = assignments.get(u.getIndex());
-            offsetMultiplicator = Math.min(offsetMultiplicator, type.getMultimere());
-            if (!type.getInsource().isAllPositiveOrZero()) {
-                offsetFormula = type.getInsource().negate().union(offsetFormula);
-            }
         }
-        if (offsetMultiplicator != 1 || !offsetFormula.isEmpty()) {
-            offsetMultiplicator = 1 / offsetMultiplicator;
-            for (AdductNode u : subnetwork) {
-                assignments.put(u.getIndex(), assignments.get(u.getIndex()).multiplyMultimere(offsetMultiplicator).addInsource(offsetFormula));
-            }
-        }
-        return Arrays.stream(subnetwork).map(x->new AdductAssignment(new IonType[]{assignments.get(x.getIndex())}, new double[]{1d})).toArray(AdductAssignment[]::new);
-
     }
+
 
     private void spreadMultimere(AdductNode[] nodes, Int2ObjectOpenHashMap<IonType> previouslyAssigned) {
         final Int2ObjectOpenHashMap<IonType> assigned = new Int2ObjectOpenHashMap();
@@ -238,7 +277,7 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         System.out.println();
     }
 
-    private AdductAssignment[] beamSearch(AdductNode[] subnetwork, CompatibilityNode[] nodes, int charge) {
+    private AdductAssignment[] beamSearch(AdductManager manager, AdductNode[] subnetwork, CompatibilityNode[] nodes, int charge) {
         // 1.) sort all edges by score
         ArrayList<CompatibilityEdge> edges = new ArrayList<>();
         for (CompatibilityNode u : nodes) {
@@ -252,23 +291,24 @@ public class OptimalAssignmentViaBeamSearch implements SubnetworkResolver {
         }
         edges.sort(Comparator.comparingDouble(x -> -x.score));
         // 2.) do beamsearch on edges
-        AdductBeamSearch adductBeamSearch = new AdductBeamSearch(nodes.length, 10);
+        AdductBeamSearch adductBeamSearch = new AdductBeamSearch(nodes.length, 30);
         for (CompatibilityEdge uv : edges) {
             adductBeamSearch.add(uv.from.index, uv.fromType + 1, uv.to.index, uv.toType + 1, uv.score);
         }
         // 3.) return best results
-        return mergeTopResults(adductBeamSearch.getTopSolutions(), subnetwork, nodes, charge);
+        return mergeTopResults(manager, adductBeamSearch.getTopSolutions(), subnetwork, nodes, charge);
     }
 
-    private AdductAssignment[] mergeTopResults(AdductBeamSearch.MatchNode[] topSolutions, AdductNode[] subnetwork, CompatibilityNode[] nodes, int charge) {
+    private AdductAssignment[] mergeTopResults(AdductManager manager, AdductBeamSearch.MatchNode[] topSolutions, AdductNode[] subnetwork, CompatibilityNode[] nodes, int charge) {
         if (topSolutions.length == 0) return null;
         double topScore = topSolutions[0].score();
+        if (topScore < 2) return null; // reject
         final double threshold = topScore - 3;
         topSolutions = Arrays.stream(topSolutions).takeWhile(x -> x.score() >= threshold).toArray(AdductBeamSearch.MatchNode[]::new);
-        if (topSolutions.length == 1)
-            return resolveCompatibilityNetwork(subnetwork, nodes, topSolutions[0].assignment(), charge);
-
-        AdductAssignment[][] assignments = Arrays.stream(topSolutions).map(x -> resolveCompatibilityNetwork(subnetwork, nodes, x.assignment(), charge)).toArray(AdductAssignment[][]::new);
+        if (topSolutions.length == 1) {
+            return resolveCompatibilityNetwork(manager, subnetwork, nodes, topSolutions[0].assignment(), charge, topScore);
+        }
+        AdductAssignment[][] assignments = Arrays.stream(topSolutions).map(x -> resolveCompatibilityNetwork(manager, subnetwork, nodes, x.assignment(), charge, x.score())).toArray(AdductAssignment[][]::new);
         double[] scores = Arrays.stream(topSolutions).mapToDouble(AdductBeamSearch.MatchNode::score).map(x -> Math.exp(x - topScore)).toArray();
         AdductAssignment[] merged = new AdductAssignment[subnetwork.length];
         for (int i = 0; i < subnetwork.length; ++i) {
