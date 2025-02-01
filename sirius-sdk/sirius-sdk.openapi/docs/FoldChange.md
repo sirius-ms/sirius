@@ -1,6 +1,6 @@
 
 
-# AlignedFeatureFoldChange
+# FoldChange
 
 
 ## Properties
@@ -11,8 +11,9 @@
 |**rightGroup** | **String** |  |  [optional] |
 |**aggregation** | **AggregationType** |  |  [optional] |
 |**quantification** | **QuantMeasure** |  |  [optional] |
-|**foldChange** | **Double** |  |  [optional] |
-|**alignedFeatureId** | **String** |  |  [optional] |
+|**quantType** | **QuantRowType** |  |  |
+|**objectId** | **String** |  |  |
+|**foldChange** | **Double** |  |  |
 
 
 

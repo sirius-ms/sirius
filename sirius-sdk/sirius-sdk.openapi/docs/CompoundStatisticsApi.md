@@ -232,7 +232,7 @@ No authorization required
 
 ## getCompoundFoldChangesExperimental
 
-> List&lt;CompoundFoldChange&gt; getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification)
+> List&lt;FoldChange&gt; getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification)
 
 [EXPERIMENTAL] Get fold changes
 
@@ -260,7 +260,7 @@ public class Example {
         AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | 
         QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | 
         try {
-            List<CompoundFoldChange> result = apiInstance.getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+            List<FoldChange> result = apiInstance.getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundStatisticsApi#getCompoundFoldChangesExperimental");
@@ -286,7 +286,7 @@ public class Example {
 
 ### Return type
 
-[**List&lt;CompoundFoldChange&gt;**](CompoundFoldChange.md)
+[**List&lt;FoldChange&gt;**](FoldChange.md)
 
 ### Authorization
 

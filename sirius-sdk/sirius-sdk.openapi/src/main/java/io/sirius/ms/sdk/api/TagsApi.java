@@ -101,7 +101,7 @@ public class TagsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/groups/{groupName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/groups/{groupName}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -197,7 +197,7 @@ public class TagsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<TagDefinition> localVarReturnType = new ParameterizedTypeReference<TagDefinition>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/tags/{tagName}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/tags/{tagName}", HttpMethod.PATCH, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -645,89 +645,6 @@ public class TagsApi {
      */
     public ResponseSpec getGroupsWithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
         return getGroupsRequestCreation(projectId, groupType);
-    }
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getGroupsByTypeRequestCreation(String projectId, String groupType) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getGroupsByType", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'groupType' is set
-        if (groupType == null) {
-            throw new WebClientResponseException("Missing the required parameter 'groupType' when calling getGroupsByType", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("groupType", groupType);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/groups/type/{groupType}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return List&lt;TagGroup&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public List<TagGroup> getGroupsByType(String projectId, String groupType) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupsByTypeRequestCreation(projectId, groupType).bodyToFlux(localVarReturnType).collectList().block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return ResponseEntity&lt;List&lt;TagGroup&gt;&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<List<TagGroup>> getGroupsByTypeWithHttpInfo(String projectId, String groupType) throws WebClientResponseException {
-        ParameterizedTypeReference<TagGroup> localVarReturnType = new ParameterizedTypeReference<TagGroup>() {};
-        return getGroupsByTypeRequestCreation(projectId, groupType).toEntityList(localVarReturnType).block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - Tag groups.
-     * @param projectId project-space to read from.
-     * @param groupType type of the group
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getGroupsByTypeWithResponseSpec(String projectId, String groupType) throws WebClientResponseException {
-        return getGroupsByTypeRequestCreation(projectId, groupType);
     }
     /**
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space

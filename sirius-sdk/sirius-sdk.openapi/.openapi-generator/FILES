@@ -7,7 +7,6 @@ docs/AdductNetworkExperimental.md
 docs/AdductNodeExperimental.md
 docs/AggregationType.md
 docs/AlignedFeature.md
-docs/AlignedFeatureFoldChange.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQualityExperimental.md
 docs/AnnotatedMsMsData.md
@@ -25,7 +24,6 @@ docs/Compound.md
 docs/CompoundClass.md
 docs/CompoundClassType.md
 docs/CompoundClasses.md
-docs/CompoundFoldChange.md
 docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundStatisticsApi.md
@@ -49,6 +47,7 @@ docs/FeatureImport.md
 docs/FeatureStatisticsApi.md
 docs/FeaturesApi.md
 docs/FingerprintPrediction.md
+docs/FoldChange.md
 docs/FormulaCandidate.md
 docs/FormulaCandidateOptField.md
 docs/FragmentNode.md
@@ -166,7 +165,6 @@ src/main/java/io/sirius/ms/sdk/model/AdductNetworkExperimental.java
 src/main/java/io/sirius/ms/sdk/model/AdductNodeExperimental.java
 src/main/java/io/sirius/ms/sdk/model/AggregationType.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
-src/main/java/io/sirius/ms/sdk/model/AlignedFeatureFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQualityExperimental.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
@@ -184,7 +182,6 @@ src/main/java/io/sirius/ms/sdk/model/Compound.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClass.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClassType.java
 src/main/java/io/sirius/ms/sdk/model/CompoundClasses.java
-src/main/java/io/sirius/ms/sdk/model/CompoundFoldChange.java
 src/main/java/io/sirius/ms/sdk/model/CompoundImport.java
 src/main/java/io/sirius/ms/sdk/model/CompoundOptField.java
 src/main/java/io/sirius/ms/sdk/model/ComputedSubtools.java
@@ -204,6 +201,7 @@ src/main/java/io/sirius/ms/sdk/model/Deviation.java
 src/main/java/io/sirius/ms/sdk/model/FeatureAnnotations.java
 src/main/java/io/sirius/ms/sdk/model/FeatureImport.java
 src/main/java/io/sirius/ms/sdk/model/FingerprintPrediction.java
+src/main/java/io/sirius/ms/sdk/model/FoldChange.java
 src/main/java/io/sirius/ms/sdk/model/FormulaCandidate.java
 src/main/java/io/sirius/ms/sdk/model/FormulaCandidateOptField.java
 src/main/java/io/sirius/ms/sdk/model/FragmentNode.java

@@ -32,22 +32,24 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.AggregationType;
 import io.sirius.ms.sdk.model.QuantMeasure;
+import io.sirius.ms.sdk.model.QuantRowType;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * AlignedFeatureFoldChange
+ * FoldChange
  */
 @JsonPropertyOrder({
-  AlignedFeatureFoldChange.JSON_PROPERTY_LEFT_GROUP,
-  AlignedFeatureFoldChange.JSON_PROPERTY_RIGHT_GROUP,
-  AlignedFeatureFoldChange.JSON_PROPERTY_AGGREGATION,
-  AlignedFeatureFoldChange.JSON_PROPERTY_QUANTIFICATION,
-  AlignedFeatureFoldChange.JSON_PROPERTY_FOLD_CHANGE,
-  AlignedFeatureFoldChange.JSON_PROPERTY_ALIGNED_FEATURE_ID
+  FoldChange.JSON_PROPERTY_LEFT_GROUP,
+  FoldChange.JSON_PROPERTY_RIGHT_GROUP,
+  FoldChange.JSON_PROPERTY_AGGREGATION,
+  FoldChange.JSON_PROPERTY_QUANTIFICATION,
+  FoldChange.JSON_PROPERTY_QUANT_TYPE,
+  FoldChange.JSON_PROPERTY_OBJECT_ID,
+  FoldChange.JSON_PROPERTY_FOLD_CHANGE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class AlignedFeatureFoldChange {
+public class FoldChange {
   public static final String JSON_PROPERTY_LEFT_GROUP = "leftGroup";
   private String leftGroup;
 
@@ -60,16 +62,19 @@ public class AlignedFeatureFoldChange {
   public static final String JSON_PROPERTY_QUANTIFICATION = "quantification";
   private QuantMeasure quantification;
 
+  public static final String JSON_PROPERTY_QUANT_TYPE = "quantType";
+  private QuantRowType quantType;
+
+  public static final String JSON_PROPERTY_OBJECT_ID = "objectId";
+  private String objectId;
+
   public static final String JSON_PROPERTY_FOLD_CHANGE = "foldChange";
   private Double foldChange;
 
-  public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
-  private String alignedFeatureId;
-
-  public AlignedFeatureFoldChange() {
+  public FoldChange() {
   }
 
-  public AlignedFeatureFoldChange leftGroup(String leftGroup) {
+  public FoldChange leftGroup(String leftGroup) {
     
     this.leftGroup = leftGroup;
     return this;
@@ -94,7 +99,7 @@ public class AlignedFeatureFoldChange {
     this.leftGroup = leftGroup;
   }
 
-  public AlignedFeatureFoldChange rightGroup(String rightGroup) {
+  public FoldChange rightGroup(String rightGroup) {
     
     this.rightGroup = rightGroup;
     return this;
@@ -119,7 +124,7 @@ public class AlignedFeatureFoldChange {
     this.rightGroup = rightGroup;
   }
 
-  public AlignedFeatureFoldChange aggregation(AggregationType aggregation) {
+  public FoldChange aggregation(AggregationType aggregation) {
     
     this.aggregation = aggregation;
     return this;
@@ -144,7 +149,7 @@ public class AlignedFeatureFoldChange {
     this.aggregation = aggregation;
   }
 
-  public AlignedFeatureFoldChange quantification(QuantMeasure quantification) {
+  public FoldChange quantification(QuantMeasure quantification) {
     
     this.quantification = quantification;
     return this;
@@ -169,7 +174,57 @@ public class AlignedFeatureFoldChange {
     this.quantification = quantification;
   }
 
-  public AlignedFeatureFoldChange foldChange(Double foldChange) {
+  public FoldChange quantType(QuantRowType quantType) {
+    
+    this.quantType = quantType;
+    return this;
+  }
+
+   /**
+   * Get quantType
+   * @return quantType
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public QuantRowType getQuantType() {
+    return quantType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_QUANT_TYPE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setQuantType(QuantRowType quantType) {
+    this.quantType = quantType;
+  }
+
+  public FoldChange objectId(String objectId) {
+    
+    this.objectId = objectId;
+    return this;
+  }
+
+   /**
+   * Get objectId
+   * @return objectId
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public String getObjectId() {
+    return objectId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_OBJECT_ID)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setObjectId(String objectId) {
+    this.objectId = objectId;
+  }
+
+  public FoldChange foldChange(Double foldChange) {
     
     this.foldChange = foldChange;
     return this;
@@ -179,9 +234,9 @@ public class AlignedFeatureFoldChange {
    * Get foldChange
    * @return foldChange
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Double getFoldChange() {
     return foldChange;
@@ -189,34 +244,9 @@ public class AlignedFeatureFoldChange {
 
 
   @JsonProperty(JSON_PROPERTY_FOLD_CHANGE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setFoldChange(Double foldChange) {
     this.foldChange = foldChange;
-  }
-
-  public AlignedFeatureFoldChange alignedFeatureId(String alignedFeatureId) {
-    
-    this.alignedFeatureId = alignedFeatureId;
-    return this;
-  }
-
-   /**
-   * Get alignedFeatureId
-   * @return alignedFeatureId
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public String getAlignedFeatureId() {
-    return alignedFeatureId;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_ALIGNED_FEATURE_ID)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setAlignedFeatureId(String alignedFeatureId) {
-    this.alignedFeatureId = alignedFeatureId;
   }
 
   @Override
@@ -227,30 +257,32 @@ public class AlignedFeatureFoldChange {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AlignedFeatureFoldChange alignedFeatureFoldChange = (AlignedFeatureFoldChange) o;
-    return Objects.equals(this.leftGroup, alignedFeatureFoldChange.leftGroup) &&
-        Objects.equals(this.rightGroup, alignedFeatureFoldChange.rightGroup) &&
-        Objects.equals(this.aggregation, alignedFeatureFoldChange.aggregation) &&
-        Objects.equals(this.quantification, alignedFeatureFoldChange.quantification) &&
-        Objects.equals(this.foldChange, alignedFeatureFoldChange.foldChange) &&
-        Objects.equals(this.alignedFeatureId, alignedFeatureFoldChange.alignedFeatureId);
+    FoldChange foldChange = (FoldChange) o;
+    return Objects.equals(this.leftGroup, foldChange.leftGroup) &&
+        Objects.equals(this.rightGroup, foldChange.rightGroup) &&
+        Objects.equals(this.aggregation, foldChange.aggregation) &&
+        Objects.equals(this.quantification, foldChange.quantification) &&
+        Objects.equals(this.quantType, foldChange.quantType) &&
+        Objects.equals(this.objectId, foldChange.objectId) &&
+        Objects.equals(this.foldChange, foldChange.foldChange);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(leftGroup, rightGroup, aggregation, quantification, foldChange, alignedFeatureId);
+    return Objects.hash(leftGroup, rightGroup, aggregation, quantification, quantType, objectId, foldChange);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AlignedFeatureFoldChange {\n");
+    sb.append("class FoldChange {\n");
     sb.append("    leftGroup: ").append(toIndentedString(leftGroup)).append("\n");
     sb.append("    rightGroup: ").append(toIndentedString(rightGroup)).append("\n");
     sb.append("    aggregation: ").append(toIndentedString(aggregation)).append("\n");
     sb.append("    quantification: ").append(toIndentedString(quantification)).append("\n");
+    sb.append("    quantType: ").append(toIndentedString(quantType)).append("\n");
+    sb.append("    objectId: ").append(toIndentedString(objectId)).append("\n");
     sb.append("    foldChange: ").append(toIndentedString(foldChange)).append("\n");
-    sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
     sb.append("}");
     return sb.toString();
   }
