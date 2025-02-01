@@ -445,4 +445,87 @@ public class FeatureStatisticsApi {
     public ResponseSpec getAlignedFeatureFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification) throws WebClientResponseException {
         return getAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification);
     }
+    /**
+     * [EXPERIMENTAL] List all fold changes that are associated with an object
+     * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @return List&lt;FoldChange&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getFoldChangesByAlignedFeatureExperimentalRequestCreation(String projectId, String objectId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getFoldChangesByAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'objectId' is set
+        if (objectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'objectId' when calling getFoldChangesByAlignedFeatureExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("objectId", objectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] List all fold changes that are associated with an object
+     * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @return List&lt;FoldChange&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<FoldChange> getFoldChangesByAlignedFeatureExperimental(String projectId, String objectId) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return getFoldChangesByAlignedFeatureExperimentalRequestCreation(projectId, objectId).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * [EXPERIMENTAL] List all fold changes that are associated with an object
+     * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @return ResponseEntity&lt;List&lt;FoldChange&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<FoldChange>> getFoldChangesByAlignedFeatureExperimentalWithHttpInfo(String projectId, String objectId) throws WebClientResponseException {
+        ParameterizedTypeReference<FoldChange> localVarReturnType = new ParameterizedTypeReference<FoldChange>() {};
+        return getFoldChangesByAlignedFeatureExperimentalRequestCreation(projectId, objectId).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] List all fold changes that are associated with an object
+     * [EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - fold changes
+     * @param projectId project-space to read from.
+     * @param objectId id of the object the fold changes are assigned to.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getFoldChangesByAlignedFeatureExperimentalWithResponseSpec(String projectId, String objectId) throws WebClientResponseException {
+        return getFoldChangesByAlignedFeatureExperimentalRequestCreation(projectId, objectId);
+    }
 }

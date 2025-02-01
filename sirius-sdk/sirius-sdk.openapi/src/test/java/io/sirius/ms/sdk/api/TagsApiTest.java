@@ -145,20 +145,7 @@ public class TagsApiTest {
         // TODO: test validations
     }
     
-    /**
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space
-     *
-     * [EXPERIMENTAL] Get tag groups by type in the given project-space.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     */
-    @Test
-    public void getGroupsByTypeTest()  {
-        String projectId = null;
-        String groupType = null;
-        List<TagGroup> response = api.getGroupsByType(projectId, groupType);
 
-        // TODO: test validations
-    }
-    
     /**
      * [EXPERIMENTAL] Get tag definition by its name in the given project-space
      *

@@ -403,6 +403,65 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/blanksubtract/compute": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter",
+        "description": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "computeFoldChangeForBlankSubtraction",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to compute the fold change in.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "job opt fields.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "request with lists of run IDs that are sample, blank, and control runs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SampleTypeFoldChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/copy": {
       "put": {
         "tags": [
@@ -4023,6 +4082,51 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/statistics/foldchanges/{objectId}": {
+      "get": {
+        "tags": [
+          "Compound Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] List all fold changes that are associated with an object",
+        "description": "[EXPERIMENTAL] List all fold changes that are associated with an object.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "getFoldChangesByCompoundExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "description": "id of the object the fold changes are assigned to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FoldChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/statistics/foldchanges/stats-table": {
       "get": {
         "tags": [
@@ -6737,6 +6841,51 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId}": {
+      "get": {
+        "tags": [
+          "Feature Statistics"
+        ],
+        "summary": "[EXPERIMENTAL] List all fold changes that are associated with an object",
+        "description": "[EXPERIMENTAL] List all fold changes that are associated with an object.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "getFoldChangesByAlignedFeatureExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "description": "id of the object the fold changes are assigned to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "fold changes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FoldChange"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table": {
       "get": {
         "tags": [
@@ -7850,21 +7999,28 @@
           }
         }
       },
-      "AggregationType": {
-        "type": "string",
-        "enum": [
-          "AVG",
-          "MIN",
-          "MAX",
-          "MEDIAN"
-        ]
-      },
-      "QuantMeasure": {
-        "type": "string",
-        "enum": [
-          "APEX_INTENSITY",
-          "AREA_UNDER_CURVE"
-        ]
+      "SampleTypeFoldChangeRequest": {
+        "type": "object",
+        "properties": {
+          "sampleRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blankRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "controlRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "JobOptField": {
         "type": "string",
@@ -7972,6 +8128,21 @@
           "CANCELED",
           "FAILED",
           "DONE"
+        ]
+      },
+      "AggregationType": {
+        "type": "string",
+        "enum": [
+          "AVG",
+          "MIN",
+          "MAX"
+        ]
+      },
+      "QuantMeasure": {
+        "type": "string",
+        "enum": [
+          "APEX_INTENSITY",
+          "AREA_UNDER_CURVE"
         ]
       },
       "SearchableDatabaseParameters": {
@@ -10097,6 +10268,10 @@
           "name": {
             "type": "string",
             "description": "Informative, human-readable name of this run"
+          },
+          "source": {
+            "type": "string",
+            "description": "Source location"
           },
           "chromatography": {
             "type": "string",
