@@ -24,9 +24,10 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                 .addSerialization(ValueType.class, new SimpleSerializers.EnumAsNumberSerializer<>(), new SimpleSerializers.EnumAsNumberDeserializer<>(ValueType.class))
                 .addSerialization(Tag.class, new Tag.Serializer(), new Tag.Deserializer())
                 .addRepository(Tag.class,
-                        Index.unique("taggedObjectId", "tagName"),
-                        Index.nonUnique("tagName"),
-                        Index.nonUnique("taggedObjectClass","tagName"))
+                        Index.unique("taggedObjectClass", "taggedObjectId", "tagName") //add/remove tags to/from objects.
+                        , Index.nonUnique("tagName") // cascade TagDefinition remove (delete tag)
+                        , Index.nonUnique("taggedObjectClass","tagName") //find all objects with tag ->  value needs to be evaluated by iteration
+                )
 
                 .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
                 .addRepository(TagGroup.class, Index.unique("groupName"), Index.nonUnique("groupType"))
@@ -48,12 +49,14 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
     }
 
     @SneakyThrows
-    default Stream<Tag> findTagsForObject(long taggedObjectId) {
-        return getStorage().findStr(Filter.where("taggedObjectId").eq(taggedObjectId), Tag.class);
+    default Stream<Tag> findTagsForObject(@NotNull Class<?> taggedObjectClass, long taggedObjectId) {
+        return getStorage().findStr(Filter.and(
+                Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
+                Filter.where("taggedObjectId").eq(taggedObjectId)), Tag.class);
     }
 
     @SneakyThrows
-    default Stream<Tag> findTagsForObjectType(Class<?> taggedObjectClass) {
+    default Stream<Tag> findTagsForObjectType(@NotNull Class<?> taggedObjectClass) {
         return getStorage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()), Tag.class);
     }
 }

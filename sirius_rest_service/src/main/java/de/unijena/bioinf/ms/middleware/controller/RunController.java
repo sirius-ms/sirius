@@ -22,9 +22,9 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import org.springdoc.core.annotations.ParameterObject;
@@ -41,7 +41,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/runs")
-@Tag(name = "Runs", description = "[EXPERIMENTAL] This API allows accessing LC/MS runs. " +
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Runs", description = "[EXPERIMENTAL] This API allows accessing LC/MS runs. " +
         "All endpoints are experimental and not part of the stable API specification. " +
         "These endpoints can change at any time, even in minor updates.")
 public class RunController implements TaggableController<Run, Run.OptField> {
@@ -140,6 +140,19 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
+     * [EXPERIMENTAL] Get all tags associated with this Run
+     *
+     * @param projectId project-space to get from.
+     * @param objectId  RunId to get tags for.
+     * @return the tags of the requested object
+     */
+    @Operation(operationId = "getTagsForRunExperimental")
+    @Override
+    public List<Tag> getTags(String projectId, String objectId) {
+        return TaggableController.super.getTags(projectId, objectId);
+    }
+
+    /**
      *
      * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.
      * <p>
@@ -153,7 +166,7 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     @Operation(operationId = "addTagsToRunExperimental")
     @PutMapping(value = "/tags/{runId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Override
-    public List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> addTags(@PathVariable String projectId, @PathVariable String runId, @Valid @RequestBody List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
+    public List<Tag> addTags(@PathVariable String projectId, @PathVariable String runId, @Valid @RequestBody List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, runId, tags);
     }
 
@@ -179,15 +192,15 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
-     * @param group     tag group name.
+     * @param groupName     tag group name.
      * @param pageable  pageable.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged runs
      */
     @Operation(operationId = "getRunsByGroupExperimental")
     @Override
-    public Page<Run> getObjectsByGroup(String projectId, String group, Pageable pageable, EnumSet<Run.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, group, pageable, optFields);
+    public Page<Run> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Run.OptField> optFields) {
+        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
     }
 
     @Override
