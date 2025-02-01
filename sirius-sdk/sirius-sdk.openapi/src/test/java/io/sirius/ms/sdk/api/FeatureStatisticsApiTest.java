@@ -23,12 +23,7 @@
 
 package io.sirius.ms.sdk.api;
 
-import io.sirius.ms.sdk.model.AggregationType;
-import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.QuantMeasure;
-import io.sirius.ms.sdk.model.StatisticsTable;
+import io.sirius.ms.sdk.model.*;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -109,7 +104,7 @@ public class FeatureStatisticsApiTest {
         String rightGroupName = null;
         AggregationType aggregation = null;
         QuantMeasure quantification = null;
-        List<AlignedFeatureFoldChange> response = api.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
+        List<FoldChange> response = api.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
 
         // TODO: test validations
     }

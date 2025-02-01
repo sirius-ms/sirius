@@ -28,11 +28,12 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategoryImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantificationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.Nullable;
@@ -95,51 +96,52 @@ public class BlankSubtractionWorkflow implements Workflow, ProgressSupport {
     public void run() {
 
         try {
-            project.findCategoryByName(CATEGORY_NAME);
+            project.findTagByName(TAG_NAME);
         } catch (ResponseStatusException e) {
-            project.addCategories(List.of(TagCategoryImport.builder()
-                    .name(CATEGORY_NAME)
-                    .categoryType(CATEGORY_TYPE)
-                    .description(CATEGORY_DESC)
-                    .valueTypeAndPossibleValues(TagCategoryImport.ValueType.STRING, CATEGORY_VALUES)
-                    .build()), false);
+            project.createTag(TagDefinitionImport.builder()
+                    .tagName(TAG_NAME)
+                    .tagType(TAG_TYPE)
+                    .description(TAG_DESC)
+                    .valueType(ValueType.TEXT)
+                    .possibleValues(POSSIBLE_VALUES)
+                    .build(), false);
         }
 
         Tag tag = Tag.builder()
-                .category(CATEGORY_NAME)
-                .valueType(TagCategoryImport.ValueType.STRING)
-                .text(SAMPLE)
+                .tagName(TAG_NAME)
+                .value(SAMPLE)
                 .build();
 
         for (String runId : sampleRunIds)
             project.addTagsToObject(Run.class, runId, List.of(tag));
 
-        tag.setText(BLANK);
-        for (String runId: blankRunIds)
+
+        tag.setValue(BLANK);
+        for (String runId : blankRunIds)
             project.addTagsToObject(Run.class, runId, List.of(tag));
 
-        tag.setText(CTRL);
-        for (String runId: controlRunIds)
+        tag.setValue(CTRL);
+        for (String runId : controlRunIds)
             project.addTagsToObject(Run.class, runId, List.of(tag));
 
         try {
             project.findTagGroup(SAMPLE_GRP_NAME);
         } catch (ResponseStatusException e) {
-            project.addTagGroup(SAMPLE_GRP_NAME, SAMPLE_GRP_QUERY, CATEGORY_TYPE);
+            project.addTagGroup(SAMPLE_GRP_NAME, SAMPLE_GRP_QUERY, TAG_TYPE);
         }
         try {
             project.findTagGroup(BLANK_GRP_NAME);
         } catch (ResponseStatusException e) {
-            project.addTagGroup(BLANK_GRP_NAME, BLANK_GRP_QUERY, CATEGORY_TYPE);
+            project.addTagGroup(BLANK_GRP_NAME, BLANK_GRP_QUERY, TAG_TYPE);
         }
         try {
             project.findTagGroup(CTRL_GRP_NAME);
         } catch (ResponseStatusException e) {
-            project.addTagGroup(CTRL_GRP_NAME, CTRL_GRP_QUERY, CATEGORY_TYPE);
+            project.addTagGroup(CTRL_GRP_NAME, CTRL_GRP_QUERY, TAG_TYPE);
         }
 
-        FoldChangeWorkflow blankWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, BLANK_GRP_NAME, AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class);
-        FoldChangeWorkflow ctrlWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, CTRL_GRP_NAME, AggregationType.AVG, QuantificationType.APEX_INTENSITY, AlignedFeature.class);
+        FoldChangeWorkflow blankWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, BLANK_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
+        FoldChangeWorkflow ctrlWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, CTRL_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
 
         blankWorkflow.addJobProgressListener(progressSupport);
         ctrlWorkflow.addJobProgressListener(progressSupport);

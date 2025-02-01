@@ -22,7 +22,9 @@ package de.unijena.bioinf.ms.gui.blank_subtraction;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.AlignedFeatureFoldChange;
+import io.sirius.ms.sdk.model.AggregationType;
+import io.sirius.ms.sdk.model.FoldChange;
+import io.sirius.ms.sdk.model.QuantMeasure;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,19 +41,19 @@ public class BlankSubtraction {
     public static final String BLANK = "blank";
     public static final String CTRL = "control";
 
-    public static final String CATEGORY_NAME = "sample type";
-    public static final String CATEGORY_TYPE = "LC/MS runs";
-    public static final String CATEGORY_DESC = "Sample types for LC/MS runs";
-    public static final List<String> CATEGORY_VALUES = List.of(SAMPLE, BLANK, CTRL);
+    public static final String TAG_NAME = "sample type";
+    public static final String TAG_TYPE = "LC/MS runs";
+    public static final String TAG_DESC = "Sample types for LC/MS runs";
+    public static final List<Object> POSSIBLE_VALUES = List.of(SAMPLE, BLANK, CTRL);
 
     public static final String SAMPLE_GRP_NAME = "sample runs";
-    public static final String SAMPLE_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + SAMPLE;
+    public static final String SAMPLE_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + SAMPLE;
 
     public static final String BLANK_GRP_NAME = "blank runs";
-    public static final String BLANK_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + BLANK;
+    public static final String BLANK_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + BLANK;
 
     public static final String CTRL_GRP_NAME = "control runs";
-    public static final String CTRL_GRP_QUERY = "category:\"" + CATEGORY_NAME + "\" AND text:" + CTRL;
+    public static final String CTRL_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + CTRL;
 
     private boolean blankSubtractionEnabled;
     private double blankSubtractionFoldChange;
@@ -66,11 +68,12 @@ public class BlankSubtraction {
 
     public boolean matches(InstanceBean bean) {
         return gui.applySiriusClient((client, pid) -> {
-            List<AlignedFeatureFoldChange> foldChanges = client.featureStatistics().getFoldChange1(pid, bean.getFeatureId());
-            for (AlignedFeatureFoldChange foldChange : foldChanges) {
+            List<FoldChange> foldChanges = client.featureStatistics()
+                    .getFoldChangesByAlignedFeatureExperimental(pid, bean.getFeatureId());
+            for (FoldChange foldChange : foldChanges) {
                 if (Objects.equals(foldChange.getLeftGroup(), SAMPLE_GRP_NAME) &&
-                        Objects.equals(foldChange.getAggregation(), AlignedFeatureFoldChange.AggregationEnum.AVG) &&
-                        Objects.equals(foldChange.getQuantification(), AlignedFeatureFoldChange.QuantificationEnum.APEX_INTENSITY)
+                        Objects.equals(foldChange.getAggregation(), AggregationType.AVG) &&
+                        Objects.equals(foldChange.getQuantification(), QuantMeasure.APEX_INTENSITY)
                 ) {
                     Double fc = foldChange.getFoldChange();
                     if (fc == null) fc = Double.POSITIVE_INFINITY;

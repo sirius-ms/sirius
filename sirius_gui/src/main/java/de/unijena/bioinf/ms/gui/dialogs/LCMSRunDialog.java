@@ -124,7 +124,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
             }
         }));
 
-        JComboBox<String> sampleBox = new JComboBox<>(BlankSubtraction.CATEGORY_VALUES.toArray(String[]::new));
+        JComboBox<String> sampleBox = new JComboBox<>(BlankSubtraction.POSSIBLE_VALUES.toArray(String[]::new));
         table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(sampleBox));
         TableComparatorChooser.install(table, sortedRuns, AbstractTableComparatorChooser.SINGLE_COLUMN);
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -132,14 +132,14 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
         Jobs.runEDTLater(() -> {
             List<Run> runs1;
             if (runs == null) {
-                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPaged(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
             } else {
                 runs1 = runs;
             }
             if (runs1 != null) {
                 for (Run run : runs1) {
-                    if (run.getTags() != null && run.getTags().containsKey(BlankSubtraction.CATEGORY_NAME)) {
-                        sampleTypes.put(run.getRunId(), run.getTags().get(BlankSubtraction.CATEGORY_NAME).getText());
+                    if (run.getTags() != null && run.getTags().containsKey(BlankSubtraction.TAG_NAME)) {
+                        sampleTypes.put(run.getRunId(), (String) run.getTags().get(BlankSubtraction.TAG_NAME).getValue());
                     } else {
                         sampleTypes.put(run.getRunId(), BlankSubtraction.SAMPLE);
                     }
