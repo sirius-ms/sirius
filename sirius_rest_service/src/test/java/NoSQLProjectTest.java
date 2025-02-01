@@ -424,13 +424,13 @@ public class NoSQLProjectTest {
             List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
             Assert.assertEquals(1, fc.size());
             Assert.assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
-            Assert.assertEquals(FoldChange.AlignedFeatureFoldChange.class, fc.getFirst().getClass());
-            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), ((FoldChange.AlignedFeatureFoldChange) fc.getFirst()).getAlignedFeatureId());
+            Assert.assertEquals(FoldChange.class, fc.getFirst().getClass());
+            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
             fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
             Assert.assertEquals(1, fc.size());
             Assert.assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
-            Assert.assertEquals(FoldChange.AlignedFeatureFoldChange.class, fc.getFirst().getClass());
-            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), ((FoldChange.AlignedFeatureFoldChange) fc.getFirst()).getAlignedFeatureId());
+            Assert.assertEquals(FoldChange.class, fc.getFirst().getClass());
+            Assert.assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
 
 
             AlignedFeatures af2 = AlignedFeatures.builder().name("af2").build();

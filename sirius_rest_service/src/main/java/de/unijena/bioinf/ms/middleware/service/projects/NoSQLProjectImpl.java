@@ -1171,27 +1171,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .build();
     }
 
-    private FoldChange.AlignedFeatureFoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
-        return FoldChange.AlignedFeatureFoldChange.builder()
-                .alignedFeatureId(Long.toString(foldChange.getAlignedFeatureId()))
-                .leftGroup(foldChange.getLeftGroup())
-                .rightGroup(foldChange.getRightGroup())
-                .aggregation(foldChange.getAggregation())
-                .quantification(foldChange.getQuantification())
-                .foldChange(foldChange.getFoldChange())
+    private FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
+        return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
+                .quantType(QuantRowType.FEATURES)
                 .build();
     }
 
-    private FoldChange.CompoundFoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
-        return FoldChange.CompoundFoldChange.builder()
-                .compoundId(Long.toString(foldChange.getCompoundId()))
+    private FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
+        return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
+                .quantType(QuantRowType.COMPOUNDS)
+                .build();
+    }
+    private FoldChange.FoldChangeBuilder<?,?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
+        return FoldChange.builder()
+                .objectId(Long.toString(foldChange.getForeignId()))
                 .leftGroup(foldChange.getLeftGroup())
                 .rightGroup(foldChange.getRightGroup())
                 .aggregation(foldChange.getAggregation())
                 .quantification(foldChange.getQuantification())
-                .foldChange(foldChange.getFoldChange())
-                .build();
+                .foldChange(foldChange.getFoldChange());
     }
+
+
 
     private FeatureAnnotations extractTopCsiNovoAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, CsiStructureMatch.class);
@@ -1900,12 +1901,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
         if (AlignedFeature.class.equals(target)) {
             return (List<F>) storage()
-                    .findStr(Filter.where("foreignId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
+                    .findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
                     .map(this::convertToApiFoldChange)
                     .toList();
         } else if (Compound.class.equals(target)) {
             return (List<F>) storage()
-                    .findStr(Filter.where("foreignId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
+                    .findStr(Filter.where("compoundId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
                     .map(this::convertToApiFoldChange)
                     .toList();
         } else {
