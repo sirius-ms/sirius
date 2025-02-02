@@ -282,7 +282,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException {
         double abs = settings.getPrecursorDeviation().absoluteFor(precursorMz);
-        return queryAgainstLibrary(storage.findStr(Filter.where("precursorMz").beetweenBothInclusive(precursorMz-abs, precursorMz+abs), MergedReferenceSpectrum.class, "querySpectrum").filter(x->x.getPrecursorIonType().getCharge()==chargeAndPolarity),
+        return queryAgainstLibrary(storage.findStr(Filter.where("precursorMz").betweenBothInclusive(precursorMz-abs, precursorMz+abs), MergedReferenceSpectrum.class, "querySpectrum").filter(x->x.getPrecursorIonType().getCharge()==chargeAndPolarity),
                 settings, query);
     }
 
