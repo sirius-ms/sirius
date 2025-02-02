@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.frontend.subtools.sirius;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
@@ -151,14 +150,6 @@ public class SiriusSubToolJob extends InstanceJob {
 
         CandidateFormulas candidateFormulas = exp.computeAnnotationIfAbsent(CandidateFormulas.class);
         candidateFormulas.addAndMergeSpectralLibrarySearchFormulas(formulas, SpectraMatchingJJob.class);
-    }
-
-    private boolean adductsOnlyMulti(Ms2Experiment exp) {
-        // TODO what about fallback/enforced?
-        final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        Set<PrecursorIonType> adducts = detAdds.getAllAdducts().getAdducts();
-        final AdductSettings settings = exp.getAnnotationOrDefault(AdductSettings.class);
-        return adducts.stream().filter(ion -> !ion.isIonizationUnknown()).allMatch(ion -> ion.isMultimere() || ion.isMultipleCharged());
     }
 
     @Override

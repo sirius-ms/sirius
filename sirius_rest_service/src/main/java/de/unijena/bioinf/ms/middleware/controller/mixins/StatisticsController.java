@@ -68,51 +68,6 @@ public interface StatisticsController<T> extends ProjectProvidingController, Com
         return getComputeService().createAndSubmitFoldChangeJob(getProjectsProvider().getProjectOrThrow(projectId), leftGroupName, rightGroupName, aggregation, quantification, getTarget(), removeNone(optFields));
     }
 
-    /**
-     * [EXPERIMENTAL] Get fold changes.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId      project-space to delete from.
-     * @param leftGroupName           name of the left group.
-     * @param rightGroupName          name of the right group.
-     */
-    @GetMapping(value = "/foldchanges")
-    default List<FoldChange>  getFoldChanges(
-            @PathVariable String projectId,
-            @NotNull @RequestParam String leftGroupName,
-            @NotNull @RequestParam String rightGroupName,
-            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure quantification
-
-    ) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not yest implemented");
-//        getProjectsProvider().getProjectOrThrow(projectId).deleteFoldChange(getTarget(), leftGroupName, rightGroupName, aggregation, quantification);
-    }
-
-//    /**
-//     * [EXPERIMENTAL] Get fold changes.
-//     * <p>
-//     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-//     *
-//     * @param projectId      project-space to delete from.
-//     * @param leftGroupName           name of the left group.
-//     * @param rightGroupName          name of the right group.
-//     */
-//    @GetMapping(value = "/foldchanges/{objectId}")
-//    default FoldChange getFoldChange(
-//            @PathVariable String projectId,
-//            @PathVariable String objectId,
-//            @NotNull @RequestParam String leftGroupName,
-//            @NotNull @RequestParam String rightGroupName,
-//            @RequestParam(defaultValue = "AVG") AggregationType aggregation,
-//            @RequestParam(defaultValue = "APEX_INTENSITY") QuantMeasure quantification
-//
-//    ) {
-//        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not yest implemented");
-////        getProjectsProvider().getProjectOrThrow(projectId).ge(getTarget(), leftGroupName, rightGroupName, aggregation, quantification);
-//    }
-
 
     /**
      * [EXPERIMENTAL] List all fold changes that are associated with an object.
@@ -171,29 +126,5 @@ public interface StatisticsController<T> extends ProjectProvidingController, Com
     ) {
         return getProjectsProvider().getProjectOrThrow(projectId).getFoldChangeTable(getTarget(), aggregation, quantification);
     }
-
-
-
-
-    // todo I am not sure if this is really useful/needed.. discus
-
-//    /**
-//     * [EXPERIMENTAL] Page of all fold changes in the project space.
-//     * <p>
-//     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-//     *
-//     * @param projectId project-space to read from.
-//     * @param pageable  pageable.
-//     * @return fold changes.
-//     */
-//    @GetMapping(value = "/foldchanges/page", produces = MediaType.APPLICATION_JSON_VALUE)
-//    default Page<F> listFoldChange(
-//            @PathVariable String projectId,
-//            @ParameterObject Pageable pageable
-//    ) {
-//        return getProjectsProvider().getProjectOrThrow(projectId).listFoldChanges(getTarget(), pageable);
-//    }
-
-
 
 }
