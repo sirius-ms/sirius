@@ -40,19 +40,22 @@ public class BlankSubtraction {
     public static final String BLANK = "blank";
     public static final String CTRL = "control";
 
-    public static final String TAG_NAME = "sample type";
+
+    public static final String TAG_NAME = "sampleType";
     public static final String TAG_TYPE = "LC/MS runs";
     public static final String TAG_DESC = "Sample types for LC/MS runs";
-    public static final List<Object> POSSIBLE_VALUES = List.of(SAMPLE, BLANK, CTRL);
+    public static final List<Object> POSSIBLE_VALUES = List.of(BLANK, CTRL, SAMPLE); // keep order just in case we want to allow range queries on ordinal values at som point
 
-    public static final String SAMPLE_GRP_NAME = "sample runs";
-    public static final String SAMPLE_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + SAMPLE;
+    public static final String TAG_VALUE_QUERY = "tags.%s:\"%s\"";
 
-    public static final String BLANK_GRP_NAME = "blank runs";
-    public static final String BLANK_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + BLANK;
+    public static final String SAMPLE_GRP_NAME = "sampleRuns";
+    public static final String SAMPLE_GRP_QUERY = String.format(TAG_VALUE_QUERY, TAG_NAME, SAMPLE);
 
-    public static final String CTRL_GRP_NAME = "control runs";
-    public static final String CTRL_GRP_QUERY = "category:\"" + TAG_NAME + "\" AND text:" + CTRL;
+    public static final String BLANK_GRP_NAME = "blankRuns";
+    public static final String BLANK_GRP_QUERY = String.format(TAG_VALUE_QUERY, TAG_NAME, BLANK);
+
+    public static final String CTRL_GRP_NAME = "controlRuns";
+    public static final String CTRL_GRP_QUERY = String.format(TAG_VALUE_QUERY, TAG_NAME, CTRL);;
 
     private boolean blankSubtractionEnabled;
     private double blankSubtractionFoldChange;
