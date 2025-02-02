@@ -23,11 +23,13 @@ package de.unijena.bioinf.ms.middleware.model.compounds;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -36,7 +38,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Compound {
     @Schema(name = "CompoundOptField", nullable = true)
-    public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}
+    public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 
     /**
      * uid of this compound Entity
@@ -93,4 +95,10 @@ public class Compound {
      */
     @Schema(nullable = true)
     ConsensusAnnotationsCSI customAnnotations;
+
+    /**
+     * Key: tagName, value: tag
+     */
+    @Schema(nullable = true)
+    protected Map<String, ? extends Tag> tags;
 }
