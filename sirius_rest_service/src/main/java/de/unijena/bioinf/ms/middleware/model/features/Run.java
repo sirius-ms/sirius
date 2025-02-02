@@ -51,6 +51,11 @@ public class Run {
      */
     protected String name;
 
+    /**
+     * Source location
+     */
+    protected String source;
+
     @Schema(nullable = true)
     protected String chromatography;
 

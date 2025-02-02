@@ -40,9 +40,7 @@ public enum AggregationType {
   
   MIN("MIN"),
   
-  MAX("MAX"),
-  
-  MEDIAN("MEDIAN");
+  MAX("MAX");
 
   private String value;
 

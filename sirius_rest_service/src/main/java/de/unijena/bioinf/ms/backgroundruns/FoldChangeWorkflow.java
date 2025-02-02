@@ -150,6 +150,16 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
                             ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                             .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 
+                    if (leftObjectIds.length == 0 || rightObjectIds.length == 0) {
+                        if (AlignedFeature.class.equals(target)) {
+                            cleanupFoldChanges(FoldChange.AlignedFeaturesFoldChange.class);
+                        } else {
+                            cleanupFoldChanges(FoldChange.CompoundFoldChange.class);
+                        }
+
+                        return true;
+                    }
+
                     psm.getProject().getStorage().findStr(Filter.where("runId").in(leftObjectIds), LCMSRun.class).forEach(run -> leftRuns.add(run.getRunId()));
                     psm.getProject().getStorage().findStr(Filter.where("runId").in(rightObjectIds), LCMSRun.class).forEach(run -> rightRuns.add(run.getRunId()));
 
@@ -270,7 +280,7 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                                 double leftval = aggregate(quantify(leftFeatures));
                                 double rightval = aggregate(quantify(rightFeatures));
-                                double foldChange = rightval > 0 ? leftval / rightval : 0.0;
+                                double foldChange = Double.isFinite(rightval) ? leftval / rightval : 0.0;
 
                                 foldChanges.add(FoldChange.AlignedFeaturesFoldChange
                                         .builder()
@@ -301,10 +311,9 @@ public class FoldChangeWorkflow implements Workflow, ProgressSupport {
 
                 private double aggregate(DoubleStream values) {
                     return switch (aggregation) {
-                        case AVG -> values.average().orElse(0.0);
-                        case MIN -> values.min().orElse(0.0);
-                        case MAX -> values.max().orElse(0.0);
-                        case MEDIAN -> new Median().evaluate(values.toArray());
+                        case AVG -> values.average().orElse(Double.POSITIVE_INFINITY);
+                        case MIN -> values.min().orElse(Double.POSITIVE_INFINITY);
+                        case MAX -> values.max().orElse(Double.POSITIVE_INFINITY);
                     };
                 }
 

@@ -18,11 +18,25 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core.statistics;
+package de.unijena.bioinf.ms.middleware.model.statistics;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Schema
-public enum AggregationType {
-    AVG, MIN, MAX
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class SampleTypeFoldChangeRequest {
+
+    private List<String> sampleRunIds;
+
+    private List<String> blankRunIds;
+
+    private List<String> controlRunIds;
+
 }

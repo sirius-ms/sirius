@@ -133,8 +133,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable);
 
-    default List<TagDefinition> createTag(TagDefinitionImport tagDefinition, boolean editable) {
-        return createTags(List.of(tagDefinition), editable);
+    default TagDefinition createTag(TagDefinitionImport tagDefinition, boolean editable) {
+        return createTags(List.of(tagDefinition), editable).getFirst();
     }
 
     void deleteTags(String tagName);

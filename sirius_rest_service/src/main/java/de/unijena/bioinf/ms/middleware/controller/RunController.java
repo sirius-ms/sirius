@@ -21,7 +21,10 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
+import de.unijena.bioinf.ms.middleware.model.statistics.SampleTypeFoldChangeRequest;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,11 +50,14 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 public class RunController implements TaggableController<Run, Run.OptField> {
 
     @Getter
-    private ProjectsProvider<?> projectsProvider;
+    private final ProjectsProvider<?> projectsProvider;
+
+    private final ComputeService computeService;
 
     @Autowired
-    public RunController(ProjectsProvider<?> projectsProvider) {
+    public RunController(ProjectsProvider<?> projectsProvider, ComputeService computeService) {
         this.projectsProvider = projectsProvider;
+        this.computeService = computeService;
     }
 
     /**
@@ -90,6 +96,30 @@ public class RunController implements TaggableController<Run, Run.OptField> {
             @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findRunById(runId, removeNone(optFields));
+    }
+
+    /**
+     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.
+     *
+     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
+     *
+     * @param projectId project-space to compute the fold change in.
+     * @param request   request with lists of run IDs that are sample, blank, and control runs
+     * @param optFields job opt fields.
+     * @return
+     */
+    @PutMapping(value = "/blanksubtract/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
+    public Job computeFoldChangeForBlankSubtraction(
+            @PathVariable String projectId,
+            @RequestBody @Valid SampleTypeFoldChangeRequest request,
+            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(
+                getProjectsProvider().getProjectOrThrow(projectId),
+                request.getSampleRunIds(),
+                request.getBlankRunIds(),
+                request.getControlRunIds(),
+                removeNone(optFields));
     }
 
     /**

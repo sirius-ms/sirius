@@ -70,7 +70,7 @@ public class ComputeServiceImpl implements ComputeService {
 
     private BackgroundRuns backgroundRuns(Project<?> project) {
         return backgroundRuns.computeIfAbsent(project.getProjectId(), p -> {
-            BackgroundRuns br = new BackgroundRuns(project.getProjectSpaceManager(), instanceBufferFactory);
+            BackgroundRuns br = new BackgroundRuns(project, instanceBufferFactory);
             br.addUnfinishedRunsListener(evt -> {
                 if (evt instanceof BackgroundRuns.ChangeEvent e) {
                     eventService.sendEvent(ServerEvents.newComputeStateEvent(
@@ -277,6 +277,13 @@ public class ComputeServiceImpl implements ComputeService {
             registerServerJobEventListener(job, project.getProjectId());
             registerServerImportEventListener(job, project.getProjectId());
         });
+    }
+
+    @Override
+    public Job createAndSubmitFoldChangeForBlankSubtractionJob(@NotNull Project<?> project, List<String> sampleRunIds, List<String> blankRunIds, List<String> controlRunIds, @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChangesForBlankSubtraction(sampleRunIds, blankRunIds, controlRunIds);
+        registerServerJobEventListener(run, project.getProjectId());
+        return extractJobId(run, optFields);
     }
 
     @Override
