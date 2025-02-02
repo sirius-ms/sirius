@@ -230,7 +230,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public AlignedFeatureQualityExperimental getQualityReport() {
-        return withIds((pid, fid) -> getClient().features().getAlignedFeaturesQualityExperimentalWithResponseSpec(pid, fid)
+        return withIds((pid, fid) -> getClient().features().getAlignedFeatureQualityExperimentalWithResponseSpec(pid, fid)
                 .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().block());
     }
 

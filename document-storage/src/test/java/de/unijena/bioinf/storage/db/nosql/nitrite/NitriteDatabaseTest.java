@@ -53,7 +53,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.*;
 
@@ -341,7 +340,7 @@ public class NitriteDatabaseTest {
             for (NitriteEntryWithDoubleKey k : entries) {
                 db.insert(k);
             }
-            List<NitriteEntryWithDoubleKey> xs = db.findStr(Filter.where("otherKey").beetweenRightInclusive(115.5, 129.4), NitriteEntryWithDoubleKey.class).toList();
+            List<NitriteEntryWithDoubleKey> xs = db.findStr(Filter.where("otherKey").betweenRightInclusive(115.5, 129.4), NitriteEntryWithDoubleKey.class).toList();
             List<String> letters = new ArrayList<>();
             for (NitriteEntryWithDoubleKey x : xs) {
                 assertTrue(x.otherKey > 115.5);

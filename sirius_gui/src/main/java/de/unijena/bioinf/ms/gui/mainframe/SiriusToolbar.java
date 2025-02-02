@@ -31,7 +31,7 @@ import java.awt.*;
  * @author Markus Fleischauer
  */
 public class SiriusToolbar extends JToolBar {
-    private ToolbarButton logsB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
+    private ToolbarButton logsB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, sample, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
 
@@ -71,6 +71,10 @@ public class SiriusToolbar extends JToolBar {
 
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
+        addSeparator(new Dimension(20, 20));
+
+        sample = new ToolbarButton(SiriusActions.SHOW_SAMPLE.getInstance(gui, true));
+        add(sample);
         addSeparator(new Dimension(20, 20));
 
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
@@ -146,6 +150,10 @@ public class SiriusToolbar extends JToolBar {
 
     public ToolbarButton getDb() {
         return db;
+    }
+
+    public ToolbarButton getSample() {
+        return sample;
     }
 
     public ToolbarButton getConnect() {
