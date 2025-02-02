@@ -42,7 +42,9 @@ public enum CompoundOptField {
   
   CONSENSUSANNOTATIONSDENOVO("consensusAnnotationsDeNovo"),
   
-  CUSTOMANNOTATIONS("customAnnotations");
+  CUSTOMANNOTATIONS("customAnnotations"),
+  
+  TAGS("tags");
 
   private String value;
 
