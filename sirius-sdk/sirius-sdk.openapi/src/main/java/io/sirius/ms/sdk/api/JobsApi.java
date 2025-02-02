@@ -539,8 +539,8 @@ public class JobsApi {
         return getJobConfigRequestCreation(name, moveParametersToConfigMap);
     }
     /**
-     * DEPRECATED: use /job-configs to get all configs with names.
-     * Get all (non-default) job configuration names
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -571,8 +571,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: use /job-configs to get all configs with names.
-     * Get all (non-default) job configuration names
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
      * @return List&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -583,8 +583,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: use /job-configs to get all configs with names.
-     * Get all (non-default) job configuration names
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
      * @return ResponseEntity&lt;List&lt;String&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -595,8 +595,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: use /job-configs to get all configs with names.
-     * Get all (non-default) job configuration names
+     * [DEPRECATED] Get all (non-default) job configuration names  
+     * [DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - OK
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -1019,8 +1019,8 @@ public class JobsApi {
         return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting, moveParametersToConfigMap);
     }
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * Start computation for given command and input.
+     * [DEPRECATED] Start computation for given command and input
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1068,8 +1068,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * Start computation for given command and input.
+     * [DEPRECATED] Start computation for given command and input
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1083,8 +1083,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * Start computation for given command and input.
+     * [DEPRECATED] Start computation for given command and input
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
@@ -1098,8 +1098,8 @@ public class JobsApi {
     }
 
     /**
-     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
-     * Start computation for given command and input.
+     * [DEPRECATED] Start computation for given command and input
+     * [DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * <p><b>200</b> - Job of the command to be executed.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
