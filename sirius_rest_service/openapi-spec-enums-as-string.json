@@ -421,6 +421,72 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/blanksubtract/compute": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter",
+        "description": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
+        "operationId": "computeFoldChangeForBlankSubtraction",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to compute the fold change in.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "job opt fields.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "command",
+                  "progress",
+                  "affectedIds"
+                ]
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "request with lists of run IDs that are sample, blank, and control runs",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SampleTypeFoldChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/copy": {
       "put": {
         "tags": [
@@ -599,8 +665,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -761,8 +826,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -4165,8 +4229,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -4245,8 +4308,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -4300,8 +4362,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -7075,8 +7136,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -7155,8 +7215,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -7210,8 +7269,7 @@
               "enum": [
                 "AVG",
                 "MIN",
-                "MAX",
-                "MEDIAN"
+                "MAX"
               ]
             }
           },
@@ -8318,6 +8376,29 @@
             "type": "object",
             "description": "Optional value of the tag.\n \u003cp\u003e\n Generic value of the tag as defined by the corresponding TagDefinition.\n Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).",
             "nullable": true
+          }
+        }
+      },
+      "SampleTypeFoldChangeRequest": {
+        "type": "object",
+        "properties": {
+          "sampleRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blankRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "controlRunIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10514,6 +10595,10 @@
             "type": "string",
             "description": "Informative, human-readable name of this run"
           },
+          "source": {
+            "type": "string",
+            "description": "Source location"
+          },
           "chromatography": {
             "type": "string",
             "nullable": true
@@ -10900,8 +10985,7 @@
             "enum": [
               "AVG",
               "MIN",
-              "MAX",
-              "MEDIAN"
+              "MAX"
             ]
           },
           "quantification": {
@@ -10941,8 +11025,7 @@
             "enum": [
               "AVG",
               "MIN",
-              "MAX",
-              "MEDIAN"
+              "MAX"
             ]
           },
           "quantificationMeasure": {

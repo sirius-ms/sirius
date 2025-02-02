@@ -8,6 +8,7 @@ All URIs are relative to *http://localhost:8888*
 | [**deleteCompoundFoldChangesExperimental**](CompoundStatisticsApi.md#deleteCompoundFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes |
 | [**getCompoundFoldChangeTableExperimental**](CompoundStatisticsApi.md#getCompoundFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space |
 | [**getCompoundFoldChangesExperimental**](CompoundStatisticsApi.md#getCompoundFoldChangesExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges | [EXPERIMENTAL] Get fold changes |
+| [**getFoldChangesByCompoundExperimental**](CompoundStatisticsApi.md#getFoldChangesByCompoundExperimental) | **GET** /api/projects/{projectId}/compounds/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object |
 
 
 
@@ -63,7 +64,7 @@ public class Example {
 | **projectId** | **String**| project-space to compute the fold change in. | |
 | **leftGroupName** | **String**| name of the left tag group. | |
 | **rightGroupName** | **String**| name of the right tag group. | |
-| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX] |
 | **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
 
@@ -137,7 +138,7 @@ public class Example {
 | **projectId** | **String**| project-space to delete from. | |
 | **leftGroupName** | **String**| name of the left group. | |
 | **rightGroupName** | **String**| name of the right group. | |
-| **aggregation** | [**AggregationType**](.md)|  | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **aggregation** | [**AggregationType**](.md)|  | [optional] [enum: AVG, MIN, MAX] |
 | **quantification** | [**QuantMeasure**](.md)|  | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
@@ -207,7 +208,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX] |
 | **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
@@ -281,7 +282,7 @@ public class Example {
 | **projectId** | **String**| project-space to delete from. | |
 | **leftGroupName** | **String**| name of the left group. | |
 | **rightGroupName** | **String**| name of the right group. | |
-| **aggregation** | [**AggregationType**](.md)|  | [optional] [enum: AVG, MIN, MAX, MEDIAN] |
+| **aggregation** | [**AggregationType**](.md)|  | [optional] [enum: AVG, MIN, MAX] |
 | **quantification** | [**QuantMeasure**](.md)|  | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
 
 ### Return type
@@ -302,4 +303,72 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+
+## getFoldChangesByCompoundExperimental
+
+> List&lt;FoldChange&gt; getFoldChangesByCompoundExperimental(projectId, objectId)
+
+[EXPERIMENTAL] List all fold changes that are associated with an object
+
+[EXPERIMENTAL] List all fold changes that are associated with an object.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundStatisticsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundStatisticsApi apiInstance = new CompoundStatisticsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String objectId = "objectId_example"; // String | id of the object the fold changes are assigned to.
+        try {
+            List<FoldChange> result = apiInstance.getFoldChangesByCompoundExperimental(projectId, objectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundStatisticsApi#getFoldChangesByCompoundExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **objectId** | **String**| id of the object the fold changes are assigned to. | |
+
+### Return type
+
+[**List&lt;FoldChange&gt;**](FoldChange.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | fold changes |  -  |
 
