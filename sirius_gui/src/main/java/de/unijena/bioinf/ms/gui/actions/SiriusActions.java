@@ -71,6 +71,7 @@ public enum SiriusActions {
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class),
+    SHOW_SAMPLE(ShowLCMSRunsDialogAction.class),
     SHOW_LOG(OpenLogAction.class),
 
     REGISTER_EXPLORER(ExplorerLicRegisterAction.class),

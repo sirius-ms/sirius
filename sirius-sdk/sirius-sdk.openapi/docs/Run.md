@@ -9,6 +9,7 @@
 |------------ | ------------- | ------------- | -------------|
 |**runId** | **String** | Identifier |  [optional] |
 |**name** | **String** | Informative, human-readable name of this run |  [optional] |
+|**source** | **String** | Source location |  [optional] |
 |**chromatography** | **String** |  |  [optional] |
 |**ionization** | **String** |  |  [optional] |
 |**fragmentation** | **String** |  |  [optional] |

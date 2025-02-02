@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
+@Setter
 @Builder
 @Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
