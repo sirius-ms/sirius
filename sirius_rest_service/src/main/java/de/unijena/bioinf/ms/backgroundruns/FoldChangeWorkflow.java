@@ -38,7 +38,6 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.longs.*;
-import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.jetbrains.annotations.Nullable;
 

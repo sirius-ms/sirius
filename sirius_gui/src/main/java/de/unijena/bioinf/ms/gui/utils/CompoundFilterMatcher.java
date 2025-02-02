@@ -22,7 +22,6 @@ import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -37,12 +36,10 @@ import java.util.Set;
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
     private final GuiProperties properties;
-//    private final SiriusGui gui;
 
     public CompoundFilterMatcher(GuiProperties properties, CompoundFilterModel filterModel) {
         this.filterModel = filterModel;
         this.properties = properties;
-//        this.gui = gui;
     }
 
     @Override

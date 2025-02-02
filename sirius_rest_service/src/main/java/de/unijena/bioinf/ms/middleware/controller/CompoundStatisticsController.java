@@ -70,12 +70,6 @@ public class CompoundStatisticsController implements StatisticsController<Compou
         return StatisticsController.super.computeFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
     }
 
-    @Operation(operationId = "getCompoundFoldChangesExperimental")
-    @Override
-    public List<FoldChange> getFoldChanges(String projectId, @NotNull String leftGroupName, @NotNull String rightGroupName, AggregationType aggregation, QuantMeasure quantification) {
-        return StatisticsController.super.getFoldChanges(projectId, leftGroupName, rightGroupName, aggregation, quantification);
-    }
-
     @Operation(operationId = "getFoldChangesByCompoundExperimental")
     @Override
     public List<FoldChange> getFoldChanges(String projectId, String objectId) {

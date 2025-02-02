@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableDatabase;
@@ -41,9 +40,6 @@ import java.util.stream.Collectors;
  */
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-
-//    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
-//            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
 
     /*
     currently selected values
@@ -118,8 +114,8 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double maxConfidence;
 
 
-    public CompoundFilterModel(SiriusGui gui) {
-        this(gui, 0, 5000d, 0, 10000d, 0, 1d);
+    public CompoundFilterModel() {
+        this(0, 5000d, 0, 10000d, 0, 1d);
     }
 
 
@@ -134,8 +130,8 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param minConfidence
      * @param maxConfidence
      */
-    public CompoundFilterModel(SiriusGui gui, double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
-        this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0, gui);
+    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+        this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
