@@ -95,7 +95,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return this.storage.findStr(Filter.where("mass").beetweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
+            return this.storage.findStr(Filter.where("mass").betweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
                     .map(c -> c.getFormulaCandidate(dbFlag, ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);

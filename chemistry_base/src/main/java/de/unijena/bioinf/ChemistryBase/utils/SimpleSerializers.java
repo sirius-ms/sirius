@@ -36,6 +36,7 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
+import lombok.AllArgsConstructor;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -47,10 +48,10 @@ public class SimpleSerializers {
 
     public static abstract class FromStringDeserializer<T> extends JsonDeserializer<T> {
 
-        public abstract T getObject(String text);
+        public abstract T getObject(String text) throws IOException;
 
         @Override
-        public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             while (p.currentToken() != null && p.currentToken() != JsonToken.VALUE_STRING)
                 p.nextToken();
             return getObject(p.getText());
@@ -141,7 +142,7 @@ public class SimpleSerializers {
     public static final class AnnotationDeserializer extends JsonDeserializer<SpectrumAnnotation> {
 
         @Override
-        public SpectrumAnnotation deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        public SpectrumAnnotation deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             JsonToken token = p.currentToken();
             if (token != JsonToken.START_OBJECT)
                 return null;
@@ -165,6 +166,24 @@ public class SimpleSerializers {
             return Deviation.fromString(text);
         }
 
+    }
+
+    public static class EnumAsNumberSerializer<E extends Enum<E>> extends JsonSerializer<E> {
+        @Override
+        public void serialize(E value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeNumber(value.ordinal());
+        }
+    }
+
+    @AllArgsConstructor
+    public static class EnumAsNumberDeserializer<E extends Enum<E>> extends JsonDeserializer<E> {
+        private final Class<E> enumClass;
+
+        @Override
+        public E deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            int code = p.getIntValue();
+            return enumClass.getEnumConstants()[code];
+        }
     }
 
 }

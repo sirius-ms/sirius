@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.io.Closeable;
@@ -32,6 +33,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
+
+    protected static Metadata buildMetadata() throws IOException {
+        Metadata metadata = Metadata.build();
+        MsProjectDocumentDatabase.buildMetadata(metadata);
+        NetworkingProjectDocumentDatabase.buildMetadata(metadata);
+        StatsAndTaggingSupport.buildMetadata(metadata);
+        SiriusProjectDocumentDatabase.buildMetadata(metadata);
+        return metadata;
+    }
 
     protected final Storage storage;
 

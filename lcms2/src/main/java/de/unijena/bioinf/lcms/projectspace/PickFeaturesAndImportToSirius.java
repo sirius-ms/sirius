@@ -664,6 +664,16 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         feature.setRetentionTime(new RetentionTime(trace.retentionTime(segment.leftEdge), trace.retentionTime(segment.rightEdge), trace.retentionTime(segment.apex)));
         feature.setRunId(rawSample.getRun().getRunId());
         feature.setFwhm(calcFwhm(segment, trace, projectedSample.getMapping()));
+        feature.setAreaUnderCurve(calcAUC(segment, trace, projectedSample.getMapping()));
+    }
+
+    private double calcAUC(TraceSegment segment, Trace trace, ScanPointMapping mapping) {
+        double auc = 0;
+        for (int i = segment.leftEdge; i < segment.rightEdge; i++) {
+            // trapezoid equation: (f(a) + f(b)) / 2 * (b - a)
+            auc += 0.5 * (trace.intensity(i) + trace.intensity(i + 1)) * (mapping.getRetentionTimeAt(i + 1) - mapping.getRetentionTimeAt(i));
+        }
+        return auc;
     }
 
     private double calcFwhm(TraceSegment segment, Trace trace, ScanPointMapping mapping) {

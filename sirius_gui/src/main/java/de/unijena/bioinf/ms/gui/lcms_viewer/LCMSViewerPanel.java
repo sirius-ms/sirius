@@ -189,7 +189,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             return;
         }
 
-        CompletableFuture<AlignedFeatureQualityExperimental> future = currentInstance.getClient().features().getAlignedFeaturesQualityExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
+        CompletableFuture<AlignedFeatureQualityExperimental> future = currentInstance.getClient().features().getAlignedFeatureQualityExperimentalWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
                 .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().toFuture();
 
         TraceSetExperimental spec;

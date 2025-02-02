@@ -103,7 +103,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     public Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException {
         try {
             double abs = deviation.absoluteFor(precursorMz);
-            Filter filter = Filter.where("precursorMz").beetweenBothInclusive(precursorMz - abs, precursorMz + abs);
+            Filter filter = Filter.where("precursorMz").betweenBothInclusive(precursorMz - abs, precursorMz + abs);
             if (withData) {
                 return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum", "querySpectrum"));
             } else {
