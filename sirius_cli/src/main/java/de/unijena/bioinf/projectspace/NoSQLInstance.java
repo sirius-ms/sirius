@@ -190,22 +190,11 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasMs1() {
         return getAlignedFeatures().isHasMs1();
-        /*
-        return getMSData().map(ms -> ms.getMergedMs1Spectrum() != null || ms.getIsotopePattern() != null)
-                .orElse(false);
-
-         */
     }
 
     @Override
     public boolean hasMsMs() {
         return getAlignedFeatures().isHasMsMs();
-        /*
-        return getAlignedFeatures().getMSData()
-                .map(ms -> ms.getMergedMSnSpectrum() != null || (ms.getMsnSpectra() != null && !ms.getMsnSpectra().isEmpty()))
-                .orElse(false);
-
-         */
     }
 
     @SneakyThrows

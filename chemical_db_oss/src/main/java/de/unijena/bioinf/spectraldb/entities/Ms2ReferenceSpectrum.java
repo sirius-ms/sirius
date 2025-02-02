@@ -137,7 +137,6 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
     /**
      * Original spectrum
      */
-    //@JsonIgnore
     private SimpleSpectrum spectrum;
 
     /**
