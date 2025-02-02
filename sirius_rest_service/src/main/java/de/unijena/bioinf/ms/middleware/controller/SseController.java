@@ -46,14 +46,14 @@ public class SseController {
     }
 
     /**
-     * Listen to SSE events for job updates, progress changes and imports.
+     * [INTERNAL] Listen to SSE events for job updates, progress changes and imports.
+     * <p>
+     * [INTERNAL] This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time
+     *
      * @param eventsToListenOn list of event types to listen on
      * @return SseEmitter that constantly listens to events sent from the server.
      */
-    @Operation(
-            operationId = "listenToEventsInternal",
-            summary = "INTERNAL: This is an internal api endpoint and not part of the official public API. It might be changed or removed at any time"
-    )
+    @Operation(operationId = "listenToEventsInternal")
     @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter listenToEvents(@RequestParam(defaultValue = "JOB,PROJECT") EnumSet<ServerEvent.Type> eventsToListenOn) {
         if (eventsToListenOn == null || eventsToListenOn.isEmpty())
