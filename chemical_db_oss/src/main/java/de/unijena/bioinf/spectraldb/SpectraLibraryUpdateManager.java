@@ -7,14 +7,9 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -109,13 +104,13 @@ public class SpectraLibraryUpdateManager {
                         Ms2Experiment experiment = toExperiment(index, specs);
                         // 3.) compute fragmentation tree
                         List<IdentificationResult> identificationResult = submitSubJob(sirius.makeIdentificationJob(experiment)).takeResult();
-                        FTree tree = identificationResult.size()>0 ? identificationResult.get(0).getTree() : null;
+                        FTree tree = !identificationResult.isEmpty() ? identificationResult.getFirst().getTree() : null;
                         if (tree == null) {
                             LoggerFactory.getLogger("Cannot compute tree for " + index);
                             tree = new FTree(experiment.getMolecularFormula(), index.ionType.getIonization());
                         }
                         MergedReferenceSpectrum merged = new MergedReferenceSpectrum();
-                        merged.setFormula(specs.get(0).getFormula());
+                        merged.setFormula(specs.getFirst().getFormula());
                         merged.setSmiles(specs.stream().map(Ms2ReferenceSpectrum::getSmiles).filter(Objects::nonNull).findFirst().orElse(null));
                         merged.setPrecursorMz(experiment.getIonMass());
                         merged.setExactMass(index.ionType.neutralMassToPrecursorMass(merged.getFormula().getMass()));
@@ -137,7 +132,7 @@ public class SpectraLibraryUpdateManager {
     private static Ms2Experiment toExperiment(Index index, List<Ms2ReferenceSpectrum> spectra) {
         MutableMs2Experiment experiment = new MutableMs2Experiment();
         experiment.setMs2Spectra(spectra.stream().map(x->new MutableMs2Spectrum(x.getSpectrum()==null ? x.getQuerySpectrum() : x.getSpectrum(), x.getPrecursorMz(), x.getCollisionEnergy(), x.getMsLevel())).toList());
-        MolecularFormula formula = spectra.get(0).getFormula();
+        MolecularFormula formula = spectra.getFirst().getFormula();
         experiment.setIonMass(index.ionType.neutralMassToPrecursorMass(formula.getMass()));
         experiment.setMolecularFormula(formula);
         experiment.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(Set.of(experiment.getMolecularFormula()),SpectraLibraryUpdateManager.class));
