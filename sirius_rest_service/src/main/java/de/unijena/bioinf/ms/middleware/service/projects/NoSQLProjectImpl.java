@@ -842,10 +842,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
-    private Pair<String[], Database.SortOrder[]> sortFoldChange(Sort sort) {
-        return sort(sort, Pair.of("foldChange", Database.SortOrder.DESCENDING), Function.identity());
-    }
-
     private Filter spectralMatchFilter(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
         long longId = Long.parseLong(alignedFeatureId);
         return Filter.and(

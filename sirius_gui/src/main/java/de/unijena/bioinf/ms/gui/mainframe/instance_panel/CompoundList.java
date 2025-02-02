@@ -85,7 +85,7 @@ public class CompoundList {
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
         //additional filter based on specific parameters
-        compoundFilterModel = new CompoundFilterModel(gui);
+        compoundFilterModel = new CompoundFilterModel();
         // filter based ion full text field
         searchField = new PlaceholderTextField();
         searchField.setPlaceholder("Type and hit enter to search");
