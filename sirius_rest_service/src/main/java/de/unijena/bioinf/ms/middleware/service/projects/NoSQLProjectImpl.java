@@ -817,7 +817,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Pair<String[], Database.SortOrder[]> sortCompound(Sort sort) {
-        return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
+        return sort(sort, Pair.of("rt.middle", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rtStartSeconds" -> "rt.start";
             case "rtEndSeconds" -> "rt.end";
             default -> s;
@@ -825,7 +825,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Pair<String[], Database.SortOrder[]> sortFeature(Sort sort) {
-        return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
+        return sort(sort, Pair.of("retentionTime.middle", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rtStartSeconds" -> "retentionTime.start";
             case "rtEndSeconds" -> "retentionTime.end";
             case "ionMass" -> "averageMass";
@@ -1178,7 +1178,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .quantType(QuantRowType.COMPOUNDS)
                 .build();
     }
-    private FoldChange.FoldChangeBuilder<?,?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
+
+    private FoldChange.FoldChangeBuilder<?, ?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
         return FoldChange.builder()
                 .objectId(Long.toString(foldChange.getForeignId()))
                 .leftGroup(foldChange.getLeftGroup())
@@ -1187,7 +1188,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .quantification(foldChange.getQuantification())
                 .foldChange(foldChange.getFoldChange());
     }
-
 
 
     private FeatureAnnotations extractTopCsiNovoAnnotations(long longAFIf) {
@@ -1199,24 +1199,23 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     }
 
+    @SneakyThrows
     private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz, "structureRank", Database.SortOrder.ASCENDING)
-                .findFirst().orElse(null);
-
+        StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
         if (structureMatch != null) {
-            formulaCandidate = project().findByFormulaIdStr(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                    .findFirst().orElseThrow();
+            formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                    .orElseThrow();
 
             //set Structure match
             cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
 
             if (structureMatch instanceof CsiStructureMatch) //csi only but not denovo
-                project().findByFeatureIdStr(longAFIf, CsiStructureSearchResult.class)
-                        .findFirst().ifPresent(it -> {
+                storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
+                        .ifPresent(it -> {
                             cSum.setConfidenceExactMatch(it.getConfidenceExact());
                             cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
                             cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
@@ -1224,18 +1223,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             cSum.setExpandedDatabases(it.getExpandedDatabases());
                         });
         } else {
-            Pair<String[], Database.SortOrder[]> formSort = sortFormulaCandidate(null); //null == default
-            formulaCandidate = project().findByFeatureIdStr(longAFIf, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, formSort.getLeft()[0], formSort.getRight()[0])
-                    .findFirst().orElse(null); //todo should we call a page of size one instead?
+            formulaCandidate = storage().findStr(
+                            Filter.and(
+                                    Filter.where("alignedFeatureId").eq(longAFIf),
+                                    Filter.where("formulaRank").eq(1)
+                            ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                    .findFirst().orElse(null);
         }
 
         //get Canopus result. either for
         if (formulaCandidate != null) {
             cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
-//            if (structureMatch != null)
-//                cSum.getFormulaAnnotation().setTopCSIScore(structureMatch.getCsiScore());
-            project().findByFormulaIdStr(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
-                    .findFirst().map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
+            storage().getByPrimaryKey(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
                     .ifPresent(cSum::setCompoundClassAnnotation);
         }
         return cSum;
@@ -1263,6 +1263,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return convertFormulaCandidate(null, candidate, EnumSet.noneOf(FormulaCandidate.OptField.class));
     }
 
+    @SneakyThrows
     private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
@@ -1276,9 +1277,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .treeScore(candidate.getTreeScore())
                 .zodiacScore(candidate.getZodiacScore());
 
-        //todo post 6.0: we need the scores in the gui without the tree -> do we want to store stats separately from the tree?
+        //todo We need the scores in the gui without the tree -> do we want to store stats separately from the tree?
         final FTree ftree = optFields.stream().anyMatch(needTree::contains)
-                ? project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null)
+                ? storage().getByPrimaryKey(fid, FTreeResult.class).map(FTreeResult::getFTree).orElse(null)
                 : null;
 
         if (ftree != null) {
@@ -1306,13 +1307,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
         if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
-            project().findByFormulaIdStr(fid, CsiPrediction.class).findFirst()
+            storage().getByPrimaryKey(fid, CsiPrediction.class)
                     .map(fpp -> fpp.getFingerprint().toProbabilityArray()).ifPresent(builder::predictedFingerprint);
 
 
         if (optFields.contains(FormulaCandidate.OptField.canopusPredictions) || optFields.contains(FormulaCandidate.OptField.compoundClasses)) {
-            project().findByFormulaIdStr(fid, de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
-                    .findFirst().ifPresent(cr -> {
+            storage().getByPrimaryKey(fid, de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .ifPresent(cr -> {
                         if (optFields.contains(FormulaCandidate.OptField.canopusPredictions))
                             builder.canopusPrediction(CanopusPrediction.of(cr.getNpcFingerprint(), cr.getCfFingerprint()));
                         if (optFields.contains(FormulaCandidate.OptField.compoundClasses))
@@ -1328,18 +1329,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<Compound> findCompounds(Pageable pageable,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-        Pair<String[], Database.SortOrder[]> sort = sortCompound(pageable.getSort());
-        Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
-        if (pageable.isPaged()) {
-            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
-        } else {
-            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, sort.getLeft(), sort.getRight());
-        }
-        stream = stream.peek(project()::fetchAdductFeatures);
+        Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream =
+                findPageStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable, this::sortCompound)
+                        .peek(project()::fetchAdductFeatures);
 
-        if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
+        if (optFeatureFields.contains(AlignedFeature.OptField.msData))
             stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
-        }
 
         List<Compound> compounds = stream.map(c -> convertToApiCompound(c, optFields, optFeatureFields)).toList();
 
@@ -1430,15 +1425,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        Stream<AlignedFeatures> stream;
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
-            stream = storage().findAllStr(AlignedFeatures.class);
-        } else {
-            Pair<String[], Database.SortOrder[]> sort = sortFeature(pageable.getSort());
-            stream = storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
-        }
-
-        List<AlignedFeature> features = stream.map(alf -> convertToApiFeature(alf, optFields)).toList();
+        List<AlignedFeature> features = findPageStr(AlignedFeatures.class, pageable, this::sortFeature)
+                .map(alf -> convertToApiFeature(alf, optFields)).toList();
 
         long total = storage().countAll(AlignedFeatures.class);
 
@@ -2021,20 +2009,29 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
-        Pair<String[], Database.SortOrder[]> sort = sortFormulaCandidate(pageable.getSort());
 
         //load ms data only once per formula candidate
-        final MSData msData = Stream.of(/*FormulaCandidate.OptField.annotatedSpectrum,*/ FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
+        final MSData msData = Stream.of(FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
                 ? project().findByFeatureIdStr(longAFId, MSData.class).findFirst().orElse(null) : null;
 
-        List<FormulaCandidate> candidates;
-        if (pageable.isPaged()) {
-            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft()[0], sort.getRight()[0])
-                    .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+
+        Filter.FilterClause defaultSortFilter = Filter.and(Filter.where("alignedFeatureId").eq(longAFId), Filter.where("formulaRank").gt(0));
+        Pair<String[], Database.SortOrder[]> sort = sortFormulaCandidate(pageable.getSort());
+        final boolean defaultSort = pageable.getSort().isUnsorted() || sort.getLeft().length == 0 || "formulaRank".equals(sort.getLeft()[0]);
+
+        Stream<de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate> stream;
+        if (pageable.isUnpaged() && defaultSort)
+            stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
+        else if (defaultSort)
+            stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize());
+        else if (pageable.isUnpaged()) {
+            stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft(), sort.getRight());
         } else {
-            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft()[0], sort.getRight()[0])
-                    .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+            stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
+
+        List<FormulaCandidate> candidates = stream.map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+
         long total = project().countByFeatureId(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
 
         return new PageImpl<>(candidates, pageable, total);
@@ -2089,22 +2086,36 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return findStructureCandidatesByFeatureId(DenovoStructureMatch.class, alignedFeatureId, pageable, optFields);
     }
 
-    private <T extends StructureMatch> Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(Class<T> clzz, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+    @SneakyThrows
+    private <T extends StructureMatch> Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(Class<T> clz, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
+        Filter.FilterClause defaultSortFilter = Filter.and(Filter.where("alignedFeatureId").eq(longAFId), Filter.where("structureRank").gt(0));
         Pair<String[], Database.SortOrder[]> sort = sortStructureMatch(pageable.getSort());
+        final boolean defaultSort = pageable.getSort().isUnsorted() || sort.getLeft().length == 0 || "structureRank".equals(sort.getLeft()[0]);
+
+        Stream<T> stream;
+        if (pageable.isUnpaged() && defaultSort)
+            stream = storage().findStr(defaultSortFilter, clz);
+        else if (defaultSort)
+            stream = storage().findStr(defaultSortFilter, clz, pageable.getOffset(), pageable.getPageSize());
+        else if (pageable.isUnpaged()) {
+            stream = storage().findStr(defaultSortFilter, clz, sort.getLeft(), sort.getRight());
+        } else {
+            stream = storage().findStr(defaultSortFilter, clz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+        }
+
 
         Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate> fidToFC = new Long2ObjectOpenHashMap<>();
 
-        List<StructureCandidateFormula> candidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft()[0], sort.getRight()[0])
-                .map(candidate -> {
-                    de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate fc = fidToFC
-                            .computeIfAbsent(candidate.getFormulaId(), k -> project()
-                                    .findByFormulaIdStr(k, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                                    .findFirst().orElseThrow());
-                    return convertStructureMatch(fc.getMolecularFormula(), fc.getAdduct(), candidate, optFields);
-                }).toList();
+        List<StructureCandidateFormula> candidates = stream.map(candidate -> {
+            de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate fc = fidToFC
+                    .computeIfAbsent(candidate.getFormulaId(), k -> project()
+                            .findByFormulaIdStr(k, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                            .findFirst().orElseThrow());
+            return convertStructureMatch(fc.getMolecularFormula(), fc.getAdduct(), candidate, optFields);
+        }).toList();
 
-        long total = project().countByFeatureId(longAFId, clzz);
+        long total = project().countByFeatureId(longAFId, clz);
         return new PageImpl<>(candidates, pageable, total);
     }
 
@@ -2112,9 +2123,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
-        Pair<String[], Database.SortOrder[]> sort = sortStructureMatch(Sort.by(Sort.Direction.DESC, "csiScore"));
-        return project().findByFeatureIdStr(longAFId, CsiStructureMatch.class, sort.getLeft()[0], sort.getRight()[0])
-                .findFirst().map(s -> convertStructureMatch(s, optFields)).orElse(null);
+        return project().findTopStructureMatchByFeatureId(longAFId, CsiStructureMatch.class)
+                .map(s -> convertStructureMatch(s, optFields)).orElse(null);
     }
 
     @Override
@@ -2231,7 +2241,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public String getFingerIdDataCSV(int charge) {
-        Optional<FingerIdData> dataOpt = projectSpaceManager.getProject().findFingerprintData(FingerIdData.class, charge);
+        Optional<FingerIdData> dataOpt = project().findFingerprintData(FingerIdData.class, charge);
         if (dataOpt.isEmpty())
             return null;
         StringWriter writer = new StringWriter();
@@ -2242,7 +2252,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public String getCanopusClassyFireDataCSV(int charge) {
-        Optional<CanopusCfData> dataOpt = projectSpaceManager.getProject().findFingerprintData(CanopusCfData.class, charge);
+        Optional<CanopusCfData> dataOpt = project().findFingerprintData(CanopusCfData.class, charge);
         if (dataOpt.isEmpty())
             return null;
         StringWriter writer = new StringWriter();
@@ -2253,7 +2263,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public String getCanopusNpcDataCSV(int charge) {
-        Optional<CanopusNpcData> dataOpt = projectSpaceManager.getProject().findFingerprintData(CanopusNpcData.class, charge);
+        Optional<CanopusNpcData> dataOpt = project().findFingerprintData(CanopusNpcData.class, charge);
         if (dataOpt.isEmpty())
             return null;
         StringWriter writer = new StringWriter();
@@ -2271,5 +2281,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         throw new ResponseStatusException(BAD_REQUEST, "Tree exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
                     return new FTJsonWriter().treeToJsonString(ftreeRes.getFTree());
                 }).orElse(null);
+    }
+
+    private <T> Stream<T> findPageStr(Class<T> clz, Pageable pageable, Function<Sort,
+            Pair<String[], Database.SortOrder[]>> sortTransformer
+    ) throws IOException {
+        if (pageable.isUnpaged() && pageable.getSort().isUnsorted())
+            return storage().findAllStr(clz);
+        if (pageable.getSort().isUnsorted())
+            return storage().findAllStr(clz, pageable.getOffset(), pageable.getPageSize());
+
+        Pair<String[], Database.SortOrder[]> sort = sortTransformer.apply(pageable.getSort());
+        if (pageable.isUnpaged())
+            return storage().findAllStr(clz, sort.getLeft(), sort.getRight());
+
+        return storage().findAllStr(clz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
     }
 }
