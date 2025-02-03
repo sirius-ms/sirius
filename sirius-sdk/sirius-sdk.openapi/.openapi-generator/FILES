@@ -123,12 +123,12 @@ docs/StructureCandidateScored.md
 docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
-docs/TargetType.md
 docs/Tag.md
 docs/TagDefinition.md
 docs/TagDefinitionImport.md
 docs/TagGroup.md
 docs/TagsApi.md
+docs/TargetType.md
 docs/Term.md
 docs/Timeout.md
 docs/TraceAnnotationExperimental.md
