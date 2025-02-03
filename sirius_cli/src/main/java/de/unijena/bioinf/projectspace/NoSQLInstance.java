@@ -64,6 +64,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -189,15 +190,12 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasMs1() {
-        return getMSData().map(ms -> ms.getMergedMs1Spectrum() != null || ms.getIsotopePattern() != null)
-                .orElse(false);
+        return getAlignedFeatures().isHasMs1();
     }
 
     @Override
     public boolean hasMsMs() {
-        return getAlignedFeatures().getMSData()
-                .map(ms -> ms.getMergedMSnSpectrum() != null || (ms.getMsnSpectra() != null && !ms.getMsnSpectra().isEmpty()))
-                .orElse(false);
+        return getAlignedFeatures().isHasMsMs();
     }
 
     @SneakyThrows
@@ -425,13 +423,14 @@ public class NoSQLInstance implements Instance {
 
     @SneakyThrows
     @Override
-    public void saveSpectraSearchResult(SpectralSearchResult result) {
-        List<SpectraMatch> matches = result.getResults().stream()
+    public void saveSpectraSearchResult(@Nullable SpectralSearchResult result) {
+        List<SpectraMatch> matches = result == null ? List.of() : result.getResults().stream()
                 .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
                 .collect(Collectors.toList());
 
         project().getStorage().write(() -> {
-            project().getStorage().insertAll(matches);
+            if (!matches.isEmpty())
+                project().getStorage().insertAll(matches);
             upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
         });
 

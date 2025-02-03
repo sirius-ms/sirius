@@ -21,4 +21,5 @@
 version =  siriusVersion
 dependencies {
     api project(':chemistry_base')
+    api project(':preprocessing')
 }
