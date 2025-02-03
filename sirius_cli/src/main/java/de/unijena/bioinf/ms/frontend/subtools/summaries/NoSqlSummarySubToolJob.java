@@ -175,7 +175,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         boolean first = true;
                         MolecularFormula lastPrecursorFormula = null;
                         //we use the formula rank for search because its index, and we do not know whether siriusScore or zodiacScore was used for ranking.
-                        for (FormulaCandidate fc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), FormulaCandidate.class, "formulaRank", Database.SortOrder.ASCENDING)) {
+                        Filter.FilterClause sortingFilter = Filter.and(
+                                Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()),
+                                Filter.where("formulaRank").gt(0));
+
+                        for (FormulaCandidate fc : project.getProject().getStorage().find(sortingFilter, FormulaCandidate.class)) {
                             boolean nothingWritten = true;
 
                             MolecularFormula currentPrecursorFormula = fc.getAdduct()
@@ -243,7 +247,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             boolean first = true;
                             int rank = 1;
                             FormulaCandidate lastFc = null;
-                            for (CsiStructureMatch sc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), CsiStructureMatch.class, "structureRank", Database.SortOrder.ASCENDING)) {
+                            Filter.FilterClause sortingFilter = Filter.and(
+                                    Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()),
+                                    Filter.where("structureRank").gt(0));
+
+                            for (CsiStructureMatch sc : project.getProject().getStorage().find(sortingFilter, CsiStructureMatch.class)) {
                                 project.getProject().fetchFingerprintCandidate(sc, false);
                                 boolean nothingWritten = true;
                                 FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
