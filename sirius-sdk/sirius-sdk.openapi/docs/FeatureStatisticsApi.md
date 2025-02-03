@@ -7,7 +7,6 @@ All URIs are relative to *http://localhost:8888*
 | [**computeAlignedFeatureFoldChangesExperimental**](FeatureStatisticsApi.md#computeAlignedFeatureFoldChangesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/statistics/foldchange/compute | [EXPERIMENTAL] Compute the fold change between two groups of runs |
 | [**deleteAlignedFeatureFoldChangesExperimental**](FeatureStatisticsApi.md#deleteAlignedFeatureFoldChangesExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Delete fold changes |
 | [**getAlignedFeatureFoldChangeTableExperimental**](FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space |
-| [**getAlignedFeatureFoldChangesExperimental**](FeatureStatisticsApi.md#getAlignedFeatureFoldChangesExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges | [EXPERIMENTAL] Get fold changes |
 | [**getFoldChangesByAlignedFeatureExperimental**](FeatureStatisticsApi.md#getFoldChangesByAlignedFeatureExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object |
 
 
@@ -229,80 +228,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | table of fold changes. |  -  |
-
-
-## getAlignedFeatureFoldChangesExperimental
-
-> List&lt;FoldChange&gt; getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification)
-
-[EXPERIMENTAL] Get fold changes
-
-[EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.FeatureStatisticsApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        FeatureStatisticsApi apiInstance = new FeatureStatisticsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to delete from.
-        String leftGroupName = "leftGroupName_example"; // String | name of the left group.
-        String rightGroupName = "rightGroupName_example"; // String | name of the right group.
-        AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | 
-        QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | 
-        try {
-            List<FoldChange> result = apiInstance.getAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeatureStatisticsApi#getAlignedFeatureFoldChangesExperimental");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to delete from. | |
-| **leftGroupName** | **String**| name of the left group. | |
-| **rightGroupName** | **String**| name of the right group. | |
-| **aggregation** | [**AggregationType**](.md)|  | [optional] [enum: AVG, MIN, MAX] |
-| **quantification** | [**QuantMeasure**](.md)|  | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
-
-### Return type
-
-[**List&lt;FoldChange&gt;**](FoldChange.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: */*
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
 
 
 ## getFoldChangesByAlignedFeatureExperimental

@@ -56,6 +56,10 @@ public class SimilarityMatrixOptions implements StandaloneTool<SimilarityMatrixW
             description = {"Compute spectral cosine similarity between all compounds in the dataset"})
     protected boolean useCosine;
 
+    @CommandLine.Option(names = "--modified-cosine",
+            description = {"Compute spectral cosine similarity between all compounds in the dataset"})
+    protected boolean useModifiedCosine;
+
     @CommandLine.Option(names = "--minpeaks",defaultValue = "0",
             description = {"For cosine: when less than K peaks are matching, set cosine to zero."})
     protected int useMinPeaks;

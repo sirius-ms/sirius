@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Hidden;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -317,10 +318,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
-
-
+                            Ms2ReferenceSpectrum spec = chemDbService.db().getMs2ReferenceSpectrum(db, match.getUuid(), true);
+                            match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
                         } catch (ChemicalDatabaseException e) {
                             LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
                         }
@@ -368,8 +367,8 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+                            ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
+                            if (spec.getQuerySpectrum()!=null) match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
 
 
                         } catch (ChemicalDatabaseException e) {

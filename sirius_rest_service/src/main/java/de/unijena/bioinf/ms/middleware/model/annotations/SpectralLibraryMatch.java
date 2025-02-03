@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -69,6 +70,12 @@ public class SpectralLibraryMatch {
     private final String exactMass;
     private final String smiles;
 
+    @Schema(defaultValue = "SPECTRUM")
+    private final TargetType target;
+
+    @Schema(defaultValue = "COSINE")
+    private final MatchType type;
+
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final String inchiKey;
 
@@ -95,6 +102,8 @@ public class SpectralLibraryMatch {
                 .splash(result.getSplash())
                 .exactMass(Double.toString(result.getExactMass()))
                 .smiles(result.getSmiles())
+                .target(result.getSpectrumType()== SpectrumType.MERGED_SPECTRUM ? TargetType.MERGED : TargetType.SPECTRUM)
+                .type(result.isAnalog() ? MatchType.ANALOG : MatchType.COSINE)
                 .inchiKey(result.getCandidateInChiKey());
 
         if (result.getMolecularFormula() != null) {
@@ -116,5 +125,21 @@ public class SpectralLibraryMatch {
                 .filter(s -> candidateInChiKey == null || candidateInChiKey.equals(s.getCandidateInChiKey()))
                 .map(m-> SpectralLibraryMatch.of(m, null))
                 .toList();
+    }
+
+    public static enum MatchType {
+        COSINE,
+        ANALOG;
+    }
+
+    public static enum TargetType {
+        SPECTRUM,
+        MERGED;
+
+        public SpectrumType asSpectrumType() {
+            if (this==SPECTRUM) return SpectrumType.SPECTRUM;
+            if (this==MERGED) return SpectrumType.MERGED_SPECTRUM;
+            throw new IllegalArgumentException("Unknown spectrum type");
+        }
     }
 }
