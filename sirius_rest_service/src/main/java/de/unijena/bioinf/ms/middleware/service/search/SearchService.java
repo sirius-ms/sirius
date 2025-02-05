@@ -1,10 +1,8 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.SneakyThrows;
-import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition;
-import de.unijena.bioinf.storage.db.nosql.Filter;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -23,16 +21,16 @@ public interface SearchService extends Closeable {
     SearchIndexWriter getSearchIndexWriter();
 
 
-    TagDefinition getTagDefinition(String projectId, String tagName);
-    Stream<TagDefinition> getTagDefinitions(String projectId);
-    void addTagDefinition(String projectId, TagDefinition tagDefinition);
-    boolean removeTagDefinition(String projectId, String tagName);
+    ValueType getTagValueType(String projectId, String tagName);
+    Stream<ValueType> getTagValueType(String projectId);
+    void addTagValueType(String projectId, String tagName, ValueType valueType);
+    boolean removeTagValueType(String projectId, String tagName);
 
     //replace with lucene based handling.
-    @Deprecated(forRemoval = true)
-    Filter parseFindTagsByObjectType(String projectId, Class<?> targeObjectClass, String luceneFilterQuery) throws QueryNodeException, IOException;
+//    @Deprecated(forRemoval = true)
+//    Filter parseFindTagsByObjectType(String projectId, Class<?> targeObjectClass, String luceneFilterQuery) throws QueryNodeException, IOException;
     //replace with  lucene based handling.
-    @Deprecated(forRemoval = true)
-    Filter parseFindTags(String projectId, String luceneFilterQuery) throws QueryNodeException, IOException;
+//    @Deprecated(forRemoval = true)
+//    Filter parseFindTags(String projectId, String luceneFilterQuery) throws QueryNodeException, IOException;
 
 }

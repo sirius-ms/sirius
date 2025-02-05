@@ -11,6 +11,7 @@ import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsProjectDocumentDatabase<Storage> {
@@ -46,6 +47,11 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
     @SneakyThrows
     default Iterable<TagDefinition> findAllTagDefinitions() {
         return getStorage().findAll(TagDefinition.class);
+    }
+
+    @SneakyThrows
+    default Optional<TagDefinition> findTagDefinitionByName(String tagName) {
+        return getStorage().findStr(Filter.where("tagName").eq(tagName), TagDefinition.class).findFirst();
     }
 
     @SneakyThrows

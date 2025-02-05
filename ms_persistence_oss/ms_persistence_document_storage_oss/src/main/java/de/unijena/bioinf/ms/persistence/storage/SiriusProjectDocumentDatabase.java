@@ -71,11 +71,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(ComputedSubtools.class, "alignedFeatureId")
 
-                .addRepository(FormulaCandidate.class,
-                        Index.nonUnique("alignedFeatureId"),
-                        Index.nonUnique("formulaRank") //for fast sorted pages
-//                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
-                )
+                .addRepository(FormulaCandidate.class, Index.unique("alignedFeatureId", "formulaRank")) //for fast sorted pages
+
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
 
                 .addRepository(CsiPrediction.class, "formulaId", Index.nonUnique("alignedFeatureId"))
@@ -90,16 +87,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(CsiStructureMatch.class,
                         Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
-                        Index.nonUnique("structureRank")) //for fast sorted pages
+                        Index.nonUnique("alignedFeatureId", "structureRank")) //for fast sorted pages
 
                 .addRepository(DenovoStructureMatch.class,
                         Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
-                        Index.nonUnique("structureRank")) //for fast sorted pages
+                        Index.nonUnique("alignedFeatureId", "structureRank")) //for fast sorted pages
 
                 .addRepository(SpectraMatch.class,
-                        Index.nonUnique("searchResult.rank"), //sort index
-                        Index.nonUnique("searchResult.candidateInChiKey"),
-                        Index.nonUnique("alignedFeatureId"))
+                        Index.nonUnique("alignedFeatureId", "searchResult.candidateInChiKey", "searchResult.rank"),
+                        Index.nonUnique("alignedFeatureId", "searchResult.rank"))
 
                 .addRepository(FingerprintCandidate.class) //pk inchiKey
                 .setOptionalFields(FingerprintCandidate.class, "fingerprint")
@@ -269,6 +265,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return alignedFeatures;
     }
 
+
+    @SneakyThrows
+    default <T extends StructureMatch> Optional<T> findTopStructureMatchByFeatureId(long alignedFeatureId, Class<T> clzz) {
+        return getStorage().findStr(
+                Filter.and(
+                        Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                        Filter.where("structureRank").eq(1)
+                ), clzz).findFirst();
+    }
 
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {
         return stream(findByFeatureId(alignedFeatureId, clzz, optFields));

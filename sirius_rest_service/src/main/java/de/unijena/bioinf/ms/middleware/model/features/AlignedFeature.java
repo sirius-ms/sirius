@@ -25,8 +25,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
+import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueDefinition;
+import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -41,6 +45,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
+
 /**
  * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
  * that might be displayed in some summary view.
@@ -49,12 +55,12 @@ import java.util.Set;
 @Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature implements LuceneDocument {
+public class AlignedFeature implements TaggableLuceneDocumentProvider {
     @JsonIgnore
     @NotNull
     @Override
-    public Iterator<IndexableField> iterator() {
-        return new ArrayList<IndexableField>() {{ //storing all the base fields allows to load feature list solely based on index.
+    public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
+        return () -> new ArrayList<IndexableField>() {{
 
             add(new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES));
             add(new StringField("compoundId", alignedFeatureId, Field.Store.YES));
@@ -79,6 +85,12 @@ public class AlignedFeature implements LuceneDocument {
                 detectedAdducts.forEach(adduct -> add(new KeywordField("detectedAdducts", adduct, Field.Store.NO)));
             else
                 add(new KeywordField("detectedAdducts", PrecursorIonType.unknown(charge).toString(), Field.Store.NO));
+
+            //tags
+            if (notNullOrEmpty(tags))
+                tags.values().forEach(tag ->
+                        projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO));
+
         }}.iterator();
     }
 

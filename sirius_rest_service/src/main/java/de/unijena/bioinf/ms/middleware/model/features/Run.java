@@ -21,21 +21,54 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
+import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.KeywordField;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 @Getter
 @Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Run {
+public class Run implements TaggableLuceneDocumentProvider {
+
+    @Override
+    public @NotNull LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
+        return () -> new ArrayList<IndexableField>() {{
+            add(new StringField("runId", runId, Field.Store.YES));
+            if (notNullOrBlank(name))
+                add(new StringField("name", name, Field.Store.NO));
+            if (notNullOrBlank(source))
+                add(new StringField("source", source, Field.Store.NO));
+            if (notNullOrBlank(ionization))
+                add(new StringField("ionization", ionization, Field.Store.NO));
+            if (notNullOrBlank(fragmentation))
+                add(new StringField("fragmentation", fragmentation, Field.Store.NO));
+            if (massAnalyzers != null && !massAnalyzers.isEmpty())
+                massAnalyzers.forEach(analyzer -> add(new KeywordField("massAnalyzers", analyzer, Field.Store.NO)));
+
+            if (notNullOrEmpty(tags))
+                tags.values().forEach(tag ->
+                        projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO));
+
+        }}.iterator();
+    }
 
     @Schema(enumAsRef = true, name = "RunOptField", nullable = true)
     public enum OptField {none, tags}

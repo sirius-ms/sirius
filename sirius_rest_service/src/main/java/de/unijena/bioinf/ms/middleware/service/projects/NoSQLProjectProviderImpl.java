@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectEventType;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -38,12 +37,8 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -118,26 +113,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     @Override
     protected NoSQLProjectImpl createProject(String projectId, NoSQLProjectSpaceManager psm) {
-        NoSQLProjectImpl project = new NoSQLProjectImpl(projectId, psm, searchService, computeService::isInstanceComputing);
-
-        if (searchService != null) {
-            try {
-                StopWatch stopWatch = new StopWatch();
-                stopWatch.start();
-                System.out.println("Start Indexing features...");
-
-                searchService.openOrCreateProjectIndex(project);
-                Page<AlignedFeature> page = project.findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.computedTools);
-                if (page.hasContent())
-                    searchService.getSearchIndexWriter().addBeans(projectId,
-                            page.getContent());
-                System.out.println("Indexing features done in " + stopWatch);
-            } catch (IOException e) {
-                log.error("Error while initializing project space index. Closing index.", e);
-                searchService.closeProjectIndex(projectId);
-            }
-        }
-        return project;
+        return new NoSQLProjectImpl(projectId, psm, searchService, computeService::isInstanceComputing);
     }
 
     private ServerEventImpl<ProjectChangeEvent> createEvent(
