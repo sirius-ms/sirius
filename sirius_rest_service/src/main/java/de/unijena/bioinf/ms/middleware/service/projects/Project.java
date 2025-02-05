@@ -57,7 +57,11 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
     Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId);
 
+    Page<Compound> findCompounds(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
+                                 @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
+                                 @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
@@ -90,6 +94,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
 
+    Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
@@ -107,6 +114,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
 
+    Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
+    Page<Run>  findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
     Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
     default Page<Run> findRuns(Pageable pageable, Run.OptField... optFields) {
@@ -119,7 +130,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
+//    <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
 
     List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
 
@@ -143,7 +154,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values);
 
-    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
+//    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
 
     List<TagGroup> findTagGroups();
 

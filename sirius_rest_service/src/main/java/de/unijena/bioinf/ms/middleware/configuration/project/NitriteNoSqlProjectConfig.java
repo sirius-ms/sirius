@@ -20,22 +20,27 @@
 
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
+import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
-import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Configuration
 @ConditionalOnProperty(name = "sirius.middleware.project-space", havingValue = "NITRITE-NOSQL")
@@ -47,8 +52,11 @@ public class NitriteNoSqlProjectConfig {
     }
 
     @Bean
-    public SearchService searchService() {
-        return new FakeLuceneSearchService();
+    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome) throws IOException {
+        if (indexingHome == null)
+            indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
+        Files.createDirectories(indexingHome);
+        return new LuceneSearchService(indexingHome);
     }
 
     @Bean

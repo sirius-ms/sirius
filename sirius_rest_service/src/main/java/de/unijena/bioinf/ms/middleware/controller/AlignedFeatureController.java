@@ -78,15 +78,50 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId project-space to read from.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
+     * [EXPERIMENTAL] Get features (aligned over runs) in the given project-space.
+     *
+     * <h2>Supported filter syntax</h2>
+     *
+     * <p>The filter string must contain one or more clauses. A clause is prefíxed
+     * by a field name.
+     * </p>
+     *
+     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
+     * Tag name based field need to be prefixed with the namespace {@code tags.}.
+     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
+     *
+     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
+     *
+     * <p>A clause may be:</p>
+     * <ul>
+     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
+     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
+     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
+     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
+     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
+     * </ul>
+     *
+     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
+     *
+     * <h3>Example</h3>
+     *
+     * <p>The syntax allows to build complex filter queries such as:</p>
+     *
+     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
+     *
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId    project space to get features (aligned over runs) from.
+     * @param searchQuery       optional search query in lucene syntax.
+     * @param pageable     pageable.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged features (aligned over runs)
      */
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPaged(
-            @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @PathVariable String projectId,
+            @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
@@ -897,54 +932,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
     //region tags and groups
     /**
-     *
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag.
-     *
-     * <h2>Supported filter syntax</h2>
-     *
-     * <p>The filter string must contain one or more clauses. A clause is prefíxed
-     * by a field name.
-     * </p>
-     *
-     * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
-     * Tag name based field need to be prefixed with the namespace {@code tags.}.
-     * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
-     *
-     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
-     *
-     * <p>A clause may be:</p>
-     * <ul>
-     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tags.MyTagA:sample}</li>
-     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code tags.MyTagA:"Some Text"}</li>
-     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code tags.MyTagA:/[mb]oat/}</li>
-     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code tags.MyTagB<3}</li>
-     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code tags.MyTagB:[* TO 3] }</li>
-     * </ul>
-     *
-     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
-     *
-     * <h3>Example</h3>
-     *
-     * <p>The syntax allows to build complex filter queries such as:</p>
-     *
-     * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
-     *
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId    project space to get features (aligned over runs) from.
-     * @param filter       tag filter.
-     * @param pageable     pageable.
-     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-    @Operation(operationId = "getAlignedFeaturesByTagExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByTag(String projectId, String filter, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByTag(projectId, filter, pageable, optFields);
-    }
-
-
-    /**
      * [EXPERIMENTAL] Get all tags associated with this Object
      *
      * @param projectId project-space to get from.
@@ -1006,7 +993,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
     @Override
     public Page<AlignedFeature> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return TaggableController.super.getObjectsByGroup(projectId, groupName, pageable, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, optFields);
     }
 
     @Override
