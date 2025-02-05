@@ -280,10 +280,6 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
-        throw new UnsupportedOperationException();
-    }
 
     @Override
     public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
@@ -331,11 +327,6 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public List<TagGroup> findTagGroups() {
         throw new UnsupportedOperationException();
     }
@@ -372,6 +363,31 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<Compound> findCompounds(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<Run> findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
         throw new UnsupportedOperationException();
     }
 
