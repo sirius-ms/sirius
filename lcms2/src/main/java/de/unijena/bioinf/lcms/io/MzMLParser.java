@@ -249,10 +249,12 @@ public class MzMLParser implements LCMSParser {
                     }
                 }
 
+                /*
                 if (!centroided) {
                     log.error("Spectrum with ID '" + sid  + "' is not centroided. Skipping!");
                     continue;
                 }
+                 */
                 if (!skipList.isEmpty()) {
                     log.error("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
                     continue;
@@ -303,7 +305,7 @@ public class MzMLParser implements LCMSParser {
                     continue;
                 }
 
-                final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
+                SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
                 if (samplePolarity == 0)  {
                     samplePolarity = polarity.charge;
                 } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0) ) {
@@ -321,11 +323,13 @@ public class MzMLParser implements LCMSParser {
                                 .sourceScanId(sid)
                                 .scanTime(rt)
                                 .peaks(peaks)
+                                .centroided(centroided)
                                 .ccs(ccs)
                                 .build();
 
                         scanConsumer.consume(scan);
                         ms1Ids.put(spectrum.getId(), scan.getScanId());
+                        peaks = scan.getPeaks();
                     }
 
                     final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), parseScanNumber(sid, spectrum.getIndex()), sid, polarity.charge, true);
@@ -380,11 +384,14 @@ public class MzMLParser implements LCMSParser {
                                 .peaks(peaks)
                                 .msLevel(msLevel)
                                 .ccs(ccs)
+                                .centroided(centroided)
                                 .collisionEnergy(Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none())
                                 .mzOfInterest(prec.getMass())
                                 .isolationWindow(prec.getIsolationWindow())
                                 .precursorScanId(prec.getScanId());
-                        msmsScanConsumer.consume(scanBuilder.build());
+                        MSMSScan build = scanBuilder.build();
+                        msmsScanConsumer.consume(build);
+                        peaks = build.getPeaks();
                     }
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
@@ -443,13 +450,13 @@ public class MzMLParser implements LCMSParser {
         if (m.find()) {
             return Integer.parseInt(m.group(1));
         } else {
-            m = ALT_PATTERN.matcher(sid);
-            if (m.find()) {
-                return Integer.parseInt(m.group(1));
-            } else {
+            //m = ALT_PATTERN.matcher(sid);
+            //if (m.find()) {
+                //return Integer.parseInt(m.group(1));
+            //} else {
                 LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
                 return index;
-            }
+            //}
         }
     }
 
