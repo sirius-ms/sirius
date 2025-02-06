@@ -23,14 +23,24 @@ package de.unijena.bioinf.spectraldb;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public interface SpectralLibrary {
 
     long countAllSpectra() throws IOException;
+
+    /*
+    SPECTRA METHODS
+     */
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
         return lookupSpectra(precursorMz, deviation, false);
@@ -50,13 +60,33 @@ public interface SpectralLibrary {
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData) throws ChemicalDatabaseException;
 
+    /*
+    Cosine Similarity Search
+
+     */
+
+    Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
+    Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
+
+
+    /*
+    Other methods
+     */
+
+    ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException;
 
     Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException;
+    ReferenceSpectrum getReferenceSpectrum(long uuid, SpectrumType spectrumType) throws ChemicalDatabaseException;
+
+    Ms2ReferenceSpectrum queryAgainstIndividualSpectrum(long uuid) throws ChemicalDatabaseException;
 
     Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
 
     Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException;
 
     void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer) throws IOException;
+
+    void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer, boolean withData) throws IOException;
+    void forEachMergedSpectrum(Consumer<MergedReferenceSpectrum> consumer) throws IOException;
 
 }
