@@ -136,6 +136,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         System.out.println("TODO Prototype code Remove me!");
         if (searchService != null) {
             try {
+                //todo fix sorting and paging -> merge lucene and page sorting
                 //todo fix wildcard search
                 //todo fix event actions so that new tags are added to features
                 //todo add events to update indexe when features/runs are changing.
