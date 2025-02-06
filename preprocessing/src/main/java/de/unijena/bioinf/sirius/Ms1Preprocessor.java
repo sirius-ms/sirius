@@ -241,7 +241,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * @return
      */
     private boolean warnIfFormulaCandidateWithoutMatchingAdduct(Set<MolecularFormula> candidates, PossibleAdducts possibleAdducts, double precursorMass) {
-        Set<MolecularFormula> issues = candidates.stream().filter(mf -> !possibleAdducts.getAdducts().stream().anyMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.addIonAndAdduct(mf.getMass())-precursorMass)<0.1)).collect(Collectors.toSet());
+        Set<MolecularFormula> issues = candidates.stream().filter(mf -> possibleAdducts.getAdducts().stream().noneMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.neutralMassToPrecursorMass(mf.getMass())-precursorMass)<0.1)).collect(Collectors.toSet());
         if (!issues.isEmpty()) {
             LoggerFactory.getLogger(this.getClass()).warn("Enforced molecular formula has no matching adduct: "+issues.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")) + ". Adducts are: "+possibleAdducts.getAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
             return true;

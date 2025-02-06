@@ -26,6 +26,7 @@ import java.util.RandomAccess;
 import java.util.function.IntToDoubleFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * I really hate the very limited support of Java for binary search. There are many scenarios possible, so feel free to implement all these
@@ -40,6 +41,15 @@ public final class BinarySearch {
         if (!(list instanceof RandomAccess))
             list = (List<T>)Arrays.asList(list.toArray());
         return binarySearchForInt1(list, intfunc, 0, list.size(), key);
+    }
+
+    /**
+     * Given a list of objects which can be sorted using some long key. Search for a given long key,
+     */
+    public static <T> int searchForLong(List<T> list, ToLongFunction<T> intfunc, int key) {
+        if (!(list instanceof RandomAccess))
+            list = (List<T>)Arrays.asList(list.toArray());
+        return binarySearchForLong1(list, intfunc, 0, list.size(), key);
     }
 
     /**
@@ -112,6 +122,23 @@ public final class BinarySearch {
         while (low <= high) {
             int mid = (low + high) >>> 1;
             int midVal = func.applyAsInt(a.get(mid));
+
+            if (midVal < key)
+                low = mid + 1;
+            else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found.
+    }
+    private static <T> int  binarySearchForLong1(List<T> a, ToLongFunction<T> func, int fromIndex, int toIndex, long key) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            long midVal = func.applyAsLong(a.get(mid));
 
             if (midVal < key)
                 low = mid + 1;

@@ -142,6 +142,10 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
                 maxIntensity = Math.max(massOrderedSpectrum.getIntensityAt(lastIndex), maxIntensity);
             }
         }
+        if (lastIndex==properParentPeak) {
+            // this can only happen due to rounding errors
+            return -1;
+        }
 
 
 

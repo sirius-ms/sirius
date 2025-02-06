@@ -91,22 +91,4 @@ public class CompoundStatisticsApiTest {
 
         // TODO: test validations
     }
-    
-    /**
-     * [EXPERIMENTAL] Get fold changes
-     *
-     * [EXPERIMENTAL] Get fold changes.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     */
-    @Test
-    public void getCompoundFoldChangesExperimentalTest()  {
-        String projectId = null;
-        String leftGroupName = null;
-        String rightGroupName = null;
-        AggregationType aggregation = null;
-        QuantMeasure quantification = null;
-        List<FoldChange> response = api.getCompoundFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification);
-
-        // TODO: test validations
-    }
-    
 }
