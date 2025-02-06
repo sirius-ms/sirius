@@ -6,6 +6,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
+import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
@@ -64,6 +66,8 @@ public class LCMSProcessing {
      * Calculates noise thresholds from raw Spectra
      */
     @Getter @Setter private StatisticsCollectionStrategy statisticsCollector = new MedianNoiseCollectionStrategy();
+
+    @Getter @Setter private CentroidingStrategy centroidingStrategy = new CentroidIndividualSpectraStrategy();
 
     /**
      * Determines which peaks to pick from the LCMS
@@ -152,7 +156,7 @@ public class LCMSProcessing {
             Chromatography chromatography
     ) throws IOException {
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, siriusDatabaseAdapter, saveRawScans, chromatography);
+                file, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
         processSample(sample);
         return sample;
     }
