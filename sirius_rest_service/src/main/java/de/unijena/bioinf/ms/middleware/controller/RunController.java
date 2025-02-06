@@ -101,9 +101,9 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged runs
      */
-    @Operation(operationId = "getRunPageExperimental")
+    @Operation(operationId = "getRunsPageExperimental")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Run> getRunsPaged(
+    public Page<Run> getRunsPage(
             @PathVariable String projectId,
             @RequestParam(required = false) String searchQuery,
             @ParameterObject Pageable pageable,

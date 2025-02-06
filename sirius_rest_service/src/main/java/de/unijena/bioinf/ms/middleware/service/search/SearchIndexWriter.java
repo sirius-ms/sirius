@@ -5,7 +5,6 @@ import lombok.SneakyThrows;
 import org.apache.lucene.index.IndexableField;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 public interface SearchIndexWriter {
     @SneakyThrows
@@ -17,5 +16,4 @@ public interface SearchIndexWriter {
     <T extends TaggableLuceneDocumentProvider> void addBeans(String projectId, Collection<T> beans);
 
     <T extends Iterable<IndexableField>> void addBeans(String projectId, Iterable<T> bean);
-
 }

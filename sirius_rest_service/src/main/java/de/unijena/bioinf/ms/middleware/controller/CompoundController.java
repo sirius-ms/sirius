@@ -114,12 +114,13 @@ public class CompoundController implements TaggableController<Compound, Compound
      * @return tagged compounds (group of ion identities)
      */
 
+    @Operation(operationId = "getCompoundsPageExperimental")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Compound> getCompoundsPaged(@PathVariable String projectId,
-                                            @RequestParam(required = false) String searchQuery,
-                                            @ParameterObject Pageable pageable,
-                                            @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
-                                            @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+    public Page<Compound> getCompoundsPage(@PathVariable String projectId,
+                                           @RequestParam(required = false) String searchQuery,
+                                           @ParameterObject Pageable pageable,
+                                           @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                           @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(searchQuery, pageable, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 

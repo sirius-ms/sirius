@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptFields;
+import static io.sirius.ms.sdk.model.AlignedFeatureOptField.*;
 
 /**
  * This is the wrapper for the Instance class to interact with the gui
@@ -178,33 +179,38 @@ public class InstanceBean implements SiriusPCS {
         return projectManager;
     }
 
-
-    @NotNull
-    public AlignedFeature getSourceFeature() {
-        return getSourceFeature(List.of());
-    }
-
     @NotNull
     private Optional<AlignedFeature> sourceFeature() {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.TOPANNOTATIONS, AlignedFeatureOptField.COMPUTEDTOOLS);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(CONFIDENCE, COMPUTEDTOOLS);
+
+    private final Set<AlignedFeatureOptField> defaultOptsLoaded = new HashSet<>(10);
+
     @NotNull
+    public AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
+        return getSourceFeature(List.of(optFields));
+    }
+
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
         List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                ? Stream.concat(optFields.stream(), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
+                ? Stream.concat(optFields.stream().filter(opt -> !NONE.equals(opt)), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
                 : DEFAULT_OPT_FEATURE_FIELDS);
 
         //double checked locking source feature must be volatile
         if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS)) {
             synchronized (this) {
-                // we update every time here since we do not know which optional fields are already loaded.
-                if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
-                    sourceFeature = withIds((pid, fid) ->
-                            getClient().features().getAlignedFeature(pid, fid, of));
-                return sourceFeature;
+                if (defaultOptsLoaded.containsAll(of)) {
+                    defaultOptsLoaded.clear();
+                    // we update every time here since we do not know which optional fields are already loaded.
+                    if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
+                        sourceFeature = withIds((pid, fid) ->
+                                getClient().features().getAlignedFeature(pid, fid, of));
+                    defaultOptsLoaded.addAll(of);
+                    return sourceFeature;
+                }
             }
         }
         return sourceFeature;
@@ -308,26 +314,31 @@ public class InstanceBean implements SiriusPCS {
         return getRT().orElseGet(RetentionTime::NA);
     }
 
+
+
+    //top annotations needed.
     public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {
         return getFormulaAnnotation().map(fc -> new FormulaResultBean(fc, this));
     }
 
     public Optional<FormulaCandidate> getFormulaAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
+        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
     }
 
     public Optional<StructureCandidateScored> getStructureAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
+        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
     }
 
     public Optional<CompoundClasses> getCompoundClassesAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
+        return Optional.ofNullable(getSourceFeature(TOPANNOTATIONS).getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
-        return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
-                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceApproxMatch) :
-                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceExactMatch);
+        return viewMode == ConfidenceDisplayMode.APPROXIMATE
+                ? Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
+                    .map(FeatureAnnotations::getConfidenceApproxMatch)
+                : Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
+                    .map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
@@ -505,7 +516,7 @@ public class InstanceBean implements SiriusPCS {
 
     @NotNull
     public ComputedSubtools getComputedTools() {
-        ComputedSubtools tools = getSourceFeature().getComputedTools();
+        ComputedSubtools tools = getSourceFeature(COMPUTEDTOOLS).getComputedTools();
         if (tools == null) { //should not happen
             log.warn("Computed subtools information is null for feature {}.", getFeatureId());
             return new ComputedSubtools();
