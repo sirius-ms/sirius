@@ -9477,6 +9477,14 @@
           }
         }
       },
+      "MatchType": {
+        "type": "string",
+        "default": "COSINE",
+        "enum": [
+          "COSINE",
+          "ANALOG"
+        ]
+      },
       "MsData": {
         "type": "object",
         "properties": {
@@ -9680,6 +9688,12 @@
           "smiles": {
             "type": "string"
           },
+          "target": {
+            "$ref": "#/components/schemas/TargetType"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MatchType"
+          },
           "inchiKey": {
             "type": "string"
           },
@@ -9832,6 +9846,14 @@
           }
         },
         "nullable": true
+      },
+      "TargetType": {
+        "type": "string",
+        "default": "SPECTRUM",
+        "enum": [
+          "SPECTRUM",
+          "MERGED"
+        ]
       },
       "StoredJobSubmission": {
         "required": [

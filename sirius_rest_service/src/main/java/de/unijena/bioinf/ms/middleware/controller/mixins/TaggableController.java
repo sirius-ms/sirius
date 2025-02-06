@@ -33,54 +33,6 @@ import java.util.List;
 
 public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidingController {
     Class<T> getTagTarget();
-//    //todo get by tag and get by group should be merged with usual getObject with generic lucene search query.
-//    /**
-//     * Get objects by tag.
-//     *
-//     * <h2>Supported filter syntax</h2>
-//     *
-//     * <p>The filter string must contain one or more clauses. A clause is prefíxed
-//     * by a field name. Possible field names are:</p>
-//     *
-//     * <ul>
-//     *   <li><strong>tagName</strong> - name of the tag</li>
-//     *   <li><strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value</li>
-//     * </ul>
-//     *
-//     * <p>The format of the <strong>date</strong> type is {@code yyyy-MM-dd} and of the <strong>time</strong> type is {@code HH\:mm\:ss}.</p>
-//     *
-//     * <p>A clause may be:</p>
-//     * <ul>
-//     *     <li>a <strong>term</strong>: field name followed by a colon and the search term, e.g. {@code tagName:my_name}</li>
-//     *     <li>a <strong>phrase</strong>: field name followed by a colon and the search phrase in doublequotes, e.g. {@code text:"new york"}</li>
-//     *     <li>a <strong>regular expression</strong>: field name followed by a colon and the regex in slashes, e.g. {@code text:/[mb]oat/}</li>
-//     *     <li>a <strong>comparison</strong>: field name followed by a comparison operator and a value, e.g. {@code integer<3}</li>
-//     *     <li>a <strong>range</strong>: field name followed by a colon and an open (indiced by {@code [ } and {@code ] }) or (semi-)closed range (indiced by <code>{</code> and <code>}</code>), e.g. {@code integer:[* TO 3] }</li>
-//     * </ul>
-//     *
-//     * <p>Clauses may be <strong>grouped</strong> with brackets {@code ( } and {@code ) } and / or <strong>joined</strong> with {@code AND} or {@code OR } (or {@code && } and {@code || })</p>
-//     *
-//     * <h3>Example</h3>
-//     *
-//     * <p>The syntax allows to build complex filter queries such as:</p>
-//     *
-//     * <p>{@code (tagName:hello || tagName:world) && text:"new york" AND text:/[mb]oat/ AND integer:[1 TO *] OR real<=3 OR date:2024-01-01 OR date:[2023-10-01 TO 2023-12-24] OR date<2022-01-01 OR time:12\:00\:00 OR time:[12\:00\:00 TO 14\:00\:00] OR time<10\:00\:00 }</p>
-//     *
-//     * @param projectId project space to get objects from.
-//     * @param filter    tag filter.
-//     * @param pageable  pageable.
-//     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-//     * @return tagged objects
-//     */
-//    @GetMapping(value = "/tagged", produces = MediaType.APPLICATION_JSON_VALUE)
-//    default Page<T> getObjectsByTag(@PathVariable String projectId,
-//                                    @RequestParam(defaultValue = "") String filter,
-//                                    @ParameterObject Pageable pageable,
-//                                    @RequestParam(defaultValue = "") EnumSet<O> optFields
-//    ) {
-//        return getProjectsProvider().getProjectOrThrow(projectId).findObjectsByTagFilter(getTagTarget(), filter, pageable, optFields);
-//    }
-
     /**
      * Get group of objects by previously defined group.
      *
