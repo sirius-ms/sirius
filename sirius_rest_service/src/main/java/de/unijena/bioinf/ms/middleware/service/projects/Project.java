@@ -130,8 +130,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-//    <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
-
     List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
 
     void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
@@ -153,8 +151,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
     void deleteTags(String tagName);
 
     TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values);
-
-//    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
 
     List<TagGroup> findTagGroups();
 

@@ -25,12 +25,4 @@ public interface SearchService extends Closeable {
     Stream<ValueType> getTagValueType(String projectId);
     void addTagValueType(String projectId, String tagName, ValueType valueType);
     boolean removeTagValueType(String projectId, String tagName);
-
-    //replace with lucene based handling.
-//    @Deprecated(forRemoval = true)
-//    Filter parseFindTagsByObjectType(String projectId, Class<?> targeObjectClass, String luceneFilterQuery) throws QueryNodeException, IOException;
-    //replace with  lucene based handling.
-//    @Deprecated(forRemoval = true)
-//    Filter parseFindTags(String projectId, String luceneFilterQuery) throws QueryNodeException, IOException;
-
 }
