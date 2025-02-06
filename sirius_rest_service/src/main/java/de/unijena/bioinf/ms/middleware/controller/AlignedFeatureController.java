@@ -118,8 +118,9 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
      */
+    @Operation(operationId = "getAlignedFeaturesPageExperimental")
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<AlignedFeature> getAlignedFeaturesPaged(
+    public Page<AlignedFeature> getAlignedFeaturesPage(
             @PathVariable String projectId,
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,

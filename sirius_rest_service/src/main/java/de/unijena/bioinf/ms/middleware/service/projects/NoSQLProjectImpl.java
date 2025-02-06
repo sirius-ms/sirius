@@ -136,29 +136,64 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         System.out.println("TODO Prototype code Remove me!");
         if (searchService != null) {
             try {
+                //todo fix wildcard search
                 //todo fix event actions so that new tags are added to features
                 //todo add events to update indexe when features/runs are changing.
                 //todo think whether we want store tags on the tagged object because we have lucene index..
-                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
-                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
+                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
+
+
+                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
+                        alf -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
+                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
+
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
+//                        alf -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.getSearchIndexWriter().removeDocument(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
+
+                //                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
+//                        comp -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiCompound(comp, EnumSet.of(Compound.OptField.tags), EnumSet.noneOf(AlignedFeature.OptField.class))));
+
+                //                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
+//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
+//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiCompound(run, EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class))));
+
+//                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
+//                        alf -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
+//                        alf -> searchService.getSearchIndexWriter().addBean());
 
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start();
                 System.out.println("Start Indexing features...");
 
                 searchService.openOrCreateProjectIndex(this);
-                //laod feature index
-                Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
+
+                //load feature index
+                Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
                 if (features.hasContent())
                     searchService.getSearchIndexWriter().addBeans(projectId, features.getContent());
 
-                //laod Run index
+                //load Run index
                 Page<Run> runs = findRuns(Pageable.unpaged(), Run.OptField.tags);
                 if (runs.hasContent())
                     searchService.getSearchIndexWriter().addBeans(projectId,
                             runs.getContent());
 
-                //todo add Compound index
+                //load compound index
+                //todo remuse features.
+//                Page<Compound> compounds = findCompounds(Pageable.unpaged(), Compound.OptField.tags);
+//                if (compounds.hasContent())
+//                    searchService.getSearchIndexWriter().addBeans(projectId,
+//                            compounds.getContent());
 
                 System.out.println("Indexing features done in " + stopWatch);
             } catch (IOException e) {
@@ -1045,13 +1080,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    @SneakyThrows
     private AlignedFeature convertToApiFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(features.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
                 .name(features.getName())
                 .externalFeatureId(features.getExternalFeatureId())
-                .compoundId(features.getCompoundId() == null ? null : features.getCompoundId().toString())
+                .compoundId(features.getCompoundId() == null ? null : String.valueOf(features.getCompoundId()))
                 .ionMass(features.getAverageMass())
                 .quality(features.getDataQuality())
                 .hasMs1(features.isHasMs1())
@@ -1085,7 +1121,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
         }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
-            builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
+            builder.topAnnotations(extractTopCsiAnnotations(features.getAlignedFeatureId()));
+        else if (optFields.contains(AlignedFeature.OptField.confidence)) { // fast confidence score retrieval without any additional data.
+            storage().getByPrimaryKey(features.getAlignedFeatureId(), CsiStructureSearchResult.class)
+                    .ifPresent(searchResult ->
+                            builder.topAnnotations(FeatureAnnotations.builder()
+                                    .confidenceExactMatch(searchResult.getConfidenceExact())
+                                    .confidenceApproxMatch(searchResult.getConfidenceApprox())
+                                    .build()));
+        }
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
         if (optFields.contains(AlignedFeature.OptField.computedTools))
@@ -1213,7 +1257,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
 
-    private FeatureAnnotations extractTopCsiNovoAnnotations(long longAFIf) {
+    private FeatureAnnotations extractTopCsiAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, CsiStructureMatch.class);
     }
 
@@ -1353,13 +1397,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                         Pageable pageable,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-        if (searchQuery==null || searchQuery.isBlank())
+        if (searchQuery == null || searchQuery.isBlank())
             return findCompounds(pageable, optFields, optFeatureFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
         Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, Compound.class, "compoundId", "name");
+        if (ids.isEmpty())
+            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
 
         //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
         List<Compound> runs = storage().findStr(Filter.where("compoundId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
@@ -1479,25 +1525,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        if (searchQuery==null || searchQuery.isBlank())
+        if (searchQuery == null || searchQuery.isBlank())
             return findAlignedFeatures(pageable, optFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
-
+        StopWatch w = new StopWatch();
+        w.start();
         Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, AlignedFeature.class, "alignedFeatureId", "name");
+        if (ids.isEmpty())
+            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+        w.stop();
+        System.out.println("Lucene search took: " + w);
+        w.reset();
+        w.start();
 
         //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
-        List<AlignedFeature> features = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)),AlignedFeatures.class)
+        List<AlignedFeature> features = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), AlignedFeatures.class)
                 .map(f -> convertToApiFeature(f, optFields)).toList();
 
-//        List<AlignedFeature> features = ids.stream().map(Long::parseLong).map(id -> {
-//            try {
-//                return storage().getByPrimaryKey(id, AlignedFeatures.class);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }).flatMap(Optional::stream).map(f -> convertToApiFeature(f, optFields)).toList();
+        System.out.println("Extracting data from nitrite took: " + w);
 
         return new PageImpl<>(features, pageable, ids.getTotalElements());
     }
@@ -1569,13 +1616,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-        if (searchQuery==null || searchQuery.isBlank())
+        if (searchQuery == null || searchQuery.isBlank())
             return findRuns(pageable, optFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
         Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, Run.class, "runId", "name");
+        if (ids.isEmpty())
+            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
 
         //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
         List<Run> runs = storage().findStr(Filter.where("runId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), LCMSRun.class)

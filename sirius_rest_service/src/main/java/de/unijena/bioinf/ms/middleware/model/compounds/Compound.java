@@ -20,23 +20,54 @@
 
 package de.unijena.bioinf.ms.middleware.model.compounds;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
+import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Compound {
+public class Compound implements TaggableLuceneDocumentProvider {
+    @JsonIgnore
+    @NotNull
+    @Override
+    public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
+        return () -> new ArrayList<IndexableField>() {{
+            add(new KeywordField("compoundId", compoundId, Field.Store.YES));
+            if (name != null && !name.isBlank())
+                add(new TextField("name", name, Field.Store.NO));
+            if (neutralMass != null)
+                add(new DoublePoint("neutralMass", neutralMass));
+            if (rtStartSeconds != null)
+                add(new DoublePoint("rtStartSeconds", rtStartSeconds));
+            if (rtEndSeconds != null)
+                add(new DoublePoint("rtEndSeconds", rtEndSeconds));
+            //tags
+            if (notNullOrEmpty(tags))
+                tags.values().forEach(tag ->
+                        add(projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO)));
+
+        }}.iterator();
+    }
+
     @Schema(name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
 

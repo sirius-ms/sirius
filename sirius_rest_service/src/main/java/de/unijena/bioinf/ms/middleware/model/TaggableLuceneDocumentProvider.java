@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 public interface TaggableLuceneDocumentProvider {
 
     @JsonIgnore
-//    @Schema(hidden = true)
     @NotNull
     LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext);
 }

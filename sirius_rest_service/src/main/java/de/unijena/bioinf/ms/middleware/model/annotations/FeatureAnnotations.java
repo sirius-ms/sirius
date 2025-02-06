@@ -22,8 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
@@ -35,6 +34,9 @@ import java.util.List;
  * */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FeatureAnnotations {
     /**
@@ -65,7 +67,7 @@ public class FeatureAnnotations {
     protected Double confidenceApproxMatch;
 
     /**
-     * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input paramter)
+     * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input parameter)
      *
      */
     @Schema(nullable = true)
