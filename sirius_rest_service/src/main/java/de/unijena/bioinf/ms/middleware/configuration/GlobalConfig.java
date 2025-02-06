@@ -20,12 +20,16 @@
 
 package de.unijena.bioinf.ms.middleware.configuration;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Pageable;
 
 @Configuration
+@AllArgsConstructor
+@NoArgsConstructor
 public class GlobalConfig {
 
     @Value("${sirius.middleware.controller.unpagedLimit}")
