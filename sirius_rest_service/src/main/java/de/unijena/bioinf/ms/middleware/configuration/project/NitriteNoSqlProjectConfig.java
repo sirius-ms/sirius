@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
 import de.unijena.bioinf.ms.frontend.core.Workspace;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
@@ -52,11 +53,11 @@ public class NitriteNoSqlProjectConfig {
     }
 
     @Bean
-    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome) throws IOException {
+    public SearchService searchService(@Value("${de.unijena.bioinf.sirius.indexing.homeDir:#{null}}") Path indexingHome, GlobalConfig globalConfig) throws IOException {
         if (indexingHome == null)
             indexingHome = Workspace.WORKSPACE.resolve("search-indexes").resolve("lucene");
         Files.createDirectories(indexingHome);
-        return new LuceneSearchService(indexingHome);
+        return new LuceneSearchService(globalConfig, indexingHome);
     }
 
     @Bean

@@ -21,6 +21,7 @@
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
@@ -62,6 +63,9 @@ import java.util.stream.IntStream;
 
 public class NoSQLProjectTest {
 
+    // todo use spring mocks to get services
+    private static final GlobalConfig GLOBAL_CONFIG = new GlobalConfig(2147483647);
+
     @Test
     public void testCompounds() throws IOException {
 
@@ -69,7 +73,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -137,7 +141,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -197,7 +201,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             LCMSRun runIn = LCMSRun.builder()
                     .name("run1")
@@ -229,7 +233,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             Map<String, TagDefinitionImport> catIn = Map.of(
                     "c0", TagDefinitionImport.builder().tagName("c0").valueType(ValueType.NONE).tagType("foo").build(),
@@ -308,7 +312,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -391,7 +395,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -524,7 +528,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             List<LCMSRun> runs = List.of(
                     LCMSRun.builder()
@@ -652,7 +656,7 @@ public class NoSQLProjectTest {
         Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(luceneIndexDir), (a, b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, new LuceneSearchService(GLOBAL_CONFIG, luceneIndexDir), (a, b) -> false);
 
             List<LCMSRun> lcmsRuns = IntStream.range(0, 10000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
                     .name("run" + i)

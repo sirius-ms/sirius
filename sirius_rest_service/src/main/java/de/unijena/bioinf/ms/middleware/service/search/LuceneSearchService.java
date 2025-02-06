@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.middleware.service.search;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
 import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
@@ -46,6 +47,8 @@ import java.util.stream.Stream;
 public class LuceneSearchService implements SearchService {
     private static final Logger log = LoggerFactory.getLogger(LuceneSearchService.class);
 
+    private final GlobalConfig globalConfig;
+
     @NotNull
     private final Map<String, ProjectSearchContext> projectSearchContexts = new HashMap<>();
     @NotNull
@@ -61,7 +64,8 @@ public class LuceneSearchService implements SearchService {
     @NotNull
     AtomicBoolean closed = new AtomicBoolean(false);
 
-    public LuceneSearchService(@NotNull Path luceneIndexHome) {
+    public LuceneSearchService(GlobalConfig globalConfig, @NotNull Path luceneIndexHome) {
+        this.globalConfig = globalConfig;
         this.luceneIndexHome = luceneIndexHome;
     }
 
@@ -172,7 +176,7 @@ public class LuceneSearchService implements SearchService {
         }
     }
 
-    public static class Reader implements SearchIndexReader {
+    public class Reader implements SearchIndexReader {
 
         @NotNull
         private final Map<String, ProjectSearchContext> searchContexts;
@@ -195,6 +199,8 @@ public class LuceneSearchService implements SearchService {
             try (IndexReader reader = DirectoryReader.open(indexSearchers.get(projectId))) {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 Query queryObject = searchContexts.get(projectId).getParser().parse(query, defaultField);
+                if (paging == null || paging.isUnpaged())
+                    paging = globalConfig.unpaged();
                 TopFieldDocs res = searcher.search(queryObject, (int) (paging.getOffset() + paging.getPageSize()), convertSort(paging.getSort()));
                 List<String> ids = Arrays.stream(res.scoreDocs).skip(paging.getOffset()).limit(paging.getPageSize())
                         .map(scoreDoc -> {
@@ -234,7 +240,7 @@ public class LuceneSearchService implements SearchService {
         }
     }
 
-    public static class Writer implements SearchIndexWriter {
+    public  class Writer implements SearchIndexWriter {
         @NotNull
         private final Map<String, ProjectSearchContext> searchContexts;
         @NotNull
