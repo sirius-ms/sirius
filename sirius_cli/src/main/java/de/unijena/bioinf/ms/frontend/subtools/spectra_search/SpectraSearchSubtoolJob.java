@@ -23,24 +23,23 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
-import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.*;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -83,25 +82,40 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
+        if (!inst.hasMsMs()) {
+            return;
+        }
         final Ms2Experiment exp = inst.getExperiment();
+        final FastCosine fastCosine =new FastCosine();
         Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
         double precursorMz = exp.getIonMass();
-        boolean isPositive = exp.getPrecursorIonType().isPositive();
 
-        final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
-                .lookupSpectraStr(precursorMz, precursorDev, true, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs)
-                        .filter(s -> s.getPrecursorIonType().isPositive() == isPositive) //todo we might want to filter this by an indexed database field in the future but this need db schema conversion to be written first.
-                        .toList()
-                , this::checkForInterruption);
-        SpectraMatchingJJob job = new SpectraMatchingJJob(references, exp);
-        job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
-        SpectralSearchResult result = submitJob(job).awaitResult();
 
-        checkForInterruption();
+        final SpectralLibrarySearchSettings settings = SpectralLibrarySearchSettings.conservativeDefaultForCosine();
+        settings.setPrecursorDeviation(precursorDev);
+        settings.setTargetType(SpectrumType.SPECTRUM);
+        // now compare against all these reference spectra
 
-        if (result == null)
-            return;
+        //TODO WHEN introducing remote speclibs we might want to use some kind of reconnection management with netutils inside the db?.
+        // or do the matching remote...
+        SpectralSearchResult result =  submitJob(new BasicJJob<SpectralSearchResult>() {
+            @Override
+            protected SpectralSearchResult compute() throws Exception {
+                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x->fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
+                List<LibraryHit> hits = ApplicationCore.WEB_API.getChemDB().queryAgainstLibraryWithPrecursorMass(queries, precursorMz, exp.getPrecursorIonType().getCharge(), settings, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs);
+                if (hits == null || hits.isEmpty())
+                    return null;
+                hits = hits.stream().sorted(Comparator.reverseOrder()).toList();
+                List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
+                for (int k=0; k < hits.size(); ++k) {
+                    LibraryHit hit = hits.get(k);
+                    rankedHits.add(new SpectralSearchResult.SearchResult(hit, k+1));
+                }
+
+                return new SpectralSearchResult(settings.getPrecursorDeviation(), peakDev, settings.getMatchingType(), rankedHits);
+            }
+        }.asCPU()).awaitResult();
 
         inst.saveSpectraSearchResult(result);
 
@@ -117,10 +131,10 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         builder.append("\nPeak deviation: ").append(peakDev);
         builder.append("\nExperiment: ").append(exp.getName());
 
-        List<MutableMs2Spectrum> queries = exp.getMs2Spectra();
+        List<MutableMs2Spectrum> ms2Queries = exp.getMs2Spectra();
         Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
         for (Integer queryIndex : resultMap.keySet()) {
-            MutableMs2Spectrum query = queries.get(queryIndex);
+            MutableMs2Spectrum query = ms2Queries.get(queryIndex);
             builder.append("\n").append(getQueryName(query, queryIndex));
             builder.append("\nSimilarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB name | DB link | Splash");
             List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
@@ -128,7 +142,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 SpectralSimilarity similarity = r.getSimilarity();
 
                 try {
-                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
+                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                             similarity.similarity,
                             similarity.sharedPeaks,
