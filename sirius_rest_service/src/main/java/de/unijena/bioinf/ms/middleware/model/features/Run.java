@@ -31,7 +31,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.KeywordField;
-import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,21 +51,21 @@ public class Run implements TaggableLuceneDocumentProvider {
     @Override
     public @NotNull LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
         return () -> new ArrayList<IndexableField>() {{
-            add(new StringField("runId", runId, Field.Store.YES));
+            add(new KeywordField("runId", runId, Field.Store.YES));
             if (notNullOrBlank(name))
-                add(new StringField("name", name, Field.Store.NO));
+                add(new TextField("name", name, Field.Store.YES));
             if (notNullOrBlank(source))
-                add(new StringField("source", source, Field.Store.NO));
+                add(new TextField("source", source, Field.Store.YES));
             if (notNullOrBlank(ionization))
-                add(new StringField("ionization", ionization, Field.Store.NO));
+                add(new KeywordField("ionization", ionization, Field.Store.NO));
             if (notNullOrBlank(fragmentation))
-                add(new StringField("fragmentation", fragmentation, Field.Store.NO));
+                add(new KeywordField("fragmentation", fragmentation, Field.Store.NO));
             if (massAnalyzers != null && !massAnalyzers.isEmpty())
                 massAnalyzers.forEach(analyzer -> add(new KeywordField("massAnalyzers", analyzer, Field.Store.NO)));
 
             if (notNullOrEmpty(tags))
                 tags.values().forEach(tag ->
-                        projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO));
+                        add(projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO)));
 
         }}.iterator();
     }

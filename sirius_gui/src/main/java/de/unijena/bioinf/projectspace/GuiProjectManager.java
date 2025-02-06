@@ -76,7 +76,7 @@ public class GuiProjectManager implements Closeable {
         this.projectId = projectId;
         this.siriusClient = siriusClient;
 
-        //todo can be parallelizec to import project opening performance
+        StopWatch w = StopWatch.createStarted();
         List<InstanceBean> tmp = siriusClient.features()
                 .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                 .stream().map(f -> new InstanceBean(f, this)).toList();
@@ -201,6 +201,8 @@ public class GuiProjectManager implements Closeable {
                 eventQueue.add(stopper);
             }
         });
+
+        System.out.println("Project loaded in: " + w);
     }
 
     public void disableImportListener() {

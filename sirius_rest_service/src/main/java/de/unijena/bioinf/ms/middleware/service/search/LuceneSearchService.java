@@ -16,6 +16,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -35,8 +36,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -338,7 +339,10 @@ public class LuceneSearchService implements SearchService {
         private final Map<String, ValueType> tagDefinitions;
 
         @NotNull
-        private final Map<String, Analyzer> fieldAnalyzers = new ConcurrentHashMap<>();
+        private final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
+        @NotNull
+        private final Map<String, PointsConfig> pointConfigs = new HashMap<>();
+
         @NotNull
         private final Analyzer analyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), fieldAnalyzers);
         @Getter
@@ -353,9 +357,8 @@ public class LuceneSearchService implements SearchService {
         private ProjectSearchContext(Iterable<TagDefinition> tagDefinitionsStr) {
             this.tagDefinitions = new HashMap<>();
             tagDefinitionsStr.forEach(tagDef -> tagDefinitions.put(tagDef.getTagName(), tagDef.getValueType()));
-            parser = new StandardQueryParser(analyzer); //todo do we want to have default fields?
-            parser.setPointsConfigMap(new HashMap<>());
-//            parser = LuceneUtils.makeDefaultQueryParser(tagDefinitionsStr);
+            parser = new StandardQueryParser(analyzer);
+            parser.setPointsConfigMap(pointConfigs);
         }
 
         public void addTagValueType(TagDefinition tagDefinition) {
@@ -393,6 +396,7 @@ public class LuceneSearchService implements SearchService {
             }
         }
 
+        @Nullable
         public ValueType getTagValueType(String tagName) {
             lock.readLock().lock();
             try {
@@ -416,25 +420,45 @@ public class LuceneSearchService implements SearchService {
             Map<String, PointsConfig> pointsConfigMap = parser.getPointsConfigMap();
             for (IndexableField f : fields) {
                 if (!pointsConfigMap.containsKey(f.name())) { //this and putIfAbsent is a bit like double-checked locking
-                    switch (f) {
-                        case FloatField d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
-                        case FloatPoint d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
-                        case DoubleField d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
-                        case DoublePoint d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
-                        case IntField d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
-                        case IntPoint d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
-                        case LongField d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
-                        case LongPoint d ->
-                                pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
-                        default -> {
-                            //handle everything else
+                    @Nullable ValueType valueType = getTagValueType(f.name());
+
+                    // handle normal fields
+                    if (valueType == null) {
+                        switch (f) {
+                            case FloatField d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
+                            case FloatPoint d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Float.class));
+                            case DoubleField d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
+                            case DoublePoint d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Double.class));
+                            case IntField d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
+                            case IntPoint d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Integer.class));
+                            case LongField d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
+                            case LongPoint d ->
+                                    pointsConfigMap.putIfAbsent(d.name(), new PointsConfig(DecimalFormat.getInstance(), Long.class));
+                            default -> {
+                                //handle everything else
+                            }
+                        }
+                    } else { //handle tag fields
+                        switch (valueType) {
+                            case INTEGER -> new PointsConfig(DecimalFormat.getInstance(), Integer.class);
+
+                            case REAL -> new PointsConfig(DecimalFormat.getInstance(), Double.class);
+
+                            case DATE ->
+                                    new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
+
+                            case TIME ->
+                                    new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Integer.class);
+
+                            default -> {
+                            }
                         }
                     }
                 }
@@ -453,7 +477,7 @@ public class LuceneSearchService implements SearchService {
                 //todo add none or remove it in general.
                 return switch (valueType) {
                     case BOOLEAN ->
-                            new StringField(fieldName, String.valueOf(formatter.fromFormattedGeneric(formattedTagValue)), storeValue);
+                            new KeywordField(fieldName, String.valueOf(formatter.fromFormattedGeneric(formattedTagValue)), storeValue);
                     case INTEGER, TIME ->
                             new IntPoint(fieldName, (Integer) formatter.fromFormattedGeneric(formattedTagValue));
                     case REAL -> new DoublePoint(fieldName, (Double) formatter.fromFormattedGeneric(formattedTagValue));
