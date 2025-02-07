@@ -163,7 +163,7 @@ public class ElGordoPlugin extends SiriusPlugin  {
                         if (whiteset.isEmpty()) {
                             whiteset = whiteset.add(Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class));
                         }
-                        whiteset = whiteset.setFinalized(true); //todo ElementFilter: test
+                        whiteset = whiteset.setFinalized(true);
                         //alternatively a similar behaviour could be established just generating a new whiteset, but this "forgets" previous provider classes
 //                        whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class);
                     } else {
