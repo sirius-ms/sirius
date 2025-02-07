@@ -33,6 +33,7 @@ import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,12 +41,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 @Getter
 public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
 
     private final SiriusProjectDatabaseImpl<? extends Database<?>> project;
+
+    /**
+     * Filter to apply when iterating over instances. Has no effect on count methods.
+     */
+    @Setter
+    private Filter alignedFeatureFilter = null;
 
     public NoSQLProjectSpaceManager(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
         this.project = project;
@@ -117,7 +123,7 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @SneakyThrows
     @Override
     public @NotNull Iterator<Instance> iterator() {
-        return getProject().getAllAlignedFeatures().map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
+        return getProject().getAlignedFeatures(alignedFeatureFilter).map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
     }
 
     @SneakyThrows
@@ -149,7 +155,7 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     }
 
     @Override
-    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) {
         //todo remove all fingerprint data related results and de fingerprint data itself
         return true;
     }
