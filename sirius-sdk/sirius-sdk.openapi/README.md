@@ -196,6 +196,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**deleteJob**](docs/JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job.
 *JobsApi* | [**deleteJobConfig**](docs/JobsApi.md#deleteJobConfig) | **DELETE** /api/job-configs/{name} | Delete job configuration with given name.
 *JobsApi* | [**deleteJobs**](docs/JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | * Delete ALL jobs.
+*JobsApi* | [**getCommand**](docs/JobsApi.md#getCommand) | **POST** /api/job-configs/get-command | Get a CLI command for the given job configuration.
 *JobsApi* | [**getDefaultJobConfig**](docs/JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration
 *JobsApi* | [**getJob**](docs/JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available).
 *JobsApi* | [**getJobConfig**](docs/JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name.

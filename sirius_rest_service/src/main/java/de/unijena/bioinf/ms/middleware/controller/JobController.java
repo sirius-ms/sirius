@@ -51,7 +51,6 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RequestMapping(value = "/api")
 @Tag(name = "Jobs", description = "Start, monitor and cancel background jobs.")
 public class JobController {
-    public final static String DEFAULT_CONFIG_NAME = "Default";
     private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
@@ -331,5 +330,14 @@ public class JobController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void deleteJobConfig(@PathVariable String name) {
         jobConfigService.deleteUserConfig(name);
+    }
+
+    /**
+     * Get a CLI command for the given job configuration.
+     */
+    @PostMapping(value = "/job-configs/get-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<String> getCommand(@RequestBody JobSubmission jobConfig) {
+        return jobConfig.asCommand();
     }
 }
