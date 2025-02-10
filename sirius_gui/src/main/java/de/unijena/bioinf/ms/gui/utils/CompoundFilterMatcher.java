@@ -92,6 +92,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
+        if (filterModel.getBlankSubtraction().isEnabled())
+            if (!matchesFoldChangeFilter(item, filterModel)) return false;
+
         if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
             AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
             if (qualityReport != null) { //always allow to pass the filter if now quality data is available
@@ -117,6 +120,10 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesDBFilter(item, filterModel)) return false;
 
         return true;
+    }
+
+    private boolean matchesFoldChangeFilter(InstanceBean item, CompoundFilterModel filterModel) {
+        return filterModel.getBlankSubtraction().matches(item);
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {

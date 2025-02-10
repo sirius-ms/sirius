@@ -52,7 +52,15 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
+import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
+import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -122,7 +130,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type) {
+    public Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType) {
+        throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
+    }
+
+    @Override
+    public Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType) {
         throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
     }
 
@@ -216,6 +229,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
+    public List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
                 .map(projectSpaceManager::importInstanceWithUniqueId)
@@ -245,6 +263,116 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     @Override
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureId) {
         throw new UnsupportedOperationException("NOT IMPLEMENTED");
+    }
+
+    @Override
+    public Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Tag> findTagsByObject(Class<?> target, String objectId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagDefinition> findTags() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagDefinition> findTagsByType(String tagType) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagDefinition findTagByName(String tagName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTags(String tagName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagGroup> findTagGroups() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagGroup> findTagGroupsByType(String type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagGroup findTagGroup(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagGroup addTagGroup(String name, String query, String type) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTagGroup(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

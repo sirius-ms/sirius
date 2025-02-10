@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
 import jakarta.persistence.Id;
 import lombok.Getter;
@@ -16,7 +14,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MergedReferenceSpectrum {
+public class MergedReferenceSpectrum implements ReferenceSpectrum {
 
     @Id
     private long uuid;

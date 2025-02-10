@@ -48,14 +48,11 @@ public interface SpectralLibrary {
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException;
 
-
-
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d) throws ChemicalDatabaseException {
         return lookupSpectra(inchiKey2d, false);
     }
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
-
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula) throws ChemicalDatabaseException {
         return lookupSpectra(formula, false);

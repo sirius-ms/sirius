@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
-import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.SpectraLibraryUpdateManager;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
