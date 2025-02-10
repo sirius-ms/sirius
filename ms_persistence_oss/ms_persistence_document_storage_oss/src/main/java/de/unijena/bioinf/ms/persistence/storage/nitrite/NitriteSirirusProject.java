@@ -52,7 +52,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     private final Metadata metadata;
 
     public NitriteSirirusProject(@NotNull Path location) throws IOException {
-        this(location, SiriusProjectDocumentDatabase.buildMetadata(), NitriteDatabase.MVStoreCompression.DEFLATE); //highest compression rate
+        this(location, buildMetadata(), NitriteDatabase.MVStoreCompression.DEFLATE); //highest compression rate
     }
 
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression) throws IOException {

@@ -20,29 +20,24 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
-import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
-import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
+import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -54,7 +49,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @NotNull
     PSM getProjectSpaceManager();
 
-    Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type);
+    Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType);
+
+    Optional<QuantTable> getQuantificationForAlignedFeatureOrCompound(String objectId, QuantMeasure type, QuantRowType rowType);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
@@ -89,6 +86,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
+    List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
+
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
@@ -105,6 +104,62 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
+
+    Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
+    default Page<Run> findRuns(Pageable pageable, Run.OptField... optFields) {
+        return findRuns(pageable, toEnumSet(Run.OptField.class, optFields));
+    }
+
+    Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields);
+
+    default Run findRunById(String runId, Run.OptField... optFields) {
+        return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
+    }
+
+    <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String filter, Pageable pageable, @NotNull EnumSet<O> optFields);
+
+    List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
+
+    void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
+
+    List<Tag> findTagsByObject(Class<?> target, String objectId);
+
+    List<TagDefinition> findTags();
+
+    List<TagDefinition> findTagsByType(String tagType);
+
+    TagDefinition findTagByName(String tagName);
+
+    List<TagDefinition> createTags(List<TagDefinitionImport> tagDefinitions, boolean editable);
+
+    default TagDefinition createTag(TagDefinitionImport tagDefinition, boolean editable) {
+        return createTags(List.of(tagDefinition), editable).getFirst();
+    }
+
+    void deleteTags(String tagName);
+
+    TagDefinition addPossibleValuesToTagDefinition(String tagName, List<?> values);
+
+    <T, O extends Enum<O>> Page<T> findObjectsByTagGroup(Class<?> target, @NotNull String group, Pageable pageable, @NotNull EnumSet<O> optFields);
+
+    List<TagGroup> findTagGroups();
+
+    List<TagGroup> findTagGroupsByType(String type);
+
+    TagGroup findTagGroup(String name);
+
+    TagGroup addTagGroup(String name, String query, String type);
+
+    void deleteTagGroup(String name);
+
+    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification);
+
+    <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
+
+    <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
+
+    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

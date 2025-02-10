@@ -172,7 +172,7 @@ public class ProjectController {
 
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project as background job.
      * Possible formats (mzML, mzXML)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -181,6 +181,8 @@ public class ProjectController {
      * are running on the same host.
      * <p>
      * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      Project-space to import into.
      * @param localFilePaths Local files to import into project.
@@ -189,9 +191,6 @@ public class ProjectController {
      * @return the import job.
      */
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
-    )
     @PostMapping(value = "/{projectId}/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
@@ -210,7 +209,7 @@ public class ProjectController {
     }
 
     /**
-     * Import and Align full MS-Runs from various formats into the specified project
+     * [DEPRECATED] Import and Align full MS-Runs from various formats into the specified project
      * Possible formats (mzML, mzXML)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -219,15 +218,14 @@ public class ProjectController {
      * are running on the same host.
      * <p>
      * API to allow for more flexible use cases. Use 'ms-data-files' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      Project to import into.
      * @param localFilePaths Local files to import into project.
      * @param parameters     Parameters for feature alignment and feature finding.
      */
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
-    )
     @PostMapping(value = "/{projectId}/import/ms-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importMsRunDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
@@ -285,7 +283,7 @@ public class ProjectController {
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space as background job.
+     * [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job.
      * Possible formats (ms, mgf, cef, msp)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -294,15 +292,14 @@ public class ProjectController {
      * are running on the same host.
      * <p>
      * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId project-space to import into.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
-    )
     @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importPreprocessedDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localPaths,
@@ -319,7 +316,7 @@ public class ProjectController {
     }
 
     /**
-     * Import already preprocessed ms/ms data from various formats into the specified project
+     * [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project
      * Possible formats (ms, mgf, cef, msp)
      * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
@@ -328,14 +325,13 @@ public class ProjectController {
      * are running on the same host.
      * <p>
      * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId      project-space to import into.
      * @param localFilePaths files to import into project
      */
     @Deprecated(forRemoval = true)
-    @Operation(
-            summary = "DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API."
-    )
     @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importPreprocessedDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
@@ -351,14 +347,15 @@ public class ProjectController {
 
 
     /**
-     * Move an existing (opened) project-space to another location.
+     * [DEPRECATED] Move an existing (opened) project-space to another location.
+     * <p>
+     * [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
      *
      * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
      * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
      * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
      * the source project otherwise
-     * <p>
      */
     @Deprecated(forRemoval = true)
     @Operation(

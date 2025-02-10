@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.nitrite.filters.RangeFilter;
 import de.unijena.bioinf.storage.db.nosql.nitrite.joining.JoinedReflectionIterable;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStream;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedObjectStream;
