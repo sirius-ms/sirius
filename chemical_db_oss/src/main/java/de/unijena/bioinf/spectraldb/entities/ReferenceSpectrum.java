@@ -2,27 +2,24 @@ package de.unijena.bioinf.spectraldb.entities;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
-import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 
 public interface ReferenceSpectrum {
 
-    public ReferenceLibrarySpectrum getQuerySpectrum();
+    ReferenceLibrarySpectrum getQuerySpectrum();
 
-    public String getLibraryName();
+    String getLibraryName();
 
-    public String getSmiles();
+    String getSmiles();
 
-    public MolecularFormula getFormula();
+    MolecularFormula getFormula();
 
-    public double getExactMass();
+    double getExactMass();
 
-    public double getPrecursorMz();
+    double getPrecursorMz();
 
-    public PrecursorIonType getPrecursorIonType();
+    PrecursorIonType getPrecursorIonType();
 
-    public String getCandidateInChiKey();
+    String getCandidateInChiKey();
 
 }

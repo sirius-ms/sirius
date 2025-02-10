@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
+public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends StatsAndTaggingSupport<Storage>, NetworkingProjectDocumentDatabase<Storage>, MsProjectDocumentDatabase<Storage> {
     int SIRIUS_PROJECT_SCHEMA_VERSION = 1;
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
@@ -62,7 +62,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
-        NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
+        sourceMetadata
                 .schemaVersion(SIRIUS_PROJECT_SCHEMA_VERSION)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
                 .addCollection(PROJECT_PROPERTIES_COLLECTION, Index.unique("key"))
@@ -71,10 +71,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(ComputedSubtools.class, "alignedFeatureId")
 
-                .addRepository(FormulaCandidate.class,
-                        Index.nonUnique("alignedFeatureId", "formulaRank") //for fast sorted pages
-//                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
-                )
+                .addRepository(FormulaCandidate.class, Index.unique("alignedFeatureId", "formulaRank")) //for fast sorted pages
+
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
 
                 .addRepository(CsiPrediction.class, "formulaId", Index.nonUnique("alignedFeatureId"))
@@ -267,6 +265,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return alignedFeatures;
     }
 
+
+    @SneakyThrows
+    default <T extends StructureMatch> Optional<T> findTopStructureMatchByFeatureId(long alignedFeatureId, Class<T> clzz) {
+        return getStorage().findStr(
+                Filter.and(
+                        Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                        Filter.where("structureRank").eq(1)
+                ), clzz).findFirst();
+    }
 
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {
         return stream(findByFeatureId(alignedFeatureId, clzz, optFields));

@@ -15,5 +15,7 @@
 
 * `COMPUTEDTOOLS` (value: `"computedTools"`)
 
+* `TAGS` (value: `"tags"`)
+
 
 

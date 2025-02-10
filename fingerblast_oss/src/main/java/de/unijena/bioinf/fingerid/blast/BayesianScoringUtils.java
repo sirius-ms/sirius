@@ -57,8 +57,6 @@ public class BayesianScoringUtils {
     //pseudo count for Bayesian network scoring
     private final double pseudoCount;
 
-//    private final ChemicalDatabase chemicalDatabase;
-
     private final MaskedFingerprintVersion maskedFingerprintVersion;
     private final BayesnetScoringTrainingData trainingData;
 
@@ -206,13 +204,12 @@ public class BayesianScoringUtils {
     /**
      * Computes the default Bayesian Network scoring which is unspecific for the molecular formula
      * @return BayesnetScoring with Covariance Tree
-     * @throws ChemicalDatabaseException  if a db exceptions happens
      */
-    public BayesnetScoring computeDefaultScoring(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
+    public BayesnetScoring computeDefaultScoring(ChemicalDatabase sqlChemDB) {
         return SiriusJobs.getGlobalJobManager().submitJob(makeDefaultScoringJob(sqlChemDB)).getResult();
     }
 
-    public MasterJJob<BayesnetScoring> makeDefaultScoringJob(ChemicalDatabase sqlChemDb) throws ChemicalDatabaseException {
+    public MasterJJob<BayesnetScoring> makeDefaultScoringJob(ChemicalDatabase sqlChemDb) {
         return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
             protected BayesnetScoring compute() throws Exception {
@@ -241,7 +238,7 @@ public class BayesianScoringUtils {
      * @throws ChemicalDatabaseException if a db exceptions happens
      * @throws InsufficientDataException if there are not enough candidates in the Database to compute the scoring
      */
-    public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb) throws InsufficientDataException, ChemicalDatabaseException {
+    public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull SearchStructureByFormula chemdb) throws InsufficientDataException, ChemicalDatabaseException {
         try {
             return SiriusJobs.getGlobalJobManager().submitJob(createScoringComputationJob(formula, chemdb, SiriusJobs.getCPUThreads())).takeResult();
         } catch (RuntimeException r) {
@@ -268,10 +265,8 @@ public class BayesianScoringUtils {
      * Computes the Bayesian Network Scoring specific for this molecular formula
      * @param formula for which the tree will be computed
      * @return BayesnetScoring with Covariance Tree
-     * @throws ChemicalDatabaseException if a db exceptions happens
-     * @throws InsufficientDataException if there are not enough candidates in the Database to compute the scoring
      */
-    public MasterJJob<BayesnetScoring> createScoringComputationJob(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb, int numThreads) throws InsufficientDataException, ChemicalDatabaseException {
+    public MasterJJob<BayesnetScoring> createScoringComputationJob(MolecularFormula formula, @NotNull SearchStructureByFormula chemdb, int numThreads) {
         return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
             protected BayesnetScoring compute() throws Exception {
@@ -286,7 +281,7 @@ public class BayesianScoringUtils {
 
     private final static boolean USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY = true;
 
-    private Pair<List<int[]>, List<FingerprintCandidate>> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb, MasterJJob masterJJob, int numThreads) throws ChemicalDatabaseException, InsufficientDataException, ExecutionException {
+    private Pair<List<int[]>, List<FingerprintCandidate>> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull SearchStructureByFormula chemdb, MasterJJob masterJJob, int numThreads) throws InsufficientDataException, ExecutionException {
         long startTime = System.currentTimeMillis();
         List<FingerprintCandidate> candidates = new ArrayList<>();
         masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, formula, candidates)).awaitResult();
@@ -1065,11 +1060,11 @@ public class BayesianScoringUtils {
 
     protected static class LookupStructuresAndFingerprintsByFormulaJob extends BasicJJob<Object> {
 
-        final AbstractChemicalDatabase chemdb;
+        final SearchStructureByFormula chemdb;
         final MolecularFormula formula;
         final List<FingerprintCandidate> candidatesListToFill;
 
-        public LookupStructuresAndFingerprintsByFormulaJob(@NotNull AbstractChemicalDatabase chemdb, @NotNull MolecularFormula formula, List<FingerprintCandidate> candidatesListToFill) {
+        public LookupStructuresAndFingerprintsByFormulaJob(@NotNull SearchStructureByFormula chemdb, @NotNull MolecularFormula formula, List<FingerprintCandidate> candidatesListToFill) {
             super(JobType.REMOTE);
             this.chemdb = chemdb;
             this.formula = formula;

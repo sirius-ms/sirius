@@ -7,16 +7,17 @@ All URIs are relative to *http://localhost:8888*
 | [**deleteJob**](JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job. |
 | [**deleteJobConfig**](JobsApi.md#deleteJobConfig) | **DELETE** /api/job-configs/{name} | Delete job configuration with given name. |
 | [**deleteJobs**](JobsApi.md#deleteJobs) | **DELETE** /api/projects/{projectId}/jobs | * Delete ALL jobs. |
+| [**getCommand**](JobsApi.md#getCommand) | **POST** /api/job-configs/get-command | Get a CLI command for the given job configuration. |
 | [**getDefaultJobConfig**](JobsApi.md#getDefaultJobConfig) | **GET** /api/default-job-config | Request default job configuration |
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
-| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | DEPRECATED: use /job-configs to get all configs with names. |
+| [**getJobConfigNames**](JobsApi.md#getJobConfigNames) | **GET** /api/job-config-names | [DEPRECATED] Get all (non-default) job configuration names   |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
 | [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
-| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
+| [**startCommand**](JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | [DEPRECATED] Start computation for given command and input |
 | [**startJob**](JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters. |
 | [**startJobFromConfig**](JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config. |
 
@@ -225,6 +226,72 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **202** | Accepted |  -  |
+
+
+## getCommand
+
+> List&lt;String&gt; getCommand(jobSubmission)
+
+Get a CLI command for the given job configuration.
+
+Get a CLI command for the given job configuration.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.JobsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        JobsApi apiInstance = new JobsApi(defaultClient);
+        JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | 
+        try {
+            List<String> result = apiInstance.getCommand(jobSubmission);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling JobsApi#getCommand");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **jobSubmission** | [**JobSubmission**](JobSubmission.md)|  | |
+
+### Return type
+
+**List&lt;String&gt;**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## getDefaultJobConfig
@@ -439,9 +506,9 @@ No authorization required
 
 > List&lt;String&gt; getJobConfigNames()
 
-DEPRECATED: use /job-configs to get all configs with names.
+[DEPRECATED] Get all (non-default) job configuration names  
 
-Get all (non-default) job configuration names
+[DEPRECATED] Get all (non-default) job configuration names  &lt;p&gt;  [DEPRECATED] Use /job-configs to get all configs with names. This endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 ### Example
 
@@ -843,9 +910,9 @@ No authorization required
 
 > Job startCommand(projectId, commandSubmission, optFields)
 
-DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
+[DEPRECATED] Start computation for given command and input
 
-Start computation for given command and input.
+[DEPRECATED] Start computation for given command and input.  &lt;p&gt;  [DEPRECATED] this endpoint is based on local file paths and will likely be removed in future versions of this API.
 
 ### Example
 

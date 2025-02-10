@@ -26,17 +26,16 @@ import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.LCMSRunDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import io.sirius.ms.sdk.jjobs.SseProgressJJob;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import io.sirius.ms.sdk.jjobs.SseProgressJJob;
+import io.sirius.ms.sdk.model.*;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
@@ -153,6 +152,13 @@ public class ImportAction extends AbstractGuiAction {
                     return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import MS data...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
                 task.awaitResult();
+            }
+
+            if (hasLCMS) {
+                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                if (runs != null && runs.size() > 1) {
+                    new LCMSRunDialog(mainFrame, gui, runs, false);
+                }
             }
 
         } catch (Exception e) {

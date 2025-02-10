@@ -20,11 +20,12 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.annotation.Nullable;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * A class to specify filtering criteria during {@link Database}'s
@@ -111,28 +112,28 @@ public class Filter {
             return singleValue(value, Type.LTE);
         }
 
-        public <T extends Comparable<T>> Filter beetween(T left, T right) {
+        public <T extends Comparable<T>> Filter between(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, false, false}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenLeftInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenLeftInclusive(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, true, false}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenRightInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenRightInclusive(T left, T right) {
             if (left.compareTo(right) >= 0) {
                 throw new IllegalArgumentException(left + " must be > " + right);
             }
             return multiValue(new Object[]{left, right, false, true}, Type.BETWEEN);
         }
 
-        public <T extends Comparable<T>> Filter beetweenBothInclusive(T left, T right) {
+        public <T extends Comparable<T>> Filter betweenBothInclusive(T left, T right) {
             if (left.compareTo(right) > 0) {
                 throw new IllegalArgumentException(left + " must be >= " + right);
             }
@@ -179,6 +180,23 @@ public class Filter {
             return clause;
         }
 
+        @Override
+        public String toString() {
+            return field + switch (type) {
+                case EQ -> "==" + values[0].toString();
+                case NOT_EQ -> "!=" + values[0].toString();
+                case GT -> ">" + values[0].toString();
+                case GTE -> ">=" + values[0].toString();
+                case LT -> "<" + values[0].toString();
+                case LTE -> "<=" + values[0].toString();
+                case BETWEEN -> ((boolean) values[2] ? ":[" : ":{") + values[0].toString() + ", " + values[1].toString() + ((boolean) values[3] ? "]" : "}");
+                case TEXT -> "~=" + values[0].toString();
+                case REGEX -> "~=/" + values[0].toString() + "/";
+                case IN -> ":[" + Arrays.stream(values).map(Object::toString).collect(Collectors.joining(", ")) + "]";
+                case NOT_IN -> ":-[" + Arrays.stream(values).map(Object::toString).collect(Collectors.joining(", ")) + "]";
+                case ELEM_MATCH -> "$" + values[0].toString();
+            };
+        }
     }
 
     @Getter
@@ -198,6 +216,10 @@ public class Filter {
             this.type = type;
         }
 
+        @Override
+        public String toString() {
+            return "(" + Arrays.stream(children).map(FilterNode::toString).collect(Collectors.joining(" " + type.toString() + " ")) + ")" ;
+        }
     }
 
     public static FilterLiteral where(String field) {
