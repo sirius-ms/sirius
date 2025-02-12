@@ -21,11 +21,13 @@ package de.unijena.bioinf.sirius.plugins;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -42,6 +44,7 @@ import de.unijena.bioinf.sirius.PeakAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
+import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.LoggerFactory;
 
@@ -156,7 +159,11 @@ public class ElGordoPlugin extends SiriusPlugin  {
                 if (whiteset.getNeutralFormulas().contains(ano.getFormula()) || whiteset.getMeasuredFormulas().contains(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula()))) {
                     if (enforceElGordo) {
                         //enforce using only the ElGordo formula
-                        whiteset = whiteset.filterByNeutralFormulas(Collections.singleton(ano.getFormula()), input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts(), ElGordoPlugin.class).setFinalized(true); //todo ElementFilter: test
+                        whiteset = whiteset.filterByNeutralFormulas(Collections.singleton(ano.getFormula()), input.getAnnotationOrThrow(PossibleAdducts.class).getAdducts(), ElGordoPlugin.class);
+                        if (whiteset.isEmpty()) {
+                            whiteset = whiteset.add(Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class));
+                        }
+                        whiteset = whiteset.setFinalized(true);
                         //alternatively a similar behaviour could be established just generating a new whiteset, but this "forgets" previous provider classes
 //                        whiteset = Whiteset.ofNeutralizedFormulas(Arrays.asList(ano.getFormula()), ElGordoPlugin.class);
                     } else {
@@ -174,6 +181,10 @@ public class ElGordoPlugin extends SiriusPlugin  {
             if (input.getAnnotation(EnforceElGordoFormula.class, () -> EnforceElGordoFormula.newInstance(true)).value) {
                 input.setAnnotation(PossibleAdducts.class, new PossibleAdducts(ano.getIonType())); //should have no real influence on current pipeline, since the enfored formula also implicitely specifies the adduct
 //                input.getOrCreatePeakAnnotation(DecompositionList.class).set(input.getParentPeak(), DecompositionList.fromFormulas(Arrays.asList(ano.getIonType().neutralMoleculeToMeasuredNeutralMolecule(ano.getFormula())), ano.getIonType().getIonization())); //todo ElementFiler: not used in FPA. Info overriden in FPA.performDecomposition()
+            } else {
+                // still add the adduct to the input
+                input.setAnnotation(PossibleAdducts.class, PossibleAdducts.union(input.getAnnotation(PossibleAdducts.class, PossibleAdducts::empty), new PossibleAdducts(ano.getIonType())));
+
             }
 
             // pre-annotate spectrum
@@ -203,5 +214,4 @@ public class ElGordoPlugin extends SiriusPlugin  {
         }
 
     }
-
 }
