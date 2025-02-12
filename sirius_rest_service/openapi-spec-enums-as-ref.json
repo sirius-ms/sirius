@@ -2482,6 +2482,41 @@
         }
       }
     },
+    "/api/job-configs/get-command": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get a CLI command for the given job configuration.",
+        "description": "Get a CLI command for the given job configuration.",
+        "operationId": "getCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/databases": {
       "get": {
         "tags": [

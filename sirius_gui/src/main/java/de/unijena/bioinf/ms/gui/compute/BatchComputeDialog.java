@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
@@ -50,7 +49,6 @@ import io.sirius.ms.sdk.SiriusSDKErrorResponse;
 import io.sirius.ms.sdk.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
-import picocli.CommandLine;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -208,7 +206,9 @@ public class BatchComputeDialog extends JDialog {
 
                 showCommand = new JButton("Show Command");
                 showCommand.addActionListener(e -> {
-                    final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
+                    JobSubmission js = stripDefaultValues(makeJobSubmission());
+                    List<String> command = gui.applySiriusClient((c, pid) -> c.jobs().getCommand(js));
+                    final String commandString = String.join(" ", command);
                     if (warnNoMethodIsSelected()) return;
                     if (warnNoAdductSelected()) return;
                     new InfoDialog(gui.getMainFrame(), "Command", GuiUtils.formatToolTip(commandString), null) {
@@ -473,50 +473,20 @@ public class BatchComputeDialog extends JDialog {
         dispose();
     }
 
-    //todo nightsky: add endpoint to create command without submission to to NIghtsky API (dry run or try submission?) or create from submisstion in GUI.
-    @Deprecated
-    private List<String> makeCommand(final List<String> toolCommands) {
-        // create computation parameters
-        toolCommands.clear();
-        List<String> configCommand = new ArrayList<>();
-
-        configCommand.add("config");
-        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            toolCommands.add(SpectraSearchOptions.class.getAnnotation(CommandLine.Command.class).name());
-            toolCommands.add(formulaIDConfigPanel.content.toolCommand());
-            configCommand.addAll(formulaIDConfigPanel.asParameterList());
-        }
-
-        if (zodiacConfigs != null && zodiacConfigs.isToolSelected()) {
-            toolCommands.add(zodiacConfigs.content.toolCommand());
-            configCommand.addAll(zodiacConfigs.asParameterList());
-        }
-
-        //canopus prediction included. Must now run before structure database search
-        if (fingerprintAndCanopusConfigPanel != null && fingerprintAndCanopusConfigPanel.isToolSelected()) {
-            toolCommands.addAll(fingerprintAndCanopusConfigPanel.content.toolCommands());
-            configCommand.addAll(fingerprintAndCanopusConfigPanel.asParameterList());
-        }
-
-        if (csiSearchConfigs != null && csiSearchConfigs.isToolSelected()) {
-            toolCommands.add(csiSearchConfigs.content.toolCommand());
-            configCommand.addAll(csiSearchConfigs.asParameterList());
-        }
-
-        if (msNovelistConfigs != null && msNovelistConfigs.isToolSelected()) {
-            toolCommands.add(msNovelistConfigs.content.toolCommand());
-            configCommand.addAll(msNovelistConfigs.asParameterList());
-        }
-
-        List<String> command = new ArrayList<>();
-        configCommand.add("--RecomputeResults=" + recomputeBox.isSelected());
-
-        command.addAll(configCommand);
-        command.addAll(toolCommands);
-        command = command.stream().map(s -> s.replaceAll("\\s+", "")).collect(Collectors.toList());
-        return command;
+    /**
+     * Removes parameters with values equal to the default from the configMap of the passed JobSubmission
+     */
+    private JobSubmission stripDefaultValues(JobSubmission js) {
+        JobSubmission defaultPreset = allPresets.get(DEFAULT_PRESET_NAME).getJobSubmission();
+        Set<String> nonDefaultParameters = js.getConfigMap().entrySet().stream()
+                .filter(e -> !e.getValue().equals(defaultPreset.getConfigMap().get(e.getKey())))
+                .filter(e -> !(e.getKey().equals("AdductSettings.detectable")
+                        && adductsEqual(e.getValue(), defaultPreset.getConfigMap().get(e.getKey()))))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        js.getConfigMap().keySet().retainAll(nonDefaultParameters);
+        return js;
     }
-
 
     private JobSubmission makeJobSubmission() {
         if (presetFrozen) {
