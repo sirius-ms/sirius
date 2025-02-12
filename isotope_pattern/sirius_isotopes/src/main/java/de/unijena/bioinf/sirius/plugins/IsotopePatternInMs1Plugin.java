@@ -31,17 +31,20 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FGraph;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IntergraphMapping;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.SiriusPlugin;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.scoring.DecompositionScorer;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePatternAnalysis;
+import de.unijena.bioinf.sirius.PeakAnnotation;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.annotations.DecompositionList;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +53,11 @@ import java.util.stream.Collectors;
  */
 public class IsotopePatternInMs1Plugin extends SiriusPlugin {
 
+    private IsotopePatternAnalysis isotopePatternAnalysis;
+
+    public IsotopePatternInMs1Plugin(IsotopePatternAnalysis isotopePatternAnalysis) {
+        this.isotopePatternAnalysis = isotopePatternAnalysis;
+    }
 
     @Override
     public void initializePlugin(PluginInitializer initializer) {
@@ -89,6 +97,37 @@ public class IsotopePatternInMs1Plugin extends SiriusPlugin {
                 final PossibleAdducts adducts = input.getAnnotationOrThrow(PossibleAdducts.class);
                 whiteset = whiteset.filterByMeasuredFormulas(Arrays.stream(formulas).collect(Collectors.toSet()), adducts.getAdducts(), IsotopePatternInMs1Plugin.class);
                 input.setAnnotation(Whiteset.class, whiteset);
+            }
+        }
+    }
+
+    @Override
+    protected void beforePeakScoring(ProcessedInput input) {
+        super.beforePeakScoring(input);
+        if (input.getAnnotation(IsotopeSettings.class).map(IsotopeSettings::isScoring).orElse(false)) {
+            ExtractedIsotopePattern annotation = input.getAnnotation(ExtractedIsotopePattern.class, ExtractedIsotopePattern::none);
+            if (!annotation.hasPattern()) return;
+            Set<Decomposition> missing = new HashSet<>();
+            // check if there are formulas for which no isotope pattern was computed. Compute isotope pattern for them
+            final PeakAnnotation<DecompositionList> decompAno = input.getPeakAnnotationOrThrow(DecompositionList.class);
+            for (Decomposition decomp : decompAno.get(input.getParentPeak()).getDecompositions()) {
+                if (!annotation.getExplanations().containsKey(decomp.getCandidate())) {
+                    missing.add(decomp);
+                }
+            }
+            // compute isotope patterns for missing formulas
+            if (!missing.isEmpty()) {
+                ExtractedIsotopePattern redone = new ExtractedIsotopePattern(annotation.getPattern(), new HashMap<>(annotation.getExplanations()));
+                HashMap<PrecursorIonType, List<MolecularFormula>> byIonization = new HashMap<>();
+                for (Decomposition d : missing) {
+                    byIonization.computeIfAbsent(PrecursorIonType.getPrecursorIonType(d.getIon()), (x)->new ArrayList<>()).add(d.getCandidate());
+                }
+                for (Map.Entry<PrecursorIonType, List<MolecularFormula>> pair : byIonization.entrySet()) {
+                    for (IsotopePattern pat : isotopePatternAnalysis.scoreFormulas(annotation.getPattern(), pair.getValue(), input.getExperimentInformation(), pair.getKey())) {
+                        redone.getExplanations().put(pat.getCandidate(), pat);
+                    }
+                };
+                input.setAnnotation(ExtractedIsotopePattern.class, redone);
             }
         }
     }
