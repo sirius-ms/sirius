@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -58,11 +59,13 @@ public class FeatureAnnotations {
     /**
      * Confidence Score that represents the confidence whether the top hit is correct.
      */
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double confidenceExactMatch;
     /**
      * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
      */
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 

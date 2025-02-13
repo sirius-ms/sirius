@@ -65,6 +65,7 @@ import static io.sirius.ms.sdk.model.AlignedFeatureOptField.*;
  */
 public class InstanceBean implements SiriusPCS {
     private static final Logger log = LoggerFactory.getLogger(InstanceBean.class);
+    private static final ComputedSubtools NO_COMPUTATIONS = new ComputedSubtools().librarySearch(false).formulaSearch(false).zodiac(false).fingerprint(false).canopus(false).structureSearch(false).deNovoSearch(false);
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     private final String featureId;
     private volatile AlignedFeature sourceFeature;
@@ -518,8 +519,8 @@ public class InstanceBean implements SiriusPCS {
     public ComputedSubtools getComputedTools() {
         ComputedSubtools tools = getSourceFeature(COMPUTEDTOOLS).getComputedTools();
         if (tools == null) { //should not happen
-            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
-            return new ComputedSubtools();
+//            log.warn("Computed subtools information is null for feature {}.", getFeatureId());
+            return NO_COMPUTATIONS;
         }
         return tools;
     }

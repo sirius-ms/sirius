@@ -81,6 +81,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
 
     /**
      * points to an ion network
+     * NOTE: the field is actually called `networkId` as primary key. Unfortunately we cannot change this easily
      */
     protected Long adductNetworkId;
 

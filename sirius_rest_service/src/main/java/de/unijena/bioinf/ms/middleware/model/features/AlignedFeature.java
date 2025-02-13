@@ -29,11 +29,11 @@ import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
@@ -51,19 +51,23 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature implements TaggableLuceneDocumentProvider {
+public class AlignedFeature implements TaggableLuceneDocumentProvider, Taggable {
     @JsonIgnore
     @NotNull
     @Override
     public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
         return () -> new ArrayList<IndexableField>() {{
 
-            add(new KeywordField("alignedFeatureId", alignedFeatureId, Field.Store.YES));
+            add(new StringField("uuid", alignedFeatureId, Field.Store.NO)); // standard field name for uuid to identify document
+
+            add(new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES));
             if (compoundId != null)
-                add(new KeywordField("compoundId", compoundId, Field.Store.YES));
+                add(new StringField("compoundId", compoundId, Field.Store.YES));
             if (externalFeatureId != null)
-                add(new KeywordField("externalFeatureId", externalFeatureId, Field.Store.NO));
+                add(new StringField("externalFeatureId", externalFeatureId, Field.Store.NO));
             if (name != null && !name.isBlank())
                 add(new TextField("name", name, Field.Store.NO));
             add(new DoublePoint("ionMass", ionMass));
@@ -74,12 +78,12 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider {
                 add(new DoublePoint("rtEndSeconds", rtEndSeconds));
             if (rtApexSeconds != null)
                 add(new DoublePoint("rtApexSeconds", rtApexSeconds));
-            add(new KeywordField("hasMs1", String.valueOf(hasMs1), Field.Store.NO));
-            add(new KeywordField("hasMsMs", String.valueOf(hasMsMs), Field.Store.NO));
+            add(new StringField("hasMs1", String.valueOf(hasMs1), Field.Store.NO));
+            add(new StringField("hasMsMs", String.valueOf(hasMsMs), Field.Store.NO));
 
             //weired fields
             if (quality != null)
-                add(new KeywordField("quality", quality.name(), Field.Store.NO));
+                add(new StringField("quality", quality.name(), Field.Store.NO));
             if (detectedAdducts != null && !detectedAdducts.isEmpty())
                 detectedAdducts.forEach(adduct -> add(new KeywordField("detectedAdducts", adduct, Field.Store.NO)));
             else
@@ -96,7 +100,7 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider {
             //tags
             if (notNullOrEmpty(tags))
                 tags.values().forEach(tag ->
-                        add(projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO)));
+                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
 
         }}.iterator();
     }
@@ -106,54 +110,67 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider {
     public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
 
     // identifier
+    @IndexField(documentId = true)
     @NotNull
     protected String alignedFeatureId;
 
+    @IndexField(stored = true)
     protected String compoundId;
 
     // identifier source
+    @IndexField(stored = true, fullTextSearch = true, defaultSearchField = true)
     protected String name;
 
     /**
      * Externally provided FeatureId (e.g. by some preprocessing tool).
      * This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
      */
+    @IndexField(stored = true, defaultSearchField = true)
     protected String externalFeatureId;
 
     // additional attributes
+    @IndexField(stored = true)
     protected Double ionMass;
 
     /**
      * Ion mode (charge) this feature has been measured in.
      */
+    @IndexField(stored = true)
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected int charge;
 
     /**
      *  Adducts of this feature that have been detected during preprocessing.
      */
+    @IndexField(stored = true)
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected Set<String> detectedAdducts;
 
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double rtStartSeconds;
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double rtApexSeconds;
 
     /**
      * Quality of this feature.
      */
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected DataQuality quality;
     /**
      * If true, the feature has at lease one MS1 spectrum
      */
+    @IndexField(stored = true)
     protected boolean hasMs1;
     /**
      * If true, the feature has at lease one MS/MS spectrum
      */
+    @IndexField(stored = true)
     protected boolean hasMsMs;
 
     /**
@@ -170,6 +187,7 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider {
      *
      * Null if it was not requested und non-null otherwise.
      */
+    @IndexField
     @Schema(nullable = true)
     protected FeatureAnnotations topAnnotations;
 
@@ -201,5 +219,5 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider {
      * Key: tagName, value: tag
      */
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
 }
