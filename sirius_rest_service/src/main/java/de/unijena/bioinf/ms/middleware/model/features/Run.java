@@ -25,12 +25,13 @@ import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
 import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.KeywordField;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
@@ -45,27 +46,31 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Run implements TaggableLuceneDocumentProvider {
-
+public class Run implements TaggableLuceneDocumentProvider, Taggable {
+    @Deprecated
     @Override
     public @NotNull LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
         return () -> new ArrayList<IndexableField>() {{
-            add(new KeywordField("runId", runId, Field.Store.YES));
+            add(new StringField("uuid", runId, Field.Store.YES)); // standard field name for uuid to identify document
+
+            add(new StringField("runId", runId, Field.Store.YES));
             if (notNullOrBlank(name))
                 add(new TextField("name", name, Field.Store.YES));
             if (notNullOrBlank(source))
                 add(new TextField("source", source, Field.Store.YES));
             if (notNullOrBlank(ionization))
-                add(new KeywordField("ionization", ionization, Field.Store.NO));
+                add(new StringField("ionization", ionization, Field.Store.NO));
             if (notNullOrBlank(fragmentation))
-                add(new KeywordField("fragmentation", fragmentation, Field.Store.NO));
+                add(new StringField("fragmentation", fragmentation, Field.Store.NO));
             if (massAnalyzers != null && !massAnalyzers.isEmpty())
                 massAnalyzers.forEach(analyzer -> add(new KeywordField("massAnalyzers", analyzer, Field.Store.NO)));
 
             if (notNullOrEmpty(tags))
                 tags.values().forEach(tag ->
-                        add(projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO)));
+                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
 
         }}.iterator();
     }
@@ -76,28 +81,35 @@ public class Run implements TaggableLuceneDocumentProvider {
     /**
      * Identifier
      */
+    @IndexField(documentId = true)
     @NotNull
     protected String runId;
 
     /**
      * Informative, human-readable name of this run
      */
+    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true)
     protected String name;
 
     /**
      * Source location
      */
+    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true)
     protected String source;
 
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected String chromatography;
 
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected String ionization;
 
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected String fragmentation;
 
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected List<String> massAnalyzers;
 
@@ -105,6 +117,6 @@ public class Run implements TaggableLuceneDocumentProvider {
      * Key: tagName, value: tag
      */
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
 
 }

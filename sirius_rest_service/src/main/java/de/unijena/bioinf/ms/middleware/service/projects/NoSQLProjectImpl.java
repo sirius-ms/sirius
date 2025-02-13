@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -31,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -50,6 +52,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
 import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -121,7 +124,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
-    private final SearchService searchService;
+    public final SearchService searchService;
 
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
@@ -136,41 +139,42 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         System.out.println("TODO Prototype code Remove me!");
         if (searchService != null) {
             try {
+                //todo? Do we want to do indexing based on teh DB layer?
                 //todo fix sorting and paging -> merge lucene and page sorting
                 //todo fix wildcard search
                 //todo fix event actions so that new tags are added to features
                 //todo add events to update indexe when features/runs are changing.
                 //todo think whether we want store tags on the tagged object because we have lucene index..
-                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
-                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
+
+                //handle tag valuetype cache
+//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+//                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+//                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
 
 
-                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-                        alf -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
-                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
-
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.getSearchIndexWriter().removeDocument(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
-
-                //                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
-//                        comp -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiCompound(comp, EnumSet.of(Compound.OptField.tags), EnumSet.noneOf(AlignedFeature.OptField.class))));
-
-                //                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))));
-//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
-//                        run -> searchService.getSearchIndexWriter().addBean(projectId, convertToApiCompound(run, EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class))));
-
+                // handle index of alignedfeatures
+//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
+//                        alf -> searchService.addDocument(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
 //                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+//                        alf -> searchService.updateDocument(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
 //                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.getSearchIndexWriter().addBean());
+//                        alf -> searchService.removeDocument(projectId, String.valueOf(alf.getAlignedFeatureId())));
+
+                // handle index of runs
+//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.addDocument(projectId, convertToApiRun(run, EnumSet.of(Run.OptField.tags))));
+//                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.updateDocument(projectId, convertToApiRun(run, EnumSet.of(Run.OptField.tags))));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
+//                        run -> searchService.removeDocument(projectId, String.valueOf(run.getRunId())));
+
+                //handle index update of tags
+//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class,
+//                        tag -> searchService.addTagToDocument(projectId, String.valueOf(tag.getTaggedObjectId()), convertToApiTag(tag), (Class<? extends Taggable>) convertToApiObjectClass(tag.getTaggedObjectClassInstance())));
+//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class,
+//                        tag -> searchService.removeTagFromDocument(projectId, String.valueOf(tag.getTaggedObjectId()), tag.getTagName(), (Class<? extends Taggable>) convertToApiObjectClass(tag.getTaggedObjectClassInstance())));
+
 
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start();
@@ -179,18 +183,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 searchService.openOrCreateProjectIndex(this);
 
                 //load feature index
-                Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
+               /* Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
                 if (features.hasContent())
-                    searchService.getSearchIndexWriter().addBeans(projectId, features.getContent());
+                    searchService.addDocuments(projectId, features.getContent());
 
                 //load Run index
                 Page<Run> runs = findRuns(Pageable.unpaged(), Run.OptField.tags);
                 if (runs.hasContent())
-                    searchService.getSearchIndexWriter().addBeans(projectId,
-                            runs.getContent());
+                    searchService.addDocuments(projectId,
+                            runs.getContent());*/
 
                 //load compound index
                 //todo remuse features.
+                //todo we need to store analyzers and point configs.
 //                Page<Compound> compounds = findCompounds(Pageable.unpaged(), Compound.OptField.tags);
 //                if (compounds.hasContent())
 //                    searchService.getSearchIndexWriter().addBeans(projectId,
@@ -206,7 +211,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     //using private methods instead of references for easier refactoring or changes.
     // compiler will inline the method call since projectmanager is final.
-    private Database<?> storage() {
+    public Database<?> storage() {
         return projectSpaceManager.getProject().getStorage();
     }
 
@@ -1172,7 +1177,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @SneakyThrows
-    private Run convertToApiRun(LCMSRun run, EnumSet<Run.OptField> optFields) {
+    public Run convertToApiRun(LCMSRun run, EnumSet<Run.OptField> optFields) {
         Run.RunBuilder builder = Run.builder()
                 .runId(Long.toString(run.getRunId()))
                 .name(run.getName());
@@ -1192,7 +1197,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.tags.Tag tag) {
-        return Tag.builder().tagName(tag.getTagName()).value(tag.getValueType().getFormatter().toFormattedGeneric(tag.getValue())).build();
+        return Tag.builder().tagName(tag.getTagName()).value(tag.getValueFormatted()).build();
     }
 
     @SneakyThrows
@@ -1398,21 +1403,24 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                         Pageable pageable,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-        if (searchQuery == null || searchQuery.isBlank())
-            return findCompounds(pageable, optFields, optFeatureFields);
+//        if (searchQuery == null || searchQuery.isBlank())
+//            return findCompounds(pageable, optFields, optFeatureFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
-        Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, Compound.class, "compoundId", "name");
-        if (ids.isEmpty())
-            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+        Page<Compound> compounds = searchService.search(projectId, searchQuery, pageable, Compound.class);
+        //todo LOAD Aligned features search from index and later from DB
 
-        //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
-        List<Compound> runs = storage().findStr(Filter.where("compoundId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
-                .map(r -> convertToApiCompound(r, optFields, optFeatureFields)).toList();
 
-        return new PageImpl<>(runs, pageable, ids.getTotalElements());
+        if (!EnumSet.of(Compound.OptField.tags).containsAll(optFields)) {
+            //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
+            List<Compound> cps = storage().findStr(Filter.where("compoundId").in(compounds.stream().map(Compound::getCompoundId).map(Long::parseLong).toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+                    .map(r -> convertToApiCompound(r, optFields, optFeatureFields)).toList();
+            compounds = new PageImpl<>(cps, compounds.getPageable(), compounds.getTotalElements());
+        }
+
+        return compounds;
     }
 
     @SneakyThrows
@@ -1439,7 +1447,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
-            return Page.empty();
+            return Page.empty(pageable);
         return findCompounds(tagGroup.get().getLuceneQuery(), pageable, optFields, optFeatureFields);
     }
 
@@ -1526,46 +1534,153 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        if (searchQuery == null || searchQuery.isBlank())
-            return findAlignedFeatures(pageable, optFields);
+//        if (searchQuery == null || searchQuery.isBlank())
+//            return findAlignedFeatures(pageable, optFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
+
         StopWatch w = new StopWatch();
         w.start();
-        Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, AlignedFeature.class, "alignedFeatureId", "name");
-        if (ids.isEmpty())
-            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+        Page<AlignedFeature> features = searchService.search(projectId, searchQuery, pageable, AlignedFeature.class);
+//        Page<String> ids = searchService.searchIds(projectId, searchQuery, pageable, AlignedFeature.class);
         w.stop();
         System.out.println("Lucene search took: " + w);
         w.reset();
         w.start();
+        return features;
+//        if (ids.isEmpty())
+//            return Page.empty(pageable);
 
+//        if (!EnumSet.of(AlignedFeature.OptField.none, AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence).containsAll(optFields)) {
         //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
-        List<AlignedFeature> features = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), AlignedFeatures.class)
-                .map(f -> convertToApiFeature(f, optFields)).toList();
+        //todo ONLY LOAD ADDITIONAL DATA AND NOT FEATURES AGAIN!
+//        List<AlignedFeature> alfs = ids.stream().flatMap( id -> {
+//            try {
+//                return storage().getByPrimaryKey(Long.valueOf(id), AlignedFeatures.class).stream();
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }).map(f -> convertToApiFeature(f, optFields)).toList();
 
-        System.out.println("Extracting data from nitrite took: " + w);
 
-        return new PageImpl<>(features, pageable, ids.getTotalElements());
+
+//        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), AlignedFeatures.class)
+//                .map(f -> convertToApiFeature(f, optFields)).toList();
+//        System.out.println("Extracting data from nitrite took: " + w);
+//            features = new PageImpl<>(alfs, pageable, features.getTotalElements());
+//        return new PageImpl<>(alfs, pageable, ids.getTotalElements());
+//        }
+
+
+//        return features;
     }
 
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        List<AlignedFeature> features = findPageStr(AlignedFeatures.class, pageable, this::sortFeature)
-                .map(alf -> convertToApiFeature(alf, optFields)).toList();
+        StopWatch w = new StopWatch();
+        w.start();
 
-        long total = storage().countAll(AlignedFeatures.class);
+       /* List<AlignedFeatures> dbfeatures = findPageStr(AlignedFeatures.class, pageable, this::sortFeature).toList();
+        System.out.println("Loading features took: " + w);
+        w.stop();
+        w.reset();
+        w.start();
+        List<AlignedFeature> features = dbfeatures.stream()
+                .parallel()
+                .map(alf -> convertToApiFeature(alf, optFields)).toList();
+        System.out.println("Annotate features took: " + w);
+        w.stop();
+        w.reset();
+        w.start();*/
+
+
+
+        List<AlignedFeatures> dbalf = pageable.isUnpaged()
+                ? storage().findAllStr(AlignedFeatures.class).toList()
+                : storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize()).toList();
+
+        System.out.println("Loading features took: " + w);
+        w.stop();
+        w.reset();
+        w.start();
+
+        if (dbalf.isEmpty())
+            return Page.empty(pageable);
+
+        Long[] ids = dbalf.stream()
+                .parallel()
+                .map(AlignedFeatures::getAlignedFeatureId).toArray(Long[]::new);
+
+        System.out.println("Extract Ids took: " + w);
+        w.stop();
+        w.reset();
+        w.start();
+
+
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
+//                        .parallel()
+                .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
+                        , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
+                )));
+
+
+//        System.out.println("Extract Computed tools took: " + w);
+//        w.stop();
+//        w.reset();
+//        w.start();
+
+
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = SiriusJobs.runInBackground(() ->
+                storage().findStr(Filter.where("alignedFeatureId").in(ids), CsiStructureSearchResult.class)
+//                        .parallel()
+                        .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
+                                , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
+                        )));
+
+//        System.out.println("Extract confidence took: " + w);
+//        w.stop();
+//        w.reset();
+//        w.start();
+        @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob.getResult();
+        @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob.getResult();
+
+
+
+        List<AlignedFeature> features = dbalf.stream()
+                .parallel()
+                .map(alf -> {
+                    AlignedFeature apiFeture = convertToApiFeature(alf, EnumSet.noneOf(AlignedFeature.OptField.class));
+                    apiFeture.setComputedTools(computed.get(alf.getAlignedFeatureId()));
+                    CsiStructureSearchResult searchResult = csires.get(alf.getAlignedFeatureId());
+                    if (searchResult != null) {
+                        apiFeture.setTopAnnotations(FeatureAnnotations.builder()
+                                .confidenceExactMatch(searchResult.getConfidenceExact())
+                                .confidenceApproxMatch(searchResult.getConfidenceApprox())
+                                .build());
+                    }
+                    return apiFeture;
+                }).toList();
+
+
+//        System.out.println("Convert to API features took: " + w);
+//        w.stop();
+//        w.reset();
+//        w.start();
+
+        System.out.println("Extract Annotatins took: " + w);
+        w.stop();
+        w.reset();
+        w.start();
+
+        long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
+
+        System.out.println("Counting features took: " + w);
 
         return new PageImpl<>(features, pageable, total);
     }
 
-    @SneakyThrows
-    @Override
-    public List<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
-        return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
-    }
 
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
@@ -1589,7 +1704,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
-            return Page.empty();
+            return Page.empty(pageable);
         return findAlignedFeatures(tagGroup.get().getLuceneQuery(), pageable, optFields);
     }
 
@@ -1613,30 +1728,55 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
     }
 
+    @SneakyThrows
+    @Override
+    public List<de.unijena.bioinf.ms.middleware.model.features.Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId) {
+        return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
+    }
+
 
     @SneakyThrows
     @Override
     public Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+//        if (searchQuery == null || searchQuery.isBlank())
+//            return findRuns(pageable, optFields);
+
+        if (searchService == null)
+            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
+
+        // runs are fully indexed, we do not have to load anything from db.
+        return searchService.search(projectId, searchQuery, pageable, Run.class);
+    }
+
+    //todo remove TESTING ONLY
+    @SneakyThrows
+    @Override
+    @Deprecated // FOR TESTING ONLY
+    public Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
         if (searchQuery == null || searchQuery.isBlank())
             return findRuns(pageable, optFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
-        Page<String> ids = searchService.getSearchIndexReader().search(projectId, searchQuery, pageable, Run.class, "runId", "name");
-        if (ids.isEmpty())
-            return new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+        // runs are fully indexed, we do not have to load anything from db.
+        Page<String> ids = searchService.searchIds(projectId, searchQuery, pageable, Run.class);
 
-        //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
-        List<Run> runs = storage().findStr(Filter.where("runId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), LCMSRun.class)
-                .map(r -> convertToApiRun(r, optFields)).toList();
+        List<Run> runs = storage().findStr(Filter
+                                .where("runId").
+                                in(ids.stream().map(Long::valueOf).sorted().toArray(Long[]::new))
+                        , LCMSRun.class)
+                .map(r -> convertToApiRun(r, optFields))
+                .toList();
 
         return new PageImpl<>(runs, pageable, ids.getTotalElements());
     }
 
+
     @SneakyThrows
     @Override
     public Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        // todo use pageable helper
         long total;
         List<Run> objects;
         if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
@@ -1655,7 +1795,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<Run> findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
-            return Page.empty();
+            return Page.empty(pageable);
         return findRuns(tagGroup.get().getLuceneQuery(), pageable, optFields);
     }
 
@@ -1710,7 +1850,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
 
         if (objectIds.length == 0)
-            return Page.empty();
+            return Page.empty(pageable);
 
         Filter objectFilter = Filter.where(fieldName.get()).in(objectIds);
         return (Page<T>) findRunsByFilter(pageable, objectFilter, (EnumSet<Run.OptField>) optFields);
@@ -1729,47 +1869,68 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         throw new IllegalStateException("Unknown taggable: " + taggable);
     }
 
+    private Class<?> convertToApiObjectClass(Class<?> taggable) {
+        if (taggable.equals(LCMSRun.class))
+            return Run.class;
+
+        if (taggable.equals(de.unijena.bioinf.ms.persistence.model.core.Compound.class))
+            return Compound.class;
+
+        if (taggable.equals(AlignedFeatures.class))
+            return AlignedFeature.class;
+
+        throw new IllegalStateException("Unknown taggable: " + taggable);
+    }
+
     @Override
     public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
+        return addTagsToObjects(target, List.of(objectId), tags);
+    }
+
+    @Override
+    public List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags) {
         try {
             Class<?> taggedObjectClass = convertToProjectObjectClass(target);
-
-            long objId = Long.parseLong(objectId);
-            if (!storage().containsPrimaryKey(objId, taggedObjectClass))
-                throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
 
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
-            Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
+            for (String objectId : objectIds) {
+                long objId = Long.parseLong(objectId);
+                if (!storage().containsPrimaryKey(objId, taggedObjectClass))
+                    throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
 
-            for (Tag tag : tags) {
-                de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = tagDefByName.computeIfAbsent(tag.getTagName(), tagName -> project().findTagDefinitionByName(tagName).orElse(null));
+                Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
 
-                if (tagDef == null)
-                    throw new ResponseStatusException(NOT_FOUND, "There is no TagDefinition '" + tag.getTagName() + "' in project " + projectId + ".");
+                for (Tag tag : tags) {
+                    de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = tagDefByName.computeIfAbsent(tag.getTagName(), tagName -> project().findTagDefinitionByName(tagName).orElse(null));
 
-                try {
-                    Filter.FilterClause filter = Filter.and(
-                            Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
-                            Filter.where("taggedObjectId").eq(objId),
-                            Filter.where("tagName").eq(tag.getTagName())
-                    );
+                    if (tagDef == null)
+                        throw new ResponseStatusException(NOT_FOUND, "There is no TagDefinition '" + tag.getTagName() + "' in project " + projectId + ".");
 
-                    storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
-                            .findFirst().ifPresentOrElse(existing ->
-                                            upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
-                                    () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedObjectClass, objId)));
+                    try {
+                        Filter.FilterClause filter = Filter.and(
+                                Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
+                                Filter.where("taggedObjectId").eq(objId),
+                                Filter.where("tagName").eq(tag.getTagName())
+                        );
 
-                } catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + tag.getValue() + " for TagDefinition " + tag.getTagName() + ".");
-                } catch (Exception e) {
-                    throw new ResponseStatusException(BAD_REQUEST, "Error when parsing tag. Wrong tag type '" + tag.getClass() + " for TagDefinition " + tag.getTagName() + ".");
+                        storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
+                                .findFirst().ifPresentOrElse(existing ->
+                                                upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
+                                        () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedObjectClass, objId)));
+
+                    } catch (IllegalArgumentException e) {
+                        throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + tag.getValue() + " for TagDefinition " + tag.getTagName() + ".");
+                    } catch (Exception e) {
+                        throw new ResponseStatusException(BAD_REQUEST, "Error when parsing tag. Wrong tag type '" + tag.getClass() + " for TagDefinition " + tag.getTagName() + ".");
+                    }
                 }
             }
-
             storage().upsertAll(upsertTags);
             storage().insertAll(insertTags);
+            //todo optimize performance / find better solution
+            searchService.addTagsToDocuments(projectId, new ArrayList<>(objectIds), tags, (Class<? extends Taggable>) target);
 
             return Stream.concat(upsertTags.stream(), insertTags.stream()).map(tag -> convertToApiTag(tag)).toList();
         } catch (IOException e) {
@@ -1786,6 +1947,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 Filter.where("taggedObjectId").eq(Long.parseLong(taggedObjectId)),
                 Filter.where("tagName").in(tagNames.toArray(String[]::new))
         ), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
+
+        //todo optimize performance / find better solution
+        searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
     }
 
     @SneakyThrows
@@ -1830,6 +1994,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .filter(tagDef -> !existingNames.contains(tagDef.getTagName()))
                 .map(tagDef -> convertToProjectDefinition(tagDef, editable)).toList();
         storage().insertAll(filtered);
+
+        //todo optimize find fifferent solution
+        tagDefinitions.forEach(df -> searchService.addTagValueType(projectId, df.getTagName(), df.getValueType()));
+
+
         return filtered.stream().map(this::convertToApiDefinition).toList();
     }
 
@@ -1846,6 +2015,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         storage().removeAll(Filter.where("tagName").eq(tagName), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class);
         storage().remove(tagDef);
+        //todo optimize find fifferent solution
+
+        searchService.removeTagValueType(projectId, tagName);
     }
 
     @SuppressWarnings("unchecked")

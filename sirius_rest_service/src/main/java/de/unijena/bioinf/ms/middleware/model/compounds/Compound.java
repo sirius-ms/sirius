@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeN
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.apache.lucene.document.*;
@@ -45,13 +46,15 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Compound implements TaggableLuceneDocumentProvider {
+public class Compound implements TaggableLuceneDocumentProvider, Taggable {
     @JsonIgnore
     @NotNull
     @Override
     public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
         return () -> new ArrayList<IndexableField>() {{
-            add(new KeywordField("compoundId", compoundId, Field.Store.YES));
+            add(new StringField("uuid", compoundId, Field.Store.NO)); // standard field name for uuid to identify document
+
+            add(new StringField("compoundId", compoundId, Field.Store.YES));
             if (name != null && !name.isBlank())
                 add(new TextField("name", name, Field.Store.NO));
             if (neutralMass != null)
@@ -63,7 +66,7 @@ public class Compound implements TaggableLuceneDocumentProvider {
             //tags
             if (notNullOrEmpty(tags))
                 tags.values().forEach(tag ->
-                        add(projectSearchContext.getIndexableTagField(tag.getTagName(), tag.getValue(), Field.Store.NO)));
+                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
 
         }}.iterator();
     }
@@ -131,5 +134,5 @@ public class Compound implements TaggableLuceneDocumentProvider {
      * Key: tagName, value: tag
      */
     @Schema(nullable = true)
-    protected Map<String, ? extends Tag> tags;
+    protected Map<String, Tag> tags;
 }

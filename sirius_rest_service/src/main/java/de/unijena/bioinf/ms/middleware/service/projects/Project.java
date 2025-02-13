@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -90,7 +91,15 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
+    default Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull AlignedFeature.OptField... optFields){
+        return findAlignedFeatures(searchQuery, pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
+    }
+
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {
+        return findAlignedFeatures(pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
+    }
 
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
 
@@ -100,10 +109,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
-
-    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {
-        return findAlignedFeatures(pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
-    }
 
     AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
@@ -118,6 +123,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<Run>  findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
+    @SneakyThrows
+    Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
     Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
     default Page<Run> findRuns(Pageable pageable, Run.OptField... optFields) {
@@ -131,6 +139,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
     }
 
     List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
+
+    List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags);
 
     void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
 
