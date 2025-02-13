@@ -287,6 +287,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
+    public List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames) {
         throw new UnsupportedOperationException();
     }
@@ -388,6 +393,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public Page<Run> findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
         throw new UnsupportedOperationException();
     }
 
