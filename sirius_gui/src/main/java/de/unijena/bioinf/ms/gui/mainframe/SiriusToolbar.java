@@ -23,8 +23,13 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourElement;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import lombok.Getter;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -65,7 +70,7 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 
         //compute
-        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(gui, true));
+        computeAllB = new ToolbarButtonWithElement(SiriusActions.COMPUTE_ALL.getInstance(gui, true), SoftwareTourInfoStore.ComputeAllButton);
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
@@ -174,5 +179,39 @@ public class SiriusToolbar extends JToolBar {
 
     public ToolbarButton getAbout() {
         return about;
+    }
+
+
+    @Getter
+    protected static class ToolbarButtonWithElement extends ToolbarButton implements SoftwareTourElement {
+
+        private final SoftwareTourInfo.LocationHorizontal locationHorizontal;
+        private final SoftwareTourInfo.LocationVertical locationVertical;
+        private final String tutorialDescription;
+        private final int orderImportance;
+        private final String scope;
+
+        private Border originalBorder; // Store original border
+
+        public ToolbarButtonWithElement(Action action, SoftwareTourInfo info) {
+            super(action);
+            this.tutorialDescription = info.getTutorialDescription();
+            this.locationHorizontal = info.getLocationHorizontal();
+            this.locationVertical = info.getLocationVertical();
+            this.orderImportance = info.getOrderImportance();
+            this.scope = info.getScope();
+        }
+
+        public void highlightComponent(Color color, int thickness) {
+            if (originalBorder == null) {
+                originalBorder = getBorder(); // Save original border
+            }
+            setBorder(BorderFactory.createLineBorder(color, thickness));
+        }
+
+        @Override
+        public void resetHighlight() {
+            if (originalBorder != null) setBorder(originalBorder);
+        }
     }
 }

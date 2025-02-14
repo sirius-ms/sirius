@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.LandingPage;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.SiriusCardLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
@@ -204,6 +205,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setLocationRelativeTo(null); //init mainframe
         setVisible(true);
         toFront();
+
+        Jobs.runEDTLater(() -> checkAndInitTutorial());
     }
 
     // region dragndrop
@@ -265,4 +268,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         }
     }
     //endregion
+
+    private void checkAndInitTutorial() {
+        SoftwareTourUtils.checkAndInitTutorial(this, "de.unijena.bioinf.sirius.ui.tutorial.mainFrame", gui.getProperties());
+    }
 }
