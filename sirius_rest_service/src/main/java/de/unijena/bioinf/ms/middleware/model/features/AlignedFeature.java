@@ -54,63 +54,12 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AlignedFeature implements TaggableLuceneDocumentProvider, Taggable {
-    @JsonIgnore
-    @NotNull
-    @Override
-    public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
-        return () -> new ArrayList<IndexableField>() {{
-
-            add(new StringField("uuid", alignedFeatureId, Field.Store.NO)); // standard field name for uuid to identify document
-
-            add(new StringField("alignedFeatureId", alignedFeatureId, Field.Store.YES));
-            if (compoundId != null)
-                add(new StringField("compoundId", compoundId, Field.Store.YES));
-            if (externalFeatureId != null)
-                add(new StringField("externalFeatureId", externalFeatureId, Field.Store.NO));
-            if (name != null && !name.isBlank())
-                add(new TextField("name", name, Field.Store.NO));
-            add(new DoublePoint("ionMass", ionMass));
-            add(new IntPoint("charge", charge));
-            if (rtStartSeconds != null)
-                add(new DoublePoint("rtStartSeconds", rtStartSeconds));
-            if (rtEndSeconds != null)
-                add(new DoublePoint("rtEndSeconds", rtEndSeconds));
-            if (rtApexSeconds != null)
-                add(new DoublePoint("rtApexSeconds", rtApexSeconds));
-            add(new StringField("hasMs1", String.valueOf(hasMs1), Field.Store.NO));
-            add(new StringField("hasMsMs", String.valueOf(hasMsMs), Field.Store.NO));
-
-            //weired fields
-            if (quality != null)
-                add(new StringField("quality", quality.name(), Field.Store.NO));
-            if (detectedAdducts != null && !detectedAdducts.isEmpty())
-                detectedAdducts.forEach(adduct -> add(new KeywordField("detectedAdducts", adduct, Field.Store.NO)));
-            else
-                add(new KeywordField("detectedAdducts", PrecursorIonType.unknown(charge).toString(), Field.Store.NO));
-
-            //top annotations info
-            if (topAnnotations != null){
-                if (topAnnotations.getConfidenceExactMatch() != null)
-                    add(new DoublePoint("topAnnotations.confidenceExactMatch", topAnnotations.getConfidenceExactMatch()));
-                if (topAnnotations.getConfidenceApproxMatch() != null)
-                    add(new DoublePoint("topAnnotations.confidenceApproxMatch", topAnnotations.getConfidenceApproxMatch()));
-            }
-
-            //tags
-            if (notNullOrEmpty(tags))
-                tags.values().forEach(tag ->
-                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
-
-        }}.iterator();
-    }
-
-
+public class AlignedFeature implements Taggable {
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
 
     // identifier
-    @IndexField(documentId = true)
+    @IndexField(documentId = true, sortable = true)
     @NotNull
     protected String alignedFeatureId;
 
@@ -118,7 +67,7 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider, Taggable 
     protected String compoundId;
 
     // identifier source
-    @IndexField(stored = true, fullTextSearch = true, defaultSearchField = true)
+    @IndexField(stored = true, fullTextSearch = true, defaultSearchField = true, sortable = true)
     protected String name;
 
     /**
@@ -129,7 +78,7 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider, Taggable 
     protected String externalFeatureId;
 
     // additional attributes
-    @IndexField(stored = true)
+    @IndexField(stored = true, sortable = true)
     protected Double ionMass;
 
     /**
@@ -152,14 +101,14 @@ public class AlignedFeature implements TaggableLuceneDocumentProvider, Taggable 
     @IndexField(stored = true)
     @Schema(nullable = true)
     protected Double rtEndSeconds;
-    @IndexField(stored = true)
+    @IndexField(stored = true, sortable = true)
     @Schema(nullable = true)
     protected Double rtApexSeconds;
 
     /**
      * Quality of this feature.
      */
-    @IndexField(stored = true)
+    @IndexField(stored = true, sortable = true)
     @Schema(nullable = true)
     protected DataQuality quality;
     /**

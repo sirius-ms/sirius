@@ -15,6 +15,7 @@ public @interface IndexField {
 
     /**
      * Whether the field shall be stored. (If false then the field will be indexed but not retrievable in search results.)
+     * Lucene: Adds additional StoredValueField to lucene index.
      */
     boolean stored() default false;
 
@@ -22,6 +23,12 @@ public @interface IndexField {
      * Whether a String field shall be indexed as StringField (false) or TextField (true).
      */
     boolean fullTextSearch() default false;
+
+    /**
+     * Whether a field shall be sortable.
+     * Lucene: Adds additional doc value field to lucene index.
+     */
+    boolean sortable() default false;
 
     /**
      * Whether a field shall be used as fallback search field for queries that do not specify a field to search in. Simple fulltext search.

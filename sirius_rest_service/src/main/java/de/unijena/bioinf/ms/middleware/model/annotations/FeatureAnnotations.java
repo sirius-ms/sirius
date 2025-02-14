@@ -59,13 +59,13 @@ public class FeatureAnnotations {
     /**
      * Confidence Score that represents the confidence whether the top hit is correct.
      */
-    @IndexField(stored = true)
+    @IndexField(stored = true, sortable = true)
     @Schema(nullable = true)
     protected Double confidenceExactMatch;
     /**
      * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
      */
-    @IndexField(stored = true)
+    @IndexField(stored = true, sortable = true)
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 

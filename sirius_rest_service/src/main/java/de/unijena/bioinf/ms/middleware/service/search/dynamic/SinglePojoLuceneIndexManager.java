@@ -6,6 +6,7 @@ import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -44,6 +46,8 @@ import java.util.stream.Collectors;
 
 import static org.apache.lucene.document.Field.Store.NO;
 import static org.apache.lucene.document.Field.Store.YES;
+import static org.apache.lucene.util.NumericUtils.doubleToSortableLong;
+import static org.apache.lucene.util.NumericUtils.floatToSortableInt;
 
 /**
  * A helper class that manages one Lucene index (i.e. one Directory, IndexWriter, and searcher)
@@ -54,11 +58,11 @@ import static org.apache.lucene.document.Field.Store.YES;
  *   <li>Indexing nested objects by scanning their @IndexField–annotated fields and prefixing the field name.</li>
  * </ul>
  */
+@Slf4j
 class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final Directory directory;
     private final IndexWriter writer;
     private final SearcherManager searcherManager;
-
 
     private final Class<T> pojoClass;
     private final String pojoIdField;
@@ -68,6 +72,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final Analyzer baseAnalyzer = new StandardAnalyzer();
     private final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
     private final Map<String, PointsConfig> pointsConfigMap = new HashMap<>();
+    private final Map<String, SortField.Type> sortTypes = new HashMap<>();
     private final PerFieldAnalyzerWrapper dynamicAnalyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
 
     // StandardQueryParser using the dynamic analyzer.
@@ -147,7 +152,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             int numdocs = searcher.getIndexReader().numDocs();
             int maxdocs = searcher.getIndexReader().maxDoc();
 
-            System.out.println("NUmber of docs im index: " + numdocs + "/" + maxdocs);
+            System.out.println("Number of docs im index: " + numdocs + "/" + maxdocs);
             return numdocs;
         } finally {
             searcherManager.release(searcher);
@@ -222,11 +227,11 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     public synchronized void deleteDocument(@NotNull T pojoToRemove) {
-        deleteDocumentById(getIdValue(pojoToRemove));
+        deleteDocumentById(getPojoId(pojoToRemove));
     }
 
     public synchronized void deleteDocuments(@NotNull Collection<T> pojosToRemove) {
-        deleteDocumentsById(pojosToRemove.stream().map(this::getIdValue).toList());
+        deleteDocumentsById(pojosToRemove.stream().map(this::getPojoId).toList());
     }
 
     @SneakyThrows
@@ -365,12 +370,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             if (numDocs <= 0)
                 return Page.empty(pageable);
 
+            org.apache.lucene.search.Sort sort = convertToLuceneSort(pageable);
             int numHits = pageable.isUnpaged() ? numDocs : Math.min(numDocs, (int) (pageable.getOffset() + pageable.getPageSize()));
-            //todo add search after mechanism for better
+            //todo add search after mechanism for better deep pagination
 
             StopWatch stopWatch = new StopWatch();
             stopWatch.start();
-            TopDocs topDocs = searcher.search(query, numHits);
+            TopDocs topDocs = sort != null ? searcher.search(query, numHits, sort) : searcher.search(query, numHits);
             System.out.println("LUCENE: REAL SEARCHING with " + numHits + " took: " + stopWatch);
             stopWatch.stop();
             stopWatch.reset();
@@ -468,20 +474,19 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         updateDocuments(modifiedPojos);
     }
 
+    @SneakyThrows
+    private Object getPojoId(T pojo) {
+        Field f = pojo.getClass().getField(pojoIdField);
+        f.setAccessible(true);
+        return f.get(pojo);
+    }
+
     /**
      * Returns true if any field annotated with @IndexField in the bean class is not stored.
      */
     public boolean hasNonStoredFields() {
         return nonStoredFields;
     }
-
-    @SneakyThrows
-    private Object getIdValue(T pojo) {
-        Field f = pojo.getClass().getField(pojoIdField);
-        f.setAccessible(true);
-        return f.get(pojo);
-    }
-
 
     /**
      * Converts a bean into a Lucene Document.
@@ -502,7 +507,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                     Object value = field.get(pojo);
                     if (value == null)
                         continue;
-                    List<IndexableField> luceneFields = createAnnotationFields(fieldName, value, indexField.stored() || indexField.documentId(), indexField.fullTextSearch());
+                    List<IndexableField> luceneFields = createAnnotationFields(fieldName, value, indexField.stored() || indexField.documentId(), indexField.fullTextSearch(), indexField.sortable());
                     luceneFields.forEach(doc::add);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
@@ -521,226 +526,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             }
         }
         return doc;
-    }
-
-    public void close() throws IOException {
-        writer.close();
-        searcherManager.close();
-        directory.close();
-    }
-
-
-    /**
-     * Helper: returns a PointsConfig for a given ValueType.
-     */
-    private static PointsConfig getPointsConfigForValueType(ValueType valueType) {
-        return switch (valueType) {
-            case INTEGER -> new PointsConfig(DecimalFormat.getInstance(), Integer.class);
-
-            case REAL -> new PointsConfig(DecimalFormat.getInstance(), Double.class);
-
-            case DATE -> new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
-
-            case TIME -> new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Integer.class);
-
-            default -> null;
-        };
-    }
-
-    private void detectAnalyzersAndPointConfigs() {
-        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, fieldAnalyzers, defaultSearchFields);
-    }
-
-    public static void detectAnalyzersAndPointConfigs(
-            @NotNull final String fieldPrefix,
-            @NotNull final Class<?> pojoClass,
-            @NotNull final Map<String, PointsConfig> pointsConfigMap,
-            @NotNull final Map<String, Analyzer> analyzerMap,
-            List<CharSequence> defaultSearchFields) {
-        for (Field field : pojoClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(IndexField.class)) {
-                field.setAccessible(true);
-                IndexField indexField = field.getAnnotation(IndexField.class);
-                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
-                // Handle get element type and take care about collections/arrays.
-                Class<?> elementType = isCollection(field.getType()) ? getCollectionElementType(field) : field.getType();
-
-                if (!isSimpleType(elementType)) {
-                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields);
-                } else {
-                    PointsConfig pointsConfig = getPointsConfigForType(elementType);
-                    if (pointsConfig != null)
-                        pointsConfigMap.put(fieldName, pointsConfig);
-                    else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
-                        analyzerMap.put(fieldName, new StandardAnalyzer());
-                    else // this covers the boolean values as well
-                        analyzerMap.put(fieldName, new KeywordAnalyzer());
-
-                    if (indexField.defaultSearchField())
-                        defaultSearchFields.add(fieldName);
-                }
-            }
-        }
-    }
-
-
-    /**
-     * Creates one or more Lucene fields for a given bean field value.
-     * This method has been extended to support:
-     * <ul>
-     *   <li>Collections/arrays: each element is processed individually.</li>
-     *   <li>Enums: converted to their name.</li>
-     *   <li>Nested objects: its own @IndexField–annotated fields are indexed using a qualified name.</li>
-     * </ul>
-     */
-    private static List<IndexableField> createAnnotationFields(@NotNull String fieldName, @Nullable Object value, boolean store, boolean fulltext) {
-        List<IndexableField> fields = new ArrayList<>();
-        org.apache.lucene.document.Field.Store storeOption = store ? YES : NO;
-        if (value == null)
-            return fields;
-        // Handle collections.
-        if (value instanceof Collection<?> coll) {
-            for (Object element : coll) {
-                fields.addAll(createAnnotationFields(fieldName, element, store, fulltext));
-            }
-            return fields;
-        }
-        // Handle arrays.
-        if (value.getClass().isArray()) {
-            int len = Array.getLength(value);
-            for (int i = 0; i < len; i++) {
-                Object element = Array.get(value, i);
-                fields.addAll(createAnnotationFields(fieldName, element, store, fulltext));
-            }
-            return fields;
-        }
-        // Handle enums.
-        if (value.getClass().isEnum()) {
-            String enumVal = ((Enum<?>) value).name();
-            fields.add(new StringField(fieldName, enumVal, storeOption));
-            return fields;
-        }
-        // Handle nested objects (if not a simple type).
-        if (!isSimpleType(value.getClass())) {
-            boolean hasNestedIndexFields = false;
-            for (Field nested : value.getClass().getDeclaredFields()) {
-                if (nested.isAnnotationPresent(IndexField.class)) {
-                    hasNestedIndexFields = true;
-                    break;
-                }
-            }
-            if (hasNestedIndexFields) {
-                for (Field nested : value.getClass().getDeclaredFields()) {
-                    if (nested.isAnnotationPresent(IndexField.class)) {
-                        nested.setAccessible(true);
-                        IndexField nestedAnn = nested.getAnnotation(IndexField.class);
-                        String nestedFieldName = nestedAnn.name().isEmpty() ? nested.getName() : nestedAnn.name();
-                        String combinedName = fieldName + "." + nestedFieldName;
-                        Object nestedValue;
-                        try {
-                            nestedValue = nested.get(value);
-                        } catch (IllegalAccessException e) {
-                            throw new RuntimeException(e);
-                        }
-                        if (nestedValue != null) {
-                            fields.addAll(createAnnotationFields(combinedName, nestedValue, nestedAnn.stored() || nestedAnn.documentId(), nestedAnn.fullTextSearch()));
-                        }
-                    }
-                }
-                return fields;
-            }
-        }
-        // Otherwise, treat as a simple type.
-        switch (value) {
-            case String s -> {
-                if (fulltext)
-                    fields.add(new TextField(fieldName, s, storeOption));
-                else
-                    fields.add(new StringField(fieldName, s, storeOption));
-            }
-            case Integer i -> {
-                fields.add(new IntPoint(fieldName, i));
-                if (store)
-                    fields.add(new StoredField(fieldName, i));
-            }
-            case Long l -> {
-                fields.add(new LongPoint(fieldName, l));
-                if (store)
-                    fields.add(new StoredField(fieldName, l));
-            }
-            case Double d -> {
-                fields.add(new DoublePoint(fieldName, d));
-                if (store)
-                    fields.add(new StoredField(fieldName, d));
-            }
-            case Float f -> {
-                fields.add(new FloatPoint(fieldName, f));
-                if (store)
-                    fields.add(new StoredField(fieldName, f));
-            }
-            case Boolean b -> fields.add(new StringField(fieldName, String.valueOf(b), storeOption));
-            default -> {
-                // Fallback: use the object's toString().
-                String s = value.toString();
-                if (fulltext)
-                    fields.add(new TextField(fieldName, s, storeOption));
-                else
-                    fields.add(new StringField(fieldName, s, storeOption));
-            }
-        }
-        return fields;
-    }
-
-
-    private Tag convertToTag(IndexableField tagField) {
-        String tagName = tagField.name().substring(LuceneUtils.TAG_FIELD_PREFIX.length());
-        @NotNull ValueType valueType = projectContext.getTagValueType(tagName);
-        Object formattedValue = null;
-
-        switch (valueType) {
-            case BOOLEAN -> formattedValue = Boolean.valueOf(tagField.stringValue());
-            case INTEGER -> formattedValue = Integer.valueOf(tagField.stringValue());
-            case REAL -> formattedValue = tagField.numericValue().doubleValue();
-            case TEXT, DATE, TIME -> formattedValue = tagField.stringValue();
-        }
-
-        return Tag.builder().tagName(tagName).value(formattedValue).build();
-    }
-
-
-    /**
-     * Creates Lucene fields for a dynamic tag.
-     * Tags are always stored.
-     */
-    private static List<IndexableField> createTagFields(String tagName, Object formattedValue, ValueType valueType) {
-        final String fieldName = LuceneUtils.TAG_FIELD_PREFIX + tagName;
-        List<IndexableField> fields = new ArrayList<>();
-        ValueFormatter<?, ?> formatter = valueType.getFormatter();
-        Object value = formatter.fromFormattedGeneric(formattedValue);
-        // always stored
-        switch (valueType) {
-            case BOOLEAN -> fields.add(new StringField(fieldName, value.toString(), YES));
-            case INTEGER -> {
-                fields.add(new IntPoint(fieldName, (Integer) value));
-                fields.add(new StoredField(fieldName, (Integer) value));
-            }
-            case TIME -> {
-                fields.add(new IntPoint(fieldName, (Integer) value));
-                fields.add(new StoredField(fieldName, (String) formattedValue));
-            }
-            case REAL -> {
-                fields.add(new DoublePoint(fieldName, (Double) value));
-                fields.add(new StoredField(fieldName, (Double) value));
-
-            }
-            case TEXT -> fields.add(new TextField(fieldName, (String) value, YES));
-            case DATE -> {
-                fields.add(new LongPoint(fieldName, (Long) value));
-                fields.add(new StoredField(fieldName, (String) formattedValue));
-            }
-            default -> throw new IllegalArgumentException("Unsupported ValueType for tag: " + valueType);
-        }
-        return fields;
     }
 
     /**
@@ -831,6 +616,282 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void detectAnalyzersAndPointConfigs() {
+        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes);
+    }
+
+    private org.apache.lucene.search.Sort convertToLuceneSort(@NotNull Pageable pageable) {
+        return convertToLuceneSort(pageable, sortTypes);
+    }
+
+    public void close() throws IOException {
+        writer.close();
+        searcherManager.close();
+        directory.close();
+    }
+
+
+
+    /**
+     * Helper: returns a PointsConfig for a given ValueType.
+     */
+    public static PointsConfig getPointsConfigForValueType(ValueType valueType) {
+        return switch (valueType) {
+            case INTEGER -> new PointsConfig(DecimalFormat.getInstance(), Integer.class);
+
+            case REAL -> new PointsConfig(DecimalFormat.getInstance(), Double.class);
+
+            case DATE -> new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
+
+            case TIME -> new PointsConfig(new NumberDateFormat(new SimpleDateFormat("HH:mm:ss")), Integer.class);
+
+            default -> null;
+        };
+    }
+
+
+    /**
+     * Converts the Sort information from a Spring Data Pageable to a Lucene Sort.
+     *
+     * @param pageable the Spring Data Pageable that contains sort instructions
+     * @return a Lucene Sort object representing the same sort orders, or null if no sort is defined
+     */
+    public static org.apache.lucene.search.Sort convertToLuceneSort(@NotNull Pageable pageable, @NotNull Map<String, SortField.Type> fieldNameToSortType) {
+        Sort springSort = pageable.getSort();
+        if (springSort.isUnsorted())
+            return null; // No sort specified
+
+        List<SortField> sortFields = new ArrayList<>();
+        for (Sort.Order order : springSort) {
+            // Determine the Lucene field type.
+            SortField.Type fieldType = fieldNameToSortType.get(order.getProperty());
+            if (fieldType != null)
+                sortFields.add(new SortField(order.getProperty(), fieldType, order.isDescending()));
+            else
+                log.warn("Sort field {} is not supported or at least not registered as sortable field. Ignoring!", order.getProperty());
+        }
+
+        if (sortFields.isEmpty())
+            return null;
+
+        return new org.apache.lucene.search.Sort(sortFields.toArray(SortField[]::new));
+    }
+
+
+    public static void detectAnalyzersAndPointConfigs(
+            @NotNull final String fieldPrefix,
+            @NotNull final Class<?> pojoClass,
+            @NotNull final Map<String, PointsConfig> pointsConfigMap,
+            @NotNull final Map<String, Analyzer> analyzerMap,
+            @NotNull final List<CharSequence> defaultSearchFields,
+            @NotNull final Map<String, SortField.Type> sortTypes
+    ) {
+        for (Field field : pojoClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(IndexField.class)) {
+                field.setAccessible(true);
+                IndexField indexField = field.getAnnotation(IndexField.class);
+                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
+                // Handle get element type and take care about collections/arrays.
+                Class<?> elementType = isCollection(field.getType()) ? getCollectionElementType(field) : field.getType();
+
+                if (!isSimpleType(elementType)) {
+                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                } else {
+                    PointsConfig pointsConfig = getPointsConfigForType(elementType);
+                    if (pointsConfig != null)
+                        pointsConfigMap.put(fieldName, pointsConfig);
+                    else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
+                        analyzerMap.put(fieldName, new StandardAnalyzer());
+                    else // this covers the boolean values as well
+                        analyzerMap.put(fieldName, new KeywordAnalyzer());
+
+                    if (indexField.defaultSearchField())
+                        defaultSearchFields.add(fieldName);
+
+                    if (indexField.sortable()) {
+                        SortField.Type sortType = getSortTypeForType(elementType);
+                        if (sortType != null)
+                            sortTypes.put(fieldName, sortType);
+                    }
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Creates one or more Lucene fields for a given bean field value.
+     * This method has been extended to support:
+     * <ul>
+     *   <li>Collections/arrays: each element is processed individually.</li>
+     *   <li>Enums: converted to their name.</li>
+     *   <li>Nested objects: its own @IndexField–annotated fields are indexed using a qualified name.</li>
+     * </ul>
+     */
+    private static List<IndexableField> createAnnotationFields(@NotNull String fieldName, @Nullable Object value, boolean store, boolean fulltext, boolean sorted) {
+        return createAnnotationFields(fieldName, value, store, fulltext, sorted, false);
+    }
+
+    private static List<IndexableField> createAnnotationFields(@NotNull String fieldName, @Nullable Object value, boolean store, boolean fulltext, boolean sorted, boolean inCollection) {
+        List<IndexableField> fields = new ArrayList<>();
+        org.apache.lucene.document.Field.Store storeOption = store ? YES : NO;
+        if (value == null)
+            return fields;
+        // Handle collections.
+        if (value instanceof Collection<?> coll) {
+            for (Object element : coll) {
+                fields.addAll(createAnnotationFields(fieldName, element, store, fulltext, sorted, true));
+            }
+            return fields;
+        }
+        // Handle arrays.
+        if (value.getClass().isArray()) {
+            int len = Array.getLength(value);
+            for (int i = 0; i < len; i++) {
+                fields.addAll(createAnnotationFields(fieldName, Array.get(value, i), store, fulltext, sorted, true));
+            }
+            return fields;
+        }
+        // Handle enums.
+        if (value.getClass().isEnum()) {
+            String enumVal = ((Enum<?>) value).name();
+            fields.add(new StringField(fieldName, enumVal, storeOption));
+            if (sorted)
+                fields.add(new SortedDocValuesField(fieldName, new BytesRef(enumVal)));
+            return fields;
+        }
+        // Handle nested objects (if not a simple type).
+        if (!isSimpleType(value.getClass())) {
+            boolean hasNestedIndexFields = false;
+            for (Field nested : value.getClass().getDeclaredFields()) {
+                if (nested.isAnnotationPresent(IndexField.class)) {
+                    hasNestedIndexFields = true;
+                    break;
+                }
+            }
+            if (hasNestedIndexFields) {
+                for (Field nested : value.getClass().getDeclaredFields()) {
+                    if (nested.isAnnotationPresent(IndexField.class)) {
+                        nested.setAccessible(true);
+                        IndexField nestedAnn = nested.getAnnotation(IndexField.class);
+                        String nestedFieldName = nestedAnn.name().isEmpty() ? nested.getName() : nestedAnn.name();
+                        String combinedName = fieldName + "." + nestedFieldName;
+                        Object nestedValue;
+                        try {
+                            nestedValue = nested.get(value);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                        if (nestedValue != null) {
+                            fields.addAll(createAnnotationFields(combinedName, nestedValue, nestedAnn.stored() || nestedAnn.documentId(), nestedAnn.fullTextSearch(), nestedAnn.stored(), inCollection));
+                        }
+                    }
+                }
+                return fields;
+            }
+        }
+        // Otherwise, treat as a simple type.
+        switch (value) {
+            case Integer n -> {
+                fields.add(new IntPoint(fieldName, n));
+                if (store)
+                    fields.add(new StoredField(fieldName, n));
+                if (sorted)
+                    fields.add(inCollection ? new SortedNumericDocValuesField(fieldName, n) : new NumericDocValuesField(fieldName, n));
+            }
+            case Long n -> {
+                fields.add(new LongPoint(fieldName, n));
+                if (store)
+                    fields.add(new StoredField(fieldName, n));
+                if (sorted)
+                    fields.add(inCollection ? new SortedNumericDocValuesField(fieldName, n) : new NumericDocValuesField(fieldName, n));
+            }
+            case Double n -> {
+                fields.add(new DoublePoint(fieldName, n));
+                if (store)
+                    fields.add(new StoredField(fieldName, n));
+                if (sorted)
+                    fields.add(inCollection ? new SortedNumericDocValuesField(fieldName, doubleToSortableLong(n)) : new DoubleDocValuesField(fieldName, n));
+            }
+            case Float n -> {
+                fields.add(new FloatPoint(fieldName, n));
+                if (store)
+                    fields.add(new StoredField(fieldName, n));
+                if (sorted)
+                    fields.add(inCollection ? new SortedNumericDocValuesField(fieldName, floatToSortableInt(n)) : new FloatDocValuesField(fieldName, n));
+            }
+            case Boolean b -> {
+                String s = String.valueOf(b);
+                fields.add(new StringField(fieldName, s, storeOption));
+                if (sorted)
+                    fields.add(new SortedDocValuesField(fieldName, new BytesRef(s)));
+            }
+            default -> {
+                // Fallback: use the object's toString() (also covers String!).
+                String s = value.toString();
+                if (fulltext)
+                    fields.add(new TextField(fieldName, s, storeOption));
+                else
+                    fields.add(new StringField(fieldName, s, storeOption));
+                if (sorted)
+                    fields.add(new SortedDocValuesField(fieldName, new BytesRef(s)));
+            }
+        }
+        return fields;
+    }
+
+
+    private Tag convertToTag(IndexableField tagField) {
+        String tagName = tagField.name().substring(LuceneUtils.TAG_FIELD_PREFIX.length());
+        @NotNull ValueType valueType = projectContext.getTagValueType(tagName);
+        Object formattedValue = null;
+
+        switch (valueType) {
+            case BOOLEAN -> formattedValue = Boolean.valueOf(tagField.stringValue());
+            case INTEGER -> formattedValue = Integer.valueOf(tagField.stringValue());
+            case REAL -> formattedValue = tagField.numericValue().doubleValue();
+            case TEXT, DATE, TIME -> formattedValue = tagField.stringValue();
+        }
+
+        return Tag.builder().tagName(tagName).value(formattedValue).build();
+    }
+
+
+    /**
+     * Creates Lucene fields for a dynamic tag.
+     * Tags are always stored.
+     */
+    private static List<IndexableField> createTagFields(String tagName, Object formattedValue, ValueType valueType) {
+        final String fieldName = LuceneUtils.TAG_FIELD_PREFIX + tagName;
+        List<IndexableField> fields = new ArrayList<>();
+        ValueFormatter<?, ?> formatter = valueType.getFormatter();
+        Object value = formatter.fromFormattedGeneric(formattedValue);
+        // always stored
+        switch (valueType) {
+            case BOOLEAN -> fields.add(new StringField(fieldName, value.toString(), YES));
+            case INTEGER -> {
+                fields.add(new IntPoint(fieldName, (Integer) value));
+                fields.add(new StoredField(fieldName, (Integer) value));
+            }
+            case TIME -> {
+                fields.add(new IntPoint(fieldName, (Integer) value));
+                fields.add(new StoredField(fieldName, (String) formattedValue));
+            }
+            case REAL -> {
+                fields.add(new DoublePoint(fieldName, (Double) value));
+                fields.add(new StoredField(fieldName, (Double) value));
+
+            }
+            case TEXT -> fields.add(new TextField(fieldName, (String) value, YES));
+            case DATE -> {
+                fields.add(new LongPoint(fieldName, (Long) value));
+                fields.add(new StoredField(fieldName, (String) formattedValue));
+            }
+            default -> throw new IllegalArgumentException("Unsupported ValueType for tag: " + valueType);
+        }
+        return fields;
     }
 
     /**
@@ -938,6 +999,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      * Returns a PointsConfig if the type is numeric (or a date/time type that can be represented numerically).
      * If the type is not numeric, returns null.
      */
+    @Nullable
     public static PointsConfig getPointsConfigForType(Class<?> type) {
         if (type.equals(int.class) || type.equals(Integer.class)) {
             return new PointsConfig(DecimalFormat.getInstance(), Integer.class);
@@ -947,10 +1009,28 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             return new PointsConfig(DecimalFormat.getInstance(), Double.class);
         } else if (type.equals(float.class) || type.equals(Float.class)) {
             return new PointsConfig(DecimalFormat.getInstance(), Float.class);
-        }
-        // Optionally, if we want to support dates as normal fields:
-        else if (type.equals(java.util.Date.class)) {
+        } else if (type.equals(java.util.Date.class)) {  // Optionally, if we want to support dates as normal fields:
             return new PointsConfig(new NumberDateFormat(new SimpleDateFormat("yyyy-MM-dd")), Long.class);
+        }
+        return null;
+    }
+
+    /**
+     * Returns a SortField.Type if depending on the type.
+     * If the type is not supported for sorting, returns null.
+     */
+    @Nullable
+    public static SortField.Type getSortTypeForType(Class<?> type) {
+        if (type.equals(int.class) || type.equals(Integer.class)) {
+            return SortField.Type.INT;
+        } else if (type.equals(long.class) || type.equals(Long.class)) {
+            return SortField.Type.LONG;
+        } else if (type.equals(double.class) || type.equals(Double.class)) {
+            return SortField.Type.DOUBLE;
+        } else if (type.equals(float.class) || type.equals(Float.class)) {
+            return SortField.Type.FLOAT;
+        } else if (type.equals(boolean.class) || type.equals(Boolean.class) || type.equals(String.class)) {
+            return SortField.Type.STRING;
         }
         return null;
     }
