@@ -1,12 +1,12 @@
+package de.unijena.bioinf.ms.biotransformer;
+
 import biotransformer.railsappspecific.BiotransformerSequence_rails;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.utils.BiotransformerSequence;
-import executable.BiotransformerExecutable3;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class BiotransformerRunner {
 
@@ -25,6 +25,12 @@ public class BiotransformerRunner {
         int cypmode = 3;
 
      ArrayList<BiotransformationObject> transformations=  BiotransformerWrapper.AllHumanTransformer(smile, steps, p2Mode, cypmode, useDB, useSub);
+
+
+        BioTransformerJJob transformerJob = new BioTransformerJJob(); //set input and paramters
+
+        List<BioTransformerResult> results = SiriusJobs.getGlobalJobManager().submitJob(transformerJob).awaitResult();
+//        results.getFirst().getBiotranformations().getFirst();
 
         // Iteration und Ausgabe der Eigenschaften jedes Ergebnisses
         for (Biotransformation transformation : transformations) {
