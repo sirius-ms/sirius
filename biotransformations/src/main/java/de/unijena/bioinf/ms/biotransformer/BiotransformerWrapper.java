@@ -1,4 +1,4 @@
-//
+package de.unijena.bioinf.ms.biotransformer;//
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by FernFlower decompiler)
 //
@@ -6,9 +6,7 @@
 
 
 import biotransformer.biosystems.BioSystem.BioSystemName;
-import biotransformer.btransformers.Biotransformer.bType;
 import biotransformer.railsappspecific.AbioticTransformer_rails;
-import biotransformer.railsappspecific.BiotransformerSequence_rails;
 import biotransformer.railsappspecific.Cyp450BTransformer_rails;
 import biotransformer.railsappspecific.ECBasedBTransformer_rails;
 import biotransformer.railsappspecific.EnvMicroBTransformer_rails;
@@ -16,24 +14,14 @@ import biotransformer.railsappspecific.HGutBTransformer_rails;
 import biotransformer.railsappspecific.PhaseIIBTransformer_rails;
 import biotransformer.railsappspecific.SimulateHumanMetabolism_rails;
 import biotransformer.transformation.Biotransformation;
-import biotransformer.utils.BiotransformerSequence;
-import biotransformer.utils.ChemStructureExplorer;
-import biotransformer.utils.FileUtilities;
-
-import executable.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import org.apache.commons.cli.CommandLine;
-
-import org.apache.commons.cli.Options;
 
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
 public class BiotransformerWrapper{

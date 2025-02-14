@@ -242,8 +242,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         mode.importParas.writeBuffer
                 );
                 checkForInterruption();
-                submitJob(dbjob).awaitResult();
+
+                submitJob(dbjob);
                 logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
+
+                dbjob.awaitResult();
                 return true;
             } else if (mode.removeParas != null) {
                 if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
