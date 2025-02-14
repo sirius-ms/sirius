@@ -19,26 +19,18 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
-import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
-import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
+import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -157,6 +149,7 @@ public class AlignedFeature implements Taggable {
      */
     protected boolean computing;
 
+    @IndexField
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED, description =
                     "Specifies which tools have been executed for this feature. " +
                     "Can be used to estimate which results can be expected. " +

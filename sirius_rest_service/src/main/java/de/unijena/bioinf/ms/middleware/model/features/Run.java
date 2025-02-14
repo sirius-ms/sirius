@@ -21,27 +21,16 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
-import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.KeywordField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
-import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 @Getter
 @Setter

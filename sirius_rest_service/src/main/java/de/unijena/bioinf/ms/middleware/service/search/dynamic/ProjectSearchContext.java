@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 public interface ProjectSearchContext extends Closeable {
     Path getProjectIndexRootDir();
 
+    <T> Integer getNumberOfDocuments(Class<T> clazz);
+
     <T> void addDocument(T bean);
 
     <T> void addDocuments(Collection<T> beans);
@@ -53,8 +55,6 @@ public interface ProjectSearchContext extends Closeable {
     void addTagValueType(String tagName, ValueType valueType);
 
     boolean removeTagValueType(String tagName);
-
-
 
     interface Factory<C extends ProjectSearchContext> {
         /**

@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.IndexField;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 

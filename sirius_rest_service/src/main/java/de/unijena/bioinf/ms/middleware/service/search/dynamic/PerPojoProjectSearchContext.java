@@ -39,6 +39,10 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
                 tagDefinitions.forEach(tagDef -> tagDefs.put(tagDef.getTagName(), tagDef.getValueType()));
     }
 
+    @Override
+    public <T> Integer getNumberOfDocuments(Class<T> clazz) {
+        return getIndexManager(clazz).getNumOfDocs().key();
+    }
 
     @Override
     public <T> void addDocument(@NotNull T bean) {

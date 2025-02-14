@@ -106,6 +106,11 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public <T> int getNumberOfDocuments(String projectId, Class<T> clazz) {
+        return withProjectContext(projectId, ps -> ps.getNumberOfDocuments(clazz));
+    }
+
+    @Override
     public <T> void addDocument(String projectId, T bean) {
         consumeProjectContext(projectId, ps -> ps.addDocument(bean));
     }
