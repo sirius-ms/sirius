@@ -41,6 +41,8 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.JDialogWithSoftwareTour;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -70,9 +72,10 @@ import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
+import static de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator.decorate;
 
 @Slf4j
-public class BatchComputeDialog extends JDialog {
+public class BatchComputeDialog extends JDialogWithSoftwareTour {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
@@ -272,6 +275,8 @@ public class BatchComputeDialog extends JDialog {
                     Jobs.runEDTLater(() -> updateConnectionBanner(stateEvent.getConnectionCheck()));
             };
             gui.getConnectionMonitor().addConnectionListener(connectionListener);
+
+            Jobs.runEDTLater(() -> checkAndInitTutorial(gui.getProperties()));
         });
 
         setPreferredSize(new Dimension(1150, 1024));
@@ -638,7 +643,7 @@ public class BatchComputeDialog extends JDialog {
 
         presetDropdown = new JComboBox<>();
 
-        panel.add(presetDropdown);
+        panel.add(decorate(presetDropdown, SoftwareTourInfoStore.BatchCompute_PresetDropDown));
 
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
@@ -966,5 +971,10 @@ public class BatchComputeDialog extends JDialog {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
         return objectMapper.writeValueAsString(obj);
+    }
+
+    @Override
+    public String getTutorialPropertyKey() {
+        return "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
     }
 }

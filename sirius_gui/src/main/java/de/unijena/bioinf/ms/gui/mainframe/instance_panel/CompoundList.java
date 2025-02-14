@@ -32,6 +32,8 @@ import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.JButtonWithSoftwareTourElement;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -119,7 +121,7 @@ public class CompoundList {
         compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
-        openFilterPanelButton = new JButton("...");
+        openFilterPanelButton = new JButtonWithSoftwareTourElement("...", SoftwareTourInfoStore.OpenFilterPanelButton);
         openFilterPanelButton.setToolTipText("Open filter panel");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
