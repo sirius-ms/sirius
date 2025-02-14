@@ -347,11 +347,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      */
     @SneakyThrows
     public synchronized Page<T> search(Query query, Pageable pageable) {
-        return searchAndTransform(query, pageable, doc -> {
-            if (doc.getField("charge") == null)
-                System.out.println("Charge is MISSING!");
-            return convertDocumentToPojo(doc, pojoClass);
-        });
+        return searchAndTransform(query, pageable, doc -> convertDocumentToPojo(doc, pojoClass));
     }
 
 
