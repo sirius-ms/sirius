@@ -5,6 +5,8 @@ import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.lucene.LuceneUtils;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueFormatter;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.IndexField;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -94,6 +96,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 this.directory = new ByteBuffersDirectory();
                 System.out.println("Using in memory index for: " + pojoClass.getSimpleName());
             }
+
             this.writer = new IndexWriter(directory, new IndexWriterConfig(dynamicAnalyzer));
             this.searcherManager = new SearcherManager(writer, null);
 
@@ -140,12 +143,16 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         }
     }
 
+    public boolean isEmpty() {
+       return getNumOfDocs().key() <= 0;
+    }
+
     public boolean isTaggable() {
         return Taggable.class.isAssignableFrom(pojoClass);
     }
 
     @SneakyThrows
-    public int getNumOfDocs() {
+    public Pair<Integer, Integer> getNumOfDocs() {
         searcherManager.maybeRefresh();
         IndexSearcher searcher = searcherManager.acquire();
         try {
@@ -153,7 +160,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             int maxdocs = searcher.getIndexReader().maxDoc();
 
             System.out.println("Number of docs im index: " + numdocs + "/" + maxdocs);
-            return numdocs;
+            return Pair.of(numdocs, maxdocs);
         } finally {
             searcherManager.release(searcher);
         }

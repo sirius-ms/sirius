@@ -24,7 +24,14 @@ public interface SearchService extends AutoCloseable {
         //sneaky throws is fine since no deletion will happen.
         closeProjectIndex(projectId, false);
     }
+
     void closeProjectIndex(String projectId, boolean deleteIndexFromDisk) throws IOException;
+
+    <T> int getNumberOfDocuments(String projectId, Class<T> clazz);
+
+    default <T>  boolean isEmpty (String projectId, Class<T> clazz){
+        return getNumberOfDocuments(projectId, clazz) <= 0;
+    }
 
     <T> void addDocument(String projectId, T bean);
 

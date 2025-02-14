@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.middleware.service.search.dynamic;
+package de.unijena.bioinf.projectspace;
 
 import java.lang.annotation.*;
 
