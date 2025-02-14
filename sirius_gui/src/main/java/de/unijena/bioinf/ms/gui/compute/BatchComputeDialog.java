@@ -975,6 +975,6 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
 
     @Override
     public String getTutorialPropertyKey() {
-        return "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
+        return SoftwareTourInfoStore.BatchComputeTourKey;
     }
 }

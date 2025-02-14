@@ -94,7 +94,7 @@ public class EpimetheusPanel extends JPanelWithSoftwareTour implements Loadable,
 
     @Override
     public String getTutorialPropertyKey() {
-        return "de.unijena.bioinf.sirius.ui.tutorial.EpimetheusTab";
+        return SoftwareTourInfoStore.EpimetheusTabTourKey;
     }
 
     public boolean hasData() {
