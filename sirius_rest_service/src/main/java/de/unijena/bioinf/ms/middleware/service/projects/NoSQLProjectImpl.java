@@ -124,7 +124,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
-    public final SearchService searchService;
+    private final SearchService searchService;
 
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
@@ -1588,6 +1588,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         StopWatch w = new StopWatch();
         w.start();
+        //todo fix loading additional data!
 
        /* List<AlignedFeatures> dbfeatures = findPageStr(AlignedFeatures.class, pageable, this::sortFeature).toList();
         System.out.println("Loading features took: " + w);
@@ -1703,7 +1704,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
                 () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
         );
-        return compound.getFeatures();
+        List<AlignedFeature> importedFeatures = compound.getFeatures();
+        //todo check whether this is the right indexing place.
+        searchService.addDocuments(projectId, importedFeatures);
+        return importedFeatures;
     }
 
     @SneakyThrows
