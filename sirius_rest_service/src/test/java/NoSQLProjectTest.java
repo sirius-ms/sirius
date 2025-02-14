@@ -49,6 +49,7 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.domain.Page;
@@ -70,8 +71,27 @@ public class NoSQLProjectTest {
 
     @SneakyThrows
     private static SearchService makeSearchService() {
-//        Path luceneIndexDir = Files.createTempDirectory("luceneIndex"); luceneIndexDir.toFile().deleteOnExit();
         return new SearchServiceImpl(null, PerPojoProjectSearchContext.FACTORY);
+    }
+
+    @SneakyThrows
+    private static void insertRunsAndIndex(Collection<LCMSRun> runs, NoSQLProjectImpl project, SearchService searchService){
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        project.storage().insertAll(runs);
+        project.storage().flush();
+
+        watch.stop();
+        System.out.println("INSERTED RUNS in: " + watch);
+        watch.reset();watch.start();
+
+
+        searchService.addDocuments(project.getProjectId(), runs.stream()
+                .map(run -> project.convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))).toList());
+
+        watch.stop();
+        System.out.println("INDEXED RUNS in: " + watch);
     }
 
     @Test
@@ -79,8 +99,8 @@ public class NoSQLProjectTest {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -146,8 +166,8 @@ public class NoSQLProjectTest {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -205,8 +225,8 @@ public class NoSQLProjectTest {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             LCMSRun runIn = LCMSRun.builder()
                     .name("run1")
@@ -216,7 +236,7 @@ public class NoSQLProjectTest {
                     .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                     .build();
 
-            ps.getStorage().insert(runIn);
+            insertRunsAndIndex(List.of(runIn), project, searchService);
             Run runOut = project.findRunById(Long.toString(runIn.getRunId()));
 
             Assert.assertEquals(1, project.findRuns(Pageable.unpaged()).getTotalElements());
@@ -236,8 +256,8 @@ public class NoSQLProjectTest {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             Map<String, TagDefinitionImport> catIn = Map.of(
                     "c0", TagDefinitionImport.builder().tagName("c0").valueType(ValueType.NONE).tagType("foo").build(),
@@ -314,8 +334,8 @@ public class NoSQLProjectTest {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -342,7 +362,7 @@ public class NoSQLProjectTest {
                             .build()
             );
 
-            ps.getStorage().insertAll(runs);
+            insertRunsAndIndex(runs, project, searchService);
             project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
             project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
             project.addTagsToObject(Run.class, Long.toString(runs.get(2).getRunId()), List.of(Tag.builder().tagName("sample").value("control").build()));
@@ -396,8 +416,8 @@ public class NoSQLProjectTest {
     public void testFoldChange() throws IOException, ExecutionException {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             project.createTags(List.of(
                     TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
@@ -418,7 +438,7 @@ public class NoSQLProjectTest {
                             .build()
             );
 
-            ps.getStorage().insertAll(runs);
+            insertRunsAndIndex(runs, project, searchService);
             project.addTagsToObject(Run.class, Long.toString(runs.get(0).getRunId()), List.of(Tag.builder().tagName("sample").value("sample").build()));
             project.addTagsToObject(Run.class, Long.toString(runs.get(1).getRunId()), List.of(Tag.builder().tagName("sample").value("blank").build()));
 
@@ -523,13 +543,15 @@ public class NoSQLProjectTest {
         }
     }
 
+
+
     @Test
     public void testTags() throws IOException {
 
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+            SearchService searchService = makeSearchService();
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
             List<LCMSRun> runs = List.of(
                     LCMSRun.builder()
@@ -547,9 +569,7 @@ public class NoSQLProjectTest {
                             .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                             .build()
             );
-
-            ps.getStorage().insertAll(runs);
-            ps.getStorage().flush();
+            insertRunsAndIndex(runs, project, searchService);
 
             final Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
 
@@ -669,8 +689,8 @@ public class NoSQLProjectTest {
         try {
             Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
             try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
-                NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-                NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, makeSearchService(), (a, b) -> false);
+                SearchService searchService = makeSearchService();
+                NoSQLProjectImpl project = new NoSQLProjectImpl("test", new NoSQLProjectSpaceManager(ps), searchService, (a, b) -> false);
 
 
                 List<LCMSRun> lcmsRuns = IntStream.range(0, 100_000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
@@ -681,21 +701,11 @@ public class NoSQLProjectTest {
                         .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
                         .build()).toList();
 
+
+                insertRunsAndIndex(lcmsRuns, project, searchService);
+
                 StopWatch watch = new StopWatch();
                 watch.start();
-
-                ps.getStorage().insertAll(lcmsRuns);
-                watch.stop();
-                System.out.println("INSERT RUNS: " + watch);
-                watch.reset();watch.start();
-
-
-                project.searchService.addDocuments(project.getProjectId(), lcmsRuns.stream()
-                        .map(run -> project.convertToApiRun(run, EnumSet.noneOf(Run.OptField.class))).toList());
-
-                watch.stop();
-                System.out.println("INDEX RUNS: " + watch);
-                watch.reset();watch.start();
 
                 List<Run> runs = project.findRuns(Pageable.unpaged()).getContent();
                 List<Run> control = runs.subList(0, runs.size() / 3);
