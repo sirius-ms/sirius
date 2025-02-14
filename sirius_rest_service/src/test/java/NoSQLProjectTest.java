@@ -669,7 +669,7 @@ public class NoSQLProjectTest {
         assertEquals(2, instances.size());
 
         // filtered
-        psm.setAlignedFeatureFilter(Filter.where("retentionTime.middle").gt(1.0));
+        psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
         assertEquals(1, psm.countFeatures());
         instances.clear();
         psm.forEach(instances::add);

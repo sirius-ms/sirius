@@ -51,7 +51,7 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
      * Filter to apply when iterating over instances. Has no effect on counting compounds.
      */
     @Setter
-    private Filter alignedFeatureFilter = null;
+    private Filter alignedFeaturesFilter = null;
 
     public NoSQLProjectSpaceManager(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
         this.project = project;
@@ -123,16 +123,16 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @SneakyThrows
     @Override
     public @NotNull Iterator<Instance> iterator() {
-        return getProject().getAlignedFeatures(alignedFeatureFilter).map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
+        return getProject().getAlignedFeatures(alignedFeaturesFilter).map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
     }
 
     @SneakyThrows
     @Override
     public int countFeatures() {
-        if (alignedFeatureFilter == null) {
+        if (alignedFeaturesFilter == null) {
             return (int) project.getStorage().countAll(AlignedFeatures.class);
         } else {
-            return (int) project.getStorage().count(alignedFeatureFilter, AlignedFeatures.class);
+            return (int) project.getStorage().count(alignedFeaturesFilter, AlignedFeatures.class);
         }
     }
 
