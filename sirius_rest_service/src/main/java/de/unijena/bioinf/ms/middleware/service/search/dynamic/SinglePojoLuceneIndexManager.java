@@ -245,8 +245,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     public synchronized void deleteDocumentById(@NotNull Object id) {
         writer.deleteDocuments(new Term(pojoIdField, String.valueOf(id)));
         writer.commit();
-//        System.out.println("AFTER REMOVE DOCUMENT");
-//        printDocs();
         getNumOfDocs();
     }
 
@@ -257,8 +255,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         Query q = new TermInSetQuery(pojoIdField, ids.stream().map(Object::toString).map(BytesRef::new).collect(Collectors.toSet()));
         writer.deleteDocuments(q);
         writer.commit();
-//        System.out.println("AFTER MULTI REMOVE DOCUMENT");
-//        printDocs();
         getNumOfDocs();
     }
 
