@@ -49,31 +49,7 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Run implements TaggableLuceneDocumentProvider, Taggable {
-    @Deprecated
-    @Override
-    public @NotNull LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
-        return () -> new ArrayList<IndexableField>() {{
-            add(new StringField("uuid", runId, Field.Store.YES)); // standard field name for uuid to identify document
-
-            add(new StringField("runId", runId, Field.Store.YES));
-            if (notNullOrBlank(name))
-                add(new TextField("name", name, Field.Store.YES));
-            if (notNullOrBlank(source))
-                add(new TextField("source", source, Field.Store.YES));
-            if (notNullOrBlank(ionization))
-                add(new StringField("ionization", ionization, Field.Store.NO));
-            if (notNullOrBlank(fragmentation))
-                add(new StringField("fragmentation", fragmentation, Field.Store.NO));
-            if (massAnalyzers != null && !massAnalyzers.isEmpty())
-                massAnalyzers.forEach(analyzer -> add(new KeywordField("massAnalyzers", analyzer, Field.Store.NO)));
-
-            if (notNullOrEmpty(tags))
-                tags.values().forEach(tag ->
-                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
-
-        }}.iterator();
-    }
+public class Run implements Taggable {
 
     @Schema(enumAsRef = true, name = "RunOptField", nullable = true)
     public enum OptField {none, tags}
@@ -88,7 +64,7 @@ public class Run implements TaggableLuceneDocumentProvider, Taggable {
     /**
      * Informative, human-readable name of this run
      */
-    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true)
+    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true, sortable = true)
     protected String name;
 
     /**
