@@ -140,7 +140,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null) {
             try {
                 //todo? Do we want to do indexing based on teh DB layer?
-                //todo fix sorting and paging -> merge lucene and page sorting
                 //todo fix wildcard search
                 //todo fix event actions so that new tags are added to features
                 //todo add events to update indexe when features/runs are changing.
@@ -178,20 +177,29 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 StopWatch stopWatch = new StopWatch();
                 stopWatch.start();
-                System.out.println("Start Indexing features...");
 
                 searchService.openOrCreateProjectIndex(this);
+                System.out.println("Open/Create Inde took: " + stopWatch);
+                stopWatch.reset();stopWatch.start();
+
 
                 //load feature index
-               /* Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
-                if (features.hasContent())
-                    searchService.addDocuments(projectId, features.getContent());
+                if (searchService.isEmpty(projectId, AlignedFeature.class)) {
+                    Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
+                    if (features.hasContent())
+                        searchService.addDocuments(projectId, features.getContent());
+                    System.out.println("Indexing Features took: " + stopWatch);
+                    stopWatch.reset();stopWatch.start();
+                }
 
                 //load Run index
-                Page<Run> runs = findRuns(Pageable.unpaged(), Run.OptField.tags);
-                if (runs.hasContent())
-                    searchService.addDocuments(projectId,
-                            runs.getContent());*/
+                if (searchService.isEmpty(projectId, Run.class)) {
+                    Page<Run> runs = findRuns(Pageable.unpaged(), Run.OptField.tags);
+                    if (runs.hasContent())
+                        searchService.addDocuments(projectId, runs.getContent());
+                    System.out.println("Indexing Runs took: " + stopWatch);
+                    stopWatch.reset();stopWatch.start();
+                }
 
                 //load compound index
                 //todo remuse features.
@@ -201,7 +209,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 //                    searchService.getSearchIndexWriter().addBeans(projectId,
 //                            compounds.getContent());
 
-                System.out.println("Indexing features done in " + stopWatch);
             } catch (IOException e) {
                 log.error("Error while initializing project space index. Closing index.", e);
                 searchService.closeProjectIndex(projectId);
