@@ -20,6 +20,8 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
@@ -28,13 +30,18 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.JPanelWithSoftwareTour;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
 
+import static de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator.decorate;
 
-public class EpimetheusPanel extends JPanel implements Loadable, PanelDescription {
+
+public class EpimetheusPanel extends JPanelWithSoftwareTour implements Loadable, PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
@@ -49,23 +56,27 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
     protected final StructureList structureList;
     protected final EpimetheusPanelCandidateListTableView candidateTable;
     private final LoadablePanel loadablePanel;
+    private final SpectraVisualizationPanel overviewSVP;
 
-    public EpimetheusPanel(final StructureList structureList) {
+    public EpimetheusPanel(final StructureList structureList, @NotNull SiriusGui gui) {
         super(new BorderLayout());
         this.structureList = structureList;
         this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
+        this.overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
 
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
             Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
-            sre.ifPresentOrElse(bean ->
+            sre.ifPresentOrElse(bean -> {
                     structureList.readDataByConsumer(d ->
-                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles())),
+                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles()));
+                    Jobs.runEDTLater(() -> checkAndInitTutorial(gui.getProperties()));
+                    },
                     overviewSVP::clear);
         });
 
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable,
+                decorate(overviewSVP, SoftwareTourInfoStore.Epimetheus_SpectralVisualization));
         major.setDividerLocation(250);
         loadablePanel = new LoadablePanel(major);
         add(loadablePanel, BorderLayout.CENTER);
@@ -79,6 +90,15 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
     public CandidateListTableView getCandidateTable() {
         return candidateTable;
+    }
+
+    @Override
+    public String getTutorialPropertyKey() {
+        return "de.unijena.bioinf.sirius.ui.tutorial.EpimetheusTab";
+    }
+
+    public boolean hasData() {
+        return overviewSVP.msData != null;
     }
 
     protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {

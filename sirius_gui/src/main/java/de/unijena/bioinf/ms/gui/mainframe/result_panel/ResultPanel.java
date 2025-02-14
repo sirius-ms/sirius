@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
-import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
@@ -32,9 +31,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.CanopusPrediction;
-import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
@@ -43,6 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
@@ -137,8 +137,24 @@ public class ResultPanel extends JTabbedPane {
 
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView, gui);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
+
+
+        //software tour listener
+        // Add a ChangeListener to track when a tab is switched
+        addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                // Get the currently selected component
+                Component selectedComponent = getSelectedComponent();
+
+                if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+                    //todo seems to fail sometimes. maybe if data is still loaded? But in this case, the init in EpimetheusPanel should trigger ..?
+                    structureAnnoTab.checkAndInitTutorial(gui.getProperties());
+                }
+            }
+        });
 
 
         // global spectra match search list
