@@ -5,6 +5,7 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AlignedFeaturesFilterOptions {
@@ -34,7 +35,7 @@ public class AlignedFeaturesFilterOptions {
         if (rtmin != null) filters.add(Filter.where("retentionTime.middle").gte(rtmin));
         if (rtmax != null) filters.add(Filter.where("retentionTime.middle").lte(rtmax));
         if (hasMsMs != null) filters.add(Filter.where("hasMsMs").eq(true));
-        if (quality != null && quality.length > 0) filters.add(Filter.where("dataQuality").in(quality));
+        if (quality != null && quality.length > 0) filters.add(Filter.where("dataQuality").in(Arrays.stream(quality).map(Enum::toString).toArray(String[]::new)));
 
         if (filters.size() == 1) {
             return filters.getFirst();
