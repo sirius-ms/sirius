@@ -31,10 +31,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
-import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 /**
  * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
@@ -49,6 +49,9 @@ import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 public class AlignedFeature implements Taggable {
     @Schema(name = "AlignedFeatureOptField", nullable = true)
     public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
+
+    public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
+            OptField.tags, OptField.computedTools, OptField.confidence);
 
     // identifier
     @IndexField(documentId = true, sortable = true)

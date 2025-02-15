@@ -192,14 +192,14 @@ public class NoSQLProjectTest {
                     .build());
 
             List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
-            List<AlignedFeature> features2 = project.findAlignedFeatures(Pageable.unpaged(), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+            List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
 
             Assert.assertEquals(1, features.size());
             Assert.assertEquals(1, features2.size());
 
-            AlignedFeature f1 = features.get(0);
-            AlignedFeature f2 = features2.get(0);
+            AlignedFeature f1 = features.getFirst();
+            AlignedFeature f2 = features2.getFirst();
 
             Assert.assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
 
@@ -216,7 +216,6 @@ public class NoSQLProjectTest {
 
             Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(0), d2.getMs2Spectra().get(0)));
             Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
-
         }
     }
 

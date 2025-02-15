@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.JobEffect;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
@@ -84,12 +85,10 @@ public final class BackgroundRuns {
     //compute state lock end
 
     private final Project<? extends ProjectSpaceManager> project;
-    private final ProjectSpaceManager psm;
     private final InstanceBufferFactory<?> bufferfactory;
 
     public BackgroundRuns(Project<? extends ProjectSpaceManager> project, InstanceBufferFactory<?> bufferFactory) {
         this.project = project;
-        this.psm = project.getProjectSpaceManager();
         this.bufferfactory = bufferFactory;
     }
 
@@ -264,7 +263,7 @@ public final class BackgroundRuns {
     public BackgroundRunJob runImportMsData(@NotNull AbstractImportSubmission<?> submission,
                                             @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
+        Workflow computation = new ImportMsFromResourceWorkflow((NoSQLProjectImpl) project, submission, true);
         BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
@@ -274,7 +273,7 @@ public final class BackgroundRuns {
     public BackgroundRunJob runImportPeakData(@NotNull AbstractImportSubmission<?> submission,
                                               @Nullable Consumer<BackgroundRunJob> jobDecorator
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
+        Workflow computation = new ImportPeaksFomResourceWorkflow((NoSQLProjectImpl) project, submission.asInputResource(), submission.isIgnoreFormulas(), submission.isAllowMs1OnlyData());
         BackgroundRunJob run = new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import", JobEffect.IMPORT);
         if (jobDecorator != null)
             jobDecorator.accept(run);
@@ -288,7 +287,7 @@ public final class BackgroundRuns {
     }
 
     public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
-        Workflow computation = new FoldChangeWorkflow(psm, left, right, aggregation, quantification, target);
+        Workflow computation = new FoldChangeWorkflow(project.getProjectSpaceManager(), left, right, aggregation, quantification, target);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
@@ -323,7 +322,7 @@ public final class BackgroundRuns {
                     computingInstances.addAll(fids);
                 log.info("...All instances locked!");
                 if (SiriusJobs.getGlobalJobManager() instanceof SwingJobManager) //todo hacky. get rid of this swing job dependency by solving job progress via api
-                    Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
+                    Jobs.submit(runToSubmit, runToSubmit::getName, project.getProjectSpaceManager()::getName, runToSubmit::getDescription);
                 else
                     SiriusJobs.getGlobalJobManager().submitJob(runToSubmit);
                 return runToSubmit;
@@ -449,7 +448,7 @@ public final class BackgroundRuns {
                 return true;
             } finally {
                 logInfo("Flushing Results to disk in background...");
-                psm.flush();
+                project.getProjectSpaceManager().flush();
                 logInfo("Results flushed!");
             }
         }
