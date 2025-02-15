@@ -48,9 +48,9 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.jupiter.api.AutoClose;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
@@ -71,7 +71,7 @@ public class NoSQLProjectTest {
     private NitriteSirirusProject ps;
     private NoSQLProjectImpl project;
 
-    @Before
+    @BeforeEach
     public void createTestProject() throws IOException {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         ps = new NitriteSirirusProject(location);
