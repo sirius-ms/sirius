@@ -11,7 +11,7 @@ import java.util.List;
 class FeatureFilterTest extends CLITest {
 
     @Test
-    void testMzRtFilter() throws IOException {
+    void testMzRtFilters() throws IOException {
         AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).averageMass(1.0).retentionTime(new RetentionTime(1d)).build();
         AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).averageMass(2.0).retentionTime(new RetentionTime(2d)).build();
         AlignedFeatures af3 = AlignedFeatures.builder().alignedFeatureId(3L).averageMass(3.0).retentionTime(new RetentionTime(3d)).build();
@@ -43,6 +43,16 @@ class FeatureFilterTest extends CLITest {
         runAssert(expectedInstanceIds(), "--quality=GOOD");
         runAssert(expectedInstanceIds("2", "3"), "--quality=BAD,DECENT");
         runAssert(expectedInstanceIds("2", "3"), "--quality=BAD", "--quality=DECENT");
+    }
+
+    @Test
+    void testMsMsFilter() throws IOException {
+        AlignedFeatures af1 = AlignedFeatures.builder().alignedFeatureId(1L).build();
+        AlignedFeatures af2 = AlignedFeatures.builder().alignedFeatureId(2L).hasMsMs(true).build();
+        ps.getStorage().insertAll(List.of(af1, af2));
+        ps.close();
+
+        runAssert(expectedInstanceIds("2"), "--hasmsms");
     }
 
 }
