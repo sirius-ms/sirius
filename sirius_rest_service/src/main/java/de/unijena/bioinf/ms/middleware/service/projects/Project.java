@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.tags.*;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -43,12 +44,19 @@ import java.util.*;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project<PSM extends ProjectSpaceManager> {
+    @Nullable default SearchService getSearchService(){
+        return null;
+    }
 
-    @NotNull
-    String getProjectId();
+    /**
+     * Technical Identifier for the project file/directory on the filesystem/dbms
+     * @return Project system uid
+     */
+    @NotNull String getSystemUID();
 
-    @NotNull
-    PSM getProjectSpaceManager();
+    @NotNull String getProjectId();
+
+    @NotNull PSM getProjectSpaceManager();
 
     Optional<QuantTable> getQuantification(QuantMeasure type, QuantRowType rowType);
 

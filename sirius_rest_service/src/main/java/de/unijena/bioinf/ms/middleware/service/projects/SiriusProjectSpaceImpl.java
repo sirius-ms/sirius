@@ -118,6 +118,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         throw new UnsupportedOperationException("Finde by matchId not supported by the project");
     }
 
+    @Override
+    public @NotNull String getSystemUID() {
+        return Base64.getEncoder().encodeToString(projectSpaceManager.getLocation().getBytes());
+    }
+
     @NotNull
     @Override
     public String getProjectId() {

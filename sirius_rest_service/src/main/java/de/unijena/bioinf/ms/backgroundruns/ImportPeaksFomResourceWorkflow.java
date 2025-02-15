@@ -24,22 +24,24 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
-import de.unijena.bioinf.jjobs.JobProgressEventListener;
-import de.unijena.bioinf.jjobs.JobProgressMerger;
-import de.unijena.bioinf.jjobs.ProgressSupport;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.NoSQLInstance;
+import de.unijena.bioinf.storage.db.nosql.Filter;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -48,22 +50,19 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean ignoreFormulas;
     private final boolean allowMs1OnlyData;
-    private Iterable<Instance> importedCompounds = null;
-
-    public Iterable<Instance> getImportedInstances() {
-        return importedCompounds;
-    }
+    @Getter
+    private Iterable<Instance> importedInstances = null;
 
     public Stream<Instance> getImportedInstancesStr() {
-        return StreamSupport.stream(importedCompounds.spliterator(), false);
+        return StreamSupport.stream(importedInstances.spliterator(), false);
     }
 
-    private final ProjectSpaceManager psm;
+    private final NoSQLProjectImpl project;
 
     private final Collection<InputResource<?>> inputResources;
 
-    public ImportPeaksFomResourceWorkflow(ProjectSpaceManager psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        this.psm = psm;
+    public ImportPeaksFomResourceWorkflow(NoSQLProjectImpl project, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
+        this.project = project;
         this.inputResources = inputResources;
         this.ignoreFormulas = ignoreFormulas;
         this.allowMs1OnlyData = allowMs1OnlyData;
@@ -97,13 +96,24 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
     @Override
     public void run() {
         if (inputResources != null && !inputResources.isEmpty()) {
-            InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
+            InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(project.getProjectSpaceManager(), x -> true)
                     .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
             importerJJob.addJobProgressListener(progressSupport);
 
             try {
-                importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-            } catch (ExecutionException e) {
+                importedInstances = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                if (project.getSearchService() != null) {
+                    SearchService searchService = project.getSearchService();
+                    Partition<Long> partition = Partition.ofSize(getImportedInstancesStr().map(f -> ((NoSQLInstance) f).getLongId()).sorted().toList(), 10000);
+                    for (List<Long> ids : partition) {
+                        searchService.addDocuments(project.getProjectId(),
+                                project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
+                                        .parallel()
+                                        .map(project::convertToApiFeature)
+                                        .toList());
+                    }
+                }
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
                 inputResources.stream().filter(InputResource::isDeleteAfterImport).forEach(r -> {

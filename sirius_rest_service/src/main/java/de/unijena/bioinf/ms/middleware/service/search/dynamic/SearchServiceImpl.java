@@ -73,17 +73,16 @@ public class SearchServiceImpl implements SearchService {
     public void openOrCreateProjectIndex(Project<?> project) throws IOException {
         projectLock.writeLock().lock();
         try {
-            String projectId = project.getProjectId();
+            String projectSystemId = project.getSystemUID(); //used as index name.
             final Path projectDir;
             if (indexHome != null) {
-                projectDir = indexHome.resolve(projectId);
-                if (!Files.exists(projectDir))
-                    Files.createDirectories(projectDir);
+                projectDir = indexHome.resolve(projectSystemId);
+                Files.createDirectories(projectDir);
             }else {
                 projectDir = null;
             }
 
-            projectSearchContexts.computeIfAbsent(projectId, pid ->
+            projectSearchContexts.computeIfAbsent(project.getProjectId(), pid ->
                     projectSearchContextFactory.create(projectDir, project));
         } finally {
             projectLock.writeLock().unlock();
