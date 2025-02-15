@@ -63,7 +63,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -79,6 +84,8 @@ public class NitriteDatabase implements Database<Document> {
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
     protected Path file;
+
+    protected final String systemUID;
 
     // NITRITE
     private final Nitrite db;
@@ -121,6 +128,18 @@ public class NitriteDatabase implements Database<Document> {
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
+
+        try {
+            FileStore fileStore = Files.getFileStore(file);
+            // Get filesystem identifier (not always unique)
+            String fsName = fileStore.name();
+            // Get file ID (works on most platforms)
+            Object fileKey = Files.readAttributes(file, BasicFileAttributes.class).fileKey();
+            // Create a composite UID
+            systemUID = hashString(fsName + "-" + fileKey, 32);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte) {
@@ -203,6 +222,11 @@ public class NitriteDatabase implements Database<Document> {
             stateWriteLock.unlock();
         }
 
+    }
+
+    @Override
+    public String systemUID() {
+       return systemUID;
     }
 
     @SuppressWarnings("unchecked")
@@ -1160,6 +1184,16 @@ public class NitriteDatabase implements Database<Document> {
     private static Pair<Object, NitriteFilter> createUniqueFilter(Object object, Field field) throws IOException {
         Object value = getPrimaryKeyValue(object, field).orElseThrow(() -> new IOException("id can not be null"));
         return Pair.of(value, FluentFilter.where(field.getName()).eq(value));
+    }
+
+    private static String hashString(String input, int bits) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash).substring(0, bits);
+        } catch (Exception e) {
+            throw new RuntimeException("Hashing failed", e);
+        }
     }
 
 }

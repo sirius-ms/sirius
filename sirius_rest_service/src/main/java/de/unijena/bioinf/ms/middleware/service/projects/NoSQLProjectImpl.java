@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -32,7 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.middleware.Pages;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -90,6 +89,7 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.*;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -124,6 +124,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
+    @Getter
     private final SearchService searchService;
 
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
@@ -180,25 +181,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 searchService.openOrCreateProjectIndex(this);
                 System.out.println("Open/Create Inde took: " + stopWatch);
-                stopWatch.reset();stopWatch.start();
+                stopWatch.reset();
+                stopWatch.start();
 
-
-                //load feature index
+                //todo finde good page size.
+                //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
-                    Page<AlignedFeature> features = findAlignedFeatures(Pageable.unpaged(), AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags);
-                    if (features.hasContent())
-                        searchService.addDocuments(projectId, features.getContent());
+                    Pages.forEach(100_000,
+                            pageable -> findAlignedFeatures(pageable, AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags),
+                            page -> searchService.addDocuments(projectId, page.getContent())
+                    );
+
                     System.out.println("Indexing Features took: " + stopWatch);
-                    stopWatch.reset();stopWatch.start();
+                    stopWatch.reset();
+                    stopWatch.start();
                 }
 
-                //load Run index
+                //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
-                    Page<Run> runs = findRuns(Pageable.unpaged(), Run.OptField.tags);
-                    if (runs.hasContent())
-                        searchService.addDocuments(projectId, runs.getContent());
+                    Pages.forEach(100_000,
+                            pageable -> findRuns(pageable, Run.OptField.tags),
+                            page -> searchService.addDocuments(projectId, page.getContent())
+                    );
+
                     System.out.println("Indexing Runs took: " + stopWatch);
-                    stopWatch.reset();stopWatch.start();
+                    stopWatch.reset();
+                    stopWatch.start();
                 }
 
                 //load compound index
@@ -224,6 +232,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private SiriusProjectDocumentDatabase<? extends Database<?>> project() {
         return projectSpaceManager.getProject();
+    }
+
+    @Override
+    public @NotNull String getSystemUID() {
+        return projectSpaceManager.getProject().getStorage().systemUID();
     }
 
     @Override
@@ -1093,22 +1106,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    @SneakyThrows
-    private AlignedFeature convertToApiFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        final String fid = String.valueOf(features.getAlignedFeatureId());
+
+    public AlignedFeature convertToApiFeature(AlignedFeatures feature) {
+        return convertToApiFeature(feature, EnumSet.noneOf(AlignedFeature.OptField.class));
+    }
+    public AlignedFeature convertToApiFeature(AlignedFeatures feature, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        final String fid = String.valueOf(feature.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
-                .name(features.getName())
-                .externalFeatureId(features.getExternalFeatureId())
-                .compoundId(features.getCompoundId() == null ? null : String.valueOf(features.getCompoundId()))
-                .ionMass(features.getAverageMass())
-                .quality(features.getDataQuality())
-                .hasMs1(features.isHasMs1())
-                .hasMsMs(features.isHasMsMs())
+                .name(feature.getName())
+                .externalFeatureId(feature.getExternalFeatureId())
+                .compoundId(feature.getCompoundId() == null ? null : String.valueOf(feature.getCompoundId()))
+                .ionMass(feature.getAverageMass())
+                .quality(feature.getDataQuality())
+                .hasMs1(feature.isHasMs1())
+                .hasMsMs(feature.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
-                .charge(features.getCharge());
-        if (features.getDetectedAdducts() != null) {
-            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = features.getDetectedAdducts().clone();
+                .charge(feature.getCharge());
+        if (feature.getDetectedAdducts() != null) {
+            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = feature.getDetectedAdducts().clone();
             adducts.removeAllWithSource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
             adducts.removeAllWithSource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove if detection runs during import.
             builder.detectedAdducts(adducts.getAllAdducts().stream().map(PrecursorIonType::toString)
@@ -1116,7 +1132,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             builder.detectedAdducts(Set.of());
         }
-        RetentionTime rt = features.getRetentionTime();
+        RetentionTime rt = feature.getRetentionTime();
         if (rt != null) {
             if (rt.isInterval() && Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
                 builder.rtStartSeconds(rt.getStartTime());
@@ -1128,33 +1144,59 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.rtEndSeconds(rt.getMiddleTime());
             }
         }
+        return annotateApiFeature(feature.getAlignedFeatureId(), builder.build(), optFields);
+    }
 
+    @SneakyThrows
+    private AlignedFeature annotateApiFeature(long alignedFeatureId, AlignedFeature feature, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         if (optFields.contains(AlignedFeature.OptField.msData)) {
-            project().fetchMsData(features);
-            features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
+            if (feature.getMsData() == null)
+                project().findByFeatureIdStr(alignedFeatureId, MSData.class).findAny()
+                        .map(NoSQLProjectImpl::convertToApiMSData)
+                        .ifPresent(feature::setMsData);
+        } else {
+            feature.setMsData(null);
         }
+
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
-            builder.topAnnotations(extractTopCsiAnnotations(features.getAlignedFeatureId()));
+            feature.setTopAnnotations(extractTopCsiAnnotations(alignedFeatureId));
         else if (optFields.contains(AlignedFeature.OptField.confidence)) { // fast confidence score retrieval without any additional data.
-            storage().getByPrimaryKey(features.getAlignedFeatureId(), CsiStructureSearchResult.class)
-                    .ifPresent(searchResult ->
-                            builder.topAnnotations(FeatureAnnotations.builder()
-                                    .confidenceExactMatch(searchResult.getConfidenceExact())
-                                    .confidenceApproxMatch(searchResult.getConfidenceApprox())
-                                    .build()));
+            if (feature.getTopAnnotations() == null)
+                storage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class)
+                        .ifPresent(searchResult ->
+                                feature.setTopAnnotations(FeatureAnnotations.builder()
+                                        .confidenceExactMatch(searchResult.getConfidenceExact())
+                                        .confidenceApproxMatch(searchResult.getConfidenceApprox())
+                                        .build()));
+        } else {
+            feature.setTopAnnotations(null);
         }
-        if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
-            builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
-        if (optFields.contains(AlignedFeature.OptField.computedTools))
-            builder.computedTools(
-                    project().findByFeatureIdStr(features.getAlignedFeatureId(), ComputedSubtools.class)
-                            .findFirst().orElseGet(() -> ComputedSubtools.builder().build())
-            );
+
+        if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo)) {
+            if (feature.getTopAnnotationsDeNovo() == null)
+                feature.setTopAnnotationsDeNovo(extractTopDeNovoAnnotations(alignedFeatureId));
+        } else {
+            feature.setTopAnnotationsDeNovo(null);
+        }
+
+        if (optFields.contains(AlignedFeature.OptField.computedTools)) {
+            if (feature.getComputedTools() == null)
+                feature.setComputedTools(
+                        project().findByFeatureIdStr(alignedFeatureId, ComputedSubtools.class)
+                                .findFirst().orElseGet(() -> ComputedSubtools.builder().build())
+                );
+        } else {
+            feature.setComputedTools(null);
+        }
+
         if (optFields.contains(AlignedFeature.OptField.tags)) {
-            builder.tags(findTagsByObject(features.getClass(), features.getAlignedFeatureId())
-                    .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
+            if (feature.getTags() == null)
+                feature.setTags(findTagsByObject(AlignedFeatures.class, alignedFeatureId)
+                        .collect(Collectors.toMap(Tag::getTagName, Function.identity())));
+        } else {
+            feature.setTags(null);
         }
-        return builder.build();
+        return feature;
     }
 
     private de.unijena.bioinf.ms.middleware.model.features.Feature convertToApiFeature0(Feature feature) {
@@ -1321,7 +1363,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return cSum;
     }
 
-    private MsData convertMSData(MSData msData) {
+    private static MsData convertToApiMSData(MSData msData) {
         MsData.MsDataBuilder builder = MsData.builder();
         if (msData.getMergedMs1Spectrum() != null)
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
@@ -1547,21 +1589,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
-        StopWatch w = new StopWatch();
-        w.start();
+        StopWatch w = StopWatch.createStarted();
         Page<AlignedFeature> features = searchService.search(projectId, searchQuery, pageable, AlignedFeature.class);
 //        Page<String> ids = searchService.searchIds(projectId, searchQuery, pageable, AlignedFeature.class);
-        w.stop();
         System.out.println("Lucene search took: " + w);
         w.reset();
         w.start();
-        return features;
-//        if (ids.isEmpty())
-//            return Page.empty(pageable);
 
-//        if (!EnumSet.of(AlignedFeature.OptField.none, AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence).containsAll(optFields)) {
-        //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
-        //todo ONLY LOAD ADDITIONAL DATA AND NOT FEATURES AGAIN!
+        if (features.isEmpty())
+            return Page.empty(pageable);
+
+        // todo loading all annotations with find in query could be slighly faster
+        if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
+            features.stream().parallel().forEach(f ->
+                    annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, optFields));
+
 //        List<AlignedFeature> alfs = ids.stream().flatMap( id -> {
 //            try {
 //                return storage().getByPrimaryKey(Long.valueOf(id), AlignedFeatures.class).stream();
@@ -1571,24 +1613,38 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 //        }).map(f -> convertToApiFeature(f, optFields)).toList();
 
 
-
 //        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), AlignedFeatures.class)
 //                .map(f -> convertToApiFeature(f, optFields)).toList();
 //        System.out.println("Extracting data from nitrite took: " + w);
 //            features = new PageImpl<>(alfs, pageable, features.getTotalElements());
 //        return new PageImpl<>(alfs, pageable, ids.getTotalElements());
-//        }
+        }
 
 
-//        return features;
+        return features;
     }
 
+    /**
+     * Find features paged
+     *
+     * @param pageable
+     * @param optFields
+     * @return
+     */
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         StopWatch w = new StopWatch();
         w.start();
-        //todo fix loading additional data!
+        List<AlignedFeature> features = findPageStr(AlignedFeatures.class, pageable, this::sortFeature)
+                .parallel()
+                .map(alf -> convertToApiFeature(alf, optFields))
+                .toList();
+        System.out.println("Loading and annotating features took: " + w);
+        w.reset();
+        w.start();
+
+        // second
 
        /* List<AlignedFeatures> dbfeatures = findPageStr(AlignedFeatures.class, pageable, this::sortFeature).toList();
         System.out.println("Loading features took: " + w);
@@ -1601,18 +1657,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         System.out.println("Annotate features took: " + w);
         w.stop();
         w.reset();
-        w.start();*/
+        w.start();
+*/
 
-
-
-        List<AlignedFeatures> dbalf = pageable.isUnpaged()
+        //third
+       /* List<AlignedFeatures> dbalf = pageable.isUnpaged()
                 ? storage().findAllStr(AlignedFeatures.class).toList()
                 : storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize()).toList();
 
         System.out.println("Loading features took: " + w);
-        w.stop();
-        w.reset();
-        w.start();
+        w.reset(); w.start();
 
         if (dbalf.isEmpty())
             return Page.empty(pageable);
@@ -1622,9 +1676,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(AlignedFeatures::getAlignedFeatureId).toArray(Long[]::new);
 
         System.out.println("Extract Ids took: " + w);
-        w.stop();
-        w.reset();
-        w.start();
+        w.reset();w.start();
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
@@ -1634,12 +1686,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 )));
 
 
-//        System.out.println("Extract Computed tools took: " + w);
-//        w.stop();
-//        w.reset();
-//        w.start();
-
-
         TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = SiriusJobs.runInBackground(() ->
                 storage().findStr(Filter.where("alignedFeatureId").in(ids), CsiStructureSearchResult.class)
 //                        .parallel()
@@ -1647,10 +1693,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
                         )));
 
-//        System.out.println("Extract confidence took: " + w);
-//        w.stop();
-//        w.reset();
-//        w.start();
         @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob.getResult();
         @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob.getResult();
 
@@ -1671,16 +1713,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     return apiFeture;
                 }).toList();
 
-
-//        System.out.println("Convert to API features took: " + w);
-//        w.stop();
-//        w.reset();
-//        w.start();
-
         System.out.println("Extract Annotatins took: " + w);
-        w.stop();
-        w.reset();
-        w.start();
+        w.reset();w.start();*/
 
         long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
 
