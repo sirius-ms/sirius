@@ -26,8 +26,8 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                 .addSerialization(Tag.class, new Tag.Serializer(), new Tag.Deserializer())
                 .addRepository(Tag.class,
                         Index.unique("taggedObjectClass", "taggedObjectId", "tagName") //add/remove tags to/from objects.
-                        , Index.nonUnique("tagName") // cascade TagDefinition remove (delete tag)
-                        , Index.nonUnique("taggedObjectClass","tagName") //find all objects with tag ->  value needs to be evaluated by iteration
+//                        , Index.nonUnique("tagName") // cascade TagDefinition remove (delete tag) //todo Slows down insert and update, maybe its fine to not have it an iterate of db for deletion
+//                        , Index.nonUnique("taggedObjectClass","tagName") //find all objects with tag ->  value needs to be evaluated by iteration //todo handled by lucene
                 )
 
                 .addRepository(TagDefinition.class, Index.unique("tagName"), Index.nonUnique("tagType"))
@@ -59,6 +59,7 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
         return getStorage().findStr(Filter.and(
                 Filter.where("taggedObjectClass").eq(taggedObjectClass.getName()),
                 Filter.where("taggedObjectId").eq(taggedObjectId)), Tag.class);
+        //todo check if we need to add fake where query to enforce correct index.
     }
 
     @SneakyThrows

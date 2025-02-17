@@ -113,6 +113,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.ms.middleware.Pages.*;
 import static org.springframework.http.HttpStatus.*;
 
 
@@ -147,33 +148,31 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //todo think whether we want store tags on the tagged object because we have lucene index..
 
                 //handle tag valuetype cache
-//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-//                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-//                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
+                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
 
+                //handle indexing of confidence scores
+                storage().onInsert(CsiStructureSearchResult.class,
+                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
+                                feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
+                                        .confidenceApproxMatch(sr.getConfidenceApprox())
+                                        .confidenceExactMatch(sr.getConfidenceExact())
+                                        .build()),
+                                AlignedFeature.class));
 
-                // handle index of alignedfeatures
-//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.addDocument(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
-//                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.updateDocument(projectId, convertToApiFeature(alf, EnumSet.of(AlignedFeature.OptField.tags, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.confidence))));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures.class,
-//                        alf -> searchService.removeDocument(projectId, String.valueOf(alf.getAlignedFeatureId())));
+                storage().onUpdate(CsiStructureSearchResult.class,
+                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
+                                feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
+                                        .confidenceApproxMatch(sr.getConfidenceApprox())
+                                        .confidenceExactMatch(sr.getConfidenceExact())
+                                        .build()),
+                                AlignedFeature.class));
 
-                // handle index of runs
-//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.addDocument(projectId, convertToApiRun(run, EnumSet.of(Run.OptField.tags))));
-//                storage().onUpdate(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.updateDocument(projectId, convertToApiRun(run, EnumSet.of(Run.OptField.tags))));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun.class,
-//                        run -> searchService.removeDocument(projectId, String.valueOf(run.getRunId())));
-
-                //handle index update of tags
-//                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class,
-//                        tag -> searchService.addTagToDocument(projectId, String.valueOf(tag.getTaggedObjectId()), convertToApiTag(tag), (Class<? extends Taggable>) convertToApiObjectClass(tag.getTaggedObjectClassInstance())));
-//                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class,
-//                        tag -> searchService.removeTagFromDocument(projectId, String.valueOf(tag.getTaggedObjectId()), tag.getTagName(), (Class<? extends Taggable>) convertToApiObjectClass(tag.getTaggedObjectClassInstance())));
+                storage().onRemove(CsiStructureSearchResult.class,
+                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
+                                feature -> feature.setTopAnnotations(null), AlignedFeature.class));
 
 
                 StopWatch stopWatch = new StopWatch();
@@ -883,75 +882,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return Optional.of(traceSet);
     }
 
-    private Pair<String[], Database.SortOrder[]> sort(Sort sort, Pair<String, Database.SortOrder> defaults, Function<String, String> translator) {
-        if (sort == null || sort.isEmpty() || sort == Sort.unsorted())
-            return Pair.of(new String[]{defaults.getLeft()}, new Database.SortOrder[]{defaults.getRight()});
-
-        List<String> properties = new ArrayList<>();
-        List<Database.SortOrder> orders = new ArrayList<>();
-        sort.stream().forEach(s -> {
-            properties.add(translator.apply(s.getProperty()));
-            orders.add(s.getDirection().isAscending() ? Database.SortOrder.ASCENDING : Database.SortOrder.DESCENDING);
-        });
-        return Pair.of(properties.toArray(String[]::new), orders.toArray(Database.SortOrder[]::new));
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortRun(Sort sort) {
-        return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), Function.identity());
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortCompound(Sort sort) {
-        return sort(sort, Pair.of("rt.middle", Database.SortOrder.ASCENDING), s -> switch (s) {
-            case "rtStartSeconds" -> "rt.start";
-            case "rtEndSeconds" -> "rt.end";
-            default -> s;
-        });
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortFeature(Sort sort) {
-        return sort(sort, Pair.of("retentionTime.middle", Database.SortOrder.ASCENDING), s -> switch (s) {
-            case "rtStartSeconds" -> "retentionTime.start";
-            case "rtEndSeconds" -> "retentionTime.end";
-            case "ionMass" -> "averageMass";
-            default -> s;
-        });
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortMatch(Sort sort) {
-        return sort(sort, Pair.of("searchResult.rank", Database.SortOrder.ASCENDING), s -> switch (s) {
-            case "rank" -> "searchResult.rank";
-            case "similarity" -> "searchResult.similarity.similarity";
-            case "sharedPeaks" -> "searchResult.similarity.sharedPeaks";
-            default -> s;
-        });
-    }
-
-    private Filter spectralMatchFilter(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
-        long longId = Long.parseLong(alignedFeatureId);
-        return Filter.and(
-                Filter.where("alignedFeatureId").eq(longId),
-                Filter.where("searchResult.similarity.sharedPeaks").gte(minSharedPeaks),
-                Filter.where("searchResult.similarity.similarity").gte(minSimilarity)
-        );
-    }
-
-    private Filter spectralMatchInchiFilter(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity) {
-        long longId = Long.parseLong(alignedFeatureId);
-        return Filter.and(
-                Filter.where("alignedFeatureId").eq(longId),
-                Filter.where("searchResult.candidateInChiKey").eq(candidateInchi),
-                Filter.where("searchResult.similarity.sharedPeaks").gte(minSharedPeaks),
-                Filter.where("searchResult.similarity.similarity").gte(minSimilarity)
-        );
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortFormulaCandidate(Sort sort) {
-        return sort(sort, Pair.of("formulaRank", Database.SortOrder.ASCENDING), Function.identity());
-    }
-
-    private Pair<String[], Database.SortOrder[]> sortStructureMatch(Sort sort) {
-        return sort(sort, Pair.of("structureRank", Database.SortOrder.ASCENDING), Function.identity());
-    }
 
     private Compound convertToApiCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
                                           @NotNull EnumSet<Compound.OptField> optFields,
@@ -1110,6 +1040,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public AlignedFeature convertToApiFeature(AlignedFeatures feature) {
         return convertToApiFeature(feature, EnumSet.noneOf(AlignedFeature.OptField.class));
     }
+
     public AlignedFeature convertToApiFeature(AlignedFeatures feature, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(feature.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
@@ -1478,7 +1409,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream =
-                findPageStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable, this::sortCompound)
+                findPageStr(storage(), de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable)
                         .peek(project()::fetchAdductFeatures);
 
         if (optFeatureFields.contains(AlignedFeature.OptField.msData))
@@ -1556,19 +1487,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable) {
-        Stream<QualityReport> stream;
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
-            stream = storage().findAllStr(QualityReport.class);
-        } else {
-            Pair<String[], Database.SortOrder[]> sort = sortFeature(pageable.getSort());
-            stream = storage().findAllStr(QualityReport.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
-        }
-
-        List<AlignedFeatureQuality> features = stream.map(this::convertToFeatureQuality).toList();
-
-        long total = storage().countAll(QualityReport.class);
-
-        return new PageImpl<>(features, pageable, total);
+        return findPage(storage(), QualityReport.class, pageable)
+                .map(this::convertToFeatureQuality);
     }
 
     private AlignedFeatureQuality convertToFeatureQuality(QualityReport report) {
@@ -1634,17 +1554,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        StopWatch w = new StopWatch();
+        return findPage(storage(), AlignedFeatures.class, pageable)
+                .map(alf -> convertToApiFeature(alf, optFields));
+
+       /* StopWatch w = new StopWatch();
         w.start();
-        List<AlignedFeature> features = findPageStr(AlignedFeatures.class, pageable, this::sortFeature)
-                .parallel()
+        List<AlignedFeature> features = findPage(storage(), AlignedFeatures.class, pageable)
                 .map(alf -> convertToApiFeature(alf, optFields))
                 .toList();
         System.out.println("Loading and annotating features took: " + w);
         w.reset();
-        w.start();
+        w.start();*/
 
-        // second
+        // second //todo check if complicated retrieval really males a difference.
 
        /* List<AlignedFeatures> dbfeatures = findPageStr(AlignedFeatures.class, pageable, this::sortFeature).toList();
         System.out.println("Loading features took: " + w);
@@ -1716,11 +1638,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         System.out.println("Extract Annotatins took: " + w);
         w.reset();w.start();*/
 
-        long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
+//        long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
 
-        System.out.println("Counting features took: " + w);
+//        System.out.println("Counting features took: " + w);
 
-        return new PageImpl<>(features, pageable, total);
+//        return new PageImpl<>(features, pageable, total);
     }
 
 
@@ -1793,54 +1715,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return searchService.search(projectId, searchQuery, pageable, Run.class);
     }
 
-    //todo remove TESTING ONLY
-    @SneakyThrows
-    @Override
-    @Deprecated // FOR TESTING ONLY
-    public Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-        if (searchQuery == null || searchQuery.isBlank())
-            return findRuns(pageable, optFields);
-
-        if (searchService == null)
-            throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
-
-        // runs are fully indexed, we do not have to load anything from db.
-        Page<String> ids = searchService.searchIds(projectId, searchQuery, pageable, Run.class);
-
-        List<Run> runs = storage().findStr(Filter
-                                .where("runId").
-                                in(ids.stream().map(Long::valueOf).sorted().toArray(Long[]::new))
-                        , LCMSRun.class)
-                .map(r -> convertToApiRun(r, optFields))
-                .toList();
-
-        return new PageImpl<>(runs, pageable, ids.getTotalElements());
-    }
-
-
     @SneakyThrows
     @Override
     public Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-        // todo use pageable helper
-        long total;
-        List<Run> objects;
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
-            objects = storage().findAllStr(LCMSRun.class).map(run -> convertToApiRun(run, optFields)).toList();
-            total = objects.size();
-        } else {
-            Pair<String[], Database.SortOrder[]> sort = sortRun(pageable.getSort());
-            objects = storage().findAllStr(LCMSRun.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(run -> convertToApiRun(run, optFields)).toList();
-            total = storage().countAll(LCMSRun.class);
-        }
-        return new PageImpl<>(objects, pageable, total);
+        return findPage(storage(), LCMSRun.class, pageable)
+                .map(run -> convertToApiRun(run, optFields));
     }
 
     @SneakyThrows
     @Override
     public Page<Run> findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
+        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage()
+                .findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
+
         return findRuns(tagGroup.get().getLuceneQuery(), pageable, optFields);
     }
 
@@ -1851,55 +1740,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(run -> convertToApiRun(run, optFields))
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no run '" + runId + "' in project " + projectId + "."));
     }
-
-    /*private Page<Run> findRunsByFilter(Pageable pageable, Filter filter, EnumSet<Run.OptField> optFields) throws IOException {
-        long total;
-        List<Run> objects;
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
-            objects = storage().findStr(filter, LCMSRun.class)
-                    .map(run -> convertToApiRun(run, optFields)).toList();
-            total = objects.size();
-        } else {
-            Pair<String[], Database.SortOrder[]> sort = sortRun(pageable.getSort());
-            objects = storage().findStr(filter, LCMSRun.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
-                    .map(run -> convertToApiRun(run, optFields)).toList();
-            total = storage().count(filter, LCMSRun.class);
-        }
-
-        return new PageImpl<>(objects, pageable, total);
-    }*/
-
-    /*@SneakyThrows
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T, O extends Enum<O>> Page<T> findObjectsByTagFilter(Class<?> target, @NotNull String luceneQuery, Pageable pageable, @NotNull EnumSet<O> optFields) {
-        Class<?> taggedObjectClass = convertToProjectObjectClass(target);
-
-        // find id field of tagged object.
-        AtomicReference<String> fieldName = new AtomicReference<>(null);
-        ReflectionUtils.doWithFields(
-                taggedObjectClass,
-                field -> fieldName.set(field.getName()),
-                field -> field.getAnnotation(Id.class) != null);
-        if (fieldName.get() == null)
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "No @Id field in " + taggedObjectClass);
-
-        Filter tagFilter;
-        try {
-            tagFilter = searchService.parseFindTagsByObjectType(getProjectId(), taggedObjectClass, luceneQuery);
-        } catch (Exception e) {
-            throw new ResponseStatusException(BAD_REQUEST, "Parse error: " + luceneQuery);
-        }
-
-        Long[] objectIds = storage().findStr(tagFilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
-                .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
-
-        if (objectIds.length == 0)
-            return Page.empty(pageable);
-
-        Filter objectFilter = Filter.where(fieldName.get()).in(objectIds);
-        return (Page<T>) findRunsByFilter(pageable, objectFilter, (EnumSet<Run.OptField>) optFields);
-    }*/
 
     private Class<?> convertToProjectObjectClass(Class<?> taggable) {
         if (taggable.equals(Run.class))
@@ -1935,15 +1775,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags) {
         try {
-            Class<?> taggedObjectClass = convertToProjectObjectClass(target);
+            final Class<?> taggedObjectClass = convertToProjectObjectClass(target);
 
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
+            StopWatch w = StopWatch.createStarted();
+
+            //todo add would be 20% faster if we would separate update an insert of tags to object.
             for (String objectId : objectIds) {
                 long objId = Long.parseLong(objectId);
                 if (!storage().containsPrimaryKey(objId, taggedObjectClass))
-                    throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
+                    throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objId + "' in project " + projectId + ".");
 
                 Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
 
@@ -1961,8 +1804,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         );
 
                         storage().findStr(filter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
-                                .findFirst().ifPresentOrElse(existing ->
-                                                upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
+                                .findFirst().ifPresentOrElse(
+                                        existing -> upsertTags.add(tagDef.setFormattedValueOfTag(existing, tag.getValue())),
                                         () -> insertTags.add(tagDef.newTagWithFormattedValue(tag.getValue(), taggedObjectClass, objId)));
 
                     } catch (IllegalArgumentException e) {
@@ -1972,10 +1815,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     }
                 }
             }
-            storage().upsertAll(upsertTags);
-            storage().insertAll(insertTags);
-            //todo optimize performance / find better solution
+            if (!upsertTags.isEmpty())
+                storage().upsertAll(upsertTags);
+            if (!insertTags.isEmpty())
+                storage().insertAll(insertTags);
+            System.out.println("Added/Updated Tags To NITRITE in: " + w);
+            w.reset();
+            w.start();
             searchService.addTagsToDocuments(projectId, new ArrayList<>(objectIds), tags, (Class<? extends Taggable>) target);
+            System.out.println("Added/Updated Tags To LUCENE in: " + w);
 
             return Stream.concat(upsertTags.stream(), insertTags.stream()).map(tag -> convertToApiTag(tag)).toList();
         } catch (IOException e) {
@@ -2040,9 +1888,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(tagDef -> convertToProjectDefinition(tagDef, editable)).toList();
         storage().insertAll(filtered);
 
-        //todo optimize find fifferent solution
-        tagDefinitions.forEach(df -> searchService.addTagValueType(projectId, df.getTagName(), df.getValueType()));
-
+        // flushing ensures that related events have been sent before returning this method
+        storage().flush();
 
         return filtered.stream().map(this::convertToApiDefinition).toList();
     }
@@ -2212,45 +2059,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SuppressWarnings("unchecked")
     public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
-        List<F> objects;
-        long total;
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
-            if (AlignedFeature.class.equals(target)) {
-                objects = (List<F>) storage()
-                        .findAllStr(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
-                        .map(this::convertToApiFoldChange)
-                        .toList();
-            } else if (Compound.class.equals(target)) {
-                objects = (List<F>) storage()
-                        .findAllStr(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
-                        .map(this::convertToApiFoldChange)
-                        .toList();
-            } else {
-                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
-            }
-            total = objects.size();
-        } else {
-            Pair<String[], Database.SortOrder[]> sort = sortRun(pageable.getSort());
-            if (AlignedFeature.class.equals(target)) {
-                objects = (List<F>) storage().findAllStr(
-                                de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class,
-                                pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
-                        .map(fc -> convertToApiFoldChange(fc))
-                        .toList();
-                total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class);
-            } else if (Compound.class.equals(target)) {
-                objects = (List<F>) storage().findAllStr(
-                                de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class,
-                                pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
-                        .map(fc -> convertToApiFoldChange(fc))
-                        .toList();
-                total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class);
-            } else {
-                throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
-            }
+        if (AlignedFeature.class.equals(target)) {
+            return (Page<F>) findPage(storage(), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class, pageable)
+                    .map(this::convertToApiFoldChange);
+        } else if (Compound.class.equals(target)) {
+            return (Page<F>) findPage(storage(), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class, pageable)
+                    .map(this::convertToApiFoldChange);
         }
-
-        return new PageImpl<>(objects, pageable, total);
+        throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
     }
 
     @SneakyThrows
@@ -2342,19 +2158,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Page<SpectralLibraryMatch> findLibMatches(Filter filter, Pageable pageable) throws IOException {
-        Pair<String[], Database.SortOrder[]> sort = sortMatch(pageable.getSort());
-
-        Stream<SpectraMatch> matches;
-        if (pageable.isPaged()) {
-            matches = storage().findStr(filter, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
-            );
-        } else {
-            matches = storage().findStr(filter, SpectraMatch.class, sort.getLeft(), sort.getRight());
-        }
-
-        long total = storage().count(filter, SpectraMatch.class);
-
-        return new PageImpl<>(matches.map(SpectralLibraryMatch::of).toList(), pageable, total);
+        return findPage(storage(), SpectraMatch.class, pageable, filter).map(SpectralLibraryMatch::of);
     }
 
     @SneakyThrows
@@ -2657,18 +2461,5 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 }).orElse(null);
     }
 
-    private <T> Stream<T> findPageStr(Class<T> clz, Pageable pageable, Function<Sort,
-            Pair<String[], Database.SortOrder[]>> sortTransformer
-    ) throws IOException {
-        if (pageable.isUnpaged() && pageable.getSort().isUnsorted())
-            return storage().findAllStr(clz);
-        if (pageable.getSort().isUnsorted())
-            return storage().findAllStr(clz, pageable.getOffset(), pageable.getPageSize());
 
-        Pair<String[], Database.SortOrder[]> sort = sortTransformer.apply(pageable.getSort());
-        if (pageable.isUnpaged())
-            return storage().findAllStr(clz, sort.getLeft(), sort.getRight());
-
-        return storage().findAllStr(clz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
-    }
 }

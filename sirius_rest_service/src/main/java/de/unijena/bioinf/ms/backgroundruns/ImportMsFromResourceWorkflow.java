@@ -136,7 +136,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                     SearchService searchService = project.getSearchService();
                     //Handle FEATURES
                     if (!importedFeatureIds.isEmpty()) {
-                        Partition<Long> partition = Partition.ofSize(importedFeatureIds.stream().sorted().toList(), 10000);
+                        Partition<Long> partition = Partition.ofSize(importedFeatureIds.stream().sorted().toList(), 100_000);
                         for (List<Long> ids : partition) {
                             searchService.addDocuments(project.getProjectId(),
                                     project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)

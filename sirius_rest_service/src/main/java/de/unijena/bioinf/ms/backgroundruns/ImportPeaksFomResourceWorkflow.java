@@ -104,7 +104,7 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
                 importedInstances = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                 if (project.getSearchService() != null) {
                     SearchService searchService = project.getSearchService();
-                    Partition<Long> partition = Partition.ofSize(getImportedInstancesStr().map(f -> ((NoSQLInstance) f).getLongId()).sorted().toList(), 10000);
+                    Partition<Long> partition = Partition.ofSize(getImportedInstancesStr().map(f -> ((NoSQLInstance) f).getLongId()).sorted().toList(), 100_000);
                     for (List<Long> ids : partition) {
                         searchService.addDocuments(project.getProjectId(),
                                 project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
