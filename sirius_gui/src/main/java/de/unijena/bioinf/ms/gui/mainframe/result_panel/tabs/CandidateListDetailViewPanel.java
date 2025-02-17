@@ -59,7 +59,7 @@ public class CandidateListDetailViewPanel extends JPanelWithSoftwareTour impleme
         add(list, BorderLayout.CENTER);
 
         list.getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            if (instanceBean != null && !wasComputed.apply(instanceBean) && !resultElements.isEmpty()) {
+            if (instanceBean != null && wasComputed.apply(instanceBean) && !resultElements.isEmpty()) {
                 Jobs.runEDTLater(() -> checkAndInitTutorial(gui.getProperties()));
             }
         });
