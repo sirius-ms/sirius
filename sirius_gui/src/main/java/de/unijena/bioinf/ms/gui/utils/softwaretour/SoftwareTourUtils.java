@@ -146,8 +146,6 @@ public class SoftwareTourUtils {
         glassPanel.setBounds(0, 0, 0, 0); // You can adjust its position as needed
         layeredPane.add(glassPanel, JLayeredPane.PALETTE_LAYER); // Above the scrollPane
 
-
-
         // Function to update proxy position
         Runnable updateProxyPosition = () -> {
             int index = 0; // Row index to overlay
@@ -182,9 +180,7 @@ public class SoftwareTourUtils {
             }
         };
 
-        //todo some listener for initialization still seems to be missing
-
-        // 🟢 Update proxy when the list model changes (adding/removing elements)
+        // Update proxy when the list model changes (adding/removing elements)
         listModel.addListDataListener(new ListDataListener() {
             @Override
             public void intervalAdded(ListDataEvent e) { updateProxyPosition.run(); }
@@ -194,17 +190,34 @@ public class SoftwareTourUtils {
             public void contentsChanged(ListDataEvent e) { updateProxyPosition.run(); }
         });
 
-        // 🟢 Update proxy when the list is resized
+        // Update proxy when the list is resized
         list.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) { updateProxyPosition.run(); }
+            @Override
+            public void componentShown(ComponentEvent e) { updateProxyPosition.run(); }
         });
 
-        // 🟢 Update proxy when the scroll position changes
+        // Update proxy when the scroll position changes
         JViewport viewport = scrollPane.getViewport();
         viewport.addChangeListener(e -> updateProxyPosition.run());
 
-        // 🟢 Initial positioning (invoke later to ensure layout is ready)
+        //the following listeners don't seem necessary. only activate if needed.
+//        // Update proxy when the list is re-added to a new parent (useful for dynamic UIs)
+//        list.addHierarchyListener(e -> {
+//            if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) != 0) {
+//                updateProxyPosition.run();
+//            }
+//        });
+//
+//        // Update proxy when the list gains visibility (if it was hidden)
+//        list.addAncestorListener(new AncestorListener() {
+//            @Override public void ancestorAdded(AncestorEvent event) { updateProxyPosition.run(); }
+//            @Override public void ancestorRemoved(AncestorEvent event) {}
+//            @Override public void ancestorMoved(AncestorEvent event) {updateProxyPosition.run(); }
+//        });
+
+        // Initial positioning (invoke later to ensure layout is ready)
         SwingUtilities.invokeLater(updateProxyPosition);
     }
 
