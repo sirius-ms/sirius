@@ -20,8 +20,8 @@ public class SoftwareTourInfoStore {
     public static final String MainFrameTourKey = "de.unijena.bioinf.sirius.ui.tutorial.mainFrame";
     public static final String BatchComputeTourKey = "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
 
-    public static final String DatabaseTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.DatabaseTab";
-    public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.EpimetheusTab";
+    public static final String DatabaseSearchTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.databaseTab";
+    public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.epimetheusTab";
 
 
 
@@ -58,6 +58,14 @@ public class SoftwareTourInfoStore {
     public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compounds classes.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Fingerblast = new SoftwareTourInfo("Activate to perform structure database search.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_MsNovelist = new SoftwareTourInfo("Activate to annotate molecular structures independent of a database.<br>Molecular structures are generated based on the predicted molecular fingerprint.", 2, LocationHorizontal.LEFT_SPACE_TO_LEFT, LocationVertical.CENTER);
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Database search tour /////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final SoftwareTourInfo DatabaseSearch_CSIScore = new SoftwareTourInfo("The CSI:FingerID score is used to rank the molecular structure candidates.<br>It is a log-likelihood. The best possible score is 0 the worst -infinity.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit. If multiple top candidates are highlighted green this means that this are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
+    public static final SoftwareTourInfo DatabaseSearch_Source = new SoftwareTourInfo("The structure hit can be found in the displayed databases. Even database not selected for search are displayed.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
 
 
 
