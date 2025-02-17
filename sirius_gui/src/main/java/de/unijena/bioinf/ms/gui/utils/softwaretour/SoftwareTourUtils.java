@@ -21,15 +21,15 @@ import java.util.stream.StreamSupport;
 
 public class SoftwareTourUtils {
 
-    public static <C extends Component & SoftwareTourElement> void checkAndInitTutorial(Container owner, String propertyKey, GuiProperties guiProperties) {
+    public static <C extends Component & SoftwareTourElement> void checkAndInitTour(Container owner, String propertyKey, GuiProperties guiProperties) {
         if (!owner.isShowing()) return; //not starting. Panel was probably decorated with data in the background
         if (guiProperties.isAskedTutorialThisSession(propertyKey)) return;
         else guiProperties.setTutorialKnownForThisSession(propertyKey);
 
-        checkAndInitTutorial(owner instanceof Window ? (Window) owner : SwingUtilities.getWindowAncestor(owner), owner, propertyKey);
+        checkAndInitTour(owner instanceof Window ? (Window) owner : SwingUtilities.getWindowAncestor(owner), owner, propertyKey);
     }
 
-    protected static <C extends Component & SoftwareTourElement> void checkAndInitTutorial(Window windowOwner, Container tutorialRoot, String propertyKey) {
+    protected static <C extends Component & SoftwareTourElement> void checkAndInitTour(Window windowOwner, Container tutorialRoot, String propertyKey) {
         QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?", propertyKey);
 
         if (askToStart.isSuccess()) {

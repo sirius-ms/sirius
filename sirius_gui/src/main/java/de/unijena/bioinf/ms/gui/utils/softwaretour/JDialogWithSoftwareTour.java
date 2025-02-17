@@ -10,8 +10,8 @@ public abstract class JDialogWithSoftwareTour extends JDialog {
         super(owner, title, modal);
     }
     
-    public void checkAndInitTutorial(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTutorial(this, getTutorialPropertyKey(), guiProperties);
+    public void checkAndInitSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, getTutorialPropertyKey(), guiProperties);
     }
 
     public abstract String getTutorialPropertyKey();

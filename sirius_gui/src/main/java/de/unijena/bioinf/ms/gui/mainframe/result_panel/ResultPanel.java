@@ -150,11 +150,9 @@ public class ResultPanel extends JTabbedPane {
                 Component selectedComponent = getSelectedComponent();
 
                 if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
-                    //todo seems to fail sometimes. maybe if data is still loaded? But in this case, the init in EpimetheusPanel should trigger ..?
-                    structureAnnoTab.checkAndInitTutorial(gui.getProperties());
+                    structureAnnoTab.checkAndInitSoftwareTour(gui.getProperties());
                 } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
-                    //todo seems to fail sometimes. maybe if data is still loaded? But in this case, the init in EpimetheusPanel should trigger ..?
-                    structuresTab.checkAndInitTutorial(gui.getProperties());
+                    structuresTab.checkAndInitSoftwareTour(gui.getProperties());
                 }
             }
         });

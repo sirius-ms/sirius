@@ -69,7 +69,7 @@ public class EpimetheusPanel extends JPanelWithSoftwareTour implements Loadable,
             sre.ifPresentOrElse(bean -> {
                     structureList.readDataByConsumer(d ->
                             overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles()));
-                    Jobs.runEDTLater(() -> checkAndInitTutorial(gui.getProperties()));
+                    Jobs.runEDTLater(() -> checkAndInitSoftwareTour(gui.getProperties()));
                     },
                     overviewSVP::clear);
         });
