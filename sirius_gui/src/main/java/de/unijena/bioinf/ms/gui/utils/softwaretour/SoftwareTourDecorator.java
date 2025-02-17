@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -10,8 +11,8 @@ import java.awt.*;
 import java.util.Optional;
 
 @Getter
-public class SoftwareTourDecorator extends JPanel implements SoftwareTourElement {
-    private final JComponent wrappedComponent;
+public class SoftwareTourDecorator<C extends JComponent> extends JPanel implements SoftwareTourElement {
+    private final C wrappedComponent;
     private Optional<Border> originalBorder;
 
     private final String tutorialDescription;
@@ -20,13 +21,29 @@ public class SoftwareTourDecorator extends JPanel implements SoftwareTourElement
     private final SoftwareTourInfo.LocationVertical locationVertical;
     private final String scope;
 
-    protected SoftwareTourDecorator(JComponent wrappedComponent, SoftwareTourInfo info) {
+    @Setter
+    private boolean active;
+
+    /**
+     * Note: for some components, this can produce unwanted side effects. For these, use specific classes.
+     * @param wrappedComponent
+     * @param tourInfo
+     * @return
+     */
+    public SoftwareTourDecorator(C wrappedComponent, SoftwareTourInfo tourInfo) {
+        this(wrappedComponent, tourInfo, true);
+    }
+    public SoftwareTourDecorator(C wrappedComponent, SoftwareTourInfo tourInfo, boolean active) {
+        if (wrappedComponent instanceof ToolbarButton) {
+            LoggerFactory.getLogger(SoftwareTourDecorator.class).debug("Please use specific class for ToolbarButton and not general decorator.");
+        }
         this.wrappedComponent = wrappedComponent;
-        this.tutorialDescription = info.getTutorialDescription();
-        this.orderImportance = info.getOrderImportance();
-        this.locationHorizontal = info.getLocationHorizontal();
-        this.locationVertical = info.getLocationVertical();
-        this.scope = info.getScope();
+        this.tutorialDescription = tourInfo.getTutorialDescription();
+        this.orderImportance = tourInfo.getOrderImportance();
+        this.locationHorizontal = tourInfo.getLocationHorizontal();
+        this.locationVertical = tourInfo.getLocationVertical();
+        this.scope = tourInfo.getScope();
+        this.active = active;
 
         setLayout(new BorderLayout(0,0));
         setOpaque(false);
@@ -39,19 +56,6 @@ public class SoftwareTourDecorator extends JPanel implements SoftwareTourElement
         add(wrappedComponent, BorderLayout.CENTER);
     }
 
-
-    /**
-     * Note: for some components, this can produce unwanted side effects. For these, use specific classes.
-     * @param wrappedComponent
-     * @param softwareTourInfo
-     * @return
-     */
-    public static SoftwareTourDecorator decorate(JComponent wrappedComponent, SoftwareTourInfo softwareTourInfo) {
-        if (wrappedComponent instanceof ToolbarButton) {
-            LoggerFactory.getLogger(SoftwareTourDecorator.class).debug("Please use specific class for ToolbarButton and not general decorator.");
-        }
-        return new SoftwareTourDecorator(wrappedComponent, softwareTourInfo);
-    }
 
     /** Ensure the decorator has the same size as the wrapped component */
     @Override
@@ -81,5 +85,10 @@ public class SoftwareTourDecorator extends JPanel implements SoftwareTourElement
     @Override
     public void resetHighlight() {
         if (originalBorder != null) wrappedComponent.setBorder(originalBorder.orElse(null));
+    }
+
+    @Override
+    public boolean isActive() {
+        return active;
     }
 }
