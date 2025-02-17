@@ -7,9 +7,14 @@ import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -27,11 +32,10 @@ public class SoftwareTourUtils {
     protected static <C extends Component & SoftwareTourElement> void checkAndInitTutorial(Window windowOwner, Container tutorialRoot, String propertyKey) {
         QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?", propertyKey);
 
-        List<Component> allComponents = new ArrayList<>();
-        new ComponentIterator(windowOwner, (c) -> true).forEachRemaining(allComponents::add);
-
-
         if (askToStart.isSuccess()) {
+            List<Component> allComponents = new ArrayList<>();
+            new ComponentIterator(windowOwner, (c) -> true).forEachRemaining(allComponents::add);
+
             Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, component -> component.isEnabled()));
 
 
@@ -43,6 +47,7 @@ public class SoftwareTourUtils {
                     .sorted(Comparator.comparing(SoftwareTourElement::getOrderImportance))
                     .toList();
 
+//            System.out.println("number of tutorials: " + componentsWithTutorial.size());
             for (int i = 0; i < componentsWithTutorial.size(); i++) {
                 C component = componentsWithTutorial.get(i);
 
@@ -132,6 +137,76 @@ public class SoftwareTourUtils {
         tutorialDialog.setLocation(location);
     }
 
+
+    public static <C extends Component> void addSoftwareTourGlassPane(JLayeredPane layeredPane, JScrollPane scrollPane, JList list, Class<C> cellClass, Function<C, Component> componentFunction, SoftwareTourInfo tourInfo) {
+        ListModel listModel = list.getModel();
+        JPanel empty = new JPanel();
+        empty.setOpaque(false);
+        SoftwareTourDecorator glassPanel = new SoftwareTourDecorator<>(empty, tourInfo);
+        glassPanel.setBounds(0, 0, 0, 0); // You can adjust its position as needed
+        layeredPane.add(glassPanel, JLayeredPane.PALETTE_LAYER); // Above the scrollPane
+
+
+
+        // Function to update proxy position
+        Runnable updateProxyPosition = () -> {
+            int index = 0; // Row index to overlay
+            Rectangle rowBounds = list.getCellBounds(index, index);
+
+            if (rowBounds != null) {
+                Component cell = list.getCellRenderer().getListCellRendererComponent(
+                        list, list.getModel().getElementAt(index), index, false, false
+                );
+
+                Component reference = componentFunction.apply((C)cell);
+                if (reference == null) return;
+
+                Point refPos = reference.getLocation();
+
+                Point point = refPos;
+                Component currentSource = reference.getParent();
+                while (currentSource != null) {
+                    if (currentSource == cell) break;
+                    point.x += currentSource.getX();
+                    point.y += currentSource.getY();
+
+                    currentSource = currentSource.getParent();
+                }
+
+                int proxyX = point.x; // + rowBounds.x;
+                int proxyY = point.y; // + rowBounds.y;
+
+                glassPanel.setBounds(proxyX, proxyY, reference.getWidth(), reference.getHeight());
+//                    System.out.println("setting the location to " + proxyX + ", " + proxyY + ", " + reference.getWidth() + ", " + reference.getHeight());
+//
+            }
+        };
+
+        //todo some listener for initialization still seems to be missing
+
+        // 🟢 Update proxy when the list model changes (adding/removing elements)
+        listModel.addListDataListener(new ListDataListener() {
+            @Override
+            public void intervalAdded(ListDataEvent e) { updateProxyPosition.run(); }
+            @Override
+            public void intervalRemoved(ListDataEvent e) { updateProxyPosition.run(); }
+            @Override
+            public void contentsChanged(ListDataEvent e) { updateProxyPosition.run(); }
+        });
+
+        // 🟢 Update proxy when the list is resized
+        list.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) { updateProxyPosition.run(); }
+        });
+
+        // 🟢 Update proxy when the scroll position changes
+        JViewport viewport = scrollPane.getViewport();
+        viewport.addChangeListener(e -> updateProxyPosition.run());
+
+        // 🟢 Initial positioning (invoke later to ensure layout is ready)
+        SwingUtilities.invokeLater(updateProxyPosition);
+    }
 
     public static class ComponentIterator implements Iterator<Component> {
         private final Stack<Component> stack = new Stack<>();

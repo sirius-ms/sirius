@@ -93,7 +93,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
         if (tourInfo != null) {
-            add(SoftwareTourDecorator.decorate(activationButton, tourInfo), content);
+            add(new SoftwareTourDecorator<>(activationButton, tourInfo), content);
         } else {
             add(activationButton, content);
         }

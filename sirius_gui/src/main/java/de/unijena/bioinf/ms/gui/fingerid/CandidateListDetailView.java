@@ -35,18 +35,20 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.model.DBLink;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -104,7 +106,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 showCenterCard(ActionList.ViewState.DATA);
         });
 
-        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
+        ListModel<FingerprintCandidateBean> listModel = new DefaultEventListModel<>(filteredSource);
+        candidateList = new CandidateInnerList(listModel);
 
         this.resultPanel = resultPanel;
         this.gui = gui;
@@ -114,8 +117,30 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        addToCenterCard(ActionList.ViewState.DATA, scrollPane);
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+
+        // Add data panel to JLayeredPane to allow to add software tour info to a layer on top.
+        JLayeredPane layeredPane = new JLayeredPane();
+        scrollPane.setBounds(0, 0, getWidth(), getHeight()); // Make it fill the entire area
+        layeredPane.add(scrollPane, JLayeredPane.DEFAULT_LAYER);
+
+        addToCenterCard(ActionList.ViewState.DATA, layeredPane);
+
+        // Make sure the layered pane resizes properly with the panel
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Set the size of the layered pane to the size of the container
+                layeredPane.setSize(getSize());
+                scrollPane.setBounds(0, 0, getWidth(), getHeight()); // Update scrollPane size
+            }
+        });
+
+        //add tutorial stuff
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class,  (cell) -> cell.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class, (cell) -> cell.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class, (cell) -> cell.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
+
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());

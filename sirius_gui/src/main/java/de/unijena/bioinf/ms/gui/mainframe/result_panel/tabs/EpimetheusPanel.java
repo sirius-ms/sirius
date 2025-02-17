@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.JPanelWithSoftwareTour;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
-
-import static de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator.decorate;
 
 
 public class EpimetheusPanel extends JPanelWithSoftwareTour implements Loadable, PanelDescription {
@@ -76,7 +75,7 @@ public class EpimetheusPanel extends JPanelWithSoftwareTour implements Loadable,
         });
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable,
-                decorate(overviewSVP, SoftwareTourInfoStore.Epimetheus_SpectralVisualization));
+                new SoftwareTourDecorator<>(overviewSVP, SoftwareTourInfoStore.Epimetheus_SpectralVisualization));
         major.setDividerLocation(250);
         loadablePanel = new LoadablePanel(major);
         add(loadablePanel, BorderLayout.CENTER);

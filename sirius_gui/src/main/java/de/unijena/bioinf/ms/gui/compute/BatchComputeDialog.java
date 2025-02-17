@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.JDialogWithSoftwareTour;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -72,7 +73,6 @@ import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
-import static de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator.decorate;
 
 @Slf4j
 public class BatchComputeDialog extends JDialogWithSoftwareTour {
@@ -643,7 +643,7 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
 
         presetDropdown = new JComboBox<>();
 
-        panel.add(decorate(presetDropdown, SoftwareTourInfoStore.BatchCompute_PresetDropDown));
+        panel.add(new SoftwareTourDecorator<>(presetDropdown, SoftwareTourInfoStore.BatchCompute_PresetDropDown));
 
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
