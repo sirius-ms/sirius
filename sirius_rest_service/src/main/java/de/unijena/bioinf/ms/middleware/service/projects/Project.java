@@ -33,7 +33,6 @@ import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -129,16 +128,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
-    Page<Run>  findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
-
-    @SneakyThrows
-    Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
-
     Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
     default Page<Run> findRuns(Pageable pageable, Run.OptField... optFields) {
         return findRuns(pageable, toEnumSet(Run.OptField.class, optFields));
     }
+
+    Page<Run>  findRunsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
 
     Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields);
 

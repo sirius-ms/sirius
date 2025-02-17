@@ -402,11 +402,6 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Page<Run> findRunsDb(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }

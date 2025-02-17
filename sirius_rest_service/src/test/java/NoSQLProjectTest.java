@@ -733,25 +733,14 @@ public class NoSQLProjectTest {
 //                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
 //                }
                 project.addTagsToObjects(Run.class, sample.stream().map(Run::getRunId).toList(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
-
-                watch.stop();
                 System.out.println("ADD TAGS TO RUNS: " + watch);
                 watch.reset();watch.start();
 
                 Page<Run> runPage = project.findRuns("tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags)); //EnumSet.of(Run.OptField.tags) //EnumSet.noneOf(Run.OptField.class)
-
-                watch.stop();
                 System.out.println("FIND OBJ '" + runPage.getNumberOfElements() + "' BY TAGS INDEX ONLY: " + watch);
-                watch.reset();watch.start();
-                Page<Run> runPageDB = project.findRunsDb("tags.sample-type:sample", Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
-
-                watch.stop();
-                System.out.println("FIND '" + runPageDB.getNumberOfElements() + "' OBJ BY TAGS BY DB: " + watch);
                 watch.reset();watch.start();
 
                 Page<Run> runPageAll = project.findRuns(Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
-
-                watch.stop();
                 System.out.println("FIND ALL '" + runPageAll.getNumberOfElements() + "' OBJ: " + watch);
             }
         } catch (Exception e) {
