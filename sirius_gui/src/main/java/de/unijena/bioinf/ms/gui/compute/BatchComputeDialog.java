@@ -276,7 +276,7 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
             };
             gui.getConnectionMonitor().addConnectionListener(connectionListener);
 
-            Jobs.runEDTLater(() -> checkAndInitTutorial(gui.getProperties()));
+            Jobs.runEDTLater(() -> checkAndInitSoftwareTour(gui.getProperties()));
         });
 
         setPreferredSize(new Dimension(1150, 1024));

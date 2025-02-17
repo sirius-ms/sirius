@@ -11,8 +11,8 @@ public abstract class JPanelWithSoftwareTour extends JPanel {
         super(layout);
     }
     
-    public void checkAndInitTutorial(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTutorial(this, getTutorialPropertyKey(), guiProperties);
+    public void checkAndInitSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, getTutorialPropertyKey(), guiProperties);
     }
 
     public abstract String getTutorialPropertyKey();
