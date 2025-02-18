@@ -55,12 +55,12 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }
         });

@@ -69,7 +69,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         this.gui = compoundList.getGui();
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, long totalElements) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -83,7 +83,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long totalElements) {
                 if (!selected.isEmpty()) {
                     instanceBean = selected.getFirst();
                 } else {
