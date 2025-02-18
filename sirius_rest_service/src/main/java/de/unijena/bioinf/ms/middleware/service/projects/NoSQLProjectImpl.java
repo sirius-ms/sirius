@@ -1058,10 +1058,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = feature.getDetectedAdducts().clone();
             adducts.removeAllWithSource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
             adducts.removeAllWithSource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove if detection runs during import.
-            builder.detectedAdducts(adducts.getAllAdducts().stream().map(PrecursorIonType::toString)
-                    .collect(Collectors.toSet()));
+            @NotNull Set<String> cleanedAdducts = adducts.getAllAdducts().stream()
+                    .map(PrecursorIonType::toString)
+                    .collect(Collectors.toSet());
+            if (cleanedAdducts.isEmpty())
+                cleanedAdducts.add(PrecursorIonType.unknown(feature.getCharge()).toString());
+            builder.detectedAdducts(cleanedAdducts);
         } else {
-            builder.detectedAdducts(Set.of());
+            builder.detectedAdducts(Set.of(PrecursorIonType.unknown(feature.getCharge()).toString()));
         }
         RetentionTime rt = feature.getRetentionTime();
         if (rt != null) {
