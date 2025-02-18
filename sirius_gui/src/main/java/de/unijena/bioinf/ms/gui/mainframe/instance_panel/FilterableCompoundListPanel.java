@@ -42,20 +42,15 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
-        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-            decorateElementCounter(selection.getSelected().size(), event.getSourceList().size(), fullSize);
+        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, long totalElements) {
+            decorateElementCounter(selection.getSelected().size(), event.getSourceList().size(), (int) totalElements);
         }
 
         @Override
-        public void fullListChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int filteredSize) {
-            decorateElementCounter(selection.getSelected().size(), filteredSize, event.getSourceList().size());
-        }
-
-        @Override
-        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
+        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, long totalElements) {
             int selectedSize = selected.size();
             int filteredSize = (deselected.size() + selectedSize);
-            decorateElementCounter(selectedSize, filteredSize, fullSize);
+            decorateElementCounter(selectedSize, filteredSize, (int) totalElements);
         }
     };
 
@@ -76,7 +71,6 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         super(new BorderLayout());
         center = new LoadablePanel(view);
         view.sourceList.addChangeListener(sizeListener);
-        view.sourceList.backgroundFilterMatcher.setLoadable(center);
         compoundListView = view;
 
         Box includeBox = Box.createHorizontalBox();

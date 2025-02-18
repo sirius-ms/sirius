@@ -21,17 +21,13 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
-import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
-import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
-import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -63,17 +59,14 @@ public class CompoundList {
 
 
     final JButton openFilterPanelButton;
-    final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> observableScource;
     @Getter
     final SortedList<InstanceBean> sortedSource;
-    final FilterList<InstanceBean> filterList;
     @Getter
     final EventList<InstanceBean> compoundList; // wrapper for filteredList that executes events in swing edt
 
-    final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
-    final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
-    final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
+    @Getter
+    final DefaultEventSelectionModel<InstanceBean> compoundListSelectionModel;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -81,11 +74,14 @@ public class CompoundList {
 
     @Getter
     private @NotNull SiriusGui gui;
+    private final GuiProjectManager projectManager;
+    private final CompoundFilterModel compoundFilterModel;
 
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
+        this.projectManager = gui.getProjectManager();
         //additional filter based on specific parameters
-        compoundFilterModel = new CompoundFilterModel();
+        compoundFilterModel = projectManager.getCompoundFilterModel();
         // filter based ion full text field
         searchField = new PlaceholderTextField();
         searchField.setPlaceholder("Type and hit enter to search");
@@ -97,26 +93,7 @@ public class CompoundList {
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
-        compoundFilterModel.updateAdducts(sortedSource);
-
-        //filters
-        BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
-        //text filter
-        listOfFilters.add(new TextComponentMatcherEditor<>(searchField, (baseList, element) -> {
-            baseList.add(element.getGUIName());
-            baseList.add(element.getIonType().toString());
-            baseList.add(String.valueOf(element.getIonMass()));
-        }, false));
-
-        listOfFilters.add(new CompoundFilterMatcherEditor(new CompoundFilterMatcher(gui.getProperties(), compoundFilterModel)));
-        //combined filters
-        CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
-        compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
-
-        compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
-        backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
-        filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
-        compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
+        compoundList = GlazedListsSwing.swingThreadProxyList(sortedSource);
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
@@ -124,33 +101,32 @@ public class CompoundList {
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
         openFilterPanelButton.addActionListener(e -> new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this));
-        compositeMatcherEditor.addMatcherEditorListener(evt -> {
-            colorByActiveFilter();
-            updateTogglesByActiveFilter();
-        });
 
-        compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
+        compoundListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
-        compountListSelectionModel.addListSelectionListener(e -> {
+        compoundListSelectionModel.addListSelectionListener(e -> {
             final Component c = gui.getMainFrame().getResultsPanel().getSelectedComponent();
             if (c instanceof Loadable l)
                 l.setLoading(true, true);
 
             if (!e.getValueIsAdjusting()) {
                 //we only enable listener for first selected because this is the one where results are visible.
-                compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
-                compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                if (!compountListSelectionModel.isSelectionEmpty())
-                    compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
+                compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+                compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
+                if (!compoundListSelectionModel.isSelectionEmpty())
+                    compoundListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
                 notifyListenerSelectionChange(e);
             }
         });
 
         // data change listener needs to operate on unfiltered list as well to notice add or removal on filtered elements
-        sortedSource.addListEventListener(this::notifyListenerFullListDataChange);
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
+        compoundFilterModel.addUpdateCompleteListener(evt -> {
+            colorByActiveFilter();
+            updateTogglesByActiveFilter();
+        });
         compoundFilterModel.updateAdducts(sortedSource);
         compoundFilterModel.fireUpdateCompleted();
     }
@@ -221,11 +197,14 @@ public class CompoundList {
     }
 
     public boolean isFilterInverted() {
-        return compoundListMatchEditor.isInverted();
+        //todo LUCENE implement insversion?
+//        return compoundListMatchEditor.isInverted();
+        return false;
     }
 
     public void toggleInvertFilter() {
-        compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
+        //todo LUCENE check what needs to be done
+//        compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
     }
 
 
@@ -240,32 +219,26 @@ public class CompoundList {
     public void resetFilter() {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
         compoundFilterModel.resetFilter();
-        compoundListMatchEditor.setInverted(false);
+        //todo LUCENE handle inversion if needed
+//        compoundListMatchEditor.setInverted(false);
         searchField.setText("");
         searchField.postActionEvent();
         colorByActiveFilter();
         updateTogglesByActiveFilter();
     }
 
-    private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
-        //copy event is hell important to reset the iterator
-        for (ExperimentListChangeListener l : listeners) {
-            l.fullListChanged(event.copy(), compountListSelectionModel, compoundList.size());
-        }
-    }
-
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
         //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
-            l.listChanged(event.copy(), compountListSelectionModel, sortedSource.size());
+            l.listChanged(event.copy(), compoundListSelectionModel, projectManager.getTotalInstances());
         }
     }
 
     private void notifyListenerSelectionChange(ListSelectionEvent event) {
-        final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compountListSelectionModel.getSelected());
-        final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compountListSelectionModel.getDeselected());
+        final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compoundListSelectionModel.getSelected());
+        final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compoundListSelectionModel.getDeselected());
         for (ExperimentListChangeListener l : listeners) {
-            l.listSelectionChanged(compountListSelectionModel, selected, deselected, sortedSource.size());
+            l.listSelectionChanged(compoundListSelectionModel, selected, deselected, sortedSource.size());
         }
     }
 
@@ -276,10 +249,6 @@ public class CompoundList {
 
     public void removeChangeListener(ExperimentListChangeListener l) {
         listeners.remove(l);
-    }
-
-    public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
-        return compountListSelectionModel;
     }
 
     public int getFullSize() {

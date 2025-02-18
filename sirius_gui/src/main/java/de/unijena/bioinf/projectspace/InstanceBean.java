@@ -37,6 +37,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -93,22 +94,26 @@ public class InstanceBean implements SiriusPCS {
 
     //todo som unregister listener stategy
 
-    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull GuiProjectManager projectManager) {
-        this(sourceFeature.getAlignedFeatureId(), sourceFeature, projectManager);
+    //todo LUCENE MAKE loading feature data fast again.
+    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull Collection<AlignedFeatureOptField> optsLoaded, @NotNull GuiProjectManager projectManager) {
+        this(sourceFeature.getAlignedFeatureId(), sourceFeature, optsLoaded, projectManager);
     }
 
     public InstanceBean(@NotNull String featureId, @NotNull GuiProjectManager projectManager) {
-        this(featureId, null, projectManager);
+        this(featureId, null, null, projectManager);
     }
 
-    public InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @NotNull GuiProjectManager projectManager) {
+    private InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @Nullable Collection<AlignedFeatureOptField> optsLoaded, @NotNull GuiProjectManager projectManager) {
         this.featureId = featureId;
         this.projectManager = projectManager;
         this.sourceFeature = sourceFeature;
 
-        if (this.sourceFeature == null)
+        if (this.sourceFeature == null) {
             //preload minimal information for compound list to prevent them from being loaded in EDT.
             this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+        } else if (optsLoaded != null) {
+            this.optsLoaded.addAll(optsLoaded);
+        }
 
         this.listener = new PropertyChangeListener() {
             @Override
@@ -187,7 +192,7 @@ public class InstanceBean implements SiriusPCS {
 
     public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(CONFIDENCE, COMPUTEDTOOLS);
 
-    private final Set<AlignedFeatureOptField> defaultOptsLoaded = new HashSet<>(10);
+    private final Set<AlignedFeatureOptField> optsLoaded = new HashSet<>(10);
 
     @NotNull
     public AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
@@ -196,22 +201,23 @@ public class InstanceBean implements SiriusPCS {
 
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-        List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                ? Stream.concat(optFields.stream().filter(opt -> !NONE.equals(opt)), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
-                : DEFAULT_OPT_FEATURE_FIELDS);
+        Set<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
+                ? Stream.concat(optFields.stream().filter(opt -> !NONE.equals(opt)), optsLoaded.stream()).collect(Collectors.toSet())
+                : optsLoaded);
 
         //double checked locking source feature must be volatile
-        if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS)) {
+        if (sourceFeature == null || !optsLoaded.containsAll(of)) {
             synchronized (this) {
-                if (defaultOptsLoaded.containsAll(of)) {
-                    defaultOptsLoaded.clear();
-                    // we update every time here since we do not know which optional fields are already loaded.
-                    if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
-                        sourceFeature = withIds((pid, fid) ->
-                                getClient().features().getAlignedFeature(pid, fid, of));
-                    defaultOptsLoaded.addAll(of);
-                    return sourceFeature;
+                // we update every time here since we do not know which optional fields are already loaded.
+                if (sourceFeature == null || !optsLoaded.containsAll(of)) {
+                    StopWatch w = StopWatch.createStarted();
+                    optsLoaded.clear();
+                    sourceFeature = withIds((pid, fid) ->
+                            getClient().features().getAlignedFeature(pid, fid, of.stream().toList()));
+                    optsLoaded.addAll(of);
+                    System.out.println("Loaded data from API for '" + getGUIName() + "' in: " + w);
                 }
+                return sourceFeature;
             }
         }
         return sourceFeature;
@@ -316,7 +322,6 @@ public class InstanceBean implements SiriusPCS {
     }
 
 
-
     //top annotations needed.
     public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {
         return getFormulaAnnotation().map(fc -> new FormulaResultBean(fc, this));
@@ -337,9 +342,9 @@ public class InstanceBean implements SiriusPCS {
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE
                 ? Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
-                    .map(FeatureAnnotations::getConfidenceApproxMatch)
+                .map(FeatureAnnotations::getConfidenceApproxMatch)
                 : Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
-                    .map(FeatureAnnotations::getConfidenceExactMatch);
+                .map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
@@ -398,7 +403,7 @@ public class InstanceBean implements SiriusPCS {
         }
         //recalculate ranks
         {
-            merged.sort(Comparator.comparing(a -> ((FingerprintCandidateBean)a).getCandidate().getCsiScore()).reversed());
+            merged.sort(Comparator.comparing(a -> ((FingerprintCandidateBean) a).getCandidate().getCsiScore()).reversed());
             int rank = 1;
             for (FingerprintCandidateBean fc : merged)
                 fc.getCandidate().setRank(rank++);
@@ -483,7 +488,7 @@ public class InstanceBean implements SiriusPCS {
         return getSourceFeature().isHasMs1();
     }
 
-   public Boolean hasMsMs() {
+    public Boolean hasMsMs() {
         return getSourceFeature().isHasMsMs();
     }
 

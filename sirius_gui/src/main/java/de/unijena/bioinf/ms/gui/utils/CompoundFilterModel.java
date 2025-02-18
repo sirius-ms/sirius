@@ -22,16 +22,23 @@ import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
-import io.sirius.ms.sdk.model.DataQuality;
-import io.sirius.ms.sdk.model.SearchableDatabase;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
 import org.apache.commons.text.CaseUtils;
+import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,9 +71,9 @@ public class CompoundFilterModel implements SiriusPCS {
     @Getter
     private final QualityFilter peakShapeQualityFilter = new QualityFilter("Peak Quality");
     @Getter
-    private final QualityFilter alignmentQuality = new QualityFilter( "Alignment Quality");
+    private final QualityFilter alignmentQuality = new QualityFilter("Alignment Quality");
     @Getter
-    private final QualityFilter isotopePatternQuality = new QualityFilter( "Isotope Pattern Quality");
+    private final QualityFilter isotopePatternQuality = new QualityFilter("Isotope Pattern Quality");
     @Getter
     private final QualityFilter fragmentationPatternQuality = new QualityFilter("Fragmentation Pattern Quality");
     @Getter
@@ -207,7 +214,6 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
 
-
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         double oldValue = this.currentMinMz;
@@ -279,9 +285,26 @@ public class CompoundFilterModel implements SiriusPCS {
         return currentMaxMz != maxMz;
     }
 
+    public boolean isMinMzFilterActive() {
+        return currentMinMz != minMz;
+    }
+
+    public boolean isMzFilterActive() {
+        return isMinMzFilterActive() || isMaxMzFilterActive();
+    }
+
     public boolean isMaxRtFilterActive() {
         return currentMaxRt != maxRt;
     }
+
+    public boolean isMinRtFilterActive() {
+        return currentMinRt != minRt;
+    }
+
+    public boolean isRtFilterActive() {
+        return isMinRtFilterActive() || isMaxRtFilterActive();
+    }
+
 
     public boolean isMaxConfidenceFilterActive() {
         return currentMaxConfidence != maxConfidence;
@@ -344,6 +367,10 @@ public class CompoundFilterModel implements SiriusPCS {
     @Override
     public HiddenChangeSupport pcs() {
         return pcs;
+    }
+
+    public void addUpdateCompleteListener(PropertyChangeListener listener) {
+        addPropertyChangeListener("filterUpdateCompleted", listener);
     }
 
     public void resetFilter() {
@@ -446,7 +473,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
 
     public class QualityFilter {
-        private final static List<DataQuality> DEFAULT_STATE = Arrays.asList(DataQuality.values()).subList(1,DataQuality.values().length);
+        private final static List<DataQuality> DEFAULT_STATE = Arrays.asList(DataQuality.values()).subList(1, DataQuality.values().length);
 
         @Getter
         private final String name;
@@ -498,7 +525,7 @@ public class CompoundFilterModel implements SiriusPCS {
             return dataQualities.contains(quality);
         }
 
-        public boolean setQualitySelected(int publicIndex, boolean selected){
+        public boolean setQualitySelected(int publicIndex, boolean selected) {
             if (selected)
                 return addQuality(publicIndex);
             return removeQuality(publicIndex);
@@ -508,16 +535,126 @@ public class CompoundFilterModel implements SiriusPCS {
             return dataQualities.size() < DEFAULT_STATE.size();
         }
 
-        public void reset(){
+        public void reset() {
             dataQualities.clear();
             dataQualities.addAll(DEFAULT_STATE);
         }
 
-        public List<java.lang.String> getPossibleQualities(){
+        public List<java.lang.String> getPossibleQualities() {
             return DEFAULT_STATE.stream()
-                    .map(dq -> CaseUtils.toCamelCase(dq.name(), true, '_',' ','\t'))
+                    .map(dq -> CaseUtils.toCamelCase(dq.name(), true, '_', ' ', '\t'))
                     .toList();
         }
+    }
+
+    public Optional<Query> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
+        if (!isActive())
+            return Optional.empty();
+
+        return Optional.of(toLuceneQueryBuilder(confidenceMode).build());
+    }
+
+    public Optional<Query> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
+        if (!isActive() && alFeatureIds.length == 0)
+            return Optional.empty();
+
+        BooleanQuery.Builder builder = toLuceneQueryBuilder(confidenceMode);
+        if (alFeatureIds.length > 0){
+            BooleanQuery.Builder idQuery = new BooleanQuery.Builder();
+            for (String fid : alFeatureIds) {
+                idQuery.add(new TermQuery(new Term("alignedFeatureId", fid)), BooleanClause.Occur.SHOULD);
+            }
+            builder.add(idQuery.build(), BooleanClause.Occur.MUST);
+        }
+
+        return Optional.of(toLuceneQueryBuilder(confidenceMode).build());
+    }
+
+
+    public BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode){
+        // Combine queries using BooleanQuery.Builder
+        BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
+
+        if (isMzFilterActive())
+            booleanQuery.add(DoublePoint.newRangeQuery("ionMass", currentMinMz, currentMaxMz), BooleanClause.Occur.MUST);
+
+        if (isRtFilterActive()) {
+            BooleanQuery.Builder rtQuery = new BooleanQuery.Builder();
+
+            rtQuery.add(DoublePoint.newRangeQuery("rtStartSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+            rtQuery.add(DoublePoint.newRangeQuery("rtApexSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+            rtQuery.add(DoublePoint.newRangeQuery("rtEndSeconds", currentMinRt, currentMaxRt), BooleanClause.Occur.SHOULD);
+
+            booleanQuery.add(rtQuery.build(), BooleanClause.Occur.MUST);
+        }
+
+        if (isMinConfidenceFilterActive() || isMaxConfidenceFilterActive()) {
+            String confidenceField = confidenceMode == ConfidenceDisplayMode.APPROXIMATE ? "topAnnotations.confidenceApproxMatch" : "topAnnotations.confidenceExactMatch";
+            booleanQuery.add(DoublePoint.newRangeQuery(confidenceField, currentMinConfidence, currentMaxConfidence), BooleanClause.Occur.MUST);
+        }
+
+        if (isHasMs1())
+            booleanQuery.add(new TermQuery(new Term("hasMs1", "true")), BooleanClause.Occur.MUST);
+
+        if (isHasMsMs())
+            booleanQuery.add(new TermQuery(new Term("hasMsMs", "true")), BooleanClause.Occur.MUST);
+
+        if (getFeatureQualityFilter().isEnabled())
+            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()), BooleanClause.Occur.MUST);
+
+        if (isAdductFilterActive())
+            booleanQuery.add(makeAdductQuery("detectedAdducts", getSelectedAdducts()), BooleanClause.Occur.MUST);
+
+        //todo implement blank substraction filter.
+        if (getBlankSubtraction().isEnabled()){
+//            if (!matchesFoldChangeFilter(item, filterModel))
+//                return false;
+        }
+
+        if (getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
+            // todo implement quality filters
+            /*AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
+            if (qualityReport != null) { //always allow to pass the filter if now quality data is available
+                Map<String, Category> categories = qualityReport.getCategories();
+                for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
+                    if (filter.isEnabled()) {
+                        Category q = categories.get(filter.getName());
+                        if (q != null && !filter.isQualitySelected(q.getOverallQuality()))
+                            return false;
+                    }
+                }
+            }*/
+        }
+
+        // todo implement element filters
+        if (isElementFilterEnabled()) {
+//            if (!matchesElementFilter(item, filterModel)) return false;
+        }
+
+        // todo implement lipid filters
+
+        if (isLipidFilterEnabled()) {
+//            if (!matchesLipidFilter(item, filterModel)) return false;
+        }
+
+        // todo implent db filter
+        if (isDbFilterEnabled()) {
+//            if (!matchesDBFilter(item, filterModel)) return false;
+        }
+        return booleanQuery;
+    }
+
+    private static Query makeQualityQuery(String fieldName, QualityFilter filter){
+        BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
+        filter.dataQualities.forEach(q -> qualityQuery.add(new TermQuery(new Term(fieldName, q.toString())), BooleanClause.Occur.SHOULD));
+        return qualityQuery.build();
+
+    }
+
+    private static Query makeAdductQuery(String fieldName, Set<PrecursorIonType> adducts) {
+        BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
+        adducts.stream().map(p -> "\"" + p + "\"").forEach(adduct -> qualityQuery.add(new TermQuery(new Term(fieldName, adduct)), BooleanClause.Occur.SHOULD));
+        return qualityQuery.build();
 
     }
 }

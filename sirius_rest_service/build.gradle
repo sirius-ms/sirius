@@ -22,9 +22,12 @@ ext['okhttp.version'] = okhttp_version
 version = siriusFrontendVersion
 
 dependencies {
-    implementation 'org.apache.lucene:lucene-core:10.0.0'
-    implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
-    implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
+    implementation 'org.apache.lucene:lucene-core:10.1.0'
+    implementation 'org.apache.lucene:lucene-queryparser:10.1.0'
+    implementation 'org.apache.lucene:lucene-analysis-common:10.1.0'
+
+//    implementation 'org.hibernate.search:hibernate-search-mapper-pojo-standalone:7.2.2.Final'
+//    implementation 'org.hibernate.search:hibernate-search-backend-lucene:7.2.2.Final'
 
 //    implementation 'org.apache.solr:solr-solrj:9.7.0'
 //    implementation 'org.apache.solr:solr-solrj:10.0.0'
