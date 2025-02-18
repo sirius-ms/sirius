@@ -20,56 +20,24 @@
 
 package de.unijena.bioinf.ms.middleware.model.compounds;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.middleware.model.LuceneDocument;
-import de.unijena.bioinf.ms.middleware.model.TaggableLuceneDocumentProvider;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI;
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.service.search.LuceneSearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.apache.lucene.document.*;
-import org.apache.lucene.index.IndexableField;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Compound implements TaggableLuceneDocumentProvider, Taggable {
-    @JsonIgnore
-    @NotNull
-    @Override
-    public LuceneDocument toLuceneDocument(LuceneSearchService.ProjectSearchContext projectSearchContext) {
-        return () -> new ArrayList<IndexableField>() {{
-            add(new StringField("uuid", compoundId, Field.Store.NO)); // standard field name for uuid to identify document
-
-            add(new StringField("compoundId", compoundId, Field.Store.YES));
-            if (name != null && !name.isBlank())
-                add(new TextField("name", name, Field.Store.NO));
-            if (neutralMass != null)
-                add(new DoublePoint("neutralMass", neutralMass));
-            if (rtStartSeconds != null)
-                add(new DoublePoint("rtStartSeconds", rtStartSeconds));
-            if (rtEndSeconds != null)
-                add(new DoublePoint("rtEndSeconds", rtEndSeconds));
-            //tags
-            if (notNullOrEmpty(tags))
-                tags.values().forEach(tag ->
-                        addAll(projectSearchContext.getIndexableTagFields(tag.getTagName(), tag.getValue(), Field.Store.YES)));
-
-        }}.iterator();
-    }
+public class Compound implements Taggable {
 
     @Schema(name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags}
