@@ -32,10 +32,12 @@ public class OrderCompoundByRT extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy((o1, o2) -> {
-            double d1 = o1.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
-            double d2 = o2.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
-            return Double.compare(d1, d2);
-        });
+        mainFrame.getFilterableCompoundListPanel().runInBackgroundAndLoad(() ->
+                mainFrame.getCompoundList().orderBy((o1, o2) -> {
+                    double d1 = o1.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
+                    double d2 = o2.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
+                    return Double.compare(d1, d2);
+                })
+        );
     }
 }
