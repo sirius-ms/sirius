@@ -1084,6 +1084,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     private AlignedFeature annotateApiFeature(long alignedFeatureId, AlignedFeature feature, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        StopWatch w = StopWatch.createStarted();
+
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             if (feature.getMsData() == null)
                 project().findByFeatureIdStr(alignedFeatureId, MSData.class).findAny()
@@ -1092,6 +1094,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             feature.setMsData(null);
         }
+        System.out.println("Handling msData of Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
+
 
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             feature.setTopAnnotations(extractTopCsiAnnotations(alignedFeatureId));
@@ -1106,6 +1112,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             feature.setTopAnnotations(null);
         }
+        System.out.println("Handling topAnnotation/confidence of Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
 
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo)) {
             if (feature.getTopAnnotationsDeNovo() == null)
@@ -1113,6 +1122,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             feature.setTopAnnotationsDeNovo(null);
         }
+
+        System.out.println("Handling topAnnotationDeNovo of Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
+
 
         if (optFields.contains(AlignedFeature.OptField.computedTools)) {
             if (feature.getComputedTools() == null)
@@ -1124,6 +1138,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             feature.setComputedTools(null);
         }
 
+        System.out.println("Handling computedTools of Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
+
         if (optFields.contains(AlignedFeature.OptField.tags)) {
             if (feature.getTags() == null)
                 feature.setTags(findTagsByObject(AlignedFeatures.class, alignedFeatureId)
@@ -1131,6 +1149,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         } else {
             feature.setTags(null);
         }
+        System.out.println("Handling tags of Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
         return feature;
     }
 
@@ -1682,9 +1703,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        StopWatch w = StopWatch.createStarted();
         long id = Long.parseLong(alignedFeatureId);
-        return storage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(a -> convertToApiFeature(a, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+        Optional<AlignedFeatures> f = storage().getByPrimaryKey(id, AlignedFeatures.class);
+        System.out.println("Request Feature '" + alignedFeatureId + "' took: " + w);
+        w.reset();
+        w.start();
+        AlignedFeature af = f.map(a -> convertToApiFeature(a, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+        System.out.println("Map Feature '" + alignedFeatureId + "' took: " + w);
+        return af;
+
     }
 
     @SneakyThrows
@@ -2327,6 +2355,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return sSum;
     }
 
+    @SneakyThrows
     private StructureCandidateFormula convertStructureMatch(StructureMatch match, EnumSet<StructureCandidateScored.OptField> optFields) {
         final StructureCandidateFormula sSum = new StructureCandidateFormula();
         //FP
@@ -2364,7 +2393,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         // spectral library matches
         if (optFields.contains(StructureCandidateScored.OptField.libraryMatches)) {
-            List<SpectralLibraryMatch> libraryMatches = project().findByInChIStr(sSum.getInchiKey(), SpectraMatch.class)
+            /// Index:
+            /// "alignedFeatureId", "searchResult.candidateInChiKey", "searchResult.rank"
+            List<SpectralLibraryMatch> libraryMatches = storage().findStr(
+                            Filter.and(
+                                    Filter.where("alignedFeatureId").eq(match.getAlignedFeatureId()),
+                                    Filter.where("searchResult.candidateInChiKey").eq(sSum.getInchiKey())
+                            ), SpectraMatch.class)
                     .map(SpectralLibraryMatch::of).toList();
             sSum.setSpectralLibraryMatches(libraryMatches);
         }
