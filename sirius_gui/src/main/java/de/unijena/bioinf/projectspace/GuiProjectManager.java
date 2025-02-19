@@ -24,6 +24,8 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
 import io.sirius.ms.sdk.SiriusClient;
@@ -55,6 +57,8 @@ public class GuiProjectManager implements Closeable {
     public final String projectId;
     private final SiriusClient siriusClient;
     private final GuiProperties properties;
+    private final SiriusGui siriusGui;
+
     protected final FastPropertyChangeSupport pcs = new FastPropertyChangeSupport(this);
 
     private FingerIdData fingerIdDataPos;
@@ -86,6 +90,8 @@ public class GuiProjectManager implements Closeable {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
+        this.siriusGui = siriusGui;
+
         this.compoundFilterModel = new CompoundFilterModel();
 
         StopWatch w = StopWatch.createStarted();
@@ -94,10 +100,12 @@ public class GuiProjectManager implements Closeable {
 
         PropertyChangeListener filterListener = evt -> reloadFeatures();
         compoundFilterModel.addUpdateCompleteListener(filterListener);
-        reloadFeatures();
 
         confidenceModeListender = (evt) -> reloadFeatures();
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
+
+        reloadFeatures();
+
 
         //handle events for import data changes
         importListener = evt -> DataObjectEvents.
@@ -184,10 +192,8 @@ public class GuiProjectManager implements Closeable {
                                     INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
                                 }
                             });
-                            case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED -> {
-                                System.out.println("UPDATE " + projectEvent.getFeaturedId());
-                                GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + projectEvent.getFeaturedId(), null, projectEvent);
-                            }
+                            case RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
+                                    GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + projectEvent.getFeaturedId(), null, projectEvent);
                         }
                     }
                 }
@@ -213,19 +219,32 @@ public class GuiProjectManager implements Closeable {
     }
 
     private void reloadFeatures(@Nullable String filteredQuery, @Nullable List<String> sortQuery) {
-        INSTANCE_LIST.getReadWriteLock().writeLock().lock();
-        try {
-            PagedModelAlignedFeature instPage = siriusClient.features()
-                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filteredQuery, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS);
+        FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
+                .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
-            List<InstanceBean> tmpInst = instPage.getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
+        Runnable r = () -> {
+            List<InstanceBean> tmpInst = siriusClient.features()
+                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filteredQuery, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                    .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
             // todo REPLACE PLACEHOLDER if number available via page.
-            totalInstances.set(9_999_999);
-            INSTANCE_LIST.clear();
-            INSTANCE_LIST.addAll(tmpInst);
-        } finally {
-            INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
-        }
+
+
+            INSTANCE_LIST.getReadWriteLock().writeLock().lock();
+            try {
+                totalInstances.set(9_999_999);
+                INSTANCE_LIST.clear();
+                INSTANCE_LIST.addAll(tmpInst);
+            } finally {
+                INSTANCE_LIST.getReadWriteLock().writeLock().unlock();
+            }
+        };
+
+
+        if (loadable != null)
+            loadable.runInBackgroundAndLoad(r);
+        else
+            Jobs.runInBackground(r);
+
     }
 
     public void disableImportListener() {
