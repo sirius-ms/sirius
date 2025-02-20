@@ -4,20 +4,27 @@ import biotransformer.transformation.Biotransformation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import lombok.Setter;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.List;
 import java.util.concurrent.Callable;
 
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
+
+    @Setter
     List<IAtomContainer> substrates;
-
+    @Setter
     private MetabolicTransformation metabolicTransformation;
-
+    @Setter
     private int iterations; // Number of iterations
+    @Setter
     private int cyp450Mode; // CYP450 Mode
+    @Setter
     private int p2Mode; // Phase II Mode
+    @Setter
     private boolean useDB; // Use the database flag
+    @Setter
     private boolean useSub; // Use the substructure flag
 
     public BioTransformerJJob() {
@@ -29,22 +36,23 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
         List<JJob<List<Biotransformation>>> jobs =
                 switch (metabolicTransformation) {
                     case PHASE_1_CYP450 -> substrates.stream().map(ai -> makeJob(() ->
-                                    BiotransformerWrapper.Cyp450BTransformer(ai, iterations, cyp450Mode, useDB, useSub)))
+                                    BiotransformerWrapper.cyp450BTransformer(ai, iterations, cyp450Mode, useDB, useSub)))
                             .toList();
                     case EC_BASED -> substrates.stream().map(ai -> makeJob(() ->
-                            BiotransformerWrapper.ECBasedBTransformer(ai, iterations, useDB, useSub))).toList();
-                    case PHASE_2 -> {
-                    }
-                    case HUMAN_GUT -> {
-                    }
-                    case ENV_MICROBIAL -> {
-                    }
-                    case ALL_HUMAN -> {
-                    }
-                    case SUPER_BIO -> {
-                    }
-                    case ABIOTIC -> {
-                    }
+                            BiotransformerWrapper.ecBasedBTransformer(ai, iterations, useDB, useSub))).toList();
+                    case PHASE_2 -> substrates.stream().map(ai -> makeJob(() ->
+                            BiotransformerWrapper.phaseIIBTransformer(ai,iterations,p2Mode,useDB,useSub))).toList();
+                    case HUMAN_GUT -> substrates.stream().map(ai -> makeJob(() ->
+                            BiotransformerWrapper.hGutBTransformer(ai,iterations,useDB,useSub))).toList();
+                    case ENV_MICROBIAL -> substrates.stream().map(ai -> makeJob(() ->
+                            BiotransformerWrapper.envMicrobialTransformer(ai,iterations,useDB,useSub))).toList();
+
+                    case ALL_HUMAN -> substrates.stream().map(ai -> makeJob(() ->
+                            BiotransformerWrapper.allHumanTransformer(ai,iterations,p2Mode,cyp450Mode,useDB,useSub))).toList();
+                    case SUPER_BIO -> substrates.stream().map(ai -> makeJob(()->
+                            BiotransformerWrapper.superBioTransformer(ai,p2Mode,cyp450Mode,useDB,useSub))).toList();
+                    case ABIOTIC -> substrates.stream().map(ai -> makeJob(() ->
+                            BiotransformerWrapper.abioticTransformer(ai,iterations))).toList();
                     case HUMAN_CUSTOM_MULTI -> throw new IllegalArgumentException("This is the single transformation Job, use ....");
                 };
 
