@@ -42,12 +42,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Category
  */
 @JsonPropertyOrder({
+  Category.JSON_PROPERTY_CATEGORY_ID,
   Category.JSON_PROPERTY_CATEGORY_NAME,
   Category.JSON_PROPERTY_OVERALL_QUALITY,
   Category.JSON_PROPERTY_ITEMS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Category {
+  public static final String JSON_PROPERTY_CATEGORY_ID = "categoryId";
+  private String categoryId;
+
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
   private String categoryName;
 
@@ -58,6 +62,31 @@ public class Category {
   private List<QualityItem> items = new ArrayList<>();
 
   public Category() {
+  }
+
+  public Category categoryId(String categoryId) {
+    
+    this.categoryId = categoryId;
+    return this;
+  }
+
+   /**
+   * Get categoryId
+   * @return categoryId
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryId() {
+    return categoryId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CATEGORY_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryId(String categoryId) {
+    this.categoryId = categoryId;
   }
 
   public Category categoryName(String categoryName) {
@@ -152,20 +181,22 @@ public class Category {
       return false;
     }
     Category category = (Category) o;
-    return Objects.equals(this.categoryName, category.categoryName) &&
+    return Objects.equals(this.categoryId, category.categoryId) &&
+        Objects.equals(this.categoryName, category.categoryName) &&
         Objects.equals(this.overallQuality, category.overallQuality) &&
         Objects.equals(this.items, category.items);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(categoryName, overallQuality, items);
+    return Objects.hash(categoryId, categoryName, overallQuality, items);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Category {\n");
+    sb.append("    categoryId: ").append(toIndentedString(categoryId)).append("\n");
     sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
     sb.append("    overallQuality: ").append(toIndentedString(overallQuality)).append("\n");
     sb.append("    items: ").append(toIndentedString(items)).append("\n");

@@ -17,6 +17,8 @@
 
 * `COMPUTEDTOOLS` (value: `"computedTools"`)
 
+* `QUALITIES` (value: `"qualities"`)
+
 * `TAGS` (value: `"tags"`)
 
 
