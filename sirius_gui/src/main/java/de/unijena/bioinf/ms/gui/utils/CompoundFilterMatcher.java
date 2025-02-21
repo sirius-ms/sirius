@@ -95,11 +95,11 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.getBlankSubtraction().isEnabled())
             if (!matchesFoldChangeFilter(item, filterModel)) return false;
 
-        if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
+        if (filterModel.getCategorizedQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
             AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
             if (qualityReport != null) { //always allow to pass the filter if now quality data is available
                 Map<String, Category> categories = qualityReport.getCategories();
-                for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
+                for (CompoundFilterModel.QualityFilter filter : filterModel.getCategorizedQualityFilters()) {
                     if (filter.isEnabled()) {
                         Category q = categories.get(filter.getName());
                         if (q != null && !filter.isQualitySelected(q.getOverallQuality()))

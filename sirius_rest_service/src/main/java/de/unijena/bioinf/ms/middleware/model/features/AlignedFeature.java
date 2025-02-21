@@ -48,10 +48,10 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature implements Taggable {
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, tags}
+    public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags}
 
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
-            OptField.tags, OptField.computedTools, OptField.confidence);
+            OptField.tags, OptField.computedTools, OptField.confidence, OptField.qualities);
 
     // identifier
     @IndexField(documentId = true, sortable = true)
@@ -101,7 +101,7 @@ public class AlignedFeature implements Taggable {
     protected Double rtApexSeconds;
 
     /**
-     * Quality of this feature.
+     * Overall Quality of this feature.
      */
     @IndexField(stored = true)
     @Schema(nullable = true)
@@ -161,7 +161,11 @@ public class AlignedFeature implements Taggable {
     protected ComputedSubtools computedTools;
 
 
+    /**
+     * Qualities per top level quality category.
+     */
     @IndexField(stored = true)
+    @Schema(nullable = true)
     protected Map<String, DataQuality> qualities;
 
     /**
