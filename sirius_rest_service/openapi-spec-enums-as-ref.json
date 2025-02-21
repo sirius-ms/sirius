@@ -6578,7 +6578,10 @@
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
               "default": [
-                "none"
+                "confidence",
+                "computedTools",
+                "qualities",
+                "tags"
               ]
             }
           }
@@ -8720,6 +8723,7 @@
           "topAnnotations",
           "topAnnotationsDeNovo",
           "computedTools",
+          "qualities",
           "tags"
         ]
       },
@@ -8801,6 +8805,14 @@
           },
           "computedTools": {
             "$ref": "#/components/schemas/ComputedSubtools"
+          },
+          "qualities": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/DataQuality"
+            },
+            "description": "Qualities per top level quality category.",
+            "nullable": true
           },
           "tags": {
             "type": "object",
@@ -10486,6 +10498,9 @@
       "Category": {
         "type": "object",
         "properties": {
+          "categoryId": {
+            "type": "string"
+          },
           "categoryName": {
             "type": "string"
           },

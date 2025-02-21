@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 
@@ -32,11 +33,11 @@ import java.util.stream.Stream;
 class DataQualitySummaryWriter extends SummaryTable {
 
     final static List<String> CATEGORIES = List.of(
-            QualityReport.PEAK_QUALITY,
-            QualityReport.ALIGNMENT_QUALITY,
-            QualityReport.ISOTOPE_QUALITY,
-            QualityReport.MS2_QUALITY,
-            QualityReport.ADDUCT_QUALITY
+            DefaultQualityCategory.PEAK_QUALITY.getDisplayName(),
+            DefaultQualityCategory.ALIGNMENT_QUALITY.getDisplayName(),
+            DefaultQualityCategory.ISOTOPE_QUALITY.getDisplayName(),
+            DefaultQualityCategory.MS2_QUALITY.getDisplayName(),
+            DefaultQualityCategory.ADDUCT_QUALITY.getDisplayName()
     );
 
     final static List<String> SHARED_COLUMNS = List.of(
