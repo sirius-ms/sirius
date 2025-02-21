@@ -590,8 +590,6 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                         if (storedValue != null) {
                             Object converted = convertStoredValue(storedValue, fieldType);
                             field.set(instance, converted);
-                        } else {
-                            field.set(instance, null);
                         }
                     } else { // Otherwise, assume nested object.
                         Object nestedInstance = convertDocumentToPojo(fieldName + ".", doc, fieldType);

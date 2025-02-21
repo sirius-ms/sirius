@@ -41,6 +41,33 @@ public class Utils {
     public static final Comparator<Double> DOUBLE_DESC_NULL_LAST = Comparator.nullsLast(Comparator.reverseOrder());
     public static final Comparator<Double> DOUBLE_ASC_NULL_LAST = Comparator.nullsLast(Comparator.naturalOrder());
 
+
+    public static String toScreamingSnakeCase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        return input.trim()
+                .replaceAll("\\s+", "_") // Replace whitespace with underscore
+                .toUpperCase(); // Convert to uppercase
+    }
+
+    public static String toCamelCase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+
+        String[] words = input.trim().split("\\s+");
+        StringBuilder camelCaseString = new StringBuilder(words[0].toLowerCase());
+
+        for (int i = 1; i < words.length; i++) {
+            camelCaseString.append(words[i].substring(0, 1).toUpperCase())
+                    .append(words[i].substring(1).toLowerCase());
+        }
+
+        return camelCaseString.toString();
+    }
+
     public static ZonedDateTime epochLongToZonedDateTime(long epochMillis) {
         return epochLongToZonedDateTime(epochMillis, ZoneId.systemDefault());
     }

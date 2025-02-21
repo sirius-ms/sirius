@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory.*;
 
 /**
  * This model stores the filter criteria for a compound list
@@ -68,19 +71,19 @@ public class CompoundFilterModel implements SiriusPCS {
 
 
     @Getter
-    private final QualityFilter featureQualityFilter = new QualityFilter("Feature Quality");
+    private final QualityFilter featureQualityFilter = new QualityFilter(null,"Feature Quality");
     @Getter
-    private final QualityFilter peakShapeQualityFilter = new QualityFilter("Peak Quality");
+    private final QualityFilter peakShapeQualityFilter = new QualityFilter(PEAK_QUALITY);
     @Getter
-    private final QualityFilter alignmentQuality = new QualityFilter("Alignment Quality");
+    private final QualityFilter alignmentQuality = new QualityFilter(ALIGNMENT_QUALITY);
     @Getter
-    private final QualityFilter isotopePatternQuality = new QualityFilter("Isotope Pattern Quality");
+    private final QualityFilter isotopePatternQuality = new QualityFilter(ISOTOPE_QUALITY);
     @Getter
-    private final QualityFilter fragmentationPatternQuality = new QualityFilter("Fragmentation Pattern Quality");
+    private final QualityFilter fragmentationPatternQuality = new QualityFilter(MS2_QUALITY);
     @Getter
-    private final QualityFilter adductAssignmentQuality = new QualityFilter("Adduct Assignment Quality");
+    private final QualityFilter adductAssignmentQuality = new QualityFilter(ADDUCT_QUALITY);
     @Getter
-    private final List<QualityFilter> ioQualityFilters = List.of(peakShapeQualityFilter, alignmentQuality, isotopePatternQuality, fragmentationPatternQuality, adductAssignmentQuality);
+    private final List<QualityFilter> categorizedQualityFilters = List.of(peakShapeQualityFilter, alignmentQuality, isotopePatternQuality, fragmentationPatternQuality, adductAssignmentQuality);
 
     // MSData filter
     @Getter
@@ -276,7 +279,7 @@ public class CompoundFilterModel implements SiriusPCS {
                 currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
         ) return true;
         if (!adducts.isEmpty()) return true;
-        if (getIoQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
+        if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
 
         return false;
@@ -478,14 +481,16 @@ public class CompoundFilterModel implements SiriusPCS {
 
         @Getter
         private final String name;
+        @Getter
+        private final String id;
         private final EnumSet<DataQuality> dataQualities = EnumSet.copyOf(DEFAULT_STATE);
 
-        public QualityFilter() {
-            this("quality");
+        public QualityFilter(DefaultQualityCategory category) {
+            this(category.name(), category.getDisplayName());
         }
-
-        public QualityFilter(String name) {
+        public QualityFilter(String id, String name) {
             this.name = name;
+            this.id = id;
         }
 
         public boolean addQuality(int publicIndex) {
@@ -600,41 +605,31 @@ public class CompoundFilterModel implements SiriusPCS {
         if (isHasMsMs())
             booleanQuery.add(new TermQuery(new Term("hasMsMs", "true")), BooleanClause.Occur.MUST);
 
-        if (getFeatureQualityFilter().isEnabled())
-            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()), BooleanClause.Occur.MUST);
-
         if (isAdductFilterActive())
             booleanQuery.add(makeAdductQuery("detectedAdducts", getSelectedAdducts()), BooleanClause.Occur.MUST);
 
-        //todo implement blank substraction filter.
+        if (getFeatureQualityFilter().isEnabled())
+            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()), BooleanClause.Occur.MUST);
+
+        getCategorizedQualityFilters().stream().filter(CompoundFilterModel.QualityFilter::isEnabled).forEach(filter ->
+                booleanQuery.add(makeQualityQuery("qualities." + filter.id, filter), BooleanClause.Occur.MUST));
+
+
+//        // todo implement element filters
+//        if (isElementFilterEnabled()) {
+////            if (!matchesElementFilter(item, filterModel)) return false;
+//        }
+
+        //TAG FILTERS
         if (getBlankSubtraction().isEnabled()){
+            //todo implement blank substraction filter.
 //            if (!matchesFoldChangeFilter(item, filterModel))
 //                return false;
         }
 
-        if (getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
-            // todo implement quality filters
-            /*AlignedFeatureQualityExperimental qualityReport = item.getQualityReport();
-            if (qualityReport != null) { //always allow to pass the filter if now quality data is available
-                Map<String, Category> categories = qualityReport.getCategories();
-                for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
-                    if (filter.isEnabled()) {
-                        Category q = categories.get(filter.getName());
-                        if (q != null && !filter.isQualitySelected(q.getOverallQuality()))
-                            return false;
-                    }
-                }
-            }*/
-        }
-
-        // todo implement element filters
-        if (isElementFilterEnabled()) {
-//            if (!matchesElementFilter(item, filterModel)) return false;
-        }
-
-        // todo implement lipid filters
-
+        //RESULT FILTERS
         if (isLipidFilterEnabled()) {
+            // todo implement lipid filters
 //            if (!matchesLipidFilter(item, filterModel)) return false;
         }
 

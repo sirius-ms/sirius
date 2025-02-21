@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.quality;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
+import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -15,7 +16,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
     @Override
     public void addToReport(QualityReport report, MergedLCMSRun run, AlignedFeatures feature, TraceProvider provider) {
         // majors
-        QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ALIGNMENT_QUALITY);
+        QualityReport.Category peakQuality = new QualityReport.Category(DefaultQualityCategory.ALIGNMENT_QUALITY);
 
         if (feature.getFeatures().isEmpty()) {
             peakQuality.getItems().add(new QualityReport.Item("There are no aligned features.", DataQuality.LOWEST, QualityReport.Weight.CRITICAL));

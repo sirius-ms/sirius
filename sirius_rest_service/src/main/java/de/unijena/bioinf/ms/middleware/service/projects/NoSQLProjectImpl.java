@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -101,7 +102,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -187,7 +187,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
                     Pages.forEach(100_000,
-                            pageable -> findAlignedFeatures(pageable, AlignedFeature.OptField.confidence, AlignedFeature.OptField.computedTools, AlignedFeature.OptField.tags),
+                            pageable -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
 
@@ -1123,6 +1123,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 );
         } else {
             feature.setComputedTools(null);
+        }
+
+        if (optFields.contains(AlignedFeature.OptField.qualities)) {
+            AlignedFeatureQuality qualityReport = findAlignedFeaturesQualityById(feature.getAlignedFeatureId());
+            Map<String, DataQuality> qualities = new HashMap<>();
+            qualityReport.getCategories().values().forEach(v -> qualities.put(v.getCategoryId(), v.getOverallQuality()));
+            feature.setQualities(qualities);
+        } else {
+            feature.setQualities(null);
         }
 
         if (optFields.contains(AlignedFeature.OptField.tags)) {

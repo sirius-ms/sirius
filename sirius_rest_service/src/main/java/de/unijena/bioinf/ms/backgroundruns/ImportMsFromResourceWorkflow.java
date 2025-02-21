@@ -28,6 +28,7 @@ import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
@@ -141,7 +142,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                             searchService.addDocuments(project.getProjectId(),
                                     project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
                                             .parallel()
-                                            .map(project::convertToApiFeature)
+                                            .map(f -> project.convertToApiFeature(f, EnumSet.of(AlignedFeature.OptField.qualities)))
                                             .toList());
                         }
                     }

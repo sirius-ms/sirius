@@ -2259,6 +2259,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -2355,6 +2356,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -2430,6 +2432,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -2503,6 +2506,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -2667,6 +2671,41 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/job-configs/get-command": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get a CLI command for the given job configuration.",
+        "description": "Get a CLI command for the given job configuration.",
+        "operationId": "getCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3801,6 +3840,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -4263,6 +4303,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -4474,6 +4515,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -6955,11 +6997,15 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
               "default": [
-                "none"
+                "confidence",
+                "computedTools",
+                "qualities",
+                "tags"
               ]
             }
           }
@@ -7056,6 +7102,7 @@
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -9118,7 +9165,7 @@
           },
           "quality": {
             "type": "string",
-            "description": "Quality of this feature.",
+            "description": "Overall Quality of this feature.",
             "nullable": true,
             "enum": [
               "NOT_APPLICABLE",
@@ -9151,6 +9198,22 @@
           },
           "computedTools": {
             "$ref": "#/components/schemas/ComputedSubtools"
+          },
+          "qualities": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "nullable": true,
+              "enum": [
+                "NOT_APPLICABLE",
+                "LOWEST",
+                "BAD",
+                "DECENT",
+                "GOOD"
+              ]
+            },
+            "description": "Qualities per top level quality category.",
+            "nullable": true
           },
           "tags": {
             "type": "object",
@@ -10852,6 +10915,9 @@
       "Category": {
         "type": "object",
         "properties": {
+          "categoryId": {
+            "type": "string"
+          },
           "categoryName": {
             "type": "string"
           },

@@ -236,7 +236,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
                 dataParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
                 dataParameters.add(Box.createVerticalStrut(5));
-                qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
+                qualityPanels = filterModel.getCategorizedQualityFilters().stream().map(qf -> {
                     QualityFilterPanel qfp = new QualityFilterPanel(qf);
                     dataParameters.addNamed(qf.getName(), qfp);
                     return qfp;
@@ -424,7 +424,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
 
         Iterator<QualityFilterPanel> qualityPanelIt = qualityPanels.iterator();
-        Iterator<CompoundFilterModel.QualityFilter> qualityFilterIt = filterModel.getIoQualityFilters().iterator();
+        Iterator<CompoundFilterModel.QualityFilter> qualityFilterIt = filterModel.getCategorizedQualityFilters().iterator();
         while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
