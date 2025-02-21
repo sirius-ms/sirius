@@ -1102,6 +1102,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 feature.setTopAnnotations(FeatureAnnotations.builder()
                                         .confidenceExactMatch(searchResult.getConfidenceExact())
                                         .confidenceApproxMatch(searchResult.getConfidenceApprox())
+                                        .matchedDatabases(searchResult.getMatchedDatabases())
                                         .build()));
         } else {
             feature.setTopAnnotations(null);
@@ -1278,6 +1279,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
                             cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
                             cSum.setExpandedDatabases(it.getExpandedDatabases());
+                            cSum.setMatchedDatabases(it.getMatchedDatabases());
                         });
         } else {
             formulaCandidate = storage().findStr(

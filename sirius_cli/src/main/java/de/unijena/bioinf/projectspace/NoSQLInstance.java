@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -604,69 +605,77 @@ public class NoSQLInstance implements Instance {
     public void saveStructureSearchResult(@NotNull List<FCandidate<?>> structureSearchResults) {
         //todo move entity creation to document project space package
         try {
+            Object2IntMap<String> dbFlagsToRank = new Object2IntOpenHashMap<>();
+
+            {
+                List<CsiStructureMatch> matches = structureSearchResults.stream()
+                        .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                        .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
+                                .map(csiRes -> csiRes.getResults().stream().map(c -> CsiStructureMatch.builder()
+                                        .alignedFeatureId(id)
+                                        .formulaId((long) fc.getId())
+                                        .csiScore(c.getScore())
+                                        .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                        .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
+                                        .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                        .candidate(c.getCandidate())
+                                        .build())
+                                ).orElseGet(Stream::empty))
+                        .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                        .collect(Collectors.toList());
+
+                //todo here we could restrict the number of candidates stored.
+
+                {
+                    //adding ranks
+                    final AtomicInteger rank = new AtomicInteger(1);
+                    matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+                    if (!matches.isEmpty())
+                        matches.getFirst().setMcesDistToTopHit(0d); //it seems that top hit zero is sometimes overwritten during expansive search.
+                    //insert matches
+                    project().getStorage().insertAll(matches);
+
+                    //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
+                    int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
+                    upsertComputedSubtools(cs -> cs.setStructureSearch(true));
+                    log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
+                }
+
+                //collect DB flags
+                matches.forEach(match -> {
+                    int rank = match.getStructureRank();
+                    match.getCandidate().getLinks().stream().map(DBLink::getName).forEach(
+                            dbName -> dbFlagsToRank.merge(dbName, rank, Math::min));
+                });
+            }
+
+
             //create and structure search results
             List<CsiStructureSearchResult> searchResults = structureSearchResults.stream()
                     .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
                     .flatMap(fc -> {
                         final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
                         return idResult.getAnnotation(StructureSearchResult.class).map(searchResult ->
-                                        CsiStructureSearchResult.builder()
-                                                .alignedFeatureId(id)
-                                                .confidenceApprox(searchResult.getConfidencScoreApproximate())
-                                                .confidenceExact(searchResult.getConfidenceScore())
-                                                .specifiedDatabases(searchResult.getSpecifiedSearchDatabases().stream()
-                                                        .map(CustomDataSources.Source::name).distinct().toList())
-                                                .expandedDatabases(searchResult.getExpandedSearchDatabases().stream()
-                                                        .map(CustomDataSources.Source::name).distinct().toList())
-                                                .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
-                                                .build()
+                                CsiStructureSearchResult.builder()
+                                        .alignedFeatureId(id)
+                                        .confidenceApprox(searchResult.getConfidencScoreApproximate())
+                                        .confidenceExact(searchResult.getConfidenceScore())
+                                        .specifiedDatabases(searchResult.getSpecifiedSearchDatabases().stream()
+                                                .map(CustomDataSources.Source::name).distinct().toList())
+                                        .expandedDatabases(searchResult.getExpandedSearchDatabases().stream()
+                                                .map(CustomDataSources.Source::name).distinct().toList())
+                                        .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
+                                        .matchedDatabases(dbFlagsToRank)
+                                        .build()
                         ).stream();
                     }).collect(Collectors.toList());
+            if (!searchResults.isEmpty())
+                System.out.println("No Search Result for feature: " + id);
+            if (searchResults.size() > 1)
+                System.out.println("More then ONE Search Result for feature: " + id);
+
             // write structure search results to db
-            project().getStorage().insertAll(searchResults);
-
-
-            List<CsiStructureMatch> matches = structureSearchResults.stream()
-                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
-                    .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
-                            .map(csiRes -> csiRes.getResults().stream().map(c -> CsiStructureMatch.builder()
-                                    .alignedFeatureId(id)
-                                    .formulaId((long) fc.getId())
-                                    .csiScore(c.getScore())
-                                    .tanimotoSimilarity(c.getCandidate().getTanimoto())
-                                    .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
-                                    .candidateInChiKey(c.getCandidate().getInchiKey2D())
-                                    .candidate(c.getCandidate())
-                                    .build())
-                            ).orElseGet(Stream::empty))
-                    .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
-                    .collect(Collectors.toList());
-
-            //adding ranks
-            final AtomicInteger rank = new AtomicInteger(1);
-            matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
-            if (!matches.isEmpty())
-                matches.get(0).setMcesDistToTopHit(0d); //it seems that top hit zero is sometimes overwritten during expansive search.
-            //insert matches
-            project().getStorage().insertAll(matches);
-
-            // write only fingerprint candidates that do not yet exist in a transaction
-//            int inserted = project().getStorage().write(() -> {
-//                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
-//                for (CsiStructureMatch m : matches) {
-//                    FingerprintCandidate c = m.getCandidate();
-//                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
-//                        toInsert.add(c);
-//                }
-//                //insert all candidates that do not exist
-//                return project().getStorage().upsertAll(toInsert); //should be insert, workaround to prevent duplicate key error.
-//            });
-
-            //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
-            int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
-            upsertComputedSubtools(cs -> cs.setStructureSearch(true));
-            log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
-
+            project().getStorage().insert(searchResults.getFirst());
         } catch (Exception e) {
             deleteStructureSearchResult();
             throw new RuntimeException(e);
@@ -676,7 +685,6 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasStructureSearchResult() {
         return getComputedSubtools().isStructureSearch();
-//        return project().countByFeatureId(id, CsiStructureSearchResult.class) > 0;
     }
 
     @SneakyThrows
@@ -715,7 +723,6 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasCanopusResult() {
         return getComputedSubtools().isCanopus();
-//        return project().countByFeatureId(id, CanopusPrediction.class) > 0;
     }
 
     @SneakyThrows
@@ -784,7 +791,6 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasMsNovelistResult() {
         return getComputedSubtools().isDeNovoSearch();
-//        return project().countByFeatureId(id, DenovoStructureMatch.class) > 0;
     }
 
     @SneakyThrows
