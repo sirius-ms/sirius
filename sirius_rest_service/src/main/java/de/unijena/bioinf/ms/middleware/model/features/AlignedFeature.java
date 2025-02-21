@@ -103,7 +103,7 @@ public class AlignedFeature implements Taggable {
     /**
      * Quality of this feature.
      */
-    @IndexField(stored = true, sortable = true)
+    @IndexField(stored = true)
     @Schema(nullable = true)
     protected DataQuality quality;
     /**
@@ -159,6 +159,10 @@ public class AlignedFeature implements Taggable {
                             "Null if it was not requested und non-null otherwise.")
     @JsonIgnoreProperties(value = { "alignedFeatureId" })
     protected ComputedSubtools computedTools;
+
+
+    @IndexField(stored = true)
+    protected Map<String, DataQuality> qualities;
 
     /**
      * Key: tagName, value: tag

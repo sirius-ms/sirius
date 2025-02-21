@@ -44,6 +44,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.apache.lucene.document.Field.Store.NO;
@@ -72,9 +74,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
 
     // Base analyzer and dynamic (per-field) analyzer:
     private final Analyzer baseAnalyzer = new StandardAnalyzer();
-    private final Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-    private final Map<String, PointsConfig> pointsConfigMap = new HashMap<>();
-    private final Map<String, SortField.Type> sortTypes = new HashMap<>();
+    private final Map<String, Analyzer> fieldAnalyzers = new PrefixAwareString2ObjectHashMap<>();
+    private final Map<String, PointsConfig> pointsConfigMap = new PrefixAwareString2ObjectHashMap<>();
+    private final Map<String, SortField.Type> sortTypes = new PrefixAwareString2ObjectHashMap<>();
     private final PerFieldAnalyzerWrapper dynamicAnalyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
 
     // StandardQueryParser using the dynamic analyzer.
@@ -144,7 +146,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     }
 
     public boolean isEmpty() {
-       return getNumOfDocs().key() <= 0;
+        return getNumOfDocs().key() <= 0;
     }
 
     public boolean isTaggable() {
@@ -538,16 +540,33 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
      * Finally, dynamic tag fields (fields starting with the tag prefix) are collected into the bean’s tag map.
      */
     private T convertDocumentToPojo(Document doc, Class<T> clazz) {
+        return convertDocumentToPojo("", doc, clazz);
+    }
+
+    private <C> C convertDocumentToPojo(String fieldPrefix, Document doc, Class<C> clazz) {
         try {
-            T instance = clazz.getDeclaredConstructor().newInstance();
+            C instance = clazz.getDeclaredConstructor().newInstance();
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(IndexField.class)) {
                     field.setAccessible(true);
                     IndexField ann = field.getAnnotation(IndexField.class);
-                    String fieldName = ann.name().isEmpty() ? field.getName() : ann.name();
+                    String fieldName = fieldPrefix + (ann.name().isEmpty() ? field.getName() : ann.name());
                     Class<?> fieldType = field.getType();
-                    // Handle collections or arrays.
-                    if (isCollection(fieldType)) {
+
+                    if (isMap(fieldType)) { //handle hash maps
+                        String prefix = fieldName + ".";
+                        IndexableField[] values = doc.getFields().stream().filter(storedField -> storedField.name().startsWith(prefix)).toArray(IndexableField[]::new);
+                        if (values.length > 0) {
+                            Map<String, Object> map = new HashMap<>();
+                            for (IndexableField storedField : values) {
+                                String key = storedField.name().substring(prefix.length());
+                                Class<?> valueType = getMapValueType(field);
+                                Object value = convertStoredValue(storedField, valueType);
+                                map.put(key, value);
+                            }
+                            field.set(instance, map);
+                        }
+                    } else if (isCollection(fieldType)) { // Handle collections or arrays.
                         IndexableField[] values = doc.getFields(fieldName);
                         if (values != null && values.length > 0) {
                             Class<?> elementType = getCollectionElementType(field);
@@ -566,9 +585,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                         } else {
                             field.set(instance, null);
                         }
-                    }
-                    // Handle simple types.
-                    else if (isSimpleType(fieldType)) {
+                    } else if (isSimpleType(fieldType)) { // Handle simple types.
                         IndexableField storedValue = doc.getField(fieldName);
                         if (storedValue != null) {
                             Object converted = convertStoredValue(storedValue, fieldType);
@@ -576,27 +593,13 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                         } else {
                             field.set(instance, null);
                         }
-                    }
-                    // Otherwise, assume nested object.
-                    else {
-                        Object nestedInstance = fieldType.getDeclaredConstructor().newInstance();
-                        for (Field nestedField : fieldType.getDeclaredFields()) {
-                            if (nestedField.isAnnotationPresent(IndexField.class)) {
-                                nestedField.setAccessible(true);
-                                IndexField nestedAnn = nestedField.getAnnotation(IndexField.class);
-                                String nestedFieldName = nestedAnn.name().isEmpty() ? nestedField.getName() : nestedAnn.name();
-                                String combinedFieldName = fieldName + "." + nestedFieldName;
-                                IndexableField storedValue = doc.getField(combinedFieldName);
-                                if (storedValue != null) {
-                                    Object converted = convertStoredValue(storedValue, nestedField.getType());
-                                    nestedField.set(nestedInstance, converted);
-                                }
-                            }
-                        }
+                    } else { // Otherwise, assume nested object.
+                        Object nestedInstance = convertDocumentToPojo(fieldName + ".", doc, fieldType);
                         field.set(instance, nestedInstance);
                     }
                 }
             }
+            // todo replace with generic Map<String,?> type!?
             // Process dynamic tag fields.
             if (instance instanceof Taggable taggablePojo) {
                 Map<String, Tag> tagsMap = new HashMap<>();
@@ -693,7 +696,15 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 IndexField indexField = field.getAnnotation(IndexField.class);
                 String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
                 // Handle get element type and take care about collections/arrays.
-                Class<?> elementType = isCollection(field.getType()) ? getCollectionElementType(field) : field.getType();
+                Class<?> elementType = field.getType();
+                if (isCollection(elementType))
+                    elementType = getCollectionElementType(field);
+                else if (isMap(elementType)){
+                    elementType = getMapValueType(field);
+                    if (!isSimpleType(elementType))
+                        throw new IllegalArgumentException("Only simple types are allowed as map values.");
+                    fieldName = fieldName + ".*";
+                }
 
                 if (!isSimpleType(elementType)) {
                     detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
@@ -738,6 +749,24 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         org.apache.lucene.document.Field.Store storeOption = store ? YES : NO;
         if (value == null)
             return fields;
+
+        //todo do we need to skip this due to have faster parsing time?
+        if (!isValidFieldName(fieldName))
+            throw new IllegalArgumentException("Invalid field name: " + fieldName);
+
+        // Handle maps. This implementation assumes that the key of the map can be transformed into a valid field name string.
+        if (value instanceof Map<?, ?> map) {
+            if (!map.isEmpty()) {
+                if (map.keySet().iterator().next() instanceof String) {
+                    map.forEach((k, v) ->
+                            fields.addAll(createAnnotationFields(fieldName + "." + k, v, store, fulltext, sorted, true)));
+                } else {
+                    throw new IllegalArgumentException("Automatic indexing of hashmaps is only possible with string keys: " + fieldName);
+                }
+            }
+            return fields;
+        }
+
         // Handle collections.
         if (value instanceof Collection<?> coll) {
             for (Object element : coll) {
@@ -907,9 +936,42 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     /**
      * Returns true if the type is a Collection or an Array.
      */
+    private static boolean isMap(Class<?> type) {
+        return Map.class.isAssignableFrom(type);
+    }
+
+    /**
+     * Returns true if the type is a Collection or an Array.
+     */
     private static boolean isCollection(Class<?> type) {
         return Collection.class.isAssignableFrom(type) || type.isArray();
     }
+
+
+    /**
+     * Returns the key type for a map-typed field.
+     * If the field is not parameterized, String is returned as fallback.
+     */
+    private static Class<?> getMapKeyType(Field field) {
+        return getCollectionElementType(field);
+    }
+
+    /**
+     * Returns the value type for a map-typed field.
+     * If the field is not parameterized, String is returned as fallback.
+     */
+    private static Class<?> getMapValueType(Field field) {
+        if (!Map.class.isAssignableFrom(field.getType()))
+            throw new IllegalArgumentException("Field is not a Map type: " + field.getName());
+
+        try {
+            ParameterizedType pt = (ParameterizedType) field.getGenericType();
+            return (Class<?>) pt.getActualTypeArguments()[1]; // Value type
+        } catch (Exception e) {
+            return String.class;
+        }
+    }
+
 
     /**
      * Returns the element type for a collection- or array-typed field.
@@ -1032,6 +1094,24 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             return SortField.Type.STRING;
         }
         return null;
+    }
+
+
+    // Regular expression for a valid Lucene field name with sub-documents
+    private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$");
+
+    /**
+     * Checks if the given field name is valid for a Lucene document.
+     *
+     * @param fieldName The field name to validate.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean isValidFieldName(String fieldName) {
+        if (fieldName == null || fieldName.isEmpty()) {
+            return false;
+        }
+        Matcher matcher = FIELD_NAME_PATTERN.matcher(fieldName);
+        return matcher.matches();
     }
 
 }

@@ -30,6 +30,7 @@ import lombok.Setter;
 import lombok.Synchronized;
 import org.apache.commons.text.CaseUtils;
 import org.apache.lucene.document.DoublePoint;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -637,11 +638,17 @@ public class CompoundFilterModel implements SiriusPCS {
 //            if (!matchesLipidFilter(item, filterModel)) return false;
         }
 
-        // todo implent db filter
-        if (isDbFilterEnabled()) {
-//            if (!matchesDBFilter(item, filterModel)) return false;
-        }
+        if (isDbFilterEnabled())
+            booleanQuery.add(makeDbQuery("topAnnotations.matchedDatabases.", dbFilter), BooleanClause.Occur.MUST);
+
         return booleanQuery;
+    }
+
+
+    private static Query makeDbQuery(String fieldPrefix, DbFilter filter){
+        BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
+        filter.dbs.forEach(db ->  dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 0, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
+        return dbQuery.build();
     }
 
     private static Query makeQualityQuery(String fieldName, QualityFilter filter){
