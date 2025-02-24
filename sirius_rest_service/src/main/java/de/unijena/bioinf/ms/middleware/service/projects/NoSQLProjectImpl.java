@@ -159,6 +159,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
                                         .confidenceApproxMatch(sr.getConfidenceApprox())
                                         .confidenceExactMatch(sr.getConfidenceExact())
+                                        .matchedDatabases(sr.getMatchedDatabases())
                                         .build()),
                                 AlignedFeature.class));
 
@@ -167,6 +168,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
                                         .confidenceApproxMatch(sr.getConfidenceApprox())
                                         .confidenceExactMatch(sr.getConfidenceExact())
+                                        .matchedDatabases(sr.getMatchedDatabases())
                                         .build()),
                                 AlignedFeature.class));
 
