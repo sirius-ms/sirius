@@ -122,7 +122,9 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         }.asCPU()).awaitResult();
 
         inst.saveSpectraSearchResult(result);
+
         if (result==null) return;
+
         checkForInterruption();
 
         int print = exp.getAnnotationOrDefault(SpectralSearchLog.class).value;
