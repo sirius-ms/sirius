@@ -637,7 +637,6 @@ public class NoSQLInstance implements Instance {
 
                     //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
                     int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
-                    upsertComputedSubtools(cs -> cs.setStructureSearch(true));
                     log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
                 }
 
@@ -676,6 +675,8 @@ public class NoSQLInstance implements Instance {
 
             // write structure search results to db
             project().getStorage().insert(searchResults.getFirst());
+            //finally upsert compute state which is the marker that a computation has been finished and all results have been written
+            upsertComputedSubtools(cs -> cs.setStructureSearch(true));
         } catch (Exception e) {
             deleteStructureSearchResult();
             throw new RuntimeException(e);
