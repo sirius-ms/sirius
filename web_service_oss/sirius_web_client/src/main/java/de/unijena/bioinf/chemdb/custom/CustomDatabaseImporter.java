@@ -361,6 +361,22 @@ public class CustomDatabaseImporter {
                     }
                     checkCancellation();
 
+/*
+                    // todo Jonas: this could be the right place to create and run tranformer jobs if needed
+                    // run transformer as configured on all molecule in key2DToComp (valueset)
+                    // add tranformation tesult molecules to key2DToComp (2d deduplication as above)
+
+                    BioTransformerJJob job = new BioTransformerJJob();
+                    job.setSubstrates(key2DToComp.values().stream()
+                            .map(comp -> comp.molecule.container)
+                            .toList());
+
+                    List<BioTransformerResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                    //todo convert AtomContains in results into Molecules and perform  deduplication as done above.
+                    result.stream().map(res -> res.getBiotranformations().stream().map(t -> t.))
+*/
+
+
                     CustomDatabase.logger.info("Looking up compounds to find existing fps");
                     try {
                         lookupAndAnnotateMissingCandidates(key2DToComp);

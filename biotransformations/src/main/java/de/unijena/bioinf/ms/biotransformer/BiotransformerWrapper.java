@@ -14,7 +14,6 @@ import java.util.List;
 
 import biotransformer.utils.BiotransformerSequenceStep;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IChemObjectBuilder;
 
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -40,9 +39,9 @@ public static List<Biotransformation> abioticTransformer(IAtomContainer singleMo
 }
 
 
-public static List<Biotransformation> cyp450BTransformer(IAtomContainer singleMolecule,int nrOfSteps, int cyp450Mode, boolean useDB,boolean useSub) throws Exception {
+public static List<Biotransformation> cyp450BTransformer(IAtomContainer singleMolecule,int nrOfSteps, Cyp450Mode cyp450Mode, boolean useDB,boolean useSub) throws Exception {
     Cyp450BTransformer_rails cyp450bt = new Cyp450BTransformer_rails(BioSystemName.HUMAN, useDB, useSub);
-   return cyp450bt.predictCyp450BiotransformationChainByMode(singleMolecule, true, true, nrOfSteps, (double) 0.5F, cyp450Mode);
+   return cyp450bt.predictCyp450BiotransformationChainByMode(singleMolecule, true, true, nrOfSteps, (double) 0.5F, cyp450Mode.getCyp450ModeOrdinal());
 
 }
 
@@ -64,14 +63,14 @@ public static List<Biotransformation> phaseIIBTransformer(IAtomContainer singleM
 
 }
 
-public static List<Biotransformation> superBioTransformer(IAtomContainer singleMolecule,int p2Mode,int cyp450Mode, boolean useDB, boolean useSub) throws Exception {
-    SimulateHumanMetabolism_rails hsbt = new SimulateHumanMetabolism_rails(cyp450Mode, p2Mode, useDB, "hmdb", false, 30, useSub);
+public static List<Biotransformation> superBioTransformer(IAtomContainer singleMolecule,int p2Mode,Cyp450Mode cyp450Mode, boolean useDB, boolean useSub) throws Exception {
+    SimulateHumanMetabolism_rails hsbt = new SimulateHumanMetabolism_rails(cyp450Mode.getCyp450ModeOrdinal(), p2Mode, useDB, "hmdb", false, 30, useSub);
     return hsbt.simulateHumanMetabolism(singleMolecule, 4);
 
 } //TODO notwendig?? da SUPERBIO = allHUMAN mit iteration=4
 
-public static List<Biotransformation> allHumanTransformer(IAtomContainer singleMolecule,int nrOfSteps,int p2Mode,int cyp450Mode, boolean useDB, boolean useSub) throws Exception {
-    SimulateHumanMetabolism_rails hsbt = new SimulateHumanMetabolism_rails(cyp450Mode, p2Mode, useDB, "hmdb", false, 30, useSub);
+public static List<Biotransformation> allHumanTransformer(IAtomContainer singleMolecule,int nrOfSteps,int p2Mode,Cyp450Mode cyp450Mode, boolean useDB, boolean useSub) throws Exception {
+    SimulateHumanMetabolism_rails hsbt = new SimulateHumanMetabolism_rails(cyp450Mode.getCyp450ModeOrdinal(), p2Mode, useDB, "hmdb", false, 30, useSub);
     return hsbt.simulateHumanMetabolism(singleMolecule, nrOfSteps);
 
 
@@ -84,12 +83,12 @@ public static List<Biotransformation> envMicrobialTransformer (IAtomContainer si
 
 }
 
-public static List<Biotransformation> multiBioTransformer(IAtomContainer singleMolecule, ArrayList<BiotransformerSequenceStep> transformer, int cyp450Mode, boolean useDB, boolean useSub) throws Exception {
+public static List<Biotransformation> multiBioTransformer(IAtomContainer singleMolecule, ArrayList<BiotransformerSequenceStep> transformer, Cyp450Mode cyp450Mode, boolean useDB, boolean useSub) throws Exception {
     if (transformer == null || transformer.isEmpty()){
         throw new IllegalArgumentException("sequenceSteps has to be set!");
     }
         BiotransformerSequence_rails biotransformerSequence = new BiotransformerSequence_rails(transformer,useDB, useSub);
-    return biotransformerSequence.runSequence(singleMolecule,0.5F,cyp450Mode);
+    return biotransformerSequence.runSequence(singleMolecule,0.5F, cyp450Mode.getCyp450ModeOrdinal());
 
 }
 

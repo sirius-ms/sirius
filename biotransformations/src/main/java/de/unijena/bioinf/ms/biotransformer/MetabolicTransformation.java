@@ -3,6 +3,8 @@ package de.unijena.bioinf.ms.biotransformer;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
+
 public enum MetabolicTransformation {
     PHASE_1_CYP450("cyp450"),
     EC_BASED("ecBased"),
@@ -10,10 +12,15 @@ public enum MetabolicTransformation {
     HUMAN_GUT("gut"),
     ENV_MICROBIAL("microbio"),
     ALL_HUMAN("allHuman"),
-    SUPER_BIO("superbio"),
     ABIOTIC("abiotic"),
     HUMAN_CUSTOM_MULTI("multihuman");
 
+    private static final EnumSet<MetabolicTransformation> SEQUENCE_TRANSFORMATIONS =
+           EnumSet.of( PHASE_1_CYP450, EC_BASED, PHASE_2, HUMAN_GUT, ENV_MICROBIAL);
+
+    public static EnumSet<MetabolicTransformation> valueSequenceOnly(){
+        return SEQUENCE_TRANSFORMATIONS;
+    }
 
     @Getter
     private final String displayName;
