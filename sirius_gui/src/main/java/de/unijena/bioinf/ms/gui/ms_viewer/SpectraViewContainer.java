@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.NormalizationMode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -32,13 +34,16 @@ import java.util.List;
 public class SpectraViewContainer<S> {
     List<S> spectra;
     List<List<PeakMatch>> peakMatches;
+    NormalizationMode normalization = NormalizationMode.MAX;
+    IntensityTransform intensityTransform = IntensityTransform.No;
 
-    public static <S> SpectraViewContainer<S> of(S spectrum) {
-        return of(List.of(spectrum));
+
+    public static <S> SpectraViewContainer<S> of(S spectrum, Normalization norm, IntensityTransform transform) {
+        return of(List.of(spectrum), norm, transform);
     }
 
-    public static <S> SpectraViewContainer<S> of(List<S> spectra) {
-        return new SpectraViewContainer<>(spectra, null);
+    public static <S> SpectraViewContainer<S> of(List<S> spectra, Normalization norm, IntensityTransform transform) {
+        return new SpectraViewContainer<>(spectra, null, norm.getMode(), transform);
     }
 
     @Getter
@@ -46,5 +51,9 @@ public class SpectraViewContainer<S> {
     public static class PeakMatch {
         // Peak matches *between* two spectra
         int index;
+    }
+
+    public enum IntensityTransform {
+        No, Sqrt;
     }
 }

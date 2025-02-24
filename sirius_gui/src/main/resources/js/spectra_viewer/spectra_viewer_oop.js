@@ -19,6 +19,43 @@ function isSelectablePeak(peak) {
     return ((!self.structureView && hasFormula(peak)) || hasStructure(peak));
 }
 
+
+function applyNorm(spectraViewContainer) { //todo needs to be ported to new React viewer
+    const intens = spectraViewContainer.intensityTransform;
+    const normMode = spectraViewContainer.normalization;
+    for (let i=0; i < spectraViewContainer.spectra.length; ++i) {
+        const s = spectraViewContainer.spectra[i];
+        if (intens=="Sqrt") {
+            for (let j=0; j < s.peaks.length; ++j) {
+                s.peaks[j].intensity = Math.sqrt(s.peaks[j].intensity);
+            }
+        }
+        let norm = 0.0;
+        if (normMode == "L2") {
+            for (let j=0; j < s.peaks.length; ++j) {
+                norm += s.peaks[j].intensity*s.peaks[j].intensity;
+            }
+            norm = Math.sqrt(norm);
+        } else if (normMode == "SUM") {
+            for (let j=0; j < s.peaks.length; ++j) {
+                norm += s.peaks[j].intensity;
+            }
+            norm = norm;
+        } else { //max
+            for (let j=0; j < s.peaks.length; ++j) {
+                norm = Math.max(norm, s.peaks[j].intensity);
+            }
+        }
+        if (norm>0) {
+            for (let j=0; j < s.peaks.length; ++j) {
+                s.peaks[j].intensity /= norm;
+            }
+        }
+
+    }
+}
+
+
 class Base {
     constructor() {
         this.pan = {mouseupCheck: false, mousemoveCheck: false, tolerance: 10, step: 500}
@@ -1402,6 +1439,7 @@ class Main {
         } else {
             this.data = data_spectra;
         }
+        applyNorm(this.data);
         this.spectraViewer();
         return true;
     }

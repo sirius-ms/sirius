@@ -71,7 +71,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(ComputedSubtools.class, "alignedFeatureId")
 
-                .addRepository(FormulaCandidate.class, Index.unique("alignedFeatureId", "formulaRank")) //for fast sorted pages
+                .addRepository(FormulaCandidate.class, Index.nonUnique("alignedFeatureId", "formulaRank")) //for fast sorted pages
 
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
 
