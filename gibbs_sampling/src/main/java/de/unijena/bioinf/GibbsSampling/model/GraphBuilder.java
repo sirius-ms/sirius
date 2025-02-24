@@ -93,7 +93,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
 
         List<String> newIds = new ArrayList();
         List<Scored<C>[]> newFormulas = new ArrayList();
-        int removed=0;
+
         for(int i = 0; i < possibleFormulas.length; ++i) {
             C[] candidates = possibleFormulas[i];
             String id = ids[i];
@@ -102,7 +102,7 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             for (C candidate : candidates) {
                 if (candidate.getNodeLogProb() >= -1000) {
                     scoredCandidates.add(new Scored(candidate, candidate.getNodeLogProb()));
-                } else ++removed;
+                }
             }
 
             if(scoredCandidates.size() > 0) {
@@ -110,7 +110,6 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
                 newFormulas.add(scoredCandidates.toArray(new Scored[0]));
             }
         }
-        System.out.println("FILTERED OUT " + removed + " OF " + newFormulas.size() + " CANDIDATES");
 
         String[] filteredIds = newIds.toArray(new String[0]);
         Scored<C>[][] scoredPossibleFormulas = newFormulas.toArray(new Scored[0][]);
