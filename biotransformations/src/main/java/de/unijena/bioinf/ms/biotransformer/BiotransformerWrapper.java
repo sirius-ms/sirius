@@ -85,7 +85,10 @@ public static List<Biotransformation> envMicrobialTransformer (IAtomContainer si
 }
 
 public static List<Biotransformation> multiBioTransformer(IAtomContainer singleMolecule, ArrayList<BiotransformerSequenceStep> transformer, int cyp450Mode, boolean useDB, boolean useSub) throws Exception {
-    BiotransformerSequence_rails biotransformerSequence = new BiotransformerSequence_rails(transformer,useDB, useSub);
+    if (transformer == null || transformer.isEmpty()){
+        throw new IllegalArgumentException("sequenceSteps has to be set!");
+    }
+        BiotransformerSequence_rails biotransformerSequence = new BiotransformerSequence_rails(transformer,useDB, useSub);
     return biotransformerSequence.runSequence(singleMolecule,0.5F,cyp450Mode);
 
 }
