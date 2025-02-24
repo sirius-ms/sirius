@@ -206,6 +206,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         toolBar.add(modesBox);
         toolBar.add(ceBox);
 
+        //todo it makes no sense to show this for every spectrum plot. E.g. isotope mirror plot. Discuss what we actually need here.
         intBox = new JComboBox<>(intensityTransformModes);
         normBox = new JComboBox<>(normalizationModes);
         toolBar.add(new JLabel("Norm: "));
