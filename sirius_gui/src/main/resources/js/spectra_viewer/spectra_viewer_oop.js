@@ -20,7 +20,7 @@ function isSelectablePeak(peak) {
 }
 
 
-function applyNorm(spectraViewContainer) {
+function applyNorm(spectraViewContainer) { //todo needs to be ported to new React viewer
     const intens = spectraViewContainer.intensityTransform;
     const normMode = spectraViewContainer.normalization;
     for (let i=0; i < spectraViewContainer.spectra.length; ++i) {
