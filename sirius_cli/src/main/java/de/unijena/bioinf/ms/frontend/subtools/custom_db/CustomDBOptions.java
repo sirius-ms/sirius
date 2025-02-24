@@ -65,7 +65,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         Show showParas;
         @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Import custom database: %n|@", order = 200)
         Import importParas;
-        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Remove custom database: %n|@", order = 300)
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Remove custom database: %n|@", order = 400)
         Remove removeParas;
 
     }
@@ -111,16 +111,21 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 "Directories will be recursively expanded."
         }, order = 220)
         private List<Path> input;
+
+
+        //todo check heading and description
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Bio Transformations: %n|@", order = 300)
+        private BioTransformerOptions bioTransformerOptions;
     }
 
     public static class Remove {
         @Option(names = "--remove", required = true,
                 description = "Name (--show) or path of the custom database to remove from SIRIUS.",
-                order = 301)
+                order = 401)
         String location = null;
 
         @Option(names = {"--delete", "-d"}, defaultValue = "false",
-                description = "Delete removed custom database from filesystem/server.", order = 310)
+                description = "Delete removed custom database from filesystem/server.", order = 410)
         boolean delete;
     }
 
@@ -233,6 +238,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 };
 
                 checkForInterruption();
+                if (mode.importParas.bioTransformerOptions != null){
+                    //TODO configure importer to run bio transformer stuff...
+                    //collect parameters and prepare them to be added to the importer
+                }
 
                 dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),

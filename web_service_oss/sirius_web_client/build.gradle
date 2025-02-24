@@ -35,6 +35,7 @@ dependencies {
     api project(':model_store_oss')
     api project(':document-storage')
     api project(':spectral_alignment')
+    api project(':biotransformations')
     implementation project(':structure_matching')
 
     testImplementation "io.hypersistence:hypersistence-tsid:2.1.1"
