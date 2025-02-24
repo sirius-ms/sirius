@@ -121,6 +121,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                         polarity = charge;
                     } else {
                         if (polarity != charge) {
+                            //todo this should be supported at some point.
                             LoggerFactory.getLogger(ZodiacSubToolJob.class).error("Different ion mode polarities in the same project space are not allowed.");
                             continue;
                         }
@@ -136,6 +137,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         BasicMasterJJob<LibraryResults> libraryJob = submitSubJob(new BasicMasterJJob<LibraryResults>(JobType.CPU) {
             @Override
             protected LibraryResults compute() throws Exception {
+                //todo are these settings used?
                 final SpectralLibrarySearchSettings settings = SpectralLibrarySearchSettings.conservativeDefaultForModifiedCosine();
                 List<LibraryHit> anchors = new ArrayList<>();
                 settings.setTargetType(SpectrumType.MERGED_SPECTRUM);
@@ -168,7 +170,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                                     }
                                 } else if (sim.similarity < 0) {
                                     if (sim.similarity < -0.1) {
-                                        throw new RuntimeException("Cosine similarity below 0: " + sim);
+                                        throw new RuntimeException("Cosine similarity below 0: " + sim); //todo either don't throw and return no hits. Or catch at some level so that only the one instace fails.
                                     } else { // due to rounding errors, the cosine similarity can be slightly below 0
                                         sim = new SpectralSimilarity(0d, sim.sharedPeaks);
                                     }
@@ -213,7 +215,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                     ListIterator<de.unijena.bioinf.spectraldb.LibraryHit> iter = hits.listIterator();
                     while (iter.hasNext()) {
                         if (iter.next().isAnalog()) {
-                            if (++topKAnalog>=10) iter.remove();
+                            if (++topKAnalog>=10) iter.remove(); //todo this and other parameters above must be changeable. I would store more analogues.
                         }
                     }
                     // store the top hits in database

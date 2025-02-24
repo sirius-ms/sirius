@@ -490,7 +490,14 @@ public class Zodiac {
     }
 
     private List<FTree> extraNodes = new ArrayList<>();
+
+    /**
+     * Add additional nodes to the network which also act as kind of anchors.
+     * Can be used for spectral library analogue hits which don't have a direct corresponding measured feature with similar precursor mass in the data.
+     * @param nodes
+     */
     public void addExtraNodes(List<FTree> nodes) {
         extraNodes.addAll(nodes);
     }
+
 }
