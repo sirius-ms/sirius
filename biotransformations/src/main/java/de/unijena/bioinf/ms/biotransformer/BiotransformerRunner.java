@@ -1,17 +1,13 @@
 package de.unijena.bioinf.ms.biotransformer;
 
 import biotransformer.railsappspecific.BiotransformerSequence_rails;
-import biotransformer.railsappspecific.SimulateHumanMetabolism_rails;
-import biotransformer.transformation.Biotransformation;
 import biotransformer.utils.BiotransformerSequence;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import org.openscience.cdk.interfaces.*;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class BiotransformerRunner {
 
@@ -19,7 +15,6 @@ public class BiotransformerRunner {
         BiotransformerSequence_rails biotransformerSeqeuence = null;
         BiotransformerSequence btq_for_mf = null;
         // default
-        int cyp450Mode = 1;
         int p2Mode = 1;
         boolean useDB = true;
         boolean useSub = false;
@@ -27,7 +22,7 @@ public class BiotransformerRunner {
 
         String smile = "CC(C)C1=CC=C(C)C=C1O";
         int steps= 2;
-        int cypmode = 3;
+        Cyp450Mode cypmode = Cyp450Mode.COMBINED;
 
         IChemObjectBuilder builder = SilentChemObjectBuilder.getInstance();
         SmilesParser smiParser = new SmilesParser(builder);

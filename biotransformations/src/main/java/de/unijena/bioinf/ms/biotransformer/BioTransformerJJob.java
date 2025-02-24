@@ -22,7 +22,7 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
     @Setter
     private int iterations; // Number of iterations
     @Setter
-    private int cyp450Mode; // CYP450 Mode
+    private Cyp450Mode cyp450Mode; // CYP450 Mode
     @Setter
     private int p2Mode; // Phase II Mode
     @Setter
@@ -54,8 +54,6 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
 
                     case ALL_HUMAN -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.allHumanTransformer(ia,iterations,p2Mode,cyp450Mode,useDB,useSub))).toList();
-                    case SUPER_BIO -> substrates.stream().map(ia -> makeJob(()->
-                            BiotransformerWrapper.superBioTransformer(ia,p2Mode,cyp450Mode,useDB,useSub))).toList();
                     case ABIOTIC -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.abioticTransformer(ia,iterations))).toList();
                     case HUMAN_CUSTOM_MULTI ->
