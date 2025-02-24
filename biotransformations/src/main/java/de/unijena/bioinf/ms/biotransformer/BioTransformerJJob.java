@@ -1,15 +1,19 @@
 package de.unijena.bioinf.ms.biotransformer;
 
 import biotransformer.transformation.Biotransformation;
+import biotransformer.utils.BiotransformerSequenceStep;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import lombok.Builder;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-
+@Accessors(fluent = false, chain = true)
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
 
     @Setter
@@ -26,6 +30,8 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
     private boolean useDB; // Use the database flag
     @Setter
     private boolean useSub; // Use the substructure flag
+    @Setter
+    private ArrayList<BiotransformerSequenceStep> sequenceSteps;
 
     public BioTransformerJJob() {
         super(JobType.CPU);
@@ -53,7 +59,12 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
                             BiotransformerWrapper.superBioTransformer(ai,p2Mode,cyp450Mode,useDB,useSub))).toList();
                     case ABIOTIC -> substrates.stream().map(ai -> makeJob(() ->
                             BiotransformerWrapper.abioticTransformer(ai,iterations))).toList();
-                    case HUMAN_CUSTOM_MULTI -> throw new IllegalArgumentException("This is the single transformation Job, use ....");
+                    case HUMAN_CUSTOM_MULTI ->
+                        substrates.stream().map(ai -> makeJob(() ->
+                                        BiotransformerWrapper.multiBioTransformer(ai, sequenceSteps, cyp450Mode, useDB, useSub)))
+                                .toList();
+
+
                 };
 
         submitSubJobsInBatches(jobs,8).forEach(JJob::takeResult);
