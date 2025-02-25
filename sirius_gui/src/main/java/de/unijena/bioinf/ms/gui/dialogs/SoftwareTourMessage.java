@@ -14,14 +14,6 @@ public class SoftwareTourMessage extends QuestionDialog {
 
     private JLabel counter;
 
-    public SoftwareTourMessage(JDialog owner, String tutorialInfo, int currentMessage, int totalMessages) {
-        super(owner, null, () -> tutorialInfo, null, null, false);
-        this.currentMessage = currentMessage;
-        this.totalMessages = totalMessages;
-        counter.setText(currentMessage + " / " + totalMessages);
-        repaint();
-    }
-
     public SoftwareTourMessage(Window owner, String tutorialInfo, int currentMessage, int totalMessages) {
         super(owner, null, () -> tutorialInfo, null, null, false);
 
