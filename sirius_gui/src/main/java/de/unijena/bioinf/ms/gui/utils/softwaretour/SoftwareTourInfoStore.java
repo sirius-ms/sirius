@@ -3,13 +3,12 @@ package de.unijena.bioinf.ms.gui.utils.softwaretour;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo.LocationHorizontal;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo.LocationVertical;
 /**
- * This be convention holds the necessary component descriptions for the software tour. However, this is not enforced,
+ * This holds the necessary component descriptions for the software tour. However, this is not enforced,
  * so there is no guarantee that the software tour information is not just provided directly where the class is instantiated.
  */
 public class SoftwareTourInfoStore {
 
-
-
+    public static final String TOUR_ELEMENT_PROPERTY_KEY = "SIRIUS software tour element";
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +63,7 @@ public class SoftwareTourInfoStore {
     //// Database search tour /////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static final SoftwareTourInfo DatabaseSearch_CSIScore = new SoftwareTourInfo("The CSI:FingerID score is used to rank the molecular structure candidates.<br>It is a log-likelihood. The best possible score is 0 the worst -infinity.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
-    public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit. If multiple top candidates are highlighted green this means that this are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
+    public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit.<br>If multiple top candidates are highlighted green this means they are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo DatabaseSearch_Source = new SoftwareTourInfo("The structure hit can be found in the displayed databases. Even database not selected for search are displayed.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
 
 

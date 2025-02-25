@@ -21,13 +21,12 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourElement;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.Getter;
@@ -37,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -92,10 +91,9 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
             this.toolDescription = new String[]{};
 
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
+        add(activationButton, content);
         if (tourInfo != null) {
-            add(new SoftwareTourDecorator<>(activationButton, tourInfo), content);
-        } else {
-            add(activationButton, content);
+            activationButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
         }
 
         if (checkServerConnection) {

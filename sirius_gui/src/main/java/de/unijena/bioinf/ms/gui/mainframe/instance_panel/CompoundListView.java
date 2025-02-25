@@ -24,15 +24,11 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.JListDropImage;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourElement;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -40,25 +36,12 @@ import java.awt.event.MouseListener;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class CompoundListView extends JScrollPane implements SoftwareTourElement {
+public class CompoundListView extends JScrollPane {
 
     final CompoundList sourceList;
     final JListDropImage<InstanceBean> compoundListView;
     @Getter
     final JPopupMenu expPopMenu;
-
-    //tutorial info /////////////////
-    @Getter
-    private final SoftwareTourInfo.LocationHorizontal locationHorizontal = SoftwareTourInfoStore.CompoundListView.getLocationHorizontal();
-    @Getter
-    private final SoftwareTourInfo.LocationVertical locationVertical = SoftwareTourInfoStore.CompoundListView.getLocationVertical();
-    @Getter
-    private final int orderImportance = SoftwareTourInfoStore.CompoundListView.getOrderImportance();
-    @Getter
-    private final String tutorialDescription = SoftwareTourInfoStore.CompoundListView.getTutorialDescription();
-
-    private Border originalBorder;
-    /////////////////////////////
 
     public CompoundListView(SiriusGui gui, CompoundList sourceList) {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -131,22 +114,11 @@ public class CompoundListView extends JScrollPane implements SoftwareTourElement
         actionMap.put(SiriusActions.COMPUTE.name(), SiriusActions.COMPUTE.getInstance(gui, true));
         // Define and register the delete action (for Delete key)
         actionMap.put(SiriusActions.DELETE_EXP.name(), SiriusActions.DELETE_EXP.getInstance(gui, true));
+
+        putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.CompoundListView);
     }
 
     public void ensureIndexIsVisible(int index) {
         compoundListView.ensureIndexIsVisible(index);
-    }
-
-    @Override
-    public void highlightComponent(Color color, int thickness) {
-        if (originalBorder == null) {
-            originalBorder = getBorder(); // Save original border
-        }
-        setBorder(BorderFactory.createLineBorder(color, thickness));
-    }
-
-    @Override
-    public void resetHighlight() {
-        if (originalBorder != null) setBorder(originalBorder);
     }
 }
