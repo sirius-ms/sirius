@@ -138,6 +138,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
     }
 
+    @Deprecated(forRemoval = true)
     @Option(names = {"--no-project-check"}, description = "Disable compatibility check for the project-space.", order = 300, hidden = true)
     private void setSkipProjectCheck(boolean noProjectCheck) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project-check", String.valueOf(noProjectCheck)); //this is a bit hacky
@@ -146,6 +147,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Deprecated(forRemoval = true)
     @Option(names = {"--zip-provider"}, description = "Specify the Provider for handling zip compressed resources (e.g. project-space). Valid values: ${COMPLETION-CANDIDATES}", hidden = true, order = 298)
     private void setZipProvider(ZipProvider provider) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project.zipProvider", provider.name());
