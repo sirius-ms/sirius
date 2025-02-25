@@ -207,7 +207,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setVisible(true);
         toFront();
 
-        Jobs.runEDTLater(() -> checkAndInitSoftwareTour());
+        Jobs.runEDTLater(this::checkAndInitSoftwareTour);
     }
 
     // region dragndrop

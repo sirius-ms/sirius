@@ -32,7 +32,6 @@ import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.JButtonWithSoftwareTourElement;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
@@ -42,7 +41,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.util.Collections;
 import java.util.Comparator;
@@ -82,7 +80,7 @@ public class CompoundList {
     private final Color defaultOpenFilterPanelButtonColor;
 
     @Getter
-    private @NotNull SiriusGui gui;
+    private final @NotNull SiriusGui gui;
 
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
@@ -121,7 +119,8 @@ public class CompoundList {
         compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
-        openFilterPanelButton = new JButtonWithSoftwareTourElement("...", SoftwareTourInfoStore.OpenFilterPanelButton);
+        openFilterPanelButton = new JButton("...");
+        openFilterPanelButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.OpenFilterPanelButton);
         openFilterPanelButton.setToolTipText("Open filter panel");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
@@ -144,7 +143,7 @@ public class CompoundList {
                 compountListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
                 if (!compountListSelectionModel.isSelectionEmpty())
                     compountListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
-                notifyListenerSelectionChange(e);
+                notifyListenerSelectionChange();
             }
         });
 
@@ -263,7 +262,7 @@ public class CompoundList {
         }
     }
 
-    private void notifyListenerSelectionChange(ListSelectionEvent event) {
+    private void notifyListenerSelectionChange() {
         final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compountListSelectionModel.getSelected());
         final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compountListSelectionModel.getDeselected());
         for (ExperimentListChangeListener l : listeners) {

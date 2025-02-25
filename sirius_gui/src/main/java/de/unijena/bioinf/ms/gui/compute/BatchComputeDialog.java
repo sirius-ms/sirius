@@ -41,9 +41,8 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.JDialogWithSoftwareTour;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourDecorator;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -75,7 +74,7 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
 @Slf4j
-public class BatchComputeDialog extends JDialogWithSoftwareTour {
+public class BatchComputeDialog extends JDialog {
     public static final String DONT_ASK_RECOMPUTE_KEY = "de.unijena.bioinf.sirius.computeDialog.recompute.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_S_MASS = "de.unijena.bioinf.sirius.computeDialog.sirius.highmass.dontAskAgain";
     public static final String DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS = "de.unijena.bioinf.sirius.computeDialog.projectspace.outdated.dontAskAgain";
@@ -276,7 +275,7 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
             };
             gui.getConnectionMonitor().addConnectionListener(connectionListener);
 
-            Jobs.runEDTLater(() -> checkAndInitSoftwareTour(gui.getProperties()));
+            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
         });
 
         setPreferredSize(new Dimension(1150, 1024));
@@ -642,8 +641,9 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
         panel.add(new JLabel("Preset"));
 
         presetDropdown = new JComboBox<>();
+        presetDropdown.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.BatchCompute_PresetDropDown);
 
-        panel.add(new SoftwareTourDecorator<>(presetDropdown, SoftwareTourInfoStore.BatchCompute_PresetDropDown));
+        panel.add(presetDropdown);
 
         JButton savePreset = new JButton("Save");
         savePreset.setEnabled(false);
@@ -971,10 +971,5 @@ public class BatchComputeDialog extends JDialogWithSoftwareTour {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print
         return objectMapper.writeValueAsString(obj);
-    }
-
-    @Override
-    public String getTutorialPropertyKey() {
-        return SoftwareTourInfoStore.BatchComputeTourKey;
     }
 }

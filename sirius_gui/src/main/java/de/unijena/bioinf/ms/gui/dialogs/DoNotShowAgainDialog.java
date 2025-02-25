@@ -60,7 +60,8 @@ public abstract class DoNotShowAgainDialog extends JDialog {
 
         this.setLayout(new BorderLayout());
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        if (makeDialogIcon() != null) northPanel.add(new JLabel(makeDialogIcon()));
+        Icon dialogIcon = makeDialogIcon();
+        if (dialogIcon != null) northPanel.add(new JLabel(dialogIcon));
         {
             textPane = new JTextPane();
             textPane.setCursor(null);
@@ -117,7 +118,8 @@ public abstract class DoNotShowAgainDialog extends JDialog {
 
     protected abstract String getResult();
 
-    protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){};
+    protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){}
+
     protected abstract void decorateButtonPanel(JPanel boxedButtonPanel);
 
     protected abstract Icon makeDialogIcon();

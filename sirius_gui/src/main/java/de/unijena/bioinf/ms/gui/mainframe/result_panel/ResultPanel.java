@@ -40,8 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.io.IOException;
 import java.util.EnumSet;
@@ -142,18 +140,13 @@ public class ResultPanel extends JTabbedPane {
 
 
         //software tour listener
-        // Add a ChangeListener to track when a tab is switched
-        addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                // Get the currently selected component
-                Component selectedComponent = getSelectedComponent();
+        addChangeListener(e -> {
+            Component selectedComponent = getSelectedComponent();
 
-                if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
-                    structureAnnoTab.checkAndInitSoftwareTour(gui.getProperties());
-                } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
-                    structuresTab.checkAndInitSoftwareTour(gui.getProperties());
-                }
+            if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+                structureAnnoTab.initSoftwareTour(gui.getProperties());
+            } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
+                structuresTab.initSoftwareTour(gui.getProperties());
             }
         });
 
