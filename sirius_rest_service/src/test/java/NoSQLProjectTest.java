@@ -663,14 +663,14 @@ public class NoSQLProjectTest {
         ps.getStorage().insertAll(List.of(af1, af2));
 
         // unfiltered
-        assertEquals(2, psm.countAllFeatures());
+        assertEquals(2, psm.size());
         instances.clear();
         psm.forEach(instances::add);
         assertEquals(2, instances.size());
 
         // filtered
         psm.setAlignedFeaturesFilter(Filter.where("retentionTime.middle").gt(1.0));
-        assertEquals(1, psm.countAllFeatures());
+        assertEquals(1, psm.size());
         instances.clear();
         psm.forEach(instances::add);
         assertEquals(1, instances.size());
