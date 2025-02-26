@@ -169,6 +169,14 @@ public class Spectrums {
 
     }
 
+    public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceLibrarySpectrum specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
+        AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
+        if (ftree == null)
+            return spectrum;
+        Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
+        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
+    }
+
     public static List<AnnotatedSpectrum> createMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         if (exp.getMs2Spectra() == null)
             return List.of();
@@ -182,15 +190,6 @@ public class Spectrums {
         Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
         return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
     }
-
-    public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceLibrarySpectrum specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
-        AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
-        if (ftree == null)
-            return spectrum;
-        Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
-        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
-    }
-
 
     private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) {
         //compute substructure annotations //todo nightsky: do we want to do this somewhere else?
@@ -322,10 +321,10 @@ public class Spectrums {
             return null;
         Fragment[] annotatedFormulas = new Fragment[spectrum.size()];
         for (Fragment f : tree) {
-            de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak = annotatedPeak.get(f);
-            if (peak == null || peak.isArtificial()) {
+           de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak = annotatedPeak.get(f);
+            if (peak == null)
                 continue;
-            }
+
             try {
                 boolean found = SpectrumAnnotationJJob.findCorrectPeakInInputFragmentationSpectrum(f, spectrum, peak, annotatedFormulas, () -> {});
                 if (!found) {
