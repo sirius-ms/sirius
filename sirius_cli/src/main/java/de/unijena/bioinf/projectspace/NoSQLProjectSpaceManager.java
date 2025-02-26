@@ -33,6 +33,7 @@ import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,12 +41,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 @Getter
 public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
 
     private final SiriusProjectDatabaseImpl<? extends Database<?>> project;
+
+    /**
+     * Filter to apply when iterating over instances.
+     * Has no effect on counting compounds or features.
+     * Affect size() of the projectmanager/iterator though.
+     */
+    @Setter
+    private Filter alignedFeaturesFilter = null;
 
     public NoSQLProjectSpaceManager(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
         this.project = project;
@@ -117,18 +125,26 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     @SneakyThrows
     @Override
     public @NotNull Iterator<Instance> iterator() {
-        return getProject().getAllAlignedFeatures().map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
+        return getProject().getAlignedFeatures(alignedFeaturesFilter).map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
     }
 
     @SneakyThrows
     @Override
-    public int countFeatures() {
+    public int size() {
+        if (alignedFeaturesFilter == null)
+            return countAllFeatures();
+        return (int) project.getStorage().count(alignedFeaturesFilter, AlignedFeatures.class);
+    }
+
+    @SneakyThrows
+    @Override
+    public int countAllFeatures() {
         return (int) project.getStorage().countAll(AlignedFeatures.class);
     }
 
     @SneakyThrows
     @Override
-    public int countCompounds() {
+    public int countAllCompounds() {
         return (int) project.getStorage().countAll(Compound.class);
     }
 
@@ -149,7 +165,7 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
     }
 
     @Override
-    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) {
         //todo remove all fingerprint data related results and de fingerprint data itself
         return true;
     }

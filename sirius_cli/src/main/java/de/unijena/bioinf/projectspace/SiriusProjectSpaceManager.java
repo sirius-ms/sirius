@@ -290,12 +290,12 @@ public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
     }
 
     @Override
-    public int countFeatures() {
+    public int countAllFeatures() {
         return space.size();
     }
 
     @Override
-    public int countCompounds() {
+    public int countAllCompounds() {
         int count = (int) space.stream().map(CompoundContainerId::getGroupId).distinct().filter(Objects::nonNull).count();
         return (int) (count + space.stream().filter(Objects::isNull).count());
     }
