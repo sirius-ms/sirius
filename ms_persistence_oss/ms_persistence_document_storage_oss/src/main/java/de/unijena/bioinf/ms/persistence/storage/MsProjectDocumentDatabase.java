@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
@@ -137,7 +138,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default Stream<AlignedFeatures> getAllAlignedFeatures() throws IOException {
-        return getStorage().findAllStr(AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
+        return getAlignedFeatures(null);
+    }
+
+    default Stream<AlignedFeatures> getAlignedFeatures(Filter filter) throws IOException {
+        return getStorage().findStr(filter, AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
     }
 
     @SneakyThrows
