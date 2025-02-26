@@ -10065,12 +10065,17 @@
           },
           "structureAnnotationSmiles": {
             "type": "string",
-            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n \u003cp\u003e\n Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n \u003cp\u003e\n Null if substructure annotation not available or not requested.",
+            "nullable": true
+          },
+          "structureAnnotationSvg": {
+            "type": "string",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n \u003cp\u003e\n SVG graphics of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refers to this SVG.\n \u003cp\u003e\n Null if substructure annotation not available or not requested.",
             "nullable": true
           },
           "structureAnnotationScore": {
             "type": "number",
-            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n\n Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)\n\n Null if substructure annotation not available or not requested.",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n \u003cp\u003e\n Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)\n \u003cp\u003e\n Null if substructure annotation not available or not requested.",
             "format": "double",
             "nullable": true
           }

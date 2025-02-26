@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectrumAnnotation.JSON_PROPERTY_MASS_DEVIATION_MZ,
   SpectrumAnnotation.JSON_PROPERTY_MASS_DEVIATION_PPM,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES,
+  SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
@@ -64,6 +65,9 @@ public class SpectrumAnnotation {
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES = "structureAnnotationSmiles";
   private String structureAnnotationSmiles;
+
+  public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG = "structureAnnotationSvg";
+  private String structureAnnotationSvg;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE = "structureAnnotationScore";
   private Double structureAnnotationScore;
@@ -203,7 +207,7 @@ public class SpectrumAnnotation {
   }
 
    /**
-   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.   Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation  Substructure highlighting (bond and atom indices) refer to this specific SMILES.  If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might  not match correctly anymore.   Null if substructure annotation not available or not requested.
+   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation  Substructure highlighting (bond and atom indices) refer to this specific SMILES.  If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might  not match correctly anymore.  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationSmiles
   **/
   @jakarta.annotation.Nullable
@@ -221,6 +225,31 @@ public class SpectrumAnnotation {
     this.structureAnnotationSmiles = structureAnnotationSmiles;
   }
 
+  public SpectrumAnnotation structureAnnotationSvg(String structureAnnotationSvg) {
+    
+    this.structureAnnotationSvg = structureAnnotationSvg;
+    return this;
+  }
+
+   /**
+   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  SVG graphics of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation  Substructure highlighting (bond and atom indices) refers to this SVG.  &lt;p&gt;  Null if substructure annotation not available or not requested.
+   * @return structureAnnotationSvg
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getStructureAnnotationSvg() {
+    return structureAnnotationSvg;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStructureAnnotationSvg(String structureAnnotationSvg) {
+    this.structureAnnotationSvg = structureAnnotationSvg;
+  }
+
   public SpectrumAnnotation structureAnnotationScore(Double structureAnnotationScore) {
     
     this.structureAnnotationScore = structureAnnotationScore;
@@ -228,7 +257,7 @@ public class SpectrumAnnotation {
   }
 
    /**
-   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.   Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)   Null if substructure annotation not available or not requested.
+   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Overall score of all substructure annotations computed for this structure candidate (structureAnnotationSmiles)  &lt;p&gt;  Null if substructure annotation not available or not requested.
    * @return structureAnnotationScore
   **/
   @jakarta.annotation.Nullable
@@ -261,12 +290,13 @@ public class SpectrumAnnotation {
         Objects.equals(this.massDeviationMz, spectrumAnnotation.massDeviationMz) &&
         Objects.equals(this.massDeviationPpm, spectrumAnnotation.massDeviationPpm) &&
         Objects.equals(this.structureAnnotationSmiles, spectrumAnnotation.structureAnnotationSmiles) &&
+        Objects.equals(this.structureAnnotationSvg, spectrumAnnotation.structureAnnotationSvg) &&
         Objects.equals(this.structureAnnotationScore, spectrumAnnotation.structureAnnotationScore);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(molecularFormula, adduct, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationScore);
+    return Objects.hash(molecularFormula, adduct, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationSvg, structureAnnotationScore);
   }
 
   @Override
@@ -279,6 +309,7 @@ public class SpectrumAnnotation {
     sb.append("    massDeviationMz: ").append(toIndentedString(massDeviationMz)).append("\n");
     sb.append("    massDeviationPpm: ").append(toIndentedString(massDeviationPpm)).append("\n");
     sb.append("    structureAnnotationSmiles: ").append(toIndentedString(structureAnnotationSmiles)).append("\n");
+    sb.append("    structureAnnotationSvg: ").append(toIndentedString(structureAnnotationSvg)).append("\n");
     sb.append("    structureAnnotationScore: ").append(toIndentedString(structureAnnotationScore)).append("\n");
     sb.append("}");
     return sb.toString();
