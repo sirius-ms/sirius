@@ -60,9 +60,9 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
         return getCanopusNpcData(charge).isPresent();
     }
 
-    int countFeatures();
+    int countAllFeatures();
 
-    int countCompounds();
+    int countAllCompounds();
 
     long sizeInBytes();
 
@@ -72,7 +72,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
 
     @Override
     default int size() {
-        return countFeatures();
+        return countAllFeatures();
     }
 
     default boolean isEmpty() {
