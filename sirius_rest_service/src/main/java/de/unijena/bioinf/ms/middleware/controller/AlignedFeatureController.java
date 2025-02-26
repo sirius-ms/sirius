@@ -30,20 +30,18 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.*;
 import io.swagger.v3.oas.annotations.Hidden;
-import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
@@ -352,11 +350,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     * List of spectral library matches for the given 'alignedFeatureId'.
+     * Spectral library match for the given 'alignedFeatureId'.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @return Spectral library matches of this feature (aligned over runs).
+     * @param matchId id of the library match to be returned.
+     * @return Spectral library match with requested mathcId.
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public SpectralLibraryMatch getSpectralLibraryMatch(
@@ -368,11 +367,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
 
         if (removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-           CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
+            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
                     db -> {
                         try {
                             ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
-                            if (spec.getQuerySpectrum()!=null) match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
+                            if (spec.getQuerySpectrum() != null)
+                                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
 
 
                         } catch (ChemicalDatabaseException e) {
@@ -382,6 +382,49 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             );
         return match;
     }
+
+    /**
+     * [EXPERIMENTAL] Spectral library match for the given 'alignedFeatureId' with additional molecular formula and substructure annotations.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId id of the library match to be returned.
+     * @return Spectral library match with requested mathcId.
+     */
+    @Operation(operationId = "getStructureAnnotatedSpectralLibraryMatchExperimental")
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}/annotated", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AnnotatedSpectrum getStructureAnnotatedSpectralLibraryMatch(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String matchId
+    ) {
+        SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
+                .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
+
+        @NotNull
+        CustomDataSources.Source db = CustomDataSources.getSourceFromNameOpt(match.getDbName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
+
+        ReferenceSpectrum spec;
+        try {
+            spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
+            if (spec.getQuerySpectrum() != null)
+                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
+        } catch (ChemicalDatabaseException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find Spectrum: '%s' in database '%s'. %s", match.getUuid(), match.getDbName(), e.getMessage()));
+        }
+
+        if (match.getTarget() != SpectralLibraryMatch.TargetType.MERGED)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Loading annotation is currently only supported for MergedSpectra. But spectrum: '%s' in database '%s' is of type %s.", match.getUuid(), match.getDbName(), match.getTarget()));
+
+        try {
+            ReferenceFragmentationTree refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
+            return Spectrums.createReferenceMsMsWithAnnotations(spec.getQuerySpectrum(), refTree.asFTree(), spec.getSmiles());
+        } catch (ChemicalDatabaseException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));
+        }
+    }
+
 
     /**
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
@@ -489,7 +532,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId,formulaId, globalConfig.unpaged(), optFields)
+        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
@@ -607,7 +650,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree in internal format.
-     *
      */
     @Operation(operationId = "getSiriusFragTreeInternal")
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
