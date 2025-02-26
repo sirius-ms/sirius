@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -15,7 +16,9 @@ public class ReferenceLibrarySpectrum implements OrderedSpectrum<Peak>, Serializ
 
     protected final float[] intensities;
     protected final double[] mz;
+    @Getter
     private final double parentMass;
+    @Getter
     private final float parentIntensity; // not used for cosine. Set to 0 if no parent peak in spectrum
 
     @JsonCreator ReferenceLibrarySpectrum(@JsonProperty("parentMass")  double parentMass, @JsonProperty("parentIntensity") float parentIntensity, @JsonProperty("mz") double[] mz,  @JsonProperty("intensities") float[] intensities) {
@@ -23,14 +26,6 @@ public class ReferenceLibrarySpectrum implements OrderedSpectrum<Peak>, Serializ
         this.parentIntensity = parentIntensity;
         this.mz = mz;
         this.intensities = intensities;
-    }
-
-    public double getParentMass() {
-        return parentMass;
-    }
-
-    public float getParentIntensity() {
-        return parentIntensity;
     }
 
     @Override

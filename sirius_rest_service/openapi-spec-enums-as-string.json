@@ -2667,6 +2667,41 @@
         }
       }
     },
+    "/api/job-configs/get-command": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get a CLI command for the given job configuration.",
+        "description": "Get a CLI command for the given job configuration.",
+        "operationId": "getCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/databases": {
       "get": {
         "tags": [
@@ -4843,8 +4878,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
-        "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "summary": "Spectral library match for the given \u0027alignedFeatureId\u0027.",
+        "description": "Spectral library match for the given \u0027alignedFeatureId\u0027.",
         "operationId": "getSpectralLibraryMatch",
         "parameters": [
           {
@@ -4868,6 +4903,7 @@
           {
             "name": "matchId",
             "in": "path",
+            "description": "id of the library match to be returned.",
             "required": true,
             "schema": {
               "type": "string"
@@ -4895,11 +4931,62 @@
         ],
         "responses": {
           "200": {
-            "description": "Spectral library matches of this feature (aligned over runs).",
+            "description": "Spectral library match with requested mathcId.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SpectralLibraryMatch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}/annotated": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "[EXPERIMENTAL] Spectral library match for the given \u0027alignedFeatureId\u0027 with additional molecular formula and substructure annotations",
+        "description": "[EXPERIMENTAL] Spectral library match for the given \u0027alignedFeatureId\u0027 with additional molecular formula and substructure annotations.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "getStructureAnnotatedSpectralLibraryMatchExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "matchId",
+            "in": "path",
+            "description": "id of the library match to be returned.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spectral library match with requested mathcId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotatedSpectrum"
                 }
               }
             }
