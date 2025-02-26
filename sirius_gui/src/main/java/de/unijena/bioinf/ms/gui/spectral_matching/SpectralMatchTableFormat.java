@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNullElse;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
 
-    private static final int COL_COUNT = 11;
+    private static final int COL_COUNT = 13;
 
     public SpectralMatchTableFormat(Function<SpectralMatchBean, Boolean> bestFunc) {
         super(bestFunc);
