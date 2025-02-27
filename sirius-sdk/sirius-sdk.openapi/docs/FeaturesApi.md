@@ -34,11 +34,12 @@ All URIs are relative to *http://localhost:8888*
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
 | [**getQuantTableRowExperimental**](FeaturesApi.md#getQuantTableRowExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quant-table-row | [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId) |
 | [**getSiriusFragTreeInternal**](FeaturesApi.md#getSiriusFragTreeInternal) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | [INTERNAL] Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format |
-| [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
+| [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | Spectral library match for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesSummary**](FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;. |
 | [**getStructureAnnotatedMsDataExperimental**](FeaturesApi.md#getStructureAnnotatedMsDataExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey |
+| [**getStructureAnnotatedSpectralLibraryMatchExperimental**](FeaturesApi.md#getStructureAnnotatedSpectralLibraryMatchExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}/annotated | [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations |
 | [**getStructureAnnotatedSpectrumExperimental**](FeaturesApi.md#getStructureAnnotatedSpectrumExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey   |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
@@ -2182,9 +2183,9 @@ No authorization required
 
 > SpectralLibraryMatch getSpectralLibraryMatch(projectId, alignedFeatureId, matchId, optFields)
 
-List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+Spectral library match for the given &#39;alignedFeatureId&#39;.
 
-List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+Spectral library match for the given &#39;alignedFeatureId&#39;.
 
 ### Example
 
@@ -2204,7 +2205,7 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
-        String matchId = "matchId_example"; // String | 
+        String matchId = "matchId_example"; // String | id of the library match to be returned.
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
             SpectralLibraryMatch result = apiInstance.getSpectralLibraryMatch(projectId, alignedFeatureId, matchId, optFields);
@@ -2227,7 +2228,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
-| **matchId** | **String**|  | |
+| **matchId** | **String**| id of the library match to be returned. | |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -2247,7 +2248,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Spectral library matches of this feature (aligned over runs). |  -  |
+| **200** | Spectral library match with requested mathcId. |  -  |
 
 
 ## getSpectralLibraryMatches
@@ -2552,6 +2553,76 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Fragmentation spectrum annotated with fragments and sub-structures. |  -  |
+
+
+## getStructureAnnotatedSpectralLibraryMatchExperimental
+
+> AnnotatedSpectrum getStructureAnnotatedSpectralLibraryMatchExperimental(projectId, alignedFeatureId, matchId)
+
+[EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
+
+[EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        String matchId = "matchId_example"; // String | id of the library match to be returned.
+        try {
+            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectralLibraryMatchExperimental(projectId, alignedFeatureId, matchId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectralLibraryMatchExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **matchId** | **String**| id of the library match to be returned. | |
+
+### Return type
+
+[**AnnotatedSpectrum**](AnnotatedSpectrum.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Spectral library match with requested mathcId. |  -  |
 
 
 ## getStructureAnnotatedSpectrumExperimental

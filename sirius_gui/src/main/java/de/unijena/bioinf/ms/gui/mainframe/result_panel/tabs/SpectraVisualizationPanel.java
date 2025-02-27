@@ -448,6 +448,8 @@ public class SpectraVisualizationPanel extends JPanel implements
                         .collect(Collectors.toCollection(ArrayList::new)), getNormalizationMode().getMode(), getIntensityMode());
     }
 
+    //duplicate code with Spectrums class in middleware api
+    @Deprecated
     public static String makeSVG(String smiles) {
         try {
             final MolecularGraph graph = new MolecularGraph(
