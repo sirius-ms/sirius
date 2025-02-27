@@ -8,14 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class SoftwareTourUtils {
@@ -44,10 +39,12 @@ public class SoftwareTourUtils {
                     .sorted(Comparator.comparing(jc -> getTourInfo(jc).getOrderImportance()))
                     .toList();
 
-//            System.out.println("number of tutorials: " + componentsWithTutorial.size());
             for (int i = 0; i < componentsWithTutorial.size(); i++) {
                 JComponent component = componentsWithTutorial.get(i);
                 SoftwareTourInfo tourInfo = getTourInfo(component);
+                if (component instanceof SoftwareTourHighlighter<?> h) {
+                    h.updateBounds();
+                }
 
                 //disable all components
                 allComponents.forEach(c -> c.setEnabled(false));
@@ -138,87 +135,9 @@ public class SoftwareTourUtils {
     }
 
 
-    public static <C extends Component> void addSoftwareTourGlassPane(JLayeredPane layeredPane, JScrollPane scrollPane, JList list, Class<C> cellClass, Function<C, Component> componentFunction, SoftwareTourInfo tourInfo) {
-        ListModel listModel = list.getModel();
-        JPanel glassPanel = new JPanel();
-        glassPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
-        glassPanel.setOpaque(false);
-        glassPanel.setBounds(0, 0, 0, 0); // You can adjust its position as needed
+    public static void addSoftwareTourGlassPane(JLayeredPane layeredPane, JList<?> list, Component nestedComponent, SoftwareTourInfo tourInfo) {
+        SoftwareTourHighlighter<?> glassPanel = new SoftwareTourHighlighter<>(list, nestedComponent, tourInfo);
         layeredPane.add(glassPanel, JLayeredPane.PALETTE_LAYER); // Above the scrollPane
-
-        // Function to update proxy position
-        Runnable updateProxyPosition = () -> {
-            final int index = 0; // Row index to overlay
-            Rectangle rowBounds = list.getCellBounds(index, index);
-
-            if (rowBounds != null) {
-                Component cell = list.getCellRenderer().getListCellRendererComponent(
-                        list, list.getModel().getElementAt(index), index, false, false
-                );
-
-                Component reference = componentFunction.apply((C)cell);
-                if (reference == null) return;
-
-                Point refPos = reference.getLocation();
-
-                Point point = refPos;
-                Component currentSource = reference.getParent();
-                while (currentSource != null) {
-                    if (currentSource == cell) break;
-                    point.x += currentSource.getX();
-                    point.y += currentSource.getY();
-
-                    currentSource = currentSource.getParent();
-                }
-
-                int proxyX = point.x; // + rowBounds.x;
-                int proxyY = point.y; // + rowBounds.y;
-
-                glassPanel.setBounds(proxyX, proxyY, reference.getWidth(), reference.getHeight());
-//                    System.out.println("setting the location to " + proxyX + ", " + proxyY + ", " + reference.getWidth() + ", " + reference.getHeight());
-//
-            }
-        };
-
-        // Update proxy when the list model changes (adding/removing elements)
-        listModel.addListDataListener(new ListDataListener() {
-            @Override
-            public void intervalAdded(ListDataEvent e) { updateProxyPosition.run(); }
-            @Override
-            public void intervalRemoved(ListDataEvent e) { updateProxyPosition.run(); }
-            @Override
-            public void contentsChanged(ListDataEvent e) { updateProxyPosition.run(); }
-        });
-
-        // Update proxy when the list is resized
-        list.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) { updateProxyPosition.run(); }
-            @Override
-            public void componentShown(ComponentEvent e) { updateProxyPosition.run(); }
-        });
-
-        // Update proxy when the scroll position changes
-        JViewport viewport = scrollPane.getViewport();
-        viewport.addChangeListener(e -> updateProxyPosition.run());
-
-        //the following listeners don't seem necessary. only activate if needed.
-//        // Update proxy when the list is re-added to a new parent (useful for dynamic UIs)
-//        list.addHierarchyListener(e -> {
-//            if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) != 0) {
-//                updateProxyPosition.run();
-//            }
-//        });
-//
-//        // Update proxy when the list gains visibility (if it was hidden)
-//        list.addAncestorListener(new AncestorListener() {
-//            @Override public void ancestorAdded(AncestorEvent event) { updateProxyPosition.run(); }
-//            @Override public void ancestorRemoved(AncestorEvent event) {}
-//            @Override public void ancestorMoved(AncestorEvent event) {updateProxyPosition.run(); }
-//        });
-
-        // Initial positioning (invoke later to ensure layout is ready)
-        SwingUtilities.invokeLater(updateProxyPosition);
     }
 
     public static List<Component> collectNestedComponents(Container c) {
@@ -235,6 +154,46 @@ public class SoftwareTourUtils {
             } else {
                 components.add(comp);
             }
+        }
+    }
+
+    /**
+     * "Glass panel" above a nested component in a JList to highlight it for software tour
+     * @param <E>
+     */
+    private static class SoftwareTourHighlighter<E> extends JPanel {
+
+        private final JList<E> list;
+        private final Component nestedComponent;
+
+        public SoftwareTourHighlighter(JList<E> list, Component nestedComponent, SoftwareTourInfo tourInfo) {
+            super();
+            putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
+            setOpaque(false);
+            this.list = list;
+            this.nestedComponent = nestedComponent;
+        }
+
+        public void updateBounds() {
+            ListCellRenderer<? super E> renderer = list.getCellRenderer();
+
+            // force nestedComponent to be for row 0
+            Component cell = renderer.getListCellRendererComponent(list, list.getModel().getElementAt(0), 0, false, false);
+
+            Point point = nestedComponent.getLocation();
+            Component currentSource = nestedComponent.getParent();
+            while (currentSource != null) {
+                if (currentSource == cell) break;
+                point.x += currentSource.getX();
+                point.y += currentSource.getY();
+
+                currentSource = currentSource.getParent();
+            }
+
+            int proxyX = point.x;
+            int proxyY = point.y;
+
+            setBounds(proxyX, proxyY, nestedComponent.getWidth(), nestedComponent.getHeight());
         }
     }
 }
