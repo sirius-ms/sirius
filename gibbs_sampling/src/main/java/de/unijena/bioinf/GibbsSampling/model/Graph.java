@@ -120,7 +120,11 @@ public class Graph<C extends Candidate<?>> {
 //        this.edgeFilter = edgeFilter;
     }
 
+    /*
+     * This method is not in use anymore, because we have log odds as scores as well, thus scores CAN be above 1 (see library hit scorer)
+     */
     private static <C extends Candidate<?>> void assertInput(Graph<C> graph) {
+        /*
         Scored[][] var1 = graph.possibleFormulas;
         int var2 = var1.length;
 
@@ -138,7 +142,7 @@ public class Graph<C extends Candidate<?>> {
                 }
             }
         }
-
+        */
     }
 
     public double getLogWeight(int i, int j) {

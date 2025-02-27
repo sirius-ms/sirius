@@ -35,8 +35,8 @@ import lombok.*;
 @ToString(callSuper = true)
 public class MSMSScan extends AbstractScan {
     @Builder
-    public MSMSScan(long scanId, long runId, String scanNumber, double scanTime, double ccs, SimpleSpectrum peaks, long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, double mzOfInterest) {
-        super(runId, scanNumber, scanTime, ccs, peaks);
+    public MSMSScan(long scanId, long runId, String scanNumber, double scanTime, double ccs, boolean centroided, SimpleSpectrum peaks, long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, double mzOfInterest) {
+        super(runId, scanNumber, scanTime, ccs, centroided, peaks);
         this.scanId = scanId;
         this.precursorScanId = precursorScanId;
         this.msLevel = msLevel;

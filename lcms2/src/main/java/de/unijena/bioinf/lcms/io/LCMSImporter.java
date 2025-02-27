@@ -21,6 +21,7 @@
 package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
+import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
 import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
@@ -36,6 +37,7 @@ public class LCMSImporter {
             Path file,
             LCMSStorageFactory storageFactory,
             SiriusDatabaseAdapter siriusDatabaseAdapter,
+            CentroidingStrategy centroidingStrategy,
             boolean saveRawScans,
             Chromatography chromatography
     ) throws IOException {
@@ -49,9 +51,25 @@ public class LCMSImporter {
         }
         LCMSRun run = LCMSRun.builder().chromatography(chromatography).build();
         if (!saveRawScans) {
-            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, null, null, run);
+            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun,
+                    (scan)->{
+                        if (!scan.isCentroided()) centroidingStrategy.centroidMsScan(scan);
+                    },
+                    (scan)->{
+                        if (!scan.isCentroided())  centroidingStrategy.centroidMsMsScan(scan);
+                    },
+                    run);
         } else {
-            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, siriusDatabaseAdapter::importScan, siriusDatabaseAdapter::importMSMSScan, run);
+            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun,
+                    (scan)->{
+                        if (!scan.isCentroided()) centroidingStrategy.centroidMsScan(scan);
+                        siriusDatabaseAdapter.importScan(scan);
+                    },
+                    (scan)->{
+                        if (!scan.isCentroided())  centroidingStrategy.centroidMsMsScan(scan);
+                        siriusDatabaseAdapter.importMSMSScan(scan);
+                    },
+                    run);
         }
     }
 

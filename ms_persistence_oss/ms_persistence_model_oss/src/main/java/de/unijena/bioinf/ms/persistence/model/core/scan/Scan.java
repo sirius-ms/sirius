@@ -33,8 +33,8 @@ import lombok.*;
 @ToString(callSuper = true)
 public class Scan extends AbstractScan{
     @Builder
-    public Scan(long scanId, long runId, String sourceScanId, double scanTime, double ccs, SimpleSpectrum peaks) {
-        super(runId, sourceScanId, scanTime, ccs, peaks);
+    public Scan(long scanId, long runId, String sourceScanId, double scanTime, double ccs, boolean centroided, SimpleSpectrum peaks) {
+        super(runId, sourceScanId, scanTime, ccs, centroided, peaks);
         this.scanId = scanId;
     }
 

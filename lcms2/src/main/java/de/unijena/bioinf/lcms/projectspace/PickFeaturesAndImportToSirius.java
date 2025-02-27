@@ -32,10 +32,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -285,26 +282,29 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     private AbstractAlignedFeatures mergeNeighbouringFeatures(ProcessedSample mergedSample, MergedTrace trace, AbstractAlignedFeatures[] fs, DbMapper dbMapper) {
-        AbstractAlignedFeatures merged = fs[0];
+        Arrays.sort(fs, Comparator.comparingInt(x->x.getTraceRef().getStart()+x.getTraceRef().getScanIndexOffsetOfTrace()));
+        AbstractAlignedFeatures merged = Arrays.stream(fs).max(Comparator.comparingDouble(AbstractFeature::getApexIntensity)).orElse(fs[0]);
         // merge trace ref
         {
-            int left = fs[0].getTraceRef().getStart();
-            int right = fs[fs.length-1].getTraceRef().getEnd();
-            int offset = merged.getTraceRef().getScanIndexOffsetOfTrace();
-            int apex = Arrays.stream(fs).map(x->x.getTraceRef().absoluteApexId()).max(Comparator.comparingDouble(trace::intensity)).orElse(-1) - offset;
-            merged.setTraceRef(new TraceRef(merged.getTraceRef().getTraceId(), offset, left, apex, right));
+            int left = fs[0].getTraceRef().getStart() + fs[0].getTraceRef().getScanIndexOffsetOfTrace();
+            int right = fs[fs.length-1].getTraceRef().getEnd() + fs[fs.length-1].getTraceRef().getScanIndexOffsetOfTrace();
+            int apex = Arrays.stream(fs).map(x->x.getTraceRef().absoluteApexId()).max(Comparator.comparingDouble(trace::intensity)).orElse(-1);
+            final int offset = merged.getTraceRef().getScanIndexOffsetOfTrace();
+            merged.setTraceRef(new TraceRef(merged.getTraceRef().getTraceId(), offset, left-offset, apex-offset, right-offset));
         }
         // merge isotopic features
-        if (merged instanceof AlignedFeatures) {
+        if (merged instanceof AlignedFeatures && ((AlignedFeatures) merged).getIsotopicFeatures().isPresent()) {
+            /*
+            // always only merge isotopes from the same trace!
             AlignedFeatures mf = (AlignedFeatures) merged;
-            Int2ObjectOpenHashMap<List<AlignedIsotopicFeatures>> mapByMass = new Int2ObjectOpenHashMap<>();
+            Long2ObjectOpenHashMap<List<AlignedIsotopicFeatures>> sameTrace = new Long2ObjectOpenHashMap<>();
             for (AbstractAlignedFeatures f : fs) {
                 for (AlignedIsotopicFeatures i : mf.getIsotopicFeatures().get()) {
-                    mapByMass.computeIfAbsent((int) (i.getAverageMass() * 100), ArrayList::new).add(i);
+                    sameTrace.computeIfAbsent(i.getTraceRef().getTraceId(), (y)->new ArrayList<>()).add(i);
                 }
             }
             List<AlignedIsotopicFeatures> isolist = new ArrayList<>();
-            mapByMass.values().forEach(isos -> {
+            sameTrace.values().forEach(isos -> {
                 // find corresponding isotope trace
                 MergedTrace isoTrace = null;
                 for (int j = 0; j < trace.getIsotopes().length; ++j) {
@@ -316,6 +316,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 isolist.add((AlignedIsotopicFeatures) mergeNeighbouringFeatures(mergedSample, isoTrace, isos.toArray(AbstractAlignedFeatures[]::new), dbMapper));
             });
             mf.setIsotopicFeatures(isolist);
+
+             */
         }
         // merge features
         {

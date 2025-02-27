@@ -105,7 +105,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         }
 
         try {
-            int maxProgress = (int) Math.ceil(project.countFeatures() * 1.01d); //upper bound on number of features. selected instances could be much lower. but iterator has no count
+            int maxProgress = (int) Math.ceil(project.countAllFeatures() * 1.01d); //upper bound on number of features. selected instances could be much lower. but iterator has no count
             logInfo("Writing summary files...");
             StopWatch w = new StopWatch();
             w.start();

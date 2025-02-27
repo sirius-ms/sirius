@@ -34,16 +34,24 @@ import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
 import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectrumAnnotationJJob;
 import de.unijena.bioinf.ms.middleware.model.annotations.IsotopePatternAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.depict.DepictionGenerator;
+import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IBond;
+import org.openscience.cdk.renderer.color.UniColor;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -75,6 +83,20 @@ public class Spectrums {
         if (sourceSpectrum.getMergedCollisionEnergy() != null && !sourceSpectrum.getMergedCollisionEnergy().equals(CollisionEnergy.none())) {
             spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getMergedCollisionEnergy()));
             spectrum.setName("MS2 " + sourceSpectrum.getMergedCollisionEnergy().toString());
+        } else {
+            spectrum.setName("MS2");
+        }
+
+        spectrum.setMsLevel(2);
+
+        return spectrum;
+    }
+
+    private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull ReferenceLibrarySpectrum sourceSpectrum) {
+        spectrum.setPrecursorMz(sourceSpectrum.getParentMass());
+        if (sourceSpectrum.getCollisionEnergy() != null && !sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
+            spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getCollisionEnergy()));
+            spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
         } else {
             spectrum.setName("MS2");
         }
@@ -134,6 +156,7 @@ public class Spectrums {
         return createMergedMsMsWithAnnotations(exp, ftree, null);
     }
 
+    @SneakyThrows
     public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         if (exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty())
             return null;
@@ -154,12 +177,22 @@ public class Spectrums {
 
     }
 
+    @SneakyThrows
+    public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceLibrarySpectrum specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
+        AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
+        if (ftree == null)
+            return spectrum;
+        Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
+        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
+    }
+
     public static List<AnnotatedSpectrum> createMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         if (exp.getMs2Spectra() == null)
             return List.of();
         return exp.getMs2Spectra().stream().map(s -> createMsMsWithAnnotations(s, ftree, candidateSmiles)).toList();
     }
 
+    @SneakyThrows
     public static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull Ms2Spectrum<Peak> specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
         if (ftree == null)
@@ -168,8 +201,7 @@ public class Spectrums {
         return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
     }
 
-
-    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) {
+    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) throws CDKException {
         //compute substructure annotations //todo nightsky: do we want to do this somewhere else?
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
                 : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
@@ -237,7 +269,7 @@ public class Spectrums {
     private static void setSpectrumAnnotation(AnnotatedSpectrum spectrum, @Nullable FTree ftree,
                                               @Nullable InsilicoFragmentationResult structureAnno,
                                               @Nullable String candidateSmiles
-    ) {
+    ) throws CDKException {
         if (ftree == null)
             return;
         // create formula/ftree based spectrum annotation
@@ -262,6 +294,7 @@ public class Spectrums {
         if (structureAnno != null) {
             specAnno.structureAnnotationSmiles(candidateSmiles)
                     .structureAnnotationScore(structureAnno.getScore());
+            specAnno.structureAnnotationSvg(smilesToSVG(candidateSmiles));
         }
         spectrum.setSpectrumAnnotation(specAnno.build());
     }
@@ -299,10 +332,10 @@ public class Spectrums {
             return null;
         Fragment[] annotatedFormulas = new Fragment[spectrum.size()];
         for (Fragment f : tree) {
-            de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak = annotatedPeak.get(f);
-            if (peak == null || peak.isArtificial()) {
+           de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak = annotatedPeak.get(f);
+            if (peak == null)
                 continue;
-            }
+
             try {
                 boolean found = SpectrumAnnotationJJob.findCorrectPeakInInputFragmentationSpectrum(f, spectrum, peak, annotatedFormulas, () -> {});
                 if (!found) {
@@ -374,5 +407,16 @@ public class Spectrums {
     }
     //endregion
 
+
+    public static String smilesToSVG(String smiles) throws CDKException {
+        final MolecularGraph graph = new MolecularGraph(
+                new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles)
+        );
+        return new DepictionGenerator()
+                .withAtomColors(new UniColor(Colors.FOREGROUND_INTERFACE))
+                .withBackgroundColor(Colors.BACKGROUND)
+                .depict(graph.getMolecule()).toSvgStr();
+
+    }
 
 }
