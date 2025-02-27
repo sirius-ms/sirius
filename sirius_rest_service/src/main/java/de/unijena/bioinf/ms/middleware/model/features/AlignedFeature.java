@@ -58,63 +58,63 @@ public class AlignedFeature implements Taggable {
     @NotNull
     protected String alignedFeatureId;
 
-    @IndexField(stored = true)
+    @IndexField
     protected String compoundId;
 
     // identifier source
-    @IndexField(stored = true, fullTextSearch = true, defaultSearchField = true, sortable = true)
+    @IndexField(fullTextSearch = true, defaultSearchField = true, sortable = true)
     protected String name;
 
     /**
      * Externally provided FeatureId (e.g. by some preprocessing tool).
      * This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
      */
-    @IndexField(stored = true, defaultSearchField = true)
+    @IndexField(defaultSearchField = true)
     protected String externalFeatureId;
 
     // additional attributes
-    @IndexField(stored = true, sortable = true)
+    @IndexField(sortable = true)
     protected Double ionMass;
 
     /**
      * Ion mode (charge) this feature has been measured in.
      */
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected int charge;
 
     /**
      *  Adducts of this feature that have been detected during preprocessing.
      */
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected Set<String> detectedAdducts;
 
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected Double rtStartSeconds;
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected Double rtEndSeconds;
-    @IndexField(stored = true, sortable = true)
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double rtApexSeconds;
 
     /**
      * Overall Quality of this feature.
      */
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected DataQuality quality;
     /**
      * If true, the feature has at lease one MS1 spectrum
      */
-    @IndexField(stored = true)
+    @IndexField
     protected boolean hasMs1;
     /**
      * If true, the feature has at lease one MS/MS spectrum
      */
-    @IndexField(stored = true)
+    @IndexField
     protected boolean hasMsMs;
 
     /**
@@ -164,7 +164,7 @@ public class AlignedFeature implements Taggable {
     /**
      * Qualities per top level quality category.
      */
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected Map<String, DataQuality> qualities;
 

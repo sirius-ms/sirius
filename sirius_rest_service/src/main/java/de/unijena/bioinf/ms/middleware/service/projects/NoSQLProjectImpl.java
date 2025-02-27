@@ -137,11 +137,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.computeStateProvider = computeStateProvider;
         this.searchService = searchService;
 
-        //todo this is protoype testing code. make real implementation
-        System.out.println("TODO Prototype code Remove me!");
+        //todo this is protoype testing code. move to a better place real implementation
+        System.out.println("TODO Prototype code MOVE  me!");
         if (searchService != null) {
             try {
-                //todo? Do we want to do indexing based on teh DB layer?
                 //todo fix wildcard search
                 //todo fix event actions so that new tags are added to features
                 //todo add events to update indexe when features/runs are changing.

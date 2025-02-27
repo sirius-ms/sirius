@@ -37,18 +37,18 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComputedSubtools extends AlignedFeatureAnnotation {
-    @IndexField(stored = true)
+    @IndexField
     private boolean librarySearch = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean formulaSearch = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean zodiac = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean fingerprint = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean canopus = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean structureSearch = false;
-    @IndexField(stored = true)
+    @IndexField
     private boolean deNovoSearch = false;
 }
