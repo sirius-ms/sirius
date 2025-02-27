@@ -272,14 +272,20 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         updateDocuments(pojos);
     }
 
+
+    private static final String NON_STORED_FIELDS_MESSAGE = "Indexed object (%s) with id '%s' contains indexed fields that are not stored! "
+            + "Partial update not supported. Please provide the full object to perform an Update.";
     /**
      * Updates the stored fields of a document.
      * If any indexed field is not stored, an exception is thrown.
      */
     public synchronized Optional<T> updateDocumentFields(Object docId, Consumer<T> modifier) throws IllegalArgumentException {
-        if (hasNonStoredFields())
-            throw new UnsupportedOperationException("Indexed object contains indexed fields that are not stored! "
-                    + "Partial update not supported. Please provide the full object to perform an Update.");
+        if (hasNonStoredFields()){
+            String msg = String.format(NON_STORED_FIELDS_MESSAGE, pojoClass.getSimpleName(), docId);
+            log.warn(msg);
+            throw new UnsupportedOperationException(msg);
+        }
+
         Document doc = searchDocumentById(docId);
         if (doc == null)
             return Optional.empty();
