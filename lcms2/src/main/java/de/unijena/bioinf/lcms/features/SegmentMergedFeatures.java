@@ -63,6 +63,14 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         final IntOpenHashSet pointsOfInterest = new IntOpenHashSet(getPointsOfInterest(mergedTrace));
 
         TraceSegment[] mergedTraceSegments = traceSegmenter.detectSegments(mergedTrace, noiseLevel, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest.toIntArray()).toArray(TraceSegment[]::new);
+
+
+        /*
+        ENSURE CORRECT ORDERING
+         */
+        Arrays.sort(mergedTraceSegments, Comparator.comparingInt(x->x.leftEdge));
+
+
         /*
         if (mergedTraceSegments.length>=10) {
             try {
