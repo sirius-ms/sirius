@@ -52,7 +52,6 @@ import lombok.SneakyThrows;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.time.StopWatch;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -224,7 +223,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testRuns() throws IOException {
+    public void testRuns() {
 
 
         LCMSRun runIn = LCMSRun.builder()
@@ -318,7 +317,7 @@ public class NoSQLProjectTest {
     }
 
     @Test
-    public void testGroups() throws IOException {
+    public void testGroups() {
         project.createTags(List.of(
                 TagDefinitionImport.builder().tagName("sample").valueType(ValueType.TEXT).possibleValues(List.of("sample", "blank", "control")).build()
         ), true);
@@ -654,8 +653,8 @@ public class NoSQLProjectTest {
 
 
     @Test
-    public void testMany() throws IOException {
-        List<LCMSRun> lcmsRuns = IntStream.range(0, 10000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
+    public void testMany() {
+        List<LCMSRun> lcmsRuns = IntStream.range(0, 100_000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
                 .name("run" + i)
                 .chromatography(Chromatography.LC)
                 .fragmentation(Fragmentation.byValue("CID").orElseThrow())
