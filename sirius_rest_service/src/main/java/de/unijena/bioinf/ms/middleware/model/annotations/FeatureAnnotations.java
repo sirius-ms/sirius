@@ -63,14 +63,14 @@ public class FeatureAnnotations {
     /**
      * Confidence Score that represents the confidence whether the top hit is correct.
      */
-    @IndexField(stored = true, sortable = true)
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double confidenceExactMatch;
 
     /**
      * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
      */
-    @IndexField(stored = true, sortable = true)
+    @IndexField(sortable = true)
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
 
@@ -97,7 +97,7 @@ public class FeatureAnnotations {
      * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
      * This field is mainly for search index building and therefore hidden from the api
      */
-    @IndexField(stored = true, sortable = true)
+    @IndexField(sortable = true)
     @Schema(nullable = true, hidden = true)
     private Map<String, Integer> matchedDatabases;
 }

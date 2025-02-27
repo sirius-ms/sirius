@@ -53,28 +53,28 @@ public class Run implements Taggable {
     /**
      * Informative, human-readable name of this run
      */
-    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true, sortable = true)
+    @IndexField(defaultSearchField = true, fullTextSearch = true, sortable = true)
     protected String name;
 
     /**
      * Source location
      */
-    @IndexField(defaultSearchField = true, fullTextSearch = true, stored = true)
+    @IndexField(defaultSearchField = true, fullTextSearch = true)
     protected String source;
 
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected String chromatography;
 
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected String ionization;
 
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected String fragmentation;
 
-    @IndexField(stored = true)
+    @IndexField
     @Schema(nullable = true)
     protected List<String> massAnalyzers;
 

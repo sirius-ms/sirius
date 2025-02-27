@@ -17,7 +17,7 @@ public @interface IndexField {
      * Whether the field shall be stored. (If false then the field will be indexed but not retrievable in search results.)
      * Lucene: Adds additional StoredValueField to lucene index.
      */
-    boolean stored() default false;
+    boolean stored() default true;
 
     /**
      * Whether a String field shall be indexed as StringField (false) or TextField (true).

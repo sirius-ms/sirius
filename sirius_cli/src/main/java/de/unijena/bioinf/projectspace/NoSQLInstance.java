@@ -422,19 +422,24 @@ public class NoSQLInstance implements Instance {
         return project().findByFeatureIdStr(id, ComputedSubtools.class).findFirst().orElseGet(() -> ComputedSubtools.builder().alignedFeatureId(id).build());
     }
 
-    @SneakyThrows
     @Override
     public void saveSpectraSearchResult(@Nullable SpectralSearchResult result) {
-        List<SpectraMatch> matches = result == null ? List.of() : result.getResults().stream()
-                .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
-                .collect(Collectors.toList());
+        try {
+            List<SpectraMatch> matches = result == null ? List.of() : result.getResults().stream()
+                    .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
+                    .collect(Collectors.toList());
 
-        project().getStorage().write(() -> {
-            if (!matches.isEmpty())
-                project().getStorage().insertAll(matches);
-            upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
-        });
-
+            project().getStorage().write(() -> {
+                if (!matches.isEmpty())
+                    project().getStorage().insertAll(matches);
+                upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
+            });
+        } catch (IOException e) {
+            deleteSpectraSearchResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
@@ -505,6 +510,9 @@ public class NoSQLInstance implements Instance {
         } catch (IOException e) {
             deleteSiriusResult(); //try deleting all results in case of io error so that project stays consistent
             throw new RuntimeException(e);
+        } finally {
+            //flushing ensures all events have been fired
+//            project().getStorage().flush();
         }
     }
 
@@ -512,42 +520,51 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasSiriusResult() {
         return getComputedSubtools().isFormulaSearch();
-//        return project().countByFeatureId(id, FormulaCandidate.class) > 0;
     }
 
     @SneakyThrows
     @Override
     public void deleteSiriusResult() {
-        project().getStorage().write(() -> {
-            project().deleteAllByFeatureId(id, FormulaCandidate.class);
-            project().deleteAllByFeatureId(id, FTreeResult.class);
-            upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
-        });
+        try {
+            project().getStorage().write(() -> {
+                project().deleteAllByFeatureId(id, FormulaCandidate.class);
+                project().deleteAllByFeatureId(id, FTreeResult.class);
+                upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
+            });
 
-        removeAndSaveAdductsBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH,
-                DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+            removeAndSaveAdductsBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH,
+                    DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
-    @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
-        // mak zodiac score accessible via index
-        Long2ObjectMap<NoSqlFCandidate> zodiacCandidates = new Long2ObjectOpenHashMap<>(zodiacScores.size());
-        zodiacScores.stream().map(fc -> ((NoSqlFCandidate) fc))
-                .forEach(c -> zodiacCandidates.put(c.getId().longValue(), c));
+        try {
+            // mak zodiac score accessible via index
+            Long2ObjectMap<NoSqlFCandidate> zodiacCandidates = new Long2ObjectOpenHashMap<>(zodiacScores.size());
+            zodiacScores.stream().map(fc -> ((NoSqlFCandidate) fc))
+                    .forEach(c -> zodiacCandidates.put(c.getId().longValue(), c));
 
-        // add zodiac score and recompute rank for all candidates.
-        final AtomicInteger rank = new AtomicInteger(1);
-        List<FormulaCandidate> candidates = project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> {
-            if (zodiacCandidates.containsKey(fc.getFormulaId()))
-                zodiacCandidates.get(fc.getFormulaId()).getAnnotation(ZodiacScore.class).map(ZodiacScore::score)
-                        .ifPresent(fc::setZodiacScore);
-        }).sorted().peek(fc -> fc.setFormulaRank(rank.getAndIncrement())).toList();
+            // add zodiac score and recompute rank for all candidates.
+            final AtomicInteger rank = new AtomicInteger(1);
+            List<FormulaCandidate> candidates = project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> {
+                if (zodiacCandidates.containsKey(fc.getFormulaId()))
+                    zodiacCandidates.get(fc.getFormulaId()).getAnnotation(ZodiacScore.class).map(ZodiacScore::score)
+                            .ifPresent(fc::setZodiacScore);
+            }).sorted().peek(fc -> fc.setFormulaRank(rank.getAndIncrement())).toList();
 
-        project().getStorage().write(() -> {
-            project().getStorage().upsertAll(candidates);
-            upsertComputedSubtools(cs -> cs.setZodiac(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().upsertAll(candidates);
+                upsertComputedSubtools(cs -> cs.setZodiac(true));
+            });
+        } catch (IOException e) {
+            deleteZodiacResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
@@ -562,34 +579,38 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> fc.setZodiacScore(null)).toList());
             upsertComputedSubtools(cs -> cs.setZodiac(false));
         });
-
     }
 
-    @SneakyThrows
     @Override
     public void saveFingerprintResult(@NotNull List<FCandidate<?>> fingerprintResults) {
-        List<CsiPrediction> fps = fingerprintResults.stream()
-                .filter(fc -> fc.hasAnnotation(FingerprintResult.class))
-                .map(fc -> {
-                    @NotNull FingerprintResult fpResult = fc.getAnnotationOrThrow(FingerprintResult.class);
-                    return CsiPrediction.builder()
-                            .formulaId((long) fc.getId())
-                            .alignedFeatureId(id)
-                            .fingerprint(fpResult.fingerprint)
-                            .build();
-                }).collect(Collectors.toList());
+        try {
+            List<CsiPrediction> fps = fingerprintResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerprintResult.class))
+                    .map(fc -> {
+                        @NotNull FingerprintResult fpResult = fc.getAnnotationOrThrow(FingerprintResult.class);
+                        return CsiPrediction.builder()
+                                .formulaId((long) fc.getId())
+                                .alignedFeatureId(id)
+                                .fingerprint(fpResult.fingerprint)
+                                .build();
+                    }).collect(Collectors.toList());
 
 
-        project().getStorage().write(() -> {
-            project().getStorage().insertAll(fps);
-            upsertComputedSubtools(cs -> cs.setFingerprint(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().insertAll(fps);
+                upsertComputedSubtools(cs -> cs.setFingerprint(true));
+            });
+        } catch (IOException e) {
+            deleteFingerprintResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
     public boolean hasFingerprintResult() {
         return getComputedSubtools().isFingerprint();
-//        return project().countByFeatureId(id, CsiPrediction.class) > 0;
     }
 
     @SneakyThrows
@@ -668,7 +689,7 @@ public class NoSQLInstance implements Instance {
                                         .build()
                         ).stream();
                     }).collect(Collectors.toList());
-            if (!searchResults.isEmpty())
+            if (searchResults.isEmpty())
                 System.out.println("No Search Result for feature: " + id);
             if (searchResults.size() > 1)
                 System.out.println("More then ONE Search Result for feature: " + id);
@@ -680,6 +701,8 @@ public class NoSQLInstance implements Instance {
         } catch (Exception e) {
             deleteStructureSearchResult();
             throw new RuntimeException(e);
+        } finally {
+//          project().getStorage().flush();
         }
     }
 
@@ -696,29 +719,33 @@ public class NoSQLInstance implements Instance {
             project().deleteAllByFeatureId(id, CsiStructureMatch.class);
             upsertComputedSubtools(cs -> cs.setStructureSearch(false));
         });
-
-
     }
 
-    @SneakyThrows
     @Override
     public void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
-        List<CanopusPrediction> cps = canopusResults.stream()
-                .filter(fc -> fc.hasAnnotation(CanopusResult.class))
-                .map(fc -> {
-                    @NotNull CanopusResult canopusResult = fc.getAnnotationOrThrow(CanopusResult.class);
-                    return CanopusPrediction.builder()
-                            .formulaId((long) fc.getId())
-                            .alignedFeatureId(id)
-                            .cfFingerprint(canopusResult.getCanopusFingerprint())
-                            .npcFingerprint(canopusResult.getNpcFingerprint().orElse(null))
-                            .build();
-                }).collect(Collectors.toList());
+        try {
+            List<CanopusPrediction> cps = canopusResults.stream()
+                    .filter(fc -> fc.hasAnnotation(CanopusResult.class))
+                    .map(fc -> {
+                        @NotNull CanopusResult canopusResult = fc.getAnnotationOrThrow(CanopusResult.class);
+                        return CanopusPrediction.builder()
+                                .formulaId((long) fc.getId())
+                                .alignedFeatureId(id)
+                                .cfFingerprint(canopusResult.getCanopusFingerprint())
+                                .npcFingerprint(canopusResult.getNpcFingerprint().orElse(null))
+                                .build();
+                    }).collect(Collectors.toList());
 
-        project().getStorage().write(() -> {
-            project().getStorage().insertAll(cps);
-            upsertComputedSubtools(cs -> cs.setCanopus(true));
-        });
+            project().getStorage().write(() -> {
+                project().getStorage().insertAll(cps);
+                upsertComputedSubtools(cs -> cs.setCanopus(true));
+            });
+        } catch (IOException e) {
+            deleteCanopusResult();
+            throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
+        }
     }
 
     @Override
@@ -733,10 +760,8 @@ public class NoSQLInstance implements Instance {
             project().deleteAllByFeatureId(id, CanopusPrediction.class);
             upsertComputedSubtools(cs -> cs.setCanopus(false));
         });
-
     }
 
-    @SneakyThrows
     @Override
     public void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
         try {
@@ -786,6 +811,8 @@ public class NoSQLInstance implements Instance {
         } catch (Exception e) {
             deleteMsNovelistResult();
             throw new RuntimeException(e);
+        } finally {
+//            project().getStorage().flush();
         }
     }
 
@@ -803,14 +830,14 @@ public class NoSQLInstance implements Instance {
         });
     }
 
-    @SneakyThrows
-    private long upsertComputedSubtools(Consumer<ComputedSubtools> modifier) {
+    private long upsertComputedSubtools(Consumer<ComputedSubtools> modifier) throws IOException {
         @NotNull ComputedSubtools it = getComputedSubtools();
         modifier.accept(it);
         return project().getStorage().upsert(it);
     }
 
 
+    // todo this is a weird place for this.
     private class QuantTableImpl implements QuantificationTable {
         private List<String> sampleNames = new ArrayList<>();
         private Object2IntMap<String> namesToIndex = new Object2IntOpenHashMap<>();
