@@ -298,13 +298,22 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
 
     public static boolean findCorrectPeakInInputFragmentationSpectrum(Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, InterruptionCheck interruptionCheck) throws InterruptedException {
         //the FTree store spectrum indices for the original peaks. However, at this stage I rather don't want to make assumptions on the order of the spectra in MSData. Hence, we check all original peaks (from different spectra).
-        for (Peak p : peak.getOriginalPeaks()) {
-            interruptionCheck.check();
-            int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, p.getMass());
+        if (peak.isArtificial()){
+            int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, peak.getMass());
             if (i >= 0) {
                 f.setPeakId(i);
                 annotatedFormulas[i] = f;
                 return true;
+            }
+        } else {
+            for (Peak p : peak.getOriginalPeaks()) {
+                interruptionCheck.check();
+                int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, p.getMass());
+                if (i >= 0) {
+                    f.setPeakId(i);
+                    annotatedFormulas[i] = f;
+                    return true;
+                }
             }
         }
         return false;
