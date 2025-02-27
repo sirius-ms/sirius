@@ -2836,12 +2836,12 @@ public class FeaturesApi {
         return getSiriusFragTreeInternalRequestCreation(projectId, alignedFeatureId, formulaId);
     }
     /**
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId The matchId parameter
+     * @param matchId id of the library match to be returned.
      * @param optFields The optFields parameter
      * @return SpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -2888,12 +2888,12 @@ public class FeaturesApi {
     }
 
     /**
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId The matchId parameter
+     * @param matchId id of the library match to be returned.
      * @param optFields The optFields parameter
      * @return SpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -2904,12 +2904,12 @@ public class FeaturesApi {
     }
 
     /**
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId The matchId parameter
+     * @param matchId id of the library match to be returned.
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -2920,12 +2920,12 @@ public class FeaturesApi {
     }
 
     /**
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * Spectral library match for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId The matchId parameter
+     * @param matchId id of the library match to be returned.
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -3355,6 +3355,98 @@ public class FeaturesApi {
      */
     public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey) throws WebClientResponseException {
         return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey);
+    }
+    /**
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId id of the library match to be returned.
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getStructureAnnotatedSpectralLibraryMatchExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getStructureAnnotatedSpectralLibraryMatchExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'matchId' is set
+        if (matchId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'matchId' when calling getStructureAnnotatedSpectralLibraryMatchExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("matchId", matchId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}/annotated", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId id of the library match to be returned.
+     * @return AnnotatedSpectrum
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public AnnotatedSpectrum getStructureAnnotatedSpectralLibraryMatchExperimental(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId id of the library match to be returned.
+     * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectralLibraryMatchExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+        ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
+        return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
+     * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - Spectral library match with requested mathcId.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId id of the library match to be returned.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getStructureAnnotatedSpectralLibraryMatchExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String matchId) throws WebClientResponseException {
+        return getStructureAnnotatedSpectralLibraryMatchExperimentalRequestCreation(projectId, alignedFeatureId, matchId);
     }
     /**
      * [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
