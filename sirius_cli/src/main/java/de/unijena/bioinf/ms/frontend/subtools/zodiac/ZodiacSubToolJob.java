@@ -54,7 +54,6 @@ import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
