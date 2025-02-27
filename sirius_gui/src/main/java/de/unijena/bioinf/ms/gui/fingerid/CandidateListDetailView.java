@@ -113,7 +113,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(this, gui, getSource().getBestFunc()));
+        CandidateCellRenderer cellRenderer = new CandidateCellRenderer(this, gui, getSource().getBestFunc());
+        candidateList.setCellRenderer(cellRenderer);
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -137,10 +138,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         });
 
         //add tutorial stuff
-        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class,  (cell) -> cell.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
-        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class, (cell) -> cell.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
-        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, scrollPane, candidateList, CandidateCellRenderer.class, (cell) -> cell.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
-
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
