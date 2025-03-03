@@ -55,6 +55,7 @@ import org.dizitart.no2.index.IndexDescriptor;
 import org.dizitart.no2.index.IndexOptions;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.dizitart.no2.repository.ObjectRepository;
+import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -340,6 +341,19 @@ public class NitriteDatabase implements Database<Document> {
                 LoggerFactory.getLogger(getClass()).warn("Nitrite database is closed! Cannot commit any changes!");
         } finally {
             stateReadLock.unlock();
+        }
+    }
+
+    @Override
+    public void compact() {
+        stateWriteLock.lock();
+        try {
+            close();
+            try (MVStore mvStore = MVStore.open(file.toString())) {
+                mvStore.close(-1);
+            }
+        } finally {
+            stateWriteLock.unlock();
         }
     }
 

@@ -100,6 +100,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
 
     void flush() throws IOException;
 
+    void compact();
 
     void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException;
 
