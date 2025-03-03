@@ -1556,4 +1556,79 @@ public class ProjectsApi {
     public ResponseSpec openProjectWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         return openProjectRequestCreation(projectId, pathToProject, optFields);
     }
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec reindexProjectRequestCreation(String projectId, Boolean force) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling reindexProject", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "force", force));
+        
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/index", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void reindexProject(String projectId, Boolean force) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        reindexProjectRequestCreation(projectId, force).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> reindexProjectWithHttpInfo(String projectId, Boolean force) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return reindexProjectRequestCreation(projectId, force).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Create a search index for the given project.
+     * Create a search index for the given project.
+     * <p><b>200</b> - OK
+     * @param projectId unique name/identifier of the project to create the index for.
+     * @param force if true an existing index will be deleted and recreated.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec reindexProjectWithResponseSpec(String projectId, Boolean force) throws WebClientResponseException {
+        return reindexProjectRequestCreation(projectId, force);
+    }
 }
