@@ -56,7 +56,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
-    final JCheckBox invertFilter, deleteSelection, elementsMatchFormula, elementsMatchPrecursorFormula, hasMs1, hasMsMs;
+    final JCheckBox invertFilter, deleteSelection, /*elementsMatchFormula, elementsMatchPrecursorFormula,*/ hasMs1, hasMsMs;
 
     final JCheckBox blankFilter, controlFilter;
     final JSpinner blankSpinner, controlSpinner;
@@ -277,7 +277,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         // Element filter
         {
             resultParameters.add(Box.createVerticalStrut(9));
-            resultParameters.add(new JXTitledSeparator("Elements"));
+            resultParameters.add(new JXTitledSeparator("Elements in top molecular formula"));
 
             JPanel elementSelector = new JPanel();
             elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
@@ -298,19 +298,19 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             elementsField.setPlaceholder("Insert or Select formula constraints");
             elementSelector.add(elementsField);
             elementSelector.add(selectElements);
-            elementsMatchFormula = new JCheckBox("Molecular Formula");
-            elementsMatchFormula.setSelected(filterModel.getElementFilter().isMatchFormula());
-            elementsMatchPrecursorFormula = new JCheckBox("Precursor Formula");
-            elementsMatchPrecursorFormula.setSelected(filterModel.getElementFilter().isMatchPrecursorFormula());
+//            elementsMatchFormula = new JCheckBox("Molecular Formula");
+//            elementsMatchFormula.setSelected(filterModel.getElementFilter().isMatchFormula());
+//            elementsMatchPrecursorFormula = new JCheckBox("Precursor Formula");
+//            elementsMatchPrecursorFormula.setSelected(filterModel.getElementFilter().isMatchPrecursorFormula());
 
-            final Box group = Box.createHorizontalBox();
-            group.add(elementsMatchFormula);
-            group.add(Box.createHorizontalStrut(25));
-            group.add(elementsMatchPrecursorFormula);
-            group.add(Box.createHorizontalGlue());
+//            final Box group = Box.createHorizontalBox();
+//            group.add(elementsMatchFormula);
+//            group.add(Box.createHorizontalStrut(25));
+//            group.add(elementsMatchPrecursorFormula);
+//            group.add(Box.createHorizontalGlue());
 
             resultParameters.add(elementSelector);
-            resultParameters.add(group);
+//            resultParameters.add(group);
         }
 
         {
@@ -434,7 +434,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                         elementsField.getText() == null || elementsField.getText().isBlank()
                                 ? FormulaConstraints.empty()
                                 : FormulaConstraints.fromString(elementsField.getText()),
-                        elementsMatchFormula.isSelected(), elementsMatchPrecursorFormula.isSelected()
+//                        elementsMatchFormula.isSelected(), elementsMatchPrecursorFormula.isSelected()
+                        true, false
                 )
         );
 

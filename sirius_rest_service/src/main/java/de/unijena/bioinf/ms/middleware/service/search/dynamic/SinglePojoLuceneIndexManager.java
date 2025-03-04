@@ -95,7 +95,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
             // Scans the bean class’s @IndexField annotations to set PointConfigs and Analyzers.
             // Adds PointsConfig entries to the query parser.
             // Adds default search fields to query parser
-            detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes);
+            pojoMapper.detectAnalyzersAndPointConfigs(pointsConfigMap, fieldAnalyzers, defaultSearchFields, sortTypes);
             // Initialize the query with  points config map and default search fields.
             queryParser.setMultiFields(defaultSearchFields.toArray(CharSequence[]::new));
             queryParser.setPointsConfigMap(pointsConfigMap);
