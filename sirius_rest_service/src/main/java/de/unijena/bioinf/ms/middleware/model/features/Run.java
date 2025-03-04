@@ -23,6 +23,8 @@ package de.unijena.bioinf.ms.middleware.model.features;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -81,6 +83,7 @@ public class Run implements Taggable {
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
     protected Map<String, Tag> tags;
 

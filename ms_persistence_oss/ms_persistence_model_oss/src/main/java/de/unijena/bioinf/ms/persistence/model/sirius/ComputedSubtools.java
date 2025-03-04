@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.projectspace.IndexField;
@@ -51,4 +52,14 @@ public class ComputedSubtools extends AlignedFeatureAnnotation {
     private boolean structureSearch = false;
     @IndexField
     private boolean deNovoSearch = false;
+
+    @JsonIgnore
+    public boolean hasResults(){
+        return librarySearch || formulaSearch || zodiac || fingerprint || canopus || structureSearch || deNovoSearch;
+    }
+
+    @JsonIgnore
+    public boolean noResults(){
+        return !hasResults();
+    }
 }

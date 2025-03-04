@@ -386,4 +386,18 @@ public class ProjectController {
     public String getCanopusNpcData(@PathVariable String projectId, @RequestParam int charge) {
         return projectsProvider.getProjectOrThrow(projectId).getCanopusNpcDataCSV(charge);
     }
+
+    /**
+     * Create a search index for the given project.
+     *
+     * @param projectId     unique name/identifier of the project to create the index for.
+     * @param force         if true an existing index will be deleted and recreated.
+     */
+    @PutMapping(value = "/{projectId}/index", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public void buildSearchIndex(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "false") boolean force) {
+        projectsProvider.getProjectOrThrow(projectId).createSearchIndex(force);
+    }
+
+
 }

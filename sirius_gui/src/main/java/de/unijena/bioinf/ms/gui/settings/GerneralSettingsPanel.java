@@ -34,7 +34,6 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -166,6 +165,16 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         });
 
         add(new JXTitledSeparator("REST API"));
+        JButton rebuildSearchIndex = new JButton("Rebuild Search Index");
+        rebuildSearchIndex.setToolTipText("Rebuild the search index used for filtering the feature list.");
+        addNamed("", rebuildSearchIndex);
+        rebuildSearchIndex.addActionListener(evt -> {
+            Jobs.runInBackgroundAndLoad(mf, "Rebuilding search index...", () -> {
+                gui.getSiriusClient().projects().buildSearchIndex(gui.getProjectManager().getProjectId(), true);
+                gui.getProjectManager().reloadFeatures();
+            });
+        });
+
         JButton openSwaggerInBrowser = new JButton("Open API in browser");
         openSwaggerInBrowser.setToolTipText("Open URL of the REST API in the browser.");
         addNamed("", openSwaggerInBrowser);

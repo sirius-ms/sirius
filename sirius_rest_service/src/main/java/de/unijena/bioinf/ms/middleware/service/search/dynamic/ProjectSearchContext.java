@@ -3,7 +3,6 @@ package de.unijena.bioinf.ms.middleware.service.search.dynamic;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -12,10 +11,8 @@ import org.springframework.data.domain.Pageable;
 import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 public interface ProjectSearchContext extends Closeable {
     Path getProjectIndexRootDir();
@@ -32,7 +29,9 @@ public interface ProjectSearchContext extends Closeable {
 
     <T> Optional<T> updateDocumentFields(@NotNull Object objectId, @NotNull Consumer<T> objectModifier, @NotNull Class<T> clazz) throws IllegalArgumentException;
 
-    <T extends Taggable> void addTagsToDocuments(Collection<Object> docId, Collection<Tag> tag, @NotNull Class<T> clazz);
+    <T> void updateDocumentsFields(@NotNull Collection<?> objectIds, @NotNull Consumer<T> objectModifier, @NotNull Class<T> clazz);
+
+    <T extends Taggable> void addTagsToDocuments(Collection<?> docId, Collection<Tag> tag, @NotNull Class<T> clazz);
 
     <T extends Taggable> void addTagsToDocument(Object docId, Collection<Tag> tag, @NotNull Class<T> clazz);
 
@@ -44,7 +43,7 @@ public interface ProjectSearchContext extends Closeable {
 
     <T> void removeDocumentById(@NotNull Object documentId, Class<T> clazz);
 
-    <T> void removeDocumentsById(@NotNull Collection<Object> documentId, Class<T> clazz);
+    <T> void removeDocumentsById(@NotNull Collection<?> documentId, Class<T> clazz);
 
     <T> Page<T> search(@Nullable String query, Pageable pageable, Class<T> beanClass);
 

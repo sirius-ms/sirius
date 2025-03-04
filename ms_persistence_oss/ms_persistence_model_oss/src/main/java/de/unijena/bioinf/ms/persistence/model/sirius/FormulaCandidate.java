@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -92,6 +93,11 @@ public class FormulaCandidate extends AlignedFeatureAnnotation implements Compar
      */
     @Nullable
     protected Double zodiacScore;
+
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = LipidSpecies.FromStringDeserializer.class)
+    @Nullable
+    protected LipidSpecies lipidSpecies;
 
     @JsonIgnore
     public MolecularFormula getPrecursorFormula() {

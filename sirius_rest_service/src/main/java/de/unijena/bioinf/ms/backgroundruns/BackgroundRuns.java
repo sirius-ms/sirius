@@ -287,7 +287,7 @@ public final class BackgroundRuns {
     }
 
     public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
-        Workflow computation = new FoldChangeWorkflow(project.getProjectSpaceManager(), left, right, aggregation, quantification, target);
+        Workflow computation = new FoldChangeWorkflow((NoSQLProjectImpl) project, left, right, aggregation, quantification, target);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }
@@ -337,7 +337,7 @@ public final class BackgroundRuns {
         return ret;
     }
 
-    public class BackgroundRunJob extends BasicJJob<Boolean> {
+    public class BackgroundRunJob extends BasicMasterJJob<Boolean> {
         @Getter
         protected final int runId;
         @Getter
@@ -406,8 +406,8 @@ public final class BackgroundRuns {
 
                 if (instances != null) { //just a sanity check to notice if something with the went wrong before.
                     withReadLock(() -> instances.forEach(i -> {
-                        if(!computingInstances.contains(i.getId()))
-                            System.out.println("WARNING: Unlocked instance is are part of computation: " + i.getId());
+                        if (!computingInstances.contains(i.getId()))
+                            logWarn("Unlocked instance is are part of computation: " + i.getId());
                     }));
                 }
 
@@ -422,28 +422,42 @@ public final class BackgroundRuns {
 
                 checkForInterruption();
 
-                logInfo("Start Computation...");
+                logInfo("Start Background Run...");
                 computation.run();
 
-                logInfo("Computation DONE!");
+                logInfo("Assign computed affected ids...");
                 if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
-                    withWriteLock(() -> instances.forEach(i -> computingInstances.remove(i.getId())));
+                    ArrayList<String> affIds = new ArrayList<>();
+                    instances.forEach(i -> affIds.add(i.getId()));
+                    try {
+                        if (!affIds.isEmpty()){
+                            affectedFeatureIds = affIds;
+                            submitJob(() -> project.updateSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
+                        }
+                    } finally {
+                        withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
+                    }
                     logInfo("All Instances unlocked!");
-                } else if (computation instanceof ToolChainWorkflow) {
-                    logInfo("Collecting imported compounds...");
-                    extractIds(((ToolChainWorkflow) computation).getPreprocessingJob().result());
-                    logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportPeaksFomResourceWorkflow) {
                     logInfo("Collecting imported compounds...");
                     extractIds(((ImportPeaksFomResourceWorkflow) computation).getImportedInstances());
+                    if (affectedFeatureIds != null)
+                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportMsFromResourceWorkflow) {
                     logInfo("Collecting imported compounds...");
                     affectedFeatureIds = ((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
                     affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
+                    if (affectedFeatureIds != null)
+                        submitJob(() -> ((NoSQLProjectImpl)project).addToSearchIndexLongIds(((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds()), JobType.CPU).awaitResult();
+
                     logInfo("Imported compounds collected...");
+                } else if (computation instanceof ToolChainWorkflow) {
+                    logWarn("ToolChainWorkflow without instances? Should no happen! Job name: " + getName());
                 }
+
+                logInfo("Background Run DONE!");
 
                 return true;
             } finally {

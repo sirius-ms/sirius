@@ -4,6 +4,7 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
+| [**buildSearchIndex**](ProjectsApi.md#buildSearchIndex) | **PUT** /api/projects/{projectId}/index | Create a search index for the given project. |
 | [**closeProject**](ProjectsApi.md#closeProject) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
 | [**copyProject**](ProjectsApi.md#copyProject) | **PUT** /api/projects/{projectId}/copy | DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API. |
 | [**createProject**](ProjectsApi.md#createProject) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
@@ -21,8 +22,74 @@ All URIs are relative to *http://localhost:8888*
 | [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | [DEPRECATED] Import ms/ms data from the given format into the specified project-space as background job |
 | [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | [DEPRECATED] Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   |
 | [**openProject**](ProjectsApi.md#openProject) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
-| [**reindexProject**](ProjectsApi.md#reindexProject) | **PUT** /api/projects/{projectId}/index | Create a search index for the given project. |
 
+
+
+## buildSearchIndex
+
+> buildSearchIndex(projectId, force)
+
+Create a search index for the given project.
+
+Create a search index for the given project.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | unique name/identifier of the project to create the index for.
+        Boolean force = false; // Boolean | if true an existing index will be deleted and recreated.
+        try {
+            apiInstance.buildSearchIndex(projectId, force);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#buildSearchIndex");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| unique name/identifier of the project to create the index for. | |
+| **force** | **Boolean**| if true an existing index will be deleted and recreated. | [optional] [default to false] |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## closeProject
@@ -1198,73 +1265,6 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | OK |  -  |
-
-
-## reindexProject
-
-> reindexProject(projectId, force)
-
-Create a search index for the given project.
-
-Create a search index for the given project.
-
-### Example
-
-```java
-// Import classes:
-import io.sirius.ms.sdk.client.ApiClient;
-import io.sirius.ms.sdk.client.ApiException;
-import io.sirius.ms.sdk.client.Configuration;
-import io.sirius.ms.sdk.client.models.*;
-import io.sirius.ms.sdk.api.ProjectsApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8888");
-
-        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        String projectId = "projectId_example"; // String | unique name/identifier of the project to create the index for.
-        Boolean force = false; // Boolean | if true an existing index will be deleted and recreated.
-        try {
-            apiInstance.reindexProject(projectId, force);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#reindexProject");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| unique name/identifier of the project to create the index for. | |
-| **force** | **Boolean**| if true an existing index will be deleted and recreated. | [optional] [default to false] |
-
-### Return type
-
-null (empty response body)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: Not defined
 
 
 ### HTTP response details

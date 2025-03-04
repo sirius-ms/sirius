@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import de.unijena.bioinf.projectspace.IndexField;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
@@ -51,7 +53,7 @@ public class AlignedFeature implements Taggable {
     public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags}
 
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
-            OptField.tags, OptField.computedTools, OptField.confidence, OptField.qualities);
+            OptField.tags, OptField.computedTools, OptField.topAnnotations, OptField.qualities);
 
     // identifier
     @IndexField(documentId = true, sortable = true)
@@ -102,10 +104,13 @@ public class AlignedFeature implements Taggable {
 
     /**
      * Overall Quality of this feature.
+     * If no Quality data are available for this feature the value is NOT_APPLICABLE
      */
     @IndexField
-    @Schema(nullable = true)
-    protected DataQuality quality;
+    @Schema
+    @Builder.Default
+    @NotNull
+    protected DataQuality quality = DataQuality.NOT_APPLICABLE;
     /**
      * If true, the feature has at lease one MS1 spectrum
      */
@@ -171,6 +176,7 @@ public class AlignedFeature implements Taggable {
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
     protected Map<String, Tag> tags;
 }

@@ -210,7 +210,7 @@ public class GuiProjectManager implements Closeable {
         System.out.println("Project loaded in: " + w);
     }
 
-    private void reloadFeatures() {
+    public void reloadFeatures() {
         //todo LUCENE: handle loading mechanism for compound list.
         String filteredQuery = compoundFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
                 .map(Query::toString)

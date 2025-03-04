@@ -487,6 +487,42 @@
         }
       }
     },
+    "/api/projects/{projectId}/index": {
+      "put": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Create a search index for the given project.",
+        "description": "Create a search index for the given project.",
+        "operationId": "buildSearchIndex",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "unique name/identifier of the project to create the index for.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "description": "if true an existing index will be deleted and recreated.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/copy": {
       "put": {
         "tags": [
@@ -9217,7 +9253,7 @@
           },
           "quality": {
             "type": "string",
-            "description": "Overall Quality of this feature.",
+            "description": "Overall Quality of this feature.\n If no Quality data are available for this feature the value is NOT_APPLICABLE",
             "nullable": true,
             "enum": [
               "NOT_APPLICABLE",

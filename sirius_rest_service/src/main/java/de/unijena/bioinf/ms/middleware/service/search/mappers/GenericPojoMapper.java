@@ -1,0 +1,312 @@
+package de.unijena.bioinf.ms.middleware.service.search.mappers;
+
+import de.unijena.bioinf.projectspace.IndexField;
+import lombok.Getter;
+import lombok.SneakyThrows;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.*;
+
+public class GenericPojoMapper<T> implements PojoMapper<T> {
+    private final Map<Class<? extends FieldMapper>, FieldMapper> fieldMappers;
+    @Getter
+    private final @NotNull Class<T> pojoClass;
+    @Getter
+    private final String pojoIdField;
+    /**
+     * True if any field annotated with @IndexField in the bean class is not stored.
+     */
+    @Getter
+    private final boolean nonStoredFields;
+
+
+    public GenericPojoMapper(@NotNull Class<T> pojoClass, ConcurrentHashMap<Class<? extends FieldMapper>, FieldMapper> fieldMappers) {
+        this.fieldMappers = fieldMappers;
+        this.pojoClass = pojoClass;
+
+        { // detect pojo id field, check for non-stored fields
+            String pojoIdFieldTmp = null;
+            boolean unStoredTmp = false;
+
+            for (Field f : pojoClass.getDeclaredFields()) {
+                if (f.isAnnotationPresent(IndexField.class)) {
+                    IndexField indexField = f.getAnnotation(IndexField.class);
+                    String fieldName = indexField.name().isEmpty() ? f.getName() : indexField.name();
+
+                    if (!indexField.stored() && !indexField.documentId())
+                        unStoredTmp = true;
+
+                    if (indexField.documentId()) {
+                        if (pojoIdFieldTmp != null)
+                            throw new IllegalStateException("Document ID field already set. Only one ID field is allowed!");
+                        pojoIdFieldTmp = fieldName;
+                    }
+                }
+            }
+            nonStoredFields = unStoredTmp;
+            pojoIdField = pojoIdFieldTmp;
+
+            if (pojoIdField == null)
+                throw new IllegalArgumentException("No document ID field defined! ID field is mandatory!");
+        }
+    }
+
+    public String getPojoName(){
+        return pojoClass.getSimpleName();
+    }
+    @SneakyThrows
+    public Object getIdValue(T pojo) {
+        Field f = pojo.getClass().getField(pojoIdField);
+        f.setAccessible(true);
+        return f.get(pojo);
+    }
+
+
+    public GenericPojoMapper(@NotNull Class<T> pojoClass) {
+        this(pojoClass, new ConcurrentHashMap<>());
+    }
+
+    public GenericPojoMapper(@NotNull Class<T> pojoClass, FieldMapper... fieldMappers) {
+        this(pojoClass);
+        for (FieldMapper fieldMapper : fieldMappers) {
+            this.fieldMappers.put(fieldMapper.getClass(), fieldMapper);
+        }
+    }
+
+
+    /**
+     * Converts a pojo into a Lucene Document.
+     * <p>
+     * It iterates over all fields annotated with @IndexField and adds one or more Lucene fields
+     * (using an appropriate field type for numbers, text, etc.). For collections/arrays and nested objects,
+     * the helper method createAnnotationFields handles the conversion.
+     * Finally, if the field in the pojo are annotated with specific fieldMappers. The mappers must be registered in fieldMappers map.
+     */
+
+    @Override
+    public Document toDocument(T pojo) {
+        Document doc = new Document();
+        createAnnotationFields("", pojo, false, false, false, false)
+                .forEach(doc::add);
+        return doc;
+    }
+
+
+    /**
+     * Creates one or more Lucene fields for a given pojo field value.
+     * This method has been extended to support:
+     * <ul>
+     *   <li>Collections/arrays: each element is processed individually.</li>
+     *   <li>Enums: converted to their name.</li>
+     *   <li>Nested objects: its own @IndexField–annotated fields are indexed using a qualified name.</li>
+     * </ul>
+     */
+    private List<IndexableField> createAnnotationFields(@NotNull String fieldName, @Nullable Object value, boolean store, boolean fulltext, boolean sorted, boolean inCollection) {
+        List<IndexableField> fields = new ArrayList<>();
+        if (value == null)
+            return fields;
+
+        //todo do we need to skip this due to have faster parsing time?
+        if (!fieldName.isEmpty() && !isValidFieldName(fieldName))
+            throw new IllegalArgumentException("Invalid field name: " + fieldName);
+
+        // Handle maps. This implementation assumes that the key of the map can be transformed into a valid field name string.
+        if (value instanceof Map<?, ?> map) {
+            if (!map.isEmpty()) {
+                if (map.keySet().iterator().next() instanceof String) {
+                    map.forEach((k, v) ->
+                            fields.addAll(createAnnotationFields(fieldName + "." + k, v, store, fulltext, sorted, true)));
+                } else {
+                    throw new IllegalArgumentException("Automatic indexing of hashmaps is only possible with string keys: " + fieldName);
+                }
+            }
+            return fields;
+        }
+
+        // Handle collections.
+        if (value instanceof Collection<?> coll) {
+            for (Object element : coll) {
+                fields.addAll(createAnnotationFields(fieldName, element, store, fulltext, sorted, true));
+            }
+            return fields;
+        }
+
+        // Handle arrays.
+        if (value.getClass().isArray()) {
+            int len = Array.getLength(value);
+            for (int i = 0; i < len; i++) {
+                fields.addAll(createAnnotationFields(fieldName, Array.get(value, i), store, fulltext, sorted, true));
+            }
+            return fields;
+        }
+
+
+        // Handle nested objects (if not a simple type).
+        if (!isSimpleType(value.getClass())) {
+            boolean hasNestedIndexFields = false;
+            for (Field nested : value.getClass().getDeclaredFields()) {
+                if (nested.isAnnotationPresent(IndexField.class) || nested.isAnnotationPresent(IndexFieldWithMapper.class)) {
+                    hasNestedIndexFields = true;
+                    break;
+                }
+            }
+            if (hasNestedIndexFields) {
+                try {
+                    for (Field nested : value.getClass().getDeclaredFields()) {
+                        if (nested.isAnnotationPresent(IndexField.class)) {
+                            nested.setAccessible(true);
+                            Object nestedValue = nested.get(value);
+                            if (nestedValue == null)
+                                continue;
+
+                            IndexField nestedAnn = nested.getAnnotation(IndexField.class);
+                            String nestedFieldName = nestedAnn.name().isEmpty() ? nested.getName() : nestedAnn.name();
+                            String combinedName = fieldName.isEmpty() ? nestedFieldName : fieldName + "." + nestedFieldName;
+
+                            fields.addAll(createAnnotationFields(combinedName, nestedValue, nestedAnn.stored() || nestedAnn.documentId(), nestedAnn.fullTextSearch(), nestedAnn.sortable(), inCollection));
+                        } else if (nested.isAnnotationPresent(IndexFieldWithMapper.class)) {
+                            nested.setAccessible(true);
+                            Object nestedValue = nested.get(value);
+                            if (nestedValue == null)
+                                continue;
+
+                            IndexFieldWithMapper nestedAnn = nested.getAnnotation(IndexFieldWithMapper.class);
+                            String nestedFieldName = nestedAnn.name().isEmpty() ? nested.getName() : nestedAnn.name();
+                            String combinedName = fieldName.isEmpty() ? nestedFieldName : fieldName + "." + nestedFieldName;
+
+                            ((Iterable<IndexableField>) getOrComputeMapper(nestedAnn).toIndexableFields(combinedName, nestedValue))
+                                    .forEach(fields::add);
+                        }
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                return fields;
+            }
+        }
+
+        if (fieldName.isBlank())
+            throw new IllegalArgumentException("Field name must not be blank for simple values types " + fieldName);
+
+        fields.addAll(LuceneMappingUtils.
+                getIndexedFieldsFromSimpleValue(fieldName, value, store, sorted, fulltext, inCollection));
+
+        return fields;
+    }
+
+
+
+
+
+
+    /**
+     * Converts a Lucene Document back into a bean.
+     * In addition to converting simple annotated fields, this method also supports:
+     * <ul>
+     *   <li>Collection/array–typed fields (by calling doc.getValues(fieldName)).</li>
+     *   <li>Nested objects (by scanning for fields with names prefixed with the nested field’s name).</li>
+     *   <li>Enum conversion (using Enum.valueOf).</li>
+     * </ul>
+     * Finally, dynamic tag fields (fields starting with the tag prefix) are collected into the bean’s tag map.
+     */
+    @Override
+    public T toPojo(Document document) {
+        return convertDocumentToPojo("", document, pojoClass);
+    }
+
+
+
+    private <C> C convertDocumentToPojo(String fieldPrefix, Document doc, Class<C> clazz) {
+//        System.out.println("=========================> FIELD_PREFIX_TO_PoJo: " + fieldPrefix);
+        try {
+            C instance = clazz.getDeclaredConstructor().newInstance();
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(IndexField.class)) {
+                    field.setAccessible(true);
+                    IndexField ann = field.getAnnotation(IndexField.class);
+                    String fieldName = fieldPrefix + (ann.name().isEmpty() ? field.getName() : ann.name());
+                    Class<?> fieldType = field.getType();
+
+                    if (isMap(fieldType)) { //handle hash maps
+                        String prefix = fieldName + ".";
+                        IndexableField[] values = doc.getFields().stream().filter(storedField -> storedField.name().startsWith(prefix)).toArray(IndexableField[]::new);
+                        if (values.length > 0) {
+                            Map<String, Object> map = new HashMap<>();
+                            for (IndexableField storedField : values) {
+                                String key = storedField.name().substring(prefix.length());
+                                Class<?> valueType = getMapValueType(field);
+                                Object value = convertStoredValue(storedField, valueType);
+                                map.put(key, value);
+                            }
+                            field.set(instance, map);
+                        }
+                    } else if (isCollection(fieldType)) { // Handle collections or arrays.
+                        IndexableField[] values = doc.getFields(fieldName);
+                        if (values != null && values.length > 0) {
+                            Class<?> elementType = getCollectionElementType(field);
+                            if (fieldType.isArray()) {
+                                Object array = Array.newInstance(elementType, values.length);
+                                for (int i = 0; i < values.length; i++)
+                                    Array.set(array, i, convertStoredValue(values[i], elementType));
+
+                                field.set(instance, array);
+                            } else {
+                                Collection<Object> convertedList = newCollection((Class<Collection<Object>>) fieldType);
+                                for (IndexableField v : values)
+                                    convertedList.add(convertStoredValue(v, elementType));
+                                field.set(instance, convertedList);
+                            }
+                        } else {
+                            field.set(instance, null);
+                        }
+                    } else if (isSimpleType(fieldType)) { // Handle simple types.
+                        IndexableField storedValue = doc.getField(fieldName);
+                        if (storedValue != null) {
+                            Object converted = convertStoredValue(storedValue, fieldType);
+                            field.set(instance, converted);
+                        }
+                    } else { // Otherwise, assume nested object.
+                        try {
+                            Object nestedInstance = convertDocumentToPojo(fieldName + ".", doc, fieldType);
+                            field.set(instance, nestedInstance);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
+                    field.setAccessible(true);
+                    IndexFieldWithMapper indexerField = field.getAnnotation(IndexFieldWithMapper.class);
+                    String fieldName = indexerField.name().isEmpty() ? field.getName() : indexerField.name();
+                    field.set(instance, getOrComputeMapper(indexerField).toPojo(fieldName, doc));
+                }
+            }
+            return instance;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private FieldMapper getOrComputeMapper(@NotNull IndexFieldWithMapper indexerField) throws IndexMapperNotFoundException {
+        return getOrComputeMapper(indexerField.mapper());
+    }
+
+    private FieldMapper getOrComputeMapper(@NotNull Class<? extends FieldMapper> mapperClass) throws IndexMapperNotFoundException {
+        return fieldMappers.computeIfAbsent(mapperClass, clz -> {
+            try {
+                return clz.getDeclaredConstructor().newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                throw new IndexMapperNotFoundException(clz, e);
+            }
+        });
+    }
+}
