@@ -234,7 +234,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na")) {
                         spec.smiles = value;
                     }
-                } else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
+                } else if (keyword.equalsIgnoreCase("SCANS")){
+                    if(spec.name==null){ //Only use SCANS field if actual fields dont exist, if they do they overwrite
+                        spec.name=value;
+                    }
+                }
+
+                else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
                     spec.name = value;
                 } else {
                     spec.fields.put(keyword, value);
