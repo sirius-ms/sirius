@@ -34,6 +34,7 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
@@ -489,6 +490,7 @@ public class NoSQLInstance implements Instance {
                                 .siriusScore(scores.getSiriusScore())
                                 .isotopeScore(scores.getIsotopeMs1Score())
                                 .treeScore(scores.getTreeScore())
+                                .lipidSpecies(tree.getAnnotation(LipidSpecies.class).orElse(null))
                                 .build();
 
                         FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
@@ -689,13 +691,10 @@ public class NoSQLInstance implements Instance {
                                         .build()
                         ).stream();
                     }).collect(Collectors.toList());
-            if (searchResults.isEmpty())
-                System.out.println("No Search Result for feature: " + id);
-            if (searchResults.size() > 1)
-                System.out.println("More then ONE Search Result for feature: " + id);
 
             // write structure search results to db
-            project().getStorage().insert(searchResults.getFirst());
+            if (!searchResults.isEmpty())
+                project().getStorage().insert(searchResults.getFirst());
             //finally upsert compute state which is the marker that a computation has been finished and all results have been written
             upsertComputedSubtools(cs -> cs.setStructureSearch(true));
         } catch (Exception e) {

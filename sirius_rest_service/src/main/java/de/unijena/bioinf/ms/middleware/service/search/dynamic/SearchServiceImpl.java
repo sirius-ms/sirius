@@ -97,8 +97,19 @@ public class SearchServiceImpl implements SearchService {
             if (projectContext != null) {
                 projectContext.close();
                 if (indexHome != null && deleteIndexFromDisk)
-                    FileUtils.deleteRecursively(indexHome.resolve(projectId));
+                    FileUtils.deleteRecursively(projectContext.getProjectIndexRootDir());
             }
+        } finally {
+            projectLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void clearIndex(@NotNull Project<?> project) throws IOException {
+        projectLock.writeLock().lock();
+        try {
+            closeProjectIndex(project.getProjectId(), true);
+            openOrCreateProjectIndex(project);
         } finally {
             projectLock.writeLock().unlock();
         }
@@ -146,12 +157,17 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public <T> void updateDocumentsFields(@NotNull String projectId, Collection<?> objectIds, Consumer<T> objectModifier, Class<T> clazz) throws IllegalArgumentException {
+        consumeProjectContext(projectId, ps -> ps.updateDocumentsFields(objectIds, objectModifier, clazz));
+    }
+
+    @Override
     public <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz){
         consumeProjectContext(projectId, ps -> ps.addTagsToDocument(docId, tags, clazz));
     }
 
     @Override
-    public <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<Object> docId, Collection<Tag> tags, @NotNull Class<T> clazz) {
+    public <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<?> docId, Collection<Tag> tags, @NotNull Class<T> clazz) {
         consumeProjectContext(projectId, ps -> ps.addTagsToDocuments(docId, tags, clazz));
     }
 
@@ -176,7 +192,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<Object> docIds, Class<T> pojoClass) {
+    public <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<?> docIds, Class<T> pojoClass) {
         consumeProjectContext(projectId, ps ->  ps.removeDocumentsById(docIds, pojoClass));
     }
 

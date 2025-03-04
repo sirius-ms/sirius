@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,6 +46,7 @@ public class FeatureAnnotations {
     /**
      * Best matching FormulaCandidate.
      */
+    @IndexField
     @Schema(nullable = true)
     protected FormulaCandidate formulaAnnotation; // SIRIUS + ZODIAC
 

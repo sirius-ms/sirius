@@ -24,27 +24,22 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
-import de.unijena.bioinf.ms.middleware.service.search.SearchService;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
-import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -107,7 +102,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
             try {
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
                         inputResources.stream().map(PathInputResource::getResource).toList(),
-                        () -> project.getProjectSpaceManager(),
+                        project::getProjectSpaceManager,
                         submission.isAlignLCMSRuns(),
                         submission.getFilter(),
                         submission.getGaussianSigma(),
@@ -124,44 +119,6 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                     importedFeatureIds = importerJJob.getImportedFeatureIds();
                 if (importerJJob.getImportedCompoundIds() != null)
                     importedCompoundIds = importerJJob.getImportedCompoundIds();
-
-
-                //Update search index.
-                StopWatch stopWatch = null;
-
-                if (project.getSearchService() != null) {
-                    stopWatch = StopWatch.createStarted();
-                    System.out.println();
-                    System.out.println("Indexing newly imported Data...");
-
-                    SearchService searchService = project.getSearchService();
-                    //Handle FEATURES
-                    if (!importedFeatureIds.isEmpty()) {
-                        Partition<Long> partition = Partition.ofSize(importedFeatureIds.stream().sorted().toList(), 100_000);
-                        for (List<Long> ids : partition) {
-                            searchService.addDocuments(project.getProjectId(),
-                                    project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
-                                            .parallel()
-                                            .map(f -> project.convertToApiFeature(f, EnumSet.of(AlignedFeature.OptField.qualities)))
-                                            .toList());
-                        }
-                    }
-
-                    //Handle COMPOUNDS
-                    if (!importedCompoundIds.isEmpty()) {
-                        //todo IMPLEMENT!
-                    }
-
-                    //Handle Runs
-                    //todo we should maybe also track runIds because we wanted to add a add run to alignment features.
-                    searchService.addDocuments(project.getProjectId(),
-                            project.storage().findAllStr(LCMSRun.class)
-                                    .parallel()
-                                    .map(run -> project.convertToApiRun(run, EnumSet.of(Run.OptField.tags))) //tag might have been added during preprocessing.
-                                    .toList());
-                }
-
-                System.out.println("Indexing imported Data took: " + stopWatch);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {

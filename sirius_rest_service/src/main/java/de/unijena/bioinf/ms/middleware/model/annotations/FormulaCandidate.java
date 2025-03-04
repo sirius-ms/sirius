@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -36,11 +38,13 @@ import lombok.*;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     @Schema(name = "FormulaCandidateOptField", nullable = true)
-    public enum OptField {none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
+    public enum OptField {
+        none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, @Deprecated(forRemoval = true) lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
      * Unique identifier of this formula candidate
@@ -114,6 +118,7 @@ public class FormulaCandidate {
      * ElGordo lipid annotation of this candidate.
      * NULL if annotation was not requested. lipidAnnotation.lipidSpecies == NULL if candidate has not been classified as a lipid
      */
+    @IndexFieldWithMapper(mapper = LipidAnnotationMapper.class)
     @Schema(nullable = true)
     protected LipidAnnotation lipidAnnotation;
 

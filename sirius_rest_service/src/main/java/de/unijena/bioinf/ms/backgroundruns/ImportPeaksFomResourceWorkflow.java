@@ -27,12 +27,8 @@ import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
-import de.unijena.bioinf.ms.middleware.service.search.SearchService;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.NoSQLInstance;
-import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -102,17 +97,6 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
 
             try {
                 importedInstances = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                if (project.getSearchService() != null) {
-                    SearchService searchService = project.getSearchService();
-                    Partition<Long> partition = Partition.ofSize(getImportedInstancesStr().map(f -> ((NoSQLInstance) f).getLongId()).sorted().toList(), 100_000);
-                    for (List<Long> ids : partition) {
-                        searchService.addDocuments(project.getProjectId(),
-                                project.storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
-                                        .parallel()
-                                        .map(project::convertToApiFeature)
-                                        .toList());
-                    }
-                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {

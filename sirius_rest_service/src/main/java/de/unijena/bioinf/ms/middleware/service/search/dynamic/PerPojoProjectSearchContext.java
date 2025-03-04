@@ -84,8 +84,25 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
         return getIndexManager(clazz).updateDocumentFields(objectId, objectModifier);
     }
 
+    /**
+     * Updates the stored fields of multiple documents.
+     * <p>
+     * This implementation reads the Lucene documents, maps each of them to a bean, then applies the modifier and re-indexes the documents.
+     * IMPORTANT: to use these method all indexed field of the bean need to be stored in the index.
+     * If this is not the case please get a fresh copy of the bean from the data source (db) and use the usual update method.
+     *
+     * @throws IllegalArgumentException If any field is indexed but not stored.
+     *                                  .
+     */
     @Override
-    public <T extends Taggable> void addTagsToDocuments(Collection<Object> docIds, Collection<Tag> tags, @NotNull Class<T> clazz) {
+    public <T> void updateDocumentsFields(@NotNull Collection<?> objectIds, @NotNull Consumer<T> objectModifier, @NotNull Class<T> clazz) {
+        if (objectIds.isEmpty())
+            return;
+        getIndexManager(clazz).updateDocumentsFields(objectIds, objectModifier);
+    }
+
+    @Override
+    public <T extends Taggable> void addTagsToDocuments(Collection<?> docIds, Collection<Tag> tags, @NotNull Class<T> clazz) {
         getIndexManager(clazz).addTagsToDocuments(docIds, tags);
     }
 
@@ -117,7 +134,7 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
     }
 
     @Override
-    public <T> void removeDocumentsById(@NotNull Collection<Object> documentId, Class<T> clazz) {
+    public <T> void removeDocumentsById(@NotNull Collection<?> documentId, Class<T> clazz) {
         getIndexManager(clazz).deleteDocumentsById(documentId);
     }
 

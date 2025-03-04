@@ -29,9 +29,11 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.middleware.Pages;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
@@ -138,56 +140,55 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.searchService = searchService;
 
         //todo this is protoype testing code. move to a better place real implementation
-        System.out.println("TODO Prototype code MOVE  me!");
+        if (this.searchService != null) {
+            synchronized (this.searchService) {
+                try {
+                    //todo fix wildcard search
+                    //todo fix event actions so that new tags are added to features
+                    //todo think whether we want store tags on the tagged object because we have lucene index..
+
+                    StopWatch stopWatch = new StopWatch();
+                    stopWatch.start();
+                    searchService.openOrCreateProjectIndex(this);
+                    System.out.println("Open/Create Index took: " + stopWatch);
+                    stopWatch.reset();
+                    stopWatch.start();
+
+                    createSearchIndex(false);
+
+                    //handle tag valuetype cache
+                    storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                            tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
+                    storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
+                            tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
+
+
+                } catch (IOException e) {
+                    log.error("Error while initializing project space index. Closing index.", e);
+                    searchService.closeProjectIndex(projectId);
+                }
+            }
+        }
+    }
+
+    //todo should we be able to cancel this?
+    //todo does parallelization improve performance?
+
+    @SneakyThrows
+    @Override
+    public void createSearchIndex(boolean force) {
         if (searchService != null) {
-            try {
-                //todo fix wildcard search
-                //todo fix event actions so that new tags are added to features
-                //todo add events to update indexe when features/runs are changing.
-                //todo think whether we want store tags on the tagged object because we have lucene index..
-
-                //handle tag valuetype cache
-                storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-                        tagDef -> searchService.addTagValueType(projectId, tagDef.getTagName(), tagDef.getValueType()));
-                storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class,
-                        tagDef -> searchService.removeTagValueType(projectId, tagDef.getTagName()));
-
-                //handle indexing of confidence scores
-                storage().onInsert(CsiStructureSearchResult.class,
-                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
-                                feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
-                                        .confidenceApproxMatch(sr.getConfidenceApprox())
-                                        .confidenceExactMatch(sr.getConfidenceExact())
-                                        .matchedDatabases(sr.getMatchedDatabases())
-                                        .build()),
-                                AlignedFeature.class));
-
-                storage().onUpdate(CsiStructureSearchResult.class,
-                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
-                                feature -> feature.setTopAnnotations(FeatureAnnotations.builder()
-                                        .confidenceApproxMatch(sr.getConfidenceApprox())
-                                        .confidenceExactMatch(sr.getConfidenceExact())
-                                        .matchedDatabases(sr.getMatchedDatabases())
-                                        .build()),
-                                AlignedFeature.class));
-
-                storage().onRemove(CsiStructureSearchResult.class,
-                        sr -> searchService.updateDocumentFields(projectId, String.valueOf(sr.getAlignedFeatureId()),
-                                feature -> feature.setTopAnnotations(null), AlignedFeature.class));
-
-
-                StopWatch stopWatch = new StopWatch();
-                stopWatch.start();
-
-                searchService.openOrCreateProjectIndex(this);
-                System.out.println("Open/Create Inde took: " + stopWatch);
-                stopWatch.reset();
-                stopWatch.start();
+            synchronized (searchService) {
+                StopWatch stopWatch = StopWatch.createStarted();
+                System.out.println();
+                System.out.println("Creating new search index...");
+                if (force)
+                    searchService.clearIndex(this);
 
                 //todo finde good page size.
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
-                    Pages.forEach(100_000,
+                    Pages.forEach(25_000,
                             pageable -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
@@ -199,7 +200,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
-                    Pages.forEach(100_000,
+                    Pages.forEach(25_000,
                             pageable -> findRuns(pageable, Run.OptField.tags),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
@@ -217,12 +218,162 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 //                    searchService.getSearchIndexWriter().addBeans(projectId,
 //                            compounds.getContent());
 
-            } catch (IOException e) {
-                log.error("Error while initializing project space index. Closing index.", e);
-                searchService.closeProjectIndex(projectId);
             }
         }
     }
+
+
+    /**
+     * Add newly imported data into search index.
+     * Data to index will be requested from project based on the given aligned feature ids (e.g. runs, compounds, results)
+     *
+     * @param alignedFeaturesToUpdate ids of the features to be added.
+     */
+    @Override
+    public void addToSearchIndex(Collection<String> alignedFeaturesToUpdate) {
+        addToSearchIndexLongIds(alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList());
+    }
+
+    @SneakyThrows
+    public void addToSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
+
+        if (searchService != null) {
+            synchronized (searchService) {
+                StopWatch stopWatch = StopWatch.createStarted();
+                System.out.println();
+                System.out.println("Inserting imported data...");
+
+                Set<Long> runIds = new LongOpenHashSet();
+                Set<Long> compoundIds = new LongOpenHashSet();
+
+                //Handle FEATURES
+                if (!alignedFeaturesToUpdate.isEmpty()) {
+                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), 25_000);
+                    for (List<Long> ids : partition) {
+                        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
+                                .peek(alf -> {
+                                    if (alf.getRunId() != null)
+                                        runIds.add(alf.getRunId());
+                                    if (alf.getCompoundId() != null)
+                                        compoundIds.add(alf.getCompoundId());
+                                })
+                                .map(f -> convertToApiFeature(f, EnumSet.of(AlignedFeature.OptField.qualities)))
+                                .toList();
+
+                        searchService.addDocuments(projectId, alfs);
+                    }
+                }
+
+                //Handle COMPOUNDS
+                if (compoundIds != null && !compoundIds.isEmpty()) {
+                    //todo IMPLEMENT!
+                }
+
+                //Handle Runs
+                if (!runIds.isEmpty()) {
+                    List<Run> runsToUpdate = storage().findStr(Filter.where("runId").in(runIds.stream().sorted().toArray(Long[]::new)), LCMSRun.class)
+                            .parallel()
+                            .map(run -> convertToApiRun(run, EnumSet.of(Run.OptField.tags))) //tag might have been added during preprocessing.
+                            .toList();
+                    searchService.addDocuments(projectId, runsToUpdate);
+                }
+
+                System.out.println("Indexing imported Data took: " + stopWatch);
+            }
+        }
+
+    }
+
+
+    /**
+     * Add newly imported data into search index.
+     * Data to index will be requested from project based on the given aligned feature ids (e.g. runs, compounds, results)
+     *
+     * @param alignedFeaturesToUpdate ids of the features to be added.
+     */
+    @Override
+    public void updateSearchIndex(Collection<String> alignedFeaturesToUpdate) {
+        updateSearchIndexLongIds(alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList());
+
+    }
+
+    @SneakyThrows
+    public void updateSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
+        if (searchService != null) {
+            synchronized (searchService) {
+                StopWatch stopWatch = StopWatch.createStarted();
+                System.out.println();
+                System.out.println("Updating search index...");
+
+                LongList idsToUpdate = alignedFeaturesToUpdate.stream().sorted().collect(Collectors.toCollection(LongArrayList::new));
+                LongList removeOnlyIds = storage().findStr(Filter.where("alignedFeatureId").in(idsToUpdate), ComputedSubtools.class)
+                        .filter(ComputedSubtools::hasResults).map(ComputedSubtools::getAlignedFeatureId)
+                        .collect(Collectors.toCollection(LongArrayList::new));
+
+                idsToUpdate.removeAll(removeOnlyIds);
+
+
+                // update feature that have results
+                // request results from db.
+                if (!idsToUpdate.isEmpty()) {
+                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 25_000);
+                    for (List<Long> ids : partition) {
+                        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
+                                .map(f -> convertToApiFeature(f, AlignedFeature.INDEXED_OPT_FIELDS))
+                                .toList();
+
+                        searchService.updateDocuments(projectId, alfs);
+                    }
+                }
+                // update feature without results
+                // just set results to null ->  index only/
+                if (!removeOnlyIds.isEmpty()) {
+                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 25_000);
+                    for (List<Long> ids : partition) {
+                        searchService.updateDocumentsFields(projectId, ids, alf -> {
+                            alf.setTopAnnotations(null);
+                            alf.setTopAnnotationsDeNovo(null);
+                            alf.setComputedTools(ComputedSubtools.builder().build());
+                        }, AlignedFeature.class);
+                    }
+                }
+
+                System.out.println("Updating search index took: " + stopWatch);
+            }
+        }
+
+    }
+
+    @Override
+    public void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds) {
+        removeFromSearchIndexLongIds(
+                alignedFeaturesIds == null ? null : alignedFeaturesIds.stream().filter(Objects::nonNull).map(Long::parseLong).toList(),
+                compoundIds == null ? null : compoundIds.stream().filter(Objects::nonNull).map(Long::parseLong).toList(),
+                runIds == null ? null : runIds.stream().filter(Objects::nonNull).map(Long::parseLong).toList()
+        );
+    }
+
+    @SneakyThrows
+    public void removeFromSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesIds, @Nullable Collection<Long> compoundIds, @Nullable Collection<Long> runIds) {
+        if (searchService != null) {
+            synchronized (searchService) {
+                StopWatch stopWatch = StopWatch.createStarted();
+                System.out.println();
+                System.out.println("Removing deleted data from index...");
+
+                //Handle FEATURES
+                if (Utils.notNullOrEmpty(alignedFeaturesIds))
+                    searchService.removeDocuments(projectId, alignedFeaturesIds);
+                if (Utils.notNullOrEmpty(compoundIds))
+                    searchService.removeDocuments(projectId, compoundIds);
+                if (Utils.notNullOrEmpty(runIds))
+                    searchService.removeDocuments(projectId, runIds);
+
+                System.out.println("Removing deleted data from index took: " + stopWatch);
+            }
+        }
+    }
+
 
     //using private methods instead of references for easier refactoring or changes.
     // compiler will inline the method call since projectmanager is final.
@@ -230,7 +381,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return projectSpaceManager.getProject().getStorage();
     }
 
-    private SiriusProjectDocumentDatabase<? extends Database<?>> project() {
+    public SiriusProjectDocumentDatabase<? extends Database<?>> project() {
         return projectSpaceManager.getProject();
     }
 
@@ -1050,7 +1201,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(feature.getExternalFeatureId())
                 .compoundId(feature.getCompoundId() == null ? null : String.valueOf(feature.getCompoundId()))
                 .ionMass(feature.getAverageMass())
-                .quality(feature.getDataQuality())
+                .quality(feature.getDataQuality() == null ? DataQuality.NOT_APPLICABLE : feature.getDataQuality())
                 .hasMs1(feature.isHasMs1())
                 .hasMsMs(feature.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
@@ -1085,6 +1236,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     private AlignedFeature annotateApiFeature(long alignedFeatureId, AlignedFeature feature, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        //todo: we could use computedSubtool to decide whether we have to request results at all...
+
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             if (feature.getMsData() == null)
                 project().findByFeatureIdStr(alignedFeatureId, MSData.class).findAny()
@@ -1127,9 +1280,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         if (optFields.contains(AlignedFeature.OptField.qualities)) {
-            AlignedFeatureQuality qualityReport = findAlignedFeaturesQualityById(feature.getAlignedFeatureId());
             Map<String, DataQuality> qualities = new HashMap<>();
-            qualityReport.getCategories().values().forEach(v -> qualities.put(v.getCategoryId(), v.getOverallQuality()));
+            if (feature.getQuality() != null && feature.getQuality() != DataQuality.NOT_APPLICABLE) {
+                findAlignedFeaturesQualityById(feature.getAlignedFeatureId()).getCategories().values()
+                        .forEach(v -> qualities.put(v.getCategoryId(), v.getOverallQuality()));
+            }
             feature.setQualities(qualities);
         } else {
             feature.setQualities(null);
@@ -1324,7 +1479,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private static final EnumSet<FormulaCandidate.OptField> needTree = EnumSet.of(
             FormulaCandidate.OptField.fragmentationTree, FormulaCandidate.OptField.annotatedSpectrum,
-            FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation,
+            FormulaCandidate.OptField.isotopePattern,
             FormulaCandidate.OptField.statistics
     );
 
@@ -1344,7 +1499,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .siriusScore(candidate.getSiriusScore())
                 .isotopeScore(candidate.getIsotopeScore())
                 .treeScore(candidate.getTreeScore())
-                .zodiacScore(candidate.getZodiacScore());
+                .zodiacScore(candidate.getZodiacScore())
+                .lipidAnnotation(AnnotationUtils.asLipidAnnotation(candidate.getLipidSpecies()));
 
         //todo We need the scores in the gui without the tree -> do we want to store stats separately from the tree?
         final FTree ftree = optFields.stream().anyMatch(needTree::contains)
@@ -1361,8 +1517,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
             if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
                 builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
-            if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
-                builder.lipidAnnotation(AnnotationUtils.asLipidAnnotation(ftree));
             if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
                 //todo this is not efficient an loads spectra a second time as well as the whole experiment. we need no change spectra annotation code to improve this.
                 builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId()));

@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,18 @@ public interface Project<PSM extends ProjectSpaceManager> {
     @Nullable default SearchService getSearchService(){
         return null;
     }
+
+    @SneakyThrows
+    void createSearchIndex(boolean force);
+
+    @SneakyThrows
+    void addToSearchIndex(Collection<String> alignedFeaturesToUpdate);
+
+    @SneakyThrows
+    void updateSearchIndex(Collection<String> alignedFeaturesToUpdate);
+
+    @SneakyThrows
+    void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds);
 
     /**
      * Technical Identifier for the project file/directory on the filesystem/dbms

@@ -27,6 +27,8 @@ public interface SearchService extends AutoCloseable {
 
     void closeProjectIndex(String projectId, boolean deleteIndexFromDisk) throws IOException;
 
+    void clearIndex(@NotNull Project<?> project) throws IOException;
+
     <T> int getNumberOfDocuments(String projectId, Class<T> clazz);
 
     default <T>  boolean isEmpty (String projectId, Class<T> clazz){
@@ -48,8 +50,10 @@ public interface SearchService extends AutoCloseable {
         addTagsToDocument(projectId,docId, List.of(tag), clazz);
     }
 
+    <T> void updateDocumentsFields(@NotNull String projectId, Collection<?> objectIds, Consumer<T> objectModifier, Class<T> clazz) throws IllegalArgumentException;
+
     <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz);
-    <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<Object> docId, Collection<Tag> tags, @NotNull Class<T> clazz);
+    <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<?> docId, Collection<Tag> tags, @NotNull Class<T> clazz);
 
     default <T extends Taggable> void removeTagFromDocument(@NotNull String projectId, Object docId, String tagName, @NotNull Class<T> clazz){
         removeTagsFromDocument(projectId,docId, List.of(tagName), clazz);
@@ -62,7 +66,7 @@ public interface SearchService extends AutoCloseable {
 
     <T> void removeDocumentById(@NotNull String projectId, @NotNull Object docId, Class<T> pojoClass);
 
-    <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<Object> docIds, Class<T> pojoClass);
+    <T> void removeDocumentsById(@NotNull String projectId, @NotNull Collection<?> docIds, Class<T> pojoClass);
 
     <T> Page<T> search(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
     <T> Page<String> searchIds(String projectId, @Nullable String query, Pageable pageable, Class<T> beanClass);
