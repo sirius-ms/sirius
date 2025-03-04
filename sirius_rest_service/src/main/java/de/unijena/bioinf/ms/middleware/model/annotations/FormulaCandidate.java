@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FormulaElementMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.LipidAnnotationMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,6 +54,7 @@ public class FormulaCandidate {
     /**
      * molecular formula of this formula candidate
      */
+    @IndexFieldWithMapper(mapper = FormulaElementMapper.class)
     protected String molecularFormula;
     /**
      * Adduct of this formula candidate

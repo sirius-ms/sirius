@@ -620,11 +620,8 @@ public class CompoundFilterModel implements SiriusPCS {
                     booleanQuery.add(qualityQuery.build(), BooleanClause.Occur.MUST);
                 });
 
-
-//        // todo implement element filters
-//        if (isElementFilterEnabled()) {
-////            if (!matchesElementFilter(item, filterModel)) return false;
-//        }
+        if (isElementFilterEnabled())
+            booleanQuery.add(makeElementFilter("topAnnotations.formulaAnnotation.molecularFormula.", elementFilter.getConstraints()), BooleanClause.Occur.MUST);
 
         //TAG FILTERS
         if (getBlankSubtraction().isEnabled()) {
@@ -650,6 +647,17 @@ public class CompoundFilterModel implements SiriusPCS {
         return booleanQuery;
     }
 
+
+    //todo Optimize: we could check if constrains are just a formula and build exact match query instead.
+    private static Query makeElementFilter(String fieldPrefix, FormulaConstraints constrains) {
+        BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
+        constrains.getChemicalAlphabet().forEach(element -> {
+            int lower = constrains.getLowerbound(element);
+            int upper = constrains.getUpperbound(element);
+            dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + element.getSymbol(), lower, upper), BooleanClause.Occur.MUST);
+        });
+        return dbQuery.build();
+    }
 
     private static Query makeDbQuery(String fieldPrefix, DbFilter filter) {
         BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
