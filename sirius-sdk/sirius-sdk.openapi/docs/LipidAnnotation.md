@@ -7,7 +7,6 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**lipid** | **Boolean** | True if classified as lipd false otherwise |  [optional] |
 |**lipidSpecies** | **String** | Predicted lipid species in LIPID MAPS notation.  NULL if not classified as lipid. |  [optional] |
 |**lipidMapsId** | **String** | LIPID MAPS id of the predicted lipid class. |  [optional] |
 |**lipidClassName** | **String** | Human-readable name of the predicted lipid class. |  [optional] |

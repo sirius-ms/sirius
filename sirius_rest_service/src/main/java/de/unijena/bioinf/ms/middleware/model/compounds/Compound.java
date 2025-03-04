@@ -25,6 +25,8 @@ import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeN
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +103,7 @@ public class Compound implements Taggable {
     /**
      * Key: tagName, value: tag
      */
+    @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
     protected Map<String, Tag> tags;
 }

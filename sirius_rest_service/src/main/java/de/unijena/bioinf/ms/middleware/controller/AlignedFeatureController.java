@@ -804,7 +804,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
     public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.lipidAnnotation)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId)
                 .getLipidAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");

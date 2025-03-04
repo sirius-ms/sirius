@@ -34,7 +34,6 @@ import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.server.ResponseStatusException;
@@ -43,12 +42,12 @@ import java.util.List;
 
 import static de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction.*;
 
+// todo This is a API/GUI only implementation. We need to change out architecture to brig this to the CLI.
 public class BlankSubtractionWorkflow implements Workflow, ProgressSupport {
 
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
 
     private final NoSQLProjectImpl project;
-    private final NoSQLProjectSpaceManager psm;
 
     private final List<String> sampleRunIds;
     private final List<String> blankRunIds;
@@ -57,7 +56,6 @@ public class BlankSubtractionWorkflow implements Workflow, ProgressSupport {
     public BlankSubtractionWorkflow(Project<? extends ProjectSpaceManager> project, List<String> sampleRunIds, List<String> blankRunIds, List<String> controlRunIds) {
         if (project instanceof NoSQLProjectImpl noSQLProject) {
             this.project = noSQLProject;
-            this.psm = noSQLProject.getProjectSpaceManager();
         } else {
             throw new IllegalArgumentException("Project space type not supported!");
         }
@@ -140,8 +138,8 @@ public class BlankSubtractionWorkflow implements Workflow, ProgressSupport {
             project.addTagGroup(CTRL_GRP_NAME, CTRL_GRP_QUERY, TAG_TYPE);
         }
 
-        FoldChangeWorkflow blankWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, BLANK_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
-        FoldChangeWorkflow ctrlWorkflow = new FoldChangeWorkflow(psm, SAMPLE_GRP_NAME, CTRL_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
+        FoldChangeWorkflow blankWorkflow = new FoldChangeWorkflow(project, SAMPLE_GRP_NAME, BLANK_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
+        FoldChangeWorkflow ctrlWorkflow = new FoldChangeWorkflow(project, SAMPLE_GRP_NAME, CTRL_GRP_NAME, AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class);
 
         blankWorkflow.addJobProgressListener(progressSupport);
         ctrlWorkflow.addJobProgressListener(progressSupport);

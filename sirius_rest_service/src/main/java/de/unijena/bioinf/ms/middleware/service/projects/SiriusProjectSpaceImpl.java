@@ -98,6 +98,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
+@Deprecated(forRemoval = true)
 public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager> {
 
     @NotNull
@@ -115,7 +116,27 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId) {
-        throw new UnsupportedOperationException("Finde by matchId not supported by the project");
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void createSearchIndex(boolean force) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addToSearchIndex(Collection<String> alignedFeaturesToUpdate) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateSearchIndex(Collection<String> alignedFeaturesToUpdate) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeFromSearchIndex(@Nullable Collection<String> alignedFeaturesIds, @Nullable Collection<String> compoundIds, @Nullable Collection<String> runIds) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

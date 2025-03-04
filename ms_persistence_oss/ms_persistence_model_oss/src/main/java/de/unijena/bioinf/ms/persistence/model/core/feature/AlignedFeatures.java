@@ -77,6 +77,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private MolecularFormula molecularFormula;
 
+    @Builder.Default
     protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
 
     /**

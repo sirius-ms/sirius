@@ -71,7 +71,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
 
     @Getter
-    private final QualityFilter featureQualityFilter = new QualityFilter(null,"Feature Quality");
+    private final QualityFilter featureQualityFilter = new QualityFilter(null, "Feature Quality");
     @Getter
     private final QualityFilter peakShapeQualityFilter = new QualityFilter(PEAK_QUALITY);
     @Getter
@@ -488,6 +488,7 @@ public class CompoundFilterModel implements SiriusPCS {
         public QualityFilter(DefaultQualityCategory category) {
             this(category.name(), category.getDisplayName());
         }
+
         public QualityFilter(String id, String name) {
             this.name = name;
             this.id = id;
@@ -565,7 +566,7 @@ public class CompoundFilterModel implements SiriusPCS {
             return Optional.empty();
 
         BooleanQuery.Builder builder = toLuceneQueryBuilder(confidenceMode);
-        if (alFeatureIds.length > 0){
+        if (alFeatureIds.length > 0) {
             BooleanQuery.Builder idQuery = new BooleanQuery.Builder();
             for (String fid : alFeatureIds) {
                 idQuery.add(new TermQuery(new Term("alignedFeatureId", fid)), BooleanClause.Occur.SHOULD);
@@ -577,7 +578,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
 
-    public BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode){
+    public BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
         // Combine queries using BooleanQuery.Builder
         BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
 
@@ -609,10 +610,15 @@ public class CompoundFilterModel implements SiriusPCS {
             booleanQuery.add(makeAdductQuery("detectedAdducts", getSelectedAdducts()), BooleanClause.Occur.MUST);
 
         if (getFeatureQualityFilter().isEnabled())
-            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()), BooleanClause.Occur.MUST);
+            booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()).build(), BooleanClause.Occur.MUST);
 
-        getCategorizedQualityFilters().stream().filter(CompoundFilterModel.QualityFilter::isEnabled).forEach(filter ->
-                booleanQuery.add(makeQualityQuery("qualities." + filter.id, filter), BooleanClause.Occur.MUST));
+        getCategorizedQualityFilters().stream().filter(CompoundFilterModel.QualityFilter::isEnabled)
+                .forEach(filter -> {
+                    BooleanQuery.Builder qualityQuery = makeQualityQuery("qualities." + filter.id, filter);
+                    //to allow matching data without quality data.
+                    qualityQuery.add(new TermQuery(new Term("quality", DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
+                    booleanQuery.add(qualityQuery.build(), BooleanClause.Occur.MUST);
+                });
 
 
 //        // todo implement element filters
@@ -621,16 +627,21 @@ public class CompoundFilterModel implements SiriusPCS {
 //        }
 
         //TAG FILTERS
-        if (getBlankSubtraction().isEnabled()){
+        if (getBlankSubtraction().isEnabled()) {
             //todo implement blank substraction filter.
 //            if (!matchesFoldChangeFilter(item, filterModel))
 //                return false;
         }
 
         //RESULT FILTERS
+        //todo we can now also filter efficiently for exact lipid classes.
         if (isLipidFilterEnabled()) {
-            // todo implement lipid filters
-//            if (!matchesLipidFilter(item, filterModel)) return false;
+            TermQuery lipidQuery = new TermQuery(new Term("topAnnotations.formulaAnnotation.lipidAnnotation.lipid", "true"));
+            if (lipidFilter == LipidFilter.ANY_LIPID_CLASS_DETECTED) {
+                booleanQuery.add(lipidQuery, BooleanClause.Occur.MUST);
+            } else if (lipidFilter == LipidFilter.NO_LIPID_CLASS_DETECTED) {
+                booleanQuery.add(lipidQuery, BooleanClause.Occur.MUST_NOT);
+            }
         }
 
         if (isDbFilterEnabled())
@@ -640,17 +651,18 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
 
-    private static Query makeDbQuery(String fieldPrefix, DbFilter filter){
+    private static Query makeDbQuery(String fieldPrefix, DbFilter filter) {
         BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
-        filter.dbs.forEach(db ->  dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 0, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
+        filter.dbs.forEach(db -> dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 0, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
         return dbQuery.build();
     }
 
-    private static Query makeQualityQuery(String fieldName, QualityFilter filter){
+    private static BooleanQuery.Builder makeQualityQuery(String fieldName, QualityFilter filter) {
         BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
         filter.dataQualities.forEach(q -> qualityQuery.add(new TermQuery(new Term(fieldName, q.toString())), BooleanClause.Occur.SHOULD));
-        return qualityQuery.build();
-
+        //to allow matching data without quality data.
+        qualityQuery.add(new TermQuery(new Term(fieldName, DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
+        return qualityQuery;
     }
 
     private static Query makeAdductQuery(String fieldName, Set<PrecursorIonType> adducts) {
