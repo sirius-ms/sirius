@@ -3,8 +3,13 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 import de.unijena.bioinf.projectspace.IndexField;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
+import org.apache.lucene.search.SortField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +103,69 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
         createAnnotationFields("", pojo, false, false, false, false)
                 .forEach(doc::add);
         return doc;
+    }
+
+
+    public void detectAnalyzersAndPointConfigs(
+            @NotNull final Map<String, PointsConfig> pointsConfigMap,
+            @NotNull final Map<String, Analyzer> analyzerMap,
+            @NotNull final List<CharSequence> defaultSearchFields,
+            @NotNull final Map<String, SortField.Type> sortTypes
+    ){
+        detectAnalyzersAndPointConfigs("", pojoClass, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+    }
+
+    public void detectAnalyzersAndPointConfigs(
+            @NotNull final String fieldPrefix,
+            @NotNull final Class<?> pojoClass,
+            @NotNull final Map<String, PointsConfig> pointsConfigMap,
+            @NotNull final Map<String, Analyzer> analyzerMap,
+            @NotNull final List<CharSequence> defaultSearchFields,
+            @NotNull final Map<String, SortField.Type> sortTypes
+    ) {
+        for (Field field : pojoClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(IndexField.class)) {
+                field.setAccessible(true);
+                IndexField indexField = field.getAnnotation(IndexField.class);
+                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
+                // Handle get element type and take care about collections/arrays.
+                Class<?> elementType = field.getType();
+                if (isCollection(elementType))
+                    elementType = getCollectionElementType(field);
+                else if (isMap(elementType)){
+                    elementType = getMapValueType(field);
+                    if (!isSimpleType(elementType))
+                        throw new IllegalArgumentException("Only simple types are allowed as map values.");
+                    fieldName = fieldName + ".*";
+                }
+
+                if (!isSimpleType(elementType)) {
+                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+                } else {
+                    PointsConfig pointsConfig = getPointsConfigForType(elementType);
+                    if (pointsConfig != null)
+                        pointsConfigMap.put(fieldName, pointsConfig);
+                    else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
+                        analyzerMap.put(fieldName, new StandardAnalyzer());
+                    else // this covers the boolean values as well
+                        analyzerMap.put(fieldName, new KeywordAnalyzer());
+
+                    if (indexField.defaultSearchField())
+                        defaultSearchFields.add(fieldName);
+
+                    if (indexField.sortable()) {
+                        SortField.Type sortType = getSortTypeForType(elementType);
+                        if (sortType != null)
+                            sortTypes.put(fieldName, sortType);
+                    }
+                }
+            } else if (field.isAnnotationPresent(IndexFieldWithMapper.class)) {
+                IndexFieldWithMapper mapperAnno = field.getAnnotation(IndexFieldWithMapper.class);
+                String fieldName = fieldPrefix + (mapperAnno.name().isEmpty() ? field.getName() : mapperAnno.name());
+                getOrComputeMapper(mapperAnno).applyAnalyzersAndPointConfigs(fieldName, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
+
+            }
+        }
     }
 
 

@@ -81,57 +81,6 @@ public class LuceneMappingUtils {
         };
     }
 
-
-    public static void detectAnalyzersAndPointConfigs(
-            @NotNull final String fieldPrefix,
-            @NotNull final Class<?> pojoClass,
-            @NotNull final Map<String, PointsConfig> pointsConfigMap,
-            @NotNull final Map<String, Analyzer> analyzerMap,
-            @NotNull final List<CharSequence> defaultSearchFields,
-            @NotNull final Map<String, SortField.Type> sortTypes
-    ) {
-        for (Field field : pojoClass.getDeclaredFields()) {
-            if (field.isAnnotationPresent(IndexField.class)) {
-                field.setAccessible(true);
-                IndexField indexField = field.getAnnotation(IndexField.class);
-                String fieldName = fieldPrefix + (indexField.name().isEmpty() ? field.getName() : indexField.name());
-                // Handle get element type and take care about collections/arrays.
-                Class<?> elementType = field.getType();
-                if (isCollection(elementType))
-                    elementType = getCollectionElementType(field);
-                else if (isMap(elementType)){
-                    elementType = getMapValueType(field);
-                    if (!isSimpleType(elementType))
-                        throw new IllegalArgumentException("Only simple types are allowed as map values.");
-                    fieldName = fieldName + ".*";
-                }
-
-                if (!isSimpleType(elementType)) {
-                    detectAnalyzersAndPointConfigs(fieldName + ".", elementType, pointsConfigMap, analyzerMap, defaultSearchFields, sortTypes);
-                } else {
-                    PointsConfig pointsConfig = getPointsConfigForType(elementType);
-                    if (pointsConfig != null)
-                        pointsConfigMap.put(fieldName, pointsConfig);
-                    else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
-                        analyzerMap.put(fieldName, new StandardAnalyzer());
-                    else // this covers the boolean values as well
-                        analyzerMap.put(fieldName, new KeywordAnalyzer());
-
-                    if (indexField.defaultSearchField())
-                        defaultSearchFields.add(fieldName);
-
-                    if (indexField.sortable()) {
-                        SortField.Type sortType = getSortTypeForType(elementType);
-                        if (sortType != null)
-                            sortTypes.put(fieldName, sortType);
-                    }
-                }
-            }
-        }
-    }
-
-
-
     /**
      * Determines whether a type is considered “simple” (primitive, wrapper, String, or enum).
      */
