@@ -1816,11 +1816,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         List<Pair<String, String>> pairs = new ArrayList<>(pairSet);
 
-        LongList rowIds = new LongArrayList();
+        ArrayList<String> rowIds = new ArrayList<>();
         List<double[]> values = new ArrayList<>();
         for (de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange fc : foldChanges) {
-            if (rowIds.isEmpty() || fc.getForeignId() != rowIds.getLast()) {
-                rowIds.add(fc.getForeignId());
+            if (rowIds.isEmpty() || !Long.toString(fc.getForeignId()).equals(rowIds.getLast())) {
+                rowIds.add(Long.toString(fc.getForeignId()));
                 values.add(new double[pairSet.size()]);
             }
             int index = pairs.indexOf(Pair.of(fc.getLeftGroup(), fc.getRightGroup()));
@@ -1830,7 +1830,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         table.setColumnNames(pairs.stream().map(pair -> pair.getLeft() + " / " + pair.getRight()).toArray(String[]::new));
         table.setColumnLeftGroups(pairs.stream().map(Pair::getLeft).toArray(String[]::new));
         table.setColumnRightGroups(pairs.stream().map(Pair::getRight).toArray(String[]::new));
-        table.setRowIds(rowIds.toLongArray());
+        table.setRowIds(rowIds.toArray(new String[0]));
         table.setValues(values.toArray(double[][]::new));
     }
 
