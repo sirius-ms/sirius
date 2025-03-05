@@ -1830,7 +1830,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         table.setColumnNames(pairs.stream().map(pair -> pair.getLeft() + " / " + pair.getRight()).toArray(String[]::new));
         table.setColumnLeftGroups(pairs.stream().map(Pair::getLeft).toArray(String[]::new));
         table.setColumnRightGroups(pairs.stream().map(Pair::getRight).toArray(String[]::new));
-        table.setRowIds(rowIds.toLongArray());
+        table.setRowIds(rowIds.stream().map(String::valueOf).toArray(String[]::new));
         table.setValues(values.toArray(double[][]::new));
     }
 

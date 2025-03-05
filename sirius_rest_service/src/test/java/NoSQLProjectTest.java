@@ -455,8 +455,8 @@ public class NoSQLProjectTest {
         assertEquals(0, table3.getColumnRightGroups().length);
 
         assertEquals(2, table1.getRowIds().length);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), af.getAlignedFeatureId()) >= 0);
-        assertTrue(Arrays.binarySearch(table1.getRowIds(), af2.getAlignedFeatureId()) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af.getAlignedFeatureId())) >= 0);
+        assertTrue(Arrays.binarySearch(table1.getRowIds(), Long.toString(af2.getAlignedFeatureId())) >= 0);
 
         double[] vals = Arrays.stream(table1.getValues()).mapToDouble(col -> {
             assertEquals(1, col.length);
