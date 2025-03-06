@@ -50,10 +50,10 @@ import java.util.Set;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature implements Taggable {
     @Schema(name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, confidence, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags}
+    public enum OptField {none, msData, indexedTopAnnotations, topAnnotations, topAnnotationsDeNovo, computedTools, qualities, tags}
 
     public static final EnumSet<OptField> INDEXED_OPT_FIELDS =  EnumSet.of(
-            OptField.tags, OptField.computedTools, OptField.topAnnotations, OptField.qualities);
+            OptField.tags, OptField.computedTools, OptField.indexedTopAnnotations, OptField.qualities);
 
     // identifier
     @IndexField(documentId = true, sortable = true)

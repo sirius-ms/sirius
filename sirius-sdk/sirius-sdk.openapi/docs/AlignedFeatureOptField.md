@@ -9,7 +9,7 @@
 
 * `MSDATA` (value: `"msData"`)
 
-* `CONFIDENCE` (value: `"confidence"`)
+* `INDEXEDTOPANNOTATIONS` (value: `"indexedTopAnnotations"`)
 
 * `TOPANNOTATIONS` (value: `"topAnnotations"`)
 

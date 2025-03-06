@@ -6666,7 +6666,6 @@
                 "$ref": "#/components/schemas/AlignedFeatureOptField"
               },
               "default": [
-                "confidence",
                 "computedTools",
                 "qualities",
                 "tags"
@@ -8807,7 +8806,7 @@
         "enum": [
           "none",
           "msData",
-          "confidence",
+          "indexedTopAnnotations",
           "topAnnotations",
           "topAnnotationsDeNovo",
           "computedTools",

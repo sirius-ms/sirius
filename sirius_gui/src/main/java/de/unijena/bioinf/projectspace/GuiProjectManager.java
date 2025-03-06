@@ -97,13 +97,13 @@ public class GuiProjectManager implements Closeable {
         StopWatch w = StopWatch.createStarted();
         this.INSTANCE_LIST = new BasicEventList<>();
 
-
         PropertyChangeListener filterListener = evt -> reloadFeatures();
         compoundFilterModel.addUpdateCompleteListener(filterListener);
 
         confidenceModeListender = (evt) -> reloadFeatures();
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
 
+        reloadProjectData();
         reloadFeatures();
 
 
@@ -141,6 +141,7 @@ public class GuiProjectManager implements Closeable {
                             siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true, true);
                             try {
                                 checkForInterruption();
+                                reloadProjectData();
                                 reloadFeatures();
                             } finally {
                                 siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false, true);
@@ -185,6 +186,7 @@ public class GuiProjectManager implements Closeable {
                                         if (inst.getFeatureId().equals(projectEvent.getFeaturedId())) {
                                             iterator.remove();
                                             inst.unregisterProjectSpaceListener();
+                                            totalInstances.decrementAndGet();
                                             break;
                                         }
                                     }
@@ -210,7 +212,12 @@ public class GuiProjectManager implements Closeable {
         System.out.println("Project loaded in: " + w);
     }
 
-    public void reloadFeatures() {
+    public synchronized void reloadProjectData() {
+        totalInstances.set(siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION)).getNumOfFeatures());
+    }
+
+
+    public synchronized void reloadFeatures() {
         //todo LUCENE: handle loading mechanism for compound list.
         String filteredQuery = compoundFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
                 .map(Query::toString)
@@ -218,7 +225,7 @@ public class GuiProjectManager implements Closeable {
         reloadFeatures(filteredQuery, null);
     }
 
-    private void reloadFeatures(@Nullable String filteredQuery, @Nullable List<String> sortQuery) {
+    private synchronized void reloadFeatures(@Nullable String filteredQuery, @Nullable List<String> sortQuery) {
         FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
                 .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
@@ -226,12 +233,9 @@ public class GuiProjectManager implements Closeable {
             List<InstanceBean> tmpInst = siriusClient.features()
                     .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filteredQuery, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                     .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
-            // todo REPLACE PLACEHOLDER if number available via page.
-
 
             INSTANCE_LIST.getReadWriteLock().writeLock().lock();
             try {
-                totalInstances.set(9_999_999);
                 INSTANCE_LIST.clear();
                 INSTANCE_LIST.addAll(tmpInst);
             } finally {

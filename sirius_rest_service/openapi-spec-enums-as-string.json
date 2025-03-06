@@ -2291,7 +2291,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2388,7 +2388,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2464,7 +2464,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -2538,7 +2538,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -3872,7 +3872,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -4335,7 +4335,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -4547,7 +4547,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -7081,7 +7081,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
@@ -7090,7 +7090,6 @@
                 ]
               },
               "default": [
-                "confidence",
                 "computedTools",
                 "qualities",
                 "tags"
@@ -7186,7 +7185,7 @@
                 "enum": [
                   "none",
                   "msData",
-                  "confidence",
+                  "indexedTopAnnotations",
                   "topAnnotations",
                   "topAnnotationsDeNovo",
                   "computedTools",
