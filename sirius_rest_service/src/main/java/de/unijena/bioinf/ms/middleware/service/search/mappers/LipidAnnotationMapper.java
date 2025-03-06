@@ -5,7 +5,6 @@ import de.unijena.bioinf.ms.middleware.model.annotations.LipidAnnotation;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.SortField;
@@ -16,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.SIRIUS_TEXT_ANALYZER;
 import static de.unijena.bioinf.ms.middleware.service.search.mappers.LuceneMappingUtils.getIndexedFieldsFromSimpleValue;
 
 public class LipidAnnotationMapper implements FieldMapper<LipidAnnotation> {
@@ -59,7 +59,7 @@ public class LipidAnnotationMapper implements FieldMapper<LipidAnnotation> {
         analyzerMap.put(rootFieldName + ".lipid", new KeywordAnalyzer());
         analyzerMap.put(rootFieldName + ".lipidSpecies", new KeywordAnalyzer());
         analyzerMap.put(rootFieldName + ".lipidMapsId", new KeywordAnalyzer());
-        analyzerMap.put(rootFieldName + ".lipidClassName", new StandardAnalyzer());
+        analyzerMap.put(rootFieldName + ".lipidClassName", SIRIUS_TEXT_ANALYZER); //todo do we want specif lipid class analyzer?
         defaultSearchFields.add(rootFieldName + ".lipidClassName");
     }
 }

@@ -26,6 +26,9 @@ public class PrefixAwareString2ObjectHashMap<V> extends HashMap<String, V> {
 
     @Override
     public V get(Object key) {
+        if (key == null)
+            return null;
+
         //search for direct match
         V value = super.get(key);
         if (value != null)
