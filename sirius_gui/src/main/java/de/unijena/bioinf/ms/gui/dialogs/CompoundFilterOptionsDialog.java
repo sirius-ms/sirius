@@ -103,7 +103,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             centerPanel.add(new JXTitledSeparator("Filter modifiers"));
 
             invertFilter = new JCheckBox("Invert Filter");
-            invertFilter.setSelected(compoundList.isFilterInverted());
+            invertFilter.setSelected(filterModel.isInverted());
 
             deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
             deleteSelection.setSelected(false);
@@ -403,14 +403,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         } else {
             applyToModel(filterModel);
-            if (invertFilter.isSelected() != compoundList.isFilterInverted())
-                compoundList.toggleInvertFilter();
-
             filterModel.fireUpdateCompleted();
         }
     }
 
     private void applyToModel(@NotNull CompoundFilterModel filterModel) {
+        filterModel.setInverted(invertFilter.isSelected());
+
         filterModel.setCurrentMinMz(getMinMz());
         filterModel.setCurrentMaxMz(getMaxMz());
         filterModel.setCurrentMinRt(getMinRt());

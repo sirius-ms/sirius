@@ -133,12 +133,14 @@ public class CompoundList {
 
     private void colorByActiveFilter() {
         //is any filtering option active (despite the text filter which is visible all the time)
-        if (isFilterInverted()) {
-            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
-            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
-        } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
-            openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
-            openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
+        if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
+            if (compoundFilterModel.isInverted()) {
+                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
+                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
+            } else {
+                openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON);
+                openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_TEXT);
+            }
         } else {
             openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
             openFilterPanelButton.setForeground(Colors.FOREGROUND_DATA);
@@ -196,31 +198,18 @@ public class CompoundList {
         sortedSource.setComparator(comp);
     }
 
-    public boolean isFilterInverted() {
-        //todo LUCENE implement insversion?
-//        return compoundListMatchEditor.isInverted();
-        return false;
-    }
-
-    public void toggleInvertFilter() {
-        //todo LUCENE check what needs to be done
-//        compoundListMatchEditor.setInverted(!compoundListMatchEditor.isInverted());
-    }
-
-
     /**
-     * Updates the  available filter options in the filter model.
+     * Updates the available filter options in the filter model.
      * Does not cause global re-filtering
      */
     public void updateFilter(@NotNull java.util.List<InstanceBean> instances) {
         compoundFilterModel.updateAdducts(instances);
         updateTogglesByActiveFilter();
     }
+
     public void resetFilter() {
-        //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
+        //filtering consists of the text filter and the filter model
         compoundFilterModel.resetFilter();
-        //todo LUCENE handle inversion if needed
-//        compoundListMatchEditor.setInverted(false);
         searchField.setText("");
         searchField.postActionEvent();
         colorByActiveFilter();
