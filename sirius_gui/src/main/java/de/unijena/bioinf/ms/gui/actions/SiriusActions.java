@@ -51,7 +51,6 @@ public enum SiriusActions {
 
     TOOGLE_CONFIDENCE_MODE(SwitchConfidenceModeAction.class),
 
-    TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),
     COPY_ID(CopyIDAction.class),
 
