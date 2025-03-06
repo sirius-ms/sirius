@@ -33,10 +33,7 @@ import org.apache.commons.text.CaseUtils;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +52,9 @@ public class CompoundFilterModel implements SiriusPCS {
     /*
     currently selected values
      */
+    @Getter
+    private boolean inverted;
+
     @Getter
     private double currentMinMz;
     @Getter
@@ -134,14 +134,10 @@ public class CompoundFilterModel implements SiriusPCS {
      * the filter model is initialized with the min / max possible values
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see {@link CompoundFilterMatcher} and is[...]Active() methods.
      *
-     * @param minMz
-     * @param maxMz
-     * @param minRt
-     * @param maxRt
-     * @param minConfidence
-     * @param maxConfidence
      */
-    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+    private CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+        this.inverted = false;
+
         this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
@@ -217,6 +213,11 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setHasMsMs", old, hasMsMs);
     }
 
+    public void setInverted(boolean inverted) {
+        boolean old = this.inverted;
+        this.inverted = inverted;
+        pcs.firePropertyChange("setInverted", old, inverted);
+    }
 
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
@@ -378,6 +379,7 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void resetFilter() {
+        setInverted(false);
         //trigger events
         setCurrentMinMz(minMz);
         setCurrentMaxMz(maxMz);
@@ -558,7 +560,15 @@ public class CompoundFilterModel implements SiriusPCS {
         if (!isActive())
             return Optional.empty();
 
-        return Optional.of(toLuceneQueryBuilder(confidenceMode).build());
+        BooleanQuery mainQuery = toLuceneQueryBuilder(confidenceMode).build();
+        if (isInverted()){
+            mainQuery =  new BooleanQuery.Builder()
+                    .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
+                    .add(mainQuery, BooleanClause.Occur.MUST_NOT)  // Exclude the original query
+                    .build();
+        }
+
+        return Optional.of(mainQuery);
     }
 
     public Optional<Query> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
@@ -574,7 +584,13 @@ public class CompoundFilterModel implements SiriusPCS {
             builder.add(idQuery.build(), BooleanClause.Occur.MUST);
         }
 
-        return Optional.of(toLuceneQueryBuilder(confidenceMode).build());
+        if (isInverted()){
+            builder =  new BooleanQuery.Builder()
+                    .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
+                    .add(builder.build(), BooleanClause.Occur.MUST_NOT);  // Exclude the original query
+        }
+
+        return Optional.of(builder.build());
     }
 
 
@@ -661,7 +677,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
     private static Query makeDbQuery(String fieldPrefix, DbFilter filter) {
         BooleanQuery.Builder dbQuery = new BooleanQuery.Builder();
-        filter.dbs.forEach(db -> dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 0, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
+        filter.dbs.forEach(db -> dbQuery.add(IntPoint.newRangeQuery(fieldPrefix + db.getDatabaseId(), 1, filter.getNumOfCandidates()), BooleanClause.Occur.SHOULD));
         return dbQuery.build();
     }
 
