@@ -481,15 +481,21 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     private int estimateChargeFromIsotopes(ProcessedSample sample, MergedTrace mergedTrace) {
         double mz = mergedTrace.averagedMz();
         double minDist = 1d;
+        double maxDist = 1d;
         for (int k=0; k < mergedTrace.getIsotopes().length; ++k) {
             double delta = mergedTrace.getIsotopes()[k].averagedMz() - mz;
             minDist = Math.min(delta, minDist);
+            maxDist = Math.max(delta, maxDist);
             mz = mergedTrace.getIsotopes()[k].averagedMz();
         }
         int charge = (int)Math.round(1.1/minDist);
-        if (charge==0) {
-            throw new RuntimeException("Problem with charge detection occured.");
+
+        if (minDist < 0 || maxDist > 20 || charge==0) {
+            LoggerFactory.getLogger(PickFeaturesAndImportToSirius.class).warn(
+                    "Strange isotope pattern is picked. This is likely a bug:\n" + Arrays.toString(mergedTrace.getIsotopes()));
+            charge = 1;
         }
+
         return charge*sample.getPolarity();
     }
 
