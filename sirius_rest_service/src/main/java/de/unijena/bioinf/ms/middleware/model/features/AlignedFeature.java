@@ -56,7 +56,7 @@ public class AlignedFeature implements Taggable {
             OptField.tags, OptField.computedTools, OptField.indexedTopAnnotations, OptField.qualities);
 
     // identifier
-    @IndexField(documentId = true, sortable = true)
+    @IndexField(documentId = true, sortable = true, defaultSearchField = true)
     @NotNull
     protected String alignedFeatureId;
 
