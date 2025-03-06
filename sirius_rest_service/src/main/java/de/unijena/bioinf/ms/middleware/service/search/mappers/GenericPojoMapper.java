@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -146,7 +145,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
                     if (pointsConfig != null)
                         pointsConfigMap.put(fieldName, pointsConfig);
                     else if (indexField.fullTextSearch() && (elementType.equals(String.class) || elementType.isEnum()))
-                        analyzerMap.put(fieldName, new StandardAnalyzer());
+                        analyzerMap.put(fieldName, SIRIUS_TEXT_ANALYZER);
                     else // this covers the boolean values as well
                         analyzerMap.put(fieldName, new KeywordAnalyzer());
 

@@ -12,7 +12,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -61,7 +60,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
     private final GenericPojoMapper<T> pojoMapper;
 
     // Base analyzer and dynamic (per-field) analyzer:
-    private final Analyzer baseAnalyzer = new StandardAnalyzer();
+    private final Analyzer baseAnalyzer = SIRIUS_TEXT_ANALYZER;
     private final Map<String, Analyzer> fieldAnalyzers = new PrefixAwareString2ObjectHashMap<>();
     private final Map<String, PointsConfig> pointsConfigMap = new PrefixAwareString2ObjectHashMap<>();
     private final Map<String, SortField.Type> sortTypes = new PrefixAwareString2ObjectHashMap<>();
@@ -402,7 +401,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         if (vt != ValueType.TEXT)
             fieldAnalyzers.put(fieldName, new KeywordAnalyzer());
         else
-            fieldAnalyzers.put(fieldName, new StandardAnalyzer()); //todo do we need to configure full text search as well or doe default work?
+            fieldAnalyzers.put(fieldName, SIRIUS_TEXT_ANALYZER);
     }
 
     /**

@@ -1,11 +1,8 @@
 package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
+import de.unijena.bioinf.ms.middleware.service.search.SiriusStandardAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
-import de.unijena.bioinf.projectspace.IndexField;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.flexible.standard.config.NumberDateFormat;
@@ -34,7 +31,7 @@ import static org.apache.lucene.util.NumericUtils.floatToSortableInt;
 @Slf4j
 public class LuceneMappingUtils {
 
-
+    public static final SiriusStandardAnalyzer SIRIUS_TEXT_ANALYZER = new SiriusStandardAnalyzer();
 
     /**
      * Converts the Sort information from a Spring Data Pageable to a Lucene Sort.

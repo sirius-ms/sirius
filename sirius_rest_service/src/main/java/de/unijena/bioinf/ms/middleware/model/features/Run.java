@@ -48,7 +48,7 @@ public class Run implements Taggable {
     /**
      * Identifier
      */
-    @IndexField(documentId = true)
+    @IndexField(documentId = true, sortable = true, defaultSearchField = true)
     @NotNull
     protected String runId;
 
