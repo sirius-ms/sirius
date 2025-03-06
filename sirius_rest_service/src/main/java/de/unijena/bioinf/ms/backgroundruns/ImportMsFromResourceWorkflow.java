@@ -58,6 +58,10 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     @NotNull
     private LongLinkedOpenHashSet importedCompoundIds = new LongLinkedOpenHashSet();
 
+    @Getter
+    @NotNull
+    private LongLinkedOpenHashSet importedRunIds = new LongLinkedOpenHashSet();
+
     private final boolean saveImportedCompounds;
 
     private final NoSQLProjectImpl project;
@@ -97,6 +101,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     public void run() {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
+        importedRunIds = new LongLinkedOpenHashSet();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
         if (inputResources != null && !inputResources.isEmpty()) {
             try {
@@ -119,6 +124,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                     importedFeatureIds = importerJJob.getImportedFeatureIds();
                 if (importerJJob.getImportedCompoundIds() != null)
                     importedCompoundIds = importerJJob.getImportedCompoundIds();
+                if (importerJJob.getImportedRunIds() != null)
+                    importedRunIds = importerJJob.getImportedRunIds();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {

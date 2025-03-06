@@ -190,7 +190,7 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(CONFIDENCE, COMPUTEDTOOLS);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(COMPUTEDTOOLS, INDEXEDTOPANNOTATIONS);
 
     private final Set<AlignedFeatureOptField> optsLoaded = new HashSet<>(10);
 
@@ -215,6 +215,10 @@ public class InstanceBean implements SiriusPCS {
                     sourceFeature = withIds((pid, fid) ->
                             getClient().features().getAlignedFeature(pid, fid, of.stream().toList()));
                     optsLoaded.addAll(of);
+                    // this is to ensure that INDEXEDTOPANNOTATIONS request do not cause reload if TOPANNOTATIONS have already been loaded
+                    if (optsLoaded.contains(TOPANNOTATIONS))
+                        optsLoaded.add(INDEXEDTOPANNOTATIONS);
+
                     System.out.println("Loaded data from API for '" + getGUIName() + "' in: " + w);
                 }
                 return sourceFeature;
@@ -341,9 +345,9 @@ public class InstanceBean implements SiriusPCS {
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE
-                ? Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
+                ? Optional.ofNullable(getSourceFeature(INDEXEDTOPANNOTATIONS).getTopAnnotations())
                 .map(FeatureAnnotations::getConfidenceApproxMatch)
-                : Optional.ofNullable(getSourceFeature(CONFIDENCE).getTopAnnotations())
+                : Optional.ofNullable(getSourceFeature(INDEXEDTOPANNOTATIONS).getTopAnnotations())
                 .map(FeatureAnnotations::getConfidenceExactMatch);
     }
 

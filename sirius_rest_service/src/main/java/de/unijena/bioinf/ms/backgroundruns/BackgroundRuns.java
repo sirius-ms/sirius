@@ -439,18 +439,18 @@ public final class BackgroundRuns {
                         withWriteLock(() -> affectedFeatureIds.forEach(computingInstances::remove));
                     }
                     logInfo("All Instances unlocked!");
-                } else if (computation instanceof ImportPeaksFomResourceWorkflow) {
+                } else if (computation instanceof ImportPeaksFomResourceWorkflow peakImport) {
                     logInfo("Collecting imported compounds...");
-                    extractIds(((ImportPeaksFomResourceWorkflow) computation).getImportedInstances());
+                    extractIds(peakImport.getImportedInstances());
                     if (affectedFeatureIds != null)
-                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds), JobType.CPU).awaitResult();
+                        submitJob(() -> project.addToSearchIndex(affectedFeatureIds, null), JobType.CPU).awaitResult();
                     logInfo("Imported compounds collected...");
-                } else if (computation instanceof ImportMsFromResourceWorkflow) {
+                } else if (computation instanceof ImportMsFromResourceWorkflow msImport) {
                     logInfo("Collecting imported compounds...");
-                    affectedFeatureIds = ((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
-                    affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
+                    affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
+                    affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
                     if (affectedFeatureIds != null)
-                        submitJob(() -> ((NoSQLProjectImpl)project).addToSearchIndexLongIds(((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds()), JobType.CPU).awaitResult();
+                        submitJob(() -> ((NoSQLProjectImpl)project).addToSearchIndexLongIds(msImport.getImportedFeatureIds(), msImport.getImportedRunIds()), JobType.CPU).awaitResult();
 
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {

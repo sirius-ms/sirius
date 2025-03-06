@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -34,6 +35,7 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.jjobs.Partition;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.Pages;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
@@ -116,6 +118,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.middleware.Pages.*;
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.*;
 import static org.springframework.http.HttpStatus.*;
 
 
@@ -188,9 +191,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //todo finde good page size.
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
-                    Pages.forEach(25_000,
-                            pageable -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS),
-                            page -> searchService.addDocuments(projectId, page.getContent())
+                    Pages.forEach(50_000,
+                            pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS)),
+                            page -> Utils.withTime("===> Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
                     );
 
                     System.out.println("Indexing Features took: " + stopWatch);
@@ -200,7 +203,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
-                    Pages.forEach(25_000,
+                    Pages.forEach(50_000,
                             pageable -> findRuns(pageable, Run.OptField.tags),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
@@ -230,12 +233,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * @param alignedFeaturesToUpdate ids of the features to be added.
      */
     @Override
-    public void addToSearchIndex(Collection<String> alignedFeaturesToUpdate) {
-        addToSearchIndexLongIds(alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList());
+    public void addToSearchIndex(@Nullable Collection<String> alignedFeaturesToUpdate, @Nullable Collection<String> runIds) {
+        addToSearchIndexLongIds(
+                alignedFeaturesToUpdate == null ? null : alignedFeaturesToUpdate.stream().filter(Objects::nonNull).map(Long::parseLong).toList(),
+                runIds == null ? null : runIds.stream().filter(Objects::nonNull).map(Long::parseLong).toList()
+
+        );
     }
 
     @SneakyThrows
-    public void addToSearchIndexLongIds(Collection<Long> alignedFeaturesToUpdate) {
+    public void addToSearchIndexLongIds(@Nullable Collection<Long> alignedFeaturesToUpdate, @Nullable Collection<Long> runIds) {
 
         if (searchService != null) {
             synchronized (searchService) {
@@ -243,36 +250,22 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 System.out.println();
                 System.out.println("Inserting imported data...");
 
-                Set<Long> runIds = new LongOpenHashSet();
-                Set<Long> compoundIds = new LongOpenHashSet();
 
                 //Handle FEATURES
-                if (!alignedFeaturesToUpdate.isEmpty()) {
-                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), 25_000);
+                if (Utils.notNullOrEmpty(alignedFeaturesToUpdate)) {
+                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), 50_000);
                     for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
-                                .peek(alf -> {
-                                    if (alf.getRunId() != null)
-                                        runIds.add(alf.getRunId());
-                                    if (alf.getCompoundId() != null)
-                                        compoundIds.add(alf.getCompoundId());
-                                })
-                                .map(f -> convertToApiFeature(f, EnumSet.of(AlignedFeature.OptField.qualities)))
-                                .toList();
-
+                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, EnumSet.of(AlignedFeature.OptField.qualities));
                         searchService.addDocuments(projectId, alfs);
                     }
                 }
 
                 //Handle COMPOUNDS
-                if (compoundIds != null && !compoundIds.isEmpty()) {
-                    //todo IMPLEMENT!
-                }
+                //todo IMPLEMENT!
 
                 //Handle Runs
-                if (!runIds.isEmpty()) {
+                if (Utils.notNullOrEmpty(runIds)) {
                     List<Run> runsToUpdate = storage().findStr(Filter.where("runId").in(runIds.stream().sorted().toArray(Long[]::new)), LCMSRun.class)
-                            .parallel()
                             .map(run -> convertToApiRun(run, EnumSet.of(Run.OptField.tags))) //tag might have been added during preprocessing.
                             .toList();
                     searchService.addDocuments(projectId, runsToUpdate);
@@ -306,38 +299,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 System.out.println("Updating search index...");
 
                 LongList idsToUpdate = alignedFeaturesToUpdate.stream().sorted().collect(Collectors.toCollection(LongArrayList::new));
-                LongList removeOnlyIds = storage().findStr(Filter.where("alignedFeatureId").in(idsToUpdate), ComputedSubtools.class)
-                        .filter(ComputedSubtools::hasResults).map(ComputedSubtools::getAlignedFeatureId)
-                        .collect(Collectors.toCollection(LongArrayList::new));
 
-                idsToUpdate.removeAll(removeOnlyIds);
-
-
-                // update feature that have results
                 // request results from db.
                 if (!idsToUpdate.isEmpty()) {
-                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 25_000);
+                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 50_000);
                     for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.toArray(Long[]::new)), AlignedFeatures.class)
-                                .map(f -> convertToApiFeature(f, AlignedFeature.INDEXED_OPT_FIELDS))
-                                .toList();
-
-                        searchService.updateDocuments(projectId, alfs);
+                        List<AlignedFeature> alfs = Utils.withTimeRIo("===> Loaded feature page for Indexing", w ->
+                                findAlignedFeaturesByIds(ids, AlignedFeature.INDEXED_OPT_FIELDS)
+                        );
+                        Utils.withTime("===> Updated features from page in Index", w -> searchService.updateDocuments(projectId, alfs));
                     }
                 }
-                // update feature without results
-                // just set results to null ->  index only/
-                if (!removeOnlyIds.isEmpty()) {
-                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 25_000);
-                    for (List<Long> ids : partition) {
-                        searchService.updateDocumentsFields(projectId, ids, alf -> {
-                            alf.setTopAnnotations(null);
-                            alf.setTopAnnotationsDeNovo(null);
-                            alf.setComputedTools(ComputedSubtools.builder().build());
-                        }, AlignedFeature.class);
-                    }
-                }
-
                 System.out.println("Updating search index took: " + stopWatch);
             }
         }
@@ -1247,17 +1219,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             feature.setMsData(null);
         }
 
-        if (optFields.contains(AlignedFeature.OptField.topAnnotations))
+        if (optFields.contains(AlignedFeature.OptField.topAnnotations)) {
             feature.setTopAnnotations(extractTopCsiAnnotations(alignedFeatureId));
-        else if (optFields.contains(AlignedFeature.OptField.confidence)) { // fast confidence score retrieval without any additional data.
+        } else if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations)) { // fast confidence score retrieval without any additional data.
             if (feature.getTopAnnotations() == null)
-                storage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class)
-                        .ifPresent(searchResult ->
-                                feature.setTopAnnotations(FeatureAnnotations.builder()
-                                        .confidenceExactMatch(searchResult.getConfidenceExact())
-                                        .confidenceApproxMatch(searchResult.getConfidenceApprox())
-                                        .matchedDatabases(searchResult.getMatchedDatabases())
-                                        .build()));
+                feature.setTopAnnotations(extractSearchIndexTopAnnotations(alignedFeatureId));
         } else {
             feature.setTopAnnotations(null);
         }
@@ -1280,12 +1246,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         if (optFields.contains(AlignedFeature.OptField.qualities)) {
-            Map<String, DataQuality> qualities = new HashMap<>();
-            if (feature.getQuality() != null && feature.getQuality() != DataQuality.NOT_APPLICABLE) {
-                findAlignedFeaturesQualityById(feature.getAlignedFeatureId()).getCategories().values()
-                        .forEach(v -> qualities.put(v.getCategoryId(), v.getOverallQuality()));
+            if (feature.getQualities() == null) {
+                if (feature.getQuality() == null || feature.getQuality() == DataQuality.NOT_APPLICABLE) {
+                    feature.setQualities(Map.of());
+                } else {
+                    feature.setQualities(convertToQualityMap(findQualityReportById(alignedFeatureId)));
+                }
             }
-            feature.setQualities(qualities);
         } else {
             feature.setQualities(null);
         }
@@ -1413,46 +1380,79 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
 
+    @SneakyThrows
     private FeatureAnnotations extractTopCsiAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, CsiStructureMatch.class);
     }
 
     private FeatureAnnotations extractTopDeNovoAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, DenovoStructureMatch.class);
-
     }
 
     @SneakyThrows
-    private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
+    private FeatureAnnotations extractSearchIndexTopAnnotations(long longAFIf) {
+        return extractSearchIndexTopAnnotations(longAFIf, storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
+                .orElse(null));
+    }
+
+    @SneakyThrows
+    private FeatureAnnotations extractSearchIndexTopAnnotations(long longAFIf, @Nullable CsiStructureSearchResult structureSearchResult) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
+        de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate = null;
+
+        if (structureSearchResult != null) {
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+            cSum.setMatchedDatabases(structureSearchResult.getMatchedDatabases());
+
+            StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, CsiStructureMatch.class).orElse(null);
+
+            formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                    .orElse(null);
+        }
+
+        if (formulaCandidate == null)
+            formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
+
+        if (formulaCandidate != null)
+            cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
+
+        return cSum;
+    }
+
+    @SneakyThrows
+    private FeatureAnnotations extractTopAnnotations(long longAFIf, @NotNull Class<? extends StructureMatch> clzz) {
+        final FeatureAnnotations cSum = new FeatureAnnotations();
+
+        @Nullable CsiStructureSearchResult structureSearchResult = null;
+        if (clzz == CsiStructureMatch.class)
+            structureSearchResult = storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
+                    .orElse(null);
+
+        if (structureSearchResult != null){
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+            cSum.setMatchedDatabases(structureSearchResult.getMatchedDatabases());
+        }
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
-        if (structureMatch != null) {
+        if (clzz != CsiStructureMatch.class || structureSearchResult != null) {
+            StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
+
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElseThrow();
 
             //set Structure match
             cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
-
-            if (structureMatch instanceof CsiStructureMatch) //csi only but not denovo
-                storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
-                        .ifPresent(it -> {
-                            cSum.setConfidenceExactMatch(it.getConfidenceExact());
-                            cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
-                            cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                            cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
-                            cSum.setExpandedDatabases(it.getExpandedDatabases());
-                            cSum.setMatchedDatabases(it.getMatchedDatabases());
-                        });
         } else {
-            formulaCandidate = storage().findStr(
-                            Filter.and(
-                                    Filter.where("alignedFeatureId").eq(longAFIf),
-                                    Filter.where("formulaRank").eq(1)
-                            ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                    .findFirst().orElse(null);
+            formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
         }
 
         //get Canopus result. either for
@@ -1553,24 +1553,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                         Pageable pageable,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-//        if (searchQuery == null || searchQuery.isBlank())
-//            return findCompounds(pageable, optFields, optFeatureFields);
+        if (searchQuery == null || searchQuery.isBlank())
+            return findCompounds(pageable, optFields, optFeatureFields);
 
+        throw  new ResponseStatusException(METHOD_NOT_ALLOWED, "Searching compounds is not yet supported!");
+
+
+        /*
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
         Page<Compound> compounds = searchService.search(projectId, searchQuery, pageable, Compound.class);
-        //todo LOAD Aligned features search from index and later from DB
 
 
-        if (!EnumSet.of(Compound.OptField.tags).containsAll(optFields)) {
-            //todo what is faster? filter or get by key? in theory filter should be better but with nitrite you never know.
+       if (!EnumSet.of(Compound.OptField.tags).containsAll(optFields)) {
             List<Compound> cps = storage().findStr(Filter.where("compoundId").in(compounds.stream().map(Compound::getCompoundId).map(Long::parseLong).toArray(Long[]::new)), de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                     .map(r -> convertToApiCompound(r, optFields, optFeatureFields)).toList();
             compounds = new PageImpl<>(cps, compounds.getPageable(), compounds.getTotalElements());
         }
 
-        return compounds;
+        return compounds;*/
     }
 
     @SneakyThrows
@@ -1622,6 +1624,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
         project().importCompounds(dbc);
+        //todo fire import api event
+        //todo handle index update
         return dbc.stream().map(c -> convertToApiCompound(c, optFields, optFieldsFeatures)).toList();
     }
 
@@ -1647,41 +1651,33 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
 
-    @SneakyThrows
     @Override
     public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId) {
-        return storage().getByPrimaryKey(Long.parseLong(alignedFeatureId), QualityReport.class).map(this::convertToFeatureQuality)
-                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Quality information found for feature '" + alignedFeatureId + "' in project " + projectId + "."));
+        return convertToFeatureQuality(findQualityReportById(Long.parseLong(alignedFeatureId)));
     }
 
     @SneakyThrows
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable) {
         return findPage(storage(), QualityReport.class, pageable)
-                .map(this::convertToFeatureQuality);
+                .map(AnnotationUtils::convertToFeatureQuality);
     }
 
-    private AlignedFeatureQuality convertToFeatureQuality(QualityReport report) {
-        return AlignedFeatureQuality.builder()
-                .alignedFeatureId(String.valueOf(report.getAlignedFeatureId()))
-                .overallQuality(report.getOverallQuality())
-                .categories(report.getCategories())
-                .build();
+    @SneakyThrows
+    public QualityReport findQualityReportById(long alignedFeatureId) {
+        return storage().getByPrimaryKey(alignedFeatureId, QualityReport.class)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Quality information found for feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
-
 
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-//        if (searchQuery == null || searchQuery.isBlank())
-//            return findAlignedFeatures(pageable, optFields);
-
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
         StopWatch w = StopWatch.createStarted();
         Page<AlignedFeature> features = searchService.search(projectId, searchQuery, pageable, AlignedFeature.class);
-//        Page<String> ids = searchService.searchIds(projectId, searchQuery, pageable, AlignedFeature.class);
+
         System.out.println("Lucene search took: " + w);
         w.reset();
         w.start();
@@ -1689,27 +1685,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (features.isEmpty())
             return Page.empty(pageable);
 
-        // todo loading all annotations with find in query could be slighly faster
         if (!AlignedFeature.INDEXED_OPT_FIELDS.equals(optFields)) {
+            System.out.println("====> CORRECTING OPT FIELDS: " + AlignedFeature.INDEXED_OPT_FIELDS + "   VS   " + optFields);
+
             features.stream().parallel().forEach(f ->
                     annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, optFields));
-
-//        List<AlignedFeature> alfs = ids.stream().flatMap( id -> {
-//            try {
-//                return storage().getByPrimaryKey(Long.valueOf(id), AlignedFeatures.class).stream();
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }).map(f -> convertToApiFeature(f, optFields)).toList();
-
-
-//        List<AlignedFeature> alfs = storage().findStr(Filter.where("alignedFeatureId").in(ids.stream().map(Long::parseLong).toArray(Long[]::new)), AlignedFeatures.class)
-//                .map(f -> convertToApiFeature(f, optFields)).toList();
-//        System.out.println("Extracting data from nitrite took: " + w);
-//            features = new PageImpl<>(alfs, pageable, features.getTotalElements());
-//        return new PageImpl<>(alfs, pageable, ids.getTotalElements());
         }
-
 
         return features;
     }
@@ -1724,97 +1705,131 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return findPage(storage(), AlignedFeatures.class, pageable)
-                .map(alf -> convertToApiFeature(alf, optFields));
+        List<AlignedFeature> features = annotateApiFeatures(
+                pageable.isUnpaged()
+                        ? storage().findAllStr(AlignedFeatures.class)
+                        : storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize()),
+                optFields);
 
-       /* StopWatch w = new StopWatch();
+        StopWatch w = new StopWatch();
         w.start();
-        List<AlignedFeature> features = findPage(storage(), AlignedFeatures.class, pageable)
-                .map(alf -> convertToApiFeature(alf, optFields))
-                .toList();
-        System.out.println("Loading and annotating features took: " + w);
-        w.reset();
-        w.start();*/
 
-        // second //todo check if complicated retrieval really males a difference.
+        long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
 
-       /* List<AlignedFeatures> dbfeatures = findPageStr(AlignedFeatures.class, pageable, this::sortFeature).toList();
-        System.out.println("Loading features took: " + w);
-        w.stop();
-        w.reset();
+        System.out.println("Counting features took: " + w);
+
+        return new PageImpl<>(features, pageable, total);
+    }
+
+
+    private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, @NotNull EnumSet<AlignedFeature.OptField> optFields) throws IOException {
+        return annotateApiFeatures(
+                storage().findStr(Filter.where("alignedFeatureId").in(featureIds.toArray(Long[]::new)), AlignedFeatures.class),
+                optFields);
+    }
+
+    private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        StopWatch w = new StopWatch();
         w.start();
-        List<AlignedFeature> features = dbfeatures.stream()
-                .parallel()
-                .map(alf -> convertToApiFeature(alf, optFields)).toList();
-        System.out.println("Annotate features took: " + w);
-        w.stop();
-        w.reset();
-        w.start();
-*/
 
         //third
-       /* List<AlignedFeatures> dbalf = pageable.isUnpaged()
-                ? storage().findAllStr(AlignedFeatures.class).toList()
-                : storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize()).toList();
+        Long2ObjectOpenHashMap<AlignedFeatures> dbalf = apifeatures.collect(Collectors.toMap(AlignedFeatures::getAlignedFeatureId, Function.identity(),
+                (existing, replacement) -> existing, Long2ObjectOpenHashMap::new));
 
-        System.out.println("Loading features took: " + w);
-        w.reset(); w.start();
+        System.out.println("FAST_FEATURES: Loading features took: " + w);
+        w.reset();
+        w.start();
 
         if (dbalf.isEmpty())
-            return Page.empty(pageable);
+            return List.of();
 
-        Long[] ids = dbalf.stream()
-                .parallel()
-                .map(AlignedFeatures::getAlignedFeatureId).toArray(Long[]::new);
+        Long[] ids = dbalf.keySet().stream().sorted().toArray(Long[]::new);
 
-        System.out.println("Extract Ids took: " + w);
-        w.reset();w.start();
+        System.out.println("FAST_FEATURES: Extract feature Ids took: " + w);
+        w.reset();
+        w.start();
 
-
-        TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
-//                        .parallel()
-                .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
-                        , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
-                )));
-
-
-        TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = SiriusJobs.runInBackground(() ->
-                storage().findStr(Filter.where("alignedFeatureId").in(ids), CsiStructureSearchResult.class)
-//                        .parallel()
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<QualityReport>> qualJob = null;
+        if (optFields.contains(AlignedFeature.OptField.qualities)) {
+            Long[] filterIds = Arrays.stream(ids).filter(fid -> dbalf.get(fid).getDataQuality() != DataQuality.NOT_APPLICABLE).toArray(Long[]::new);
+            if (filterIds.length > 0) {
+                Filter qualFilter = Filter.where("alignedFeatureId").in(filterIds);
+                qualJob = SiriusJobs.runInBackground(() -> storage().findStr(qualFilter, QualityReport.class)
                         .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
                                 , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
                         )));
-
-        @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob.getResult();
-        @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob.getResult();
-
+            }
+        }
 
 
-        List<AlignedFeature> features = dbalf.stream()
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<ComputedSubtools>> compJob = null;
+        if (optFields.contains(AlignedFeature.OptField.computedTools) || optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
+            compJob = SiriusJobs.runInBackground(() -> storage().findStr(Filter.where("alignedFeatureId").in(ids), ComputedSubtools.class)
+                    .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
+                            , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
+                    )));
+        }
+
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<Map<String, Tag>>> tagJob = null;
+        if (optFields.contains(AlignedFeature.OptField.tags)) {
+            tagJob = SiriusJobs.runInBackground(() -> {
+                Filter.FilterClause tagfilter = Filter.and(
+                        Filter.where("taggedObjectClass").eq(AlignedFeatures.class.getName()),
+                        Filter.where("alignedFeatureId").in(ids)
+                );
+
+                final Long2ObjectOpenHashMap<Map<String, Tag>> tagmap = new Long2ObjectOpenHashMap<>();
+                storage().find(tagfilter, de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class).forEach(tag ->
+                        tagmap.computeIfAbsent(tag.getTaggedObjectId(), id -> new HashMap<>())
+                                .put(tag.getTagName(), Tag.builder().tagName(tag.getTagName()).value(tag.getValue()).build()));
+                return tagmap;
+            });
+        }
+
+        @NotNull Long2ObjectOpenHashMap<QualityReport> quality = qualJob != null ? qualJob.getResult() : new Long2ObjectOpenHashMap<>();
+        @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob != null ? compJob.getResult() : new Long2ObjectOpenHashMap<>();
+        @NotNull Long2ObjectOpenHashMap<Map<String, Tag>> tags = tagJob != null ? tagJob.getResult() : new Long2ObjectOpenHashMap<>();
+
+
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = null;
+        if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) || optFields.contains(AlignedFeature.OptField.topAnnotations)) {
+            Long[] filterIds = Arrays.stream(ids).filter(computed::containsKey).filter(id -> computed.get(id).hasResults()).toArray(Long[]::new);
+            if (filterIds.length > 0) {
+                Filter resultFilter = Filter.where("alignedFeatureId").in(filterIds);
+
+                csiJob = SiriusJobs.runInBackground(() -> storage().findStr(resultFilter, CsiStructureSearchResult.class)
+                        .collect(Collectors.toMap(AlignedFeatureAnnotation::getAlignedFeatureId, c -> c
+                                , (existing, replacement) -> existing, Long2ObjectOpenHashMap::new
+                        )));
+            }
+        }
+
+        @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob != null ? csiJob.getResult() : new Long2ObjectOpenHashMap<>();
+
+        System.out.println("FAST_FEATURES: Extract BULK Annotations took: " + w);
+        w.reset();
+        w.start();
+
+
+        List<AlignedFeature> features = dbalf.values().stream()
                 .parallel()
                 .map(alf -> {
+                    long fid = alf.getAlignedFeatureId();
                     AlignedFeature apiFeture = convertToApiFeature(alf, EnumSet.noneOf(AlignedFeature.OptField.class));
-                    apiFeture.setComputedTools(computed.get(alf.getAlignedFeatureId()));
-                    CsiStructureSearchResult searchResult = csires.get(alf.getAlignedFeatureId());
-                    if (searchResult != null) {
-                        apiFeture.setTopAnnotations(FeatureAnnotations.builder()
-                                .confidenceExactMatch(searchResult.getConfidenceExact())
-                                .confidenceApproxMatch(searchResult.getConfidenceApprox())
-                                .build());
-                    }
+                    apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
+                    apiFeture.setComputedTools(computed.get(fid));
+                    apiFeture.setTags(tags.get(fid));
+                    if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
+                        apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
+                    //add additional anotations that are not yes covered by bulk retrieval.
+                    annotateApiFeature(fid, apiFeture, optFields);
                     return apiFeture;
                 }).toList();
 
-        System.out.println("Extract Annotatins took: " + w);
-        w.reset();w.start();*/
+        System.out.println("FAST_FEATURES: Build API features and Extract per feature annotations: " + w);
 
-//        long total = pageable.isUnpaged() ? features.size() : storage().countAll(AlignedFeatures.class);
-
-//        System.out.println("Counting features took: " + w);
-
-//        return new PageImpl<>(features, pageable, total);
+        return features;
     }
-
 
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
@@ -1831,8 +1846,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
         );
         List<AlignedFeature> importedFeatures = compound.getFeatures();
-        //todo check whether this is the right indexing place.
         searchService.addDocuments(projectId, importedFeatures);
+        //todo fire import event?
         return importedFeatures;
     }
 
@@ -1875,8 +1890,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<Run> findRuns(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
-//        if (searchQuery == null || searchQuery.isBlank())
-//            return findRuns(pageable, optFields);
+        if (searchQuery == null || searchQuery.isBlank())
+            return findRuns(pageable, optFields);
 
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");

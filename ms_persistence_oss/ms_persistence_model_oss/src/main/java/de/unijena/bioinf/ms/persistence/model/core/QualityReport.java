@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.persistence.model.core;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.ms.persistence.model.sirius.AlignedFeatureAnnotation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +14,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class QualityReport {
-    @Id
-    @Getter
-    @Setter
-    private long alignedFeatureId;
-
+public class QualityReport extends AlignedFeatureAnnotation {
     @Setter
     @Getter
     private DataQuality overallQuality;
