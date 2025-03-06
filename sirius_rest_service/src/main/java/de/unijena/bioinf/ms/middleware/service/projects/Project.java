@@ -52,7 +52,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     void createSearchIndex(boolean force);
 
     @SneakyThrows
-    void addToSearchIndex(Collection<String> alignedFeaturesToUpdate);
+    void addToSearchIndex(@Nullable Collection<String> alignedFeaturesToUpdate, @Nullable Collection<String> runIds);
 
     @SneakyThrows
     void updateSearchIndex(Collection<String> alignedFeaturesToUpdate);

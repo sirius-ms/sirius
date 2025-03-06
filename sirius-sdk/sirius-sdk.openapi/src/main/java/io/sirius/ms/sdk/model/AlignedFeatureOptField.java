@@ -40,7 +40,7 @@ public enum AlignedFeatureOptField {
   
   MSDATA("msData"),
   
-  CONFIDENCE("confidence"),
+  INDEXEDTOPANNOTATIONS("indexedTopAnnotations"),
   
   TOPANNOTATIONS("topAnnotations"),
   

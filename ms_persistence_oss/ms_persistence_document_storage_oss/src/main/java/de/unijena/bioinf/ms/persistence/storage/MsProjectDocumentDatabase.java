@@ -115,7 +115,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
                 .addRepository(RetentionTimeAxis.class)
 
-                .addRepository(QualityReport.class)
+                .addRepository(QualityReport.class,"alignedFeatureId")
 
                 ;
 

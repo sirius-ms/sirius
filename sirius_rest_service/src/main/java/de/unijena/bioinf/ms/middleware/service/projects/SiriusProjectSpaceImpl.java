@@ -125,7 +125,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void addToSearchIndex(Collection<String> alignedFeaturesToUpdate) {
+    public void addToSearchIndex(@Nullable Collection<String> alignedFeaturesToUpdate, @Nullable Collection<String> runIds) {
         throw new UnsupportedOperationException();
     }
 

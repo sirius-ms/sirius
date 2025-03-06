@@ -229,17 +229,17 @@ public class CompoundList {
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
         //copy event is hell important to reset the iterator
-        for (ExperimentListChangeListener l : listeners) {
-            l.listChanged(event.copy(), compoundListSelectionModel, projectManager.getTotalInstances());
-        }
+        long total = projectManager.getTotalInstances();
+        for (ExperimentListChangeListener l : listeners)
+            l.listChanged(event.copy(), compoundListSelectionModel, total);
     }
 
     private void notifyListenerSelectionChange(ListSelectionEvent event) {
         final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compoundListSelectionModel.getSelected());
         final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compoundListSelectionModel.getDeselected());
-        for (ExperimentListChangeListener l : listeners) {
-            l.listSelectionChanged(compoundListSelectionModel, selected, deselected, sortedSource.size());
-        }
+        long total = projectManager.getTotalInstances();
+        for (ExperimentListChangeListener l : listeners)
+            l.listSelectionChanged(compoundListSelectionModel, selected, deselected, total);
     }
 
     //API methods

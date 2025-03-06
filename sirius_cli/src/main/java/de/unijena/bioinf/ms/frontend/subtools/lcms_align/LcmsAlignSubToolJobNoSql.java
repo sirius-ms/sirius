@@ -71,10 +71,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
@@ -94,6 +91,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     @Getter
     @Nullable
     private LongLinkedOpenHashSet importedCompoundIds = null;
+
+    @Getter
+    @Nullable
+    private LongLinkedOpenHashSet importedRunIds = null;
 
 
     private final boolean saveImportedCompounds;
@@ -205,6 +206,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 return;
             }
             importedFeatureIds.addAll(processing.getImportedFeatureIds());
+            if (merged.getRun() instanceof MergedLCMSRun mrun)
+                importedRunIds.addAll(LongList.of(mrun.getRunId()));
+            else
+                importedRunIds.add(merged.getRun().getRunId());
 
             updateProgress(totalProgress, ++progress, "Detecting adducts");
             System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
@@ -343,6 +348,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     protected NoSQLProjectSpaceManager compute() throws Exception {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
+        importedRunIds = new LongLinkedOpenHashSet();
 
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();

@@ -127,7 +127,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String projectId,
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
-            @RequestParam(defaultValue = "tags, computedTools, confidence, qualities") EnumSet<AlignedFeature.OptField> optFields
+            @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, removeNone(optFields));
     }
