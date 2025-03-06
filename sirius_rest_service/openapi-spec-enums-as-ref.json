@@ -242,6 +242,16 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "compact",
+            "in": "query",
+            "description": "if true, compact project storage after closing. Can take a long time for large projects.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
