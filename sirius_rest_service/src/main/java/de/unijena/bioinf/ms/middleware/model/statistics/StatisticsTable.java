@@ -41,7 +41,7 @@ public class StatisticsTable {
     private QuantMeasure quantificationMeasure;
     private QuantRowType rowType;
 
-    private long[] rowIds;
+    private String[] rowIds;
     private String[] columnNames;
     private String[] columnLeftGroups;
     private String[] columnRightGroups;
