@@ -246,7 +246,7 @@
           {
             "name": "compact",
             "in": "query",
-            "description": "if true, compact project storage after closing. Can take a long time for large projects.",
+            "description": "if true, compact project storage after closing.",
             "required": false,
             "schema": {
               "type": "boolean",

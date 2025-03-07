@@ -112,7 +112,7 @@ public class ProjectController {
      * If there are many jobs, this might take some time.
      *
      * @param projectId unique name/identifier of the  project-space to be closed.
-     * @param compact if true, compact project storage after closing. Can take a long time for large projects.
+     * @param compact if true, compact project storage after closing.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void closeProject(@PathVariable String projectId, @RequestParam(value = "compact", defaultValue = "false") boolean compact) throws IOException {

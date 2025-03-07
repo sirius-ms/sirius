@@ -49,7 +49,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier of the  project-space to be closed.
-        Boolean compact = false; // Boolean | if true, compact project storage after closing. Can take a long time for large projects.
+        Boolean compact = false; // Boolean | if true, compact project storage after closing.
         try {
             apiInstance.closeProject(projectId, compact);
         } catch (ApiException e) {
@@ -69,7 +69,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier of the  project-space to be closed. | |
-| **compact** | **Boolean**| if true, compact project storage after closing. Can take a long time for large projects. | [optional] [default to false] |
+| **compact** | **Boolean**| if true, compact project storage after closing. | [optional] [default to false] |
 
 ### Return type
 
