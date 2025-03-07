@@ -25,8 +25,10 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
+import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Queue;
@@ -75,21 +79,29 @@ public class CompoundList {
     @Getter
     private @NotNull SiriusGui gui;
     private final GuiProjectManager projectManager;
-    private final CompoundFilterModel compoundFilterModel;
+    private final FeatueFilterModel filterModel;
 
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
         this.projectManager = gui.getProjectManager();
         //additional filter based on specific parameters
-        compoundFilterModel = projectManager.getCompoundFilterModel();
+        filterModel = projectManager.getFeatueFilterModel();
         // filter based ion full text field
         searchField = new PlaceholderTextField();
+        searchField.setDocument(filterModel.getSearchTextDoc());
         searchField.setPlaceholder("Type and hit enter to search");
         searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching.");
+        searchField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                    filterModel.fireUpdateCompleted();
+            }
+        });
 
-        adductToggleSwitch = makeAdductToggleSwitch(compoundFilterModel);
-        qualityToggleSwitch = makeQualityToggleSwitch(compoundFilterModel);
-        msMsToggleSwitch = makeMsMsToggleSwitch(compoundFilterModel);
+        adductToggleSwitch = makeAdductToggleSwitch(filterModel);
+        qualityToggleSwitch = makeQualityToggleSwitch(filterModel);
+        msMsToggleSwitch = makeMsMsToggleSwitch(filterModel);
 
         observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
@@ -100,7 +112,7 @@ public class CompoundList {
         openFilterPanelButton.setToolTipText("Open filter panel");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
-        openFilterPanelButton.addActionListener(e -> new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this));
+        openFilterPanelButton.addActionListener(e -> new FeatureFilterOptionsDialog(gui, filterModel, this));
 
         compoundListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -123,18 +135,18 @@ public class CompoundList {
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
         //init filters
-        compoundFilterModel.addUpdateCompleteListener(evt -> {
+        filterModel.addUpdateCompleteListener(evt -> {
             colorByActiveFilter();
             updateTogglesByActiveFilter();
         });
-        compoundFilterModel.updateAdducts(sortedSource);
-        compoundFilterModel.fireUpdateCompleted();
+        filterModel.updateAdducts(sortedSource);
+        filterModel.fireUpdateCompleted();
     }
 
     private void colorByActiveFilter() {
         //is any filtering option active (despite the text filter which is visible all the time)
-        if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
-            if (compoundFilterModel.isInverted()) {
+        if (filterModel.isActive()) {
+            if (filterModel.isInverted()) {
                 openFilterPanelButton.setBackground(Colors.Menu.FILTER_BUTTON_INVERTED);
                 openFilterPanelButton.setForeground(Colors.Menu.FILTER_BUTTON_INVERTED_TEXT);
             } else {
@@ -148,12 +160,12 @@ public class CompoundList {
     }
 
     protected void updateTogglesByActiveFilter() {
-        msMsToggleSwitch.setSelected(!compoundFilterModel.isHasMsMs(), false, false);
-        adductToggleSwitch.setSelected(compoundFilterModel.isMultiAdductsAllowed(), false, false);
-        qualityToggleSwitch.setSelected(compoundFilterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
+        msMsToggleSwitch.setSelected(!filterModel.isHasMsMs(), false, false);
+        adductToggleSwitch.setSelected(filterModel.isMultiAdductsAllowed(), false, false);
+        qualityToggleSwitch.setSelected(filterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
     }
 
-    private static @NotNull JToggleSwitch makeAdductToggleSwitch(CompoundFilterModel model) {
+    private static @NotNull JToggleSwitch makeAdductToggleSwitch(FeatueFilterModel model) {
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(model.isMultiAdductsAllowed(), false, false);
         tSwitch.addEventToggleSelected(selected -> {
@@ -166,8 +178,8 @@ public class CompoundList {
         return tSwitch;
     }
 
-    private static @NotNull JToggleSwitch makeQualityToggleSwitch(CompoundFilterModel model) {
-        final CompoundFilterModel.QualityFilter fqFilter = model.getFeatureQualityFilter();
+    private static @NotNull JToggleSwitch makeQualityToggleSwitch(FeatueFilterModel model) {
+        final QualityFilter fqFilter = model.getFeatureQualityFilter();
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(fqFilter.isQualitySelected(DataQuality.BAD), false, false); //initialize from model
         tSwitch.addEventToggleSelected(selected -> {
@@ -184,7 +196,7 @@ public class CompoundList {
         return tSwitch;
     }
 
-    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(CompoundFilterModel model) {
+    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(FeatueFilterModel model) {
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(!model.isHasMsMs(), false, false); ///initialize from model
         tSwitch.addEventToggleSelected(selected -> {
@@ -203,13 +215,14 @@ public class CompoundList {
      * Does not cause global re-filtering
      */
     public void updateFilter(@NotNull java.util.List<InstanceBean> instances) {
-        compoundFilterModel.updateAdducts(instances);
+        //todo re-enabale during import events
+        filterModel.updateAdducts(instances);
         updateTogglesByActiveFilter();
     }
 
     public void resetFilter() {
         //filtering consists of the text filter and the filter model
-        compoundFilterModel.resetFilter();
+        filterModel.resetFilter();
         searchField.setText("");
         searchField.postActionEvent();
         colorByActiveFilter();
