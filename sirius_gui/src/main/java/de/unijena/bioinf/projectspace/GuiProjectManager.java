@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
 import io.sirius.ms.sdk.SiriusClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -38,7 +38,6 @@ import io.sirius.ms.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +77,7 @@ public class GuiProjectManager implements Closeable {
     private final JJob<Void> eventExec;
 
     @Getter
-    final CompoundFilterModel compoundFilterModel;
+    final FeatueFilterModel featueFilterModel;
 
     private final AtomicLong totalInstances = new AtomicLong(0);
 
@@ -92,13 +91,13 @@ public class GuiProjectManager implements Closeable {
         this.siriusClient = siriusClient;
         this.siriusGui = siriusGui;
 
-        this.compoundFilterModel = new CompoundFilterModel();
+        this.featueFilterModel = new FeatueFilterModel();
 
         StopWatch w = StopWatch.createStarted();
         this.INSTANCE_LIST = new BasicEventList<>();
 
         PropertyChangeListener filterListener = evt -> reloadFeatures();
-        compoundFilterModel.addUpdateCompleteListener(filterListener);
+        featueFilterModel.addUpdateCompleteListener(filterListener);
 
         confidenceModeListender = (evt) -> reloadFeatures();
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
@@ -219,8 +218,7 @@ public class GuiProjectManager implements Closeable {
 
     public synchronized void reloadFeatures() {
         //todo LUCENE: handle loading mechanism for compound list.
-        String filteredQuery = compoundFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
-                .map(Query::toString)
+        String filteredQuery = featueFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
                 .orElse(null);
         reloadFeatures(filteredQuery, null);
     }

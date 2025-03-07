@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.dialogs;
+package de.unijena.bioinf.ms.gui.dialogs.filter;
 /*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
@@ -21,19 +21,20 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
+import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import io.sirius.ms.sdk.model.SearchableDatabase;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,15 +44,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
- * Dialog allows to adjust filter criteria of the {@link CompoundFilterModel} which is used to filter compound list.
+ * Dialog allows to adjust filter criteria of the {@link FeatueFilterModel} which is used to filter compound list.
  */
-public class CompoundFilterOptionsDialog extends JDialog implements ActionListener {
+@Slf4j
+public class FeatureFilterOptionsDialog extends JDialog implements ActionListener {
 
-    final PlaceholderTextField searchField;
     final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
@@ -61,11 +60,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JCheckBox blankFilter, controlFilter;
     final JSpinner blankSpinner, controlSpinner;
 
-    final CompoundFilterModel filterModel;
+    final FeatueFilterModel filterModel;
     final CompoundList compoundList;
 
 
-    final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
+    final JComboBox<FeatueFilterModel.LipidFilter> lipidFilterBox;
     final PlaceholderTextField elementsField;
 
     final JCheckboxListPanel<SearchableDatabase> searchDBList;
@@ -75,10 +74,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final SiriusGui gui;
 
-    public CompoundFilterOptionsDialog(SiriusGui gui, PlaceholderTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
+    public FeatureFilterOptionsDialog(SiriusGui gui, FeatueFilterModel filterModel, CompoundList compoundList) {
         super(gui.getMainFrame(), "Filter configuration", true);
         this.gui = gui;
-        this.searchField = searchField;
         this.filterModel = filterModel;
         this.compoundList = compoundList;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -90,7 +88,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         //text search
         {
-            searchFieldDialogCopy = new JTextField(searchField.getText());
+            searchFieldDialogCopy = new JTextField();
+            searchFieldDialogCopy.setDocument(filterModel.getSearchTextDoc());
             centerPanel.addNamed("Fulltext search", searchFieldDialogCopy);
         }
 
@@ -114,8 +113,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             group.add(deleteSelection);
             group.add(Box.createHorizontalGlue());
             centerPanel.add(group);
-
-//            centerPanel.addVerticalGlue();
         }
 
         //input data filters
@@ -287,7 +284,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 elementsField.setText(filterModel.getElementFilter().getConstraints().toString());
 
             selectElements.addActionListener(e -> {
-                FormulaConstraints elements = new CompoundFilterModel.ElementFilter(elementsField.getText()).getConstraints();
+                FormulaConstraints elements = new ElementFilter(elementsField.getText()).getConstraints();
                 ElementSelectionDialog diag = new ElementSelectionDialog(this, "Filter Elements", elements);
                 elements = diag.getConstraints();
                 if (elements.equals(FormulaConstraints.empty()))
@@ -298,19 +295,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             elementsField.setPlaceholder("Insert or Select formula constraints");
             elementSelector.add(elementsField);
             elementSelector.add(selectElements);
-//            elementsMatchFormula = new JCheckBox("Molecular Formula");
-//            elementsMatchFormula.setSelected(filterModel.getElementFilter().isMatchFormula());
-//            elementsMatchPrecursorFormula = new JCheckBox("Precursor Formula");
-//            elementsMatchPrecursorFormula.setSelected(filterModel.getElementFilter().isMatchPrecursorFormula());
-
-//            final Box group = Box.createHorizontalBox();
-//            group.add(elementsMatchFormula);
-//            group.add(Box.createHorizontalStrut(25));
-//            group.add(elementsMatchPrecursorFormula);
-//            group.add(Box.createHorizontalGlue());
 
             resultParameters.add(elementSelector);
-//            resultParameters.add(group);
         }
 
         {
@@ -320,12 +306,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             //lipid filter
             TwoColumnPanel lipidFilterPanel = new TwoColumnPanel();
             lipidFilterBox = new JComboBox<>();
-            java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+            java.util.List.copyOf(EnumSet.allOf(FeatueFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
             lipidFilterPanel.addNamed("Lipid filter", lipidFilterBox);
             lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
             resultParameters.add(lipidFilterPanel);
         }
-
 
         // db filter
         {
@@ -345,10 +330,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 candidateSpinner.setValue(filterModel.getDbFilter().getNumOfCandidates());
             }
         }
-
-
-
-
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
@@ -407,7 +388,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         }
     }
 
-    private void applyToModel(@NotNull CompoundFilterModel filterModel) {
+    private void applyToModel(@NotNull FeatueFilterModel filterModel) {
         filterModel.setInverted(invertFilter.isSelected());
 
         filterModel.setCurrentMinMz(getMinMz());
@@ -423,13 +404,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
 
         Iterator<QualityFilterPanel> qualityPanelIt = qualityPanels.iterator();
-        Iterator<CompoundFilterModel.QualityFilter> qualityFilterIt = filterModel.getCategorizedQualityFilters().iterator();
+        Iterator<QualityFilter> qualityFilterIt = filterModel.getCategorizedQualityFilters().iterator();
         while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
-        filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
+        filterModel.setLipidFilter((FeatueFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
-        filterModel.setElementFilter(new CompoundFilterModel.ElementFilter(
+        filterModel.setElementFilter(new ElementFilter(
                         elementsField.getText() == null || elementsField.getText().isBlank()
                                 ? FormulaConstraints.empty()
                                 : FormulaConstraints.fromString(elementsField.getText()),
@@ -438,19 +419,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 )
         );
 
-        filterModel.setDbFilter(new CompoundFilterModel.DbFilter(searchDBList.checkBoxList.getCheckedItems(),
+        filterModel.setDbFilter(new DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
-        saveTextFilter();
 
         filterModel.getBlankSubtraction().setBlankSubtractionEnabled(blankFilter.isSelected());
         filterModel.getBlankSubtraction().setCtrlSubtractionEnabled(controlFilter.isSelected());
         filterModel.getBlankSubtraction().setBlankSubtractionFoldChange((Double) blankSpinner.getValue());
         filterModel.getBlankSubtraction().setCtrlSubtractionFoldChange((Double) controlSpinner.getValue());
-    }
-
-    private void saveTextFilter() {
-        searchField.setText(searchFieldDialogCopy.getText());
-        searchField.postActionEvent();
     }
 
     @Override
@@ -468,9 +443,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private void deleteSelectedCompoundsAndResetFilter() {
 
         // create deletion matcher
-        CompoundFilterModel tmpModel = new CompoundFilterModel();
+        FeatueFilterModel tmpModel = new FeatueFilterModel();
         applyToModel(tmpModel);
-        CompoundFilterMatcher matcher = new CompoundFilterMatcher(gui.getProperties(), tmpModel);
         boolean inverted = invertFilter.isSelected();
         // reset global filter and close
         resetFilter();
@@ -481,26 +455,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection();
 
         // collect instances to delete
-        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Filtering...", new TinyBackgroundJJob<List<InstanceBean>>() {
-                    @Override
-                    protected List<InstanceBean> compute() {
-                        final int max = compoundList.getSortedSource().size();
-                        AtomicInteger progress = new AtomicInteger(0);
-                        if (inverted) {
-                            return compoundList.getSortedSource().stream()
-                                    .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
-                                    .filter(matcher::matches).collect(Collectors.toList());
-                        } else {
-                            return compoundList.getSortedSource().stream()
-                                    .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
-                                    .filter(i -> !matcher.matches(i)).collect(Collectors.toList());
-                        }
-                    }
-                }
-        ).getResult();
-
+        //todo delete features via api by lucene query
         //delete instances
-        ((DeleteExperimentAction) SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
+//        ((DeleteExperimentAction) SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
     }
 
     /**
@@ -512,7 +469,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         overallQualityPanel.reset();
         qualityPanels.forEach(QualityFilterPanel::reset);
 
-        lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
+        lipidFilterBox.setSelectedItem(FeatueFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
         searchFieldDialogCopy.setText("");
@@ -601,31 +558,4 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         return spinner;
     }
 
-    private static class QualityFilterPanel extends JPanel {
-        JCheckBox[] qualityBoxes;
-
-        public QualityFilterPanel(@NotNull CompoundFilterModel.QualityFilter qualityFilterModel) {
-            super();
-            final BoxLayout groupLayout = new BoxLayout(this, BoxLayout.X_AXIS);
-            setLayout(groupLayout);
-
-            qualityBoxes = qualityFilterModel.getPossibleQualities().stream().map(JCheckBox::new).toArray(JCheckBox[]::new);
-            for (int i = 0; i < qualityBoxes.length; ++i) {
-                add(Box.createHorizontalGlue());
-                add(qualityBoxes[i]);
-                qualityBoxes[i].setSelected(qualityFilterModel.isQualitySelected(i));
-            }
-            add(Box.createHorizontalStrut(10));
-        }
-
-        public void reset() {
-            for (JCheckBox jCheckBox : qualityBoxes)
-                jCheckBox.setSelected(true);
-        }
-
-        public void updateModel(CompoundFilterModel.QualityFilter qualityFilter) {
-            for (int k = 0; k < qualityBoxes.length; ++k)
-                qualityFilter.setQualitySelected(k, qualityBoxes[k].isSelected());
-        }
-    }
 }

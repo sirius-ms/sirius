@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.utils;/*
+package de.unijena.bioinf.ms.gui.utils.filter;/*
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
@@ -23,20 +23,25 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
-import de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
-import org.apache.commons.text.CaseUtils;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.PlainDocument;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,14 +51,17 @@ import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory
 /**
  * This model stores the filter criteria for a compound list
  */
-public class CompoundFilterModel implements SiriusPCS {
+public class FeatueFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-
+    private final Analyzer analyzer = new StandardAnalyzer();
     /*
     currently selected values
      */
     @Getter
     private boolean inverted;
+
+    @Getter
+    private final Document searchTextDoc;
 
     @Getter
     private double currentMinMz;
@@ -71,17 +79,17 @@ public class CompoundFilterModel implements SiriusPCS {
 
 
     @Getter
-    private final QualityFilter featureQualityFilter = new QualityFilter(null, "Feature Quality");
+    private final QualityFilter featureQualityFilter = new QualityFilter(null, "Feature Quality", this);
     @Getter
-    private final QualityFilter peakShapeQualityFilter = new QualityFilter(PEAK_QUALITY);
+    private final QualityFilter peakShapeQualityFilter = new QualityFilter(PEAK_QUALITY, this);
     @Getter
-    private final QualityFilter alignmentQuality = new QualityFilter(ALIGNMENT_QUALITY);
+    private final QualityFilter alignmentQuality = new QualityFilter(ALIGNMENT_QUALITY, this);
     @Getter
-    private final QualityFilter isotopePatternQuality = new QualityFilter(ISOTOPE_QUALITY);
+    private final QualityFilter isotopePatternQuality = new QualityFilter(ISOTOPE_QUALITY, this);
     @Getter
-    private final QualityFilter fragmentationPatternQuality = new QualityFilter(MS2_QUALITY);
+    private final QualityFilter fragmentationPatternQuality = new QualityFilter(MS2_QUALITY, this);
     @Getter
-    private final QualityFilter adductAssignmentQuality = new QualityFilter(ADDUCT_QUALITY);
+    private final QualityFilter adductAssignmentQuality = new QualityFilter(ADDUCT_QUALITY, this);
     @Getter
     private final List<QualityFilter> categorizedQualityFilters = List.of(peakShapeQualityFilter, alignmentQuality, isotopePatternQuality, fragmentationPatternQuality, adductAssignmentQuality);
 
@@ -125,22 +133,24 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double maxConfidence;
 
 
-    public CompoundFilterModel() {
+    public FeatueFilterModel() {
         this(0, 5000d, 0, 10000d, 0, 1d);
     }
 
 
     /**
      * the filter model is initialized with the min / max possible values
-     * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see {@link CompoundFilterMatcher} and is[...]Active() methods.
+     * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
      *
      */
-    private CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+    private FeatueFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.inverted = false;
 
+        this.searchTextDoc = new PlainDocument();
+
         this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
-        this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
-        this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
+        this.featureQualityFilter.getDataQualities().remove(DataQuality.BAD);
+        this.featureQualityFilter.getDataQualities().remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
         this.currentMaxMz = maxMz;
         this.currentMinRt = minRt;
@@ -275,11 +285,14 @@ public class CompoundFilterModel implements SiriusPCS {
     public boolean isActive() {
         if (hasMs1 || hasMsMs)
             return true;
+        if (searchTextDoc.getLength() > 0)
+            return true;
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt ||
                 currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
         ) return true;
         if (!adducts.isEmpty()) return true;
+
         if (getCategorizedQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
 
@@ -370,7 +383,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
 
     @Override
-    public HiddenChangeSupport pcs() {
+    public MutableHiddenChangeSupport pcs() {
         return pcs;
     }
 
@@ -380,6 +393,9 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public void resetFilter() {
         setInverted(false);
+
+        clearSearchText();
+
         //trigger events
         setCurrentMinMz(minMz);
         setCurrentMaxMz(maxMz);
@@ -401,162 +417,41 @@ public class CompoundFilterModel implements SiriusPCS {
         blankSubtraction.setCtrlSubtractionFoldChange(2.0);
     }
 
+    private void clearSearchText(){
+        try {
+            searchTextDoc.remove(0, searchTextDoc.getLength()); // Clear existing content
+        } catch (BadLocationException e) {
+            //ignored
+        }
+    }
+
+    public boolean isSearchTextFilterActive() {
+        return searchTextDoc.getLength() > 0;
+    }
+
+    public String getSearchText() {
+        int l = searchTextDoc.getLength();
+        if (l > 0) {
+            try {
+                return searchTextDoc.getText(0, l);
+            } catch (BadLocationException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+
     public enum LipidFilter {
         KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
     }
 
-    public static class DbFilter {
-        final List<SearchableDatabase> dbs;
-        final int numOfCandidates;
 
-        public DbFilter(List<SearchableDatabase> dbs) {
-            this(dbs, 5);
-        }
+    private static final String FAKE_FIELD = "__FAKE_FIELD__";
+    private static final String FAKE_FIELD_REPLACE = FAKE_FIELD + ":";
+    private final QueryParser textFieldParser = new QueryParser(FAKE_FIELD, analyzer);
 
-        public DbFilter(List<SearchableDatabase> dbFilter, int numOfCandidates) {
-            this.dbs = dbFilter;
-            this.numOfCandidates = numOfCandidates;
-        }
-
-        public int getNumOfCandidates() {
-            return numOfCandidates;
-        }
-
-        public List<SearchableDatabase> getDbs() {
-            return dbs;
-        }
-    }
-
-    public static class ElementFilter {
-        @NotNull
-        final FormulaConstraints constraints;
-        final boolean matchFormula;
-        final boolean matchPrecursorFormula;
-
-        public ElementFilter(@Nullable FormulaConstraints constraints) {
-            this(constraints, true, true);
-        }
-
-        public ElementFilter(@Nullable String constraints) {
-            this(constraints, true, true);
-        }
-
-        public ElementFilter(@Nullable String constraints, boolean matchFormula, boolean matchPrecursorFormula) {
-            this((constraints != null && !constraints.isBlank())
-                            ? FormulaConstraints.fromString(constraints)
-                            : FormulaConstraints.empty(),
-                    matchFormula, matchPrecursorFormula);
-        }
-
-        public ElementFilter(FormulaConstraints constraints, boolean matchFormula, boolean matchPrecursorFormula) {
-            this.constraints = constraints == null ? FormulaConstraints.empty() : constraints;
-            this.matchFormula = matchFormula;
-            this.matchPrecursorFormula = matchPrecursorFormula;
-        }
-
-        public boolean isActive() {
-            return !constraints.equals(FormulaConstraints.empty()) && (matchFormula || matchPrecursorFormula);
-        }
-
-        public FormulaConstraints getConstraints() {
-            return constraints;
-        }
-
-        public boolean isMatchFormula() {
-            return matchFormula;
-        }
-
-        public boolean isMatchPrecursorFormula() {
-            return matchPrecursorFormula;
-        }
-
-        public static final ElementFilter DISABLED = new ElementFilter(FormulaConstraints.empty(), true, true);
-
-        public static ElementFilter disabled() {
-            return DISABLED;
-        }
-    }
-
-
-    public class QualityFilter {
-        private final static List<DataQuality> DEFAULT_STATE = Arrays.asList(DataQuality.values()).subList(1, DataQuality.values().length);
-
-        @Getter
-        private final String name;
-        @Getter
-        private final String id;
-        private final EnumSet<DataQuality> dataQualities = EnumSet.copyOf(DEFAULT_STATE);
-
-        public QualityFilter(DefaultQualityCategory category) {
-            this(category.name(), category.getDisplayName());
-        }
-
-        public QualityFilter(String id, String name) {
-            this.name = name;
-            this.id = id;
-        }
-
-        public boolean addQuality(int publicIndex) {
-            return addQuality(DEFAULT_STATE.get(publicIndex));
-        }
-
-        public boolean addQuality(DataQuality quality) {
-            if (quality == DataQuality.NOT_APPLICABLE) //no error thrown because this is GUI stuff, just silently ignore
-                return false;
-
-            if (dataQualities.add(quality)) {
-                pcs.firePropertyChange(name, null, quality);
-                return true;
-            }
-            return false;
-        }
-
-        public boolean removeQuality(int publicIndex) {
-            return removeQuality(DEFAULT_STATE.get(publicIndex));
-        }
-
-        public boolean removeQuality(DataQuality quality) {
-            if (quality == DataQuality.NOT_APPLICABLE) //no error thrown because this is GUI stuff, just silently ignore
-                return false;
-
-            if (dataQualities.remove(quality)) {
-                pcs.firePropertyChange(name, quality, null);
-                return true;
-            }
-            return false;
-        }
-
-        public boolean isQualitySelected(int publicIndex) {
-            return isQualitySelected(DEFAULT_STATE.get(publicIndex));
-        }
-
-        public boolean isQualitySelected(DataQuality quality) {
-            return dataQualities.contains(quality);
-        }
-
-        public boolean setQualitySelected(int publicIndex, boolean selected) {
-            if (selected)
-                return addQuality(publicIndex);
-            return removeQuality(publicIndex);
-        }
-
-        public boolean isEnabled() {
-            return dataQualities.size() < DEFAULT_STATE.size();
-        }
-
-        public void reset() {
-            dataQualities.clear();
-            dataQualities.addAll(DEFAULT_STATE);
-        }
-
-        public List<java.lang.String> getPossibleQualities() {
-            return DEFAULT_STATE.stream()
-                    .map(dq -> CaseUtils.toCamelCase(dq.name(), true, '_', ' ', '\t'))
-                    .toList();
-        }
-    }
-
-    public Optional<Query> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
+    public Optional<String> toLuceneQuery(@NotNull ConfidenceDisplayMode confidenceMode) {
         if (!isActive())
             return Optional.empty();
 
@@ -568,10 +463,10 @@ public class CompoundFilterModel implements SiriusPCS {
                     .build();
         }
 
-        return Optional.of(mainQuery);
+        return Optional.of(mainQuery.toString().replace(FAKE_FIELD_REPLACE, ""));
     }
 
-    public Optional<Query> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
+    public Optional<String> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
         if (!isActive() && alFeatureIds.length == 0)
             return Optional.empty();
 
@@ -590,11 +485,11 @@ public class CompoundFilterModel implements SiriusPCS {
                     .add(builder.build(), BooleanClause.Occur.MUST_NOT);  // Exclude the original query
         }
 
-        return Optional.of(builder.build());
+        return Optional.of(builder.build().toString().replace(FAKE_FIELD_REPLACE, ""));
     }
 
 
-    public BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
+    private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
         // Combine queries using BooleanQuery.Builder
         BooleanQuery.Builder booleanQuery = new BooleanQuery.Builder();
 
@@ -628,9 +523,9 @@ public class CompoundFilterModel implements SiriusPCS {
         if (getFeatureQualityFilter().isEnabled())
             booleanQuery.add(makeQualityQuery("quality", getFeatureQualityFilter()).build(), BooleanClause.Occur.MUST);
 
-        getCategorizedQualityFilters().stream().filter(CompoundFilterModel.QualityFilter::isEnabled)
+        getCategorizedQualityFilters().stream().filter(QualityFilter::isEnabled)
                 .forEach(filter -> {
-                    BooleanQuery.Builder qualityQuery = makeQualityQuery("qualities." + filter.id, filter);
+                    BooleanQuery.Builder qualityQuery = makeQualityQuery("qualities." + filter.getId(), filter);
                     //to allow matching data without quality data.
                     qualityQuery.add(new TermQuery(new Term("quality", DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
                     booleanQuery.add(qualityQuery.build(), BooleanClause.Occur.MUST);
@@ -660,6 +555,19 @@ public class CompoundFilterModel implements SiriusPCS {
         if (isDbFilterEnabled())
             booleanQuery.add(makeDbQuery("topAnnotations.matchedDatabases.", dbFilter), BooleanClause.Occur.MUST);
 
+        // Handling searchText (Full-text search)
+        if (isSearchTextFilterActive()) {
+            String searchText = getSearchText();
+            try {
+                // Try to parse the search text as a Lucene query
+                booleanQuery.add(textFieldParser.parse(searchText), BooleanClause.Occur.MUST);
+            } catch (ParseException e) {
+                // If parsing fails, treat as a simple text search
+                // The backend already has standard fields defined for simple search queries
+                booleanQuery.add(new TermQuery(new Term(FAKE_FIELD, searchText)), BooleanClause.Occur.MUST);
+            }
+        }
+
         return booleanQuery;
     }
 
@@ -683,7 +591,7 @@ public class CompoundFilterModel implements SiriusPCS {
 
     private static BooleanQuery.Builder makeQualityQuery(String fieldName, QualityFilter filter) {
         BooleanQuery.Builder qualityQuery = new BooleanQuery.Builder();
-        filter.dataQualities.forEach(q -> qualityQuery.add(new TermQuery(new Term(fieldName, q.toString())), BooleanClause.Occur.SHOULD));
+        filter.getDataQualities().forEach(q -> qualityQuery.add(new TermQuery(new Term(fieldName, q.toString())), BooleanClause.Occur.SHOULD));
         //to allow matching data without quality data.
         qualityQuery.add(new TermQuery(new Term(fieldName, DataQuality.NOT_APPLICABLE.toString())), BooleanClause.Occur.SHOULD);
         return qualityQuery;
