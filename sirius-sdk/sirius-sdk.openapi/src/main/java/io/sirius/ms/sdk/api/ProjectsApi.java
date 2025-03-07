@@ -57,7 +57,7 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
-     * @param compact if true, compact project storage after closing. Can take a long time for large projects.
+     * @param compact if true, compact project storage after closing.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec closeProjectRequestCreation(String projectId, Boolean compact) throws WebClientResponseException {
@@ -94,7 +94,7 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
-     * @param compact if true, compact project storage after closing. Can take a long time for large projects.
+     * @param compact if true, compact project storage after closing.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public void closeProject(String projectId, Boolean compact) throws WebClientResponseException {
@@ -107,7 +107,7 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
-     * @param compact if true, compact project storage after closing. Can take a long time for large projects.
+     * @param compact if true, compact project storage after closing.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<Void> closeProjectWithHttpInfo(String projectId, Boolean compact) throws WebClientResponseException {
@@ -120,7 +120,7 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
-     * @param compact if true, compact project storage after closing. Can take a long time for large projects.
+     * @param compact if true, compact project storage after closing.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
