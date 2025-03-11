@@ -78,7 +78,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
 
-    private static final int PORT_IN_USE_RETURN_CODE = 10;
+    private static final int PORT_IN_USE_EXIT_CODE = 10;
 
     private static MiddlewareAppOptions<?> middlewareOpts;
     private static CLIRootOptions rootOptions;
@@ -222,7 +222,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             } catch (ApplicationContextException springException) {
                 log.error("Spring error", springException);
                 if (springException.getCause() instanceof PortInUseException) {
-                    System.exit(PORT_IN_USE_RETURN_CODE);
+                    System.exit(PORT_IN_USE_EXIT_CODE);
                 }
                 System.exit(1);
             } catch (Exception e) {
