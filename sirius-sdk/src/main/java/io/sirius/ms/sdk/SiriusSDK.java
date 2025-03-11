@@ -28,7 +28,7 @@ public final class SiriusSDK extends SiriusClient {
         this(basePath, siriusProcessHandle, shutDownSirius, null);
     }
 
-    public SiriusSDK(@NotNull String basePath, ProcessHandle siriusProcessHandle, boolean shutDownSirius, @Nullable ExecutorService asyncExecutor) {
+    public SiriusSDK(@NotNull String basePath, @Nullable ProcessHandle siriusProcessHandle, boolean shutDownSirius, @Nullable ExecutorService asyncExecutor) {
         super(basePath, asyncExecutor);
         this.shutDownSirius = shutDownSirius;
         this.siriusProcessHandle = siriusProcessHandle;
@@ -125,7 +125,7 @@ public final class SiriusSDK extends SiriusClient {
                         if (exitCode == PORT_IN_USE_EXIT_CODE) {
                             throw new Exception("Sirius could not be started due to port conflict!");
                         }
-                        throw new Exception("SIRIUS process already exited!");
+                        throw new Exception("SIRIUS process already exited with code " + exitCode);
                     }
                     if (System.currentTimeMillis() - start > 20000) {
                         process.destroy();
