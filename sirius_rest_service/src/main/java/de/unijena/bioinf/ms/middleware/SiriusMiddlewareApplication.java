@@ -54,7 +54,9 @@ import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
+import org.springframework.boot.web.server.PortInUseException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import picocli.CommandLine;
@@ -75,6 +77,9 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 @OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
+
+    private static final int PORT_IN_USE_RETURN_CODE = 10;
+
     private static MiddlewareAppOptions<?> middlewareOpts;
     private static CLIRootOptions rootOptions;
 
@@ -135,10 +140,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
                 CommandLine.ParseResult parseResult = commandline.parseArgs(args);
                 CommandLine.printHelpIfRequested(parseResult);
-                System.exit(0);// Zero because this is the help message case
+                System.exit(0);
             } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(1);// Zero because this is the help message case
+                log.error("Error printing help message", e);
+                System.exit(1);
             }
             //check if service mode is used before command line is really parsed to decide whether we need to
             //configure a spring app or not.
@@ -201,22 +206,28 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
                         .properties(baseProperties)
                         .web(webType)
-                        .headless(webType.equals(WebApplicationType.NONE))
+                        .headless(splashScreen == null)
                         .bannerMode(Banner.Mode.OFF);
 
                 measureTime("Start Workflow");
                 SpringApplication app = appBuilder.application();
                 app.addListeners((ApplicationListener<WebServerInitializedEvent>) event -> {
-                    System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
-                    System.err.println("SIRIUS Service started successfully!");
+                    log.info("SIRIUS Service is running on port: {}", event.getWebServer().getPort());
+                    log.info("SIRIUS Service started successfully!");
                 });
                 app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
                 app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
 
                 app.run(args);
+            } catch (ApplicationContextException springException) {
+                log.error("Spring error", springException);
+                if (springException.getCause() instanceof PortInUseException) {
+                    System.exit(PORT_IN_USE_RETURN_CODE);
+                }
+                System.exit(1);
             } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(1);// Zero because this is the help message case
+                log.error("Error starting service", e);
+                System.exit(1);
             }
         } else {
             SiriusCLIApplication.runMain(args, List.of());
@@ -237,7 +248,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         if (successfulParsed) {
             RUN.compute();
         } else {
-            System.exit(0);// Zero because this is the help message case
+            System.exit(0);
         }
     }
 
@@ -252,7 +263,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             else
                 Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error in clean up", e);
         } finally {
             ProxyManager.disconnect();
         }
