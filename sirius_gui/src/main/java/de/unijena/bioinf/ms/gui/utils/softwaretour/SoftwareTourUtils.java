@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SoftwareTourUtils {
@@ -49,6 +51,8 @@ public class SoftwareTourUtils {
     }
 
     protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String propertyKey) {
+        ToolTipManager.sharedInstance().setEnabled(false); //disable tool tips so they don't interfere with the tour
+
         QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?<br>(You can enable/disable all tours in the settings at once.)", propertyKey, ReturnValue.Cancel);
 
         if (askToStart.isSuccess()) {
@@ -87,6 +91,7 @@ public class SoftwareTourUtils {
 
             componentToEnabledState.forEach(Component::setEnabled);
         }
+        ToolTipManager.sharedInstance().setEnabled(true);
     }
 
     private static boolean isVisibleOnScreen(Component component) {
