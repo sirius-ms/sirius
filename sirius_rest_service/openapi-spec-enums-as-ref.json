@@ -246,8 +246,9 @@
           {
             "name": "compact",
             "in": "query",
-            "description": "if true, compact project storage after closing.",
+            "description": "if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.",
             "required": false,
+            "deprecated": true,
             "schema": {
               "type": "boolean",
               "default": false
