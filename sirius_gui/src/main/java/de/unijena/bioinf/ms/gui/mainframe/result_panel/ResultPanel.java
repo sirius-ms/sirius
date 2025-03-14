@@ -147,6 +147,8 @@ public class ResultPanel extends JTabbedPane {
                 structureAnnoTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
                 structuresTab.initSoftwareTour(gui.getProperties());
+            } else if (selectedComponent == deNovoStructuresTab && !combinedStructureListDeNovoView.getElementList().isEmpty()) {
+                deNovoStructuresTab.initSoftwareTour(gui.getProperties());
             }
         });
 
