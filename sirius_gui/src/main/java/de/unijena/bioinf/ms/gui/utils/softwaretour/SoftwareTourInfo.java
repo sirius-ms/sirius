@@ -7,7 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class SoftwareTourInfo {
 
-    public enum LocationHorizontal {LEFT_ALIGN_TO_RIGHT, CENTER, RIGHT_SPACE, LEFT_SPACE_TO_LEFT}
+    public enum LocationHorizontal {LEFT_ALIGN_TO_RIGHT, CENTER, RIGHT_SPACE, LEFT_SPACE_TO_LEFT, RIGHT_ALIGN}
 
     public enum LocationVertical {ON_TOP, TOP_TOP_ALIGN, CENTER, BOTTOM_BOTTOM_ALIGN, BELOW_BOTTOM}
 
