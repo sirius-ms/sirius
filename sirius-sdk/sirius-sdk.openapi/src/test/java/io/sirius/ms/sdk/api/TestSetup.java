@@ -4,13 +4,17 @@ import io.sirius.ms.sdk.model.AccountCredentials;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.SiriusSDK;
+import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -60,7 +64,13 @@ public class TestSetup {
         Path bootJar;
         try (Stream<Path> walker = Files.walk(dataDir.getParent().getParent().getParent().getParent().getParent().getParent()
                 .resolve("sirius_rest_service/build/libs"))){
-            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).findAny()
+            bootJar = walker.filter(p -> p.getFileName().toString().matches("sirius_rest_service-.*-boot.jar")).max(Comparator.comparing(p -> {
+                        try {
+                          return Files.getLastModifiedTime(p);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }))
                     .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
         }
 
@@ -86,29 +96,31 @@ public class TestSetup {
     }
 
     public ProjectInfo createTestProject(String projectSuffix, Path sourceProject) throws IOException {
-        String uid = UUID.randomUUID().toString();
-        String name = "test-project-" + uid;
+        return createTestProject(projectSuffix, sourceProject, null);
+    }
 
-        if (projectSuffix != null) {
-            name += "-" + projectSuffix + ".sirius";
-        }
+    public ProjectInfo createTestProject(String projectSuffix, Path sourceProject, List<ProjectInfoOptField> optFields) throws IOException {
+        String uid = UUID.randomUUID().toString();
+        String name = "test-project-" + uid + (projectSuffix != null ? "-" + projectSuffix : "") + ".sirius";
 
         Path path = tempDir.resolve(name);
 
         if (sourceProject != null) {
             copySiriusProject(sourceProject, path);
-            return siriusClient.projects().openProject(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().openProject(uid, path.toAbsolutePath().toString(), optFields);
         } else {
-            return siriusClient.projects().createProject(uid, path.toAbsolutePath().toString(), null);
+            return siriusClient.projects().createProject(uid, path.toAbsolutePath().toString(), optFields);
         }
     }
 
     public void deleteTestProject(ProjectInfo projectSpace) {
         try {
-            siriusClient.projects().closeProject(projectSpace.getProjectId());
+            siriusClient.projects().closeProject(projectSpace.getProjectId(), false);
             Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
+        } catch (WebClientResponseException e) {
+            log.warn("Could not delete test project", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage(), e);
         }
     }
 
