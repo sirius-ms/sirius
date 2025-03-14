@@ -20,6 +20,7 @@ public class SoftwareTourInfoStore {
     public static final String BatchComputeTourKey = "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
 
     public static final String DatabaseSearchTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.databaseTab";
+    public static final String DeNovoStructuresTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.deNovoStructuresTab";
     public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.epimetheusTab";
 
 
@@ -73,11 +74,16 @@ public class SoftwareTourInfoStore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Database search tour /////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static final SoftwareTourInfo DatabaseSearch_CSIScore = new SoftwareTourInfo("The CSI:FingerID score is used to rank the molecular structure candidates.<br>It is a log-likelihood. The best possible score is 0 the worst -infinity.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
-    public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit.<br>If multiple top candidates are highlighted green this means they are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
-    public static final SoftwareTourInfo DatabaseSearch_Source = new SoftwareTourInfo("The structure hit can be found in the displayed databases. Even database not selected for search are displayed.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo DatabaseSearch_CSIScore = new SoftwareTourInfo("The CSI:FingerID score is used to rank the molecular structure candidates.<br>It is a log-likelihood. The best possible score is 0 the worst -infinity.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
+    public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit.<br>If multiple top candidates are highlighted green this means they are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER, DatabaseSearchTabTourKey);
+    public static final SoftwareTourInfo DatabaseSearch_Source = new SoftwareTourInfo("The structure hit can be found in the displayed databases. Even databases that have not been selected for search are displayed.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
 
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// De Novo structures tour /////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final SoftwareTourInfo DeNovo_Source = new SoftwareTourInfo("The de novo structures view is very similar to the database structures view.<br>A \"De Novo\" label as part of the sources indicates that this structure was generated de novo.<br>De novo generated structures can also be contained in databases.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM, DeNovoStructuresTabTourKey);
+    public static final SoftwareTourInfo DeNovo_Filter = new SoftwareTourInfo("By default, database structures are shown.<br>Toggle here to (un-)hide those.", 2, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM, DeNovoStructuresTabTourKey);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Epimetheus tour /////////////////////////////////////////////////////////////////////////////////////////////

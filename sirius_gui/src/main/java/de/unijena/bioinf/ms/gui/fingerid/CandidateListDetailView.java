@@ -141,6 +141,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DeNovo_Source);
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
