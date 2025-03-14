@@ -1,9 +1,11 @@
 package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourMessage;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -15,6 +17,29 @@ import java.util.stream.Collectors;
 
 public class SoftwareTourUtils {
 
+    /**
+     * enable all software tours that have been disabled via "don't ask again"
+     * @param guiProperties
+     */
+    public static void enableAllTours(GuiProperties guiProperties) {
+        setAllTourProperties(true);
+        guiProperties.resetAllTutorialsKnownForThisSession();
+
+    }
+
+    /**
+     * disable all software tours. No further tours will be started.
+     */
+    public static void disableAllTours() {
+        setAllTourProperties(false);
+    }
+
+    private static void setAllTourProperties(boolean enabled) {
+        for (String tourKey : SoftwareTourInfoStore.AllTourKeys) {
+            SiriusProperties.setAndStoreInBackground(tourKey, enabled ? null : ReturnValue.Cancel.name());
+        }
+
+    }
     public static void checkAndInitTour(Container owner, String propertyKey, GuiProperties guiProperties) {
         if (!owner.isShowing()) return; //not starting. Panel was probably decorated with data in the background
         if (guiProperties.isAskedTutorialThisSession(propertyKey)) return;
@@ -24,7 +49,7 @@ public class SoftwareTourUtils {
     }
 
     protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String propertyKey) {
-        QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?", propertyKey);
+        QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?<br>(You can enable/disable all tours in the settings at once.)", propertyKey, ReturnValue.Cancel);
 
         if (askToStart.isSuccess()) {
             List<Component> allComponents = collectNestedComponents(windowOwner);

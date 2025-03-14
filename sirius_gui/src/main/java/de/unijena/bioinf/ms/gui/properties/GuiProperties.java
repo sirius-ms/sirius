@@ -118,4 +118,8 @@ public final class GuiProperties {
     public synchronized void setTutorialKnownForThisSession(String tutorialKey) {
         tutorialsThisSession.add(tutorialKey);
     }
+
+    public synchronized void resetAllTutorialsKnownForThisSession() {
+        tutorialsThisSession.clear();
+    }
 }

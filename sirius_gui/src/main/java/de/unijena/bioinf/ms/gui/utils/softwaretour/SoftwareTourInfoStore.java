@@ -23,6 +23,9 @@ public class SoftwareTourInfoStore {
     public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.epimetheusTab";
 
 
+    //INCLUDE ALL TO TOUR KEYS HERE!
+    public static final String[] AllTourKeys = new String[] {MainFrameTourKey, BatchComputeTourKey, DatabaseSearchTabTourKey, EpimetheusTabTourKey};
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
