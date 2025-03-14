@@ -30,7 +30,7 @@ public final class SiriusSDK extends SiriusClient {
         this(basePath, siriusProcess, shutDownSirius, redirectSiriusOutput, null);
     }
 
-    public SiriusSDK(@NotNull String basePath, @Nullable Process siriusProcess, boolean shutDownSirius, boolean redirectSiriusOutput, @Nullable ExecutorService asyncExecutor) throws Exception {
+    public SiriusSDK(@NotNull String basePath, @Nullable Process siriusProcess, boolean shutDownSirius, boolean redirectSiriusOutput, @Nullable ExecutorService asyncExecutor) {
         super(basePath, asyncExecutor);
         this.shutDownSirius = shutDownSirius;
         this.siriusProcess = siriusProcess;
@@ -53,7 +53,7 @@ public final class SiriusSDK extends SiriusClient {
         this(basePath, siriusProcessHandle, shutDownSirius, null);
     }
 
-    public SiriusSDK(@NotNull String basePath, @Nullable ProcessHandle siriusProcessHandle, boolean shutDownSirius, @Nullable ExecutorService asyncExecutor) throws Exception {
+    public SiriusSDK(@NotNull String basePath, @Nullable ProcessHandle siriusProcessHandle, boolean shutDownSirius, @Nullable ExecutorService asyncExecutor) {
         super(basePath, asyncExecutor);
         this.shutDownSirius = shutDownSirius;
         this.siriusProcessHandle = siriusProcessHandle;
@@ -157,7 +157,7 @@ public final class SiriusSDK extends SiriusClient {
 
         }
 
-        log.info("Starting SIRIUS process...");
+        log.info("Starting SIRIUS process from {}", executable);
         Process process = null;
         for (int tries = 1; tries < 4; tries++) {
             try {

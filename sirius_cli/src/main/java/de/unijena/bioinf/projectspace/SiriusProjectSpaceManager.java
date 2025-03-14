@@ -408,6 +408,11 @@ public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
         getProjectSpaceImpl().flush();
     }
 
+    @Override
+    public void compact() {
+        throw new UnsupportedOperationException("Compacting is not supported.");
+    }
+
     //region static helper
     public static Summarizer[] defaultSummarizer(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
         return new Summarizer[]{
