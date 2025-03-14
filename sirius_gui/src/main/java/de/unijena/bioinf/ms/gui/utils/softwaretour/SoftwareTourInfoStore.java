@@ -78,6 +78,12 @@ public class SoftwareTourInfoStore {
     public static final SoftwareTourInfo DatabaseSearch_Rank = new SoftwareTourInfo("This is the rank of the structure hit.<br>If multiple top candidates are highlighted green this means they are structurally highly similar - the confidence score would consider any of this as top hit.<br>Green-highlighted rows in other result tabs all link to these top hits.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER, DatabaseSearchTabTourKey);
     public static final SoftwareTourInfo DatabaseSearch_Source = new SoftwareTourInfo("The structure hit can be found in the displayed databases. Even databases that have not been selected for search are displayed.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
 
+    public static final SoftwareTourInfo DatabaseSearch_Substructures = new SoftwareTourInfo("Each square represents a molecular property (substructure) from the fingerprint that is present in the candidate.<br>Green squares agree with the predicted fingerprint.<br>Pink squares disagree with the predicted fingerprint.<br>Larger squares correspond to properties that can be well predicted (high predictor quality).", 4, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
+
+    public static final SoftwareTourInfo DatabaseSearch_DatabaseFilter = new SoftwareTourInfo("Filter candidate structure by database...", 10, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
+    public static final SoftwareTourInfo DatabaseSearch_SubstructureFilter = new SoftwareTourInfo("... or by a substructure you selected via the \"substructures\" squares", 10, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
+    public static final SoftwareTourInfo DatabaseSearch_TextFilter = new SoftwareTourInfo("... or by text, e.g. name, molecular formula or inchi key", 10, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, DatabaseSearchTabTourKey);
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// De Novo structures tour /////////////////////////////////////////////////////////////////////////////////////////
