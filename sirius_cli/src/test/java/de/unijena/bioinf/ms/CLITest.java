@@ -67,7 +67,11 @@ public abstract class CLITest {
         List<String> args = new ArrayList<>(List.of("-p", projectLocation.toString()));
         Collections.addAll(args, testArgs);
         args.add(ASSERT_TOOL);
-        run.parseArgs(args.toArray(String[]::new));
+        runWithArguments(args.toArray(String[]::new));
+    }
+
+    protected void runWithArguments(String... args) {
+        run.parseArgs(args);
         run.makeWorkflow();
         run.compute();
     }

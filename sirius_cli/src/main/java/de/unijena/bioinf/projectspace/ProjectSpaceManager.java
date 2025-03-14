@@ -34,8 +34,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
+
+    Pattern PROJECT_FILENAME_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
+
     @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment);
 
     @NotNull Optional<? extends Instance> findInstance(Object id);
