@@ -142,6 +142,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DeNovo_Source);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.ag, SoftwareTourInfoStore.DatabaseSearch_Substructures);
+        searchField.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_TextFilter);
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
@@ -179,6 +181,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         JToolBar tb = super.getToolBar();
 
         filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MOLECULAR_PROPERTY.derive(24,24), "Filter by selected molecular property (square)");
+        filterByMolecularPropertyButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_SubstructureFilter);
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");
