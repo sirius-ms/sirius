@@ -120,6 +120,7 @@ public class SoftwareTourUtils {
             case CENTER -> x = component.getX() + component.getWidth() / 2 - tutorialDialog.getWidth() / 2;
             case RIGHT_SPACE -> x = component.getX() + component.getWidth() + 10;
             case LEFT_SPACE_TO_LEFT -> x = component.getX() - tutorialDialog.getWidth() - 10;
+            case RIGHT_ALIGN -> x = component.getX() + component.getWidth() - tutorialDialog.getWidth();
         }
         switch (tourInfo.getLocationVertical()) {
             case ON_TOP -> y = component.getY() - tutorialDialog.getHeight() - 10;

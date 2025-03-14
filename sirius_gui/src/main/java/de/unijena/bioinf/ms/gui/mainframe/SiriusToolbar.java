@@ -89,6 +89,7 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
         logsB = new ToolbarButton(SiriusActions.SHOW_LOG.getInstance(true));
         add(logsB);
+        logsB.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Log);
 
         settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(gui, true));
         add(settings);
