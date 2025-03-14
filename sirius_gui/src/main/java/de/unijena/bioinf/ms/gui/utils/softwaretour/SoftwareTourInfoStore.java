@@ -38,10 +38,18 @@ public class SoftwareTourInfoStore {
 
     ////SiriusToolbar
     public static final SoftwareTourInfo ComputeAllButton = new SoftwareTourInfo("Here you can start computations on all features currently displayed in the feature list.", 10, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Log = new SoftwareTourInfo("This provides information, warnings and error on all jobs, including import and annotation tasks.<br>Information on individual jobs that failed can also be specifically selected using the \"Jobs\" panel.", 10, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM);
 
     ////left feature list
-    public static final SoftwareTourInfo CompoundListView = new SoftwareTourInfo( "This is the feature list. It lists all features that pass the current filter.", 1, LocationHorizontal.RIGHT_SPACE,  LocationVertical.CENTER);
-    public static final SoftwareTourInfo OpenFilterPanelButton = new SoftwareTourInfo("This open the filter dialog.<br>Here, you can filter the features by m/z, RT, quality and more.<br>You can even filter based on results such as database affiliation.", 5, LocationHorizontal.RIGHT_SPACE, LocationVertical.TOP_TOP_ALIGN);
+    public static final SoftwareTourInfo CompoundListView = new SoftwareTourInfo( "This is the feature list. It displays all features that pass the current filter.<br>The right-click menu allows to sort or perform computations on a set of selected features.", 2, LocationHorizontal.RIGHT_SPACE,  LocationVertical.CENTER);
+    public static final SoftwareTourInfo OpenFilterPanelButton = new SoftwareTourInfo("This opens the filter dialog.<br>Here, you can filter the features by m/z, RT, quality and more.<br>You can even filter based on results such as database affiliation of structure hits.", 3, LocationHorizontal.RIGHT_SPACE, LocationVertical.TOP_TOP_ALIGN);
+
+
+    ///landing page
+    public static final SoftwareTourInfo LandingPage_AccountInfo = new SoftwareTourInfo( "Create an account or log in to an existing to use the full feature set of SIRIUS.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT,  LocationVertical.BELOW_BOTTOM); //todo is this worth a tutorial message?
+    public static final SoftwareTourInfo LandingPage_WebConnectionInfo = new SoftwareTourInfo( "See if your SIRIUS client established a connection to the webservice.<br>If you encounter general connection issues, please refer to the documentation and check with your IT department.", 1, LocationHorizontal.RIGHT_ALIGN,  LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo LandingPage_GetStartedInfo = new SoftwareTourInfo( "Get started with tutorials and documentation.<br>Get an overview and in-depth information to best practices and parameters.", 1, LocationHorizontal.RIGHT_SPACE,  LocationVertical.CENTER);
+    public static final SoftwareTourInfo LandingPage_CommunityInfo = new SoftwareTourInfo( "Interact with other SIRIUS users, ask question or report bugs.", 1, LocationHorizontal.LEFT_SPACE_TO_LEFT,  LocationVertical.CENTER);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
