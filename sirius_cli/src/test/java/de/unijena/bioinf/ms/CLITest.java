@@ -45,13 +45,15 @@ public abstract class CLITest {
 
     @BeforeAll
     public static void initApplication() throws IOException {
-        ApplicationCore.VERSION(); // execute static init code
-        DefaultParameterConfigLoader defaultConfigOptions = new DefaultParameterConfigLoader();
-        NitriteProjectSpaceManagerFactory spaceManagerFactory = new NitriteProjectSpaceManagerFactory();
-        CLIRootOptions rootOptions = new CLIRootOptions(defaultConfigOptions, spaceManagerFactory);
-        WorkflowBuilder workflowBuilder = new WorkflowBuilder(rootOptions);
-        run = new Run(workflowBuilder);
-        rootCLISpec = workflowBuilder.getRootSpec();
+        if (run == null) {
+            ApplicationCore.VERSION(); // execute static init code
+            DefaultParameterConfigLoader defaultConfigOptions = new DefaultParameterConfigLoader();
+            NitriteProjectSpaceManagerFactory spaceManagerFactory = new NitriteProjectSpaceManagerFactory();
+            CLIRootOptions rootOptions = new CLIRootOptions(defaultConfigOptions, spaceManagerFactory);
+            WorkflowBuilder workflowBuilder = new WorkflowBuilder(rootOptions);
+            run = new Run(workflowBuilder);
+            rootCLISpec = workflowBuilder.getRootSpec();
+        }
     }
 
     @BeforeEach
