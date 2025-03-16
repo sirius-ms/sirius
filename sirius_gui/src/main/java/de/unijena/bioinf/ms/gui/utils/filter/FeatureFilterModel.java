@@ -21,8 +21,8 @@ package de.unijena.bioinf.ms.gui.utils.filter;/*
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
 import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -51,7 +51,7 @@ import static de.unijena.bioinf.ms.persistence.model.core.DefaultQualityCategory
 /**
  * This model stores the filter criteria for a compound list
  */
-public class FeatueFilterModel implements SiriusPCS {
+public class FeatureFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
     private final Analyzer analyzer = new StandardAnalyzer();
     /*
@@ -113,8 +113,7 @@ public class FeatueFilterModel implements SiriusPCS {
     private DbFilter dbFilter;
 
     @Getter
-    private BlankSubtraction blankSubtraction;
-
+    private final FoldChangeFilter sampleBlankFoldChange;
     /*
     min/max possible values
      */
@@ -133,7 +132,7 @@ public class FeatueFilterModel implements SiriusPCS {
     private final double maxConfidence;
 
 
-    public FeatueFilterModel() {
+    public FeatureFilterModel() {
         this(0, 5000d, 0, 10000d, 0, 1d);
     }
 
@@ -143,12 +142,12 @@ public class FeatueFilterModel implements SiriusPCS {
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
      *
      */
-    private FeatueFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+    private FeatureFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.inverted = false;
 
         this.searchTextDoc = new PlainDocument();
 
-        this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
+        this.sampleBlankFoldChange = new FoldChangeFilter(2.0);
         this.featureQualityFilter.getDataQualities().remove(DataQuality.BAD);
         this.featureQualityFilter.getDataQualities().remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
@@ -411,10 +410,7 @@ public class FeatueFilterModel implements SiriusPCS {
         adducts = Set.of();
         setHasMs1(false);
         setHasMsMs(false);
-        blankSubtraction.setBlankSubtractionEnabled(false);
-        blankSubtraction.setCtrlSubtractionEnabled(false);
-        blankSubtraction.setBlankSubtractionFoldChange(2.0);
-        blankSubtraction.setCtrlSubtractionFoldChange(2.0);
+        sampleBlankFoldChange.reset();
     }
 
     private void clearSearchText(){
@@ -463,7 +459,9 @@ public class FeatueFilterModel implements SiriusPCS {
                     .build();
         }
 
-        return Optional.of(mainQuery.toString().replace(FAKE_FIELD_REPLACE, ""));
+        return Optional.of(mainQuery.toString()
+                .replace(FAKE_FIELD_REPLACE, "") //fake field to trick lucene
+                .replace("Infinity]", "*]").replace("[-Infinity", "[*")); // tostring of query seems to be buggy, Infinity is the suggested way by lucene but the resulting query string is wrong.
     }
 
     public Optional<String> toLuceneQueryWithIds(@NotNull ConfidenceDisplayMode confidenceMode, String... alFeatureIds) {
@@ -485,9 +483,16 @@ public class FeatueFilterModel implements SiriusPCS {
                     .add(builder.build(), BooleanClause.Occur.MUST_NOT);  // Exclude the original query
         }
 
-        return Optional.of(builder.build().toString().replace(FAKE_FIELD_REPLACE, ""));
+        return Optional.of(builder.build().toString()
+                .replace(FAKE_FIELD_REPLACE, "")  //fake field to trick lucene
+                .replace("Infinity]", "*]").replace("[-Infinity", "[*")); // tostring of query seems to be buggy, Infinity is the suggested way by lucene but the resulting query string is wrong.
     }
 
+    private static final String BLANK_REMOVAL_SEARCH_FIELD_NAME = "stats.foldChange" +
+            "." + Groups.SAMPLE_RUNS.getGroupName() +
+            "." + Groups.BLANK_RUNS.getGroupName() +
+            "." + QuantMeasure.APEX_INTENSITY +
+            "." + AggregationType.AVG;
 
     private BooleanQuery.Builder toLuceneQueryBuilder(@NotNull ConfidenceDisplayMode confidenceMode) {
         // Combine queries using BooleanQuery.Builder
@@ -535,11 +540,8 @@ public class FeatueFilterModel implements SiriusPCS {
             booleanQuery.add(makeElementFilter("topAnnotations.formulaAnnotation.molecularFormula.", elementFilter.getConstraints()), BooleanClause.Occur.MUST);
 
         //TAG FILTERS
-        if (getBlankSubtraction().isEnabled()) {
-            //todo implement blank substraction filter.
-//            if (!matchesFoldChangeFilter(item, filterModel))
-//                return false;
-        }
+        if (getSampleBlankFoldChange().isEnabled())
+            booleanQuery.add(DoublePoint.newRangeQuery(BLANK_REMOVAL_SEARCH_FIELD_NAME, getSampleBlankFoldChange().getCurrentMinFoldChange(), Double.POSITIVE_INFINITY), BooleanClause.Occur.MUST);
 
         //RESULT FILTERS
         //todo we can now also filter efficiently for exact lipid classes.
@@ -570,7 +572,6 @@ public class FeatueFilterModel implements SiriusPCS {
 
         return booleanQuery;
     }
-
 
     //todo Optimize: we could check if constrains are just a formula and build exact match query instead.
     private static Query makeElementFilter(String fieldPrefix, FormulaConstraints constrains) {

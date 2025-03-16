@@ -18,16 +18,16 @@ public class QualityFilter {
     private final String id;
     @Getter
     private final EnumSet<DataQuality> dataQualities = EnumSet.copyOf(DEFAULT_STATE);
-    private final FeatueFilterModel featueFilterModel;
+    private final FeatureFilterModel featureFilterModel;
 
-    public QualityFilter(DefaultQualityCategory category, FeatueFilterModel featueFilterModel) {
-        this(category.name(), category.getDisplayName(), featueFilterModel);
+    public QualityFilter(DefaultQualityCategory category, FeatureFilterModel featureFilterModel) {
+        this(category.name(), category.getDisplayName(), featureFilterModel);
     }
 
-    public QualityFilter(String id, String name, FeatueFilterModel featueFilterModel) {
+    public QualityFilter(String id, String name, FeatureFilterModel featureFilterModel) {
         this.name = name;
         this.id = id;
-        this.featueFilterModel = featueFilterModel;
+        this.featureFilterModel = featureFilterModel;
     }
 
     public boolean addQuality(int publicIndex) {
@@ -39,7 +39,7 @@ public class QualityFilter {
             return false;
 
         if (dataQualities.add(quality)) {
-            featueFilterModel.pcs().firePropertyChange(name, null, quality);
+            featureFilterModel.pcs().firePropertyChange(name, null, quality);
             return true;
         }
         return false;
@@ -54,7 +54,7 @@ public class QualityFilter {
             return false;
 
         if (dataQualities.remove(quality)) {
-            featueFilterModel.pcs().firePropertyChange(name, quality, null);
+            featureFilterModel.pcs().firePropertyChange(name, quality, null);
             return true;
         }
         return false;

@@ -57,11 +57,11 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     String FP_DATA_COLLECTION = "FP_DATA";
     String PROJECT_PROPERTIES_COLLECTION = "PROJECT_PROPERTIES";
 
-    static Metadata buildMetadata() throws IOException {
+    static Metadata buildMetadata() {
         return buildMetadata(Metadata.build());
     }
 
-    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         sourceMetadata
                 .schemaVersion(SIRIUS_PROJECT_SCHEMA_VERSION)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))

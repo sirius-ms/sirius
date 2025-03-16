@@ -48,12 +48,10 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
-import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
@@ -117,6 +115,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
 import static de.unijena.bioinf.ms.middleware.Pages.*;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.*;
 import static org.springframework.http.HttpStatus.*;
@@ -191,7 +190,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //todo finde good page size.
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
-                    Pages.forEach(50_000,
+                    Pages.forEach(
                             pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS)),
                             page -> Utils.withTime("===> Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
                     );
@@ -203,7 +202,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 //load Run index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, Run.class)) {
-                    Pages.forEach(50_000,
+                    Pages.forEach(
                             pageable -> findRuns(pageable, Run.OptField.tags),
                             page -> searchService.addDocuments(projectId, page.getContent())
                     );
@@ -253,7 +252,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 //Handle FEATURES
                 if (Utils.notNullOrEmpty(alignedFeaturesToUpdate)) {
-                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), 50_000);
+                    Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
                         List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, EnumSet.of(AlignedFeature.OptField.qualities));
                         searchService.addDocuments(projectId, alfs);
@@ -302,7 +301,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                 // request results from db.
                 if (!idsToUpdate.isEmpty()) {
-                    Partition<Long> partition = Partition.ofSize(idsToUpdate, 50_000);
+                    Partition<Long> partition = Partition.ofSize(idsToUpdate, LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
                         List<AlignedFeature> alfs = Utils.withTimeRIo("===> Loaded feature page for Indexing", w ->
                                 findAlignedFeaturesByIds(ids, AlignedFeature.INDEXED_OPT_FIELDS)
@@ -1357,19 +1356,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .build();
     }
 
-    private FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
+    public static FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange foldChange) {
         return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
                 .quantType(QuantRowType.FEATURES)
                 .build();
     }
 
-    private FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
+    public static FoldChange convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange foldChange) {
         return convertToApiFoldChange((de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange) foldChange)
                 .quantType(QuantRowType.COMPOUNDS)
                 .build();
     }
 
-    private FoldChange.FoldChangeBuilder<?, ?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
+    private static FoldChange.FoldChangeBuilder<?, ?> convertToApiFoldChange(de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange foldChange) {
         return FoldChange.builder()
                 .objectId(Long.toString(foldChange.getForeignId()))
                 .leftGroup(foldChange.getLeftGroup())
@@ -1433,7 +1432,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             structureSearchResult = storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
                     .orElse(null);
 
-        if (structureSearchResult != null){
+        if (structureSearchResult != null) {
             cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
             cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
             cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
@@ -1556,7 +1555,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchQuery == null || searchQuery.isBlank())
             return findCompounds(pageable, optFields, optFeatureFields);
 
-        throw  new ResponseStatusException(METHOD_NOT_ALLOWED, "Searching compounds is not yet supported!");
+        throw new ResponseStatusException(METHOD_NOT_ALLOWED, "Searching compounds is not yet supported!");
 
 
         /*
@@ -1786,9 +1785,22 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             });
         }
 
+        TinyBackgroundJJob<Long2ObjectOpenHashMap<List<Statistics>>> statJob = null;
+        if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations)) {
+            statJob = SiriusJobs.runInBackground(() -> {
+                final Long2ObjectOpenHashMap<List<Statistics>> statsMap = new Long2ObjectOpenHashMap<>();
+                storage().find(Filter.where("alignedFeatureId").in(ids), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
+                        .forEach(foldChange ->
+                                statsMap.computeIfAbsent(foldChange.getAlignedFeatureId(), id -> new ArrayList<>())
+                                        .add(convertToApiFoldChange(foldChange)));
+                return statsMap;
+            });
+        }
+
         @NotNull Long2ObjectOpenHashMap<QualityReport> quality = qualJob != null ? qualJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<ComputedSubtools> computed = compJob != null ? compJob.getResult() : new Long2ObjectOpenHashMap<>();
         @NotNull Long2ObjectOpenHashMap<Map<String, Tag>> tags = tagJob != null ? tagJob.getResult() : new Long2ObjectOpenHashMap<>();
+        @NotNull Long2ObjectOpenHashMap<List<Statistics>> stats = statJob != null ? statJob.getResult() : new Long2ObjectOpenHashMap<>();
 
 
         TinyBackgroundJJob<Long2ObjectOpenHashMap<CsiStructureSearchResult>> csiJob = null;
@@ -1819,6 +1831,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
                     apiFeture.setComputedTools(computed.get(fid));
                     apiFeture.setTags(tags.get(fid));
+                    apiFeture.setStats(stats.get(fid));
                     if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
@@ -1854,7 +1867,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
+        Optional<TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
         return findAlignedFeatures(tagGroup.get().getLuceneQuery(), pageable, optFields);
@@ -1954,28 +1967,33 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags) {
-        return addTagsToObjects(target, List.of(objectId), tags);
+        addTagsToObjects(target, Map.of(objectId, tags));
+        return findTagsByObject(target, objectId);
     }
 
     @Override
-    public List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags) {
+    public void addTagsToObjects(Class<?> target, List<TagSubmission> tags) {
+        addTagsToObjects(target, tags.stream().collect(Collectors.groupingBy(TagSubmission::getTaggedObjectId)));
+    }
+
+    private void addTagsToObjects(Class<?> target, Map<String, ? extends Collection<? extends Tag>> objectToTags) {
         try {
             final Class<?> taggedObjectClass = convertToProjectObjectClass(target);
 
+            Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> insertTags = new ArrayList<>();
 
             StopWatch w = StopWatch.createStarted();
 
             //todo add would be 20% faster if we would separate update an insert of tags to object.
-            for (String objectId : objectIds) {
-                long objId = Long.parseLong(objectId);
+            //todo can be upsert without knowing the primary key?
+            for (Map.Entry<String, ? extends Collection<? extends Tag>> entry : objectToTags.entrySet()) {
+                long objId = Long.parseLong(entry.getKey());
                 if (!storage().containsPrimaryKey(objId, taggedObjectClass))
                     throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objId + "' in project " + projectId + ".");
 
-                Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
-
-                for (Tag tag : tags) {
+                for (Tag tag : entry.getValue()) {
                     de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition tagDef = tagDefByName.computeIfAbsent(tag.getTagName(), tagName -> project().findTagDefinitionByName(tagName).orElse(null));
 
                     if (tagDef == null)
@@ -2007,10 +2025,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             System.out.println("Added/Updated Tags To NITRITE in: " + w);
             w.reset();
             w.start();
-            searchService.addTagsToDocuments(projectId, new ArrayList<>(objectIds), tags, (Class<? extends Taggable>) target);
+
+            if(searchService != null)
+                searchService.addTagsToDocuments(projectId, objectToTags, (Class<? extends Taggable>) target);
             System.out.println("Added/Updated Tags To LUCENE in: " + w);
 
-            return Stream.concat(upsertTags.stream(), insertTags.stream()).map(tag -> convertToApiTag(tag)).toList();
+
         } catch (IOException e) {
             log.error("Error when assigning tags to Object", e);
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
@@ -2191,22 +2211,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
+    public StatisticsTable getFoldChangeTable(QuantRowType statsTarget, AggregationType aggregation, QuantMeasure quantification) {
         StatisticsTable table = StatisticsTable.builder()
                 .statisticsType(StatisticsType.FOLD_CHANGE)
                 .quantificationMeasure(quantification)
                 .aggregationType(aggregation)
+                .rowType(statsTarget)
                 .build();
-
-        if (AlignedFeature.class.equals(target)) {
-            table.setRowType(QuantRowType.FEATURES);
-            fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class, aggregation, quantification);
-        } else if (Compound.class.equals(target)) {
-            table.setRowType(QuantRowType.COMPOUNDS);
-            fillFoldChangeTable(table, de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class, aggregation, quantification);
-        } else {
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
-        }
+        fillFoldChangeTable(table, statsTarget.getProjectFoldChangeClass(), aggregation, quantification);
         return table;
     }
 
@@ -2243,62 +2255,33 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     @SuppressWarnings("unchecked")
-    public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
-        if (AlignedFeature.class.equals(target)) {
-            return (Page<F>) findPage(storage(), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class, pageable)
-                    .map(this::convertToApiFoldChange);
-        } else if (Compound.class.equals(target)) {
-            return (Page<F>) findPage(storage(), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class, pageable)
-                    .map(this::convertToApiFoldChange);
-        }
-        throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
+    public Page<FoldChange> listFoldChanges(QuantRowType statsTarget, Pageable pageable) {
+       return findPage(storage(), statsTarget.getProjectFoldChangeClass(), pageable)
+                .map(NoSQLProjectImpl::convertToApiFoldChange).map(FoldChange.FoldChangeBuilder::build);
     }
 
     @SneakyThrows
     @Override
     @SuppressWarnings("unchecked")
-    public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
-        if (AlignedFeature.class.equals(target)) {
-            return (List<F>) storage()
-                    .findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class)
-                    .map(this::convertToApiFoldChange)
-                    .toList();
-        } else if (Compound.class.equals(target)) {
-            return (List<F>) storage()
-                    .findStr(Filter.where("compoundId").eq(Long.parseLong(objectId)), de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class)
-                    .map(this::convertToApiFoldChange)
-                    .toList();
-        } else {
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
-        }
+    public  List<FoldChange> getFoldChanges(QuantRowType statsTarget, String objectId) {
+        return storage()
+                .findStr(Filter.where(statsTarget.getTargetIdFieldName()).eq(Long.parseLong(objectId)), statsTarget.getProjectFoldChangeClass())
+                .map(NoSQLProjectImpl::convertToApiFoldChange)
+                .map(FoldChange.FoldChangeBuilder::build)
+                .collect(Collectors.toList());
     }
 
     @SneakyThrows
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
-        if (AlignedFeature.class.equals(target)) {
-            storage().removeAll(
-                    Filter.and(
-                            Filter.where("leftGroup").eq(left),
-                            Filter.where("rightGroup").eq(right),
-                            Filter.where("aggregation").eq(aggregation.toString()),
-                            Filter.where("quantification").eq(quantification.toString())
-                    ),
-                    de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.AlignedFeaturesFoldChange.class
-            );
-        } else if (Compound.class.equals(target)) {
-            storage().removeAll(
-                    Filter.and(
-                            Filter.where("leftGroup").eq(left),
-                            Filter.where("rightGroup").eq(right),
-                            Filter.where("aggregation").eq(aggregation.toString()),
-                            Filter.where("quantification").eq(quantification.toString())
-                    ),
-                    de.unijena.bioinf.ms.persistence.model.core.statistics.FoldChange.CompoundFoldChange.class
-            );
-        } else {
-            throw new ResponseStatusException(INTERNAL_SERVER_ERROR, "Type not supported: " + target);
-        }
+    public void deleteFoldChange(QuantRowType statsTarget, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
+        storage().removeAll(
+                Filter.and(
+                        Filter.where("leftGroup").eq(left),
+                        Filter.where("rightGroup").eq(right),
+                        Filter.where("aggregation").eq(aggregation.toString()),
+                        Filter.where("quantification").eq(quantification.toString())
+                ),
+                statsTarget.getProjectTargetClass());
     }
 
     private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {

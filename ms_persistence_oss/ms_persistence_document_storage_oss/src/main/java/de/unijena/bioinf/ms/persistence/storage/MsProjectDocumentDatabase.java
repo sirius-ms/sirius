@@ -50,11 +50,11 @@ import java.util.stream.StreamSupport;
 public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
 
-    static Metadata buildMetadata() throws IOException {
+    static Metadata buildMetadata() {
         return buildMetadata(Metadata.build());
     }
 
-    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
                 .addRepository(LCMSRun.class

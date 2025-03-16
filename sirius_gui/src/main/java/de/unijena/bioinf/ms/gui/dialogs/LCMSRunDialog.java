@@ -29,10 +29,10 @@ import ca.odell.glazedlists.gui.WritableTableFormat;
 import ca.odell.glazedlists.swing.DefaultEventTableModel;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Groups;
 import io.sirius.ms.sdk.model.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +42,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
+
+import static de.unijena.bioinf.ms.gui.dialogs.import5.CombinedImportDialog.POSSIBLE_SAMPLE_TYPES;
+import static de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions.*;
 
 
 public class LCMSRunDialog extends JDialog implements ActionListener {
@@ -61,7 +64,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
 
         //region north
 
-        JPanel header = new DialogHeader(Icons.SAMPLE.derive(64,64));
+        JPanel header = new DialogHeader(Icons.SAMPLE.derive(64, 64));
         add(header, BorderLayout.NORTH);
 
         //endregion
@@ -86,15 +89,9 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
             }
 
             @Override
-            public Run setColumnValue(Run run, Object o, int i) {
-                if (o instanceof String str) {
-                    if (str.equalsIgnoreCase(BlankSubtraction.SAMPLE))
-                        sampleTypes.put(run.getRunId(), BlankSubtraction.SAMPLE);
-                    else if (str.equalsIgnoreCase(BlankSubtraction.BLANK))
-                        sampleTypes.put(run.getRunId(), BlankSubtraction.BLANK);
-                    else if (str.equalsIgnoreCase(BlankSubtraction.CTRL))
-                        sampleTypes.put(run.getRunId(), BlankSubtraction.CTRL);
-                }
+            public Run setColumnValue(Run run, Object value, int column) {
+                if (column == 2 && value instanceof String str)
+                    sampleTypes.put(run.getRunId(), str);
                 return run;
             }
 
@@ -124,7 +121,7 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
             }
         }));
 
-        JComboBox<String> sampleBox = new JComboBox<>(BlankSubtraction.POSSIBLE_VALUES.toArray(String[]::new));
+        JComboBox<String> sampleBox = new JComboBox<>(POSSIBLE_SAMPLE_TYPES.toArray(String[]::new));
         table.getColumnModel().getColumn(2).setCellEditor(new DefaultCellEditor(sampleBox));
         TableComparatorChooser.install(table, sortedRuns, AbstractTableComparatorChooser.SINGLE_COLUMN);
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -132,16 +129,16 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
         Jobs.runEDTLater(() -> {
             List<Run> runs1;
             if (runs == null) {
-                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPageExperimental(pid, null,0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                runs1 = gui.applySiriusClient((c, pid) -> c.runs().getRunsPageExperimental(pid, null, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
             } else {
                 runs1 = runs;
             }
             if (runs1 != null) {
                 for (Run run : runs1) {
-                    if (run.getTags() != null && run.getTags().containsKey(BlankSubtraction.TAG_NAME)) {
-                        sampleTypes.put(run.getRunId(), (String) run.getTags().get(BlankSubtraction.TAG_NAME).getValue());
+                    if (run.getTags() != null && run.getTags().containsKey(SAMPLE_TYPE.getTagName())) {
+                        sampleTypes.put(run.getRunId(), (String) run.getTags().get(SAMPLE_TYPE.getTagName()).getValue());
                     } else {
-                        sampleTypes.put(run.getRunId(), BlankSubtraction.SAMPLE);
+                        sampleTypes.put(run.getRunId(), SAMPLE_TYPE_SAMPLE);
                     }
                 }
                 runList.addAll(runs1);
@@ -174,41 +171,34 @@ public class LCMSRunDialog extends JDialog implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        // compute fold-changes and add tags to runs
         this.dispose();
         try {
             if (e.getSource() == save) {
-                Set<String> samples = new HashSet<>();
-                Set<String> blanks = new HashSet<>();
-                Set<String> controls = new HashSet<>();
+                List<TagSubmission> tags = new ArrayList<>(sampleTypes.size());
 
-                for (Map.Entry<String, String> entry : sampleTypes.entrySet()) {
-                    switch (entry.getValue()) {
-                        case BlankSubtraction.SAMPLE:
-                            samples.add(entry.getKey());
-                            break;
-                        case BlankSubtraction.BLANK:
-                            blanks.add(entry.getKey());
-                            break;
-                        case BlankSubtraction.CTRL:
-                            controls.add(entry.getKey());
-                            break;
-                        default:
-                            break;
-                    }
-                }
+                sampleTypes.forEach((objectId, sampleType) ->
+                        tags.add(new TagSubmission()
+                                .taggedObjectId(objectId)
+                                .value(sampleType)
+                                .tagName(SAMPLE_TYPE.getTagName())));
+
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((client, pid) -> {
-                    SampleTypeFoldChangeRequest request = new SampleTypeFoldChangeRequest();
-                    request.setSampleRunIds(new ArrayList<>(samples));
-                    request.setBlankRunIds(new ArrayList<>(blanks));
-                    request.setControlRunIds(new ArrayList<>(controls));
+                    client.runs().addTagsToRunsExperimental(pid, tags);
 
-                    Job job = client.runs().computeFoldChangeForBlankSubtraction(pid, request, List.of(JobOptField.PROGRESS));
-                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing fold changes...", new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    FoldChangeJobSubmission request = new FoldChangeJobSubmission()
+                            .aggregationTypes(List.of(/*AggregationType.MIN,*/ AggregationType.AVG, AggregationType.MAX))
+                            .quantificationMeasures(List.of(QuantMeasure.APEX_INTENSITY, QuantMeasure.AREA_UNDER_CURVE))
+                            .rightRunGroup(Groups.SAMPLE_RUNS.getGroupName())
+                            .leftRunGroup(Groups.BLANK_RUNS.getGroupName());
+
+                    Job job = client.featureStatistics().computeAlignedFeatureFoldChangesExperimental(pid, request, List.of(JobOptField.PROGRESS));
+                    return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Computing blank removal fold changes...", new io.sirius.ms.sdk.jjobs.SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
                 task.awaitResult();
             }
         } catch (Exception exc) {
-            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause()));
+            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), exc.getMessage(), exc.getCause() != null ? exc.getCause(): exc));
         }
     }
 

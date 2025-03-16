@@ -54,10 +54,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
-import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
@@ -313,7 +310,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags) {
+    public void addTagsToObjects(Class<?> target, List<TagSubmission> tags) {
         throw new UnsupportedOperationException();
     }
 
@@ -383,17 +380,17 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification) {
+    public StatisticsTable getFoldChangeTable(QuantRowType statsTarget, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable) {
+    public <F extends FoldChange> Page<F> listFoldChanges(QuantRowType statsTarget, Pageable pageable) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId) {
+    public <F extends FoldChange> List<F> getFoldChanges(QuantRowType statsTarget, String objectId) {
         throw new UnsupportedOperationException();
     }
 
@@ -423,7 +420,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
+    public void deleteFoldChange(QuantRowType statsTarget, String left, String right, AggregationType aggregation, QuantMeasure quantification) {
         throw new UnsupportedOperationException();
     }
 

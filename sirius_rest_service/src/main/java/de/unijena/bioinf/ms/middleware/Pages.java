@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.LARGE_BATCH_SIZE;
+
 public class Pages {
     private static final Map<Class<?>, Function<Sort,Pair<String[], Database.SortOrder[]>>> sortMapper = Map.of(
             AlignedFeatures.class, Pages::sortFeature,
@@ -52,11 +54,19 @@ public class Pages {
     }
 
 
+    public static <T> void forEach(Function<Pageable, Page<T>> pageProvider, Consumer<Page<T>> pageConsumer){
+        forEach(LARGE_BATCH_SIZE, pageProvider, pageConsumer);
+    }
+
     public static <T> void forEach(int pageSize, Function<Pageable, Page<T>> pageProvider, Consumer<Page<T>> pageConsumer){
         forEach(PageRequest.ofSize(pageSize), pageProvider, pageConsumer);
     }
 
-    public static  <T> void forEach(int pageNumberFrom, int pageSize, Function<Pageable, Page<T>> pageProvider, Consumer<Page<T>> pageConsumer){
+    public static  <T> void forEachFrom(int pageNumberFrom, Function<Pageable, Page<T>> pageProvider, Consumer<Page<T>> pageConsumer){
+        forEachFrom(pageNumberFrom, LARGE_BATCH_SIZE, pageProvider, pageConsumer);
+    }
+
+    public static  <T> void forEachFrom(int pageNumberFrom, int pageSize, Function<Pageable, Page<T>> pageProvider, Consumer<Page<T>> pageConsumer){
         forEach(PageRequest.of(pageNumberFrom, pageSize), pageProvider, pageConsumer);
     }
 

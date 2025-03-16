@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features. |
 | [**addTagsToCompoundExperimental**](CompoundsApi.md#addTagsToCompoundExperimental) | **PUT** /api/projects/{projectId}/compounds/tags/{compoundId} | [EXPERIMENTAL] Tags with the same name will be overwritten |
+| [**addTagsToObjects**](CompoundsApi.md#addTagsToObjects) | **PUT** /api/projects/{projectId}/compounds/tags | Tags with the same name will be overwritten. |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
 | [**getCompoundQuantTableExperimental**](CompoundsApi.md#getCompoundQuantTableExperimental) | **GET** /api/projects/{projectId}/compounds/quant-table | [EXPERIMENTAL] Returns the full quantification table of compounds |
@@ -161,6 +162,73 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the tags that have been added |  -  |
+
+
+## addTagsToObjects
+
+> addTagsToObjects(projectId, tagSubmission)
+
+Tags with the same name will be overwritten.
+
+Tags with the same name will be overwritten.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        List<TagSubmission> tagSubmission = Arrays.asList(); // List<TagSubmission> | tags with id of the object to be added to.
+        try {
+            apiInstance.addTagsToObjects(projectId, tagSubmission);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#addTagsToObjects");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **tagSubmission** | [**List&lt;TagSubmission&gt;**](TagSubmission.md)| tags with id of the object to be added to. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## deleteCompound

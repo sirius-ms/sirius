@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.middleware.service.search.mappers;
 
 import de.unijena.bioinf.ms.middleware.service.search.SiriusStandardAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.tags.ValueType;
+import de.unijena.bioinf.projectspace.IndexField;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.IndexableField;
@@ -252,7 +253,6 @@ public class LuceneMappingUtils {
         return null;
     }
 
-
     // Regular expression for a valid Lucene field name with sub-documents
     private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$");
 
@@ -334,5 +334,17 @@ public class LuceneMappingUtils {
             }
         }
         return fields;
+    }
+
+
+    public static Optional<Field> getDocumentIdField(Class<?> type) {
+       return Arrays.stream(type.getDeclaredFields())
+                .filter(field -> field.isAnnotationPresent(IndexField.class) )
+                .filter(field -> field.getAnnotation(IndexField.class).documentId())
+                .findAny();
+    }
+
+    public static Optional<String> getDocumentIdFieldName(Class<?> type) {
+        return getDocumentIdField(type).map(Field::getName);
     }
 }

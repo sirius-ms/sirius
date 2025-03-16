@@ -97,7 +97,7 @@ public class FeatureAnnotations {
 
     /**
      * A mapping of structural database names (keys) to the rank (value) of the highest-ranked match found in each database.
-     * This field is mainly for search index building and therefore hidden from the api
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
      */
     @IndexField(sortable = true)
     @Schema(nullable = true, hidden = true)

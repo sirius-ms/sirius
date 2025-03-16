@@ -13,7 +13,7 @@ All URIs are relative to *http://localhost:8888*
 
 ## computeAlignedFeatureFoldChangesExperimental
 
-> Job computeAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields)
+> Job computeAlignedFeatureFoldChangesExperimental(projectId, foldChangeJobSubmission, optFields)
 
 [EXPERIMENTAL] Compute the fold change between two groups of runs
 
@@ -36,13 +36,10 @@ public class Example {
 
         FeatureStatisticsApi apiInstance = new FeatureStatisticsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to compute the fold change in.
-        String leftGroupName = "leftGroupName_example"; // String | name of the left tag group.
-        String rightGroupName = "rightGroupName_example"; // String | name of the right tag group.
-        AggregationType aggregation = AggregationType.fromValue("AVG"); // AggregationType | aggregation type.
-        QuantMeasure quantification = QuantMeasure.fromValue("APEX_INTENSITY"); // QuantMeasure | quantification type.
+        FoldChangeJobSubmission foldChangeJobSubmission = new FoldChangeJobSubmission(); // FoldChangeJobSubmission | Parameters of fold change job
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
         try {
-            Job result = apiInstance.computeAlignedFeatureFoldChangesExperimental(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
+            Job result = apiInstance.computeAlignedFeatureFoldChangesExperimental(projectId, foldChangeJobSubmission, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeatureStatisticsApi#computeAlignedFeatureFoldChangesExperimental");
@@ -61,10 +58,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to compute the fold change in. | |
-| **leftGroupName** | **String**| name of the left tag group. | |
-| **rightGroupName** | **String**| name of the right tag group. | |
-| **aggregation** | [**AggregationType**](.md)| aggregation type. | [optional] [enum: AVG, MIN, MAX] |
-| **quantification** | [**QuantMeasure**](.md)| quantification type. | [optional] [enum: APEX_INTENSITY, AREA_UNDER_CURVE] |
+| **foldChangeJobSubmission** | [**FoldChangeJobSubmission**](FoldChangeJobSubmission.md)| Parameters of fold change job | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
 
 ### Return type
@@ -77,7 +71,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 

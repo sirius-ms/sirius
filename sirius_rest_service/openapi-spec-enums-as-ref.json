@@ -344,6 +344,46 @@
         }
       }
     },
+    "/api/projects/{projectId}/runs/tags": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "[EXPERIMENTAL] Add tags to a run in the project",
+        "description": "[EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "addTagsToRunsExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags with the id of run they shall be added to.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TagSubmission"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/runs/tags/{runId}": {
       "put": {
         "tags": [
@@ -396,65 +436,6 @@
                   "items": {
                     "$ref": "#/components/schemas/Tag"
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/runs/blanksubtract/compute": {
-      "put": {
-        "tags": [
-          "Runs"
-        ],
-        "summary": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter",
-        "description": "**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.\n\n \u003cp\u003eThis endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.\u003c/p\u003e",
-        "operationId": "computeFoldChangeForBlankSubtraction",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to compute the fold change in.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "job opt fields.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "request with lists of run IDs that are sample, blank, and control runs",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SampleTypeFoldChangeRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -564,6 +545,46 @@
         "deprecated": true
       }
     },
+    "/api/projects/{projectId}/compounds/tags": {
+      "put": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Tags with the same name will be overwritten.",
+        "description": "Tags with the same name will be overwritten.",
+        "operationId": "addTagsToObjects",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags with id of the object to be added to.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TagSubmission"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/tags/{compoundId}": {
       "put": {
         "tags": [
@@ -642,42 +663,6 @@
             }
           },
           {
-            "name": "leftGroupName",
-            "in": "query",
-            "description": "name of the left tag group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "rightGroupName",
-            "in": "query",
-            "description": "name of the right tag group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/AggregationType"
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/QuantMeasure"
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "job opt fields.",
@@ -693,6 +678,17 @@
             }
           }
         ],
+        "requestBody": {
+          "description": "Parameters of fold change job",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoldChangeJobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -703,6 +699,46 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/tags": {
+      "put": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project",
+        "description": "[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "operationId": "addTagsToAlignedFeaturesExperimental",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags with the id of feature they shall be added to.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TagSubmission"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -728,7 +764,7 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
-            "description": "run to add tags to.",
+            "description": "feature to add tags to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -785,42 +821,6 @@
             }
           },
           {
-            "name": "leftGroupName",
-            "in": "query",
-            "description": "name of the left tag group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "rightGroupName",
-            "in": "query",
-            "description": "name of the right tag group.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "aggregation",
-            "in": "query",
-            "description": "aggregation type.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/AggregationType"
-            }
-          },
-          {
-            "name": "quantification",
-            "in": "query",
-            "description": "quantification type.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/QuantMeasure"
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "job opt fields.",
@@ -836,6 +836,17 @@
             }
           }
         ],
+        "requestBody": {
+          "description": "Parameters of fold change job",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoldChangeJobSubmission"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -2027,8 +2038,8 @@
         "tags": [
           "Tags"
         ],
-        "summary": "[EXPERIMENTAL] Group tags in the project",
-        "description": "[EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "summary": "[EXPERIMENTAL] TagGroup tags in the project",
+        "description": "[EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.\n\n \u003cp\u003e\n See \u003ccode\u003e/tagged\u003c/code\u003e for filter syntax.\n \u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "addGroup",
         "parameters": [
           {
@@ -7728,6 +7739,28 @@
           }
         }
       },
+      "TagSubmission": {
+        "required": [
+          "tagName",
+          "taggedObjectId"
+        ],
+        "type": "object",
+        "properties": {
+          "tagName": {
+            "type": "string",
+            "description": "Name of the tag as defined by the corresponding TagDefinition\n Links tag object to their definition."
+          },
+          "value": {
+            "type": "object",
+            "description": "Optional value of the tag.\n \u003cp\u003e\n Generic value of the tag as defined by the corresponding TagDefinition.\n Can be Integer, Double, Boolean and String, whereas String values can represent Text, Date (yyyy-MM-dd) or Time (HH:mm:ss).",
+            "nullable": true
+          },
+          "taggedObjectId": {
+            "type": "string",
+            "description": "ID of the object where the tag should be added.\n Then Object type is taken from context of the API endpoint."
+          }
+        }
+      },
       "Tag": {
         "required": [
           "tagName"
@@ -7745,28 +7778,43 @@
           }
         }
       },
-      "SampleTypeFoldChangeRequest": {
+      "AggregationType": {
+        "type": "string",
+        "enum": [
+          "AVG",
+          "MIN",
+          "MAX"
+        ]
+      },
+      "FoldChangeJobSubmission": {
         "type": "object",
         "properties": {
-          "sampleRunIds": {
+          "leftRunGroup": {
+            "type": "string"
+          },
+          "rightRunGroup": {
+            "type": "string"
+          },
+          "aggregationTypes": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/AggregationType"
             }
           },
-          "blankRunIds": {
+          "quantificationMeasures": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
-          },
-          "controlRunIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/QuantMeasure"
             }
           }
         }
+      },
+      "QuantMeasure": {
+        "type": "string",
+        "enum": [
+          "APEX_INTENSITY",
+          "AREA_UNDER_CURVE"
+        ]
       },
       "JobOptField": {
         "type": "string",
@@ -7874,21 +7922,6 @@
           "CANCELED",
           "FAILED",
           "DONE"
-        ]
-      },
-      "AggregationType": {
-        "type": "string",
-        "enum": [
-          "AVG",
-          "MIN",
-          "MAX"
-        ]
-      },
-      "QuantMeasure": {
-        "type": "string",
-        "enum": [
-          "APEX_INTENSITY",
-          "AREA_UNDER_CURVE"
         ]
       },
       "SearchableDatabaseParameters": {
@@ -8027,7 +8060,7 @@
           },
           "subscriberId": {
             "type": "string",
-            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  Group or  User)\n depending on the level on which a subscription should be is valid."
+            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)\n depending on the level on which a subscription should be is valid."
           },
           "subscriberName": {
             "type": "string",
@@ -8593,6 +8626,15 @@
       "LcmsSubmissionParameters": {
         "type": "object",
         "properties": {
+          "sampleTypes": {
+            "type": "array",
+            "description": "Sample type for each input file to be used to compute fold changes between blank and sample runs\n If NULL or empty no fold changes will be computed during preprocessing.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
           "alignLCMSRuns": {
             "type": "boolean",
             "description": "Specifies whether LC/MS runs should be aligned",
@@ -10461,8 +10503,7 @@
           "rowIds": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "columnNames": {
