@@ -62,6 +62,8 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
             }
         }
         NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        projectSpaceManager.getProject().initDefaultTagDefinitions();
+        projectSpaceManager.getProject().initDefaultGroups();
         updateProjectType(projectSpaceManager.getProject());
         return projectSpaceManager;
     }

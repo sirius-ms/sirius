@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
-import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
@@ -79,13 +79,13 @@ public class CompoundList {
     @Getter
     private @NotNull SiriusGui gui;
     private final GuiProjectManager projectManager;
-    private final FeatueFilterModel filterModel;
+    private final FeatureFilterModel filterModel;
 
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
         this.projectManager = gui.getProjectManager();
         //additional filter based on specific parameters
-        filterModel = projectManager.getFeatueFilterModel();
+        filterModel = projectManager.getFeatureFilterModel();
         // filter based ion full text field
         searchField = new PlaceholderTextField();
         searchField.setDocument(filterModel.getSearchTextDoc());
@@ -165,7 +165,7 @@ public class CompoundList {
         qualityToggleSwitch.setSelected(filterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
     }
 
-    private static @NotNull JToggleSwitch makeAdductToggleSwitch(FeatueFilterModel model) {
+    private static @NotNull JToggleSwitch makeAdductToggleSwitch(FeatureFilterModel model) {
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(model.isMultiAdductsAllowed(), false, false);
         tSwitch.addEventToggleSelected(selected -> {
@@ -178,7 +178,7 @@ public class CompoundList {
         return tSwitch;
     }
 
-    private static @NotNull JToggleSwitch makeQualityToggleSwitch(FeatueFilterModel model) {
+    private static @NotNull JToggleSwitch makeQualityToggleSwitch(FeatureFilterModel model) {
         final QualityFilter fqFilter = model.getFeatureQualityFilter();
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(fqFilter.isQualitySelected(DataQuality.BAD), false, false); //initialize from model
@@ -196,7 +196,7 @@ public class CompoundList {
         return tSwitch;
     }
 
-    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(FeatueFilterModel model) {
+    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(FeatureFilterModel model) {
         JToggleSwitch tSwitch = new JToggleSwitch();
         tSwitch.setSelected(!model.isHasMsMs(), false, false); ///initialize from model
         tSwitch.addEventToggleSelected(selected -> {

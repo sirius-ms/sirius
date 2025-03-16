@@ -23,17 +23,20 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
+import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
+import de.unijena.bioinf.ms.middleware.service.search.mappers.FoldChangeMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.IndexFieldWithMapper;
 import de.unijena.bioinf.ms.middleware.service.search.mappers.TagMapper;
-import de.unijena.bioinf.projectspace.IndexField;
-import de.unijena.bioinf.ms.middleware.service.search.dynamic.Taggable;
 import de.unijena.bioinf.ms.persistence.model.sirius.ComputedSubtools;
+import de.unijena.bioinf.projectspace.IndexField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -179,4 +182,14 @@ public class AlignedFeature implements Taggable {
     @IndexFieldWithMapper(mapper = TagMapper.class)
     @Schema(nullable = true)
     protected Map<String, Tag> tags;
+
+
+    /**
+     * Aggregated fold change of sample runs vs blank runs for this aligned feature
+     * NULL of not a sample run or no fold change exists
+     * NOTE: This field is mainly for search index building and therefore hidden from the api
+     */
+    @IndexFieldWithMapper(mapper = FoldChangeMapper.AlignedFeatureFoldChange.class)
+    @Schema(nullable = true, hidden = true)
+    protected List<Statistics> stats;
 }

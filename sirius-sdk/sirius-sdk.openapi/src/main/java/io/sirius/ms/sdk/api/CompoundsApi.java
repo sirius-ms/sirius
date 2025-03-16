@@ -11,6 +11,7 @@ import io.sirius.ms.sdk.model.PagedModelCompound;
 import io.sirius.ms.sdk.model.QuantMeasure;
 import io.sirius.ms.sdk.model.QuantTableExperimental;
 import io.sirius.ms.sdk.model.Tag;
+import io.sirius.ms.sdk.model.TagSubmission;
 import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import java.util.HashMap;
@@ -247,6 +248,85 @@ public class CompoundsApi {
      */
     public ResponseSpec addTagsToCompoundExperimentalWithResponseSpec(String projectId, String compoundId, List<Tag> tag) throws WebClientResponseException {
         return addTagsToCompoundExperimentalRequestCreation(projectId, compoundId, tag);
+    }
+    /**
+     * Tags with the same name will be overwritten.
+     * Tags with the same name will be overwritten.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with id of the object to be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addTagsToObjectsRequestCreation(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        Object postBody = tagSubmission;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTagsToObjects", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'tagSubmission' is set
+        if (tagSubmission == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tagSubmission' when calling addTagsToObjects", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/tags", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Tags with the same name will be overwritten.
+     * Tags with the same name will be overwritten.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with id of the object to be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void addTagsToObjects(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        addTagsToObjectsRequestCreation(projectId, tagSubmission).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Tags with the same name will be overwritten.
+     * Tags with the same name will be overwritten.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with id of the object to be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> addTagsToObjectsWithHttpInfo(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return addTagsToObjectsRequestCreation(projectId, tagSubmission).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Tags with the same name will be overwritten.
+     * Tags with the same name will be overwritten.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with id of the object to be added to.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addTagsToObjectsWithResponseSpec(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        return addTagsToObjectsRequestCreation(projectId, tagSubmission);
     }
     /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.

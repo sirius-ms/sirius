@@ -49,8 +49,8 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] Group tags in the project
-     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] TagGroup tags in the project
+     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -105,8 +105,8 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] Group tags in the project
-     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] TagGroup tags in the project
+     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -121,8 +121,8 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] Group tags in the project
-     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] TagGroup tags in the project
+     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group
@@ -137,8 +137,8 @@ public class TagsApi {
     }
 
     /**
-     * [EXPERIMENTAL] Group tags in the project
-     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * [EXPERIMENTAL] TagGroup tags in the project
+     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.   &lt;p&gt;  See &lt;code&gt;/tagged&lt;/code&gt; for filter syntax.  &lt;/p&gt;   [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tag group that was added
      * @param projectId project-space to add to.
      * @param groupName name of the new group

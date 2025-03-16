@@ -58,7 +58,7 @@ public class Compound {
     }
 
     /**
-     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
+     * TagGroup of edges between pairs of feature alignments that correlate among each other. Connected components
      * from the whole graph of correlated pairs (whole dataset)
      */
     @JsonIgnore

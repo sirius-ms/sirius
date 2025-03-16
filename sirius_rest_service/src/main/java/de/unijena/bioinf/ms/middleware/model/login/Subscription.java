@@ -40,7 +40,7 @@ public class Subscription {
 
     /**
      * ID of the owner of the subscription.
-     * This can be the ID of any SubscriptionOwner (e.g.  Group or  User)
+     * This can be the ID of any SubscriptionOwner (e.g.  TagGroup or  User)
      * depending on the level on which a subscription should be is valid.
      */
     private String subscriberId;

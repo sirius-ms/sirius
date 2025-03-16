@@ -102,8 +102,8 @@ public class PerPojoProjectSearchContext implements ProjectSearchContext {
     }
 
     @Override
-    public <T extends Taggable> void addTagsToDocuments(Collection<?> docIds, Collection<Tag> tags, @NotNull Class<T> clazz) {
-        getIndexManager(clazz).addTagsToDocuments(docIds, tags);
+    public <T extends Taggable> void addTagsToDocuments(Map<String, ? extends Collection<? extends Tag>> docIdsToTags, @NotNull Class<T> clazz) {
+        getIndexManager(clazz).addTagsToDocuments(docIdsToTags);
     }
 
     @Override

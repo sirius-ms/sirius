@@ -218,7 +218,7 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         getNumOfDocs();
     }
 
-    public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
+   public synchronized void updateDocumentsFields(Collection<?> docIds, Consumer<T> modifier) throws IllegalArgumentException {
         Query q = new TermInSetQuery(pojoMapper.getPojoIdField(), docIds.stream()
                 .map(Object::toString).map(BytesRef::new)
                 .collect(Collectors.toSet()));
@@ -227,9 +227,9 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
                 .stream()
                 .peek(modifier)
                 .toList();
+
         updateDocuments(pojos);
     }
-
 
     private static final String NON_STORED_FIELDS_MESSAGE = "Indexed object (%s) with id '%s' contains indexed fields that are not stored! "
             + "Partial update not supported. Please provide the full object to perform an Update.";
@@ -254,16 +254,16 @@ class SinglePojoLuceneIndexManager<T> implements Closeable {
         return Optional.of(pojo);
     }
 
-    public synchronized void addTagsToDocuments(Collection<?> docIds, Collection<Tag> tags) {
+    public synchronized void addTagsToDocuments(Map<String, ? extends Collection<? extends Tag>> docIdsToTags) {
         if (!isTaggable())
             throw new UnsupportedOperationException(String.format("Cannot add tags to non Taggable Object! %s does not implement Taggable!", pojoMapper.getPojoName()));
 
-        updateDocumentsFields(docIds, pojo -> {
+        updateDocumentsFields(docIdsToTags.keySet(), pojo -> {
             Map<String, Tag> tagMap = ((Taggable) pojo).getTags();
             if (tagMap == null)
                 tagMap = new HashMap<>();
 
-            for (Tag tag : tags)
+            for (Tag tag : docIdsToTags.get((String) pojoMapper.getIdValue(pojo)))
                 tagMap.put(tag.getTagName(), tag);
 
             ((Taggable) pojo).setTags(tagMap);

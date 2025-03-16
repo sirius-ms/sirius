@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -997,7 +998,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId  project-space to add to.
-     * @param alignedFeatureId      run to add tags to.
+     * @param alignedFeatureId      feature to add tags to.
      * @param tags       tags to add.
      * @return the tags that have been added
      */
@@ -1006,6 +1007,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public List<Tag> addTags(String projectId, String alignedFeatureId, List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, alignedFeatureId, tags);
+    }
+
+    /**
+     *
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of feature they shall be added to.
+     */
+    @Operation(operationId = "addTagsToAlignedFeaturesExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
     }
 
     /**

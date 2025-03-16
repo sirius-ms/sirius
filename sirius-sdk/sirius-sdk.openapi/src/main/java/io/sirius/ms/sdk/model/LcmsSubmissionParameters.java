@@ -30,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -37,14 +40,51 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * LcmsSubmissionParameters
  */
 @JsonPropertyOrder({
+  LcmsSubmissionParameters.JSON_PROPERTY_SAMPLE_TYPES,
   LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_L_C_M_S_RUNS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class LcmsSubmissionParameters {
+  public static final String JSON_PROPERTY_SAMPLE_TYPES = "sampleTypes";
+  private List<String> sampleTypes;
+
   public static final String JSON_PROPERTY_ALIGN_L_C_M_S_RUNS = "alignLCMSRuns";
   private Boolean alignLCMSRuns = true;
 
   public LcmsSubmissionParameters() {
+  }
+
+  public LcmsSubmissionParameters sampleTypes(List<String> sampleTypes) {
+    
+    this.sampleTypes = sampleTypes;
+    return this;
+  }
+
+  public LcmsSubmissionParameters addSampleTypesItem(String sampleTypesItem) {
+    if (this.sampleTypes == null) {
+      this.sampleTypes = new ArrayList<>();
+    }
+    this.sampleTypes.add(sampleTypesItem);
+    return this;
+  }
+
+   /**
+   * Sample type for each input file to be used to compute fold changes between blank and sample runs  If NULL or empty no fold changes will be computed during preprocessing.
+   * @return sampleTypes
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getSampleTypes() {
+    return sampleTypes;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SAMPLE_TYPES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSampleTypes(List<String> sampleTypes) {
+    this.sampleTypes = sampleTypes;
   }
 
   public LcmsSubmissionParameters alignLCMSRuns(Boolean alignLCMSRuns) {
@@ -81,18 +121,20 @@ public class LcmsSubmissionParameters {
       return false;
     }
     LcmsSubmissionParameters lcmsSubmissionParameters = (LcmsSubmissionParameters) o;
-    return Objects.equals(this.alignLCMSRuns, lcmsSubmissionParameters.alignLCMSRuns);
+    return Objects.equals(this.sampleTypes, lcmsSubmissionParameters.sampleTypes) &&
+        Objects.equals(this.alignLCMSRuns, lcmsSubmissionParameters.alignLCMSRuns);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignLCMSRuns);
+    return Objects.hash(sampleTypes, alignLCMSRuns);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class LcmsSubmissionParameters {\n");
+    sb.append("    sampleTypes: ").append(toIndentedString(sampleTypes)).append("\n");
     sb.append("    alignLCMSRuns: ").append(toIndentedString(alignLCMSRuns)).append("\n");
     sb.append("}");
     return sb.toString();

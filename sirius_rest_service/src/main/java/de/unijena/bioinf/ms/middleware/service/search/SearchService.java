@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -53,7 +54,7 @@ public interface SearchService extends AutoCloseable {
     <T> void updateDocumentsFields(@NotNull String projectId, Collection<?> objectIds, Consumer<T> objectModifier, Class<T> clazz) throws IllegalArgumentException;
 
     <T extends Taggable> void addTagsToDocument(@NotNull String projectId, Object docId, Collection<Tag> tags, @NotNull Class<T> clazz);
-    <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<?> docId, Collection<Tag> tags, @NotNull Class<T> clazz);
+    <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Map<String, ? extends Collection<? extends Tag>> docIdsToTags, @NotNull Class<T> clazz);
 
     default <T extends Taggable> void removeTagFromDocument(@NotNull String projectId, Object docId, String tagName, @NotNull Class<T> clazz){
         removeTagsFromDocument(projectId,docId, List.of(tagName), clazz);
