@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import io.sirius.ms.sdk.SiriusClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -77,7 +77,7 @@ public class GuiProjectManager implements Closeable {
     private final JJob<Void> eventExec;
 
     @Getter
-    final FeatueFilterModel featueFilterModel;
+    final FeatureFilterModel featureFilterModel;
 
     private final AtomicLong totalInstances = new AtomicLong(0);
 
@@ -91,13 +91,13 @@ public class GuiProjectManager implements Closeable {
         this.siriusClient = siriusClient;
         this.siriusGui = siriusGui;
 
-        this.featueFilterModel = new FeatueFilterModel();
+        this.featureFilterModel = new FeatureFilterModel();
 
         StopWatch w = StopWatch.createStarted();
         this.INSTANCE_LIST = new BasicEventList<>();
 
         PropertyChangeListener filterListener = evt -> reloadFeatures();
-        featueFilterModel.addUpdateCompleteListener(filterListener);
+        featureFilterModel.addUpdateCompleteListener(filterListener);
 
         confidenceModeListender = (evt) -> reloadFeatures();
         properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
@@ -218,8 +218,9 @@ public class GuiProjectManager implements Closeable {
 
     public synchronized void reloadFeatures() {
         //todo LUCENE: handle loading mechanism for compound list.
-        String filteredQuery = featueFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
+        String filteredQuery = featureFilterModel.toLuceneQuery(properties.getConfidenceDisplayMode())
                 .orElse(null);
+        System.out.println("=====>>> FILTER: " + filteredQuery);
         reloadFeatures(filteredQuery, null);
     }
 

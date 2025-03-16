@@ -28,13 +28,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-@SuperBuilder
+@Builder
 @Jacksonized
 @Getter
 @ToString
@@ -44,9 +43,14 @@ public class TagDefinition {
 
     private String tagName;
 
+    @Nullable
     private String tagType;
 
+    @Nullable
     private String description;
+
+    @Nullable
+    private String displayName;
 
     @JsonSerialize(using = ValueDefinition.Serializer.class)
     @JsonDeserialize(using = ValueDefinition.Deserializer.class)

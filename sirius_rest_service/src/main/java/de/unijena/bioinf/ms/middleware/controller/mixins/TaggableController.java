@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller.mixins;
 
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -71,6 +72,17 @@ public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidi
     @PutMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     default List<Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<? extends Tag> tags) {
         return getProjectsProvider().getProjectOrThrow(projectId).addTagsToObject(getTagTarget(), objectId, tags);
+    }
+
+    /**
+     * Tags with the same name will be overwritten.
+     *
+     * @param projectId project-space to add to.
+     * @param tags      tags with id of the object to be added to.
+     */
+    @PutMapping(value = "/tags", produces = MediaType.APPLICATION_JSON_VALUE)
+    default void addTagsToObjects(@PathVariable String projectId, @RequestBody @Valid List<TagSubmission> tags) {
+        getProjectsProvider().getProjectOrThrow(projectId).addTagsToObjects(getTagTarget(), tags);
     }
 
 

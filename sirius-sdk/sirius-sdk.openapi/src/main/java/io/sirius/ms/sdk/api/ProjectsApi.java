@@ -994,6 +994,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
@@ -1094,6 +1095,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sampleTypes", parameters.getSampleTypes()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         
         final String[] localVarAccepts = { 

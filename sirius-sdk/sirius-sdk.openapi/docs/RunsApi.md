@@ -5,7 +5,7 @@ All URIs are relative to *http://localhost:8888*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**addTagsToRunExperimental**](RunsApi.md#addTagsToRunExperimental) | **PUT** /api/projects/{projectId}/runs/tags/{runId} | [EXPERIMENTAL] Add tags to a run in the project |
-| [**computeFoldChangeForBlankSubtraction**](RunsApi.md#computeFoldChangeForBlankSubtraction) | **PUT** /api/projects/{projectId}/runs/blanksubtract/compute | **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter |
+| [**addTagsToRunsExperimental**](RunsApi.md#addTagsToRunsExperimental) | **PUT** /api/projects/{projectId}/runs/tags | [EXPERIMENTAL] Add tags to a run in the project |
 | [**getRunExperimental**](RunsApi.md#getRunExperimental) | **GET** /api/projects/{projectId}/runs/{runId} | [EXPERIMENTAL] Get run with the given identifier from the specified project-space |
 | [**getRunsByGroupExperimental**](RunsApi.md#getRunsByGroupExperimental) | **GET** /api/projects/{projectId}/runs/grouped | [EXPERIMENTAL] Get runs by tag group |
 | [**getRunsPageExperimental**](RunsApi.md#getRunsPageExperimental) | **GET** /api/projects/{projectId}/runs/page | [EXPERIMENTAL] Get runs in the given project-space |
@@ -84,13 +84,13 @@ No authorization required
 | **200** | the tags that have been added |  -  |
 
 
-## computeFoldChangeForBlankSubtraction
+## addTagsToRunsExperimental
 
-> Job computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields)
+> addTagsToRunsExperimental(projectId, tagSubmission)
 
-**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter
+[EXPERIMENTAL] Add tags to a run in the project
 
-**EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.   &lt;p&gt;This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.&lt;/p&gt;
+[EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
 
 ### Example
 
@@ -108,14 +108,12 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         RunsApi apiInstance = new RunsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to compute the fold change in.
-        SampleTypeFoldChangeRequest sampleTypeFoldChangeRequest = new SampleTypeFoldChangeRequest(); // SampleTypeFoldChangeRequest | request with lists of run IDs that are sample, blank, and control runs
-        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | job opt fields.
+        String projectId = "projectId_example"; // String | project-space to add to.
+        List<TagSubmission> tagSubmission = Arrays.asList(); // List<TagSubmission> | tags with the id of run they shall be added to.
         try {
-            Job result = apiInstance.computeFoldChangeForBlankSubtraction(projectId, sampleTypeFoldChangeRequest, optFields);
-            System.out.println(result);
+            apiInstance.addTagsToRunsExperimental(projectId, tagSubmission);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#computeFoldChangeForBlankSubtraction");
+            System.err.println("Exception when calling RunsApi#addTagsToRunsExperimental");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -130,13 +128,12 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to compute the fold change in. | |
-| **sampleTypeFoldChangeRequest** | [**SampleTypeFoldChangeRequest**](SampleTypeFoldChangeRequest.md)| request with lists of run IDs that are sample, blank, and control runs | |
-| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| job opt fields. | [optional] |
+| **projectId** | **String**| project-space to add to. | |
+| **tagSubmission** | [**List&lt;TagSubmission&gt;**](TagSubmission.md)| tags with the id of run they shall be added to. | |
 
 ### Return type
 
-[**Job**](Job.md)
+null (empty response body)
 
 ### Authorization
 
@@ -145,7 +142,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
+- **Accept**: Not defined
 
 
 ### HTTP response details

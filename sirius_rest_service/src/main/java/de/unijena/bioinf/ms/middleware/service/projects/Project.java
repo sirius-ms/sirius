@@ -155,9 +155,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
+    /**
+     * Add/Updates tags to/of a target object identified by target class und object id.
+     * @param target class of the target
+     * @param objectId id of the target
+     * @param tags tags to be added
+     * @return return all tags of the target object that has been modified.
+     */
     List<Tag> addTagsToObject(Class<?> target, String objectId, List<Tag> tags);
 
-    List<Tag> addTagsToObjects(Class<?> target, List<String> objectIds, List<Tag> tags);
+    void addTagsToObjects(Class<?> target, List<TagSubmission> tags);
 
     void removeTagsFromObject(Class<?> taggedObjectClass, String taggedObjectId, List<String> tagNames);
 
@@ -189,13 +196,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteTagGroup(String name);
 
-    StatisticsTable getFoldChangeTable(Class<?> target, AggregationType aggregation, QuantMeasure quantification);
+    StatisticsTable getFoldChangeTable(QuantRowType statsTarget, AggregationType aggregation, QuantMeasure quantification);
 
-    <F extends FoldChange> Page<F> listFoldChanges(Class<?> target, Pageable pageable);
+    <F extends FoldChange> Page<F> listFoldChanges(QuantRowType statsTarget, Pageable pageable);
 
-    <F extends FoldChange> List<F> getFoldChanges(Class<?> target, String objectId);
+    <F extends FoldChange> List<F> getFoldChanges(QuantRowType statsTarget, String objectId);
 
-    void deleteFoldChange(Class<?> target, String left, String right, AggregationType aggregation, QuantMeasure quantification);
+    void deleteFoldChange(QuantRowType statsTarget, String left, String right, AggregationType aggregation, QuantMeasure quantification);
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

@@ -157,7 +157,7 @@ public class TagController {
     }
 
     /**
-     * [EXPERIMENTAL] Group tags in the project. The group name must not exist in the project.
+     * [EXPERIMENTAL] TagGroup tags in the project. The group name must not exist in the project.
      *
      * <p>
      * See {@code /tagged} for filter syntax.

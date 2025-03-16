@@ -22,14 +22,12 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.LCMSRunDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
+import de.unijena.bioinf.ms.gui.dialogs.import5.CombinedImportDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -44,8 +42,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -102,36 +100,28 @@ public class ImportAction extends AbstractGuiAction {
         watch.start();
 
         try {
-            boolean hasLCMS = !input.msInput.lcmsFiles.isEmpty();
-            boolean hasPeakLists = !input.msInput.msParserfiles.isEmpty();
-            boolean alignAllowed = input.msInput.lcmsFiles.size() > 1;
-
-            if (!hasLCMS && !hasPeakLists)
+            if (input.msInput.lcmsFiles.isEmpty() && input.msInput.msParserfiles.isEmpty())
                 return;
 
-            // LC/MS default parameters
-            LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
-            if (hasLCMS)
-                parameters.setAlignLCMSRuns(false);
+            // Show combined import dialog to configure parameters and sample types
+            CombinedImportDialog dialog = new CombinedImportDialog(popupOwner, input);
+            if (!dialog.isSuccess())
+                return;
 
-            // show dialog
-            if (hasPeakLists || alignAllowed) {
-                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, alignAllowed, hasPeakLists);
-                if (!dialog.isSuccess())
-                    return;
+            // Get parameters from dialog
+            if (dialog.isHasLCMS()) {
+                // LC/MS default parameters
+                LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
 
-                if (hasLCMS) {
-                    ParameterBinding binding = dialog.getParamterBinding();
-                    binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
-                }
-            }
+                parameters.setAlignLCMSRuns(dialog.isAlign());
+                // Get sample type assignments
+                parameters.setSampleTypes(dialog.getLCMSFilesSampleTypes());
 
-            // handle LC/MS files
-            if (hasLCMS) {
+                // Import LC/MS files with sample type information
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             parameters,
-                            input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            dialog.getLCMSFiles().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
                     return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Import, find & align...", new SseProgressJJob(gui.getSiriusClient(), pid, job));
@@ -140,12 +130,14 @@ public class ImportAction extends AbstractGuiAction {
                 task.awaitResult();
             }
 
-            // handle non-LC/MS files
-            if (hasPeakLists) {
+            // Handle non-LC/MS files
+            if (dialog.isHasPeakLists()) {
+                boolean ignoreFormulas = PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false);
+
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
                             input.msInput.msParserfiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                            ignoreFormulas,
                             true,
                             List.of(JobOptField.PROGRESS)
                     );
@@ -154,19 +146,12 @@ public class ImportAction extends AbstractGuiAction {
                 task.awaitResult();
             }
 
-            if (hasLCMS) {
-                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunsPageExperimental(pid, null, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
-                if (runs != null && runs.size() > 1) {
-                    new LCMSRunDialog(mainFrame, gui, runs, false);
-                }
-            }
-
         } catch (Exception e) {
             String m = Objects.requireNonNullElse(e.getMessage(), "");
             Stream.of("ProjectTypeException:", "ProjectStateException:").filter(m::contains).findFirst().ifPresentOrElse(
                     extText -> Jobs.runEDTLater(() -> new WarningDialog(gui.getMainFrame(), extText, GuiUtils.formatAndStripToolTip(m.substring(m.lastIndexOf(extText) + extText.length()).split(" \\| ")[0]), null)),
                     () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(),
-                            GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause()))
+                            GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause() != null ? e.getCause() : e))
             );
         }
     }

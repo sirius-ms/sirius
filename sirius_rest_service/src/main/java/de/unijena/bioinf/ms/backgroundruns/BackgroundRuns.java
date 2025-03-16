@@ -33,10 +33,10 @@ import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.JobEffect;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
@@ -280,14 +280,8 @@ public final class BackgroundRuns {
         return submitRunAndLockInstances(run);
     }
 
-    public BackgroundRunJob runFoldChangesForBlankSubtraction(List<String> sampleRunIds, List<String> blankRunIds, List<String> ctrlRunIds) {
-        Workflow computation = new BlankSubtractionWorkflow(project, sampleRunIds, blankRunIds, ctrlRunIds);
-        return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
-    }
-
-    public BackgroundRunJob runFoldChange(String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target) {
-        Workflow computation = new FoldChangeWorkflow((NoSQLProjectImpl) project, left, right, aggregation, quantification, target);
+    public BackgroundRunJob runFoldChange(FoldChangeJobSubmission jobSubmission, QuantRowType statsTarget) {
+        Workflow computation = new FoldChangeWorkflow((NoSQLProjectImpl) project, jobSubmission, statsTarget);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Fold change computation", "Fold Change", JobEffect.COMPUTATION));
     }

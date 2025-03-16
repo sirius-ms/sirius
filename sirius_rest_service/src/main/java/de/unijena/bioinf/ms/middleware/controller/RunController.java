@@ -21,11 +21,9 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
-import de.unijena.bioinf.ms.middleware.model.statistics.SampleTypeFoldChangeRequest;
-import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -52,12 +50,9 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     @Getter
     private final ProjectsProvider<?> projectsProvider;
 
-    private final ComputeService computeService;
-
     @Autowired
-    public RunController(ProjectsProvider<?> projectsProvider, ComputeService computeService) {
+    public RunController(ProjectsProvider<?> projectsProvider) {
         this.projectsProvider = projectsProvider;
-        this.computeService = computeService;
     }
 
     /**
@@ -132,30 +127,6 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     }
 
     /**
-     * **EXPERIMENTAL** Compute the fold changes that are required for the fold change filter.
-     *
-     * <p>This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.</p>
-     *
-     * @param projectId project-space to compute the fold change in.
-     * @param request   request with lists of run IDs that are sample, blank, and control runs
-     * @param optFields job opt fields.
-     * @return
-     */
-    @PutMapping(value = "/blanksubtract/compute",  produces = MediaType.APPLICATION_JSON_VALUE)
-    public Job computeFoldChangeForBlankSubtraction(
-            @PathVariable String projectId,
-            @RequestBody @Valid SampleTypeFoldChangeRequest request,
-            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        return computeService.createAndSubmitFoldChangeForBlankSubtractionJob(
-                getProjectsProvider().getProjectOrThrow(projectId),
-                request.getSampleRunIds(),
-                request.getBlankRunIds(),
-                request.getControlRunIds(),
-                removeNone(optFields));
-    }
-
-    /**
      * [EXPERIMENTAL] Get all tags associated with this Run
      *
      * @param projectId project-space to get from.
@@ -184,6 +155,21 @@ public class RunController implements TaggableController<Run, Run.OptField> {
     @Override
     public List<Tag> addTags(@PathVariable String projectId, @PathVariable String runId, @Valid @RequestBody List<? extends de.unijena.bioinf.ms.middleware.model.tags.Tag> tags) {
         return TaggableController.super.addTags(projectId, runId, tags);
+    }
+
+    /**
+     *
+     * [EXPERIMENTAL] Add tags to a run in the project. Tags with the same name will be overwritten.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId  project-space to add to.
+     * @param tags       tags with the id of run they shall be added to.
+     */
+    @Operation(operationId = "addTagsToRunsExperimental")
+    @Override
+    public void addTagsToObjects(String projectId, List<TagSubmission> tags) {
+        TaggableController.super.addTagsToObjects(projectId, tags);
     }
 
     /**

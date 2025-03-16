@@ -69,7 +69,7 @@ public class GenericPojoMapper<T> implements PojoMapper<T> {
     }
     @SneakyThrows
     public Object getIdValue(T pojo) {
-        Field f = pojo.getClass().getField(pojoIdField);
+        Field f = pojo.getClass().getDeclaredField(pojoIdField);
         f.setAccessible(true);
         return f.get(pojo);
     }

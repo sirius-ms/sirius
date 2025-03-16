@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.client.ApiClient;
 
 import io.sirius.ms.sdk.model.AggregationType;
 import io.sirius.ms.sdk.model.FoldChange;
+import io.sirius.ms.sdk.model.FoldChangeJobSubmission;
 import io.sirius.ms.sdk.model.Job;
 import io.sirius.ms.sdk.model.JobOptField;
 import io.sirius.ms.sdk.model.QuantMeasure;
@@ -56,27 +57,20 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec computeAlignedFeatureFoldChangesExperimentalRequestCreation(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = null;
+    private ResponseSpec computeAlignedFeatureFoldChangesExperimentalRequestCreation(String projectId, FoldChangeJobSubmission foldChangeJobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = foldChangeJobSubmission;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'leftGroupName' is set
-        if (leftGroupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'leftGroupName' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'rightGroupName' is set
-        if (rightGroupName == null) {
-            throw new WebClientResponseException("Missing the required parameter 'rightGroupName' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'foldChangeJobSubmission' is set
+        if (foldChangeJobSubmission == null) {
+            throw new WebClientResponseException("Missing the required parameter 'foldChangeJobSubmission' when calling computeAlignedFeatureFoldChangesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -88,17 +82,15 @@ public class FeatureStatisticsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "leftGroupName", leftGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "rightGroupName", rightGroupName));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "aggregation", aggregation));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "quantification", quantification));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
             "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
@@ -112,17 +104,14 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job computeAlignedFeatureFoldChangesExperimental(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job computeAlignedFeatureFoldChangesExperimental(String projectId, FoldChangeJobSubmission foldChangeJobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).bodyToMono(localVarReturnType).block();
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -130,17 +119,14 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> computeAlignedFeatureFoldChangesExperimentalWithHttpInfo(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> computeAlignedFeatureFoldChangesExperimentalWithHttpInfo(String projectId, FoldChangeJobSubmission foldChangeJobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields).toEntity(localVarReturnType).block();
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -148,16 +134,13 @@ public class FeatureStatisticsApi {
      * [EXPERIMENTAL] Compute the fold change between two groups of runs.  &lt;p&gt;  The runs need to be tagged and grouped.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - OK
      * @param projectId project-space to compute the fold change in.
-     * @param leftGroupName name of the left tag group.
-     * @param rightGroupName name of the right tag group.
-     * @param aggregation aggregation type.
-     * @param quantification quantification type.
+     * @param foldChangeJobSubmission Parameters of fold change job
      * @param optFields job opt fields.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec computeAlignedFeatureFoldChangesExperimentalWithResponseSpec(String projectId, String leftGroupName, String rightGroupName, AggregationType aggregation, QuantMeasure quantification, List<JobOptField> optFields) throws WebClientResponseException {
-        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, leftGroupName, rightGroupName, aggregation, quantification, optFields);
+    public ResponseSpec computeAlignedFeatureFoldChangesExperimentalWithResponseSpec(String projectId, FoldChangeJobSubmission foldChangeJobSubmission, List<JobOptField> optFields) throws WebClientResponseException {
+        return computeAlignedFeatureFoldChangesExperimentalRequestCreation(projectId, foldChangeJobSubmission, optFields);
     }
     /**
      * [EXPERIMENTAL] Delete fold changes

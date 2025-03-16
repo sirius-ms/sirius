@@ -10,16 +10,15 @@ import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsProjectDocumentDatabase<Storage> {
-    static Metadata buildMetadata() throws IOException {
+    static Metadata buildMetadata() {
         return buildMetadata(Metadata.build());
     }
 
-    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
+    static Metadata buildMetadata(@NotNull Metadata sourceMetadata) {
         return sourceMetadata
                 .addSerialization(ValueDefinition.class, new ValueDefinition.Serializer(), new ValueDefinition.Deserializer())
                 .addSerialization(ValueType.class, new SimpleSerializers.EnumAsNumberSerializer<>(), new SimpleSerializers.EnumAsNumberDeserializer<>(ValueType.class))
@@ -37,6 +36,25 @@ public interface StatsAndTaggingSupport<Storage extends Database<?>> extends MsP
                 .addRepository(FoldChange.AlignedFeaturesFoldChange.class, Index.nonUnique("alignedFeatureId"))
 
                 ;
+    }
+
+    /**
+     * Adds/Updates default/predefined immutable tag definitions to the project.
+     */
+    @SneakyThrows
+    default void initDefaultTagDefinitions() {
+        for (TagDefinition td : TagDefinitions.DEFAULT_TAG_DEFINITIONS) {
+            if (getStorage().findStr(Filter.where("tagName").eq(td.getTagName()), TagDefinition.class).findAny().isEmpty())
+                getStorage().insert(td);
+        }
+    }
+
+    @SneakyThrows
+    default void initDefaultGroups() {
+        for (TagGroup grp : Groups.DEFAULT_GROUPS) {
+            if (getStorage().findStr(Filter.where("groupName").eq(grp.getGroupName()), TagGroup.class).findAny().isEmpty())
+                getStorage().insert(grp);
+        }
     }
 
     @SneakyThrows

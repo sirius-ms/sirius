@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import java.io.Closeable;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -31,7 +32,7 @@ public interface ProjectSearchContext extends Closeable {
 
     <T> void updateDocumentsFields(@NotNull Collection<?> objectIds, @NotNull Consumer<T> objectModifier, @NotNull Class<T> clazz);
 
-    <T extends Taggable> void addTagsToDocuments(Collection<?> docId, Collection<Tag> tag, @NotNull Class<T> clazz);
+    <T extends Taggable> void addTagsToDocuments(Map<String, ? extends Collection<? extends Tag>> docIdsToTags, @NotNull Class<T> clazz);
 
     <T extends Taggable> void addTagsToDocument(Object docId, Collection<Tag> tag, @NotNull Class<T> clazz);
 

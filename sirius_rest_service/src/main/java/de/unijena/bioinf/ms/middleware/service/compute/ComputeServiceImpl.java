@@ -29,11 +29,11 @@ import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
-import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.projectspace.Instance;
@@ -280,15 +280,8 @@ public class ComputeServiceImpl implements ComputeService {
     }
 
     @Override
-    public Job createAndSubmitFoldChangeForBlankSubtractionJob(@NotNull Project<?> project, List<String> sampleRunIds, List<String> blankRunIds, List<String> controlRunIds, @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChangesForBlankSubtraction(sampleRunIds, blankRunIds, controlRunIds);
-        registerServerJobEventListener(run, project.getProjectId());
-        return extractJobId(run, optFields);
-    }
-
-    @Override
-    public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, String left, String right, AggregationType aggregation, QuantMeasure quantification, Class<?> target, @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChange(left, right, aggregation, quantification, target);
+    public Job createAndSubmitFoldChangeJob(@NotNull Project<?> project, FoldChangeJobSubmission jobSubmission, QuantRowType statsTarget, @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runFoldChange(jobSubmission, statsTarget);
         registerServerJobEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);
     }

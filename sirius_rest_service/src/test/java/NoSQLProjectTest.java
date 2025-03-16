@@ -28,12 +28,10 @@ import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
+import de.unijena.bioinf.ms.middleware.model.statistics.FoldChangeJobSubmission;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsTable;
 import de.unijena.bioinf.ms.middleware.model.statistics.StatisticsType;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
-import de.unijena.bioinf.ms.middleware.model.tags.TagDefinitionImport;
-import de.unijena.bioinf.ms.middleware.model.tags.TagGroup;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.ms.middleware.service.search.dynamic.PerPojoProjectSearchContext;
@@ -427,14 +425,17 @@ public class NoSQLProjectTest {
         project.addTagGroup("sample", "tags.sample:sample", "type1");
         project.addTagGroup("blank", "tags.sample:blank", "type1");
 
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(
+                FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY),
+                QuantRowType.FEATURES
+        ).awaitResult();
 
-        List<FoldChange> fc = project.getFoldChanges(AlignedFeature.class, Long.toString(af.getAlignedFeatureId()));
+        List<FoldChange> fc = project.getFoldChanges(QuantRowType.FEATURES, Long.toString(af.getAlignedFeatureId()));
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
         assertEquals(Long.toString(af.getAlignedFeatureId()), fc.getFirst().getObjectId());
-        fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+        fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(1, fc.size());
         assertEquals(2.0, fc.getFirst().getFoldChange(), Double.MIN_VALUE);
         assertEquals(FoldChange.class, fc.getFirst().getClass());
@@ -448,12 +449,12 @@ public class NoSQLProjectTest {
         Feature f22 = Feature.builder().alignedFeatureId(af2.getAlignedFeatureId()).apexIntensity(1.0).runId(runs.get(1).getRunId()).build();
         ps.getStorage().insertAll(List.of(f21, f22));
 
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
-        new BackgroundRuns(project, null).runFoldChange("sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY, AlignedFeature.class).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
+        new BackgroundRuns(project, null).runFoldChange(FoldChangeJobSubmission.of("sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY), QuantRowType.FEATURES).awaitResult();
 
-        StatisticsTable table1 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
-        StatisticsTable table2 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
-        StatisticsTable table3 = project.getFoldChangeTable(AlignedFeature.class, AggregationType.MIN, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table1 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table2 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
+        StatisticsTable table3 = project.getFoldChangeTable(QuantRowType.FEATURES, AggregationType.MIN, QuantMeasure.APEX_INTENSITY);
 
         assertEquals(AggregationType.AVG, table1.getAggregationType());
         assertEquals(AggregationType.MAX, table2.getAggregationType());
@@ -511,9 +512,9 @@ public class NoSQLProjectTest {
 
         assertEquals(0, table3.getValues().length);
 
-        project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
-        project.deleteFoldChange(AlignedFeature.class, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
-        fc = project.listFoldChanges(AlignedFeature.class, Pageable.unpaged()).getContent();
+        project.deleteFoldChange(QuantRowType.FEATURES, "sample", "blank", AggregationType.AVG, QuantMeasure.APEX_INTENSITY);
+        project.deleteFoldChange(QuantRowType.FEATURES, "sample", "blank", AggregationType.MAX, QuantMeasure.APEX_INTENSITY);
+        fc = project.listFoldChanges(QuantRowType.FEATURES, Pageable.unpaged()).getContent();
         assertEquals(0, fc.size());
     }
 
@@ -685,17 +686,17 @@ public class NoSQLProjectTest {
 //                for (Run run : control) {
 //                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
 //                }
-        project.addTagsToObjects(Run.class, control.stream().map(Run::getRunId).toList(), List.of(Tag.builder().tagName("sample-type").value("control").build()));
+        project.addTagsToObjects(Run.class, control.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("control").build()).collect(Collectors.toList()));
 
 //                for (Run run : blank) {
 //                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
 //                }
-        project.addTagsToObjects(Run.class, blank.stream().map(Run::getRunId).toList(), List.of(Tag.builder().tagName("sample-type").value("blank").build()));
+        project.addTagsToObjects(Run.class, blank.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("blank").build()).collect(Collectors.toList()));
 
 //                for (Run run : sample) {
 //                    project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
 //                }
-        project.addTagsToObjects(Run.class, sample.stream().map(Run::getRunId).toList(), List.of(Tag.builder().tagName("sample-type").value("sample").build()));
+        project.addTagsToObjects(Run.class, sample.stream().map(Run::getRunId).map(rid -> TagSubmission.builder().taggedObjectId(rid).tagName("sample-type").value("sample").build()).collect(Collectors.toList()));
         System.out.println("ADD TAGS TO RUNS: " + watch);
         watch.reset();
         watch.start();

@@ -167,8 +167,8 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
-    public <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Collection<?> docId, Collection<Tag> tags, @NotNull Class<T> clazz) {
-        consumeProjectContext(projectId, ps -> ps.addTagsToDocuments(docId, tags, clazz));
+    public <T extends Taggable> void addTagsToDocuments(@NotNull String projectId, Map<String, ? extends Collection<? extends Tag>> docIdsToTags, @NotNull Class<T> clazz) {
+        consumeProjectContext(projectId, ps -> ps.addTagsToDocuments(docIdsToTags, clazz));
     }
 
     @Override

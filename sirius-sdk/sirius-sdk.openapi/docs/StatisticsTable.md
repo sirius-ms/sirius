@@ -11,7 +11,7 @@
 |**aggregationType** | **AggregationType** |  |  [optional] |
 |**quantificationMeasure** | **QuantMeasure** |  |  [optional] |
 |**rowType** | **QuantRowType** |  |  [optional] |
-|**rowIds** | **List&lt;Long&gt;** |  |  [optional] |
+|**rowIds** | **List&lt;String&gt;** |  |  [optional] |
 |**columnNames** | **List&lt;String&gt;** |  |  [optional] |
 |**columnLeftGroups** | **List&lt;String&gt;** |  |  [optional] |
 |**columnRightGroups** | **List&lt;String&gt;** |  |  [optional] |

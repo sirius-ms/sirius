@@ -47,9 +47,12 @@ import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectStateException;
@@ -60,7 +63,10 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.longs.*;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
@@ -76,7 +82,8 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     private static final Logger log = LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class);
-    List<Path> inputFiles;
+    private final @Nullable List<String> sampleTypes;
+    private final List<Path> inputFiles;
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
@@ -94,7 +101,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Getter
     @Nullable
-    private LongLinkedOpenHashSet importedRunIds = null;
+    private Map<String, LongSet> importedRunIds = null;
 
 
     private final boolean saveImportedCompounds;
@@ -111,6 +118,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         super();
         this.inputFiles = inputFiles;
+        this.sampleTypes = null;
         this.projectSupplier = projectSupplier;
         this.alignRuns = !options.noAlign;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
@@ -124,7 +132,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     }
 
     public LcmsAlignSubToolJobNoSql(
-            @NotNull List<Path> inputFiles,
+            @NotNull List<Path> runFiles,
+            @Nullable List<String> sampleTypes,
             @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier,
             boolean alignRuns,
             DataSmoothing filter,
@@ -136,11 +145,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             boolean saveImportedCompounds
     ) {
         super();
-        this.inputFiles = inputFiles;
+        this.inputFiles = runFiles;
+        this.sampleTypes = sampleTypes;
         this.projectSupplier = projectSupplier;
         this.alignRuns = alignRuns;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
+            case AUTO -> runFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
@@ -186,6 +196,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
                     updateProgress(totalProgress, ++progress, "Processing Runs");
                 }
+
+                // create sample type tags for runs.
+                Iterator<String> stIt = sampleTypes != null && sampleTypes.size() == inputFiles.size() ? sampleTypes.iterator() : null;
+                List<Tag> sampleTypeTags = jobs.stream()
+                        .map(j -> {
+                            String tagValue = stIt != null ? stIt.next() : TagDefinitions.SAMPLE_TYPE_SAMPLE;
+                            return TagDefinitions.SAMPLE_TYPE.newTagWithValue(tagValue, LCMSRun.class, j.getResult().getRun().getRunId());
+                        })
+                        .peek(tag -> importedRunIds.computeIfAbsent((String) tag.getValue(), k -> new LongLinkedOpenHashSet()).add(tag.getTaggedObjectId()))
+                        .toList();
+                ps.getStorage().insertAll(sampleTypeTags);
             }
 
             updateProgress(totalProgress, progress, "Aligning runs");
@@ -206,10 +227,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 return;
             }
             importedFeatureIds.addAll(processing.getImportedFeatureIds());
-            if (merged.getRun() instanceof MergedLCMSRun mrun)
-                importedRunIds.addAll(LongList.of(mrun.getRunId()));
-            else
-                importedRunIds.add(merged.getRun().getRunId());
 
             updateProgress(totalProgress, ++progress, "Detecting adducts");
             System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
@@ -348,7 +365,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     protected NoSQLProjectSpaceManager compute() throws Exception {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
-        importedRunIds = new LongLinkedOpenHashSet();
+        importedRunIds = new HashMap<>();
 
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();

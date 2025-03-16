@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost:8888*
 |------------- | ------------- | -------------|
 | [**addAlignedFeatures**](FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project. |
 | [**addTagsToAlignedFeatureExperimental**](FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
+| [**addTagsToAlignedFeaturesExperimental**](FeaturesApi.md#addTagsToAlignedFeaturesExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project |
 | [**deleteAlignedFeature**](FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**deleteAlignedFeatures**](FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space. |
 | [**getAdductNetworkWithMergedTracesExperimental**](FeaturesApi.md#getAdductNetworkWithMergedTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/adducts | [EXPERIMENTAL] Returns the adduct network for a given alignedFeatureId together with all merged traces contained in the network |
@@ -147,7 +148,7 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | run to add tags to.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature to add tags to.
         List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
         try {
             List<Tag> result = apiInstance.addTagsToAlignedFeatureExperimental(projectId, alignedFeatureId, tag);
@@ -169,7 +170,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
-| **alignedFeatureId** | **String**| run to add tags to. | |
+| **alignedFeatureId** | **String**| feature to add tags to. | |
 | **tag** | [**List&lt;Tag&gt;**](Tag.md)| tags to add. | |
 
 ### Return type
@@ -190,6 +191,73 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the tags that have been added |  -  |
+
+
+## addTagsToAlignedFeaturesExperimental
+
+> addTagsToAlignedFeaturesExperimental(projectId, tagSubmission)
+
+[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+
+[EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+
+### Example
+
+```java
+// Import classes:
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        List<TagSubmission> tagSubmission = Arrays.asList(); // List<TagSubmission> | tags with the id of feature they shall be added to.
+        try {
+            apiInstance.addTagsToAlignedFeaturesExperimental(projectId, tagSubmission);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#addTagsToAlignedFeaturesExperimental");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **tagSubmission** | [**List&lt;TagSubmission&gt;**](TagSubmission.md)| tags with the id of feature they shall be added to. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## deleteAlignedFeature

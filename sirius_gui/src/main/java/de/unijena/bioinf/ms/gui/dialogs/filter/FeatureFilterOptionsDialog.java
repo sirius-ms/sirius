@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
-import de.unijena.bioinf.ms.gui.utils.filter.FeatueFilterModel;
+import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.DbFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.ElementFilter;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.*;
 
 /**
- * Dialog allows to adjust filter criteria of the {@link FeatueFilterModel} which is used to filter compound list.
+ * Dialog allows to adjust filter criteria of the {@link FeatureFilterModel} which is used to filter compound list.
  */
 @Slf4j
 public class FeatureFilterOptionsDialog extends JDialog implements ActionListener {
@@ -57,14 +57,14 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     JButton discard, apply, reset;
     final JCheckBox invertFilter, deleteSelection, /*elementsMatchFormula, elementsMatchPrecursorFormula,*/ hasMs1, hasMsMs;
 
-    final JCheckBox blankFilter, controlFilter;
-    final JSpinner blankSpinner, controlSpinner;
+    final JCheckBox blankFilter;
+    final JSpinner blankSpinner;
 
-    final FeatueFilterModel filterModel;
+    final FeatureFilterModel filterModel;
     final CompoundList compoundList;
 
 
-    final JComboBox<FeatueFilterModel.LipidFilter> lipidFilterBox;
+    final JComboBox<FeatureFilterModel.LipidFilter> lipidFilterBox;
     final PlaceholderTextField elementsField;
 
     final JCheckboxListPanel<SearchableDatabase> searchDBList;
@@ -74,7 +74,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
     final SiriusGui gui;
 
-    public FeatureFilterOptionsDialog(SiriusGui gui, FeatueFilterModel filterModel, CompoundList compoundList) {
+    public FeatureFilterOptionsDialog(SiriusGui gui, FeatureFilterModel filterModel, CompoundList compoundList) {
         super(gui.getMainFrame(), "Filter configuration", true);
         this.gui = gui;
         this.filterModel = filterModel;
@@ -178,28 +178,18 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             centerTab.addTab("Fold Change", foldParameters);
 
             foldParameters.add(Box.createVerticalStrut(6));
-            foldParameters.add(new JXTitledSeparator("Minimum Fold Change"));
+            foldParameters.add(new JXTitledSeparator("Minimum Fold Change Filters"));
 
-            blankSpinner = makeSpinner(filterModel.getBlankSubtraction().getBlankSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
-            controlSpinner = makeSpinner(filterModel.getBlankSubtraction().getCtrlSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
+            blankSpinner = makeSpinner(filterModel.getSampleBlankFoldChange().getCurrentMinFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
 
-            blankFilter = new JCheckBox("sample/blank");
-            blankFilter.setSelected(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
+            blankFilter = new JCheckBox("Filter Blanks");
+            blankFilter.setSelected(filterModel.getSampleBlankFoldChange().isEnabled());
             blankFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by blank feature intensity</html>");
-
-            controlFilter = new JCheckBox("sample/control");
-            controlFilter.setSelected(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
-            controlFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by control feature intensity</html>");
-
-            blankSpinner.setEnabled(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
-            controlSpinner.setEnabled(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
+            blankSpinner.setEnabled(filterModel.getSampleBlankFoldChange().isEnabled());
 
             blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected()));
-            controlFilter.addChangeListener((e) -> controlSpinner.setEnabled(controlFilter.isSelected()));
 
             foldParameters.add(blankFilter, blankSpinner);
-            foldParameters.add(controlFilter, controlSpinner);
-
             foldParameters.addVerticalGlue();
         }
 
@@ -306,7 +296,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
             //lipid filter
             TwoColumnPanel lipidFilterPanel = new TwoColumnPanel();
             lipidFilterBox = new JComboBox<>();
-            java.util.List.copyOf(EnumSet.allOf(FeatueFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+            java.util.List.copyOf(EnumSet.allOf(FeatureFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
             lipidFilterPanel.addNamed("Lipid filter", lipidFilterBox);
             lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
             resultParameters.add(lipidFilterPanel);
@@ -388,7 +378,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         }
     }
 
-    private void applyToModel(@NotNull FeatueFilterModel filterModel) {
+    private void applyToModel(@NotNull FeatureFilterModel filterModel) {
         filterModel.setInverted(invertFilter.isSelected());
 
         filterModel.setCurrentMinMz(getMinMz());
@@ -408,7 +398,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
             qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
-        filterModel.setLipidFilter((FeatueFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
+        filterModel.setLipidFilter((FeatureFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
         filterModel.setElementFilter(new ElementFilter(
                         elementsField.getText() == null || elementsField.getText().isBlank()
@@ -422,10 +412,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         filterModel.setDbFilter(new DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
 
-        filterModel.getBlankSubtraction().setBlankSubtractionEnabled(blankFilter.isSelected());
-        filterModel.getBlankSubtraction().setCtrlSubtractionEnabled(controlFilter.isSelected());
-        filterModel.getBlankSubtraction().setBlankSubtractionFoldChange((Double) blankSpinner.getValue());
-        filterModel.getBlankSubtraction().setCtrlSubtractionFoldChange((Double) controlSpinner.getValue());
+        filterModel.getSampleBlankFoldChange().setEnabled(blankFilter.isSelected());
+        filterModel.getSampleBlankFoldChange().setCurrentMinFoldChange((Double) blankSpinner.getValue());
     }
 
     @Override
@@ -443,9 +431,8 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
     private void deleteSelectedCompoundsAndResetFilter() {
 
         // create deletion matcher
-        FeatueFilterModel tmpModel = new FeatueFilterModel();
+        FeatureFilterModel tmpModel = new FeatureFilterModel();
         applyToModel(tmpModel);
-        boolean inverted = invertFilter.isSelected();
         // reset global filter and close
         resetFilter();
         saveChanges();
@@ -469,7 +456,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         overallQualityPanel.reset();
         qualityPanels.forEach(QualityFilterPanel::reset);
 
-        lipidFilterBox.setSelectedItem(FeatueFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
+        lipidFilterBox.setSelectedItem(FeatureFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
         searchFieldDialogCopy.setText("");
@@ -479,7 +466,6 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         hasMsMs.setSelected(false);
 
         blankFilter.setEnabled(false);
-        controlFilter.setEnabled(false);
     }
 
     private void resetSpinnerValues() {
@@ -490,8 +476,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
         candidateSpinner.setValue(1);
-        blankSpinner.setValue(filterModel.getBlankSubtraction().getBlankSubtractionFoldChange());
-        controlSpinner.setValue(filterModel.getBlankSubtraction().getCtrlSubtractionFoldChange());
+        blankSpinner.setValue(filterModel.getSampleBlankFoldChange().getMinFoldChange());
     }
 
     public double getMinMz() {

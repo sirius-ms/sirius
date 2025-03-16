@@ -31,6 +31,7 @@ import io.sirius.ms.sdk.model.StructureCandidateFormula;
 import io.sirius.ms.sdk.model.StructureCandidateOptField;
 import io.sirius.ms.sdk.model.StructureCandidateScored;
 import io.sirius.ms.sdk.model.Tag;
+import io.sirius.ms.sdk.model.TagSubmission;
 import io.sirius.ms.sdk.model.TraceSetExperimental;
 
 import java.util.HashMap;
@@ -175,7 +176,7 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -225,7 +226,7 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
      * @return List&lt;Tag&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -240,7 +241,7 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
      * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
@@ -255,13 +256,92 @@ public class FeaturesApi {
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
-     * @param alignedFeatureId run to add tags to.
+     * @param alignedFeatureId feature to add tags to.
      * @param tag tags to add.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseSpec addTagsToAlignedFeatureExperimentalWithResponseSpec(String projectId, String alignedFeatureId, List<Tag> tag) throws WebClientResponseException {
         return addTagsToAlignedFeatureExperimentalRequestCreation(projectId, alignedFeatureId, tag);
+    }
+    /**
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with the id of feature they shall be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addTagsToAlignedFeaturesExperimentalRequestCreation(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        Object postBody = tagSubmission;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTagsToAlignedFeaturesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'tagSubmission' is set
+        if (tagSubmission == null) {
+            throw new WebClientResponseException("Missing the required parameter 'tagSubmission' when calling addTagsToAlignedFeaturesExperimental", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/tags", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with the id of feature they shall be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void addTagsToAlignedFeaturesExperimental(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        addTagsToAlignedFeaturesExperimentalRequestCreation(projectId, tagSubmission).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with the id of feature they shall be added to.
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> addTagsToAlignedFeaturesExperimentalWithHttpInfo(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return addTagsToAlignedFeaturesExperimentalRequestCreation(projectId, tagSubmission).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
+     * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to add to.
+     * @param tagSubmission tags with the id of feature they shall be added to.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addTagsToAlignedFeaturesExperimentalWithResponseSpec(String projectId, List<TagSubmission> tagSubmission) throws WebClientResponseException {
+        return addTagsToAlignedFeaturesExperimentalRequestCreation(projectId, tagSubmission);
     }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.

@@ -29,12 +29,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class Utils {
     public static final Comparator<String> ALPHANUMERIC_COMPARATOR_NULL_LAST = Comparator.nullsLast(new AlphanumComparator());
@@ -215,4 +213,41 @@ public class Utils {
         return !isNullOrEmpty(s);
     }
 
+
+    public static final int LARGE_BATCH_SIZE = 50_000;
+
+
+    public static  <T> void forEachBatch(Stream<T> streamToPage, Consumer<List<T>> batchProcessor){
+        forEachBatch(LARGE_BATCH_SIZE, streamToPage, batchProcessor);
+
+    }
+    public static  <T> void forEachBatch(Iterable<T> steamToBatch, Consumer<List<T>> batchProcessor){
+        forEachBatch(LARGE_BATCH_SIZE, steamToBatch, batchProcessor);
+    }
+
+    public static  <T> void forEachBatch(Iterator<T> iteratorToBatch, Consumer<List<T>> batchProcessor){
+        forEachBatch(LARGE_BATCH_SIZE, iteratorToBatch, batchProcessor);
+    }
+
+    public static  <T> void forEachBatch(int batchSize, Iterable<T> iterableToBatch, Consumer<List<T>> pageProcessor){
+        forEachBatch(batchSize, iterableToBatch.iterator(), pageProcessor);
+    }
+
+    public static  <T> void forEachBatch(int batchSize, Stream<T> streamToPage, Consumer<List<T>> batchProcessor){
+        forEachBatch(batchSize, streamToPage.iterator(), batchProcessor);
+    }
+
+    public static  <T> void forEachBatch(int batchSize, Iterator<T> iteratorToBatch, Consumer<List<T>> batchProcessor){
+        List<T> batch = new ArrayList<>(batchSize);
+
+        while (iteratorToBatch.hasNext()) {
+            batch.add(iteratorToBatch.next());
+            if (batch.size() >= batchSize) {
+                batchProcessor.accept(batch);
+                batch = new ArrayList<>(batchSize);
+            }
+        }
+        if (!batch.isEmpty())
+            batchProcessor.accept(batch);
+    }
 }
