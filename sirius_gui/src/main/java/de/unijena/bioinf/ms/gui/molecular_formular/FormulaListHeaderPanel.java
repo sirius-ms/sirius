@@ -25,6 +25,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +46,9 @@ public class FormulaListHeaderPanel extends JPanel {
         if (detailed){
             add(new FormulaListDetailView(formulaList),BorderLayout.NORTH);
         }else{
-            add(new FormulaListCompactView(formulaList),BorderLayout.NORTH);
+            FormulaListCompactView formulaListCompactView = new FormulaListCompactView(formulaList);
+            add(formulaListCompactView,BorderLayout.NORTH);
+            formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_Formulas);
         }
         add(center,BorderLayout.CENTER);
 

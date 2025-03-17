@@ -23,6 +23,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
@@ -31,7 +32,11 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import io.sirius.ms.sdk.model.CanopusPrediction;
+import io.sirius.ms.sdk.model.CompoundClasses;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
@@ -45,6 +50,7 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ResultPanel extends JTabbedPane {
 
@@ -118,7 +124,11 @@ public class ResultPanel extends JTabbedPane {
                         .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
                         .flatMap(List::stream).map(CompoundClassBean::new).toList());
         canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements);
-        addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
+        FormulaListHeaderPanel formulaHeaderCanopus = new FormulaListHeaderPanel(siriusResultElements, canopusTab);
+        compoundClassList.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, instanceBean, gui);
+        });
+        addTab("Compound Classes", null, formulaHeaderCanopus, canopusTab.getDescription());
 
 
         // structure db search tab
@@ -143,7 +153,9 @@ public class ResultPanel extends JTabbedPane {
         addChangeListener(e -> {
             Component selectedComponent = getSelectedComponent();
 
-            if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+            if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
+                checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
+            } else if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
                 structureAnnoTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
                 structuresTab.initSoftwareTour(gui.getProperties());
@@ -157,6 +169,15 @@ public class ResultPanel extends JTabbedPane {
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
                 showSpectralMatchingTab((Boolean) evt.getNewValue()));
         showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
+    }
+
+    private void checkAndInitCanopusSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
+        if (instanceBean != null) {
+            Optional<CompoundClasses> cc = instanceBean.getCompoundClasses();
+            if (cc.isPresent() && Objects.nonNull(cc.get())) {
+                Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeaderCanopus, SoftwareTourInfoStore.CanopusTabTourKey, gui.getProperties()));
+            }
+        }
     }
 
     private void showSpectralMatchingTab(boolean show) {
