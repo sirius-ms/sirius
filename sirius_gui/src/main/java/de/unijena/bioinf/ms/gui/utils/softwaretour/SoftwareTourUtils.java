@@ -53,7 +53,7 @@ public class SoftwareTourUtils {
     protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String propertyKey) {
         ToolTipManager.sharedInstance().setEnabled(false); //disable tool tips so they don't interfere with the tour
 
-        QuestionDialog askToStart = new QuestionDialog(windowOwner,"Should I give you a quick tour of the interface?<br>(You can enable/disable all tours in the settings at once.)", propertyKey, ReturnValue.Cancel);
+        QuestionDialog askToStart = new QuestionDialog(windowOwner,"<html><body>Should I give you a quick tour of the interface?<br><br><small>(You can enable/disable all tours at once in the settings.)</small></body></html>", propertyKey, ReturnValue.Cancel);
 
         if (askToStart.isSuccess()) {
             List<Component> allComponents = collectNestedComponents(windowOwner);
