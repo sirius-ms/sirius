@@ -68,7 +68,7 @@ public class SoftwareTourInfoStore {
     public static final SoftwareTourInfo BatchCompute_Formula = new SoftwareTourInfo("Activate to compute molecular formulas.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_ZODIAC = new SoftwareTourInfo("Activate to optimize molecular formula annotations.<br>" +
                                                                     "This reranks molecular formula annotations from the previous step based on similarities between compounds in the whole dataset.<br>" +
-                                                                    "This does not generate new annotations. Please, first read documentation for prerequisites for this method.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
+                                                                    "This does not generate new annotations. Please, first read documentation on prerequisites before using this method.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compounds classes.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Fingerblast = new SoftwareTourInfo("Activate to perform structure database search.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_MsNovelist = new SoftwareTourInfo("Activate to annotate molecular structures independent of a database.<br>Molecular structures are generated based on the predicted molecular fingerprint.", 2, LocationHorizontal.LEFT_SPACE_TO_LEFT, LocationVertical.CENTER);
@@ -120,10 +120,12 @@ public class SoftwareTourInfoStore {
     //// De Novo structures tour /////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static final SoftwareTourInfo DeNovo_Source = new SoftwareTourInfo("The de novo structures view is very similar to the database structures view.<br>A \"De Novo\" label as part of the sources indicates that this structure was generated de novo.<br>De novo generated structures can also be contained in databases.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM, DeNovoStructuresTabTourKey);
-    public static final SoftwareTourInfo DeNovo_Filter = new SoftwareTourInfo("By default, database structures are shown.<br>Toggle here to (un-)hide those.", 2, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM, DeNovoStructuresTabTourKey);
+    public static final SoftwareTourInfo DeNovo_Filter = new SoftwareTourInfo("By default, database structures are shown.<br>Toggle to (un-)hide those.", 2, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM, DeNovoStructuresTabTourKey);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Epimetheus tour /////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public static final SoftwareTourInfo Epimetheus_SpectralVisualization = new SoftwareTourInfo("This panel allows you to manually validate molecular structure hits by assessing potential fragment explanations.<br>This does not consider rearrangements", 2, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
+    public static final SoftwareTourInfo Epimetheus_List = new SoftwareTourInfo("Here you find all molecular structure candidates from both, database search and de novo generation.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Epimetheus_SpectralVisualization = new SoftwareTourInfo("This panel allows you to manually validate molecular structure candidates by assessing potential fragment explanations.<br>This does not consider rearrangements.", 2, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
+    public static final SoftwareTourInfo Epimetheus_DeNovoFilter = new SoftwareTourInfo("Toggle to (un-)hide molecular structure candidates that were generated de novo and are not contained in a database.", 3, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM);
 }
