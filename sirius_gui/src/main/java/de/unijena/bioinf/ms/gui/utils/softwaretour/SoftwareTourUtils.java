@@ -79,19 +79,30 @@ public class SoftwareTourUtils {
                 allComponents.forEach(c -> c.setEnabled(false));
                 //highlight current
                 Border originalBorder = highlight(component);
+                boolean originalBorderPainted = ensureBorderPainted(component);
                 enableFocusedComponent(component, componentToEnabledState);
                 //dialog
                 SoftwareTourMessage tutorialDialog = new SoftwareTourMessage(windowOwner, tourInfo.getTutorialDescription(), i+1, componentsWithTutorial.size());
                 setRelativeLocation(component, tourInfo, tutorialDialog);
                 tutorialDialog.setVisible(true);
                 //reset
-                resetHighlight(component, originalBorder);
+                resetHighlight(component, originalBorder, originalBorderPainted);
                 if (tutorialDialog.isCancel()) break;
             }
 
             componentToEnabledState.forEach(Component::setEnabled);
         }
         ToolTipManager.sharedInstance().setEnabled(true);
+    }
+
+    private static boolean ensureBorderPainted(JComponent jc) {
+        if (jc instanceof JToolBar tb) {
+            boolean state =  tb.isBorderPainted();
+            tb.setBorderPainted(true);
+            return state;
+        } else {
+            return true;
+        }
     }
 
     private static boolean isVisibleOnScreen(Component component) {
@@ -130,8 +141,11 @@ public class SoftwareTourUtils {
         return originalBorder;
     }
 
-    private static void resetHighlight(JComponent jc, Border originalBorder) {
+    private static void resetHighlight(JComponent jc, Border originalBorder, boolean originalBorderPainted) {
         jc.setBorder(originalBorder);
+        if (jc instanceof JToolBar tb) {
+            tb.setBorderPainted(originalBorderPainted);
+        }
     }
 
     private static void enableFocusedComponent(JComponent component, Map<Component, Boolean> componentToEnabledState) {

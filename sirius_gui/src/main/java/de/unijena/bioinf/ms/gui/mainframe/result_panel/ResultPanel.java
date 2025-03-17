@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import io.sirius.ms.sdk.model.CanopusPrediction;
-import io.sirius.ms.sdk.model.CompoundClasses;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
@@ -102,7 +101,7 @@ public class ResultPanel extends JTabbedPane {
 
 
         // formulas tabs
-        formulasTab = new FormulaOverviewPanel(siriusResultElements);
+        formulasTab = new FormulaOverviewPanel(siriusResultElements, gui);
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
 
@@ -114,8 +113,17 @@ public class ResultPanel extends JTabbedPane {
             logger.error("Error when loading FingerprintList. Fingerprint tab will not be available.", e);
         }
         fingerprintTab = fingerprintList == null ? null : new FingerprintPanel(fingerprintList);
-        if (fingerprintList != null)
-            addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fingerprintTab), fingerprintTab.getDescription());
+        FormulaListHeaderPanel formulaHeaderFingerprint;
+        if (fingerprintList != null) {
+            formulaHeaderFingerprint = new FormulaListHeaderPanel(siriusResultElements, fingerprintTab);
+            addTab("Predicted Fingerprints", null, formulaHeaderFingerprint, fingerprintTab.getDescription());
+            fingerprintList.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+                checkAndInitFingerprintSoftwareTour(formulaHeaderFingerprint, instanceBean, gui);
+            });
+        } else {
+            formulaHeaderFingerprint = null;
+        }
+
 
 
         // canopus tab
@@ -153,13 +161,23 @@ public class ResultPanel extends JTabbedPane {
         addChangeListener(e -> {
             Component selectedComponent = getSelectedComponent();
 
-            if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
+            if (selectedComponent == formulasTab &&  siriusResultElements.getSelectedElement() != null) {
+                //formulas tab
+                formulasTab.initSoftwareTour(gui.getProperties());
+            } else if (selectedComponent == formulaHeaderFingerprint &&  siriusResultElements.getSelectedElement() != null) {
+                //fingerprint tab
+                checkAndInitFingerprintSoftwareTour(formulaHeaderFingerprint, siriusResultElements.getSelectedElement(), gui);
+            } else if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
+                //canopus tab
                 checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
             } else if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+                //epimetheus tab
                 structureAnnoTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
+                //database search tab
                 structuresTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == deNovoStructuresTab && !combinedStructureListDeNovoView.getElementList().isEmpty()) {
+                //de novo structures tab
                 deNovoStructuresTab.initSoftwareTour(gui.getProperties());
             }
         });
@@ -173,10 +191,19 @@ public class ResultPanel extends JTabbedPane {
 
     private void checkAndInitCanopusSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
         if (instanceBean != null) {
-            Optional<CompoundClasses> cc = instanceBean.getCompoundClasses();
-            if (cc.isPresent() && Objects.nonNull(cc.get())) {
-                Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeaderCanopus, SoftwareTourInfoStore.CanopusTabTourKey, gui.getProperties()));
-            }
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getCanopusPrediction(), SoftwareTourInfoStore.CanopusTabTourKey, gui);
+        }
+    }
+
+    private void checkAndInitFingerprintSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
+        if (instanceBean != null) {
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getPredictedFingerprint(), SoftwareTourInfoStore.FingerprintTabTourKey, gui);
+        }
+    }
+
+    private void checkAndInitSoftwareTour(FormulaListHeaderPanel formulaHeader, Optional data, String tourKey, @NotNull SiriusGui gui) {
+        if (data.isPresent() && Objects.nonNull(data.get())) {
+            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeader, tourKey, gui.getProperties()));
         }
     }
 

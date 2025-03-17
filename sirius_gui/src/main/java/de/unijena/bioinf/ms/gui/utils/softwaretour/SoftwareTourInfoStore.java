@@ -19,6 +19,8 @@ public class SoftwareTourInfoStore {
     public static final String MainFrameTourKey = "de.unijena.bioinf.sirius.ui.tutorial.mainFrame";
     public static final String BatchComputeTourKey = "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
 
+    public static final String FormulaTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.formulaTab";
+    public static final String FingerprintTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.fingerprintTab";
     public static final String CanopusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.canopusTab";
     public static final String DatabaseSearchTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.databaseTab";
     public static final String DeNovoStructuresTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.deNovoStructuresTab";
@@ -61,7 +63,7 @@ public class SoftwareTourInfoStore {
     //// Batch compute tour /////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Note: we could add a separate tour for the advanced mode. But probably advance users don't need it?
-    public static final SoftwareTourInfo BatchCompute_PresetDropDown = new SoftwareTourInfo("Presets specify the parameters of your workflow", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo BatchCompute_PresetDropDown = new SoftwareTourInfo("Presets specify the parameters of your workflow.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
     //todo check if tour description and tool tip should be identical, or if one should be more comprehensive
     public static final SoftwareTourInfo BatchCompute_Formula = new SoftwareTourInfo("Activate to compute molecular formulas.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_ZODIAC = new SoftwareTourInfo("Activate to optimize molecular formula annotations.<br>" +
@@ -70,6 +72,24 @@ public class SoftwareTourInfoStore {
     public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compounds classes.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Fingerblast = new SoftwareTourInfo("Activate to perform structure database search.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_MsNovelist = new SoftwareTourInfo("Activate to annotate molecular structures independent of a database.<br>Molecular structures are generated based on the predicted molecular fingerprint.", 2, LocationHorizontal.LEFT_SPACE_TO_LEFT, LocationVertical.CENTER);
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Formula tab tour /////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final SoftwareTourInfo Formulas_List = new SoftwareTourInfo("The molecular formula candidates for the current feature<br>They are ranked by SIRIUS score (tree plus isotope score), or by ZODIAC score if available.<br>Candidates with the same precursor formula but different adducts have identical SIRIUS score.<br>Additional scores allow to assess quality of MS/MS data and annotation.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+    //combine tree and spectrum explanation in one since new JS viewer will combine it as well.
+    public static final SoftwareTourInfo Formulas_SpectraAndTree = new SoftwareTourInfo("MS1, MS/MS spectra and fragmentation tree for the selected molecular formula candidate.<br>Peaks in MS/MS spectra are annotated with molecular formulas from the fragmentation tree.<br>You can zoom spectra by right-click, select peaks by left-click, and use arrow keys for navigation.", 1, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
+
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Fingerprint tab tour /////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final SoftwareTourInfo Fingerprint_Formulas = new SoftwareTourInfo("The predicted fingerprint depends on the molecular formula. Hence, different molecular formula candidates for the same feature result in different predictions.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, FingerprintTabTourKey);
+    public static final SoftwareTourInfo Fingerprint_Predictions = new SoftwareTourInfo("This displays all molecular properties (substructures) of the predicted fingerprint with probabilities.<br>Generally, the predicted fingerprint can be seen as an intermediate step for predicting compound classes or annotating the molecular structure.<br>Still, the fingerprint already contains a lot structure information.<br>For some properties examples are provided upon selection.", 2, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Fingerprint_Filter = new SoftwareTourInfo("Easily filter molecular properties.", 3, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Compound classes tour /////////////////////////////////////////////////////////////////////////////////////////

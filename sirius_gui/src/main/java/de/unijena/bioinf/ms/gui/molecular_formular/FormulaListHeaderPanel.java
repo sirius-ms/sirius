@@ -49,6 +49,7 @@ public class FormulaListHeaderPanel extends JPanel {
             FormulaListCompactView formulaListCompactView = new FormulaListCompactView(formulaList);
             add(formulaListCompactView,BorderLayout.NORTH);
             formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_Formulas);
+            formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Fingerprint_Formulas);
         }
         add(center,BorderLayout.CENTER);
 
