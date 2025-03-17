@@ -99,12 +99,14 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
         public EpimetheusPanelCandidateListTableView(StructureList list) {
             super(list);
+            centerCardPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_List);
         }
 
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
             ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO.derive(24,24), "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            showMSNovelist.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_DeNovoFilter);
             showMSNovelist.setSelected(true);
             tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
 
