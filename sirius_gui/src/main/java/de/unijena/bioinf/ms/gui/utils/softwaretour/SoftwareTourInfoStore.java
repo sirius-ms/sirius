@@ -19,6 +19,7 @@ public class SoftwareTourInfoStore {
     public static final String MainFrameTourKey = "de.unijena.bioinf.sirius.ui.tutorial.mainFrame";
     public static final String BatchComputeTourKey = "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
 
+    public static final String CanopusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.canopusTab";
     public static final String DatabaseSearchTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.databaseTab";
     public static final String DeNovoStructuresTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.deNovoStructuresTab";
     public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.epimetheusTab";
@@ -69,6 +70,16 @@ public class SoftwareTourInfoStore {
     public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compounds classes.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Fingerblast = new SoftwareTourInfo("Activate to perform structure database search.",  2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_MsNovelist = new SoftwareTourInfo("Activate to annotate molecular structures independent of a database.<br>Molecular structures are generated based on the predicted molecular fingerprint.", 2, LocationHorizontal.LEFT_SPACE_TO_LEFT, LocationVertical.CENTER);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Compound classes tour /////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    public static final SoftwareTourInfo Canopus_Formulas = new SoftwareTourInfo("Compound class prediction depends on the predicted fingerprint.<br>Hence, different molecular formulas result in different compound class predictions.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, CanopusTabTourKey);
+    public static final SoftwareTourInfo Canopus_MainClass = new SoftwareTourInfo("Compound classes are based on the ClassyFire ontology.<br>Here, you see most specific compound class and its parents.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Canopus_AlternativeClasses = new SoftwareTourInfo("...but a compound usually belongs to multiple classes.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Canopus_NPClasses = new SoftwareTourInfo("This is a different classification system based on NPClassifier.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+
+    public static final SoftwareTourInfo Canopus_Predictions = new SoftwareTourInfo("This displays all compound classes with probabilities.", 1, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
