@@ -95,7 +95,7 @@ public class SoftwareTourInfoStore {
     //// Compound classes tour /////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static final SoftwareTourInfo Canopus_Formulas = new SoftwareTourInfo("Compound class prediction depends on the predicted fingerprint.<br>Hence, different molecular formulas result in different compound class predictions.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM, CanopusTabTourKey);
-    public static final SoftwareTourInfo Canopus_MainClass = new SoftwareTourInfo("Compound classes are based on the ClassyFire ontology.<br>Here, you see most specific compound class and its parents.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
+    public static final SoftwareTourInfo Canopus_MainClass = new SoftwareTourInfo("Compound classes are based on the ClassyFire ontology.<br>Here, you see the most specific compound class and its parents.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
     public static final SoftwareTourInfo Canopus_AlternativeClasses = new SoftwareTourInfo("...but a compound usually belongs to multiple classes.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
     public static final SoftwareTourInfo Canopus_NPClasses = new SoftwareTourInfo("This is a different classification system based on NPClassifier.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
 
