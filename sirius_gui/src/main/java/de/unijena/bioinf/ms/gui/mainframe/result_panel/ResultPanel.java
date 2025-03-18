@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
-import ca.odell.glazedlists.event.ListEventListener;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
@@ -32,9 +31,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.CanopusPrediction;
-import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import io.sirius.ms.sdk.model.ProjectType;
 import lombok.Getter;
@@ -64,6 +61,7 @@ public class ResultPanel extends JTabbedPane {
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
     private SpectralMatchingPanel spectralMatchingTab;
+    private KendrickMassDefectPanel massDefectTab;
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
@@ -119,7 +117,7 @@ public class ResultPanel extends JTabbedPane {
                 sre -> sre.getCanopusPrediction()
                         .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
                         .flatMap(List::stream).map(CompoundClassBean::new).toList());
-        canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements);
+        canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements, gui);
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
 
@@ -140,6 +138,8 @@ public class ResultPanel extends JTabbedPane {
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
+        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
+        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
 
         // global spectra match search list
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->

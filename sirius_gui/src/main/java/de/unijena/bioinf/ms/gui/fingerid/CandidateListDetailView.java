@@ -187,7 +187,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
-                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
+                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
@@ -199,11 +199,11 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 return;
                             try {
                                 if (s.URI().contains("%s")) {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
-                                            new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))), gui);
                                 } else {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
-                                            new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))), gui);
                                 }
                             } catch (IOException | URISyntaxException e1) {
                                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
@@ -346,22 +346,22 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 if (lmIds != null && !lmIds.isEmpty()) {
                                     lmIds.forEach(lmId -> {
                                         try {
-                                            GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))));
+                                            GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))), gui);
                                         } catch (IOException e) {
                                             LoggerFactory.getLogger(getClass()).error("Error when opening lipid maps URL.", e);
                                         }
                                     });
                                 } else {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), LipidClass.makeLipidMapsFuzzySearchLink(id));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), LipidClass.makeLipidMapsFuzzySearchLink(id), gui);
                                 }
                             } catch (Exception ex) {
                                 LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
                             }
                         });
                     } else if (s.URI().contains("%s")) {
-                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))));
+                        GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))), gui);
                     } else {
-                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))));
+                        GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))), gui);
                     }
                 }
             } catch (IOException | URISyntaxException e1) {
