@@ -295,8 +295,9 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
             detail.append("Response Message: ").append(e.getServerResponseErrorMessage());
         return  detail.toString();
     }
+
     public JComponent makeHTMLTextPanel(@NotNull String text, Color fontColor) {
-        HyperlinkJTextPane htmlPanel = new HyperlinkJTextPane(text);
+        HyperlinkJTextPane htmlPanel = new HyperlinkJTextPane(text, gui);
         htmlPanel.setBackground(getBackground());
         htmlPanel.setForeground(fontColor);
 

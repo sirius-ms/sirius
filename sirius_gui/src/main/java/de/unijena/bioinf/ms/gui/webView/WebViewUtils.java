@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.utils;
+package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;

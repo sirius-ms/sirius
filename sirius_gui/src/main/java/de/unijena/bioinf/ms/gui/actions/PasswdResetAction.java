@@ -20,9 +20,9 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.auth.UserPortal;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 
 import javax.swing.*;
-import java.awt.*;
 import java.net.URI;
 
 /**
@@ -30,8 +30,8 @@ import java.net.URI;
  */
 public class PasswdResetAction extends AbstractUserPortalAction {
 
-    public PasswdResetAction(Frame popupOwner) {
-        super("Reset Password", popupOwner);
+    public PasswdResetAction(SiriusGui gui) {
+        super("Reset Password", gui);
         putValue(Action.SHORT_DESCRIPTION, "Open password reset dialog.");
     }
 
