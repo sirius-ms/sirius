@@ -28,15 +28,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class WebviewHTMLTextJPanel extends WebViewJPanel{
+public class HTMLTextJPanel extends WebViewJPanel{
     private final String html;
-    public WebviewHTMLTextJPanel(String htmlText) {
+    public HTMLTextJPanel(String htmlText) {
         this(htmlText, Colors.BACKGROUND);
     }
-    public WebviewHTMLTextJPanel(String htmlText, Color background) {
+    public HTMLTextJPanel(String htmlText, Color background) {
         super("/sirius/style-light.css","/sirius/style-dark.css");
         final StringBuilder buf = new StringBuilder();
-        try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(WebviewHTMLTextJPanel.class.getResourceAsStream("/sirius/text.html")))) {
+        try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(HTMLTextJPanel.class.getResourceAsStream("/sirius/text.html")))) {
             String line;
             while ((line = br.readLine()) != null) buf.append(line).append('\n');
             html = buf.toString().replace("#BACKGROUND#", "#"+Integer.toHexString(background.getRGB()).substring(2)).replace("#TEXT#", htmlText);

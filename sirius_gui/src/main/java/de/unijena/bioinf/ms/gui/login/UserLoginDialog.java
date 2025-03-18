@@ -35,7 +35,7 @@ import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
+import de.unijena.bioinf.ms.gui.webView.HTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.rest.ProxyManager;
@@ -174,7 +174,7 @@ public class UserLoginDialog extends JDialog {
             signInAction.setEnabled(false);
             boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox) evt.getSource()).isSelected()));
 
-            WebviewHTMLTextJPanel htmlPanel = new WebviewHTMLTextJPanel("I accept " + Term.toLinks(terms) + ".");
+            HTMLTextJPanel htmlPanel = new HTMLTextJPanel("I accept " + Term.toLinks(terms) + ".");
             htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));
             center.add(boxAcceptTerms, htmlPanel, GuiUtils.MEDIUM_GAP, false);
             htmlPanel.load();

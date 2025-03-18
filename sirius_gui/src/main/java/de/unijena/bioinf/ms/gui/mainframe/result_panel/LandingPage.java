@@ -104,7 +104,7 @@ public class LandingPage extends JPanel {
         button.setBorderPainted(false);
         button.setHideActionText(true);
         button.setBackground(Colors.BACKGROUND);
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-tIG8w3hZWJunWZyy-qnIZM")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-tIG8w3hZWJunWZyy-qnIZM"), gui));
         return button;
     }
 
@@ -126,17 +126,17 @@ public class LandingPage extends JPanel {
     private ToolbarButton matrixButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.MATRIX);
         button.setToolTipText("Join the SIRIUS Matrix/Gitter community for discussion and support.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(),
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(
                 UriComponentsBuilder.fromUriString("https://matrix.to/#")
                         .fragment("/#sirius-ms:gitter.im")
-                        .build().toUri()));
+                        .build().toUri(), gui));
         return button;
     }
 
     private ToolbarButton githubButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.GITHUB);
         button.setToolTipText("SIRIUS on GitHub. Review source code and download releases.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://github.com/sirius-ms/sirius")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(URI.create("https://github.com/sirius-ms/sirius"), gui));
 
         return button;
     }
@@ -144,7 +144,7 @@ public class LandingPage extends JPanel {
     private ToolbarButton bugReportButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.BUG2);
         button.setToolTipText("Report a bug or request a feature.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://github.com/sirius-ms/sirius/issues/new/choose")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(URI.create("https://github.com/sirius-ms/sirius/issues/new/choose"), gui));
 
         return button;
     }

@@ -23,8 +23,13 @@ package de.unijena.bioinf.ms.middleware.configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 @Configuration
 public class SecurityConfig {
@@ -33,13 +38,47 @@ public class SecurityConfig {
 
     @Value("${app.cors.methods:#{null}}")
     private String corsAllowedMethods;
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                if(corsAllowedOrigins!=null)
+                if (corsAllowedOrigins != null)
                     registry.addMapping("/api/**").allowedOrigins(corsAllowedOrigins).allowedMethods(corsAllowedMethods.split(","));
+            }
+
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                //todo generic solution to easily add more apps
+
+                // First React app - accessible at /app1/**
+                registry.addResourceHandler("/KMD/**")
+                        .addResourceLocations("classpath:/static/kmd-view/")
+                        .resourceChain(true)
+                        .addResolver(new PathResourceResolver() {
+                            @Override
+                            protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                                Resource resource = location.createRelative(resourcePath);
+                                return resource.exists() && resource.isReadable() ? resource :
+                                        location.createRelative("index.html");
+                            }
+                        });
+
+                registry.addResourceHandler("/assets/**")
+                        .addResourceLocations("classpath:/static/kmd-view/assets/");
+
+                registry.addResourceHandler("/apps/hello-world/**")
+                        .addResourceLocations("classpath:/static/hello-world/")
+                        .resourceChain(true)
+                        .addResolver(new PathResourceResolver() {
+                            @Override
+                            protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                                Resource resource = location.createRelative(resourcePath);
+                                return resource.exists() && resource.isReadable() ? resource :
+                                        location.createRelative("index.html");
+                            }
+                        });
             }
         };
     }

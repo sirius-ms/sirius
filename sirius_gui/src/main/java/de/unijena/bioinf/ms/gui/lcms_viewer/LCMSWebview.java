@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
-import de.unijena.bioinf.ms.gui.utils.WebViewUtils;
+import de.unijena.bioinf.ms.gui.webView.WebViewUtils;
 import io.sirius.ms.sdk.model.TraceSetExperimental;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
