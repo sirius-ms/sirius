@@ -2,44 +2,87 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
 import de.unijena.bioinf.ms.biotransformer.MetabolicTransformation;
+import de.unijena.bioinf.ms.biotransformer.P2Mode;
+import lombok.Setter;
+import org.gradle.internal.impldep.com.beust.jcommander.IParameterValidator;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
-import java.util.List;
-
+import java.util.*;
+import java.util.function.Consumer;
 // --transfromation HUMAN_CUSTOM_MULTI --seq-step CYP450 --seq-iterations 3  --seq-step PHASE_2 --seq-iterations 1
 
 public class BioTransformerOptions {
     @CommandLine.ArgGroup(multiplicity = "1", exclusive = true, order = 301)
     public BioTransformer bioTransformer;
 
-    @CommandLine.Option(names = "--cyp450Mode", description = "", defaultValue = "RULE_BASED", order = 309) //todo copy descripton from biotansformer cli
+    @CommandLine.Option(names = "--cyp450Mode", description = "Specify the CYP450 predictoin Mode here: 1) CypReact + BioTransformer\n" +
+            " rules; 2) CyProduct only; 3) Combined: CypReact + BioTransformer rules +\n" +
+            " CyProducts.\n" +
+            " Default mode is 1.", defaultValue = "RULE_BASED", order = 309)
     public Cyp450Mode cyp450Mode; // CYP450 Mode
 
 
 
-    //todo headline to differentiate single vs sequence.
+
+
+
+
+
     public static class BioTransformer {
-        @CommandLine.ArgGroup(exclusive = false, heading = "", order = 310)
+        @CommandLine.ArgGroup(exclusive = false, heading = "### Single Transformer Options ###\n", order = 310)
         Single biotransformer;
 
-        @CommandLine.ArgGroup(exclusive = false, multiplicity = "1..4", heading = "", order = 320)
+        @CommandLine.ArgGroup(exclusive = false, multiplicity = "1..5", heading = "### Sequential Transformation Options ###\n", order = 320)
         List<Sequence> bioTransformerSequence;
     }
 
     public static class Single {
-        @CommandLine.Option(names = {"--transformation"}, required = true, order = 311)
-        MetabolicTransformation metabolicTransformation;
-        @CommandLine.Option(names = {"--iterations"}, description = "", defaultValue = "1", order = 312) //todo copy descripton from biotansformer cli
+        @CommandLine.Option(names = {"--transformation"},completionCandidates = MetabolicTransformationSingleCandidates.class,required = true, order = 311)
+        private MetabolicTransformation metabolicTransformation;
+
+        @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII predictoin Mode here: 1) BioTransformer rules; 2)\n" +
+                " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
+                " rules.\n" +
+                " Default mode is 1.\n", defaultValue = "BT_RULE_BASED"
+        ,order = 315)
+        private P2Mode p2Mode;
+
+        @CommandLine.Spec
+        private CommandLine.Model.CommandSpec spec; // for validation
+
+        @CommandLine.Command(name = "validate")
+        private void validate() {
+            // Prüfen, ob --p2Mode gesetzt ist, wenn transformation ≠ PHASE_2
+            if (p2Mode != null && metabolicTransformation != MetabolicTransformation.PHASE_2) {
+                throw new CommandLine.ParameterException(
+                        spec.commandLine(),
+                        "--p2Mode is only allowed, when --transformation has the value: PHASE_2"
+                );
+            }
+        }
+
+
+        @CommandLine.Option(names = {"--iterations"}, description = "The number of steps for the prediction. This option can be set by the\n" +
+                " user for the EC-based, CYP450, Phase II, and Environmental microbial\n" +
+                " biotransformers. The default value is 1.", defaultValue = "1",parameterConsumer = RangeValidator.class, order = 312)
         private int iterations; // Number of iterations
-        @CommandLine.Option(names = "--useDB", description = "", defaultValue = "true", order = 313) //todo copy descripton from biotansformer cli
+        @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
+                " feature.", defaultValue = "true", order = 313)
         private boolean useDB; // Use the database flag
-        @CommandLine.Option(names = "--useSubstructure", description = "", defaultValue = "false", order = 314) //todo copy descripton from biotansformer cli
+        @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want to enable the using first\n" +
+                " 14 characters of InChIKey when retrieving from database feature.", defaultValue = "false", order = 314)
         private boolean useSubstructure; // Use the substructure flag
 
+
+
+        }
+
+
         // todo Check if all of this parameters should be changeable.
-        // todo write validation method that checks whether parameter match tranformation type.
-    }
+        // todo write validation method that checks whether parameter match transformation type.
+
+
 
     public static class Sequence {
         @CommandLine.Option(names = "--seq-step", completionCandidates = MetabolicTransformationSequenceCandidates.class, required = true, order = 321)
@@ -52,8 +95,15 @@ public class BioTransformerOptions {
 
         @CommandLine.Option(names = "--seq-iterations", defaultValue = "1", order = 322)
         public int iterations;
+        //TODO validation method, überprüfe ob transformationen versch. Iterations Max haben -> keine egrenzung im code-> nur in Webclient
     }
 
+    public static class MetabolicTransformationSingleCandidates implements Iterable<String> {
+        @Override
+        public java.util.@NotNull Iterator<String> iterator(){
+            return MetabolicTransformation.valueSingleOnly().stream().map(MetabolicTransformation::name).iterator();
+        }
+    }
     public static class MetabolicTransformationSequenceCandidates implements Iterable<String> {
         @Override
         public java.util.@NotNull Iterator<String> iterator() {
@@ -62,4 +112,30 @@ public class BioTransformerOptions {
                     .map(MetabolicTransformation::name).iterator();
         }
     }
+
+    public class RangeValidator implements CommandLine.IParameterConsumer {
+        @Override
+        public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec, CommandLine.Model.CommandSpec commandSpec) {
+            String value = args.pop(); // Hole den Parameterwert
+            int intValue = Integer.parseInt(value);
+
+            // Bereich prüfen
+            if (intValue < 1 || intValue > 3) {
+                throw new CommandLine.ParameterException(
+                        commandSpec.commandLine(),
+                        String.format("Invalid value '%s' for option '%s': Value must be between 1 and 3.", value, argSpec.getValue())
+                );
+            }
+
+            // Falls gültig, setze den Wert in der CommandLine-Option
+            argSpec.setValue(intValue);
+        }
+
+    }
+
+
+
+
+
+
 }

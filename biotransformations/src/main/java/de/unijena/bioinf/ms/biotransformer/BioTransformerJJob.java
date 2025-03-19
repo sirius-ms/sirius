@@ -63,7 +63,7 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
 
 
                 };
-
+        //TODO:
         submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::takeResult);
 
         return jobs.stream().map(JJob::takeResult).map(BioTransformerResult::new).toList(); //results here
