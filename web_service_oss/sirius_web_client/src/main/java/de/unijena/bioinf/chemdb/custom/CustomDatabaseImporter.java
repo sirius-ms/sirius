@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
+import de.unijena.bioinf.babelms.cef.Compound;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.*;
@@ -38,6 +39,8 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
@@ -294,6 +297,45 @@ public class CustomDatabaseImporter {
                 importStructuresFromSmileAndInChis(s);
             }
         }
+    }
+
+    private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
+        // 1. BioTransformerJJob erstellen und ausführen
+        BioTransformerJJob job = new BioTransformerJJob();
+        job.setSubstrates(
+                key2DToComp.values().stream()
+                        .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                        .toList()
+        );
+        List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+        // 2. Transformationsergebnisse in Moleküle konvertieren
+
+
+            for (BioTransformerResult result : transformationResults) {
+
+            }
+            List<Molecule> transformedMolecules = transformationResults.stream()
+                    .flatMap(result -> result.getBiotranformations().stream()) // Zugriff auf Biotransformationen
+                    .map(transformation -> new Molecule(transformation.getProducts().getAtomContainer())) // Konvertieren
+                    .toList(); //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
+
+
+
+        // 3. Deduplikation basierend auf InChIKey-2D
+        Map<String, Molecule> deduplicatedMolecules = transformedMolecules.stream()
+                .collect(Collectors.toMap(
+                        Molecule::getInChIKey2D, // 2D-Struktur als Schlüssel
+                        molecule -> molecule,
+                        (existing, replacement) -> existing // Behalte das erste Molekül bei Duplikaten
+                ));
+
+        // 4. Deduplizierte Moleküle zur bestehenden Sammlung hinzufügen
+        deduplicatedMolecules.forEach((key2D, newMolecule) -> {
+            if (!key2DToComp.containsKey(key2D)) {
+                key2DToComp.put(key2D, new Comp(newMolecule)); // Neues Molekül einfügen
+            }
+        });
     }
 
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {

@@ -92,7 +92,7 @@ public static List<Biotransformation> multiBioTransformer(IAtomContainer singleM
 
 }
 
-//TODO: biotransformersequence?? da nur aneinenandereihung der human BTs
+
 
 
 
