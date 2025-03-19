@@ -153,7 +153,26 @@ public class JCefBrowserPanel extends JPanel {
 
         setupLinkInterception();
         browser = client.createBrowser(url, false, false);
-        add(browser.getUIComponent(), BorderLayout.CENTER);
+
+        // Add focus-related improvements
+        Component browserUI = browser.getUIComponent();
+        browserUI.setFocusable(true);
+
+        // Request focus when mouse enters
+        browserUI.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                browserUI.requestFocusInWindow();
+            }
+
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                browserUI.requestFocusInWindow();
+            }
+        });
+
+
+        add(browserUI, BorderLayout.CENTER);
 
         // We don't need a hierarchy listener as we'll override removeNotify() instead
     }
