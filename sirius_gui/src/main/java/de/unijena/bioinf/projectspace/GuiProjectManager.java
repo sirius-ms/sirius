@@ -259,9 +259,18 @@ public class GuiProjectManager implements Closeable {
         return siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
     }
 
+    public ProjectInfo getProjectInfo(List<ProjectInfoOptField> optFields) {
+        return siriusClient.projects().getProject(projectId, optFields);
+    }
+
     public ProjectInfo getProjectInfo() {
-        return siriusClient.projects().getProject(
-                projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+        return getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+    }
+
+    public ProjectInfo compact() {
+        String location = getProjectLocation();
+        siriusClient.projects().closeProject(projectId, true);
+        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZEINFORMATION));
     }
 
     @Override

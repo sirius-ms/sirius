@@ -46,6 +46,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private AdductSettingsPanel addSettings;
     private NetworkSettingsPanel proxSettings;
     private GerneralSettingsPanel genSettings;
+    private ProjectSettingsPanel projectSettings;
     private JTabbedPane settingsPane;
 
     private SiriusGui gui;
@@ -79,6 +80,9 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
         proxSettings = new NetworkSettingsPanel(gui, nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
+
+        projectSettings = new ProjectSettingsPanel(gui, this);
+        settingsPane.add(projectSettings.name(), projectSettings);
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
 //        settingsPane.add(accountSettings.name(), accountSettings);
