@@ -51,7 +51,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.inchi.InChIGenerator;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -68,6 +71,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -88,6 +92,8 @@ public class CustomDatabaseImporter {
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
     protected SmilesGenerator smilesGen;
     protected SmilesParser smilesParser;
+    protected InChIGeneratorFactory inchiGenFactory;
+    protected InChIGenerator inchiGen;
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
     protected final IFingerprinterCache ifpCache;
@@ -111,6 +117,15 @@ public class CustomDatabaseImporter {
         smilesGen = SmilesGenerator.generic().aromatic();
         smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         smilesParser.kekulise(true);
+
+    }
+
+    public String generateInChI(IAtomContainer container) throws CDKException {
+        InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
+        InChIGenerator generator = factory.getInChIGenerator(container);
+
+        return generator.getInchi();
+
     }
 
     private void throwIfShutdown() {
@@ -299,44 +314,6 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
-        // 1. BioTransformerJJob erstellen und ausführen
-        BioTransformerJJob job = new BioTransformerJJob();
-        job.setSubstrates(
-                key2DToComp.values().stream()
-                        .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
-                        .toList()
-        );
-        List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
-
-        // 2. Transformationsergebnisse in Moleküle konvertieren
-
-
-            for (BioTransformerResult result : transformationResults) {
-
-            }
-            List<Molecule> transformedMolecules = transformationResults.stream()
-                    .flatMap(result -> result.getBiotranformations().stream()) // Zugriff auf Biotransformationen
-                    .map(transformation -> new Molecule(transformation.getProducts().getAtomContainer())) // Konvertieren
-                    .toList(); //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
-
-
-
-        // 3. Deduplikation basierend auf InChIKey-2D
-        Map<String, Molecule> deduplicatedMolecules = transformedMolecules.stream()
-                .collect(Collectors.toMap(
-                        Molecule::getInChIKey2D, // 2D-Struktur als Schlüssel
-                        molecule -> molecule,
-                        (existing, replacement) -> existing // Behalte das erste Molekül bei Duplikaten
-                ));
-
-        // 4. Deduplizierte Moleküle zur bestehenden Sammlung hinzufügen
-        deduplicatedMolecules.forEach((key2D, newMolecule) -> {
-            if (!key2DToComp.containsKey(key2D)) {
-                key2DToComp.put(key2D, new Comp(newMolecule)); // Neues Molekül einfügen
-            }
-        });
-    }
 
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
         synchronized (spectraBuffer) {
@@ -373,6 +350,62 @@ public class CustomDatabaseImporter {
         }
         if (moleculeBuffer.size() > molBufferSize)
             flushMoleculeBuffer();
+    }
+
+    private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
+        // 1. BioTransformerJJob erstellen und ausführen
+        BioTransformerJJob job = new BioTransformerJJob();
+        job.setSubstrates(
+                key2DToComp.values().stream()
+                        .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                        .toList()
+        );
+        List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+        // 2. Transformationsergebnisse in Moleküle konvertieren
+
+        List<Molecule> transformedMolecules = transformationResults.stream()
+                // Iteriere über alle Ergebnisse der Biotransformationen
+                .flatMap(result -> result.getBiotranformations().stream())
+                // Iteriere über alle Produkte (IAtomContainer) eines Transformations-Ergebnisses
+                .flatMap(transformation -> {
+                    IAtomContainerSet products = transformation.getProducts(); // Zugriff auf das IAtomContainerSet
+                    return StreamSupport.stream(products.atomContainers().spliterator(), false) // Konvertiere Iterable in Stream
+                            .map(container -> new Molecule(container,smilesGen.create(container),generateInChI(container))); // Konvertiere jeden IAtomContainer in ein Molecule
+                })
+                .toList();
+
+        //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
+
+
+
+        // 3. Deduplikation basierend auf InChIKey-2D
+        for (Molecule newMolecule : transformedMolecules) {
+            try {
+                final InChI inchi = newMolecule.inchi;
+                final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
+                if (key2DToComp.containsKey(key2d)) {
+                    // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
+                    Comp existingComp = key2DToComp.get(key2d);
+                    existingComp.molecule.ids.addAll(newMolecule.ids);
+                    if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
+                            (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
+                                    existingComp.molecule.name.length() > newMolecule.name.length())) {
+                        existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
+                    }
+                } else {
+                    // Neues Molekül hinzufügen
+                    Comp newComp = new Comp(newMolecule);
+                    key2DToComp.put(key2d, newComp);
+                }
+            } catch (IllegalArgumentException e) {
+                // Fehlerhafte Moleküle ignorieren, aber loggen
+                CustomDatabase.logger.error("Error deduplicating molecule. Skipping: " + newMolecule.ids + " - " + newMolecule.name, e);
+            }
+        }
+
+
+
     }
 
     private void flushMoleculeBuffer() {
