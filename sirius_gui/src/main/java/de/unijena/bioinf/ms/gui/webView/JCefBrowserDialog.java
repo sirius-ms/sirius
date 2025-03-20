@@ -110,24 +110,6 @@ public class JCefBrowserDialog extends JDialog {
     }
 
     /**
-     * Loads a new URL in the browser.
-     *
-     * @param url The URL to load
-     */
-    public void loadURL(String url) {
-        browserPanel.loadURL(url);
-    }
-
-    /**
-     * Loads a new URL in the browser.
-     *
-     * @param url The URL to load
-     */
-    public void loadURL(URI url) {
-        browserPanel.loadURL(url);
-    }
-
-    /**
      * Executes JavaScript in the browser.
      *
      * @param javascript The JavaScript to execute
