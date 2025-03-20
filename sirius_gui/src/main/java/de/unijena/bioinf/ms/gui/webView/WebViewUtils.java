@@ -24,7 +24,7 @@ public class WebViewUtils {
      */
     public static String textToDataURL(String textFileAsSingleString) {
         byte[] bytes = textFileAsSingleString.getBytes(StandardCharsets.UTF_8);
-        String dataUrl = "data:text/plain;base64," +
+        String dataUrl = "data:text/html;charset=utf-8;base64," +
                 Base64.getEncoder().encodeToString(bytes);
         return dataUrl;
     }
