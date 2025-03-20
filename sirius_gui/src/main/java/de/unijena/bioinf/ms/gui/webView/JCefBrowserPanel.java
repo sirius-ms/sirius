@@ -20,7 +20,9 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.rest.ProxyManager;
 import lombok.Getter;
@@ -35,6 +37,9 @@ import org.cef.network.CefRequest;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -54,18 +59,49 @@ public class JCefBrowserPanel extends JPanel {
     private final boolean ownClient;
     private LinkInterception linkInterception = LinkInterception.NONE;
 
-    /**
-     * Creates a new browser panel using a provided CefClient.
-     */
-    public JCefBrowserPanel(SiriusGui siriusGui) {
-        this(siriusGui, LinkInterception.NONE);
+    private static final String CSS_LIGHT_RESOURCE_TEXT = "/sirius/style-light.css";
+    private static final String CSS_DARK_RESOURCE_TEXT = "/sirius/style-dark.css";
+
+    private static final String CSS_LIGHT_RESOURCE = "/js/styles.css";
+    private static final String CSS_DARK_RESOURCE = "/js/styles-dark.css";
+
+    public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider) {
+        return makeHTMLTextPanel(htmlText, browserProvider,  Colors.BACKGROUND);
+    }
+    public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider, Color background) {
+        final StringBuilder buf = new StringBuilder();
+        try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(JCefBrowserPanel.class.getResourceAsStream("/sirius/text.html")))) {
+            String line;
+            while ((line = br.readLine()) != null) buf.append(line).append('\n');
+            String htmlContent = buf.toString().replace("#BACKGROUND#", "#" + Integer.toHexString(background.getRGB()).substring(2)).replace("#TEXT#", htmlText);
+            return makeHTMLPanel(htmlContent, Colors.isDarkTheme() ? CSS_DARK_RESOURCE_TEXT : CSS_LIGHT_RESOURCE_TEXT, browserProvider);
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
-    public JCefBrowserPanel(SiriusGui siriusGui, LinkInterception linkInterception) {
-        this.client = siriusGui.newClient();
-        this.ownClient = true;
-        this.linkInterception = linkInterception;
-        initialize("about:blank");
+    public static JCefBrowserPanel makeHTMLPanel(String htmlContent, SiriusGui browserProvider) {
+        return makeHTMLPanel(htmlContent, Colors.isDarkTheme() ? CSS_DARK_RESOURCE : CSS_LIGHT_RESOURCE, browserProvider);
+    }
+
+    public static JCefBrowserPanel makeHTMLPanel(String htmlContent, String cssResource, SiriusGui browserProvider) {
+        // Include the CSS in the HTML if provided
+        String cssContent = WebViewUtils.loadCSSAndSetColorThemeAndFont(cssResource);
+        if (cssContent != null && !cssContent.isEmpty()) {
+            String styleTag = "<style>" + cssContent + "</style>";
+            // Insert style tag into head if exists, otherwise add it at the beginning
+            if (htmlContent.contains("<head>")) {
+                htmlContent = htmlContent.replace("<head>", "<head>" + styleTag);
+            } else {
+                htmlContent = styleTag + htmlContent;
+            }
+        }
+
+        // Create data URL with base64 encoding
+        String dataUrl = WebViewUtils.textToDataURL(htmlContent);
+
+        // Load the data URL
+        return new JCefBrowserPanel(dataUrl, browserProvider, LinkInterception.ALL);
     }
 
     /**
@@ -76,7 +112,9 @@ public class JCefBrowserPanel extends JPanel {
     }
 
     public JCefBrowserPanel(String urlPath, SiriusGui siriusGui, LinkInterception linkInterception) {
-        this(siriusGui, linkInterception);
+        this.client = siriusGui.newClient();
+        this.ownClient = true;
+        this.linkInterception = linkInterception;
         initialize(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve(urlPath).toString());
     }
 
@@ -209,27 +247,27 @@ public class JCefBrowserPanel extends JPanel {
         }
     }
 
-    /**
-     * Loads a new URL in the browser.
-     *
-     * @param url The URL to load
-     */
-    //todo loading urls after initilize is not working right now.
-
-    public void loadURL(String url) {
-        if (browser != null && !isDisposed) {
-            browser.loadURL(url);
-        }
-    }
-
-    /**
-     * Loads a new URL in the browser.
-     *
-     * @param url The URL to load
-     */
-    public void loadURL(URI url) {
-        loadURL(url.toString());
-    }
+      //todo loading urls after initialize is not working right now.
+//    /**
+//     * Loads a new URL in the browser.
+//     *
+//     * @param url The URL to load
+//     */
+//
+//    public void loadURL(String url) {
+//        if (browser != null && !isDisposed) {
+//            browser.loadURL(url);
+//        }
+//    }
+//
+//    /**
+//     * Loads a new URL in the browser.
+//     *
+//     * @param url The URL to load
+//     */
+//    public void loadURL(URI url) {
+//        loadURL(url.toString());
+//    }
 
     /**
      * Executes JavaScript in the browser.
@@ -240,21 +278,6 @@ public class JCefBrowserPanel extends JPanel {
         if (browser != null && !isDisposed) {
             browser.executeJavaScript(javascript, browser.getURL(), 0);
         }
-    }
-
-    public void loadHtml(String htmlContent) {
-        if (browser != null && !isDisposed) {
-           // Load the data URL
-            browser.loadURL(createHTMLURL(htmlContent));
-        }
-    }
-
-    public static String createHTMLURL(String htmlContent){
-        // Encode the HTML content
-        String encodedHtml = java.net.URLEncoder.encode(htmlContent, java.nio.charset.StandardCharsets.UTF_8);
-
-        // Create a data URL with the encoded HTML
-        return  "data:text/html;charset=utf-8," + encodedHtml;
     }
 
     /**

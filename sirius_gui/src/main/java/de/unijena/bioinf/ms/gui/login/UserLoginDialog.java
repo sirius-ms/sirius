@@ -35,7 +35,7 @@ import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.HTMLTextJPanel;
+import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.rest.ProxyManager;
@@ -60,9 +60,10 @@ public class UserLoginDialog extends JDialog {
     Action cancelAction;
 
     private final LoadablePanel loadablePanel;
-
+    private final SiriusGui gui;
     public UserLoginDialog(@NotNull SiriusGui gui, @NotNull AuthService service) {
         super(gui.getMainFrame(), true);
+        this.gui = gui;
         setTitle("Login");
         final JPanel content = new JPanel(new BorderLayout());
         loadablePanel = new LoadablePanel(content);
@@ -174,10 +175,9 @@ public class UserLoginDialog extends JDialog {
             signInAction.setEnabled(false);
             boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox) evt.getSource()).isSelected()));
 
-            HTMLTextJPanel htmlPanel = new HTMLTextJPanel("I accept " + Term.toLinks(terms) + ".");
+            JCefBrowserPanel htmlPanel = JCefBrowserPanel.makeHTMLTextPanel("I accept " + Term.toLinks(terms) + ".", gui);
             htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));
             center.add(boxAcceptTerms, htmlPanel, GuiUtils.MEDIUM_GAP, false);
-            htmlPanel.load();
         }
     }
 }
