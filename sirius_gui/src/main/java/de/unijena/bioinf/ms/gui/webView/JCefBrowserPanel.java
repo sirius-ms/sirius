@@ -37,6 +37,7 @@ import org.cef.network.CefRequest;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -204,8 +205,8 @@ public class JCefBrowserPanel extends JPanel {
             }
 
             @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
-                browserUI.requestFocusInWindow();
+            public void mouseExited(MouseEvent e) {
+                super.mouseExited(e);
             }
         });
 
