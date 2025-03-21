@@ -29,8 +29,8 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ErrorReportingDocumentListener;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,12 +48,11 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
+import static de.unijena.bioinf.projectspace.ProjectSpaceManager.PROJECT_FILENAME_VALIDATOR;
 
 
 /**
@@ -63,8 +62,6 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
 
     public static final String DONT_ASK_NEW_WINDOW_CREATE_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowCreate.dontAskAgain";
-
-    public static final Pattern PROJECT_ID_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
 
     public ProjectCreateAction(SiriusGui gui) {
         super("New", gui);
@@ -129,8 +126,8 @@ public class ProjectCreateAction extends ProjectOpenAction {
                     error =  "Project name must not be empty.";
                 } else if (name.isBlank()) {
                     error =  "Project name must not contain only white spaces.";
-                } else if (!PROJECT_ID_VALIDATOR.matcher(name).matches()) {
-                    error =  "Project name must be valid: \"([a-zA-Z0-9_-]+).sirius\"";
+                } else if (!PROJECT_FILENAME_VALIDATOR.matcher(name).matches()) {
+                    error = String.format("Project name must match \"(%s)%s\"", PROJECT_FILENAME_VALIDATOR.pattern(), SIRIUS_PROJECT_SUFFIX);
                 } else if (pfile.exists()) {
                     error =  "Project already exists";
                 }
@@ -193,8 +190,9 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 if (projectName.isBlank()) {
                     throw new IllegalArgumentException("Project name must not contain only white spaces.");
                 }
-                if (!PROJECT_ID_VALIDATOR.matcher(projectName).matches()) {
-                    throw new IllegalArgumentException("File name must be valid: \"([a-zA-Z0-9_-]+).sirius\"");
+                if (!PROJECT_FILENAME_VALIDATOR.matcher(projectName).matches()) {
+                    String error = String.format("File name must match \"(%s)%s\"", PROJECT_FILENAME_VALIDATOR.pattern(), SIRIUS_PROJECT_SUFFIX);
+                    throw new IllegalArgumentException(error);
                 }
 
                 Jobs.runInBackground(() ->

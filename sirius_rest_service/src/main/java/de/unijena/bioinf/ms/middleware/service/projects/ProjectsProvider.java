@@ -31,7 +31,8 @@ import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
+
+import static de.unijena.bioinf.projectspace.ProjectSpaceManager.PROJECT_FILENAME_VALIDATOR;
 
 public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
@@ -90,10 +91,9 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
         }
     }
 
-    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
     default String validateId(String projectId){
-        if (!projectIdValidator.matcher(projectId).matches())
-            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]+!");
+        if (!PROJECT_FILENAME_VALIDATOR.matcher(projectId).matches())
+            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must match " + PROJECT_FILENAME_VALIDATOR.pattern());
         return projectId;
     }
 }
