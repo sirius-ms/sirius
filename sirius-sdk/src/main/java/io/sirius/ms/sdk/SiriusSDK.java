@@ -109,7 +109,7 @@ public final class SiriusSDK extends SiriusClient {
             }
         }
 
-        log.info("Starting SIRIUS process...");
+        log.info("Starting SIRIUS process from {}", executable);
         Process process = null;
         int retryAttempts = 3;
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
