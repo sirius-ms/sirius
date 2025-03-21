@@ -15,10 +15,13 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static io.sirius.ms.sdk.model.ProjectInfoOptField.SIZEINFORMATION;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -60,7 +63,7 @@ public class ProjectsApiTest {
             ProjectInfo pid = instance.getProject(projectId, null);
             assertNotNull(pid);
 
-            instance.closeProject(projectId);
+            instance.closeProject(projectId, false);
             WebClientResponseException ex = assertThrows(WebClientResponseException.class, () -> instance.getProject(projectId, null));
             assertEquals(404, ex.getStatusCode().value());
         } catch (WebClientResponseException e) {
@@ -118,7 +121,7 @@ public class ProjectsApiTest {
             assertNotNull(projectInfo);
             assertEquals(projectId, projectInfo.getProjectId());
 
-            instance.closeProject(projectId);
+            instance.closeProject(projectId, false);
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }
@@ -136,7 +139,7 @@ public class ProjectsApiTest {
         } catch (Exception e) {
             fail("API exception occurred: " + e.getMessage());
         }finally {
-           instance.closeProject(projectId);
+           instance.closeProject(projectId, false);
         }
     }
 
@@ -163,4 +166,25 @@ public class ProjectsApiTest {
         assertEquals(expected, alignedFeatures.size());
 
     }
+
+    @Test
+    public void compactProjectTest() {
+        String projectId = project.getProjectId();
+
+        File f = TestSetup.getInstance().getDataDir().resolve("Kaempferol.ms").toFile();
+        List<File> files = Collections.nCopies(20, f);
+        instance.importPreprocessedData(projectId, true, null, files);
+
+        // delete all features
+        List<String> allFeatureIds = featureApiInstance.getAlignedFeatures(projectId, null).stream().map(AlignedFeature::getAlignedFeatureId).toList();
+        featureApiInstance.deleteAlignedFeatures(projectId, allFeatureIds);
+
+        instance.closeProject(projectId, false);
+        ProjectInfo beforeCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+        instance.closeProject(projectId, true);
+        ProjectInfo afterCompacting = instance.openProject(projectId, project.getLocation(), List.of(SIZEINFORMATION));
+
+        assertTrue(Objects.requireNonNull(afterCompacting.getNumOfBytes()) < Objects.requireNonNull(beforeCompacting.getNumOfBytes()));
+    }
+
 }

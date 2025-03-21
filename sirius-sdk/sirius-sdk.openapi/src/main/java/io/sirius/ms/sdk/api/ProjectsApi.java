@@ -57,9 +57,10 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec closeProjectRequestCreation(String projectId) throws WebClientResponseException {
+    private ResponseSpec closeProjectRequestCreation(String projectId, Boolean compact) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -75,6 +76,8 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "compact", compact));
+        
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -91,11 +94,12 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void closeProject(String projectId) throws WebClientResponseException {
+    public void closeProject(String projectId, Boolean compact) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        closeProjectRequestCreation(projectId).bodyToMono(localVarReturnType).block();
+        closeProjectRequestCreation(projectId, compact).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -103,11 +107,12 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> closeProjectWithHttpInfo(String projectId) throws WebClientResponseException {
+    public ResponseEntity<Void> closeProjectWithHttpInfo(String projectId, Boolean compact) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return closeProjectRequestCreation(projectId).toEntity(localVarReturnType).block();
+        return closeProjectRequestCreation(projectId, compact).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -115,11 +120,12 @@ public class ProjectsApi {
      * Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec closeProjectWithResponseSpec(String projectId) throws WebClientResponseException {
-        return closeProjectRequestCreation(projectId);
+    public ResponseSpec closeProjectWithResponseSpec(String projectId, Boolean compact) throws WebClientResponseException {
+        return closeProjectRequestCreation(projectId, compact);
     }
     /**
      * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
