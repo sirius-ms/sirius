@@ -33,7 +33,7 @@ public class OutputOptions {
     @Getter
     protected Path outputProjectLocation;
 
-    @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
+    @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to be used (.sirius).", order = 210)
     public void setOutputProjectLocation(Path path) {
         String fileName = path.getFileName().toString();
         String fileWithoutExtension = fileName.indexOf(".") > 0 ? fileName.substring(0, fileName.lastIndexOf(".")) : fileName;
