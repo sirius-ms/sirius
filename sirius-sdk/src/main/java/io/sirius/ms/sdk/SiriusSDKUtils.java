@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 
-import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,10 +27,10 @@ public class SiriusSDKUtils {
     }
 
     public static Process startSirius(@Nullable String configDir) throws Exception {
-        return startSirius(configDir, null);
+        return startSirius(configDir, null, true);
     }
 
-    public static Process startSirius(@Nullable String configDir, @Nullable Path executable) throws Exception {
+    public static Process startSirius(@Nullable String configDir, @Nullable Path executable, boolean inheritIo) throws Exception {
         List<String> command = new ArrayList<>();
         command.add(executable != null ? executable.toAbsolutePath().toString() : findSiriusExecutable());
         if (configDir != null) {
@@ -41,29 +40,12 @@ public class SiriusSDKUtils {
         command.add("--noCite");
         command.add("rest");
         command.add("-s");
-        ProcessBuilder processBuilder = new ProcessBuilder(command.toArray(String[]::new));
-
-        Process process = processBuilder.start();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("Web server failed to start. Port")) {
-                    process.destroy();
-                    throw new Exception("Sirius could not be started due to port conflict!");
-                }
-                if (line.contains("SIRIUS Service started successfully!") || line.contains("Workflow DONE")) {
-                    return process;
-                }
-            }
+        ProcessBuilder processBuilder = new ProcessBuilder(command);
+        if (inheritIo) {
+            processBuilder.inheritIO();
         }
 
-        System.out.println("WARNING: Could not verify whether Startup of SIRIUS was successful. Please verify via PID file and API health check.");
-        if (!process.isAlive()) {
-            throw new Exception("SIRIUS process already exited!");
-        }
-
-        return process;
+        return processBuilder.start();
     }
 
     public static String findSiriusExecutable() {
@@ -100,22 +82,6 @@ public class SiriusSDKUtils {
 
     public static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
-    }
-
-    public static void redirectStdOutputToConsole(Process process) {
-        try {
-            process.getInputStream().transferTo(System.out);
-        } catch (IOException e) {
-           log.error("Error when reading process '{}' stdout. Future output might be lost.", process.pid(), e);
-        }
-    }
-
-    public static void redirectErrOutputToConsole(Process process) {
-        try {
-            process.getInputStream().transferTo(System.err);
-        } catch (IOException e) {
-            log.error("Error when reading process '{}' error stream. Future output might be lost.", process.pid(), e);
-        }
     }
 
     public static boolean restShutdown(ApiClient client) {
