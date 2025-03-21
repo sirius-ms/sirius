@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
@@ -54,13 +52,10 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
         addNamed("", compactButton);
 
         compactButton.addActionListener(e -> {
-            // todo check jobs
-            LoadingBackroundTask<ProjectInfo> loadingDialog = Jobs.runInBackgroundAndLoad(parent, "Compacting...", gui.getProjectManager()::compact);
-            if (loadingDialog.isCanceled()) {
-                JOptionPane.showMessageDialog(parent, "<html>Compacting will continue in the background.<br>In the meantime, the project is closed and will have to be opened manually.</html>", null, JOptionPane.WARNING_MESSAGE);
-                return;
+            ProjectInfo projectInfo = gui.getProjectManager().compactWithLoading(parent);
+            if (projectInfo != null) {
+                loadSize(projectInfo);
             }
-            loadSize();
         });
 
         addVerticalGlue();
@@ -75,7 +70,10 @@ public class ProjectSettingsPanel extends TwoColumnPanel implements SettingsPane
     }
 
     private void loadSize() {
-        ProjectInfo projectInfo = gui.getProjectManager().getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION));
+        loadSize(gui.getProjectManager().getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION)));
+    }
+
+    private void loadSize(ProjectInfo projectInfo) {
         long size = Optional.ofNullable(projectInfo.getNumOfBytes()).orElseThrow();
         sizeField.setText(FileUtils.sizeToReadableString(size));
     }
