@@ -203,11 +203,6 @@ public class JCefBrowserPanel extends JPanel {
             public void mouseEntered(java.awt.event.MouseEvent e) {
                 browserUI.requestFocusInWindow();
             }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                super.mouseExited(e);
-            }
         });
 
 
