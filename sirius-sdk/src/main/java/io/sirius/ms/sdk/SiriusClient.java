@@ -335,4 +335,13 @@ public class SiriusClient implements AutoCloseable {
         }
         return Optional.empty();
     }
+
+    /**
+     * @return error message from web response or, as a fallback, the message of the passed throwable
+     */
+    public String unwrapErrorMessage(Throwable ex) {
+        return unwrapErrorResponse(ex)
+                .map(SiriusSDKErrorResponse::getMessage)
+                .orElse(ex.getMessage());
+    }
 }
