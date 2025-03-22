@@ -112,15 +112,19 @@ public class ProjectController {
      * If there are many jobs, this might take some time.
      *
      * @param projectId unique name/identifier of the  project-space to be closed.
+     * @param compact if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeProject(@PathVariable String projectId) throws Throwable {
-        Project<?> ps = projectsProvider.getProject(projectId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
-                        "Project space with identifier '" + projectId + "' not found!"));
+    public void closeProject(@PathVariable String projectId,
+                             @Deprecated(forRemoval = true) @RequestParam(value = "compact", defaultValue = "false") boolean compact
+    ) throws IOException {
+        Project<?> ps = projectsProvider.getProjectOrThrow(projectId);
         computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
+        if (compact) {
+            ps.getProjectSpaceManager().compact();
+        }
     }
 
     /**
