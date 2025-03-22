@@ -94,7 +94,7 @@ No authorization required
 
 ## closeProject
 
-> closeProject(projectId)
+> closeProject(projectId, compact)
 
 Close project-space and remove it from application
 
@@ -117,8 +117,9 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier of the  project-space to be closed.
+        Boolean compact = false; // Boolean | if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.
         try {
-            apiInstance.closeProject(projectId);
+            apiInstance.closeProject(projectId, compact);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#closeProject");
             System.err.println("Status code: " + e.getCode());
@@ -136,6 +137,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier of the  project-space to be closed. | |
+| **compact** | **Boolean**| if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version. | [optional] [default to false] |
 
 ### Return type
 
