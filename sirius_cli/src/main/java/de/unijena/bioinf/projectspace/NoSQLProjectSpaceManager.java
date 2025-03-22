@@ -186,4 +186,8 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
         project.getStorage().flush();
     }
 
+    @Override
+    public void compact() {
+        project.getStorage().compact();
+    }
 }

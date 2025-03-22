@@ -160,7 +160,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
 
             enforceElGordo = makeParameterCheckBox("EnforceElGordoFormula");  //El Gordo detects lipids and by default fixes the formula
-            smallParameters.addNamed("Fix formula for detected lipid", enforceElGordo);
+            addAdvancedParameter(smallParameters,"Fix formula for detected lipid", enforceElGordo);
 
 
             //sync profile with ppm spinner

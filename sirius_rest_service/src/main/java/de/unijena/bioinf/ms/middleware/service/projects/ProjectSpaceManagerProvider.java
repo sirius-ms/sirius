@@ -291,4 +291,13 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public void destroy() {
         closeAll();
     }
+
+    @Override
+    public String validateId(String projectId) {
+        try {
+            return ProjectsProvider.super.validateId(projectId);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
+    }
 }

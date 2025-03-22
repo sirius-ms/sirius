@@ -19,22 +19,32 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import lombok.Getter;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 
+import static de.unijena.bioinf.projectspace.ProjectSpaceManager.PROJECT_FILENAME_VALIDATOR;
+
 public class OutputOptions {
-    @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
+    @Getter
     protected Path outputProjectLocation;
 
-    public Path getOutputProjectLocation() {
-        return outputProjectLocation;
+    @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to be used (.sirius).", order = 210)
+    public void setOutputProjectLocation(Path path) {
+        String fileName = path.getFileName().toString();
+        String fileWithoutExtension = fileName.indexOf(".") > 0 ? fileName.substring(0, fileName.lastIndexOf(".")) : fileName;
+        if (!PROJECT_FILENAME_VALIDATOR.matcher(fileWithoutExtension).matches()) {
+            throw new CommandLine.ParameterException(spec.commandLine(),
+                    String.format("Output project filename '%s' must match '%s'.", fileWithoutExtension, PROJECT_FILENAME_VALIDATOR.pattern()));
+        }
+        outputProjectLocation = path;
     }
 
+    @Getter
     @CommandLine.Option(names = "--update-fingerprint-version", description = {"Updates Fingerprint versions of the input project to the one used by this SIRIUS version.","WARNING: All Fingerprint related results (CSI:FingerID, CANOPUS) will be lost!"}, order = 230)
     private boolean updateFingerprints;
-
-    public boolean isUpdateFingerprints() {
-        return updateFingerprints;
-    }
 }

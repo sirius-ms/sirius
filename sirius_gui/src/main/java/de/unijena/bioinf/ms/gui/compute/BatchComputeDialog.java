@@ -45,7 +45,6 @@ import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.SiriusSDKErrorResponse;
 import io.sirius.ms.sdk.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -62,8 +61,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -808,10 +807,7 @@ public class BatchComputeDialog extends JDialog {
         try {
             return gui.applySiriusClient((c, pid) -> c.jobs().saveJobConfig(newPresetName, js, finalOverwrite, false));
         } catch (Exception ex) {
-            String errorMessage = gui.getSiriusClient().unwrapErrorResponse(ex)
-                    .map(SiriusSDKErrorResponse::getMessage)
-                    .orElse(ex.getMessage());
-            Jobs.runEDTLater(() -> new StacktraceDialog(this, errorMessage, ex));
+            Jobs.runEDTLater(() -> new StacktraceDialog(this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
             return null;
         }
     }
