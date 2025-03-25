@@ -121,5 +121,9 @@ public class DeleteExperimentAction extends AbstractGuiAction {
                 }
             }
         });
+
+        if (toRemove.size() >= 100 && JOptionPane.showConfirmDialog(mainFrame, "Compact project storage? (may take some time)", null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            gui.getProjectManager().compactWithLoading(mainFrame);
+        }
     }
 }

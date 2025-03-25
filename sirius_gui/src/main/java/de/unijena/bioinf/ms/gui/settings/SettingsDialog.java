@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -40,6 +41,7 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
+@Slf4j
 public class SettingsDialog extends JDialog implements ActionListener {
     private JButton discard, save;
     private final Properties nuProps;
@@ -81,8 +83,12 @@ public class SettingsDialog extends JDialog implements ActionListener {
         proxSettings = new NetworkSettingsPanel(gui, nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
-        projectSettings = new ProjectSettingsPanel(gui, this);
-        settingsPane.add(projectSettings.name(), projectSettings);
+        try {
+            projectSettings = new ProjectSettingsPanel(gui, this);
+            settingsPane.add(projectSettings.name(), projectSettings);
+        } catch (Exception e) {
+            log.error("Cannot init ProjectSettingsPanel", e);
+        }
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
 //        settingsPane.add(accountSettings.name(), accountSettings);

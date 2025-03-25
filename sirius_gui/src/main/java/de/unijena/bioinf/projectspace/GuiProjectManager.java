@@ -271,7 +271,7 @@ public class GuiProjectManager implements Closeable {
         return getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
     }
 
-    public ProjectInfo compactWithLoading(Dialog parent) {
+    public ProjectInfo compactWithLoading(Window parent) {
         if (siriusClient.jobs().hasJobs(projectId, false)) {
             if (JOptionPane.showConfirmDialog(parent,"There are running jobs. They will be canceled before compacting.", null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
                 return null;
