@@ -16,7 +16,6 @@ class FileUtilsTest {
         assertEquals("1 kB", sizeToReadableString(1049));
         assertEquals("1.1 kB", sizeToReadableString(1050));
         assertEquals("1.2 kB", sizeToReadableString(1234));
-        assertEquals("1.2 kB", sizeToReadableString(1234));
         assertEquals("1.9 GB", sizeToReadableString(1900000000));
     }
 }
