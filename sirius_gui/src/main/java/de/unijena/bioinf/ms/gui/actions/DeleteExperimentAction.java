@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -42,6 +42,7 @@ import java.util.List;
 /**
  * @author Markus Fleischauer
  */
+@Slf4j
 public class DeleteExperimentAction extends AbstractGuiAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
 
@@ -101,10 +102,10 @@ public class DeleteExperimentAction extends AbstractGuiAction {
                                             client.features().deleteAlignedFeature(pid, feature.getFeatureId());
                                             removed.add(feature);
                                         } else {
-                                            LoggerFactory.getLogger(getClass()).warn("Cannot delete '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
+                                            log.warn("Cannot delete '{}' because it is currently computing. Skipping!", feature.getFeatureId());
                                         }
                                     } catch (Exception e) {
-                                        LoggerFactory.getLogger(getClass()).error("Could not delete: " + feature.getFeatureId(), e);
+                                        log.error("Could not delete: {}", feature.getFeatureId(), e);
                                     }
                                 }));
 
