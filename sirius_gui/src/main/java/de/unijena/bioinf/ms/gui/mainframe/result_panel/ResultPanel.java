@@ -149,7 +149,6 @@ public class ResultPanel extends JTabbedPane {
                 massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
                 int index = indexOfComponent(massDefectPlaceholder);
                 if (index >= 0) {
-                    System.out.println("removed placeholder");
                     removeTabAt(index);
                     insertTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription(), index);
                     setSelectedIndex(index);
