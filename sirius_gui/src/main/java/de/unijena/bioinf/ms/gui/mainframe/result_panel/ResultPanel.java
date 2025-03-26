@@ -73,6 +73,9 @@ public class ResultPanel extends JTabbedPane {
 
     private ProjectType type;
 
+    private JPanel massDefectPlaceholder;
+
+
     public ResultPanel(@NotNull CompoundList compoundList, @NotNull SiriusGui gui) {
         super();
         this.gui = gui;
@@ -138,13 +141,29 @@ public class ResultPanel extends JTabbedPane {
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
-        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
+        massDefectPlaceholder = new JPanel();
+        addTab("Homologue Series", null, massDefectPlaceholder, "Kendrick mass defect plot for homologue series.");
+
+        this.addChangeListener(e -> {
+            if (getSelectedComponent() == massDefectPlaceholder && massDefectTab == null) {
+                massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
+                int index = indexOfComponent(massDefectPlaceholder);
+                if (index >= 0) {
+                    System.out.println("removed placeholder");
+                    removeTabAt(index);
+                    insertTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription(), index);
+                    setSelectedIndex(index);
+                }
+            }
+        });
+
 
         // global spectra match search list
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
                 showSpectralMatchingTab((Boolean) evt.getNewValue()));
         showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
+
+
     }
 
     private void showSpectralMatchingTab(boolean show) {
