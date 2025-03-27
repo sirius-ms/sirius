@@ -19,22 +19,17 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
+import lombok.Getter;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 
+@Getter
 public class OutputOptions {
     @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
     protected Path outputProjectLocation;
 
-    public Path getOutputProjectLocation() {
-        return outputProjectLocation;
-    }
-
     @CommandLine.Option(names = "--update-fingerprint-version", description = {"Updates Fingerprint versions of the input project to the one used by this SIRIUS version.","WARNING: All Fingerprint related results (CSI:FingerID, CANOPUS) will be lost!"}, order = 230)
     private boolean updateFingerprints;
 
-    public boolean isUpdateFingerprints() {
-        return updateFingerprints;
-    }
 }
