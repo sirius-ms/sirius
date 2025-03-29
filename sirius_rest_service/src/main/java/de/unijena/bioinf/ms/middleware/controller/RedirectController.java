@@ -37,7 +37,22 @@ public class RedirectController {
 
     @GetMapping({"/KMD", "/KMD/**"})
     public String forwardKmdView() {
-        return "forward:/kmd-view/index.html";
+        return "forward:/sirius_java_integrated/index.html";
+    }
+
+    @GetMapping({"/formulaTreeView", "/formulaTreeView/**"})
+    public String forwardFormulaTreeView() {
+        return "forward:/sirius_java_integrated/index.html";
+    }
+
+    @GetMapping({"/d3-colorbar.js", })
+    public String forwardD3ColorbarJs() {
+        return "forward:/sirius_java_integrated/d3-colorbar.js";
+    }
+
+    @GetMapping({"/treeViewer.js"})
+    public String forwardTreeViewerJs() {
+        return "forward:/sirius_java_integrated/treeViewer.js";
     }
 
     @GetMapping({"/apps/hello-world", "/apps/hello-world/**"})

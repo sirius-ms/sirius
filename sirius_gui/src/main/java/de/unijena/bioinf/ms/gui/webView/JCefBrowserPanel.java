@@ -34,10 +34,10 @@ import org.cef.handler.CefLifeSpanHandler;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
 import org.cef.network.CefRequest;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -274,6 +274,18 @@ public class JCefBrowserPanel extends JPanel {
         if (browser != null && !isDisposed) {
             browser.executeJavaScript(javascript, browser.getURL(), 0);
         }
+    }
+
+    public void updateSelectedFeature(@NotNull String alignedFeatureId){
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s')", alignedFeatureId));
+    }
+
+    public void updateSelectedFormulaCandidate(@NotNull String alignedFeatureId, @NotNull String formulaId){
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s', formulaID='%s')", alignedFeatureId, formulaId));
+    }
+
+    public void updateSelectedStructureCandidate(@NotNull String alignedFeatureId, @NotNull String formulaId , @NotNull String inchiKey){
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s', formulaID='%s', inchikey='%s')", alignedFeatureId, formulaId, inchiKey));
     }
 
     /**

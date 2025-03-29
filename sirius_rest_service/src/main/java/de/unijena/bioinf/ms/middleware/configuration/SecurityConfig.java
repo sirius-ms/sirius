@@ -52,9 +52,12 @@ public class SecurityConfig {
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
                 //todo generic solution to easily add more apps
 
-                // First React app - accessible at /app1/**
-                registry.addResourceHandler("/KMD/**")
-                        .addResourceLocations("classpath:/static/kmd-view/")
+
+
+
+                // React views
+                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**")
+                        .addResourceLocations("classpath:/static/sirius_java_integrated/")
                         .resourceChain(true)
                         .addResolver(new PathResourceResolver() {
                             @Override
@@ -65,10 +68,16 @@ public class SecurityConfig {
                             }
                         });
 
+                //assets for react views
                 registry.addResourceHandler("/assets/**")
-                        .addResourceLocations("classpath:/static/kmd-view/assets/");
+                        .addResourceLocations("classpath:/static/sirius_java_integrated/assets/");
+/*                registry.addResourceHandler("/treeViewer.js")
+                        .addResourceLocations("classpath:/static/sirius_java_integrated/treeViewer.js");
+                registry.addResourceHandler("/d3-colorbar.js")
+                        .addResourceLocations("classpath:/static/sirius_java_integrated/d3-colorbar.js");*/
 
-                registry.addResourceHandler("/apps/hello-world/**")
+                // just some basic example for testing.
+                registry.addResourceHandler("/apps/hello-world/")
                         .addResourceLocations("classpath:/static/hello-world/")
                         .resourceChain(true)
                         .addResolver(new PathResourceResolver() {
