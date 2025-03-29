@@ -102,6 +102,9 @@ public class ResultPanel extends JTabbedPane {
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
+        FormulaOverviewPanel2 formulasTab2 = new FormulaOverviewPanel2(siriusResultElements, gui);
+        addTab("Formulas 2", null, formulasTab2, formulasTab2.getDescription());
+
 
         // fingerprint tab
         fingerprintList = null;
@@ -123,12 +126,10 @@ public class ResultPanel extends JTabbedPane {
         canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements, gui);
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
-
         // structure db search tab
         databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
         structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
-
 
         // combined denovo structure db search tabs
         combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
