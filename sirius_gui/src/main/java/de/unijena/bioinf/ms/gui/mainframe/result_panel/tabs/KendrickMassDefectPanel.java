@@ -18,7 +18,7 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     public KendrickMassDefectPanel(@NotNull CompoundList compoundList, SiriusGui siriusGui) {
         super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + "?projectID=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+                + "?pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
         compoundList.addChangeListener(this);
     }
 
@@ -29,7 +29,7 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     @Override
     public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
-        executeJavaScript(String.format("window.kmdUtils.updateFeatureOfInterest('%s')", selected.getFirst().getFeatureId()));
+        updateSelectedFeature(selected.getFirst().getFeatureId());
     }
 
     @Override
