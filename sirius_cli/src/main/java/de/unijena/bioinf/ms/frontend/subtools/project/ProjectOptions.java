@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 @CommandLine.Command(name = "project", description = "<STANDALONE> Project space management.%n%n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class ProjectOptions implements StandaloneTool<Workflow> {
 
-    @CommandLine.Option(names = "--compact", description = "Compact project storage.")
+    @CommandLine.Option(names = "--compact", description = "Compact project to reduce projects file size.")
     boolean compact;
 
     @Override

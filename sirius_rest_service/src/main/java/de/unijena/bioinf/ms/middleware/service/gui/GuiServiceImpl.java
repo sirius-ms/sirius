@@ -87,7 +87,8 @@ public class GuiServiceImpl implements GuiService {
                                 Box closingDialogPanel = Box.createVerticalBox();
                                 closingDialogPanel.add(new JLabel("You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?"));
                                 closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
-                                JCheckBox compactCheckbox = new JCheckBox("Compact project storage");
+                                JCheckBox compactCheckbox = new JCheckBox("Compact project");
+                                compactCheckbox.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
                                 closingDialogPanel.add(compactCheckbox);
 
                                 closeSirius = JOptionPane.showConfirmDialog(gui.getMainFrame(), closingDialogPanel, null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
