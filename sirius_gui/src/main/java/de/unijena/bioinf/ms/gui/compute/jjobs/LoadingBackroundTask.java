@@ -4,6 +4,7 @@ import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.loading.JProgressBarPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.ProgressPanel;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,6 +24,9 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
     private final SwingJJobContainer<T> job;
 
     private JButton cancel;
+
+    @Getter
+    private boolean canceled = false;
 
     private ProgressPanel<?> progressPanel;
 
@@ -177,6 +181,7 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == this.cancel) {
+            canceled = true;
             job.getSourceJob().cancel();
             cancel.setEnabled(false);
             progressPanel.setMessage("Canceling...");
