@@ -35,7 +35,7 @@ import org.cef.handler.CefLifeSpanHandler;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
 import org.cef.network.CefRequest;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,8 +68,9 @@ public class JCefBrowserPanel extends JPanel {
     private static final String CSS_DARK_RESOURCE = "/js/styles-dark.css";
 
     public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider) {
-        return makeHTMLTextPanel(htmlText, browserProvider,  Colors.BACKGROUND);
+        return makeHTMLTextPanel(htmlText, browserProvider, Colors.BACKGROUND);
     }
+
     public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider, Color background) {
         final StringBuilder buf = new StringBuilder();
         try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(JCefBrowserPanel.class.getResourceAsStream("/sirius/text.html")))) {
@@ -213,7 +214,7 @@ public class JCefBrowserPanel extends JPanel {
                                 URI targetURL = URI.create(url);
                                 URI currentURL = browser.getURL() != null ? URI.create(browser.getURL()) : null;
                                 if (linkInterception == LinkInterception.ALL || currentURL == null || !currentURL.getHost().equals(targetURL.getHost())) {
-                                    GuiUtils.openURL(targetURL,null, true);
+                                    GuiUtils.openURL(targetURL, null, true);
                                     // Return true to cancel the navigation in the embedded browser
                                     return true;
                                 }
@@ -229,28 +230,6 @@ public class JCefBrowserPanel extends JPanel {
         }
     }
 
-      //todo loading urls after initialize is not working right now.
-//    /**
-//     * Loads a new URL in the browser.
-//     *
-//     * @param url The URL to load
-//     */
-//
-//    public void loadURL(String url) {
-//        if (browser != null && !isDisposed) {
-//            browser.loadURL(url);
-//        }
-//    }
-//
-//    /**
-//     * Loads a new URL in the browser.
-//     *
-//     * @param url The URL to load
-//     */
-//    public void loadURL(URI url) {
-//        loadURL(url.toString());
-//    }
-
     /**
      * Executes JavaScript in the browser.
      *
@@ -262,16 +241,20 @@ public class JCefBrowserPanel extends JPanel {
         }
     }
 
-    public void updateSelectedFeature(@NotNull String alignedFeatureId){
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s')", alignedFeatureId));
+    public void updateSelectedFeature(@Nullable String alignedFeatureId) {
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
     }
 
-    public void updateSelectedFormulaCandidate(@NotNull String alignedFeatureId, @NotNull String formulaId){
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s', formulaID='%s')", alignedFeatureId, formulaId));
+    public void updateSelectedFormulaCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId) {
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId)));
     }
 
-    public void updateSelectedStructureCandidate(@NotNull String alignedFeatureId, @NotNull String formulaId , @NotNull String inchiKey){
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID='%s', formulaID='%s', inchikey='%s')", alignedFeatureId, formulaId, inchiKey));
+    public void updateSelectedStructureCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId, @Nullable String inchiKey) {
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
+    }
+
+    private static String parseNullable(@Nullable String s) {
+       return s == null || s.isBlank() ? "null" : ("'" + s + "'");
     }
 
     /**
