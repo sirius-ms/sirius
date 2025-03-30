@@ -1,9 +1,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewContainer;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -26,21 +24,8 @@ public class FormulaTreePanel extends JCefBrowserPanel implements ActiveElementC
 
     @Override
     public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
-        if (elementsParent != null) {
-            String alignedFeatureId = elementsParent.getFeatureId();
-            if (selectedElement != null){
-                String formulaId = selectedElement.getFormulaId();
-                updateSelectedFormulaCandidate(alignedFeatureId, formulaId);
-            } else {
-                updateSelectedFeature(alignedFeatureId);
-            }
-        } else {
-            //todo clear view
-        }
-    }
-
-    public void updateSpectrumSettings(int spectrumIndex, String spectrumType, Normalization normalizationMode, SpectraViewContainer.IntensityTransform intensityMode) {
-        // todo add norm, int box handling
-        executeJavaScript(String.format("window.urlUtils.updateSelectedSpectrum(spectrumIndex='%d', spectrumType=%s)", spectrumIndex, spectrumType));
+        String alignedFeatureId = elementsParent != null ? elementsParent.getFeatureId() : null;
+        String formulaId = selectedElement != null ? selectedElement.getFormulaId() : null;
+        updateSelectedFormulaCandidate(alignedFeatureId, formulaId);
     }
 }
