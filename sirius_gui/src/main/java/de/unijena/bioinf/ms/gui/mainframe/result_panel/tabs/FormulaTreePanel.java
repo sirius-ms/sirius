@@ -28,10 +28,8 @@ public class FormulaTreePanel extends JCefBrowserPanel implements ActiveElementC
     public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         if (elementsParent != null) {
             String alignedFeatureId = elementsParent.getFeatureId();
-            System.out.println("featureID: " + alignedFeatureId);
             if (selectedElement != null){
                 String formulaId = selectedElement.getFormulaId();
-                System.out.println("formulaID: " + formulaId);
                 updateSelectedFormulaCandidate(alignedFeatureId, formulaId);
             } else {
                 updateSelectedFeature(alignedFeatureId);
