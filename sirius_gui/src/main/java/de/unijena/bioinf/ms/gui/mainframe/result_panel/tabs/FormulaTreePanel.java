@@ -19,9 +19,7 @@ public class FormulaTreePanel extends JCefBrowserPanel implements ActiveElementC
     //todo make loadable by using swing based spinner
     public FormulaTreePanel(@NotNull FormulaList formulaList, SiriusGui siriusGui) {
         super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/formulaTreeView")
-                + "?pid=" + siriusGui.getProjectManager().getProjectId()
-                + "&spectrumIndex=0" + "&spectrumType=MS2"
-                , siriusGui);
+                + "?pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
         formulaList.addActiveResultChangedListener(this);
     }
 

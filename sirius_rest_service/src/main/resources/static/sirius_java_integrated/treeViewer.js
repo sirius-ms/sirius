@@ -175,7 +175,6 @@ var TreeViewer = (function() {
         svg.selectAll('.node, .link, .brush').remove();
         toggleColorBar(false);
       }
-      data = null;
     }
   
     // When width/height of the page has changed, and/or node/link
@@ -364,12 +363,12 @@ var TreeViewer = (function() {
           nodeToMove = clickedNode;
           // visualize source/target of move with line
           d3.select(clickedNode).style('opacity', 0.45);
-          d3.select('svg')
+          d3.select('#tree-svg')
             .append('line')
             .attr('id', 'moveLine')
             .style('stroke', 'blue')
             .style('stroke-width', 2);
-          d3.select('svg')
+          d3.select('#tree-svg')
             .append('text')
             .attr('id', 'moveLabel')
             .style('fill', 'blue');
@@ -404,6 +403,33 @@ var TreeViewer = (function() {
             .select('rect')
             .style(style, styles[theme]['node-rect-selected'][style]);
     }
+
+    function highlightNodeById(fragmentId) {
+      var d3Instance = window.d3 || d3; // Ensure d3 is accessible
+      if (!d3Instance || !svg) {
+          console.error("D3 or SVG not initialized for highlightNodeById");
+          return;
+      }
+
+      if (fragmentId === null || typeof fragmentId === 'undefined') {
+          highlightNode(null); // Clear highlighting
+          return;
+      }
+
+      // Find the node data using the provided fragmentId
+      var targetNodeSelection = svg.selectAll('.node') // Select within the initialized svg
+          .filter(function(d) {
+              // Check if data structure is as expected
+              return d && d.data && d.data.fragmentData && d.data.fragmentData.id === fragmentId;
+          });
+
+      if (!targetNodeSelection.empty()) {
+          highlightNode(targetNodeSelection); // Pass the D3 selection
+      } else {
+          console.warn("Node with fragmentId " + fragmentId + " not found in the tree.");
+          highlightNode(null); // Clear highlighting if not found
+      }
+  }
   
     function changeCursor(new_cursor) {
       svg.select('.overlay').attr('cursor', new_cursor);
@@ -1796,7 +1822,7 @@ var TreeViewer = (function() {
   
     function applyWindowSize() {
       calcLayout();
-      d3.select('svg').attr('width', width).attr('height', height);
+      d3.select('#tree-svg').attr('width', width).attr('height', height);
       zoom_base.attr('width', width).attr('height', height);
       d3.select('.overlay').attr('width', width).attr('height', height);
       d3.select('#cb').attr(
@@ -1902,7 +1928,6 @@ var TreeViewer = (function() {
       brushTransition = d3.transition().duration(500);
       zeroTransition = d3.transition().duration(0);
       
-      console.log(container)
       // Calculate initial layout
       calcLayout();
       
@@ -1911,7 +1936,7 @@ var TreeViewer = (function() {
         .append('svg')
         .attr('width', width)
         .attr('height', height)
-        .attr('id', 'svg')
+        .attr('id', 'tree-svg')
         .append('g');
       
       zoom_base = svg
@@ -2010,6 +2035,7 @@ var TreeViewer = (function() {
       scale: scaleTree,
       getJsonTree: getJSONTree,
       highlightNode: highlightNode,
+      highlightNodeById: highlightNodeById
     };
   })();
   

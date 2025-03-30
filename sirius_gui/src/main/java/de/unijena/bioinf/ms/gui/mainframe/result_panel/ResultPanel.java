@@ -53,7 +53,6 @@ public class ResultPanel extends JTabbedPane {
     private final SiriusGui gui;
 
     private final FormulaOverviewPanel formulasTab;
-    private FormulaOverviewPanel2 formulasTab2 = null;
 
     private LCMSViewerPanel lcmsTab;
     private final CandidateListDetailViewPanel structuresTab;
@@ -63,7 +62,7 @@ public class ResultPanel extends JTabbedPane {
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
     private SpectralMatchingPanel spectralMatchingTab;
-    private KendrickMassDefectPanel massDefectTab = null;
+    private final KendrickMassDefectPanel massDefectTab;
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
@@ -98,16 +97,8 @@ public class ResultPanel extends JTabbedPane {
 
 
         // formulas tabs
-        formulasTab = new FormulaOverviewPanel(siriusResultElements);
+        formulasTab = new FormulaOverviewPanel(siriusResultElements, gui);
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
-
-        final JPanel formulasTab2PlaceHolder = new JPanel();
-        addTab("Formulas 2", null, formulasTab2PlaceHolder, "<html>"
-                + "<b>SIRIUS - Molecular Formulas Identification</b>"
-                + "<br>"
-                + "Overview about your Experiment and Results of the Formula Identification with SIRIUS."
-                + "</html>");
-
 
         // fingerprint tab
         fingerprintList = null;
@@ -119,7 +110,6 @@ public class ResultPanel extends JTabbedPane {
         fingerprintTab = fingerprintList == null ? null : new FingerprintPanel(fingerprintList);
         if (fingerprintList != null)
             addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fingerprintTab), fingerprintTab.getDescription());
-
 
         // canopus tab
         compoundClassList = new CompoundClassList(siriusResultElements,
@@ -145,29 +135,8 @@ public class ResultPanel extends JTabbedPane {
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        final JPanel massDefectPlaceholder = new JPanel();
-        addTab("Homologue Series", null, massDefectPlaceholder, "Kendrick mass defect plot for homologue series.");
-
-        this.addChangeListener(e -> {
-            if (getSelectedComponent() == massDefectPlaceholder && massDefectTab == null) {
-                massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
-                int index = indexOfComponent(massDefectPlaceholder);
-                if (index >= 0) {
-                    removeTabAt(index);
-                    insertTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription(), index);
-                    setSelectedIndex(index);
-                }
-            } else if (getSelectedComponent() == formulasTab2PlaceHolder && formulasTab2 == null) {
-                formulasTab2 = new FormulaOverviewPanel2(siriusResultElements, gui);
-                int index = indexOfComponent(formulasTab2PlaceHolder);
-                if (index >= 0) {
-                    removeTabAt(index);
-                    insertTab("Formulas 2", null, formulasTab2, formulasTab2.getDescription(), index);
-                    setSelectedIndex(index);
-                }
-            }
-        });
-
+        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
+        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
 
         // global spectra match search list
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->

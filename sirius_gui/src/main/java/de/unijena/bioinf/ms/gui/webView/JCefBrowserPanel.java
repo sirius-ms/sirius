@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.browser.CefRendering;
 import org.cef.handler.CefLifeSpanHandler;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
@@ -189,26 +190,11 @@ public class JCefBrowserPanel extends JPanel {
         };
 
         client.addLifeSpanHandler(lifeSpanHandler);
-
         setupLinkInterception();
-        browser = client.createBrowser(url, false, false);
-
-        // Add focus-related improvements
+        // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
+        browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
         Component browserUI = browser.getUIComponent();
-        browserUI.setFocusable(true);
-
-        // Request focus when mouse enters
-        browserUI.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                browserUI.requestFocusInWindow();
-            }
-        });
-
-
         add(browserUI, BorderLayout.CENTER);
-
-        // We don't need a hierarchy listener as we'll override removeNotify() instead
     }
 
     // Add this to your JCefBrowserPanel class

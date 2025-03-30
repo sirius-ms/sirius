@@ -34,6 +34,10 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     @Override
     public String getDescription() {
+        return getDescriptionString();
+    }
+
+    public static String getDescriptionString() {
         //todo write useful description
         return "Kendrick mass defect plot for homologue series.";
     }
