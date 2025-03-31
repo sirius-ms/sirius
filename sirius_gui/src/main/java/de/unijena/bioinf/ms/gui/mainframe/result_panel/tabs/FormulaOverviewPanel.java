@@ -45,14 +45,14 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription, Lo
         return getDescriptionString();
     }
 
-    private final FormulaTreePanel spectrumTreeView;
+    private final SpectraTreePanel spectrumTreeView;
     private final FormulaListDetailView formulaListDetailView;
 
     public FormulaOverviewPanel(FormulaList siriusResultElements, SiriusGui siriusGui) {
         super(new BorderLayout());
 
         formulaListDetailView = new FormulaListDetailView(siriusResultElements);
-        spectrumTreeView = new FormulaTreePanel(siriusResultElements, siriusGui);
+        spectrumTreeView = new SpectraTreePanel(siriusResultElements, siriusGui);
 
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, formulaListDetailView, spectrumTreeView);
