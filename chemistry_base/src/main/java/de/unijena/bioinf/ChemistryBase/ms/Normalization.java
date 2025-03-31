@@ -25,35 +25,38 @@ import de.unijena.bioinf.ChemistryBase.algorithm.HasParameters;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameter;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import lombok.Getter;
 
-import static de.unijena.bioinf.ChemistryBase.ms.NormalizationMode.*;
 
 @HasParameters
 public class Normalization {
 	
-	private final NormalizationMode mode;
-	private final double norm;
+	@Getter
+    private final NormalizationMode mode;
+	@Getter
+    private final double norm;
 	
-	public final static Normalization Sum = new Normalization(SUM, 1d);
-	public final static Normalization Max = new Normalization(MAX, 1d);
-    public final static Normalization First = new Normalization(FIRST, 1d);
-	
+	public final static Normalization Sum = new Normalization(NormalizationMode.SUM, 1d);
+	public final static Normalization Max = new Normalization(NormalizationMode.MAX, 1d);
+    public final static Normalization First = new Normalization(NormalizationMode.FIRST, 1d);
+    public final static Normalization L2 = new Normalization(NormalizationMode.L2, 1d);
+
 	public static Normalization Sum(double norm) {
-		return new Normalization(SUM, norm);
+		return new Normalization(NormalizationMode.SUM, norm);
 	}
 	
 	public static Normalization Max(double norm) {
-		return new Normalization(MAX, norm);
+		return new Normalization(NormalizationMode.MAX, norm);
 	}
-	
+
+    public static Normalization L2() {
+        return L2;
+    }
+
 	public Normalization(@Parameter("mode") NormalizationMode mode, @Parameter("base") double norm) {
 		this.mode = mode;
 		this.norm = norm;
 	}
-
-    public static Normalization L2() {
-        return new Normalization(L2, 1d);
-    }
 
     /**
      * Given a value from 0.0 to 1.0, this function returns the scaled value from 0.0 to MAX.
@@ -94,15 +97,11 @@ public class Normalization {
         long temp;
         result = mode.hashCode();
         temp = norm != +0.0d ? Double.doubleToLongBits(norm) : 0L;
-        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        result = 31 * result + Long.hashCode(temp);
         return result;
     }
 
-    public NormalizationMode getMode() {
-		return mode;
-	}
-
-	public double getBase() {
+    public double getBase() {
 		return norm;
 	}
 	
