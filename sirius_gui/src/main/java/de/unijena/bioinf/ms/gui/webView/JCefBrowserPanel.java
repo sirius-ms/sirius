@@ -195,6 +195,13 @@ public class JCefBrowserPanel extends JPanel {
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
         browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
         Component browserUI = browser.getUIComponent();
+
+        // Apply the Linux scroll fix
+        // This should be done before adding the component to the panel
+        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+            MouseWheelFix.apply(browserUI);
+        }
+
         add(browserUI, BorderLayout.CENTER);
     }
 
