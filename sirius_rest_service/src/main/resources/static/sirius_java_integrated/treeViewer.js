@@ -2006,9 +2006,6 @@ var TreeViewer = (function() {
       
       // Set up zoom and brush
       zoom = d3.zoom().on('zoom', zoomed)
-      .wheelDelta(function () {
-        return -d3.event.deltaY * (d3.event.deltaMode ? 120 : 1) / 500 * 10;
-      });
       brush = d3.brush().on('end', brushended);
       brush.filter(function () {
         if (d3.event.button == 2) {
