@@ -1114,6 +1114,11 @@ public class Spectrums {
     }
 
 
+    public static boolean isSpectrumRelativeIntensity(Spectrum<?> spec){
+        final double maxInt = spec.getMaxIntensity();
+        return Math.abs(maxInt - 1d) < 0.000001d;
+    }
+
     public static <P extends Peak, S extends MutableSpectrum<P>> double normalize(S spectrum, Normalization norm) {
         final int size = spectrum.size();
         return normalizeByScale(spectrum, computeNormalizationScale(spectrum, size, norm), size);
