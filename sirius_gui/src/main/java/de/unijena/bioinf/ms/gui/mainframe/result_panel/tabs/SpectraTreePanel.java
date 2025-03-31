@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
@@ -12,12 +13,12 @@ import javax.swing.*;
 import java.net.URI;
 import java.util.List;
 
-public class FormulaTreePanel extends JCefBrowserPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
+public class SpectraTreePanel extends JCefBrowserPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     //todo make loadable by using swing based spinner
-    public FormulaTreePanel(@NotNull FormulaList formulaList, SiriusGui siriusGui) {
+    public SpectraTreePanel(@NotNull FormulaList formulaList, SiriusGui siriusGui) {
         super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/formulaTreeView")
-                + "?pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+                + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
         formulaList.addActiveResultChangedListener(this);
     }
 

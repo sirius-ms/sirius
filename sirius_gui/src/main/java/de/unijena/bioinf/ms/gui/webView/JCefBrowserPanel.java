@@ -67,6 +67,8 @@ public class JCefBrowserPanel extends JPanel {
     private static final String CSS_LIGHT_RESOURCE = "/js/styles.css";
     private static final String CSS_DARK_RESOURCE = "/js/styles-dark.css";
 
+    protected static String THEME_REST_PARA = "?theme=" + (Colors.isDarkTheme() ? "dark" : "light");
+
     public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider) {
         return makeHTMLTextPanel(htmlText, browserProvider, Colors.BACKGROUND);
     }

@@ -19,7 +19,7 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     public KendrickMassDefectPanel(@NotNull CompoundList compoundList, SiriusGui siriusGui) {
         super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + "?pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+                + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
         compoundList.addChangeListener(this);
     }
 
