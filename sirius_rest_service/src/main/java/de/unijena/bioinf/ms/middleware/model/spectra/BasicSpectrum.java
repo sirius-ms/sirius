@@ -34,7 +34,6 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,31 +49,18 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
 
     public BasicSpectrum(@NotNull List<SimplePeak> peaks) {
         this.peaks = peaks;
+        computeNormalizationFactors();
     }
 
     public BasicSpectrum(@NotNull Spectrum<Peak> spec) {
-        this(spec, true);
+        this(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec));
     }
 
-    public BasicSpectrum(@NotNull Spectrum<Peak> spec, boolean makeRelative) {
-        Double scale = null;
-        if (makeRelative) {
-            final double maxInt = spec.getMaxIntensity();
-            //check if spectrum is not normalized or max normalized
-            if (maxInt > 1d || Math.abs(maxInt - 1d) < 0.000001d){
-                Pair<SimpleSpectrum, Double> specAndScale = Spectrums.getNormalizedSpectrumWithScale(spec, Normalization.Sum);
-                spec = specAndScale.first();
-                scale = specAndScale.second();
-            }
-        }
-        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), scale);
+    public BasicSpectrum(double[] masses, double[] intensities) {
+        init(masses, intensities);
     }
 
-    public BasicSpectrum(double[] masses, double[] intensities, @Nullable Double intFactor) {
-        init(masses, intensities, intFactor);
-    }
-
-    protected void init(double[] masses, double[] intensities, @Nullable Double intFactor) {
+    protected void init(double[] masses, double[] intensities) {
         if (masses == null)
             throw new IllegalArgumentException("Masses are Null but must be non Null.");
         if (intensities == null)
@@ -88,7 +74,7 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
         for (int i = 0; i < masses.length; i++)
             peaks.add(new SimplePeak(masses[i], intensities[i]));
 
-        absIntensityFactor = intFactor;
+        computeNormalizationFactors();
     }
 
     /**
