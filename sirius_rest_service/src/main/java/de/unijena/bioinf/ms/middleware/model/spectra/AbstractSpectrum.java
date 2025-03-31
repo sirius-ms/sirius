@@ -238,7 +238,7 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     }
 
     protected void computeNormalizationFactors() {
-        maxNormFactor = Spectrums.computeNormalizationScale(this, Normalization.Max);
+        maxNormFactor = Spectrums.isSpectrumRelativeIntensity(this) ? 1d : Spectrums.computeNormalizationScale(this, Normalization.Max);
         sumNormFactor = Spectrums.computeNormalizationScale(this, Normalization.Sum);
         firstPeakNormFactor = Spectrums.computeNormalizationScale(this, Normalization.First);
         l2NormFactor = Spectrums.computeNormalizationScale(this, Normalization.L2);
