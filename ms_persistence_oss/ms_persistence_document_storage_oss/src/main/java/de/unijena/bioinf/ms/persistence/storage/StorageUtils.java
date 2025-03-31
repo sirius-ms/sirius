@@ -108,7 +108,7 @@ public class StorageUtils {
                 .mergedMs1Spectrum(mergedMs1);
 
         if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
-            List<ProcessedPeak> tmpSpec = null;
+            List<ProcessedPeak> tmpSpec;
             try {
                 tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
             } catch (Exception e) {
@@ -150,7 +150,7 @@ public class StorageUtils {
 
         Feature feature = Feature.builder()
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
-                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
+                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(exp.getIonMass()))
                 .charge((byte) charge)
                 .build();
 
