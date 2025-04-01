@@ -7,7 +7,7 @@ var TreeViewer = (function () {
     annot_fields = ['mz', 'massDeviationMz', 'relativeIntensity'],
     popup_annot_fields = ['massDeviationPpm', 'score'],
     color_variant = 'rel_int',
-    color_scheme = "['#ffc14c', '#ffffff', '#a879d2']",
+    color_scheme = '["#ecf5f9","#4da6bf"]',
     show_edge_labels = true,
     show_node_labels = true,
     centered_node_labels = true,
@@ -145,6 +145,46 @@ var TreeViewer = (function () {
       throw 'tree has an invalid format';
     return tree;
   }
+
+  function setNodeAnnotations(annoArray) {
+    console.log(annot_fields)
+     annot_fields = annoArray;
+     console.log(annot_fields)
+     drawTree();
+  }
+
+  function setPopupAnnotations(popupArray) {
+     popup_annot_fields = popupArray;
+     drawTree();
+
+  }
+
+  function setEdgeLabelMode(mode){
+    if(mode === 'angled'){
+    edge_labels_angled = true;
+    edge_label_boxes = false;
+    }
+    if(mode === 'boxed'){
+      edge_label_boxes = true;
+      edge_labels_angled=false
+    }
+    if(mode === 'simple'){
+      edge_label_boxes = false;
+      edge_labels_angled=false
+    }
+
+
+  }
+
+  function toggleLossColors(toggleBoolean){
+    loss_colors = toggleBoolean;
+  }
+
+  function toggleDeviationColors(toggleBoolean){
+    deviation_colors = toggleBoolean;
+  }
+
+
 
   // Main entry function, to be called from sirius
   function loadJSONTree(data_json) {
@@ -517,8 +557,9 @@ var TreeViewer = (function () {
       popup_div.style('visibility', 'visible');
     popup_div
       .html(popupStrings.join('<br>'))
-      .style('left', d3.event.clientX - open_left + 10 + 'px')
-      .style('top', d3.event.clientY - open_above + 10 + 'px');
+      .style('left', d3.event.clientX - open_left - 10 + 'px')
+      .style('top', d3.event.clientY - open_above - 10 + 'px');
+      
   }
 
   function popupClose(d) {
@@ -1164,6 +1205,7 @@ var TreeViewer = (function () {
     }
     if (typeof cb_label != 'undefined') cb_label.text('');
     if (typeof scheme == 'string') {
+      console.log(scheme)
       // Java, when executing this function, can not pass the function
       // objects, so it will have to use strings
       const numColors = scheme.split(',').length; //expected format ['#ffc14c', '#ffffff', '#a879d2']
@@ -2077,6 +2119,11 @@ var TreeViewer = (function () {
     highlightNode: highlightNode,
     highlightNodeById: highlightNodeById,
     setTheme: setTheme,
+    setNodeAnnotations, setNodeAnnotations,
+    setPopupAnnotations: setPopupAnnotations,
+    setEdgeLabelMode: setEdgeLabelMode,
+    toggleLossColors: toggleLossColors,
+    toggleDeviationColors: toggleDeviationColors,
   };
 })();
 
