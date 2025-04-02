@@ -4,7 +4,7 @@ import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
 import de.unijena.bioinf.ms.biotransformer.MetabolicTransformation;
 import de.unijena.bioinf.ms.biotransformer.P2Mode;
 import lombok.Setter;
-import org.gradle.internal.impldep.com.beust.jcommander.IParameterValidator;
+//import org.gradle.internal.impldep.com.beust.jcommander.IParameterValidator;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
@@ -51,7 +51,6 @@ public class BioTransformerOptions {
         @CommandLine.Spec
         private CommandLine.Model.CommandSpec spec; // for validation
 
-        @CommandLine.Command(name = "validate")
         private void validate() {
             // Prüfen, ob --p2Mode gesetzt ist, wenn transformation ≠ PHASE_2
             if (p2Mode != null && metabolicTransformation != MetabolicTransformation.PHASE_2) {
@@ -113,7 +112,7 @@ public class BioTransformerOptions {
         }
     }
 
-    public class RangeValidator implements CommandLine.IParameterConsumer {
+    public static class RangeValidator implements CommandLine.IParameterConsumer {
         @Override
         public void consumeParameters(Stack<String> args, CommandLine.Model.ArgSpec argSpec, CommandLine.Model.CommandSpec commandSpec) {
             String value = args.pop(); // Hole den Parameterwert
@@ -134,7 +133,25 @@ public class BioTransformerOptions {
     }
 
 
+    public static class BioTransformerParas {
+        boolean useDB;
+        boolean useSubstructure;
+        MetabolicTransformation metabolicTransformation;
+        int p2Mode;
+        int cyp450Mode;
+        int iterations;
+    }
+    public BioTransformerParas toBioTransformerParas(){
+        BioTransformerParas paras = new BioTransformerParas();
+        paras.useDB = bioTransformer.biotransformer.useDB;
+        paras.useSubstructure = bioTransformer.biotransformer.useSubstructure;
+        paras.metabolicTransformation = bioTransformer.biotransformer.metabolicTransformation;
+        paras.p2Mode = bioTransformer.biotransformer.p2Mode.ordinal();
+        paras.cyp450Mode = cyp450Mode.ordinal();
+        paras.iterations = bioTransformer.biotransformer.iterations;
 
+        return new BioTransformerParas();
+    }
 
 
 
