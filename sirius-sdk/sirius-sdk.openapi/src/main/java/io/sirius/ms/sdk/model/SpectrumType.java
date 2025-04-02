@@ -32,9 +32,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets TargetType
+ * Gets or Sets SpectrumType
  */
-public enum TargetType {
+public enum SpectrumType {
   
   SPECTRUM("SPECTRUM"),
   
@@ -42,7 +42,7 @@ public enum TargetType {
 
   private String value;
 
-  TargetType(String value) {
+  SpectrumType(String value) {
     this.value = value;
   }
 
@@ -57,8 +57,8 @@ public enum TargetType {
   }
 
   @JsonCreator
-  public static TargetType fromValue(String value) {
-    for (TargetType b : TargetType.values()) {
+  public static SpectrumType fromValue(String value) {
+    for (SpectrumType b : SpectrumType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

@@ -4,6 +4,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Builder;
 import lombok.Getter;
@@ -280,13 +282,16 @@ public class ModifiedCosine extends AbstractSpectralMatching {
 
     @Getter
     @Builder
-    public static final class Result{
+    public static final class Result {
         // assigns peak from left to right
         private final int[] assignment;
         private final double score;
 
         public SpectralSimilarity getSimilarity() {
-            return new SpectralSimilarity(score, assignment.length>>1);
+            Int2IntMap sharedPeaks = new Int2IntOpenHashMap(assignment.length >> 1);
+            for (int i = 0; i < assignment.length; i += 2)
+                sharedPeaks.put(assignment[i], assignment[i + 1]);
+            return new SpectralSimilarity(score, sharedPeaks);
         }
     }
 }

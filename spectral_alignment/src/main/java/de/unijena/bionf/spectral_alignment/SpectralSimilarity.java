@@ -20,9 +20,16 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import de.unijena.bioinf.ChemistryBase.utils.FastUtilJson;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -32,14 +39,37 @@ public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
     public final double similarity;
     public final int sharedPeaks;
 
+    /**
+     * matched peak pairs
+     * left spec index ->  right spec index
+     * query spec index -> reference spec index
+     * Empty if no matching peaks or NULL if similarity measure does not support assignments
+     */
+    @JsonDeserialize(using = FastUtilJson.IntMapDeserializer.class)
+    @JsonSerialize(using = FastUtilJson.IntMapSerializer.class)
+    @Nullable
+    private final Int2IntMap sharedPeakPairs;
+
+    public Int2IntMap getSharedPeakPairs() {
+        if (sharedPeakPairs == null)
+            return null;
+        return Int2IntMaps.unmodifiable(sharedPeakPairs);
+    }
+
     public SpectralSimilarity() {
         this.similarity = 0;
         this.sharedPeaks = 0;
+        this.sharedPeakPairs = Int2IntMaps.EMPTY_MAP;
     }
 
-    public SpectralSimilarity(double similarity, int sharedPeaks) {
+    public SpectralSimilarity(double similarity, Int2IntMap sharedPeakPairs) {
+        this(similarity, sharedPeakPairs == null ? 0 : sharedPeakPairs.size(), sharedPeakPairs);
+    }
+
+    public SpectralSimilarity(double similarity, int sharedPeaks, Int2IntMap sharedPeakPairs) {
         this.similarity = similarity;
         this.sharedPeaks = sharedPeaks;
+        this.sharedPeakPairs = sharedPeakPairs instanceof Int2IntMaps.UnmodifiableMap ?  new Int2IntOpenHashMap(sharedPeakPairs) : sharedPeakPairs;
     }
 
     @Override
