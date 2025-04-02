@@ -248,7 +248,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
                         ApplicationCore.IFP_CACHE(),
-                        mode.importParas.writeBuffer
+                        mode.importParas.writeBuffer,
+                        mode.importParas.bioTransformerOptions != null ? mode.importParas.bioTransformerOptions.toBioTransformerParas() : null
+
                 );
                 checkForInterruption();
 

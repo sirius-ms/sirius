@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
-import de.unijena.bioinf.babelms.cef.Compound;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.*;
@@ -39,8 +38,7 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
-import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.BioTransformerOptions;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
@@ -54,7 +52,6 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -71,7 +68,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -102,7 +98,7 @@ public class CustomDatabaseImporter {
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerOptions paras) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -352,8 +348,8 @@ public class CustomDatabaseImporter {
             flushMoleculeBuffer();
     }
 
-    private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
-        // 1. BioTransformerJJob erstellen und ausführen
+ /*   private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
+        // 1. BioTransformerJJob erstellen
         BioTransformerJJob job = new BioTransformerJJob();
         job.setSubstrates(
                 key2DToComp.values().stream()
@@ -362,16 +358,22 @@ public class CustomDatabaseImporter {
         );
         List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
-        // 2. Transformationsergebnisse in Moleküle konvertieren
+        // 2. Transformations in Molecule konvertieren
 
         List<Molecule> transformedMolecules = transformationResults.stream()
                 // Iteriere über alle Ergebnisse der Biotransformationen
                 .flatMap(result -> result.getBiotranformations().stream())
-                // Iteriere über alle Produkte (IAtomContainer) eines Transformations-Ergebnisses
+                // Iteriere über ale AtomContainer aus Tranformations
                 .flatMap(transformation -> {
                     IAtomContainerSet products = transformation.getProducts(); // Zugriff auf das IAtomContainerSet
-                    return StreamSupport.stream(products.atomContainers().spliterator(), false) // Konvertiere Iterable in Stream
-                            .map(container -> new Molecule(container,smilesGen.create(container),generateInChI(container))); // Konvertiere jeden IAtomContainer in ein Molecule
+                    return StreamSupport.stream(products.atomContainers().spliterator(), false) //  Iterable in Stream
+                            .map(container -> {
+                                try {
+                                    return new Molecule(container,smilesGen.create(container),generateInChI(container));
+                                } catch (CDKException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }); // Konvertiere jeden IAtomContainer in ein Molecule
                 })
                 .toList();
 
@@ -406,7 +408,7 @@ public class CustomDatabaseImporter {
 
 
 
-    }
+    }*/
 
     private void flushMoleculeBuffer() {
         // start downloading
@@ -765,7 +767,8 @@ public class CustomDatabaseImporter {
             @Nullable CustomDatabaseImporter.Listener listener,
             @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
             @Nullable IFingerprinterCache ifpCache,
-            int bufferSize
+            int bufferSize,
+            BioTransformerParas paras
 
     ) {
         return new BasicJJob<Boolean>() {
@@ -774,7 +777,7 @@ public class CustomDatabaseImporter {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize);
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize,paras);
                 if (listener != null)
                     importer.addListener(listener);
                 importToDatabase(spectrumFiles, structureFiles, importer);
