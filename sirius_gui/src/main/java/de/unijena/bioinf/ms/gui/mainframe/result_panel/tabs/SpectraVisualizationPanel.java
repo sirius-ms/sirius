@@ -60,6 +60,7 @@ import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.BasicSpectrum;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -91,7 +92,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrEmpty;
@@ -407,6 +407,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         }
         return Normalization.Max;
     }
+
     private SpectraViewContainer.IntensityTransform getIntensityMode() {
         switch ((String)intBox.getSelectedItem()) {
             case KEEPINT: return SpectraViewContainer.IntensityTransform.No;
@@ -615,8 +616,11 @@ public class SpectraVisualizationPanel extends JPanel implements
                                             for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
                                                 similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
                                                         match.getMatch().getSimilarity(),
-                                                        match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
-                                                );
+                                                        match.getMatch() == null ? null : match.getMatch().getSharedPeakMapping().stream().collect(
+                                                                Int2IntOpenHashMap::new,
+                                                                (map, pair) -> map.put(pair.getQueryPeak(), pair.getReferencePeak()),
+                                                                Int2IntOpenHashMap::putAll));
+
                                                 queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
                                             }
                                             queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
@@ -718,7 +722,7 @@ public class SpectraVisualizationPanel extends JPanel implements
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
         if (ms2MirrorEnabled) {
-            SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
+            SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, null);
             int maxIndex = -1;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
                 if (similarities != null && similarities[i] != null) {

@@ -1,6 +1,6 @@
 
 
-# TargetType
+# SpectrumType
 
 ## Enum
 

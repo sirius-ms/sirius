@@ -23,6 +23,8 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.util.BitSet;
 
@@ -47,6 +49,7 @@ public class GaussianSpectralMatching extends AbstractSpectralMatching {
     public SpectralSimilarity scoreAllAgainstAll(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         final BitSet usedIndicesLeft = new BitSet();
         final BitSet usedIndicesRight = new BitSet();
+        Int2IntMap matchedPairs = new Int2IntOpenHashMap();
 
         int i = 0, j = 0;
         double score = 0d;
@@ -83,6 +86,7 @@ public class GaussianSpectralMatching extends AbstractSpectralMatching {
                         usedIndicesRight.set(l);
                     } else break;
                 }
+                matchedPairs.put(i,j);
                 ++i; ++j;
             } else if (difference > 0) {
                 ++j;
@@ -91,9 +95,7 @@ public class GaussianSpectralMatching extends AbstractSpectralMatching {
                 ++i;
             }
         }
-        int matchedPeaks = Math.min(usedIndicesLeft.cardinality(), usedIndicesRight.cardinality());
-        return  new SpectralSimilarity(score, matchedPeaks);
-
+        return  new SpectralSimilarity(score, matchedPairs);
     }
 
     protected double scorePeaks(Peak lp, Peak rp) {
