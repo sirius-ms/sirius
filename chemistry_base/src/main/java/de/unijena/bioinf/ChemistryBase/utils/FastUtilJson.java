@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 public final class FastUtilJson {
     public static class LongSetDeserializer extends LongCollectionDeserializer<LongSet> {
@@ -76,6 +77,54 @@ public final class FastUtilJson {
         }
 
         protected abstract C newInstance();
+    }
+
+    public static class IntMapSerializer extends JsonSerializer<Int2IntMap> {
+        @Override
+        public void serialize(Int2IntMap int2IntMap, JsonGenerator gen, SerializerProvider serializerProvider) throws IOException {
+            IntList intList = new IntArrayList(int2IntMap.size() * 2);
+            int2IntMap.forEach((k,v) -> {
+                intList.add(k);
+                intList.add(v);
+            });
+            gen.writeArray(intList.toIntArray(), 0, intList.size());
+        }
+    }
+
+    public static class IntMapDeserializer extends IdentityMapDeserializer<Int2IntMap, Integer> {
+        @Override
+        protected Integer parseCurrentToken(JsonParser p) throws IOException {
+            return p.getIntValue();
+        }
+
+        @Override
+        protected Int2IntMap newInstance() {
+            return new Int2IntOpenHashMap();
+        }
+    }
+
+    public abstract static class IdentityMapDeserializer<M extends Map<T, T>, T> extends JsonDeserializer<M> {
+        @Override
+        public M deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
+            M map = newInstance();
+            if (parser.currentToken() == JsonToken.START_ARRAY) {
+                parser.nextToken();
+                while (parser.currentToken() != JsonToken.END_ARRAY) {
+                    T key = parseCurrentToken(parser);
+                    // next value
+                    parser.nextToken();
+                    T value = parseCurrentToken(parser);
+                    map.put(key, value);
+                    // next pair (next key)
+                    parser.nextToken();
+                }
+                return map;
+            }
+            throw new IOException("Expected LongSet in arrays format but no Array token found!");
+        }
+
+        protected abstract T parseCurrentToken(JsonParser p) throws IOException;
+        protected abstract M newInstance();
     }
 
 

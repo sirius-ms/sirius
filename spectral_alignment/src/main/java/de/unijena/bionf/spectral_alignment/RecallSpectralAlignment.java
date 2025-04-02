@@ -3,8 +3,9 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RecallSpectralAlignment extends AbstractSpectralMatching {
@@ -18,13 +19,18 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
     }
 
     public SpectralSimilarity score(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        List<Peak> matchedMsrdPeaks = this.getMatchedMsrdPeaks(msrdSpectrum, predSpectrum);
-        double recall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : (double) matchedMsrdPeaks.size() / msrdSpectrum.size();
-        return new SpectralSimilarity(recall, matchedMsrdPeaks.size());
+        Int2IntMap matchedPeaks = this.getMatchedPeaks(msrdSpectrum, predSpectrum);
+        double recall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : (double) matchedPeaks.size() / msrdSpectrum.size();
+        return new SpectralSimilarity(recall, matchedPeaks);
     }
 
     public List<Peak> getMatchedMsrdPeaks(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        ArrayList<Peak> matchedMsrdPeaks = new ArrayList<>();
+        return getMatchedPeaks(msrdSpectrum, predSpectrum).keySet().intStream().mapToObj(msrdSpectrum::getPeakAt).toList();
+    }
+    
+    public Int2IntMap getMatchedPeaks(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
+        Int2IntMap matchedPeaks = new Int2IntOpenHashMap();
+
         int i = 0, j = 0;
         while(i < msrdSpectrum.size() && j < predSpectrum.size()){
             Peak msrdPeak = msrdSpectrum.getPeakAt(i);
@@ -35,7 +41,7 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
 
             // Check if msrdPeak and predPeak are matching
             if(absDiff <= maxAllowedDiff){
-                matchedMsrdPeaks.add(msrdPeak);
+                matchedPeaks.put(i,j);
                 i++;
             }else{
                 if(msrdPeak.getMass() < predPeak.getMass()){
@@ -45,7 +51,6 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
                 }
             }
         }
-        return matchedMsrdPeaks;
+        return matchedPeaks;
     }
-
 }
