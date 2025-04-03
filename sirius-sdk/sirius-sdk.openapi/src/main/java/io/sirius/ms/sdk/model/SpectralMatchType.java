@@ -32,9 +32,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets MatchType
+ * Gets or Sets SpectralMatchType
  */
-public enum MatchType {
+public enum SpectralMatchType {
   
   COSINE("COSINE"),
   
@@ -42,7 +42,7 @@ public enum MatchType {
 
   private String value;
 
-  MatchType(String value) {
+  SpectralMatchType(String value) {
     this.value = value;
   }
 
@@ -57,8 +57,8 @@ public enum MatchType {
   }
 
   @JsonCreator
-  public static MatchType fromValue(String value) {
-    for (MatchType b : MatchType.values()) {
+  public static SpectralMatchType fromValue(String value) {
+    for (SpectralMatchType b : SpectralMatchType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

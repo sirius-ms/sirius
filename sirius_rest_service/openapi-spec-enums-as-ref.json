@@ -9817,14 +9817,6 @@
           }
         }
       },
-      "MatchType": {
-        "type": "string",
-        "default": "COSINE",
-        "enum": [
-          "COSINE",
-          "ANALOG"
-        ]
-      },
       "MsData": {
         "type": "object",
         "properties": {
@@ -9975,6 +9967,19 @@
         },
         "nullable": true
       },
+      "PeakPair": {
+        "type": "object",
+        "properties": {
+          "queryPeak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "referencePeak": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SpectralLibraryMatch": {
         "required": [
           "inchiKey",
@@ -9993,11 +9998,20 @@
           },
           "similarity": {
             "type": "number",
+            "description": "Similarity between query and reference spectrum",
             "format": "double"
           },
           "sharedPeaks": {
             "type": "integer",
+            "description": "Number of shared/matched peaks",
             "format": "int32"
+          },
+          "sharedPeakMapping": {
+            "type": "array",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "items": {
+              "$ref": "#/components/schemas/PeakPair"
+            }
           },
           "querySpectrumIndex": {
             "type": "integer",
@@ -10029,10 +10043,10 @@
             "type": "string"
           },
           "target": {
-            "$ref": "#/components/schemas/TargetType"
+            "$ref": "#/components/schemas/SpectrumType"
           },
           "type": {
-            "$ref": "#/components/schemas/MatchType"
+            "$ref": "#/components/schemas/SpectralMatchType"
           },
           "inchiKey": {
             "type": "string"
@@ -10042,6 +10056,14 @@
           }
         },
         "nullable": true
+      },
+      "SpectralMatchType": {
+        "type": "string",
+        "default": "COSINE",
+        "enum": [
+          "COSINE",
+          "ANALOG"
+        ]
       },
       "SpectrumAnnotation": {
         "type": "object",
@@ -10092,6 +10114,14 @@
           }
         },
         "nullable": true
+      },
+      "SpectrumType": {
+        "type": "string",
+        "default": "SPECTRUM",
+        "enum": [
+          "SPECTRUM",
+          "MERGED"
+        ]
       },
       "StructureCandidate": {
         "type": "object",
@@ -10191,14 +10221,6 @@
           }
         },
         "nullable": true
-      },
-      "TargetType": {
-        "type": "string",
-        "default": "SPECTRUM",
-        "enum": [
-          "SPECTRUM",
-          "MERGED"
-        ]
       },
       "StoredJobSubmission": {
         "required": [
@@ -10681,8 +10703,7 @@
           "rowIds": {
             "type": "array",
             "items": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           },
           "columnNames": {
