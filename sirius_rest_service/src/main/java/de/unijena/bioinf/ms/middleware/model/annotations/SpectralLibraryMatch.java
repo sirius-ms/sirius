@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,12 +60,12 @@ public class SpectralLibraryMatch {
     public final Integer sharedPeaks;
 
     /**
+     * List of paired/matched peak indices.
+     *
      * Maps indices of peaks from the query spectrum (mass sorted)
      * to indices of matched peaks in the reference spectrum (mass sorted)
-     * even number -> left/query spectrum index
-     * odd number ->  right/reference spectrum index
      */
-    public final List<PeakPair> sharedPeakMapping;
+    private final List<PeakPair> sharedPeakMapping;
 
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -107,11 +107,12 @@ public class SpectralLibraryMatch {
             builder.similarity(result.getSimilarity().similarity);
             builder.sharedPeaks(result.getSimilarity().sharedPeaks);
 
-
-            Int2IntMap mapping = result.getSimilarity().getSharedPeakPairs();
+            IntList mapping = result.getSimilarity().getSharedPeakPairs();
             if (mapping != null) {
-                List<PeakPair> peakPairs = new ArrayList<>(mapping.size());
-                mapping.forEach((k,v) -> peakPairs.add(PeakPair.of(k,v)));
+                List<PeakPair> peakPairs = new ArrayList<>(mapping.size() >> 1);
+                for (int i = 0; i < mapping.size(); i += 2)
+                    peakPairs.add(PeakPair.of(mapping.getInt(i), mapping.getInt(i + 1)));
+
                 builder.sharedPeakMapping(peakPairs);
             }
         }

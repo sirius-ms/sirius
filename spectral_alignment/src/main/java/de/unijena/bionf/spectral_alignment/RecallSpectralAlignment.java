@@ -3,9 +3,10 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecallSpectralAlignment extends AbstractSpectralMatching {
@@ -19,17 +20,21 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
     }
 
     public SpectralSimilarity score(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        Int2IntMap matchedPeaks = this.getMatchedPeaks(msrdSpectrum, predSpectrum);
+        IntList matchedPeaks = this.getMatchedPeaks(msrdSpectrum, predSpectrum);
         double recall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : (double) matchedPeaks.size() / msrdSpectrum.size();
         return new SpectralSimilarity(recall, matchedPeaks);
     }
 
     public List<Peak> getMatchedMsrdPeaks(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        return getMatchedPeaks(msrdSpectrum, predSpectrum).keySet().intStream().mapToObj(msrdSpectrum::getPeakAt).toList();
+        IntList matched = getMatchedPeaks(msrdSpectrum, predSpectrum);
+        List<Peak> peaks = new ArrayList<>(matched.size() >> 1);
+        for (int i = 0; i < matched.size(); i += 2)
+            peaks.add(msrdSpectrum.getPeakAt(matched.getInt(i)));
+        return peaks;
     }
     
-    public Int2IntMap getMatchedPeaks(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        Int2IntMap matchedPeaks = new Int2IntOpenHashMap();
+    public IntList getMatchedPeaks(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
+        IntList matchedPeaks = new IntArrayList(Math.min(msrdSpectrum.size(), predSpectrum.size()));
 
         int i = 0, j = 0;
         while(i < msrdSpectrum.size() && j < predSpectrum.size()){
@@ -41,7 +46,8 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
 
             // Check if msrdPeak and predPeak are matching
             if(absDiff <= maxAllowedDiff){
-                matchedPeaks.put(i,j);
+                matchedPeaks.add(i);
+                matchedPeaks.add(j);
                 i++;
             }else{
                 if(msrdPeak.getMass() < predPeak.getMass()){

@@ -11,8 +11,8 @@ import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.peakprocessor.NoiseIntensityThresholdFilter;
 import de.unijena.bionf.spectral_alignment.ModifiedCosine;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Getter;
 
 import java.util.*;
@@ -104,7 +104,7 @@ public class FastCosine {
         int i = 0, j = 0;
         double similarity = 0d;
 
-        Int2IntMap matchedPeaks = new Int2IntOpenHashMap();
+        IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
 
         final double thresholdLeft = left.getParentMass()-0.1d;
         final double thresholdRight = right.getParentMass()-0.1d;
@@ -119,7 +119,8 @@ public class FastCosine {
             if (Math.abs(delta) < allowedMassDeviation) {
                 // match
                 similarity += left.getIntensityAt(i)*right.getIntensityAt(j);
-                matchedPeaks.put(i,j);
+                matchedPeaks.add(i);
+                matchedPeaks.add(j);
                 ++i;
                 ++j;
             } else if (delta < 0) {
@@ -134,7 +135,7 @@ public class FastCosine {
     public SpectralSimilarity fastReverseCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
         int i = 0, j = 0;
         double similarity = 0d;
-        Int2IntMap matchedPeaks = new Int2IntOpenHashMap();
+        IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
 
         while (i < left.size() && j < right.size()) {
             double l = left.getParentMass() - left.getMzAt(i);
@@ -147,7 +148,8 @@ public class FastCosine {
             if (Math.abs(delta) < allowedMassDeviation) {
                 // match
                 similarity += left.getIntensityAt(i)*right.getIntensityAt(j);
-                matchedPeaks.put(i, j);
+                matchedPeaks.add(i);
+                matchedPeaks.add(j);
                 ++i;
                 ++j;
             } else if (delta < 0) {
