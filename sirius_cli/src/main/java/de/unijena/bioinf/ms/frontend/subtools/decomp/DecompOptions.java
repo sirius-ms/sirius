@@ -67,6 +67,10 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
                     "than [--max-decomps] decompositions if there are not more available."})
     Integer maxDecomps;
 
+    @CommandLine.Option(names = {"--maxMz",}, description = {"Maximum allowed precursor m/z of a given MS2 spectrum. " +
+            "The input spectra are filtered according to this value."})
+    Double maxMz;
+
     @CommandLine.Option(names = {"--mass", "-m"}, arity = "0..*", description = {"Masses that will be decomposed."})
     double[] masses;
 
