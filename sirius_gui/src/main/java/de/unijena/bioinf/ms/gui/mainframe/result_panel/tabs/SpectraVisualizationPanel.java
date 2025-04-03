@@ -60,10 +60,7 @@ import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.BasicSpectrum;
 import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntComparators;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +160,7 @@ public class SpectraVisualizationPanel extends JPanel implements
     private final WebViewJPanel compoundDetails;
 
     private final boolean ms2MirrorEnabled;
-    private SpectralSimilarity[] similarities;
+    private Int2ObjectMap<SpectralSimilarity> similarities;
     private IntList queryIndices;
     private SpectralMatchBean selectedMatchBean;
 
@@ -611,12 +608,11 @@ public class SpectraVisualizationPanel extends JPanel implements
 
                                         if (matchList != null && matchBean != null) {
                                             selectedMatchBean = matchBean;
-                                            similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
+                                            similarities = new Int2ObjectOpenHashMap<>(msData.getMs2Spectra().size() + 1);
                                             queryIndices = new IntArrayList();
                                             for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
-                                                similarities[match.getMatch().getQuerySpectrumIndex()] =
-                                                        new SpectralSimilarity(match.getMatch().getSimilarity(), getIntArrayList(match));
-
+                                                similarities.put((int) match.getMatch().getQuerySpectrumIndex(),
+                                                        new SpectralSimilarity(match.getMatch().getSimilarity(), getIntArrayList(match)));
                                                 queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
                                             }
                                             queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
@@ -730,17 +726,19 @@ public class SpectraVisualizationPanel extends JPanel implements
     private void updateCEBox(MsData msData) {
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
+
         if (ms2MirrorEnabled) {
             SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, null);
             int maxIndex = -1;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
-                if (similarities != null && similarities[i] != null) {
+                if (similarities != null && similarities.containsKey(i)) {
+                    SpectralSimilarity sim = similarities.get(i);
                     BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
                     String collisionEnergy = spectrum.getCollisionEnergy();
                     ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy +
-                            String.format(" (%.1f %% similarity, %d shared peaks)", 100 * similarities[i].similarity, similarities[i].sharedPeaks));
-                    if (similarities[i].similarity > maxSimilarity.similarity || (Math.abs(similarities[i].similarity - maxSimilarity.similarity) < 1E-3 && similarities[i].sharedPeaks > maxSimilarity.sharedPeaks)) {
-                        maxSimilarity = similarities[i];
+                            String.format(" (%.1f %% similarity, %d shared peaks)", 100 * sim.similarity, sim.sharedPeaks));
+                    if (sim.similarity > maxSimilarity.similarity || (Math.abs(sim.similarity - maxSimilarity.similarity) < 1E-3 && sim.sharedPeaks > maxSimilarity.sharedPeaks)) {
+                        maxSimilarity = sim;
                         maxIndex++;
                     }
                 }
