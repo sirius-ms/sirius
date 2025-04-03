@@ -147,9 +147,7 @@ var TreeViewer = (function () {
   }
 
   function setNodeAnnotations(annoArray) {
-    console.log(annot_fields)
      annot_fields = annoArray;
-     console.log(annot_fields)
      drawTree();
   }
 
@@ -163,25 +161,45 @@ var TreeViewer = (function () {
     if(mode === 'angled'){
     edge_labels_angled = true;
     edge_label_boxes = false;
+    drawLinks(root)
+
     }
     if(mode === 'boxed'){
       edge_label_boxes = true;
       edge_labels_angled=false
+      drawLinks(root)
     }
     if(mode === 'simple'){
       edge_label_boxes = false;
       edge_labels_angled=false
+      drawLinks(root)
+
     }
 
 
   }
 
+  function getTreeScale(){
+    return tree_scale;
+  }
+
+  function getTreeScaleMin(){
+    return tree_scale_min;
+  }
+
   function toggleLossColors(toggleBoolean){
     loss_colors = toggleBoolean;
+    drawLinks(root);
   }
 
   function toggleDeviationColors(toggleBoolean){
     deviation_colors = toggleBoolean;
+    drawNodeAnnots();
+    
+  }
+
+  function setCommonLosses(losses){
+    common_losses = losses;
   }
 
 
@@ -530,7 +548,6 @@ var TreeViewer = (function () {
   }
 
   function reset() {
-    data = JSON.parse(data_json);
     apply(data);
     scaleToFit();
   }
@@ -1205,7 +1222,6 @@ var TreeViewer = (function () {
     }
     if (typeof cb_label != 'undefined') cb_label.text('');
     if (typeof scheme == 'string') {
-      console.log(scheme)
       // Java, when executing this function, can not pass the function
       // objects, so it will have to use strings
       const numColors = scheme.split(',').length; //expected format ['#ffc14c', '#ffffff', '#a879d2']
@@ -2124,6 +2140,10 @@ var TreeViewer = (function () {
     setEdgeLabelMode: setEdgeLabelMode,
     toggleLossColors: toggleLossColors,
     toggleDeviationColors: toggleDeviationColors,
+    setCommonLosses: setCommonLosses,
+    scaleTree: scaleTree,
+    getTreeScale,getTreeScale,
+    getTreeScaleMin: getTreeScaleMin,
   };
 })();
 
