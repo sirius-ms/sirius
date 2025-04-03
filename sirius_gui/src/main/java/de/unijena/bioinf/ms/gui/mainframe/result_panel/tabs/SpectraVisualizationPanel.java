@@ -614,12 +614,8 @@ public class SpectraVisualizationPanel extends JPanel implements
                                             similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
                                             queryIndices = new IntArrayList();
                                             for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
-                                                similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
-                                                        match.getMatch().getSimilarity(),
-                                                        match.getMatch() == null ? null : match.getMatch().getSharedPeakMapping().stream().collect(
-                                                                Int2IntOpenHashMap::new,
-                                                                (map, pair) -> map.put(pair.getQueryPeak(), pair.getReferencePeak()),
-                                                                Int2IntOpenHashMap::putAll));
+                                                similarities[match.getMatch().getQuerySpectrumIndex()] =
+                                                        new SpectralSimilarity(match.getMatch().getSimilarity(), getIntArrayList(match));
 
                                                 queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
                                             }
@@ -707,6 +703,19 @@ public class SpectraVisualizationPanel extends JPanel implements
         } finally {
             center.decreaseLoading();
         }
+    }
+
+    private static @Nullable IntArrayList getIntArrayList(SpectralMatchBean match) {
+        List<PeakPair> pairs = match.getMatch().getSharedPeakMapping();
+        IntArrayList arrayPairs = null;
+        if (pairs != null) {
+            arrayPairs = new IntArrayList(pairs.size() * 2);
+            for (PeakPair pair : pairs) {
+                arrayPairs.add(pair.getQueryPeak());
+                arrayPairs.add(pair.getReferencePeak());
+            }
+        }
+        return arrayPairs;
     }
 
     private void clearData() {

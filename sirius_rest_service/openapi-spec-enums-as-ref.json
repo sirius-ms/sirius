@@ -10008,7 +10008,7 @@
           },
           "sharedPeakMapping": {
             "type": "array",
-            "description": "Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)\n even number -\u003e left/query spectrum index\n odd number -\u003e  right/reference spectrum index",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
             "items": {
               "$ref": "#/components/schemas/PeakPair"
             }
