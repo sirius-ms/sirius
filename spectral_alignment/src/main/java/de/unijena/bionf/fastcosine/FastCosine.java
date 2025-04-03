@@ -11,6 +11,9 @@ import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.peakprocessor.NoiseIntensityThresholdFilter;
 import de.unijena.bionf.spectral_alignment.ModifiedCosine;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import lombok.Getter;
 
 import java.util.*;
 
@@ -18,6 +21,7 @@ public class FastCosine {
 
     private static boolean mergeMasses = false;
 
+    @Getter
     private final Deviation maxDeviation;
     private final boolean useSquareRootTransform;
     private final NoiseThresholdSettings noiseThresholdSettings;
@@ -99,7 +103,9 @@ public class FastCosine {
     public SpectralSimilarity fastCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
         int i = 0, j = 0;
         double similarity = 0d;
-        int matchedPeaks = 0;
+
+        IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
+
         final double thresholdLeft = left.getParentMass()-0.1d;
         final double thresholdRight = right.getParentMass()-0.1d;
         while (i < left.size() && j < right.size()) {
@@ -113,7 +119,8 @@ public class FastCosine {
             if (Math.abs(delta) < allowedMassDeviation) {
                 // match
                 similarity += left.getIntensityAt(i)*right.getIntensityAt(j);
-                ++matchedPeaks;
+                matchedPeaks.add(i);
+                matchedPeaks.add(j);
                 ++i;
                 ++j;
             } else if (delta < 0) {
@@ -128,7 +135,8 @@ public class FastCosine {
     public SpectralSimilarity fastReverseCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
         int i = 0, j = 0;
         double similarity = 0d;
-        int matchedPeaks = 0;
+        IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
+
         while (i < left.size() && j < right.size()) {
             double l = left.getParentMass() - left.getMzAt(i);
             double r = right.getParentMass() - right.getMzAt(j);
@@ -140,7 +148,8 @@ public class FastCosine {
             if (Math.abs(delta) < allowedMassDeviation) {
                 // match
                 similarity += left.getIntensityAt(i)*right.getIntensityAt(j);
-                ++matchedPeaks;
+                matchedPeaks.add(i);
+                matchedPeaks.add(j);
                 ++i;
                 ++j;
             } else if (delta < 0) {
@@ -194,9 +203,5 @@ public class FastCosine {
             mergedSpectrum.addPeak(mergedMz, (float)mergedIntensity, (float)intensityOrdered.getIntensityAt(k));
         }
         return mergedSpectrum.done();
-    }
-
-    public Deviation getMaxDeviation() {
-        return maxDeviation;
     }
 }

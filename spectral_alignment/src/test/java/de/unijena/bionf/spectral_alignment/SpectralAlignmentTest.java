@@ -82,10 +82,9 @@ public class SpectralAlignmentTest {
 
         Map<Integer, Integer> actualAssignment = new HashMap<>();
 
-        for (int i=0; i < res.getAssignment().length; i+=2) {
-            actualAssignment.put(res.getAssignment()[i], res.getAssignment()[i+1]);
+        for (int i=0; i < res.getAssignment().size(); i+=2) {
+            actualAssignment.put(res.getAssignment().getInt(i), res.getAssignment().getInt(i+1));
         }
-
         assertEquals(expectedAssignment, actualAssignment);
     }
 

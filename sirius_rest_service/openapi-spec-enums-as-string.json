@@ -10411,6 +10411,19 @@
         },
         "nullable": true
       },
+      "PeakPair": {
+        "type": "object",
+        "properties": {
+          "queryPeak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "referencePeak": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SpectralLibraryMatch": {
         "required": [
           "inchiKey",
@@ -10429,11 +10442,20 @@
           },
           "similarity": {
             "type": "number",
+            "description": "Similarity between query and reference spectrum",
             "format": "double"
           },
           "sharedPeaks": {
             "type": "integer",
+            "description": "Number of shared/matched peaks",
             "format": "int32"
+          },
+          "sharedPeakMapping": {
+            "type": "array",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "items": {
+              "$ref": "#/components/schemas/PeakPair"
+            }
           },
           "querySpectrumIndex": {
             "type": "integer",
