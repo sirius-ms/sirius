@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -32,22 +33,22 @@ public class ModifiedCosine extends AbstractSpectralMatching {
     }
 
     public Result scoreWithResult(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, double powerIntensity) {
-        int[] assignment;
+        IntList assignment;
         double score;
         if (precursorLeft <= precursorRight) {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
             score = dp.score;
-            assignment = dp.assignments.toArray(new int[0]);
+            assignment = dp.assignments;
         } else {
             final DP dp = new DP(right, left, precursorRight, precursorLeft, deviation, powerIntensity);
             dp.compute();
             score = dp.score;
-            assignment = dp.assignments.toArray(new int[0]);
-            for (int k = 0; k < assignment.length; k += 2) {
-                int swap = assignment[k];
-                assignment[k] = assignment[k + 1];
-                assignment[k + 1] = swap;
+            assignment = dp.assignments;
+            for (int k = 0; k < assignment.size(); k += 2) {
+                int swap = assignment.getInt(k);
+                assignment.set(k, assignment.getInt(k + 1));
+                assignment.set(k + 1, swap);
             }
         }
         return Result.builder().assignment(assignment).score(score).build();
@@ -280,13 +281,13 @@ public class ModifiedCosine extends AbstractSpectralMatching {
 
     @Getter
     @Builder
-    public static final class Result{
+    public static final class Result {
         // assigns peak from left to right
-        private final int[] assignment;
+        private final IntList assignment;
         private final double score;
 
         public SpectralSimilarity getSimilarity() {
-            return new SpectralSimilarity(score, assignment.length>>1);
+            return new SpectralSimilarity(score, assignment);
         }
     }
 }
