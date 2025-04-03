@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
@@ -169,14 +170,14 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 int instanceCounter = 1;
                 for (Instance inst : instances) {
                     updateProgress(maxProgress, instanceCounter++, "Writing Feature '" + inst.getExternalFeatureId().orElseGet(inst::getName) + "'...");
-                    AlignedFeatures f = ((NoSQLInstance) inst).getAlignedFeatures();
+                    AlignedFeatures feature = ((NoSQLInstance) inst).getAlignedFeatures();
 
                     { //formula summary
                         boolean first = true;
                         MolecularFormula lastPrecursorFormula = null;
                         //we use the formula rank for search because its index, and we do not know whether siriusScore or zodiacScore was used for ranking.
                         Filter.FilterClause sortingFilter = Filter.and(
-                                Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()),
+                                Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()),
                                 Filter.where("formulaRank").gt(0));
 
                         for (FormulaCandidate fc : project.getProject().getStorage().find(sortingFilter, FormulaCandidate.class)) {
@@ -191,17 +192,17 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                             // write top hits
                             if (formulaTopHit != null && first) {
-                                formulaTopHit.writeFormulaCandidate(f, fc, ftree);
+                                formulaTopHit.writeFormulaCandidate(feature, fc, ftree);
                                 nothingWritten = false;
                             }
                             if (canopusFormula != null && first) {
                                 CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                 if (cp != null)
-                                    canopusFormula.writeCanopusPredictions(f, fc, cp);
+                                    canopusFormula.writeCanopusPredictions(feature, fc, cp);
                                 nothingWritten = false;
                             }
                             if (formulaTopHitAdducts != null && (first || currentPrecursorFormula.equals(lastPrecursorFormula))) {
-                                formulaTopHitAdducts.writeFormulaCandidate(f, fc, ftree);
+                                formulaTopHitAdducts.writeFormulaCandidate(feature, fc, ftree);
                                 lastPrecursorFormula = currentPrecursorFormula;
                                 nothingWritten = false;
                             }
@@ -209,25 +210,25 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                             // write top k hits
                             if (formulaTopK != null && fc.getFormulaRank() <= options.getTopK()) {
-                                formulaTopK.writeFormulaCandidate(f, fc, ftree);
+                                formulaTopK.writeFormulaCandidate(feature, fc, ftree);
                                 nothingWritten = false;
                             }
-                            if(canopusFormulaTopK != null && fc.getFormulaRank() <= options.getTopK()){
+                            if (canopusFormulaTopK != null && fc.getFormulaRank() <= options.getTopK()) {
                                 CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                 if (cp != null)
-                                    canopusFormulaTopK.writeCanopusPredictions(f, fc, cp);
+                                    canopusFormulaTopK.writeCanopusPredictions(feature, fc, cp);
                                 nothingWritten = false;
                             }
 
                             // write top all hits
                             if (formulaAll != null) {
-                                formulaAll.writeFormulaCandidate(f, fc, ftree);
+                                formulaAll.writeFormulaCandidate(feature, fc, ftree);
                                 nothingWritten = false;
                             }
-                            if(canopusFormulaAll != null){
+                            if (canopusFormulaAll != null) {
                                 CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                 if (cp != null)
-                                    canopusFormulaAll.writeCanopusPredictions(f, fc, cp);
+                                    canopusFormulaAll.writeCanopusPredictions(feature, fc, cp);
                                 nothingWritten = false;
                             }
 
@@ -242,13 +243,13 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     }
 
                     {// structure summary
-                        CsiStructureSearchResult ssr = project.getProject().findByFeatureIdStr(f.getAlignedFeatureId(), CsiStructureSearchResult.class).findFirst().orElse(null);
+                        CsiStructureSearchResult ssr = project.getProject().findByFeatureIdStr(feature.getAlignedFeatureId(), CsiStructureSearchResult.class).findFirst().orElse(null);
                         if (ssr != null) {
                             boolean first = true;
                             int rank = 1;
                             FormulaCandidate lastFc = null;
                             Filter.FilterClause sortingFilter = Filter.and(
-                                    Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()),
+                                    Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()),
                                     Filter.where("structureRank").gt(0));
 
                             for (CsiStructureMatch sc : project.getProject().getStorage().find(sortingFilter, CsiStructureMatch.class)) {
@@ -258,25 +259,25 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                         ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
 
                                 if (structureTopHit != null && first) {
-                                    structureTopHit.writeStructureCandidate(f, fc, sc, ssr);
+                                    structureTopHit.writeStructureCandidate(feature, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (canopusStructure != null && first) {
                                     CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                     if (cp != null)
-                                        canopusStructure.writeCanopusPredictions(f, fc, cp);
+                                        canopusStructure.writeCanopusPredictions(feature, fc, cp);
                                     nothingWritten = false;
                                 }
                                 if (chemVistaWriter != null && first) {
-                                    chemVistaWriter.writeStructureCandidate(f, fc, sc, ssr);
+                                    chemVistaWriter.writeStructureCandidate(feature, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (formulaTopK != null && rank <= options.getTopK()) {
-                                    structureTopK.writeStructureCandidate(f, fc, sc, ssr);
+                                    structureTopK.writeStructureCandidate(feature, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (structureAll != null) {
-                                    structureAll.writeStructureCandidate(f, fc, sc, ssr);
+                                    structureAll.writeStructureCandidate(feature, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (nothingWritten)
@@ -293,23 +294,23 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         boolean first = true;
                         int rank = 1;
                         FormulaCandidate lastFc = null;
-                        for (DenovoStructureMatch sc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), DenovoStructureMatch.class, "structureRank", Database.SortOrder.ASCENDING)) {
+                        for (DenovoStructureMatch sc : project.getProject().findByFeatureId(feature.getAlignedFeatureId(), DenovoStructureMatch.class, "structureRank", Database.SortOrder.ASCENDING)) {
                             project.getProject().fetchFingerprintCandidate(sc, false);
                             boolean nothingWritten = true;
                             FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
                                     ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
 
                             if (deNovoTopHit != null && first) {
-                                deNovoTopHit.writeStructureCandidate(f, fc, sc);
+                                deNovoTopHit.writeStructureCandidate(feature, fc, sc);
                                 nothingWritten = false;
                             }
 
                             if (formulaTopK != null && rank <= options.getTopK()) {
-                                deNovoTopK.writeStructureCandidate(f, fc, sc);
+                                deNovoTopK.writeStructureCandidate(feature, fc, sc);
                                 nothingWritten = false;
                             }
                             if (deNovoAll != null) {
-                                deNovoAll.writeStructureCandidate(f, fc, sc);
+                                deNovoAll.writeStructureCandidate(feature, fc, sc);
                                 nothingWritten = false;
                             }
                             if (nothingWritten)
@@ -322,11 +323,13 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         }
                     }
 
-                    if (options.topK > 0 || options.fullSummary || options.topHitSummary) {// spectral match summary
-                        List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
+                    // spectral match summary
+                    if (options.topK > 0 || options.fullSummary || options.topHitSummary) {
+                        MSData msData = feature.getMSData().orElse(null);
+
                         int rank = 1;
 
-                        Iterable<SpectraMatch> matches = project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING});
+                        Iterable<SpectraMatch> matches = project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING});
                         Set<String> dbs = StreamSupport.stream(matches.spliterator(), false).map(SpectraMatch::getDbName).collect(Collectors.toSet());
                         Map<String, CustomDataSources.Source> sources = new HashMap<>();
                         dbs.forEach(name -> {
@@ -334,16 +337,25 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             if (source != null) {
                                 sources.put(name, source);
                             } else {
-                                LoggerFactory.getLogger(this.getClass()).warn("Custom library " + name + " not found!");
+                                LoggerFactory.getLogger(this.getClass()).warn("Custom library {} not found!", name);
                             }
                         });
 
                         for (SpectraMatch match : matches) {
+                            MutableMs2Spectrum query = null;
+                            if (msData != null){
+                                int qIdx = match.getQuerySpectrumIndex();
+                                if (qIdx < 0) {
+                                    if (msData.getMergedMSnSpectrum() != null)
+                                        query = new MutableMs2Spectrum(msData.getMergedMSnSpectrum(), feature.getAverageMass(), null, 2);
+                                } else if (qIdx < msData.getMsnSpectra().size()){
+                                    query = msData.getMsnSpectra().get(qIdx).toMs2Spectrum();
+                                }
+                            }
 
-                            if (match.getQuerySpectrumIndex() >= queries.size())
-                                continue;
+                            if (query == null)
+                                log.warn("Could not load MS spectra. This should not be possible and is likely caused by a corrupted project. Query information will be missing.");
 
-                            MutableMs2Spectrum query = queries.get(match.getQuerySpectrumIndex());
                             Ms2ReferenceSpectrum reference;
                             try {
                                 if (sources.containsKey(match.getDbName())) {
@@ -352,24 +364,24 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                     reference = null;
                                 }
                             } catch (ChemicalDatabaseException e) {
-                                LoggerFactory.getLogger(this.getClass()).warn("Spectral match not written to summary file. Feature ID: " + f.getAlignedFeatureId() + ". Error: " + e.getMessage());
+                                LoggerFactory.getLogger(this.getClass()).warn("Spectral match not written to summary file. Feature ID: {}. Error: {}", feature.getAlignedFeatureId(), e.getMessage());
                                 continue;
                             }
 
                             boolean nothingWritten = true;
 
                             if (refSpectrum != null && rank == 1) {
-                                refSpectrum.writeSpectralMatch(f, match, query, reference);
+                                refSpectrum.writeSpectralMatch(feature, match, query, reference);
                                 nothingWritten = false;
                             }
 
                             if (refSpectrumAll != null) {
-                                refSpectrumAll.writeSpectralMatch(f, match, query, reference);
-                                nothingWritten  = false;
+                                refSpectrumAll.writeSpectralMatch(feature, match, query, reference);
+                                nothingWritten = false;
                             }
 
                             if (refSpectrumTopK != null && rank <= options.getTopK()) {
-                                refSpectrumTopK.writeSpectralMatch(f, match, query, reference);
+                                refSpectrumTopK.writeSpectralMatch(feature, match, query, reference);
                                 nothingWritten = false;
                             }
 
@@ -382,8 +394,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                     // data quality summary
                     if (qualityWriter != null) {
-                        QualityReport qr = project.getProject().findByFeatureIdStr(f.getAlignedFeatureId(), QualityReport.class).findFirst().orElse(null);
-                        qualityWriter.writeFeatureQuality(f, qr);
+                        QualityReport qr = project.getProject().findByFeatureIdStr(feature.getAlignedFeatureId(), QualityReport.class).findFirst().orElse(null);
+                        qualityWriter.writeFeatureQuality(feature, qr);
                     }
                 }
 
