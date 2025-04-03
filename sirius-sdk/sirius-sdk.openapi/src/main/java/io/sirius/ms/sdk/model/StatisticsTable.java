@@ -69,7 +69,7 @@ public class StatisticsTable {
   private QuantRowType rowType;
 
   public static final String JSON_PROPERTY_ROW_IDS = "rowIds";
-  private List<Long> rowIds = new ArrayList<>();
+  private List<String> rowIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_COLUMN_NAMES = "columnNames";
   private List<String> columnNames = new ArrayList<>();
@@ -186,13 +186,13 @@ public class StatisticsTable {
     this.rowType = rowType;
   }
 
-  public StatisticsTable rowIds(List<Long> rowIds) {
+  public StatisticsTable rowIds(List<String> rowIds) {
     
     this.rowIds = rowIds;
     return this;
   }
 
-  public StatisticsTable addRowIdsItem(Long rowIdsItem) {
+  public StatisticsTable addRowIdsItem(String rowIdsItem) {
     if (this.rowIds == null) {
       this.rowIds = new ArrayList<>();
     }
@@ -208,14 +208,14 @@ public class StatisticsTable {
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<Long> getRowIds() {
+  public List<String> getRowIds() {
     return rowIds;
   }
 
 
   @JsonProperty(JSON_PROPERTY_ROW_IDS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setRowIds(List<Long> rowIds) {
+  public void setRowIds(List<String> rowIds) {
     this.rowIds = rowIds;
   }
 

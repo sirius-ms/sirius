@@ -31,8 +31,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.BasicSpectrum;
-import io.sirius.ms.sdk.model.MatchType;
-import io.sirius.ms.sdk.model.TargetType;
+import io.sirius.ms.sdk.model.PeakPair;
+import io.sirius.ms.sdk.model.SpectralMatchType;
+import io.sirius.ms.sdk.model.SpectrumType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -44,6 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_RANK,
   SpectralLibraryMatch.JSON_PROPERTY_SIMILARITY,
   SpectralLibraryMatch.JSON_PROPERTY_SHARED_PEAKS,
+  SpectralLibraryMatch.JSON_PROPERTY_SHARED_PEAK_MAPPING,
   SpectralLibraryMatch.JSON_PROPERTY_QUERY_SPECTRUM_INDEX,
   SpectralLibraryMatch.JSON_PROPERTY_DB_NAME,
   SpectralLibraryMatch.JSON_PROPERTY_DB_ID,
@@ -71,6 +76,9 @@ public class SpectralLibraryMatch {
 
   public static final String JSON_PROPERTY_SHARED_PEAKS = "sharedPeaks";
   private Integer sharedPeaks;
+
+  public static final String JSON_PROPERTY_SHARED_PEAK_MAPPING = "sharedPeakMapping";
+  private List<PeakPair> sharedPeakMapping = new ArrayList<>();
 
   public static final String JSON_PROPERTY_QUERY_SPECTRUM_INDEX = "querySpectrumIndex";
   private Integer querySpectrumIndex;
@@ -100,10 +108,10 @@ public class SpectralLibraryMatch {
   private String smiles;
 
   public static final String JSON_PROPERTY_TARGET = "target";
-  private TargetType target = TargetType.SPECTRUM;
+  private SpectrumType target = SpectrumType.SPECTRUM;
 
   public static final String JSON_PROPERTY_TYPE = "type";
-  private MatchType type = MatchType.COSINE;
+  private SpectralMatchType type = SpectralMatchType.COSINE;
 
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -171,7 +179,7 @@ public class SpectralLibraryMatch {
   }
 
    /**
-   * Get similarity
+   * Similarity between query and reference spectrum
    * @return similarity
   **/
   @jakarta.annotation.Nonnull
@@ -196,7 +204,7 @@ public class SpectralLibraryMatch {
   }
 
    /**
-   * Get sharedPeaks
+   * Number of shared/matched peaks
    * @return sharedPeaks
   **/
   @jakarta.annotation.Nullable
@@ -212,6 +220,39 @@ public class SpectralLibraryMatch {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSharedPeaks(Integer sharedPeaks) {
     this.sharedPeaks = sharedPeaks;
+  }
+
+  public SpectralLibraryMatch sharedPeakMapping(List<PeakPair> sharedPeakMapping) {
+    
+    this.sharedPeakMapping = sharedPeakMapping;
+    return this;
+  }
+
+  public SpectralLibraryMatch addSharedPeakMappingItem(PeakPair sharedPeakMappingItem) {
+    if (this.sharedPeakMapping == null) {
+      this.sharedPeakMapping = new ArrayList<>();
+    }
+    this.sharedPeakMapping.add(sharedPeakMappingItem);
+    return this;
+  }
+
+   /**
+   * Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)  even number -&gt; left/query spectrum index  odd number -&gt;  right/reference spectrum index
+   * @return sharedPeakMapping
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SHARED_PEAK_MAPPING)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<PeakPair> getSharedPeakMapping() {
+    return sharedPeakMapping;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SHARED_PEAK_MAPPING)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSharedPeakMapping(List<PeakPair> sharedPeakMapping) {
+    this.sharedPeakMapping = sharedPeakMapping;
   }
 
   public SpectralLibraryMatch querySpectrumIndex(Integer querySpectrumIndex) {
@@ -439,7 +480,7 @@ public class SpectralLibraryMatch {
     this.smiles = smiles;
   }
 
-  public SpectralLibraryMatch target(TargetType target) {
+  public SpectralLibraryMatch target(SpectrumType target) {
     
     this.target = target;
     return this;
@@ -453,18 +494,18 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_TARGET)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public TargetType getTarget() {
+  public SpectrumType getTarget() {
     return target;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TARGET)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTarget(TargetType target) {
+  public void setTarget(SpectrumType target) {
     this.target = target;
   }
 
-  public SpectralLibraryMatch type(MatchType type) {
+  public SpectralLibraryMatch type(SpectralMatchType type) {
     
     this.type = type;
     return this;
@@ -478,14 +519,14 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public MatchType getType() {
+  public SpectralMatchType getType() {
     return type;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setType(MatchType type) {
+  public void setType(SpectralMatchType type) {
     this.type = type;
   }
 
@@ -552,6 +593,7 @@ public class SpectralLibraryMatch {
         Objects.equals(this.rank, spectralLibraryMatch.rank) &&
         Objects.equals(this.similarity, spectralLibraryMatch.similarity) &&
         Objects.equals(this.sharedPeaks, spectralLibraryMatch.sharedPeaks) &&
+        Objects.equals(this.sharedPeakMapping, spectralLibraryMatch.sharedPeakMapping) &&
         Objects.equals(this.querySpectrumIndex, spectralLibraryMatch.querySpectrumIndex) &&
         Objects.equals(this.dbName, spectralLibraryMatch.dbName) &&
         Objects.equals(this.dbId, spectralLibraryMatch.dbId) &&
@@ -569,7 +611,7 @@ public class SpectralLibraryMatch {
 
   @Override
   public int hashCode() {
-    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, target, type, inchiKey, referenceSpectrum);
+    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, sharedPeakMapping, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, target, type, inchiKey, referenceSpectrum);
   }
 
   @Override
@@ -580,6 +622,7 @@ public class SpectralLibraryMatch {
     sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
     sb.append("    similarity: ").append(toIndentedString(similarity)).append("\n");
     sb.append("    sharedPeaks: ").append(toIndentedString(sharedPeaks)).append("\n");
+    sb.append("    sharedPeakMapping: ").append(toIndentedString(sharedPeakMapping)).append("\n");
     sb.append("    querySpectrumIndex: ").append(toIndentedString(querySpectrumIndex)).append("\n");
     sb.append("    dbName: ").append(toIndentedString(dbName)).append("\n");
     sb.append("    dbId: ").append(toIndentedString(dbId)).append("\n");

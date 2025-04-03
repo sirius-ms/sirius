@@ -1,6 +1,6 @@
 
 
-# MatchType
+# SpectralMatchType
 
 ## Enum
 
