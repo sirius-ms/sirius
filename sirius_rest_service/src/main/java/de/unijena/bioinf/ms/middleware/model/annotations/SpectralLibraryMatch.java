@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +33,7 @@ import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -46,15 +48,28 @@ public class SpectralLibraryMatch {
 
     public final Integer rank;
 
+    /**
+     * Similarity between query and reference spectrum
+     */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public final Double similarity;
 
+    /**
+     * Number of shared/matched peaks
+     */
     public final Integer sharedPeaks;
+
+    /**
+     * List of paired/matched peak indices.
+     *
+     * Maps indices of peaks from the query spectrum (mass sorted)
+     * to indices of matched peaks in the reference spectrum (mass sorted)
+     */
+    private final List<PeakPair> sharedPeakMapping;
 
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final Integer querySpectrumIndex;
-
 
     private final String dbName;
 
@@ -91,6 +106,15 @@ public class SpectralLibraryMatch {
         if (result.getSimilarity() != null) {
             builder.similarity(result.getSimilarity().similarity);
             builder.sharedPeaks(result.getSimilarity().sharedPeaks);
+
+            IntList mapping = result.getSimilarity().getSharedPeakPairs();
+            if (mapping != null) {
+                List<PeakPair> peakPairs = new ArrayList<>(mapping.size() >> 1);
+                for (int i = 0; i < mapping.size(); i += 2)
+                    peakPairs.add(PeakPair.of(mapping.getInt(i), mapping.getInt(i + 1)));
+
+                builder.sharedPeakMapping(peakPairs);
+            }
         }
 
         builder.rank(result.getRank())
@@ -127,12 +151,14 @@ public class SpectralLibraryMatch {
                 .toList();
     }
 
-    public static enum MatchType {
+    @Schema(name = "SpectralMatchType")
+    public enum MatchType {
         COSINE,
         ANALOG;
     }
 
-    public static enum TargetType {
+    @Schema(name = "SpectrumType")
+    public enum TargetType {
         SPECTRUM,
         MERGED;
 
@@ -140,6 +166,13 @@ public class SpectralLibraryMatch {
             if (this==SPECTRUM) return SpectrumType.SPECTRUM;
             if (this==MERGED) return SpectrumType.MERGED_SPECTRUM;
             throw new IllegalArgumentException("Unknown spectrum type");
+        }
+    }
+
+    @Schema(name = "PeakPair")
+    public record PeakPair(int queryPeak, int referencePeak) {
+        public static PeakPair of(int queryIndex, int referenceIndex) {
+            return new PeakPair(queryIndex, referenceIndex);
         }
     }
 }

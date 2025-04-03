@@ -54,7 +54,6 @@ import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
@@ -166,13 +165,13 @@ public class ZodiacSubToolJob extends DataSetJob {
                                     if (sim.similarity > 1.1) {
                                         throw new RuntimeException("Cosine similarity above 1: " + sim);
                                     } else { // due to rounding errors, the cosine similarity can be slightly above 1
-                                        sim = new SpectralSimilarity(1d, sim.sharedPeaks);
+                                        sim = new SpectralSimilarity(1d, sim.getSharedPeakPairs());
                                     }
                                 } else if (sim.similarity < 0) {
                                     if (sim.similarity < -0.1) {
                                         throw new RuntimeException("Cosine similarity below 0: " + sim); //todo either don't throw and return no hits. Or catch at some level so that only the one instace fails.
                                     } else { // due to rounding errors, the cosine similarity can be slightly below 0
-                                        sim = new SpectralSimilarity(0d, sim.sharedPeaks);
+                                        sim = new SpectralSimilarity(0d, sim.getSharedPeakPairs());
                                     }
                                 }
 
