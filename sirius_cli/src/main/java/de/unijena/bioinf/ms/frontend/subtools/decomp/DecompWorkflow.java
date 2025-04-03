@@ -136,12 +136,10 @@ public class DecompWorkflow implements Workflow {
             printFeatureSpectrumIds = false;
         }
 
-        System.out.println("Number of decomposition jobs:\t" + decompJobs.size());
+        LoggerFactory.getLogger(getClass()).info("Number of decomposition jobs:\t{}", decompJobs.size());
 
         // Now, all jobs are collect. Run them and take their results:
         final List<DecompResult> results = decompJobs.stream().map(jobManager::submitJob).map(JJob::takeResult).toList();
-
-        System.out.print("Number of DecompResults:\t" + results.size());
 
         final boolean printErrors = options.massErrors;
         try (Writer ow = options.out != null ? Files.newBufferedWriter(options.out) : new OutputStreamWriter(System.out)) {
