@@ -23,10 +23,7 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntMaps;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import it.unimi.dsi.fastutil.ints.*;
 
 import java.util.BitSet;
 import java.util.HashSet;
@@ -55,7 +52,7 @@ public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching
      */
     public SpectralSimilarity score1To1(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         if (left.isEmpty() || right.isEmpty())
-            return new SpectralSimilarity(0d, 0, Int2IntMaps.EMPTY_MAP);
+            return new SpectralSimilarity(0d, 0, IntLists.EMPTY_LIST);
         MatchesMatrix backtrace = new MatchesMatrix();
         double[] scoreRowBefore = new double[left.size()];
         double[] scoreRow = new double[left.size()];
@@ -144,19 +141,17 @@ public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching
             }
         }
 
-        Int2IntMap matchedPeaks = backtraceAndCountMatchedPeaks(left, right, backtrace, maxScorePos, (j == nr ? nr - 1 : j));
+        IntList matchedPeaks = backtraceAndCountMatchedPeaks(left, right, backtrace, maxScorePos, (j == nr ? nr - 1 : j));
         return new SpectralSimilarity(maxScore, matchedPeaks);
 
     }
 
-    protected Int2IntMap backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax){
+    protected IntList backtraceAndCountMatchedPeaks(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, MatchesMatrix backtrace, int imax, int jmax){
         //todo take only one best match. should result in same number of peaks!?!?
         int i = imax;
         int j = jmax;
 
-        final BitSet usedIndicesLeft = new BitSet();
-        final BitSet usedIndicesRight = new BitSet();
-        Int2IntMap matchedPeaks = new Int2IntOpenHashMap();
+        IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
 
         while (i>=0 && j>=0) {
             Peak lp = left.getPeakAt(i);
@@ -173,9 +168,8 @@ public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching
 
             if (backtrace.hasMatch(i,j)){
                 if (matchScore>0) {
-                    usedIndicesLeft.set(i);
-                    usedIndicesRight.set(j);
-                    matchedPeaks.put(i, j);
+                    matchedPeaks.add(i);
+                    matchedPeaks.add(j);
                 }
                 --i;
                 --j;

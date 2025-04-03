@@ -23,10 +23,9 @@ package de.unijena.bionf.spectral_alignment;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.utils.FastUtilJson;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntMaps;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,31 +44,36 @@ public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
      * query spec index -> reference spec index
      * Empty if no matching peaks or NULL if similarity measure does not support assignments
      */
-    @JsonDeserialize(using = FastUtilJson.IntMapDeserializer.class)
-    @JsonSerialize(using = FastUtilJson.IntMapSerializer.class)
+    @JsonDeserialize(using = FastUtilJson.IntListDeserializer.class)
+    @JsonSerialize(using = FastUtilJson.IntCollectionSerializer.class)
     @Nullable
-    private final Int2IntMap sharedPeakPairs;
+    @Getter
+    private final IntList sharedPeakPairs;
 
-    public Int2IntMap getSharedPeakPairs() {
+    public Int2IntMap getSharedPeakPairsMap() {
         if (sharedPeakPairs == null)
             return null;
-        return Int2IntMaps.unmodifiable(sharedPeakPairs);
+        Int2IntMap sharedPeakPairsMap = new Int2IntOpenHashMap(sharedPeakPairs.size() >> 1);
+        for (int i = 0; i < sharedPeakPairs.size(); i += 2)
+             sharedPeakPairsMap.put(sharedPeakPairs.getInt(i), sharedPeakPairs.getInt(i + 1));
+
+        return sharedPeakPairsMap;
     }
 
     public SpectralSimilarity() {
         this.similarity = 0;
         this.sharedPeaks = 0;
-        this.sharedPeakPairs = Int2IntMaps.EMPTY_MAP;
+        this.sharedPeakPairs = IntLists.EMPTY_LIST;
     }
 
-    public SpectralSimilarity(double similarity, Int2IntMap sharedPeakPairs) {
-        this(similarity, sharedPeakPairs == null ? 0 : sharedPeakPairs.size(), sharedPeakPairs);
+    public SpectralSimilarity(double similarity, @Nullable IntList sharedPeakPairs) {
+        this(similarity, sharedPeakPairs == null ? 0 : sharedPeakPairs.size() >> 1, sharedPeakPairs);
     }
 
-    public SpectralSimilarity(double similarity, int sharedPeaks, Int2IntMap sharedPeakPairs) {
+    public SpectralSimilarity(double similarity, int sharedPeaks, @Nullable IntList sharedPeakPairs) {
         this.similarity = similarity;
         this.sharedPeaks = sharedPeaks;
-        this.sharedPeakPairs = sharedPeakPairs instanceof Int2IntMaps.UnmodifiableMap ?  new Int2IntOpenHashMap(sharedPeakPairs) : sharedPeakPairs;
+        this.sharedPeakPairs = sharedPeakPairs;
     }
 
     @Override
