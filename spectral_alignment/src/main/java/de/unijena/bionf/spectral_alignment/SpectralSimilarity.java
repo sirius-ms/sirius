@@ -20,9 +20,15 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import de.unijena.bioinf.ChemistryBase.utils.FastUtilJson;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -32,14 +38,42 @@ public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
     public final double similarity;
     public final int sharedPeaks;
 
+    /**
+     * matched peak pairs
+     * left spec index ->  right spec index
+     * query spec index -> reference spec index
+     * Empty if no matching peaks or NULL if similarity measure does not support assignments
+     */
+    @JsonDeserialize(using = FastUtilJson.IntListDeserializer.class)
+    @JsonSerialize(using = FastUtilJson.IntCollectionSerializer.class)
+    @Nullable
+    @Getter
+    private final IntList sharedPeakPairs;
+
+    public Int2IntMap getSharedPeakPairsMap() {
+        if (sharedPeakPairs == null)
+            return null;
+        Int2IntMap sharedPeakPairsMap = new Int2IntOpenHashMap(sharedPeakPairs.size() >> 1);
+        for (int i = 0; i < sharedPeakPairs.size(); i += 2)
+             sharedPeakPairsMap.put(sharedPeakPairs.getInt(i), sharedPeakPairs.getInt(i + 1));
+
+        return sharedPeakPairsMap;
+    }
+
     public SpectralSimilarity() {
         this.similarity = 0;
         this.sharedPeaks = 0;
+        this.sharedPeakPairs = IntLists.EMPTY_LIST;
     }
 
-    public SpectralSimilarity(double similarity, int sharedPeaks) {
+    public SpectralSimilarity(double similarity, @Nullable IntList sharedPeakPairs) {
+        this(similarity, sharedPeakPairs == null ? 0 : sharedPeakPairs.size() >> 1, sharedPeakPairs);
+    }
+
+    public SpectralSimilarity(double similarity, int sharedPeaks, @Nullable IntList sharedPeakPairs) {
         this.similarity = similarity;
         this.sharedPeaks = sharedPeaks;
+        this.sharedPeakPairs = sharedPeakPairs;
     }
 
     @Override
