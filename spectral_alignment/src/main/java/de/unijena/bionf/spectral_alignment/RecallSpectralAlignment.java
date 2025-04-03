@@ -21,7 +21,8 @@ public class RecallSpectralAlignment extends AbstractSpectralMatching {
 
     public SpectralSimilarity score(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
         IntList matchedPeaks = this.getMatchedPeaks(msrdSpectrum, predSpectrum);
-        double recall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : (double) matchedPeaks.size() / msrdSpectrum.size();
+        int numMatchedPeaks = matchedPeaks.size() >> 1;
+        double recall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : (double) numMatchedPeaks / msrdSpectrum.size();
         return new SpectralSimilarity(recall, matchedPeaks);
     }
 
