@@ -38,7 +38,7 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.BioTransformerOptions;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
@@ -98,7 +98,7 @@ public class CustomDatabaseImporter {
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerOptions.BioTransformerParas paras) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerSettings settings) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -768,8 +768,7 @@ public class CustomDatabaseImporter {
             @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
             @Nullable IFingerprinterCache ifpCache,
             int bufferSize,
-            BioTransFormerOptions.BioTransformerParas paras
-
+            BioTransformerSettings settings
     ) {
         return new BasicJJob<Boolean>() {
             CustomDatabaseImporter importer;
@@ -777,7 +776,7 @@ public class CustomDatabaseImporter {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize,paras);
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize, settings);
                 if (listener != null)
                     importer.addListener(listener);
                 importToDatabase(spectrumFiles, structureFiles, importer);

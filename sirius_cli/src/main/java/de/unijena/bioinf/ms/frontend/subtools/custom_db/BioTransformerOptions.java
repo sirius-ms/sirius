@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
 import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
 import de.unijena.bioinf.ms.biotransformer.MetabolicTransformation;
 import de.unijena.bioinf.ms.biotransformer.P2Mode;
@@ -20,11 +21,13 @@ public class BioTransformerOptions {
             " Default mode is 1.", defaultValue = "RULE_BASED", order = 309)
     public Cyp450Mode cyp450Mode; // CYP450 Mode
 
+    public BioTransformerSettings toBioTransformerSetting() {
+        return BioTransformerSettings.builder()
+                //todo Jonas: Create BioTransformerSettings object from fields in this BioTransformerOptions object.
+                .cyp450Mode(cyp450Mode)
 
-
-
-
-
+                .build();
+    }
 
 
     public static class BioTransformer {

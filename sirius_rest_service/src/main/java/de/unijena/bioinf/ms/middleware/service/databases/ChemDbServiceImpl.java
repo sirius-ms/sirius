@@ -93,8 +93,9 @@ public class ChemDbServiceImpl implements ChemDbService {
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
+        // TODO Markus: ADD BIOTRANSFORMER SUPPORT TO API
         SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(
-                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache, bufferSize))
+                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache, bufferSize, null))
                 .takeResult();
 
         return SearchableDatabases.of(db);

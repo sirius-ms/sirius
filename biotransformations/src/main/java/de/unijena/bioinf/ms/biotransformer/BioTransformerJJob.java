@@ -1,36 +1,31 @@
 package de.unijena.bioinf.ms.biotransformer;
 
 import biotransformer.transformation.Biotransformation;
-import biotransformer.utils.BiotransformerSequenceStep;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.experimental.Delegate;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+
 @Accessors(fluent = false, chain = true)
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
 
     @Setter
     List<IAtomContainer> substrates;
+
     @Setter
-    private MetabolicTransformation metabolicTransformation;
-    @Setter
-    private int iterations; // Number of iterations
-    @Setter
-    private Cyp450Mode cyp450Mode; // CYP450 Mode
-    @Setter
-    private int p2Mode; // Phase II Mode
-    @Setter
-    private boolean useDB; // Use the database flag
-    @Setter
-    private boolean useSub; // Use the substructure flag
-    @Setter
-    private ArrayList<BiotransformerSequenceStep> sequenceSteps;
+    @Delegate
+    BioTransformerSettings settings;
+
+    public BioTransformerJJob(BioTransformerSettings settings) {
+        this();
+        this.settings = settings;
+    }
 
     public BioTransformerJJob() {
         super(JobType.CPU);
@@ -39,29 +34,23 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
     @Override
     protected List<BioTransformerResult> compute() throws Exception {
         List<JJob<List<Biotransformation>>> jobs =
-                switch (metabolicTransformation) {
+                switch (getMetabolicTransformation()) {
                     case PHASE_1_CYP450 -> substrates.stream().map(ia -> makeJob(() ->
-                                    BiotransformerWrapper.cyp450BTransformer(ia, iterations, cyp450Mode, useDB, useSub)))
-                            .toList();
+                                    BiotransformerWrapper.cyp450BTransformer(ia, getIterations(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                     case EC_BASED -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.ecBasedBTransformer(ia, iterations, useDB, useSub))).toList();
+                            BiotransformerWrapper.ecBasedBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case PHASE_2 -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.phaseIIBTransformer(ia,iterations,p2Mode,useDB,useSub))).toList();
+                            BiotransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode(), isUseDB(), isUseSub()))).toList();
                     case HUMAN_GUT -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.hGutBTransformer(ia,iterations,useDB,useSub))).toList();
+                            BiotransformerWrapper.hGutBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ENV_MICROBIAL -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.envMicrobialTransformer(ia,iterations,useDB,useSub))).toList();
-
+                            BiotransformerWrapper.envMicrobialTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ALL_HUMAN -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.allHumanTransformer(ia,iterations,p2Mode,cyp450Mode,useDB,useSub))).toList();
+                            BiotransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                     case ABIOTIC -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.abioticTransformer(ia,iterations))).toList();
-                    case HUMAN_CUSTOM_MULTI ->
-                        substrates.stream().map(ia -> makeJob(() ->
-                                        BiotransformerWrapper.multiBioTransformer(ia, sequenceSteps, cyp450Mode, useDB, useSub)))
-                                .toList();
-
-
+                            BiotransformerWrapper.abioticTransformer(ia, getIterations()))).toList();
+                    case HUMAN_CUSTOM_MULTI -> substrates.stream().map(ia -> makeJob(() ->
+                                    BiotransformerWrapper.multiBioTransformer(ia, getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                 };
         //TODO:
         submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::takeResult);

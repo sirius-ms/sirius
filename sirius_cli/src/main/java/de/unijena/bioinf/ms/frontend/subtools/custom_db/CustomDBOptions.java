@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import BioTransformerOptions;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -250,7 +249,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
                         ApplicationCore.IFP_CACHE(),
                         mode.importParas.writeBuffer,
-                        mode.importParas.bioTransformerOptions != null ? mode.importParas.bioTransformerOptions.toBioTransformerParas() : null
+                        mode.importParas.bioTransformerOptions != null ? mode.importParas.bioTransformerOptions.toBioTransformerSetting() : null
 
                 );
                 checkForInterruption();
