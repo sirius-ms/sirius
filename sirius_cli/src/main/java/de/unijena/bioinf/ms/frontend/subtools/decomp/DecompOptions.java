@@ -59,7 +59,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
             description = {"If set, the decompositions have to be subformulas of the given parent formula."})
     String parentFormula;
 
-    @CommandLine.Option(names = {"--ion", "-i"}, description = {"Ionization mode.", "Example: '[M+H]+'."})
+    @CommandLine.Option(names = {"--adduct", "--ion", "-i"}, description = {"Expected adduct to be used.", "Example: '[M+H]+', '[M+H20+H]+', '[M-H20+H]+'."})
     String ionization;
 
     @CommandLine.Option(names = {"--max-decomps","-d"},
