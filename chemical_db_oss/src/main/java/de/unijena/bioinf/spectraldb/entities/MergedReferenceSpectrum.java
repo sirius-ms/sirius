@@ -63,6 +63,12 @@ public class MergedReferenceSpectrum implements ReferenceSpectrum {
     private String smiles;
 
     /**
+     * Name of the spectrum.
+     * Usually contains the name of the measured compound
+     */
+    private String name;
+
+    /**
      * NOTE: filled while querying a SpectralLibrary
      */
     @JsonIgnore
