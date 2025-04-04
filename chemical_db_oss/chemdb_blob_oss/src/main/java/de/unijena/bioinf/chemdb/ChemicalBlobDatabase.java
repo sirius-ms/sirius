@@ -246,6 +246,11 @@ public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractC
     }
 
     @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+       throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try (final InputStream blobReader = getCompoundStream(formula).orElse(null)) {
             if (blobReader != null) {
@@ -265,7 +270,7 @@ public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractC
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 

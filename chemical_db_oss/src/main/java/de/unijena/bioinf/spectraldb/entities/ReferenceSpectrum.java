@@ -22,4 +22,6 @@ public interface ReferenceSpectrum {
 
     String getCandidateInChiKey();
 
+    String getName();
+
 }
