@@ -97,7 +97,7 @@ public class DecompWorkflow implements Workflow {
         // parse input massed and collect DecompInstanceJobs
         final JobManager jobManager = SiriusJobs.getGlobalJobManager();
         final List<DecompInstanceJob> decompJobs = new ArrayList<>();
-        final boolean printFeatureSpectrumIds;
+        final boolean inputFromSpectrumFiles;
         if(input != null && input.msInput != null && input.msInput.msParserfiles != null){
             final Collection<InputResource<?>> inputResources = input.msInput.msParserfiles.keySet().stream().map(PathInputResource::new).collect(Collectors.toList());
             final double maxMz = options.maxMz == null ? Double.POSITIVE_INFINITY : options.maxMz;
@@ -109,14 +109,22 @@ public class DecompWorkflow implements Workflow {
                     final MolecularFormula parentFormula = exp.getMolecularFormula();
                     final PrecursorIonType ionization = exp.getPrecursorIonType();
                     final List<Ms2Spectrum<Peak>> ms2Spectra = exp.getMs2Spectra();
+
                     for(int i = 0; i < ms2Spectra.size(); i++){
                         final Ms2Spectrum<Peak> spec = ms2Spectra.get(i);
-                        final List<Double> masses = spec.stream().map(Peak::getMass).toList();
-                        decompJobs.add(new DecompInstanceJob(featureId, i, parentFormula, ionization, masses, alphabet, dev, decomposer, validator));
+
+                        final List<Double> masses = new ArrayList<>(spec.size());
+                        final List<Double> intensities = new ArrayList<>(spec.size());
+                        spec.forEach(p -> {
+                            masses.add(p.getMass());
+                            intensities.add(p.getIntensity());
+                        });
+
+                        decompJobs.add(new DecompInstanceJob(featureId, i, parentFormula, ionization, masses, intensities, alphabet, dev, decomposer, validator));
                     }
                 }
             }
-            printFeatureSpectrumIds = true;
+            inputFromSpectrumFiles = true;
         }else{
             final MolecularFormula parentFormula = options.parentFormula != null ? MolecularFormula.parseOrNull(options.parentFormula) : null;
             final PrecursorIonType ionization = options.ionization == null ? null : PeriodicTable.getInstance().ionByNameOrNull(options.ionization);
@@ -132,14 +140,15 @@ public class DecompWorkflow implements Workflow {
                 }
             }
 
-            decompJobs.add(new DecompInstanceJob(null, 0, parentFormula, ionization, masses, alphabet, dev, decomposer, validator));
-            printFeatureSpectrumIds = false;
+            decompJobs.add(new DecompInstanceJob(null, 0, parentFormula, ionization, masses, null, alphabet, dev, decomposer, validator));
+            inputFromSpectrumFiles = false;
         }
 
         LoggerFactory.getLogger(getClass()).info("Number of decomposition jobs:\t{}", decompJobs.size());
 
         // Now, all jobs are collect. Run them and take their results:
-        final List<DecompResult> results = decompJobs.stream().map(jobManager::submitJob).map(JJob::takeResult).toList();
+        decompJobs.forEach(jobManager::submitJob);
+        final List<DecompResult> results = decompJobs.stream().map(JJob::takeResult).toList();
 
         final boolean printErrors = options.massErrors;
         try (Writer ow = options.out != null ? Files.newBufferedWriter(options.out) : new OutputStreamWriter(System.out)) {
@@ -147,23 +156,25 @@ public class DecompWorkflow implements Workflow {
             formater.applyPattern("#.####");
 
             //write header
-            if(printFeatureSpectrumIds){
+            if(inputFromSpectrumFiles)
                 ow.write("featureId\tspectrumId\t");
-            }
-            ow.write("parentFormula\tionization\tm/z\tdecompositions");
+            ow.write("parentFormula\tadduct\tm/z");
+            if(inputFromSpectrumFiles)
+                ow.write("\tintensity");
+            ow.write("\tdecompositions");
             if (printErrors)
                 ow.write("\tabsMassDev\trelMassDev");
             ow.write(System.lineSeparator());
 
             for(final DecompResult result : results)
-                writeDecompResult(ow, formater, result, printErrors, printFeatureSpectrumIds);
+                this.writeDecompResult(ow, formater, result, printErrors, inputFromSpectrumFiles);
 
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("could not write output! Canceling...", e);
         }
     }
 
-    private void writeDecompResult(Writer ow, DecimalFormat formater, DecompResult result, boolean printErrors, boolean printFeatureSpectrumIds) throws IOException {
+    private void writeDecompResult(Writer ow, DecimalFormat formater, DecompResult result, boolean printErrors, boolean inputFromSpectrumFiles) throws IOException {
         final String featureId = String.valueOf(result.id());
         final String spectrumId = Integer.toString(result.spectrumId());
         final String parentFormula = String.valueOf(result.parentFormula());
@@ -175,7 +186,7 @@ public class DecompWorkflow implements Workflow {
             final double mass = masses.get(i);
             final List<MolecularFormula> mfs = formulas.get(i);
 
-            if(printFeatureSpectrumIds) {
+            if(inputFromSpectrumFiles) {
                 ow.write(featureId);
                 ow.write("\t");
                 ow.write(spectrumId);
@@ -186,6 +197,13 @@ public class DecompWorkflow implements Workflow {
             ow.write(ionization);
             ow.write("\t");
             ow.write(formater.format(mass));
+
+            if(inputFromSpectrumFiles){
+                final double intensity = result.intensities().get(i);
+                ow.write("\t");
+                ow.write(formater.format(intensity));
+            }
+
             ow.write("\t");
             ow.write(mfs.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")));
             if(printErrors){
@@ -205,20 +223,24 @@ public class DecompWorkflow implements Workflow {
 
         private final MolecularFormula parentFormula;
         private final PrecursorIonType ionization;
+
         private final List<Double> masses;
+        private final List<Double> intensities;
 
         private final DecompositionValidator<Element> validator;
         private final ChemicalAlphabet alphabet;
         private final Deviation deviation;
         private final MassToFormulaDecomposer decomposer;
 
-        public DecompInstanceJob(String instanceId, int spectrumId, MolecularFormula parentFormula, PrecursorIonType ionization, List<Double> masses, ChemicalAlphabet alphabet, Deviation deviation, MassToFormulaDecomposer decomposer, DecompositionValidator<Element> validator) {
+        public DecompInstanceJob(String instanceId, int spectrumId, MolecularFormula parentFormula, PrecursorIonType ionization, List<Double> masses, List<Double> intensities, ChemicalAlphabet alphabet, Deviation deviation, MassToFormulaDecomposer decomposer, DecompositionValidator<Element> validator) {
             this.instanceId = instanceId;
             this.spectrumId = spectrumId;
 
             this.parentFormula = parentFormula;
             this.ionization = ionization;
+
             this.masses = masses;
+            this.intensities = intensities;
 
             this.alphabet = alphabet;
             this.deviation = deviation;
@@ -270,10 +292,9 @@ public class DecompWorkflow implements Workflow {
                 formulas.add(mfs);
             }
 
-
-            return new DecompResult(this.instanceId, this.spectrumId, this.parentFormula, this.ionization, this.masses, formulas);
+            return new DecompResult(this.instanceId, this.spectrumId, this.parentFormula, this.ionization, this.masses, this.intensities, formulas);
         }
     }
 
-    private record DecompResult(String id, int spectrumId, MolecularFormula parentFormula, PrecursorIonType ionization, List<Double> masses, List<List<MolecularFormula>> formulas) {}
+    private record DecompResult(String id, int spectrumId, MolecularFormula parentFormula, PrecursorIonType ionization, List<Double> masses, List<Double> intensities, List<List<MolecularFormula>> formulas) {}
 }
