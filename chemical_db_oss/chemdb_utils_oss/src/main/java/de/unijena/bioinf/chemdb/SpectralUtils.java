@@ -31,7 +31,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.spectraldb.SpectraLibraryUpdateManager;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
 import edu.ucdavis.fiehnlab.spectra.hash.core.SplashFactory;
