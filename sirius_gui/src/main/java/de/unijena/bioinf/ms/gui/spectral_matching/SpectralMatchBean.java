@@ -56,7 +56,10 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
         try {
             if (instance != null) {
                 this.instance = instance;
-                BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+                BasicSpectrum query = match.getQuerySpectrumIndex() < 0
+                        ? instance.getMsData().getMergedMs2()
+                        : instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+
                 this.queryName = SpectraSearchSubtoolJob.getQueryName(
                         query.getMsLevel(),
                         query.getScanNumber(),

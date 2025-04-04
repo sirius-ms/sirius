@@ -1,4 +1,4 @@
-package de.unijena.bioinf.spectraldb;
+package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -11,6 +11,8 @@ import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
@@ -109,9 +111,26 @@ public class SpectraLibraryUpdateManager {
                             LoggerFactory.getLogger("Cannot compute tree for " + index);
                             tree = new FTree(experiment.getMolecularFormula(), index.ionType.getIonization());
                         }
+
+                        String name;
+                        String smiles;
+                        // try to use name from structure instead of arbitrary spectrum because that is the 2d representative
+                        if (reader instanceof AbstractChemicalDatabase chemDb){
+                            CompoundCandidate structure = chemDb.lookupStructuresByInChI(index.inchikey);
+                            name = structure.getName();
+                            smiles = structure.getSmiles();
+                        } else {
+                            Ms2ReferenceSpectrum metaDataReference = specs.stream()
+                                    .filter(ref -> ref.getSmiles() != null)
+                                    .findFirst().orElse(null);
+                            name = metaDataReference.getName();
+                            smiles = metaDataReference.getSmiles();
+                        }
+
                         MergedReferenceSpectrum merged = new MergedReferenceSpectrum();
+                        merged.setName(name);
                         merged.setFormula(specs.getFirst().getFormula());
-                        merged.setSmiles(specs.stream().map(Ms2ReferenceSpectrum::getSmiles).filter(Objects::nonNull).findFirst().orElse(null));
+                        merged.setSmiles(smiles);
                         merged.setPrecursorMz(experiment.getIonMass());
                         merged.setExactMass(index.ionType.neutralMassToPrecursorMass(merged.getFormula().getMass()));
                         merged.setCandidateInChiKey(index.inchikey);
