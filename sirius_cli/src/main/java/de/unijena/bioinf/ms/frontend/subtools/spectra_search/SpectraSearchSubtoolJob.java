@@ -64,6 +64,9 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     public static String getQueryName(int mslevel, int scanNumber, @Nullable String collisionEnergy,
                                       @Nullable String ionization, int queryIndex) {
 
+        if (queryIndex < 0)
+            return String.format("Merged MS%d", mslevel);
+
         String q = String.format("MS%d; #%d", mslevel, (scanNumber > -1) ? scanNumber : queryIndex + 1);
 
         if (collisionEnergy != null)

@@ -41,9 +41,9 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,6 +60,7 @@ import java.util.Optional;
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @io.swagger.v3.oas.annotations.tags.Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
@@ -317,16 +318,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }
 
         if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
-                    db -> {
-                        try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getMs2ReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-                        } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
-                        }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
-            ));
+            matches.getContent().forEach(this::extractRefSpectraSneaky);
         return matches;
     }
 
@@ -367,19 +359,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
 
         if (removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
-                    db -> {
-                        try {
-                            ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
-                            if (spec.getQuerySpectrum() != null)
-                                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-
-
-                        } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
-                        }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
-            );
+            extractRefSpectraSneaky(match);
         return match;
     }
 
@@ -401,28 +381,19 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
                 .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
 
-        @NotNull
-        CustomDataSources.Source db = CustomDataSources.getSourceFromNameOpt(match.getDbName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
-
-        ReferenceSpectrum spec;
-        try {
-            spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
-            if (spec.getQuerySpectrum() != null)
-                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-        } catch (ChemicalDatabaseException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find Spectrum: '%s' in database '%s'. %s", match.getUuid(), match.getDbName(), e.getMessage()));
-        }
+        ReferenceSpectrum spec = extractRefSpectra(match);
 
         if (match.getTarget() != SpectralLibraryMatch.TargetType.MERGED)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Loading annotation is currently only supported for MergedSpectra. But spectrum: '%s' in database '%s' is of type %s.", match.getUuid(), match.getDbName(), match.getTarget()));
 
-        try {
-            ReferenceFragmentationTree refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
-            return Spectrums.createReferenceMsMsWithAnnotations(spec.getQuerySpectrum(), refTree.asFTree(), spec.getSmiles());
-        } catch (ChemicalDatabaseException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));
-        }
+        return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
+            try {
+                ReferenceFragmentationTree refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
+                return Spectrums.createReferenceMsMsWithAnnotations(spec, refTree.asFTree());
+            } catch (ChemicalDatabaseException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));
+            }
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load ftree for Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
     }
 
 
@@ -1067,6 +1038,32 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     protected static String idString(String pid, String fid, String foId) {
         return "'" + pid + "/" + fid + "/" + foId + "'";
     }
+
+
+    @NotNull
+    private ReferenceSpectrum extractRefSpectra(SpectralLibraryMatch match) throws ResponseStatusException {
+        return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
+            try {
+                ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
+                if (spec.getQuerySpectrum() != null)
+                    match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
+                return spec;
+            } catch (ChemicalDatabaseException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find Spectrum: '%s' in database '%s'. %s", match.getUuid(), match.getDbName(), e.getMessage()));
+            }
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
+    }
+
+    @Nullable
+    private ReferenceSpectrum extractRefSpectraSneaky(SpectralLibraryMatch match) {
+        try {
+            return extractRefSpectra(match);
+        } catch (ResponseStatusException e) {
+            log.error(e.getReason(), e);
+            return null;
+        }
+    }
+
     // endregion
 
 }
