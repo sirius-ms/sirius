@@ -178,7 +178,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                                 if (sim.sharedPeaks >= 6 && sim.similarity >= 0.6) {
                                     final boolean analog = !dev.inErrorWindow(db.getPrecursorMz(), spec.getParentMass());
                                     if (!analog || sim.sharedPeaks>=analogMinNumberOfPeaks) {
-                                        allHits.add(new de.unijena.bioinf.spectraldb.LibraryHit(0, sim, db, analog));
+                                        allHits.add(new de.unijena.bioinf.spectraldb.LibraryHit(-1, sim, db, analog));
                                     }
                                 }
                             }

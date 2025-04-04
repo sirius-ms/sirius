@@ -21,10 +21,7 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
-import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
-import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -91,14 +88,15 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
                 buf.setIntensityAt(j, buf.getIntensityAt(j)*buf.getIntensityAt(j));
             }
         }
+
         BasicSpectrum spec = new BasicSpectrum(s);
         // basic information
         spec.setMsLevel(2);
+        spec.setName(ref.getName());
         spec.setPrecursorMz(ref.getPrecursorMz());
         // extended information
         if (ref instanceof Ms2ReferenceSpectrum) {
             Ms2ReferenceSpectrum ms2ref = (Ms2ReferenceSpectrum) ref;
-            spec.setName(ms2ref.getName());
             if (ms2ref.getInstrumentation() != null) {
                 spec.setInstrument(ms2ref.getInstrumentation().description());
             } else if (ms2ref.getInstrumentType() != null && ms2ref.getInstrument() != null
@@ -116,8 +114,7 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
             }
             spec.setCollisionEnergy(ms2ref.getCollisionEnergy());;
         } else if (ref instanceof MergedReferenceSpectrum) {
-            spec.setName("Merged spectrum");
-            spec.setCollisionEnergyStr("merged");
+            spec.setCollisionEnergy(CollisionEnergy.none());
         }
         return spec;
     }

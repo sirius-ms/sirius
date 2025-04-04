@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,6 +34,8 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
 
     final static List<String> HEADER = List.of(
             "spectralMatchRank",
+            "spectrumType",
+            "analogHit",
             "querySpectrumIndex",
             "querySpectrumScanNumber",
             "querySpectrumMsLevel",
@@ -65,18 +68,22 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
         writer.writeHeader(HEADER);
     }
 
-    public void writeSpectralMatch(AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
+    public void writeSpectralMatch(AlignedFeatures f, SpectraMatch match, @Nullable MutableMs2Spectrum query, @Nullable Ms2ReferenceSpectrum reference) throws IOException {
         List<Object> row = new ArrayList<>();
 
         row.add(match.getRank());
 
+        row.add(match.getSpectrumType());
+
+        row.add(match.isAnalog());
+
         row.add(match.getQuerySpectrumIndex());
 
-        row.add(query.getScanNumber() > -1 ? query.getScanNumber() : null);
+        row.add(query != null  && query.getScanNumber() > -1 ? query.getScanNumber() : null);
 
-        row.add(query.getMsLevel());
+        row.add(query != null ? query.getMsLevel() : null);
 
-        row.add(Optional.ofNullable(query.getCollisionEnergy()).map(CollisionEnergy::toString).orElse(null));
+        row.add(Optional.ofNullable(query).map(MutableMs2Spectrum::getCollisionEnergy).map(CollisionEnergy::toString).orElse(null));
 
         row.add(match.getSimilarity().similarity); //max cosine is 1.0. In the GUI we show percent. Here it is just the number.
 
