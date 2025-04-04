@@ -3,13 +3,11 @@ package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
 import de.unijena.bioinf.ms.biotransformer.MetabolicTransformation;
 import de.unijena.bioinf.ms.biotransformer.P2Mode;
-import lombok.Setter;
 //import org.gradle.internal.impldep.com.beust.jcommander.IParameterValidator;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.util.*;
-import java.util.function.Consumer;
 // --transfromation HUMAN_CUSTOM_MULTI --seq-step CYP450 --seq-iterations 3  --seq-step PHASE_2 --seq-iterations 1
 
 public class BioTransformerOptions {
@@ -141,17 +139,17 @@ public class BioTransformerOptions {
         int cyp450Mode;
         int iterations;
     }
-    public BioTransformerParas toBioTransformerParas(){
-        BioTransformerParas paras = new BioTransformerParas();
-        paras.useDB = bioTransformer.biotransformer.useDB;
-        paras.useSubstructure = bioTransformer.biotransformer.useSubstructure;
-        paras.metabolicTransformation = bioTransformer.biotransformer.metabolicTransformation;
-        paras.p2Mode = bioTransformer.biotransformer.p2Mode.ordinal();
-        paras.cyp450Mode = cyp450Mode.ordinal();
-        paras.iterations = bioTransformer.biotransformer.iterations;
+        public BioTransformerParas toBioTransformerParas() {
+            BioTransformerParas paras = new BioTransformerParas();
+            paras.useDB = bioTransformer.biotransformer.useDB;
+            paras.useSubstructure = bioTransformer.biotransformer.useSubstructure;
+            paras.metabolicTransformation = bioTransformer.biotransformer.metabolicTransformation;
+            paras.p2Mode = bioTransformer.biotransformer.p2Mode.ordinal();
+            paras.cyp450Mode = cyp450Mode.ordinal();
+            paras.iterations = bioTransformer.biotransformer.iterations;
 
-        return new BioTransformerParas();
-    }
+            return new BioTransformerParas();
+        }
 
 
 

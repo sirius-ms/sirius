@@ -98,7 +98,7 @@ public class CustomDatabaseImporter {
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerOptions paras) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerOptions.BioTransformerParas paras) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -768,7 +768,7 @@ public class CustomDatabaseImporter {
             @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
             @Nullable IFingerprinterCache ifpCache,
             int bufferSize,
-            BioTransformerParas paras
+            BioTransFormerOptions.BioTransformerParas paras
 
     ) {
         return new BasicJJob<Boolean>() {
