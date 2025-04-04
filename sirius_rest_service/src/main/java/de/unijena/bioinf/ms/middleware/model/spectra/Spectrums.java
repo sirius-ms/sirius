@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -82,23 +83,9 @@ public class Spectrums {
         spectrum.setPrecursorMz(sourceSpectrum.getMergedPrecursorMz());
         if (sourceSpectrum.getMergedCollisionEnergy() != null && !sourceSpectrum.getMergedCollisionEnergy().equals(CollisionEnergy.none())) {
             spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getMergedCollisionEnergy()));
-            spectrum.setName("MS2 " + sourceSpectrum.getMergedCollisionEnergy().toString());
+            spectrum.setName("MS2 merged " + sourceSpectrum.getMergedCollisionEnergy().toString());
         } else {
-            spectrum.setName("MS2");
-        }
-
-        spectrum.setMsLevel(2);
-
-        return spectrum;
-    }
-
-    private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull ReferenceLibrarySpectrum sourceSpectrum) {
-        spectrum.setPrecursorMz(sourceSpectrum.getParentMass());
-        if (sourceSpectrum.getCollisionEnergy() != null && !sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
-            spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getCollisionEnergy()));
-            spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
-        } else {
-            spectrum.setName("MS2");
+            spectrum.setName("MS2 merged");
         }
 
         spectrum.setMsLevel(2);
@@ -178,8 +165,15 @@ public class Spectrums {
     }
 
     @SneakyThrows
-    public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceLibrarySpectrum specSource, @Nullable FTree ftree, @Nullable String candidateSmiles) {
-        AnnotatedSpectrum spectrum = decorateMsMs(new AnnotatedSpectrum(specSource), specSource);
+    public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceSpectrum refSpectrum, @Nullable FTree ftree) {
+        ReferenceLibrarySpectrum specSource = refSpectrum.getQuerySpectrum();
+        String candidateSmiles = refSpectrum.getSmiles();
+
+        AnnotatedSpectrum spectrum = new AnnotatedSpectrum(specSource);
+        spectrum.setName(refSpectrum.getName());
+        spectrum.setMsLevel(2);
+        spectrum.setCollisionEnergy(CollisionEnergy.none());
+
         if (ftree == null)
             return spectrum;
         Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree);
@@ -202,7 +196,7 @@ public class Spectrums {
     }
 
     private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) throws CDKException {
-        //compute substructure annotations //todo nightsky: do we want to do this somewhere else?
+        //compute substructure annotations //todo do we want to do this somewhere else? We need a cancellable job in the api anyways
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
                 : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
                 .asType(JJob.JobType.TINY_BACKGROUND)).takeResult(); //executed as tiny background job to be computed instantly for immediate response
