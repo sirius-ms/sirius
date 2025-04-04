@@ -237,7 +237,7 @@ public class SpectralLibraryMatch {
   }
 
    /**
-   * Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)  even number -&gt; left/query spectrum index  odd number -&gt;  right/reference spectrum index
+   * List of paired/matched peak indices.   Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)
    * @return sharedPeakMapping
   **/
   @jakarta.annotation.Nullable
