@@ -18,10 +18,10 @@ public class BiotransformerRunner {
         int p2Mode = 1;
         boolean useDB = true;
         boolean useSub = false;
-        Double massThreshold = (double)1500.0F;
+        Double massThreshold = (double) 1500.0F;
 
         String smile = "CC(C)C1=CC=C(C)C=C1O";
-        int steps= 2;
+        int steps = 2;
         Cyp450Mode cypmode = Cyp450Mode.COMBINED;
 
         IChemObjectBuilder builder = SilentChemObjectBuilder.getInstance();
@@ -29,20 +29,20 @@ public class BiotransformerRunner {
         IAtomContainer input = smiParser.parseSmiles(smile);
 
 
-
-       BioTransformerJJob transformerJob = new BioTransformerJJob();//set input and paramters
-        transformerJob.setSubstrates(List.of(input));
-        transformerJob.setMetabolicTransformation(MetabolicTransformation.ALL_HUMAN);
-        transformerJob.setCyp450Mode(cypmode);
-        transformerJob.setP2Mode(p2Mode);
-        transformerJob.setIterations(steps);
-        transformerJob.setUseDB(useDB);
-        transformerJob.setUseSub(useSub);
-
-
+        BioTransformerJJob transformerJob = new BioTransformerJJob();
+        transformerJob.setSubstrates(List.of(input)); //set input structures
+        transformerJob.setSettings(BioTransformerSettings.builder() //set parameters
+                .metabolicTransformation(MetabolicTransformation.ALL_HUMAN)
+                .cyp450Mode(cypmode)
+                .p2Mode(p2Mode)
+                .iterations(steps)
+                .useDB(useDB)
+                .useSub(useSub)
+                .build()
+        );
 
         List<BioTransformerResult> results = SiriusJobs.getGlobalJobManager().submitJob(transformerJob).awaitResult();
-       System.out.println(results.getFirst().getBiotranformations().getFirst().getProducts());
+        System.out.println(results.getFirst().getBiotranformations().getFirst().getProducts());
 
 
 
@@ -64,10 +64,6 @@ public class BiotransformerRunner {
             transformation.display();
         }
          */
-
-
-
-
 
 
     }
