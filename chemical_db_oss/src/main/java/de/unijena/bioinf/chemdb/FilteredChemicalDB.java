@@ -80,6 +80,11 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
                 .filter(ChemDBs.inFilter((it) -> it.bitset, filter)).collect(Collectors.toList());
     }
 
+    @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        return wrappedDB.lookupStructuresByInChI(inchiKey2d);
+    }
+
 
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
@@ -97,8 +102,8 @@ public class FilteredChemicalDB<DB extends AbstractChemicalDatabase> implements 
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return wrappedDB.lookupManyInchisByInchiKeys(inchi_keys);
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
+        return wrappedDB.lookupManyInchisByInchiKeys(inchiKeys2d);
     }
 
     @Override
