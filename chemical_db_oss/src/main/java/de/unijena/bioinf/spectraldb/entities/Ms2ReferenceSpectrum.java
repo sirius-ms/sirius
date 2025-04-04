@@ -109,6 +109,7 @@ public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
 
     /**
      * Name of the spectrum.
+     * Usually contains the name of the measured compound
      */
     private String name;
 

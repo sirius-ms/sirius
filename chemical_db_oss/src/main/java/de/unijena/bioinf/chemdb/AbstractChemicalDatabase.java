@@ -75,15 +75,21 @@ public interface AbstractChemicalDatabase extends Closeable, Cloneable, SearchSt
      */
     List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException;
 
+    CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException;
+
     List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
 
-    List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException;
+    List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException;
 
     List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException;
 
     default Fingerprint lookupFingerprintByInChI(InChI inchi) throws ChemicalDatabaseException {
-        final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchi.key2D()));
-        if (xs.size() > 0) return xs.get(0).getFingerprint();
+            return lookupFingerprintByInChI(inchi.key2D());
+    }
+
+    default Fingerprint lookupFingerprintByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        final List<FingerprintCandidate> xs = lookupFingerprintsByInchis(Collections.singleton(inchiKey2d));
+        if (!xs.isEmpty()) return xs.getFirst().getFingerprint();
         else return null;
     }
 
