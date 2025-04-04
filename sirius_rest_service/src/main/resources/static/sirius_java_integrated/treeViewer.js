@@ -2047,7 +2047,7 @@ var TreeViewer = (function () {
     popup_div = d3
       .select(containerElement)
       .append('div')
-      .attr('class', 'popup')
+      .attr('class', 'tree-popup')
       .style('visibility', 'hidden')
       .style('position', 'absolute')
       .style('pointer-events', 'none');
