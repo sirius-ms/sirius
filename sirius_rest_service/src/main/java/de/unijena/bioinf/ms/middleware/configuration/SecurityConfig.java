@@ -56,7 +56,7 @@ public class SecurityConfig {
 
 
                 // React views
-                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**")
+                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**", "epi/**")
                         .addResourceLocations("classpath:/static/sirius_java_integrated/")
                         .resourceChain(true)
                         .addResolver(new PathResourceResolver() {
@@ -71,10 +71,6 @@ public class SecurityConfig {
                 //assets for react views
                 registry.addResourceHandler("/assets/**")
                         .addResourceLocations("classpath:/static/sirius_java_integrated/assets/");
-/*                registry.addResourceHandler("/treeViewer.js")
-                        .addResourceLocations("classpath:/static/sirius_java_integrated/treeViewer.js");
-                registry.addResourceHandler("/d3-colorbar.js")
-                        .addResourceLocations("classpath:/static/sirius_java_integrated/d3-colorbar.js");*/
 
                 // just some basic example for testing.
                 registry.addResourceHandler("/apps/hello-world/")
