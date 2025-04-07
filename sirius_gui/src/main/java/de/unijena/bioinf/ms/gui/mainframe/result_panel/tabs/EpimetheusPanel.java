@@ -19,10 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
@@ -31,7 +29,6 @@ import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Optional;
 
 
 public class EpimetheusPanel extends JPanel implements Loadable, PanelDescription {
@@ -54,18 +51,11 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
         super(new BorderLayout());
         this.structureList = structureList;
         this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
 
-        candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
-            DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
-            Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
-            sre.ifPresentOrElse(bean ->
-                    structureList.readDataByConsumer(d ->
-                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles())),
-                    overviewSVP::clear);
-        });
+        SubstructurePanel substructurePanel = new SubstructurePanel(structureList.getGui());
+        candidateTable.getFilteredSelectionModel().addListSelectionListener(substructurePanel);
 
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, substructurePanel);
         major.setDividerLocation(250);
         loadablePanel = new LoadablePanel(major);
         add(loadablePanel, BorderLayout.CENTER);

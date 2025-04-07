@@ -35,13 +35,12 @@ public class RedirectController {
         return "redirect:/swagger-ui.html";
     }
 
-    @GetMapping({"/KMD", "/KMD/**"})
+    @GetMapping({
+            "/KMD", "/KMD/**",
+            "/formulaTreeView", "/formulaTreeView/**",
+            "/epi", "/epi/**"
+    })
     public String forwardKmdView() {
-        return "forward:/sirius_java_integrated/index.html";
-    }
-
-    @GetMapping({"/formulaTreeView", "/formulaTreeView/**"})
-    public String forwardFormulaTreeView() {
         return "forward:/sirius_java_integrated/index.html";
     }
 
