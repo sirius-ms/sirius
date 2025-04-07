@@ -38,6 +38,7 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -298,18 +299,28 @@ public class WebWithCustomDatabase {
         return spec;
     }
 
-    public Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> getAllMergedSpectra(Collection<CustomDataSources.Source> dbs) {
-        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectra = new HashMap<>();
+
+    /**
+     * Provides all MergedReferenceSpectrum (positive ion mode -> left, negative ion mode -> right) grouped by datasource
+     * @param dbs data sources to include
+     */
+    public Pair<Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>, Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>> getAllMergedSpectra(Collection<CustomDataSources.Source> dbs) {
+        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectraPos = new HashMap<>();
+        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectraNeg = new HashMap<>();
         dbs.stream().filter(CustomDataSources.Source::isCustomSource).forEach(db ->
                 asCustomDB(db).toSpectralLibrary().ifPresent(specLib -> {
                     try {
-                        specLib.forEachMergedSpectrum(s ->
-                                spectra.computeIfAbsent(db, k -> new ArrayList<>()).add(s));
+                        specLib.forEachMergedSpectrum(s -> {
+                            if (s.getPrecursorIonType().isPositive())
+                                spectraPos.computeIfAbsent(db, k -> new ArrayList<>()).add(s);
+                            else
+                                spectraNeg.computeIfAbsent(db, k -> new ArrayList<>()).add(s);
+                        });
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }));
-        return spectra;
+        return Pair.of(spectraPos, spectraNeg);
     }
 
     public Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> getMergedSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, Collection<CustomDataSources.Source> dbs) {
