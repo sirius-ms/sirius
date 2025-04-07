@@ -82,7 +82,7 @@ public class SpectralLibraryMatch {
 
     private final String molecularFormula;
     private final String adduct;
-    private final String exactMass;
+    private final Double exactMass;
     private final String smiles;
 
     @Schema(defaultValue = "SPECTRUM")
@@ -124,7 +124,7 @@ public class SpectralLibraryMatch {
                 .dbId(result.getDbId())
                 .uuid(result.getUuid())
                 .splash(result.getSplash())
-                .exactMass(Double.toString(result.getExactMass()))
+                .exactMass(result.getExactMass())
                 .smiles(result.getSmiles())
                 .target(result.getSpectrumType()== SpectrumType.MERGED_SPECTRUM ? TargetType.MERGED : TargetType.SPECTRUM)
                 .type(result.isAnalog() ? MatchType.ANALOG : MatchType.COSINE)

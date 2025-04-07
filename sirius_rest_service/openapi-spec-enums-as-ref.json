@@ -10037,7 +10037,8 @@
             "type": "string"
           },
           "exactMass": {
-            "type": "string"
+            "type": "number",
+            "format": "double"
           },
           "smiles": {
             "type": "string"
