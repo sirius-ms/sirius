@@ -102,7 +102,7 @@ public class SpectralLibraryMatch {
   private String adduct;
 
   public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
-  private String exactMass;
+  private Double exactMass;
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
   private String smiles;
@@ -237,7 +237,7 @@ public class SpectralLibraryMatch {
   }
 
    /**
-   * Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)  even number -&gt; left/query spectrum index  odd number -&gt;  right/reference spectrum index
+   * List of paired/matched peak indices.   Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)
    * @return sharedPeakMapping
   **/
   @jakarta.annotation.Nullable
@@ -430,7 +430,7 @@ public class SpectralLibraryMatch {
     this.adduct = adduct;
   }
 
-  public SpectralLibraryMatch exactMass(String exactMass) {
+  public SpectralLibraryMatch exactMass(Double exactMass) {
     
     this.exactMass = exactMass;
     return this;
@@ -444,14 +444,14 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getExactMass() {
+  public Double getExactMass() {
     return exactMass;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExactMass(String exactMass) {
+  public void setExactMass(Double exactMass) {
     this.exactMass = exactMass;
   }
 
