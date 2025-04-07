@@ -1,4 +1,6 @@
 PrintCitations=de.unijena.bioinf.ms.annotations.PrintCitations
 RecomputeResults=de.unijena.bioinf.ms.annotations.RecomputeResults
 SpectralSearchLog=de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectralSearchLog
+SpectralSearchTargetTypes=de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectralSearchTargetTypes
+AnalogSpectraSearch=de.unijena.bioinf.ms.frontend.subtools.spectra_search.AnalogSpectraSearch
 NumberOfMsNovelistCandidates=de.unijena.bioinf.ms.frontend.subtools.msnovelist.NumberOfMsNovelistCandidates

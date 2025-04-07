@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * A Ms2Experiment is a MS/MS measurement of a *single* compound. If there are multiple compounds measured in your
@@ -96,6 +95,8 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
      * @return a list of MS2 spectra belonging to this compound
      */
     <T extends Ms2Spectrum<Peak>> List<T> getMs2Spectra();
+
+    <T extends Spectrum<Peak>> T getMergedMs2Spectrum();
 
     /**
      * @return the mass-to-charge ratio of the ion to analyze

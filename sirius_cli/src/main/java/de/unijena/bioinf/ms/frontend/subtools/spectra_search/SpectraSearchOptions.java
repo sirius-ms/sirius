@@ -19,8 +19,10 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
+import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
@@ -42,7 +44,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
+    @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search spectra in the union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
@@ -58,13 +60,32 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPrecursorDeviation", value + "ppm");
     }
 
+    @CommandLine.Option(names = {"--analog", "--hybrid", "-a"}, descriptionKey = "AnalogSpectraSearch", description = "Perform full search against all spectra in the selected database. All matches exceeding given mass deviation will be considered a analog/hybrid search hit.")
+    public void setAnalogSearch(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("AnalogSpectraSearch", value);
+    }
+
+    @CommandLine.Option(names = "--target-types", descriptionKey = "SpectralSearchTargetTypes", defaultValue = "SPECTRUM,MERGED_SPECTRUM", description = "Specify targets in the spectral library where hits shall be returned. Valid values: ${COMPLETION-CANDIDATES}.", hidden = true)
+    public void setScorer(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("SpectralSearchTargetTypes", value);
+    }
+
+    //todo allwo fast search with merged source only?
+  /*
+    @CommandLine.Option(names = {"--fast", "--merged-only"}, descriptionKey = "MergedSearchOnly", description = "Searches only merged spectra against merged spectra omitting additional computations for similarities of individual spectra.")
+    public void setFastSearch(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("MergedSearchOnly", value);
+    }*/
+
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
-    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralMatchingScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.")
+    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralMatchingScorer", defaultValue = "MODIFIED_COSINE", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", hidden = true)
     public void setScorer(SpectralMatchingType matchingType) throws Exception {
+        if (matchingType != SpectralMatchingType.MODIFIED_COSINE)
+            throw new CommandLine.PicocliException("MODIFIED_COSINE is currently the only supported matching type.");
         defaultConfigOptions.changeOption("SpectralMatchingScorer", matchingType.toString());
     }
 
@@ -80,7 +101,12 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
 
     @Override
     public InstanceJob.Factory<SpectraSearchSubtoolJob> call() throws Exception {
-        return new InstanceJob.Factory<>(SpectraSearchSubtoolJob::new, getInvalidator());
+        //todo we need a cleanup mechanism for the cache
+        SpectraCache cache = new SpectraCache(
+                ApplicationCore.WEB_API.getChemDB(),
+                defaultConfigOptions.config.createInstanceWithDefaults(SpectralSearchDB.class).searchDBs
+        );
+        return new InstanceJob.Factory<>(sub -> new SpectraSearchSubtoolJob(sub, cache), getInvalidator());
     }
 
 }
