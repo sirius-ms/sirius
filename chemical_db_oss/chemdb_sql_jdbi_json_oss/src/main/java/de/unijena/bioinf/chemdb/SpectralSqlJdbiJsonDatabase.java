@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.spectraldb.LibraryHit;
@@ -42,6 +43,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -99,6 +101,32 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
 
     @Override
     public Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+
+    @Override
+    public Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 

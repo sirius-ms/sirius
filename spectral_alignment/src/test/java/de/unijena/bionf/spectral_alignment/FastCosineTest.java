@@ -182,7 +182,7 @@ public class FastCosineTest {
         for (int i=0; i < 10; ++i) {
             maxCosine = Math.max(fastCosine.fastCosine(query, spectra.get(i)).similarity, maxCosine);
         }
-        final double upperbound = fastCosine.fastCosine(query, merged.getUpperboundQuery()).similarity;
+        final double upperbound = fastCosine.fastCosine(query, merged.asUpperboundQuerySpectrum()).similarity;
         assertTrue("cosine against merged upperbound spectrum is an upperbound to maximum cosine against all individual spectra.",
                 maxCosine <= upperbound);
 

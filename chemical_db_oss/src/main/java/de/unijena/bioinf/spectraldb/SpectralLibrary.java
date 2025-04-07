@@ -21,6 +21,7 @@
 package de.unijena.bioinf.spectraldb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
@@ -28,6 +29,8 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,11 +51,11 @@ public interface SpectralLibrary {
 
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException;
 
-    default Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d) throws ChemicalDatabaseException {
-        return lookupSpectra(inchiKey2d, false);
+    default Iterable<Ms2ReferenceSpectrum> lookupSpectra(String candidateInChiKey) throws ChemicalDatabaseException {
+        return lookupSpectra(candidateInChiKey, false);
     }
 
-    Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException;
+    Iterable<Ms2ReferenceSpectrum> lookupSpectra(String candidateInChiKey, boolean withData) throws ChemicalDatabaseException;
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula) throws ChemicalDatabaseException {
         return lookupSpectra(formula, false);
@@ -68,10 +71,22 @@ public interface SpectralLibrary {
     Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
     Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
 
+    Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException;
+    Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException;
 
     /*
     Other methods
      */
+
+    default Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) throws ChemicalDatabaseException {
+        return getMergedReferenceQuerySpectra(precursorMz, chargeAndPolarity, precursorDeviation, true);
+    }
+    Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException;
+
+    default MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType) throws ChemicalDatabaseException {
+        return getMergedReferenceQuerySpectrum(candidateInChiKey, precursorIonType, true);
+    }
+    MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException;
 
     ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException;
 
