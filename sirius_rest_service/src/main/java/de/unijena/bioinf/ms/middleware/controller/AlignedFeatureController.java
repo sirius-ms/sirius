@@ -383,12 +383,16 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
         ReferenceSpectrum spec = extractRefSpectra(match);
 
-        if (match.getTarget() != SpectralLibraryMatch.TargetType.MERGED)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Loading annotation is currently only supported for MergedSpectra. But spectrum: '%s' in database '%s' is of type %s.", match.getUuid(), match.getDbName(), match.getTarget()));
-
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
-                ReferenceFragmentationTree refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
+                ReferenceFragmentationTree refTree = null;
+                if (match.getTarget() == SpectralLibraryMatch.TargetType.MERGED) {
+                    refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
+                }else {
+                    // todo this does needs more queries then necessary. We should maybe allow for direct tree retrieval.
+                    MergedReferenceSpectrum mergedSpec = chemDbService.db().getMergedReferenceQuerySpectrum(db, spec.getCandidateInChiKey(), spec.getPrecursorIonType(), false);
+                    refTree = chemDbService.db().getReferenceTree(db, mergedSpec.getUuid());
+                }
                 return Spectrums.createReferenceMsMsWithAnnotations(spec, refTree.asFTree());
             } catch (ChemicalDatabaseException e) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));

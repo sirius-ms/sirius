@@ -173,6 +173,7 @@ public class Spectrums {
         spectrum.setName(refSpectrum.getName());
         spectrum.setMsLevel(2);
         spectrum.setCollisionEnergy(CollisionEnergy.none());
+        spectrum.setPrecursorMz(refSpectrum.getPrecursorMz());
 
         if (ftree == null)
             return spectrum;

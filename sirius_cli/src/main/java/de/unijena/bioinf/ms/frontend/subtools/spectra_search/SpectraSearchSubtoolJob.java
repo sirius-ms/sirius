@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.*;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
@@ -46,9 +47,11 @@ import java.util.stream.StreamSupport;
 public class SpectraSearchSubtoolJob extends InstanceJob {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final SpectraCache cache;
 
-    public SpectraSearchSubtoolJob(JobSubmitter jobSubmitter) {
+    public SpectraSearchSubtoolJob(JobSubmitter jobSubmitter, @NotNull SpectraCache cache) {
         super(jobSubmitter);
+        this.cache = cache;
     }
 
     public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
@@ -89,34 +92,60 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             return;
         }
         final Ms2Experiment exp = inst.getExperiment();
-        final FastCosine fastCosine =new FastCosine();
+        final FastCosine fastCosine = new FastCosine();
+
         Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
         double precursorMz = exp.getIonMass();
 
+        boolean analogSearch = exp.getAnnotationOrDefault(AnalogSpectraSearch.class).value;
+        Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> mergedReferenceSpectra;
 
-        final SpectralLibrarySearchSettings settings = SpectralLibrarySearchSettings.conservativeDefaultForCosine();
-        settings.setPrecursorDeviation(precursorDev);
-        settings.setTargetType(SpectrumType.SPECTRUM);
+        if (analogSearch) {
+            mergedReferenceSpectra = cache.getAllMergedSpectra();
+
+        } else {
+            mergedReferenceSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(
+                    precursorMz, exp.getPrecursorIonType().getCharge(), precursorDev,
+                    exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs
+            );
+        }
+
+        final SpectralLibrarySearchSettings cosine = SpectralLibrarySearchSettings.conservativeDefaultForCosine();
+        cosine.setPrecursorDeviation(precursorDev);
+        cosine.setTargetTypes(exp.getAnnotationOrDefault(SpectralSearchTargetTypes.class).value);
+        final SpectralLibrarySearchSettings modifiedCosine = SpectralLibrarySearchSettings.conservativeDefaultForModifiedCosine();
+        modifiedCosine.setPrecursorDeviation(precursorDev);
+        modifiedCosine.setTargetTypes(exp.getAnnotationOrDefault(SpectralSearchTargetTypes.class).value);
+
         // now compare against all these reference spectra
 
-        //TODO WHEN introducing remote speclibs we might want to use some kind of reconnection management with netutils inside the db?.
-        // or do the matching remote...
-        SpectralSearchResult result =  submitJob(new BasicJJob<SpectralSearchResult>() {
+        SpectralSearchResult result = submitJob(new BasicJJob<SpectralSearchResult>() {
             @Override
             protected SpectralSearchResult compute() throws Exception {
-                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x->fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
-                List<LibraryHit> hits = ApplicationCore.WEB_API.getChemDB().queryAgainstLibraryWithPrecursorMass(queries, precursorMz, exp.getPrecursorIonType().getCharge(), settings, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs);
-                if (hits == null || hits.isEmpty())
-                    return null;
-                hits = hits.stream().sorted(Comparator.reverseOrder()).toList();
-                List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
-                for (int k=0; k < hits.size(); ++k) {
-                    LibraryHit hit = hits.get(k);
-                    rankedHits.add(new SpectralSearchResult.SearchResult(hit, k+1));
+                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x -> fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
+                ReferenceLibrarySpectrum mergedQuery = fastCosine.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
+
+                List<LibraryHit> hits = new ArrayList<>();
+                for (Map.Entry<CustomDataSources.Source, List<MergedReferenceSpectrum>> e : mergedReferenceSpectra.entrySet()) {
+                    SpectralLibrary db = cache.getChemDB().asCustomDB(e.getKey()).toSpectralLibrary().orElseThrow();
+                    for (MergedReferenceSpectrum mergedRefSpec : e.getValue()) {
+                        SpectralLibrarySearchSettings settings = precursorDev.inErrorWindow(precursorMz, mergedRefSpec.getExactMass()) ? cosine : modifiedCosine;
+                        db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery).forEach(hits::add);
+                    }
                 }
 
-                return new SpectralSearchResult(settings.getPrecursorDeviation(), peakDev, settings.getMatchingType(), rankedHits);
+                if (hits.isEmpty())
+                    return null;
+
+                hits = hits.stream().sorted(Comparator.reverseOrder()).toList();
+                List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
+                for (int k = 0; k < hits.size(); ++k) {
+                    LibraryHit hit = hits.get(k);
+                    rankedHits.add(new SpectralSearchResult.SearchResult(hit, k + 1));
+                }
+
+                return new SpectralSearchResult(cosine.getPrecursorDeviation(), peakDev, cosine.getMatchingType(), rankedHits);
             }
         }.asCPU()).awaitResult();
 
