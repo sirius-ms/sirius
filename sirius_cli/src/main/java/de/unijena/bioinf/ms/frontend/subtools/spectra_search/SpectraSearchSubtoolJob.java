@@ -102,7 +102,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> mergedReferenceSpectra;
 
         if (analogSearch) {
-            mergedReferenceSpectra = cache.getAllMergedSpectra();
+            mergedReferenceSpectra = cache.getAllMergedSpectra(exp.getPrecursorIonType().getCharge());
 
         } else {
             mergedReferenceSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(
@@ -130,8 +130,10 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 for (Map.Entry<CustomDataSources.Source, List<MergedReferenceSpectrum>> e : mergedReferenceSpectra.entrySet()) {
                     SpectralLibrary db = cache.getChemDB().asCustomDB(e.getKey()).toSpectralLibrary().orElseThrow();
                     for (MergedReferenceSpectrum mergedRefSpec : e.getValue()) {
-                        SpectralLibrarySearchSettings settings = precursorDev.inErrorWindow(precursorMz, mergedRefSpec.getExactMass()) ? cosine : modifiedCosine;
-                        db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery).forEach(hits::add);
+                        SpectralLibrarySearchSettings settings = precursorDev
+                                .inErrorWindow(precursorMz, mergedRefSpec.getExactMass()) ? cosine : modifiedCosine;
+                        db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery)
+                                .forEach(hits::add);
                     }
                 }
 
