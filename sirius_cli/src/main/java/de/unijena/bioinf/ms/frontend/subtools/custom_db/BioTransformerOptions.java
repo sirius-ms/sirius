@@ -4,6 +4,8 @@ import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
 import de.unijena.bioinf.ms.biotransformer.Cyp450Mode;
 import de.unijena.bioinf.ms.biotransformer.MetabolicTransformation;
 import de.unijena.bioinf.ms.biotransformer.P2Mode;
+import biotransformer.utils.BiotransformerSequenceStep;
+import biotransformer.btransformers.Biotransformer;
 //import org.gradle.internal.impldep.com.beust.jcommander.IParameterValidator;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
@@ -23,9 +25,16 @@ public class BioTransformerOptions {
 
     public BioTransformerSettings toBioTransformerSetting() {
         return BioTransformerSettings.builder()
-                //todo Jonas: Create BioTransformerSettings object from fields in this BioTransformerOptions object.
                 .cyp450Mode(cyp450Mode)
-
+                .metabolicTransformation(bioTransformer.biotransformer.metabolicTransformation)
+                .iterations(bioTransformer.biotransformer.iterations)
+                .useDB(bioTransformer.biotransformer.useDB)
+                .useSub(bioTransformer.biotransformer.useSubstructure)
+                .p2Mode(bioTransformer.biotransformer.p2Mode.P2ModeOrdinal())
+                .sequenceSteps((ArrayList<BiotransformerSequenceStep>) Optional.ofNullable(bioTransformer.bioTransformerSequence)
+                        .orElse(Collections.emptyList())
+                        .stream().map(sequence-> new BiotransformerSequenceStep(toBType(sequence.metabolicTransformation),sequence.iterations))
+                        .toList())
                 .build();
     }
 
@@ -133,8 +142,19 @@ public class BioTransformerOptions {
 
     }
 
+    public Biotransformer.bType toBType(MetabolicTransformation metabolicTransformation) {
+        switch (metabolicTransformation){
+            case PHASE_1_CYP450 -> {return Biotransformer.bType.CYP450;}
+            case EC_BASED -> {return Biotransformer.bType.ECBASED;}
+            case ENV_MICROBIAL -> {return Biotransformer.bType.ENV;}
+            case HUMAN_GUT -> {return Biotransformer.bType.HGUT;}
+            case PHASE_2 -> { return Biotransformer.bType.PHASEII;}
+        }
 
-    public static class BioTransformerParas {
+        return null;
+    }
+
+/*    public static class BioTransformerParas {
         boolean useDB;
         boolean useSubstructure;
         MetabolicTransformation metabolicTransformation;
@@ -153,7 +173,7 @@ public class BioTransformerOptions {
 
             return new BioTransformerParas();
         }
-
+*/
 
 
 }
