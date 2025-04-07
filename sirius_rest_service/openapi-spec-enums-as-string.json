@@ -10954,6 +10954,9 @@
           "label": {
             "type": "string"
           },
+          "color": {
+            "type": "string"
+          },
           "intensities": {
             "type": "array",
             "items": {
