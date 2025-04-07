@@ -1246,7 +1246,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (msData.getMergedMs1Spectrum() != null)
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
         if (msData.getMergedMSnSpectrum() != null)
-            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra().get(0).getMergedPrecursorMz()));
+            builder.mergedMs2(Spectrums.decorateMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra()
+                    .getFirst().getMergedPrecursorMz()));
 
         builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList() : List.of());
         //MS1Spectra are not set since they are not stored in default MSData object.
@@ -2199,8 +2200,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId) {
-        //todo we want to do this without ms2 experiment
-        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(alignedFeatureId)
+        MSData msdata = storage().getByPrimaryKey(alignedFeatureId, MSData.class)
                 .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
 
         FTree ftree = project().findByFormulaIdStr(formulaId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
@@ -2211,10 +2211,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
-        if (specIndex < 0)
-            return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, smiles);
-        else
-            return Spectrums.createMsMsWithAnnotations(exp.getMs2Spectra().get(specIndex), ftree, smiles);
+        if (specIndex < 0) {
+            double precursorMz = msdata.getMsnSpectra().stream().mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().orElseThrow();
+            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, msdata.getMergedMSnSpectrum(), ftree, smiles);
+        } else {
+            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles);
+        }
     }
 
     @SneakyThrows
@@ -2223,9 +2225,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
 
-        //todo we want to do this without ms2 experiment
-        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(longAFId)
+        MSData msdata = storage().getByPrimaryKey(longAFId, MSData.class)
                 .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
+
+        if (msdata.getMsnSpectra() == null || msdata.getMsnSpectra().isEmpty())
+            throw new ResponseStatusException(BAD_REQUEST, "Could not find MS/MS spectra to annotate for feature with id: " + alignedFeatureId);
 
         FTree ftree = project().findByFormulaIdStr(longFId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
                 .orElse(null);
@@ -2235,7 +2239,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
-        return AnnotatedMsMsData.of(exp, ftree, smiles);
+        return AnnotatedMsMsData.of(msdata, ftree, smiles);
     }
 
     @SneakyThrows

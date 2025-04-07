@@ -58,13 +58,4 @@ public class MsData {
     protected List<BasicSpectrum> ms1Spectra;
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
-
-    public static MsData of(Ms2Experiment exp) {
-        return MsData.builder()
-                .ms1Spectra(exp.getMs1Spectra().stream().map(Spectrums::createMs1).toList())
-                .ms2Spectra(exp.getMs2Spectra().stream().map(Spectrums::createMsMs).toList())
-                .mergedMs1(Spectrums.createMergedMs1(exp))
-                .mergedMs2(Spectrums.createMergedMsMs(exp))
-                .build();
-    }
 }
