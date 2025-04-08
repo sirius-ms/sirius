@@ -1,12 +1,13 @@
-package de.unijena.bionf.spectral_alignment;
+package de.unijena.bionf.fastcosine;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class FastCosineTest {
+public class FastCosineBoundTest {
     private static double parentMass = 432.10556;
     private static double[] testMz = new double[]{
             432.10556,
