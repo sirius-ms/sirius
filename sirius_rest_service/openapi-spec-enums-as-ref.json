@@ -2109,6 +2109,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -2258,6 +2268,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -3687,6 +3707,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -4191,6 +4221,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -4395,6 +4435,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5023,10 +5073,20 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
-            "description": "feature (aligned over runs) the Mass Spec data belong sto.",
+            "description": "feature (aligned over runs) the Mass Spec data belongs to.",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -5069,6 +5129,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5138,6 +5208,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5225,6 +5305,15 @@
               "format": "int32",
               "default": -1
             }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5284,6 +5373,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -6046,6 +6145,15 @@
               "format": "int32",
               "default": -1
             }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -6096,6 +6204,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -6172,6 +6290,16 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -6599,7 +6727,7 @@
           "Features"
         ],
         "summary": "[EXPERIMENTAL] Get features (aligned over runs) by tag",
-        "description": "[EXPERIMENTAL] Get features (aligned over runs) by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
+        "description": "[EXPERIMENTAL] Get features (aligned over runs) by tag.\n\n \u003ch2\u003eSupported filter syntax\u003c/h2\u003e\n\n \u003cp\u003eThe filter string must contain one or more clauses. A clause is prefíxed\n by a field name.\n \u003c/p\u003e\n \u003cp\u003e\n Currently the only searchable fields are names of tags (\u003ccode\u003etagName\u003c/code\u003e) followed by a clause that is valued for the value type of the tag (See TagDefinition).\n Tag name based field need to be prefixed with the namespace \u003ccode\u003etags.\u003c/code\u003e.\n Possible value types of tags are \u003cstrong\u003ebool\u003c/strong\u003e, \u003cstrong\u003einteger\u003c/strong\u003e, \u003cstrong\u003ereal\u003c/strong\u003e, \u003cstrong\u003etext\u003c/strong\u003e, \u003cstrong\u003edate\u003c/strong\u003e, or \u003cstrong\u003etime\u003c/strong\u003e - tag value\n\n \u003cp\u003eThe format of the \u003cstrong\u003edate\u003c/strong\u003e type is \u003ccode\u003eyyyy-MM-dd\u003c/code\u003e and of the \u003cstrong\u003etime\u003c/strong\u003e type is \u003ccode\u003eHH\\:mm\\:ss\u003c/code\u003e.\u003c/p\u003e\n\n \u003cp\u003eA clause may be:\u003c/p\u003e\n \u003cul\u003e\n     \u003cli\u003ea \u003cstrong\u003eterm\u003c/strong\u003e: field name followed by a colon and the search term, e.g. \u003ccode\u003etags.MyTagA:sample\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ephrase\u003c/strong\u003e: field name followed by a colon and the search phrase in doublequotes, e.g. \u003ccode\u003etags.MyTagA:\u0026quot;Some Text\u0026quot;\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003eregular expression\u003c/strong\u003e: field name followed by a colon and the regex in slashes, e.g. \u003ccode\u003etags.MyTagA:/[mb]oat/\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003ecomparison\u003c/strong\u003e: field name followed by a comparison operator and a value, e.g. \u003ccode\u003etags.MyTagB\u0026lt;3\u003c/code\u003e\u003c/li\u003e\n     \u003cli\u003ea \u003cstrong\u003erange\u003c/strong\u003e: field name followed by a colon and an open (indiced by \u003ccode\u003e[ \u003c/code\u003e and \u003ccode\u003e] \u003c/code\u003e) or (semi-)closed range (indiced by \u003ccode\u003e{\u003c/code\u003e and \u003ccode\u003e}\u003c/code\u003e), e.g. \u003ccode\u003etags.MyTagB:[* TO 3] \u003c/code\u003e\u003c/li\u003e\n \u003c/ul\u003e\n\n \u003cp\u003eClauses may be \u003cstrong\u003egrouped\u003c/strong\u003e with brackets \u003ccode\u003e( \u003c/code\u003e and \u003ccode\u003e) \u003c/code\u003e and / or \u003cstrong\u003ejoined\u003c/strong\u003e with \u003ccode\u003eAND\u003c/code\u003e or \u003ccode\u003eOR \u003c/code\u003e (or \u003ccode\u003e\u0026amp;\u0026amp; \u003c/code\u003e and \u003ccode\u003e|| \u003c/code\u003e)\u003c/p\u003e\n\n \u003ch3\u003eExample\u003c/h3\u003e\n\n \u003cp\u003eThe syntax allows to build complex filter queries such as:\u003c/p\u003e\n\n \u003cp\u003e\u003ccode\u003etags.city:\u0026quot;new york\u0026quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag\u0026lt;\u003d3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag\u0026lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time\u0026lt;10\\:00\\:00 \u003c/code\u003e\u003c/p\u003e\n \u003cp\u003e\n [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.",
         "operationId": "getAlignedFeaturesByTagExperimental",
         "parameters": [
           {
@@ -6871,6 +6999,16 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -8834,6 +8972,7 @@
       },
       "BasicSpectrum": {
         "required": [
+          "cosineQuery",
           "peaks"
         ],
         "type": "object",
@@ -8870,6 +9009,14 @@
             "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
             "format": "int32",
             "nullable": true
+          },
+          "cosineQuery": {
+            "type": "boolean",
+            "description": "True if spectrum is in cosine query normalized format.\n Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.",
+            "default": false
+          },
+          "precursorPeak": {
+            "$ref": "#/components/schemas/SimplePeak"
           },
           "peaks": {
             "type": "array",
@@ -9136,6 +9283,7 @@
       },
       "AnnotatedSpectrum": {
         "required": [
+          "cosineQuery",
           "peaks"
         ],
         "type": "object",
@@ -9172,6 +9320,14 @@
             "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
             "format": "int32",
             "nullable": true
+          },
+          "cosineQuery": {
+            "type": "boolean",
+            "description": "True if spectrum is in cosine query normalized format.\n Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.",
+            "default": false
+          },
+          "precursorPeak": {
+            "$ref": "#/components/schemas/SimplePeak"
           },
           "peaks": {
             "type": "array",
@@ -9968,6 +10124,10 @@
         "nullable": true
       },
       "PeakPair": {
+        "required": [
+          "queryPeak",
+          "referencePeak"
+        ],
         "type": "object",
         "properties": {
           "queryPeak": {
@@ -10008,7 +10168,7 @@
           },
           "sharedPeakMapping": {
             "type": "array",
-            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "description": "List of paired/matched peak indices.\n \u003cp\u003e\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
             "items": {
               "$ref": "#/components/schemas/PeakPair"
             }
