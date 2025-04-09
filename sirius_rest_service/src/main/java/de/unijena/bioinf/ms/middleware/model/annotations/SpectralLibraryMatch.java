@@ -61,7 +61,7 @@ public class SpectralLibraryMatch {
 
     /**
      * List of paired/matched peak indices.
-     *
+     * <p>
      * Maps indices of peaks from the query spectrum (mass sorted)
      * to indices of matched peaks in the reference spectrum (mass sorted)
      */
@@ -98,10 +98,11 @@ public class SpectralLibraryMatch {
     @Setter
     private BasicSpectrum referenceSpectrum;
 
-    public static SpectralLibraryMatch of(@NotNull SpectraMatch match){
+    public static SpectralLibraryMatch of(@NotNull SpectraMatch match) {
         return of(match.getSearchResult(), String.valueOf(match.getSpecMatchId()));
     }
-    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result, String id){
+
+    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result, String id) {
         SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
         if (result.getSimilarity() != null) {
             builder.similarity(result.getSimilarity().similarity);
@@ -126,7 +127,7 @@ public class SpectralLibraryMatch {
                 .splash(result.getSplash())
                 .exactMass(result.getExactMass())
                 .smiles(result.getSmiles())
-                .target(result.getSpectrumType()== SpectrumType.MERGED_SPECTRUM ? TargetType.MERGED : TargetType.SPECTRUM)
+                .target(result.getSpectrumType() == SpectrumType.MERGED_SPECTRUM ? TargetType.MERGED : TargetType.SPECTRUM)
                 .type(result.isAnalog() ? MatchType.ANALOG : MatchType.COSINE)
                 .inchiKey(result.getCandidateInChiKey());
 
@@ -138,16 +139,17 @@ public class SpectralLibraryMatch {
         }
         return builder.build();
     }
+
     @Deprecated
-    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result){
+    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result) {
         return of(result, null);
     }
 
     @Deprecated
-    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result, @Nullable String candidateInChiKey){
+    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result, @Nullable String candidateInChiKey) {
         return result.getResults().stream()
                 .filter(s -> candidateInChiKey == null || candidateInChiKey.equals(s.getCandidateInChiKey()))
-                .map(m-> SpectralLibraryMatch.of(m, null))
+                .map(m -> SpectralLibraryMatch.of(m, null))
                 .toList();
     }
 
@@ -163,14 +165,17 @@ public class SpectralLibraryMatch {
         MERGED;
 
         public SpectrumType asSpectrumType() {
-            if (this==SPECTRUM) return SpectrumType.SPECTRUM;
-            if (this==MERGED) return SpectrumType.MERGED_SPECTRUM;
+            if (this == SPECTRUM) return SpectrumType.SPECTRUM;
+            if (this == MERGED) return SpectrumType.MERGED_SPECTRUM;
             throw new IllegalArgumentException("Unknown spectrum type");
         }
     }
 
     @Schema(name = "PeakPair")
-    public record PeakPair(int queryPeak, int referencePeak) {
+    public record PeakPair(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int queryPeak,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int referencePeak
+    ) {
         public static PeakPair of(int queryIndex, int referenceIndex) {
             return new PeakPair(queryIndex, referenceIndex);
         }
