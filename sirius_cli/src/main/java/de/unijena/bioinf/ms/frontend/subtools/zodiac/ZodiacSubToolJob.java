@@ -107,7 +107,6 @@ public class ZodiacSubToolJob extends DataSetJob {
         //this is to know which zodiac result belongs to which instance
         final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new LinkedHashMap<>(instances.size());
         //this is to identify which formula results belongs to the score
-        final FastCosine fastCosine = new FastCosine();
         int polarity = 0;
         final Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
         {
