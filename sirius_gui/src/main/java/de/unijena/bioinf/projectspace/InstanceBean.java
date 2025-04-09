@@ -203,7 +203,7 @@ public class InstanceBean implements SiriusPCS {
                 // we update every time here since we do not know which optional fields are already loaded.
                 if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
                     sourceFeature = withIds((pid, fid) ->
-                            getClient().features().getAlignedFeature(pid, fid, of));
+                            getClient().features().getAlignedFeature(pid, fid, false, of));
                 return sourceFeature;
             }
         }
@@ -332,7 +332,7 @@ public class InstanceBean implements SiriusPCS {
 
     public List<FormulaResultBean> getFormulaCandidates() {
         return withIds((pid, fid) -> getClient().features()
-                .getFormulaCandidates(pid, fid, ensureDefaultOptFields(null)))
+                .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
                 .stream()
                 .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
                 .toList();
@@ -453,12 +453,16 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public MsData getMsData() {
+        return getMsData(false);
+    }
+
+    public MsData getMsData(boolean asCosineQuery) {
         //double-checked locking, msData must be volatile
         if (msData == null) {
             synchronized (this) {
                 if (msData == null) {
                     msData = sourceFeature().map(AlignedFeature::getMsData)
-                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId())));
+                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asCosineQuery)));
                 }
                 return msData;
             }

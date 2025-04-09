@@ -21,12 +21,15 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -58,4 +61,21 @@ public class MsData {
     protected List<BasicSpectrum> ms1Spectra;
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
+
+    public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asCosineQuery) {
+        FastCosine fastCosine = new FastCosine();
+        MsData.MsDataBuilder builder = MsData.builder();
+        if (msData.getMergedMs1Spectrum() != null)
+            builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
+        if (msData.getMergedMSnSpectrum() != null){
+            double precursorMz = msData.getMsnSpectra().stream()
+                    .mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().getAsDouble();
+            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), precursorMz, asCosineQuery));
+        }
+
+        builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream()
+                .map(s -> Spectrums.createMsMs(s, asCosineQuery)).toList() : List.of());
+        //MS1Spectra are not set since they are not stored in default MSData object.
+        return builder.build();
+    }
 }
