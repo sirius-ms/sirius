@@ -54,23 +54,8 @@ public class BioTransformerOptions {
         @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII predictoin Mode here: 1) BioTransformer rules; 2)\n" +
                 " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
                 " rules.\n" +
-                " Default mode is 1.\n", defaultValue = "BT_RULE_BASED"
-        ,order = 315)
+                " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
         private P2Mode p2Mode;
-
-        @CommandLine.Spec
-        private CommandLine.Model.CommandSpec spec; // for validation
-
-        private void validate() {
-            // Prüfen, ob --p2Mode gesetzt ist, wenn transformation ≠ PHASE_2
-            if (p2Mode != null && metabolicTransformation != MetabolicTransformation.PHASE_2) {
-                throw new CommandLine.ParameterException(
-                        spec.commandLine(),
-                        "--p2Mode is only allowed, when --transformation has the value: PHASE_2"
-                );
-            }
-        }
-
 
         @CommandLine.Option(names = {"--iterations"}, description = "The number of steps for the prediction. This option can be set by the\n" +
                 " user for the EC-based, CYP450, Phase II, and Environmental microbial\n" +
