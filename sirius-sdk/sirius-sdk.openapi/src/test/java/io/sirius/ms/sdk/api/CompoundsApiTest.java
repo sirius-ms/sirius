@@ -45,17 +45,17 @@ public class CompoundsApiTest {
     @Test
     public void deleteCompoundTest() {
         String projectId = project.getProjectId();
-        List<Compound> compounds = instance.getCompounds(projectId, null, null);
+        List<Compound> compounds = instance.getCompounds(projectId, false, null, null);
         String compoundId = compoundIdDelete;
         instance.deleteCompound(projectId, compoundId);
-        assertThrows(WebClientResponseException.class, () -> instance.getCompound(projectId, compoundId, null, null));
+        assertThrows(WebClientResponseException.class, () -> instance.getCompound(projectId, compoundId, false, null, null));
     }
 
     @Test
     public void getCompoundTest() {
         String projectId = project.getProjectId();
         String compoundId = compoundIdGet;
-        Compound response = instance.getCompound(projectId, compoundId, null, null);
+        Compound response = instance.getCompound(projectId, compoundId, false, null, null);
         assertEquals(compoundId, response.getCompoundId());
     }
 
@@ -67,7 +67,7 @@ public class CompoundsApiTest {
                 CompoundOptField.CUSTOMANNOTATIONS,
                 CompoundOptField.CONSENSUSANNOTATIONSDENOVO
         );
-        List<Compound> response = instance.getCompounds(projectId, compoundOptFields, null);
+        List<Compound> response = instance.getCompounds(projectId, false, compoundOptFields, null);
         assertNotNull(response);
         assertTrue(response.size() >= 12);
     }
@@ -190,6 +190,7 @@ public class CompoundsApiTest {
         Compound compound = instance.getCompound(
                 project.getProjectId(),
                 newCompound.getCompoundId(),
+                false,
                 List.of(CompoundOptField.CONSENSUSANNOTATIONS),
                 List.of(AlignedFeatureOptField.TOPANNOTATIONS)
         );

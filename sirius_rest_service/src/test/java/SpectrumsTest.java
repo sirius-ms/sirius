@@ -41,7 +41,7 @@ public class SpectrumsTest {
         treeReader = new FTJsonReader();
         tree = treeReader.parse(inputStream, null);
 
-        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree);
+        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree, false);
 
         Assert.assertEquals("C14H12N2O4", annotatedSpectrum.getSpectrumAnnotation().getMolecularFormula());
         Assert.assertEquals(PrecursorIonType.fromString("[M+H]+"), PrecursorIonType.fromString(annotatedSpectrum.getSpectrumAnnotation().getAdduct()));
@@ -60,7 +60,7 @@ public class SpectrumsTest {
         tree = treeReader.parse(inputStream, null);
 
 
-        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree);
+        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree, false);
 
         Assert.assertEquals("C14H9NO4", annotatedSpectrum.getSpectrumAnnotation().getMolecularFormula());
         Assert.assertEquals(PrecursorIonType.fromString("[M+NH4]+"), PrecursorIonType.fromString(annotatedSpectrum.getSpectrumAnnotation().getAdduct()));
@@ -80,7 +80,7 @@ public class SpectrumsTest {
         treeReader = new FTJsonReader();
         tree = treeReader.parse(inputStream, null);
 
-        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree);
+        annotatedSpectrum = Spectrums.createMergedMsMsWithAnnotations(precursorMz, spectrum, tree, false);
 
         Assert.assertEquals("C14H14N2O5", annotatedSpectrum.getSpectrumAnnotation().getMolecularFormula());
         Assert.assertEquals(PrecursorIonType.fromString("[M-H2O+H]+"), PrecursorIonType.fromString(annotatedSpectrum.getSpectrumAnnotation().getAdduct()));
