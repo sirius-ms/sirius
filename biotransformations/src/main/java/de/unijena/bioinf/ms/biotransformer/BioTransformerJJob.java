@@ -50,7 +50,7 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
                     case ABIOTIC -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.abioticTransformer(ia, getIterations()))).toList();
                     case HUMAN_CUSTOM_MULTI -> substrates.stream().map(ia -> makeJob(() ->
-                                    BiotransformerWrapper.multiBioTransformer(ia, getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
+                                    BiotransformerWrapper.multiBioTransformer(ia, settings.getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                 };
         //TODO:
         submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::takeResult);
