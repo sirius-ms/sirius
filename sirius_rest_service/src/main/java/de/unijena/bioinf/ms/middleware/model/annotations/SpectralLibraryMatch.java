@@ -61,7 +61,7 @@ public class SpectralLibraryMatch {
 
     /**
      * List of paired/matched peak indices.
-     * <p>
+     *
      * Maps indices of peaks from the query spectrum (mass sorted)
      * to indices of matched peaks in the reference spectrum (mass sorted)
      */

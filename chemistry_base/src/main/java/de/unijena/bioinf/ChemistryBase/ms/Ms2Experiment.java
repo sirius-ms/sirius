@@ -96,6 +96,10 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
      */
     <T extends Ms2Spectrum<Peak>> List<T> getMs2Spectra();
 
+    /**
+     * This method is just a bridge from new feature based model where merged ms2 spectrum is stored.
+     */
+    @Deprecated
     <T extends Spectrum<Peak>> T getMergedMs2Spectrum();
 
     /**
