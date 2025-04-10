@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -34,40 +35,22 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter @Setter
 public class MutableMs2Experiment implements Ms2Experiment {
 
-    @Getter
-    @Setter
     private PrecursorIonType precursorIonType;
-    @Setter
-    @Getter
     private List<SimpleSpectrum> ms1Spectra;
-    @Setter
-    @Getter
     private SimpleSpectrum mergedMs1Spectrum;
-    @Setter
-    @Getter
     private List<MutableMs2Spectrum> ms2Spectra;
-    @Getter
-    @Setter
     @Nullable
     private SimpleSpectrum mergedMs2Spectrum;
-    @Setter
-    @Getter
     private double ionMass;
-    @Setter
-    @Getter
     private MolecularFormula molecularFormula;
-    @Setter
-    @Getter
     private String name;
 
-    @Getter
-    @Setter
     @Nullable
     private String featureId;
-
-
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private Annotated.Annotations<Ms2ExperimentAnnotation> annotations;
 
     @Override
