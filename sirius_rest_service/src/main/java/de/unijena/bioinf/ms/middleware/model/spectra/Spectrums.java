@@ -57,6 +57,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -64,6 +65,7 @@ import java.util.stream.StreamSupport;
 
 public class Spectrums {
     private static final FastCosine FAST_COSINE = new FastCosine(new Deviation(15), false, new NoiseThresholdSettings(0.001, 60, NoiseThresholdSettings.BASE_PEAK.NOT_PRECURSOR, 0));
+    private static final boolean DEBUG = false;
 
     private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull MergedMSnSpectrum sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getMergedPrecursorMz());
@@ -286,13 +288,24 @@ public class Spectrums {
         return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
     }
 
-    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Iterable<Fragment> fragments, @Nullable String candidateSmiles) throws CDKException {
+    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Collection<Fragment> fragments, @Nullable String candidateSmiles) throws CDKException {
         //compute substructure annotations //todo do we want to do this somewhere else? We need a cancellable job in the api anyways
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
                 : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
                 .asType(JJob.JobType.TINY_BACKGROUND)).takeResult(); //executed as tiny background job to be computed instantly for immediate response
         setSpectrumAnnotation(spectrum, ftree, structureAnno, candidateSmiles);
         setPeakAnnotations(spectrum, ftree, fragments, structureAnno);
+
+        // DEBUGGING/VALIDATION: Show tree annotations stats
+        if (DEBUG) {
+            long annotatedPeaks = spectrum.getPeaks().stream().filter(p -> p.getPeakAnnotation() != null).count();
+            int peaks = spectrum.getPeaks().size();
+            int extractedFragments = fragments.size();
+            int treeSize = ftree.getFragmentsWithoutRoot().size();
+
+            System.out.printf("%s [%s] ==>  OverallPeaks: %s; AnnotatedPeaks: %s; ExtractedFragments: %s; TreeFragments: %s.", spectrum.getName(), spectrum.isCosineQuery(), peaks, annotatedPeaks, extractedFragments, treeSize);
+            System.out.println();
+        }
         return spectrum;
     }
 
