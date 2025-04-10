@@ -24,8 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -63,7 +61,6 @@ public class MsData {
     protected List<BasicSpectrum> ms2Spectra;
 
     public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asCosineQuery) {
-        FastCosine fastCosine = new FastCosine();
         MsData.MsDataBuilder builder = MsData.builder();
         if (msData.getMergedMs1Spectrum() != null)
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
