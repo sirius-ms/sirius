@@ -31,15 +31,16 @@ public class BiotransformerRunner {
 
         BioTransformerJJob transformerJob = new BioTransformerJJob();
         transformerJob.setSubstrates(List.of(input)); //set input structures
-        transformerJob.setSettings(BioTransformerSettings.builder() //set parameters
-                .metabolicTransformation(MetabolicTransformation.ALL_HUMAN)
-                .cyp450Mode(cypmode)
-                .p2Mode(p2Mode)
-                .iterations(steps)
-                .useDB(useDB)
-                .useSub(useSub)
-                .build()
-        );
+
+        BioTransformerSettings settings = new BioTransformerSettings().
+                setMetabolicTransformation(MetabolicTransformation.ALL_HUMAN)
+                .setCyp450Mode(cypmode)
+                .setP2Mode(p2Mode)
+                .setIterations(steps)
+                .setUseDB(useDB)
+                .setUseSub(useSub);
+
+        transformerJob.setSettings(settings);
 
         List<BioTransformerResult> results = SiriusJobs.getGlobalJobManager().submitJob(transformerJob).awaitResult();
         System.out.println(results.getFirst().getBiotranformations().getFirst().getProducts());
