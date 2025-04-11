@@ -56,7 +56,7 @@ public class SecurityConfig {
 
 
                 // React views
-                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**", "epi/**")
+                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**", "epi/**", "/lcms/**")
                         .addResourceLocations("classpath:/static/sirius_java_integrated/")
                         .resourceChain(true)
                         .addResolver(new PathResourceResolver() {
