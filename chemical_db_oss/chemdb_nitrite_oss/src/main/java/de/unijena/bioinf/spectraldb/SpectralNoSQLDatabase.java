@@ -173,7 +173,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
 
     @Override
-    public Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
+    public Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
         double abs = precursorDeviation.absoluteFor(precursorMz);
         try {
             Filter filter = Filter.where("exactMass").betweenBothInclusive(precursorMz - abs, precursorMz + abs);
@@ -187,7 +187,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
 
     @Override
-    public MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
+    public MergedReferenceSpectrum getMergedReferenceSpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
         try {
             Filter filter = Filter.and(
                     Filter.where("candidateInChiKey").eq(candidateInChiKey),
@@ -227,7 +227,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
+    public Iterable<Ms2ReferenceSpectrum> fetchSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException {
         try {
             return withLibrary(this.storage.injectOptionalFields(Ms2ReferenceSpectrum.class, references, "spectrum", "querySpectrum"));
         } catch (IOException e) {
@@ -236,7 +236,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
+    public Ms2ReferenceSpectrum fetchSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException {
         try {
             return fillLibrary(this.storage.injectOptionalFields(reference, "spectrum", "querySpectrum"));
         } catch (IOException e) {
@@ -316,7 +316,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException {
-        return queryAgainstLibraryByMergedReference(getMergedReferenceQuerySpectra(precursorMz, chargeAndPolarity, settings.getPrecursorDeviation()).toList(), settings, query, null);
+        return queryAgainstLibraryByMergedReference(getMergedReferenceSpectra(precursorMz, chargeAndPolarity, settings.getPrecursorDeviation()).toList(), settings, query, null);
     }
 
     @Override

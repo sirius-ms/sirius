@@ -78,15 +78,15 @@ public interface SpectralLibrary {
     Other methods
      */
 
-    default Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) throws ChemicalDatabaseException {
-        return getMergedReferenceQuerySpectra(precursorMz, chargeAndPolarity, precursorDeviation, true);
+    default Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) throws ChemicalDatabaseException {
+        return getMergedReferenceSpectra(precursorMz, chargeAndPolarity, precursorDeviation, true);
     }
-    Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException;
+    Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException;
 
-    default MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType) throws ChemicalDatabaseException {
-        return getMergedReferenceQuerySpectrum(candidateInChiKey, precursorIonType, true);
+    default MergedReferenceSpectrum getMergedReferenceSpectrum(String candidateInChiKey, PrecursorIonType precursorIonType) throws ChemicalDatabaseException {
+        return getMergedReferenceSpectrum(candidateInChiKey, precursorIonType, true);
     }
-    MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException;
+    MergedReferenceSpectrum getMergedReferenceSpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException;
 
     ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException;
 
@@ -95,9 +95,9 @@ public interface SpectralLibrary {
 
     Ms2ReferenceSpectrum queryAgainstIndividualSpectrum(long uuid) throws ChemicalDatabaseException;
 
-    Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
+    Iterable<Ms2ReferenceSpectrum> fetchSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
 
-    Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException;
+    Ms2ReferenceSpectrum fetchSpectralData(Ms2ReferenceSpectrum reference) throws ChemicalDatabaseException;
 
     void forEachSpectrum(Consumer<Ms2ReferenceSpectrum> consumer) throws IOException;
 
