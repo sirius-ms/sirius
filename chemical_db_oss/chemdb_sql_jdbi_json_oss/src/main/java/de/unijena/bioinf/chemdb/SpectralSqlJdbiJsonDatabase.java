@@ -116,17 +116,17 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
 
 
     @Override
-    public Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) {
+    public Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Stream<MergedReferenceSpectrum> getMergedReferenceQuerySpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
+    public Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public MergedReferenceSpectrum getMergedReferenceQuerySpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
+    public MergedReferenceSpectrum getMergedReferenceSpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
 
@@ -151,14 +151,14 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
-    public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) {
+    public Iterable<Ms2ReferenceSpectrum> fetchSpectralData(Iterable<Ms2ReferenceSpectrum> references) {
         return StreamSupport.stream(references.spliterator(), false)
-                .peek(this::getSpectralData)
+                .peek(this::fetchSpectralData)
                 .toList(); //todo use single db request instead
     }
 
     @Override
-    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {
+    public Ms2ReferenceSpectrum fetchSpectralData(Ms2ReferenceSpectrum reference) {
         reference.setSpectrum(jdbi.withExtension(Dao.class, db -> db.findSpectrumByUUID(reference.getUuid())));
         return reference;
     }

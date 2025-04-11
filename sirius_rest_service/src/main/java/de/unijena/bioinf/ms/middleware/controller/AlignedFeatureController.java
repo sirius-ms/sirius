@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
@@ -403,7 +402,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                     refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
                 } else {
                     // todo this does needs more queries then necessary. We should maybe allow for direct tree retrieval.
-                    MergedReferenceSpectrum mergedSpec = chemDbService.db().getMergedReferenceQuerySpectrum(db, spec.getCandidateInChiKey(), spec.getPrecursorIonType(), false);
+                    MergedReferenceSpectrum mergedSpec = chemDbService.db().getMergedReferenceSpectrum(db, spec.getCandidateInChiKey(), spec.getPrecursorIonType(), false);
                     refTree = chemDbService.db().getReferenceTree(db, mergedSpec.getUuid());
                 }
                 return Spectrums.createReferenceMsMsWithAnnotations(spec, refTree.asFTree());
