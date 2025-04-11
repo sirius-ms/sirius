@@ -281,21 +281,19 @@ public class WebWithCustomDatabase {
 
     public ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid, SpectrumType spectrumType) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
-        ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid, spectrumType);
-        return spec;
+        return spectralLibrary.getReferenceSpectrum(uuid, spectrumType);
     }
 
-    public MergedReferenceSpectrum getMergedReferenceQuerySpectrum(CustomDataSources.Source db, String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
+    public MergedReferenceSpectrum getMergedReferenceSpectrum(CustomDataSources.Source db, String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
-        MergedReferenceSpectrum spec = spectralLibrary.getMergedReferenceQuerySpectrum(candidateInChiKey, precursorIonType, withSpectrum);
-        return spec;
+        return spectralLibrary.getMergedReferenceSpectrum(candidateInChiKey, precursorIonType, withSpectrum);
     }
 
-    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
+    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withSpectrum) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
         Ms2ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid);
-        if (withData)
-            spectralLibrary.getSpectralData(spec);
+        if (withSpectrum)
+            spectralLibrary.fetchSpectralData(spec);
         return spec;
     }
 
@@ -328,7 +326,7 @@ public class WebWithCustomDatabase {
         dbs.stream().filter(CustomDataSources.Source::isCustomSource).forEach(db ->
                 asCustomDB(db).toSpectralLibrary().ifPresent(specLib -> {
                     try {
-                        specLib.getMergedReferenceQuerySpectra(precursorMz, chargeAndPolarity, precursorDeviation).
+                        specLib.getMergedReferenceSpectra(precursorMz, chargeAndPolarity, precursorDeviation).
                                 forEach(s -> spectra.computeIfAbsent(db, k -> new ArrayList<>()).add(s));
                     } catch (ChemicalDatabaseException e) {
                         throw new RuntimeException(e);
