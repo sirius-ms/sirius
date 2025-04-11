@@ -165,7 +165,7 @@ public class ResultPanel extends JTabbedPane {
 
     private void addLcmsTab() {
         if (lcmsTab == null)
-            lcmsTab = new LCMSViewerPanel(siriusResultElements);
+            lcmsTab = new LCMSViewerPanel(gui, siriusResultElements);
 
         insertTab("LC-MS", null, lcmsTab, lcmsTab.getDescription(), 0);
     }
