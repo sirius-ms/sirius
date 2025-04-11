@@ -38,7 +38,8 @@ public class RedirectController {
     @GetMapping({
             "/KMD", "/KMD/**",
             "/formulaTreeView", "/formulaTreeView/**",
-            "/epi", "/epi/**"
+            "/epi", "/epi/**",
+            "/lcms", "/lcms/**"
     })
     public String forwardKmdView() {
         return "forward:/sirius_java_integrated/index.html";
