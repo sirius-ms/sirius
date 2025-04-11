@@ -38,6 +38,8 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -52,6 +54,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -68,6 +71,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -116,11 +120,11 @@ public class CustomDatabaseImporter {
 
     }
 
-    public String generateInChI(IAtomContainer container) throws CDKException {
+    public InChIGenerator generateInChI(IAtomContainer container) throws CDKException {
         InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
         InChIGenerator generator = factory.getInChIGenerator(container);
 
-        return generator.getInchi();
+        return generator;
 
     }
 
@@ -348,67 +352,7 @@ public class CustomDatabaseImporter {
             flushMoleculeBuffer();
     }
 
- /*   private void processAndTransformMolecules(Map<String, Comp> key2DToComp) throws ExecutionException {
-        // 1. BioTransformerJJob erstellen
-        BioTransformerJJob job = new BioTransformerJJob();
-        job.setSubstrates(
-                key2DToComp.values().stream()
-                        .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
-                        .toList()
-        );
-        List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
-        // 2. Transformations in Molecule konvertieren
-
-        List<Molecule> transformedMolecules = transformationResults.stream()
-                // Iteriere über alle Ergebnisse der Biotransformationen
-                .flatMap(result -> result.getBiotranformations().stream())
-                // Iteriere über ale AtomContainer aus Tranformations
-                .flatMap(transformation -> {
-                    IAtomContainerSet products = transformation.getProducts(); // Zugriff auf das IAtomContainerSet
-                    return StreamSupport.stream(products.atomContainers().spliterator(), false) //  Iterable in Stream
-                            .map(container -> {
-                                try {
-                                    return new Molecule(container,smilesGen.create(container),generateInChI(container));
-                                } catch (CDKException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }); // Konvertiere jeden IAtomContainer in ein Molecule
-                })
-                .toList();
-
-        //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
-
-
-
-        // 3. Deduplikation basierend auf InChIKey-2D
-        for (Molecule newMolecule : transformedMolecules) {
-            try {
-                final InChI inchi = newMolecule.inchi;
-                final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
-                if (key2DToComp.containsKey(key2d)) {
-                    // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
-                    Comp existingComp = key2DToComp.get(key2d);
-                    existingComp.molecule.ids.addAll(newMolecule.ids);
-                    if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
-                            (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
-                                    existingComp.molecule.name.length() > newMolecule.name.length())) {
-                        existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
-                    }
-                } else {
-                    // Neues Molekül hinzufügen
-                    Comp newComp = new Comp(newMolecule);
-                    key2DToComp.put(key2d, newComp);
-                }
-            } catch (IllegalArgumentException e) {
-                // Fehlerhafte Moleküle ignorieren, aber loggen
-                CustomDatabase.logger.error("Error deduplicating molecule. Skipping: " + newMolecule.ids + " - " + newMolecule.name, e);
-            }
-        }
-
-
-
-    }*/
 
     private void flushMoleculeBuffer() {
         // start downloading
@@ -452,6 +396,62 @@ public class CustomDatabaseImporter {
                     //todo convert AtomContains in results into Molecules and perform  deduplication as done above.
                     result.stream().map(res -> res.getBiotranformations().stream().map(t -> t.))
 */
+                    BioTransformerJJob job = new BioTransformerJJob();
+                    job.setSubstrates(
+                            key2DToComp.values().stream()
+                                    .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                                    .toList()
+                    );
+                    List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+                    // 2. Transformations in Molecule konvertieren
+
+                    List<Molecule> transformedMolecules = transformationResults.stream()
+                            // Iteriere über alle Ergebnisse der Biotransformationen
+                            .flatMap(result -> result.getBiotranformations().stream())
+                            // Iteriere über ale AtomContainer aus Tranformations
+                            .flatMap(transformation -> {
+                                IAtomContainerSet products = transformation.getProducts(); // Zugriff auf das IAtomContainerSet
+                                return StreamSupport.stream(products.atomContainers().spliterator(), false) //  Iterable in Stream
+                                        .map(container -> {
+                                            try {
+                                                InChIGenerator inchi= generateInChI(container);
+                                                return new Molecule(container,new Smiles(smilesGen.create(container)),new InChI(inchi.getInchiKey(),inchi.getInchi()));
+                                            } catch (CDKException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }); // Konvertiere jeden IAtomContainer in ein Molecule
+                            })
+                            .toList();
+
+                    //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
+
+
+
+                    // 3. Deduplikation basierend auf InChIKey-2D
+                    for (Molecule newMolecule : transformedMolecules) {
+                        try {
+                            final InChI inchi = newMolecule.inchi;
+                            final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
+                            if (key2DToComp.containsKey(key2d)) {
+                                // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
+                                Comp existingComp = key2DToComp.get(key2d);
+                                existingComp.molecule.ids.addAll(newMolecule.ids);
+                                if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
+                                        (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
+                                                existingComp.molecule.name.length() > newMolecule.name.length())) {
+                                    existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
+                                }
+                            } else {
+                                // Neues Molekül hinzufügen
+                                Comp newComp = new Comp(newMolecule);
+                                key2DToComp.put(key2d, newComp);
+                            }
+                        } catch (IllegalArgumentException e) {
+                            // Fehlerhafte Moleküle ignorieren, aber loggen
+                            CustomDatabase.logger.error("Error deduplicating molecule. Skipping: " + newMolecule.ids + " - " + newMolecule.name, e);
+                        }
+                    }
 
 
                     CustomDatabase.logger.info("Looking up compounds to find existing fps");
