@@ -74,22 +74,22 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    public void setInstance(TraceSetExperimental peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
-        lcmsView(f->{
-            try {
-                final String json = objectMapper.writeValueAsString(peakInformation);
-                f.call("setOrder", order.name());
-                if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
-                    f.call("loadString", json);
-                } else {
-                    f.call("loadStringForCompound", json,  featureId);
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        });
-    }
+//    public void setInstance(TraceSetExperimental peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
+//        lcmsView(f->{
+//            try {
+//                final String json = objectMapper.writeValueAsString(peakInformation);
+//                f.call("setOrder", order.name());
+//                if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
+//                    f.call("loadString", json);
+//                } else {
+//                    f.call("loadStringForCompound", json,  featureId);
+//                }
+//            } catch (Throwable e) {
+//                e.printStackTrace();
+//                throw new RuntimeException(e);
+//            }
+//        });
+//    }
 
     public void lcmsView(Consumer<JSObject> functor) {
         if (lcmsViewer != null) {
