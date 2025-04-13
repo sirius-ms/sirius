@@ -31,6 +31,7 @@ import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -117,7 +118,7 @@ public interface Instance {
     }
     //endregion
 
-    void saveSpectraSearchResult(SpectralSearchResult result);
+    void saveSpectraSearchResult(@Nullable List<SpectralSearchResult.SearchResult> results);
     boolean hasSpectraSearchResult();
     void deleteSpectraSearchResult();
 

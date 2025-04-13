@@ -19,7 +19,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
@@ -29,7 +30,10 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.spectraldb.*;
+import de.unijena.bioinf.spectraldb.LibraryHit;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
@@ -40,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -94,60 +101,69 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         final Ms2Experiment exp = inst.getExperiment();
         final FastCosine fastCosine = new FastCosine();
 
-        Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
         double precursorMz = exp.getIonMass();
 
-        boolean analogSearch = exp.getAnnotationOrDefault(AnalogSpectraSearch.class).value;
+        AnalogueSearchSettings analogueSearchSettings = exp.getAnnotationOrDefault(AnalogueSearchSettings.class);
+        IdentitySearchSettings identitySearchSettings = exp.getAnnotationOrDefault(IdentitySearchSettings.class);
+
         Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> mergedReferenceSpectra;
 
-        if (analogSearch) {
+        if (analogueSearchSettings.enabled) {
             mergedReferenceSpectra = cache.getAllMergedSpectra(exp.getPrecursorIonType().getCharge());
-
         } else {
             mergedReferenceSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(
-                    precursorMz, exp.getPrecursorIonType().getCharge(), precursorDev,
+                    precursorMz, exp.getPrecursorIonType().getCharge(), identitySearchSettings.getPrecursorDeviation(),
                     exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs
             );
         }
 
-        final SpectralLibrarySearchSettings cosine = SpectralLibrarySearchSettings.conservativeDefaultForCosine();
-        cosine.setPrecursorDeviation(precursorDev);
-        cosine.setTargetTypes(exp.getAnnotationOrDefault(SpectralSearchTargetTypes.class).value);
-        final SpectralLibrarySearchSettings modifiedCosine = SpectralLibrarySearchSettings.conservativeDefaultForModifiedCosine();
-        modifiedCosine.setPrecursorDeviation(precursorDev);
-        modifiedCosine.setTargetTypes(exp.getAnnotationOrDefault(SpectralSearchTargetTypes.class).value);
-
         // now compare against all these reference spectra
-
-        SpectralSearchResult result = submitJob(new BasicJJob<SpectralSearchResult>() {
+        List<SpectralSearchResult.SearchResult> result = submitJob(new BasicJJob<List<SpectralSearchResult.SearchResult>>() {
             @Override
-            protected SpectralSearchResult compute() throws Exception {
+            protected List<SpectralSearchResult.SearchResult> compute() throws Exception {
                 final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x -> fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
                 ReferenceLibrarySpectrum mergedQuery = fastCosine.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
 
-                List<LibraryHit> hits = new ArrayList<>();
+                List<LibraryHit> identityHits = new ArrayList<>();
+                List<LibraryHit> analogHits = new ArrayList<>();
                 for (Map.Entry<CustomDataSources.Source, List<MergedReferenceSpectrum>> e : mergedReferenceSpectra.entrySet()) {
                     SpectralLibrary db = cache.getChemDB().asCustomDB(e.getKey()).toSpectralLibrary().orElseThrow();
                     for (MergedReferenceSpectrum mergedRefSpec : e.getValue()) {
-                        SpectralLibrarySearchSettings settings = precursorDev
-                                .inErrorWindow(precursorMz, mergedRefSpec.getExactMass()) ? cosine : modifiedCosine;
-                        db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery)
-                                .forEach(hits::add);
+                        SpectralLibrarySearchSettings settings = null;
+                        if (identitySearchSettings.getPrecursorDeviation().inErrorWindow(precursorMz, mergedRefSpec.getExactMass())) {
+                            settings = identitySearchSettings;
+                        } else if (!analogueSearchSettings.getPrecursorDeviation().inErrorWindow(precursorMz, mergedRefSpec.getExactMass())) {
+                            settings = analogueSearchSettings;
+                        }
+
+                        if (settings != null) {
+                            db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery)
+                                    .forEach(hit -> {
+                                        if (hit.isAnalog())
+                                            analogHits.add(hit);
+                                        else
+                                            identityHits.add(hit);
+                                    });
+                        }
                     }
                 }
 
-                if (hits.isEmpty())
+                if (identityHits.isEmpty() && analogHits.isEmpty())
                     return null;
 
-                hits = hits.stream().sorted(Comparator.reverseOrder()).toList();
-                List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(hits.size());
-                for (int k = 0; k < hits.size(); ++k) {
-                    LibraryHit hit = hits.get(k);
-                    rankedHits.add(new SpectralSearchResult.SearchResult(hit, k + 1));
-                }
+                identityHits.sort(Comparator.reverseOrder());
+                analogHits.sort(Comparator.reverseOrder());
 
-                return new SpectralSearchResult(cosine.getPrecursorDeviation(), peakDev, cosine.getMatchingType(), rankedHits);
+                List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(
+                        analogueSearchSettings.getMaxNumOfHits() + identitySearchSettings.getMaxNumOfHits());
+
+
+                for (int k = 0; k < identitySearchSettings.getMaxNumOfHits() && k < identityHits.size(); ++k)
+                    rankedHits.add(new SpectralSearchResult.SearchResult(identityHits.get(k), k + 1));
+                for (int k = 0; k < analogueSearchSettings.getMaxNumOfHits() && k < analogHits.size(); ++k)
+                    rankedHits.add(new SpectralSearchResult.SearchResult(analogHits.get(k), k + 1));
+
+                return rankedHits;
             }
         }.asCPU()).awaitResult();
 
@@ -163,8 +179,6 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             return;
 
         StringBuilder builder = new StringBuilder("##########  BEGIN SPECTRUM SEARCH RESULTS  ##########");
-        builder.append("\nPrecursor deviation: ").append(precursorDev);
-        builder.append("\nPeak deviation: ").append(peakDev);
         builder.append("\nExperiment: ").append(exp.getName());
 
         List<MutableMs2Spectrum> ms2Queries = exp.getMs2Spectra();

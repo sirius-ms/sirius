@@ -5,7 +5,7 @@
 ## Enum
 
 
-* `COSINE` (value: `"COSINE"`)
+* `IDENTITY` (value: `"IDENTITY"`)
 
 * `ANALOG` (value: `"ANALOG"`)
 
