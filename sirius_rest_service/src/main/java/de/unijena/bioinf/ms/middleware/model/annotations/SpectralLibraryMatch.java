@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
@@ -71,6 +72,12 @@ public class SpectralLibraryMatch {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final Integer querySpectrumIndex;
 
+    @JsonInclude
+    @Schema
+    public SpectrumType getQuerySpectrumType() {
+        return getQuerySpectrumIndex() < 0 ? SpectrumType.MERGED_SPECTRUM : SpectrumType.SPECTRUM;
+    }
+
     private final String dbName;
 
     private final String dbId;
@@ -85,14 +92,14 @@ public class SpectralLibraryMatch {
     private final Double exactMass;
     private final String smiles;
 
-    @Schema(defaultValue = "SPECTRUM")
-    private final TargetType target;
-
-    @Schema(defaultValue = "COSINE")
+    @Schema(defaultValue = "IDENTITY")
     private final MatchType type;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final String inchiKey;
+
+    @Schema(defaultValue = "SPECTRUM")
+    private final SpectrumType referenceSpectrumType;
 
     @Schema(nullable = true)
     @Setter
@@ -127,8 +134,8 @@ public class SpectralLibraryMatch {
                 .splash(result.getSplash())
                 .exactMass(result.getExactMass())
                 .smiles(result.getSmiles())
-                .target(result.getSpectrumType() == SpectrumType.MERGED_SPECTRUM ? TargetType.MERGED : TargetType.SPECTRUM)
-                .type(result.isAnalog() ? MatchType.ANALOG : MatchType.COSINE)
+                .referenceSpectrumType(result.getSpectrumType() == SpectrumType.MERGED_SPECTRUM ? SpectrumType.MERGED_SPECTRUM : SpectrumType.SPECTRUM)
+                .type(result.isAnalog() ? MatchType.ANALOG : MatchType.IDENTITY)
                 .inchiKey(result.getCandidateInChiKey());
 
         if (result.getMolecularFormula() != null) {
@@ -155,20 +162,14 @@ public class SpectralLibraryMatch {
 
     @Schema(name = "SpectralMatchType")
     public enum MatchType {
-        COSINE,
+        /**
+         * Identity match: Search with narrow mass window to identify the exact compound.
+         */
+        IDENTITY,
+        /**
+         * Analog/Hybrid search against any mass to find compounds similar to the query
+         */
         ANALOG;
-    }
-
-    @Schema(name = "SpectrumType")
-    public enum TargetType {
-        SPECTRUM,
-        MERGED;
-
-        public SpectrumType asSpectrumType() {
-            if (this == SPECTRUM) return SpectrumType.SPECTRUM;
-            if (this == MERGED) return SpectrumType.MERGED_SPECTRUM;
-            throw new IllegalArgumentException("Unknown spectrum type");
-        }
     }
 
     @Schema(name = "PeakPair")

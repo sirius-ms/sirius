@@ -77,7 +77,7 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 5 -> baseObject.getMatch().getSimilarity();
             case 6 -> baseObject.getMatch().getSharedPeaks();
             case 7 -> baseObject.getMatch().getType();
-            case 8 -> baseObject.getMatch().getTarget();
+            case 8 -> baseObject.getMatch().getReferenceSpectrumType();
             case 9 -> baseObject.getMatch().getAdduct();
             case 10 -> baseObject.getReference()
                     .map(BasicSpectrum::getCollisionEnergy)

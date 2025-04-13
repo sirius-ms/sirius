@@ -38,7 +38,7 @@ public enum SpectrumType {
   
   SPECTRUM("SPECTRUM"),
   
-  MERGED("MERGED");
+  MERGED_SPECTRUM("MERGED_SPECTRUM");
 
   private String value;
 

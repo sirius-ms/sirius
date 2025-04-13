@@ -8735,20 +8735,49 @@
               "nullable": true
             }
           },
-          "peakDeviationPpm": {
-            "type": "number",
-            "description": "Maximum allowed mass deviation in ppm for matching peaks.",
-            "format": "double",
-            "nullable": true
-          },
           "precursorDeviationPpm": {
             "type": "number",
             "description": "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.",
             "format": "double",
             "nullable": true
           },
+          "minSimilarity": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered a hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaks": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered a hit.",
+            "format": "int32",
+            "nullable": true
+          },
+          "enableAnalogueSearch": {
+            "type": "boolean",
+            "description": "Enable analogue search in addition to the identity spectral library search"
+          },
+          "minSimilarityAnalogue": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered an analogue hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaksAnalogue": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered an analogue hit.",
+            "format": "int32",
+            "nullable": true
+          },
           "scoring": {
             "$ref": "#/components/schemas/SpectralMatchingType"
+          },
+          "peakDeviationPpm": {
+            "type": "number",
+            "description": "NO LONGER SUPPORTED (IGNORED)\n Maximum allowed mass deviation in ppm for matching peaks.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
           }
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",
@@ -8760,7 +8789,8 @@
         "enum": [
           "INTENSITY",
           "GAUSSIAN",
-          "MODIFIED_COSINE"
+          "MODIFIED_COSINE",
+          "FAST_COSINE"
         ]
       },
       "StructureDbSearch": {
@@ -10168,7 +10198,7 @@
           },
           "sharedPeakMapping": {
             "type": "array",
-            "description": "List of paired/matched peak indices.\n \u003cp\u003e\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
             "items": {
               "$ref": "#/components/schemas/PeakPair"
             }
@@ -10203,26 +10233,29 @@
           "smiles": {
             "type": "string"
           },
-          "target": {
-            "$ref": "#/components/schemas/SpectrumType"
-          },
           "type": {
             "$ref": "#/components/schemas/SpectralMatchType"
           },
           "inchiKey": {
             "type": "string"
           },
+          "referenceSpectrumType": {
+            "$ref": "#/components/schemas/SpectrumType"
+          },
           "referenceSpectrum": {
             "$ref": "#/components/schemas/BasicSpectrum"
+          },
+          "querySpectrumType": {
+            "$ref": "#/components/schemas/SpectrumType"
           }
         },
         "nullable": true
       },
       "SpectralMatchType": {
         "type": "string",
-        "default": "COSINE",
+        "default": "IDENTITY",
         "enum": [
-          "COSINE",
+          "IDENTITY",
           "ANALOG"
         ]
       },
@@ -10278,10 +10311,9 @@
       },
       "SpectrumType": {
         "type": "string",
-        "default": "SPECTRUM",
         "enum": [
           "SPECTRUM",
-          "MERGED"
+          "MERGED_SPECTRUM"
         ]
       },
       "StructureCandidate": {

@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
@@ -398,7 +399,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
                 ReferenceFragmentationTree refTree = null;
-                if (match.getTarget() == SpectralLibraryMatch.TargetType.MERGED) {
+                if (match.getReferenceSpectrumType() == SpectrumType.MERGED_SPECTRUM) {
                     refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
                 } else {
                     // todo this does needs more queries then necessary. We should maybe allow for direct tree retrieval.
@@ -1094,7 +1095,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     private ReferenceSpectrum extractRefSpectra(SpectralLibraryMatch match) throws ResponseStatusException {
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
-                ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
+                ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getReferenceSpectrumType());
                 if (spec.getQuerySpectrum() != null)
                     match.setReferenceSpectrum(Spectrums.createReferenceMsMs(spec));
                 return spec;
