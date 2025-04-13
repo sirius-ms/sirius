@@ -50,44 +50,45 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
 
-    @CommandLine.Option(names = "--ppm-max-peaks", descriptionKey = "SpectralMatchingMassDeviation.allowedPeakDeviation")
-    public void setPpmMax(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPeakDeviation", value + "ppm");
+
+    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "IdentitySearchSettings.precursorDeviation")
+    public void setPpmMaxIdentity(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("IdentitySearchSettings.precursorDeviation", value);
     }
 
-    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "SpectralMatchingMassDeviation.allowedPrecursorDeviation")
-    public void setPpmMaxMs2(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPrecursorDeviation", value + "ppm");
+    @CommandLine.Option(names = "--min-similarity", descriptionKey = "IdentitySearchSettings.minSimilarity")
+    public void setMinSimilarityIdentity(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("IdentitySearchSettings.minSimilarity", value);
     }
 
-    @CommandLine.Option(names = {"--analog", "--hybrid", "-a"}, descriptionKey = "AnalogSpectraSearch", description = "Perform full search against all spectra in the selected database. All matches exceeding given mass deviation will be considered a analog/hybrid search hit.")
-    public void setAnalogSearch(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("AnalogSpectraSearch", value);
+    @CommandLine.Option(names = "--min-peaks", descriptionKey = "IdentitySearchSettings.minNumOfPeaks")
+    public void setMinNumPeaksIdentity(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("IdentitySearchSettings.minNumOfPeaks", value);
     }
 
-    @CommandLine.Option(names = "--target-types", descriptionKey = "SpectralSearchTargetTypes", defaultValue = "SPECTRUM,MERGED_SPECTRUM", description = "Specify targets in the spectral library where hits shall be returned. Valid values: ${COMPLETION-CANDIDATES}.", hidden = true)
-    public void setScorer(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("SpectralSearchTargetTypes", value);
+
+    @CommandLine.Option(names = "--analogue-search", descriptionKey = "AnalogueSearchSettings.enabled")
+    public void setEnableAnalogueSearch(boolean value) throws Exception {
+        defaultConfigOptions.changeOption("AnalogueSearchSettings.enabled", String.valueOf(value));
     }
 
-    //todo allwo fast search with merged source only?
-  /*
-    @CommandLine.Option(names = {"--fast", "--merged-only"}, descriptionKey = "MergedSearchOnly", description = "Searches only merged spectra against merged spectra omitting additional computations for similarities of individual spectra.")
-    public void setFastSearch(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("MergedSearchOnly", value);
-    }*/
+    @CommandLine.Option(names = "--min-similarity-analogue", descriptionKey = "AnalogueSearchSettings.minSimilarity")
+    public void setMinSimilarityAnalogue(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("AnalogueSearchSettings.minSimilarity", value);
+    }
+
+    @CommandLine.Option(names = "--min-peaks-analogue", descriptionKey = "AnalogueSearchSettings.minNumOfPeaks")
+    public void setMinNumPeaksAnalogue(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("AnalogueSearchSettings.minNumOfPeaks", value);
+    }
+
+
 
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
-    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralMatchingScorer", defaultValue = "MODIFIED_COSINE", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", hidden = true)
-    public void setScorer(SpectralMatchingType matchingType) throws Exception {
-        if (matchingType != SpectralMatchingType.MODIFIED_COSINE)
-            throw new CommandLine.PicocliException("MODIFIED_COSINE is currently the only supported matching type.");
-        defaultConfigOptions.changeOption("SpectralMatchingScorer", matchingType.toString());
-    }
 
     @Override
     public Consumer<Instance> getInvalidator() {

@@ -24,13 +24,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
 public enum SpectralMatchingType {
 
-    INTENSITY, GAUSSIAN, MODIFIED_COSINE;
+    INTENSITY, GAUSSIAN, MODIFIED_COSINE, FAST_COSINE;
 
     public AbstractSpectralMatching getScorer(Deviation deviation) {
         return switch (this) {
             case INTENSITY -> new IntensityWeightedSpectralAlignment(deviation);
             case GAUSSIAN -> new GaussianSpectralMatching(deviation);
             case MODIFIED_COSINE -> new ModifiedCosine(deviation);
+            case FAST_COSINE -> null; //todo add fast cosine to api or change API so that it works better with fast cosine implementation
         };
     }
 }

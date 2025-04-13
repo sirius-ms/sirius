@@ -364,7 +364,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     private final static FastCosine fastCosine = new FastCosine();
     private SpectralSimilarity spectralSimilarity(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right, SpectralLibrarySearchSettings settings) {
-        if (settings.getMatchingType()== SpectralMatchingType.INTENSITY) return fastCosine.fastCosine(left,right);
+        if (settings.getMatchingType()== SpectralMatchingType.FAST_COSINE) return fastCosine.fastCosine(left,right);
         else if (settings.getMatchingType()==SpectralMatchingType.MODIFIED_COSINE) return fastCosine.fastModifiedCosine(left,right);
         else throw new UnsupportedOperationException();
     }

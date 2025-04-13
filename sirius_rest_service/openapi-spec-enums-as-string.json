@@ -9140,27 +9140,58 @@
               "nullable": true
             }
           },
-          "peakDeviationPpm": {
-            "type": "number",
-            "description": "Maximum allowed mass deviation in ppm for matching peaks.",
-            "format": "double",
-            "nullable": true
-          },
           "precursorDeviationPpm": {
             "type": "number",
             "description": "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.",
             "format": "double",
             "nullable": true
           },
+          "minSimilarity": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered a hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaks": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered a hit.",
+            "format": "int32",
+            "nullable": true
+          },
+          "enableAnalogueSearch": {
+            "type": "boolean",
+            "description": "Enable analogue search in addition to the identity spectral library search"
+          },
+          "minSimilarityAnalogue": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered an analogue hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaksAnalogue": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered an analogue hit.",
+            "format": "int32",
+            "nullable": true
+          },
           "scoring": {
             "type": "string",
-            "description": "Specify scoring method to match spectra\n INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.\n GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.\n MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.",
+            "description": "NO LONGER SUPPORTED (IGNORED)\n Specify scoring method to match spectra\n INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.\n GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.\n MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.",
             "nullable": true,
+            "deprecated": true,
             "enum": [
               "INTENSITY",
               "GAUSSIAN",
-              "MODIFIED_COSINE"
+              "MODIFIED_COSINE",
+              "FAST_COSINE"
             ]
+          },
+          "peakDeviationPpm": {
+            "type": "number",
+            "description": "NO LONGER SUPPORTED (IGNORED)\n Maximum allowed mass deviation in ppm for matching peaks.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
           }
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",
@@ -10562,7 +10593,7 @@
           },
           "sharedPeakMapping": {
             "type": "array",
-            "description": "List of paired/matched peak indices.\n \u003cp\u003e\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
             "items": {
               "$ref": "#/components/schemas/PeakPair"
             }
@@ -10597,27 +10628,34 @@
           "smiles": {
             "type": "string"
           },
-          "target": {
-            "type": "string",
-            "default": "SPECTRUM",
-            "enum": [
-              "SPECTRUM",
-              "MERGED"
-            ]
-          },
           "type": {
             "type": "string",
-            "default": "COSINE",
+            "default": "IDENTITY",
             "enum": [
-              "COSINE",
+              "IDENTITY",
               "ANALOG"
             ]
           },
           "inchiKey": {
             "type": "string"
           },
+          "referenceSpectrumType": {
+            "type": "string",
+            "default": "SPECTRUM",
+            "enum": [
+              "SPECTRUM",
+              "MERGED_SPECTRUM"
+            ]
+          },
           "referenceSpectrum": {
             "$ref": "#/components/schemas/BasicSpectrum"
+          },
+          "querySpectrumType": {
+            "type": "string",
+            "enum": [
+              "SPECTRUM",
+              "MERGED_SPECTRUM"
+            ]
           }
         },
         "nullable": true
