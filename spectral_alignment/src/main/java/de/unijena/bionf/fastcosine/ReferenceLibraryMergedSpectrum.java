@@ -1,6 +1,5 @@
 package de.unijena.bionf.fastcosine;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -70,7 +69,7 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
         return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, intensities);
     }
 
-    public ReferenceLibrarySpectrum getUpperboundQuery() {
+    public ReferenceLibrarySpectrum asUpperboundQuerySpectrum() {
         return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, mergedMaxIntensities);
     }
 }

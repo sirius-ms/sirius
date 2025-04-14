@@ -332,12 +332,13 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundRequestCreation(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundRequestCreation(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -358,6 +359,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -380,14 +382,15 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Compound getCompound(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public Compound getCompound(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -396,14 +399,15 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Compound> getCompoundWithHttpInfo(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<Compound> getCompoundWithHttpInfo(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -412,13 +416,14 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundWithResponseSpec(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundWithResponseSpec(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Returns the full quantification table of compounds
@@ -683,12 +688,13 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsRequestCreation(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsRequestCreation(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -704,6 +710,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -725,14 +732,15 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Compound> getCompounds(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public List<Compound> getCompounds(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -740,14 +748,15 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -755,13 +764,14 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsWithResponseSpec(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
@@ -975,12 +985,13 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -999,6 +1010,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -1023,14 +1035,15 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1041,14 +1054,15 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<PagedModelCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1059,13 +1073,14 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Get all tags associated with this Compound
