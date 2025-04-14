@@ -148,7 +148,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         // we update every time here since we do not know which optional fields are already loaded.
         if (sourceCandidate == null || !of.equals(List.of(FormulaCandidateOptField.STATISTICS)))
             sourceCandidate = withIds((pid, featId, formId) ->
-                    getClient().features().getFormulaCandidate(pid, featId, formId, of));
+                    getClient().features().getFormulaCandidate(pid, featId, formId, false, of));
 
         return sourceCandidate;
     }

@@ -58,10 +58,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_ADDUCT,
   SpectralLibraryMatch.JSON_PROPERTY_EXACT_MASS,
   SpectralLibraryMatch.JSON_PROPERTY_SMILES,
-  SpectralLibraryMatch.JSON_PROPERTY_TARGET,
   SpectralLibraryMatch.JSON_PROPERTY_TYPE,
   SpectralLibraryMatch.JSON_PROPERTY_INCHI_KEY,
-  SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM
+  SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE,
+  SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM,
+  SpectralLibraryMatch.JSON_PROPERTY_QUERY_SPECTRUM_TYPE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SpectralLibraryMatch {
@@ -102,22 +103,25 @@ public class SpectralLibraryMatch {
   private String adduct;
 
   public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
-  private String exactMass;
+  private Double exactMass;
 
   public static final String JSON_PROPERTY_SMILES = "smiles";
   private String smiles;
 
-  public static final String JSON_PROPERTY_TARGET = "target";
-  private SpectrumType target = SpectrumType.SPECTRUM;
-
   public static final String JSON_PROPERTY_TYPE = "type";
-  private SpectralMatchType type = SpectralMatchType.COSINE;
+  private SpectralMatchType type = SpectralMatchType.IDENTITY;
 
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
 
+  public static final String JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE = "referenceSpectrumType";
+  private SpectrumType referenceSpectrumType;
+
   public static final String JSON_PROPERTY_REFERENCE_SPECTRUM = "referenceSpectrum";
   private BasicSpectrum referenceSpectrum;
+
+  public static final String JSON_PROPERTY_QUERY_SPECTRUM_TYPE = "querySpectrumType";
+  private SpectrumType querySpectrumType;
 
   public SpectralLibraryMatch() {
   }
@@ -237,7 +241,7 @@ public class SpectralLibraryMatch {
   }
 
    /**
-   * Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)  even number -&gt; left/query spectrum index  odd number -&gt;  right/reference spectrum index
+   * List of paired/matched peak indices.   Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted)
    * @return sharedPeakMapping
   **/
   @jakarta.annotation.Nullable
@@ -430,7 +434,7 @@ public class SpectralLibraryMatch {
     this.adduct = adduct;
   }
 
-  public SpectralLibraryMatch exactMass(String exactMass) {
+  public SpectralLibraryMatch exactMass(Double exactMass) {
     
     this.exactMass = exactMass;
     return this;
@@ -444,14 +448,14 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getExactMass() {
+  public Double getExactMass() {
     return exactMass;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EXACT_MASS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExactMass(String exactMass) {
+  public void setExactMass(Double exactMass) {
     this.exactMass = exactMass;
   }
 
@@ -478,31 +482,6 @@ public class SpectralLibraryMatch {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSmiles(String smiles) {
     this.smiles = smiles;
-  }
-
-  public SpectralLibraryMatch target(SpectrumType target) {
-    
-    this.target = target;
-    return this;
-  }
-
-   /**
-   * Get target
-   * @return target
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TARGET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SpectrumType getTarget() {
-    return target;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_TARGET)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTarget(SpectrumType target) {
-    this.target = target;
   }
 
   public SpectralLibraryMatch type(SpectralMatchType type) {
@@ -555,6 +534,31 @@ public class SpectralLibraryMatch {
     this.inchiKey = inchiKey;
   }
 
+  public SpectralLibraryMatch referenceSpectrumType(SpectrumType referenceSpectrumType) {
+    
+    this.referenceSpectrumType = referenceSpectrumType;
+    return this;
+  }
+
+   /**
+   * Get referenceSpectrumType
+   * @return referenceSpectrumType
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SpectrumType getReferenceSpectrumType() {
+    return referenceSpectrumType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setReferenceSpectrumType(SpectrumType referenceSpectrumType) {
+    this.referenceSpectrumType = referenceSpectrumType;
+  }
+
   public SpectralLibraryMatch referenceSpectrum(BasicSpectrum referenceSpectrum) {
     
     this.referenceSpectrum = referenceSpectrum;
@@ -580,6 +584,31 @@ public class SpectralLibraryMatch {
     this.referenceSpectrum = referenceSpectrum;
   }
 
+  public SpectralLibraryMatch querySpectrumType(SpectrumType querySpectrumType) {
+    
+    this.querySpectrumType = querySpectrumType;
+    return this;
+  }
+
+   /**
+   * Get querySpectrumType
+   * @return querySpectrumType
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SpectrumType getQuerySpectrumType() {
+    return querySpectrumType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_QUERY_SPECTRUM_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setQuerySpectrumType(SpectrumType querySpectrumType) {
+    this.querySpectrumType = querySpectrumType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -603,15 +632,16 @@ public class SpectralLibraryMatch {
         Objects.equals(this.adduct, spectralLibraryMatch.adduct) &&
         Objects.equals(this.exactMass, spectralLibraryMatch.exactMass) &&
         Objects.equals(this.smiles, spectralLibraryMatch.smiles) &&
-        Objects.equals(this.target, spectralLibraryMatch.target) &&
         Objects.equals(this.type, spectralLibraryMatch.type) &&
         Objects.equals(this.inchiKey, spectralLibraryMatch.inchiKey) &&
-        Objects.equals(this.referenceSpectrum, spectralLibraryMatch.referenceSpectrum);
+        Objects.equals(this.referenceSpectrumType, spectralLibraryMatch.referenceSpectrumType) &&
+        Objects.equals(this.referenceSpectrum, spectralLibraryMatch.referenceSpectrum) &&
+        Objects.equals(this.querySpectrumType, spectralLibraryMatch.querySpectrumType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, sharedPeakMapping, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, target, type, inchiKey, referenceSpectrum);
+    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, sharedPeakMapping, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, type, inchiKey, referenceSpectrumType, referenceSpectrum, querySpectrumType);
   }
 
   @Override
@@ -632,10 +662,11 @@ public class SpectralLibraryMatch {
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
     sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
-    sb.append("    target: ").append(toIndentedString(target)).append("\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    inchiKey: ").append(toIndentedString(inchiKey)).append("\n");
+    sb.append("    referenceSpectrumType: ").append(toIndentedString(referenceSpectrumType)).append("\n");
     sb.append("    referenceSpectrum: ").append(toIndentedString(referenceSpectrum)).append("\n");
+    sb.append("    querySpectrumType: ").append(toIndentedString(querySpectrumType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

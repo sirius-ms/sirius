@@ -19,7 +19,7 @@ import java.util.*;
 
 public class FastCosine {
 
-    private static boolean mergeMasses = false;
+    private static final boolean mergeMasses = false;
 
     @Getter
     private final Deviation maxDeviation;

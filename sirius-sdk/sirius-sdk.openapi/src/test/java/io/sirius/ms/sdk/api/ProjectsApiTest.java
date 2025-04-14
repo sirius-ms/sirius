@@ -79,7 +79,7 @@ public class ProjectsApiTest {
         assertNotNull(response);
         assertEquals(projectId, response.getProjectId());
 
-        List<AlignedFeature> cids = featureApiInstance.getAlignedFeatures(projectId, null);
+        List<AlignedFeature> cids = featureApiInstance.getAlignedFeatures(projectId, false, null);
         assertEquals(0, cids.size());
 
         TestSetup.getInstance().deleteTestProject(response);
@@ -161,7 +161,7 @@ public class ProjectsApiTest {
         List<File> inputFiles = List.of(f.toFile());
         instance.importPreprocessedData(project.getProjectId(), true, null, inputFiles);
 
-        List<AlignedFeature> alignedFeatures = featureApiInstance.getAlignedFeatures(project.getProjectId(), null);
+        List<AlignedFeature> alignedFeatures = featureApiInstance.getAlignedFeatures(project.getProjectId(), false, null);
         assertNotNull(alignedFeatures);
         assertEquals(expected, alignedFeatures.size());
 
@@ -176,7 +176,7 @@ public class ProjectsApiTest {
         instance.importPreprocessedData(projectId, true, null, files);
 
         // delete all features
-        List<String> allFeatureIds = featureApiInstance.getAlignedFeatures(projectId, null).stream().map(AlignedFeature::getAlignedFeatureId).toList();
+        List<String> allFeatureIds = featureApiInstance.getAlignedFeatures(projectId, false, null).stream().map(AlignedFeature::getAlignedFeatureId).toList();
         featureApiInstance.deleteAlignedFeatures(projectId, allFeatureIds);
 
         instance.closeProject(projectId, false);

@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.AnnotatedPeak;
+import io.sirius.ms.sdk.model.SimplePeak;
 import io.sirius.ms.sdk.model.SpectrumAnnotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +49,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_INSTRUMENT,
   AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   AnnotatedSpectrum.JSON_PROPERTY_SCAN_NUMBER,
+  AnnotatedSpectrum.JSON_PROPERTY_COSINE_QUERY,
+  AnnotatedSpectrum.JSON_PROPERTY_PRECURSOR_PEAK,
   AnnotatedSpectrum.JSON_PROPERTY_PEAKS,
   AnnotatedSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR,
   AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION
@@ -71,6 +74,12 @@ public class AnnotatedSpectrum {
 
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
   private Integer scanNumber;
+
+  public static final String JSON_PROPERTY_COSINE_QUERY = "cosineQuery";
+  private Boolean cosineQuery = false;
+
+  public static final String JSON_PROPERTY_PRECURSOR_PEAK = "precursorPeak";
+  private SimplePeak precursorPeak;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<AnnotatedPeak> peaks = new ArrayList<>();
@@ -234,6 +243,56 @@ public class AnnotatedSpectrum {
     this.scanNumber = scanNumber;
   }
 
+  public AnnotatedSpectrum cosineQuery(Boolean cosineQuery) {
+    
+    this.cosineQuery = cosineQuery;
+    return this;
+  }
+
+   /**
+   * True if spectrum is in cosine query normalized format.  Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
+   * @return cosineQuery
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isCosineQuery() {
+    return cosineQuery;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setCosineQuery(Boolean cosineQuery) {
+    this.cosineQuery = cosineQuery;
+  }
+
+  public AnnotatedSpectrum precursorPeak(SimplePeak precursorPeak) {
+    
+    this.precursorPeak = precursorPeak;
+    return this;
+  }
+
+   /**
+   * Get precursorPeak
+   * @return precursorPeak
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SimplePeak getPrecursorPeak() {
+    return precursorPeak;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPrecursorPeak(SimplePeak precursorPeak) {
+    this.precursorPeak = precursorPeak;
+  }
+
   public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
     
     this.peaks = peaks;
@@ -332,6 +391,8 @@ public class AnnotatedSpectrum {
         Objects.equals(this.instrument, annotatedSpectrum.instrument) &&
         Objects.equals(this.precursorMz, annotatedSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, annotatedSpectrum.scanNumber) &&
+        Objects.equals(this.cosineQuery, annotatedSpectrum.cosineQuery) &&
+        Objects.equals(this.precursorPeak, annotatedSpectrum.precursorPeak) &&
         Objects.equals(this.peaks, annotatedSpectrum.peaks) &&
         Objects.equals(this.absIntensityFactor, annotatedSpectrum.absIntensityFactor) &&
         Objects.equals(this.spectrumAnnotation, annotatedSpectrum.spectrumAnnotation);
@@ -339,7 +400,7 @@ public class AnnotatedSpectrum {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, peaks, absIntensityFactor, spectrumAnnotation);
+    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, cosineQuery, precursorPeak, peaks, absIntensityFactor, spectrumAnnotation);
   }
 
   @Override
@@ -352,6 +413,8 @@ public class AnnotatedSpectrum {
     sb.append("    instrument: ").append(toIndentedString(instrument)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
+    sb.append("    cosineQuery: ").append(toIndentedString(cosineQuery)).append("\n");
+    sb.append("    precursorPeak: ").append(toIndentedString(precursorPeak)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
     sb.append("    absIntensityFactor: ").append(toIndentedString(absIntensityFactor)).append("\n");
     sb.append("    spectrumAnnotation: ").append(toIndentedString(spectrumAnnotation)).append("\n");

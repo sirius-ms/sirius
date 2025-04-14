@@ -7,8 +7,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**queryPeak** | **Integer** |  |  [optional] |
-|**referencePeak** | **Integer** |  |  [optional] |
+|**queryPeak** | **Integer** |  |  |
+|**referencePeak** | **Integer** |  |  |
 
 
 

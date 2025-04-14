@@ -3,71 +3,77 @@ package de.unijena.bioinf.spectraldb;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
+
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class SpectralLibrarySearchSettings {
+    /**
+     * Minimal spectral similarity of a spectral match to be considered a hit.
+     */
+    protected float minSimilarity;
+    /**
+     * Minimal number of matching peaks of a spectral match to be considered a hit.
+     */
+    protected int minNumOfPeaks;
+    /**
+     * Maximum number of hits to store
+     */
+    protected int maxNumOfHits =  100;
 
-    private float minCosine;
-    private int minimumNumberOfPeaks;
-    private SpectralMatchingType matchingType;
-    private Deviation precursorDeviation;
-    private SpectrumType targetType;
+    /**
+     * Matching algorith to be used for comparing spectra.
+     */
+    protected SpectralMatchingType matchingType;
+    /**
+     * Maximal allowed mass deviation of a library spectrum's compound compared to the query spectrum's precursor to be considered as candidate.
+     */
+    protected Deviation precursorDeviation;
 
-    public static SpectralLibrarySearchSettings conservativeDefaultForCosine() {
-        return new SpectralLibrarySearchSettings(SpectralMatchingType.INTENSITY, SpectrumType.SPECTRUM, 0.33f, 3, new Deviation(10));
-    }
-    public static SpectralLibrarySearchSettings conservativeDefaultForModifiedCosine() {
-        return new SpectralLibrarySearchSettings(SpectralMatchingType.MODIFIED_COSINE, SpectrumType.MERGED_SPECTRUM, 0.5f, 6, new Deviation(10));
-    }
+    /**
+     * Type of spectrum
+     */
+    protected Set<SpectrumType> targetTypes;
 
-    public SpectralLibrarySearchSettings(SpectralMatchingType matchingType, SpectrumType targetType, float minCosine, int minimumNumberOfPeaks, Deviation precursorDeviation) {
-        this.minCosine = minCosine;
-        this.minimumNumberOfPeaks = minimumNumberOfPeaks;
-        this.precursorDeviation = precursorDeviation;
-        this.matchingType = matchingType;
-        this.targetType = targetType;
-    }
 
     public boolean exceeded(SpectralSimilarity similarity) {
-        return similarity.similarity>=minCosine && similarity.sharedPeaks >= minimumNumberOfPeaks;
+        return similarity.similarity>= minSimilarity && similarity.sharedPeaks >= minNumOfPeaks;
     }
 
-    public SpectrumType getTargetType() {
-        return targetType;
+    public boolean containsTargetType(SpectrumType targetType) {
+        return targetTypes != null && targetTypes.contains(targetType);
     }
 
-    public void setTargetType(SpectrumType targetType) {
-        this.targetType = targetType;
+    public void addTargetType(SpectrumType targetType) {
+        if (targetTypes == null)
+            targetTypes = EnumSet.of(targetType);
+        else
+            targetTypes.add(targetType);
     }
 
-    public float getMinCosine() {
-        return minCosine;
+    @Override
+    public SpectralLibrarySearchSettings clone() {
+        SpectralLibrarySearchSettings clone = new SpectralLibrarySearchSettings(
+                this.minSimilarity,
+                this.minNumOfPeaks,
+                this.maxNumOfHits,
+                this.matchingType,
+                this.precursorDeviation != null ? new Deviation(this.precursorDeviation.getPpm()) : null,
+                new HashSet<>(this.targetTypes)
+        );
+
+        clone.setMaxNumOfHits(this.maxNumOfHits);
+
+        return clone;
     }
 
-    public void setMinCosine(float minCosine) {
-        this.minCosine = minCosine;
-    }
-
-    public int getMinimumNumberOfPeaks() {
-        return minimumNumberOfPeaks;
-    }
-
-    public void setMinimumNumberOfPeaks(int minimumNumberOfPeaks) {
-        this.minimumNumberOfPeaks = minimumNumberOfPeaks;
-    }
-
-    public SpectralMatchingType getMatchingType() {
-        return matchingType;
-    }
-
-    public void setMatchingType(SpectralMatchingType matchingType) {
-        this.matchingType = matchingType;
-    }
-
-    public Deviation getPrecursorDeviation() {
-        return precursorDeviation;
-    }
-
-    public void setPrecursorDeviation(Deviation precursorDeviation) {
-        this.precursorDeviation = precursorDeviation;
-    }
 }
