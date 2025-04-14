@@ -109,11 +109,12 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> mergedReferenceSpectra;
 
         if (analogueSearchSettings.enabled) {
+            //spectra cache already contains the information about the selected databases.
             mergedReferenceSpectra = cache.getAllMergedSpectra(exp.getPrecursorIonType().getCharge());
         } else {
             mergedReferenceSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(
-                    precursorMz, exp.getPrecursorIonType().getCharge(), identitySearchSettings.getPrecursorDeviation(),
-                    exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs
+                    precursorMz, exp.getPrecursorIonType().getCharge(),
+                    identitySearchSettings.getPrecursorDeviation(), cache.getSelectedDbs()
             );
         }
 
