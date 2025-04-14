@@ -745,7 +745,6 @@ public class SiriusProjectSpaceInstance implements Instance {
                 }));
     }
 
-
     @Override
     public void saveSpectraSearchResult(@Nullable List<SpectralSearchResult.SearchResult> results) {
         throw new UnsupportedOperationException("Not supported yet.");
