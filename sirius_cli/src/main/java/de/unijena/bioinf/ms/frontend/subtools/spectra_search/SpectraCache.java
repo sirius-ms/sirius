@@ -5,6 +5,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -32,9 +33,11 @@ public class SpectraCache {
         if (mergedSpectra == null) {
             synchronized (this) {
                 if (mergedSpectra == null){
+                    StopWatch w = StopWatch.createStarted();
                     Pair<Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>, Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>> tmppair =
                             chemDB.getAllMergedSpectra(selectedDbs);
                     mergedSpectra = Pair.of(Collections.unmodifiableMap(tmppair.left()), Collections.unmodifiableMap(tmppair.right()));
+                    System.out.println("Loading DB took: " + w);
                 }
             }
         }
