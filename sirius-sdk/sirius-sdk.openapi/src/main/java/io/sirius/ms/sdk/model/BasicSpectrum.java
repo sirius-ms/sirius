@@ -47,6 +47,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_INSTRUMENT,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
+  BasicSpectrum.JSON_PROPERTY_COSINE_QUERY,
+  BasicSpectrum.JSON_PROPERTY_PRECURSOR_PEAK,
   BasicSpectrum.JSON_PROPERTY_PEAKS,
   BasicSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR,
   BasicSpectrum.JSON_PROPERTY_MAX_NORM_FACTOR,
@@ -73,6 +75,12 @@ public class BasicSpectrum {
 
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
   private Integer scanNumber;
+
+  public static final String JSON_PROPERTY_COSINE_QUERY = "cosineQuery";
+  private Boolean cosineQuery = false;
+
+  public static final String JSON_PROPERTY_PRECURSOR_PEAK = "precursorPeak";
+  private SimplePeak precursorPeak;
 
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<SimplePeak> peaks = new ArrayList<>();
@@ -243,6 +251,56 @@ public class BasicSpectrum {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setScanNumber(Integer scanNumber) {
     this.scanNumber = scanNumber;
+  }
+
+  public BasicSpectrum cosineQuery(Boolean cosineQuery) {
+    
+    this.cosineQuery = cosineQuery;
+    return this;
+  }
+
+   /**
+   * True if spectrum is in cosine query normalized format.  Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
+   * @return cosineQuery
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isCosineQuery() {
+    return cosineQuery;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setCosineQuery(Boolean cosineQuery) {
+    this.cosineQuery = cosineQuery;
+  }
+
+  public BasicSpectrum precursorPeak(SimplePeak precursorPeak) {
+    
+    this.precursorPeak = precursorPeak;
+    return this;
+  }
+
+   /**
+   * Get precursorPeak
+   * @return precursorPeak
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SimplePeak getPrecursorPeak() {
+    return precursorPeak;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPrecursorPeak(SimplePeak precursorPeak) {
+    this.precursorPeak = precursorPeak;
   }
 
   public BasicSpectrum peaks(List<SimplePeak> peaks) {
@@ -420,6 +478,8 @@ public class BasicSpectrum {
         Objects.equals(this.instrument, basicSpectrum.instrument) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
+        Objects.equals(this.cosineQuery, basicSpectrum.cosineQuery) &&
+        Objects.equals(this.precursorPeak, basicSpectrum.precursorPeak) &&
         Objects.equals(this.peaks, basicSpectrum.peaks) &&
         Objects.equals(this.absIntensityFactor, basicSpectrum.absIntensityFactor) &&
         Objects.equals(this.maxNormFactor, basicSpectrum.maxNormFactor) &&
@@ -430,7 +490,7 @@ public class BasicSpectrum {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, peaks, absIntensityFactor, maxNormFactor, sumNormFactor, l2NormFactor, firstPeakNormFactor);
+    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, cosineQuery, precursorPeak, peaks, absIntensityFactor, maxNormFactor, sumNormFactor, l2NormFactor, firstPeakNormFactor);
   }
 
   @Override
@@ -443,6 +503,8 @@ public class BasicSpectrum {
     sb.append("    instrument: ").append(toIndentedString(instrument)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
+    sb.append("    cosineQuery: ").append(toIndentedString(cosineQuery)).append("\n");
+    sb.append("    precursorPeak: ").append(toIndentedString(precursorPeak)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
     sb.append("    absIntensityFactor: ").append(toIndentedString(absIntensityFactor)).append("\n");
     sb.append("    maxNormFactor: ").append(toIndentedString(maxNormFactor)).append("\n");
