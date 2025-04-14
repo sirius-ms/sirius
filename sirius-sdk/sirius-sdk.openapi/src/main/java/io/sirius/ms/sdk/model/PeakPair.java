@@ -61,9 +61,9 @@ public class PeakPair {
    * Get queryPeak
    * @return queryPeak
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getQueryPeak() {
     return queryPeak;
@@ -71,7 +71,7 @@ public class PeakPair {
 
 
   @JsonProperty(JSON_PROPERTY_QUERY_PEAK)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setQueryPeak(Integer queryPeak) {
     this.queryPeak = queryPeak;
   }
@@ -86,9 +86,9 @@ public class PeakPair {
    * Get referencePeak
    * @return referencePeak
   **/
-  @jakarta.annotation.Nullable
+  @jakarta.annotation.Nonnull
   @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
   public Integer getReferencePeak() {
     return referencePeak;
@@ -96,7 +96,7 @@ public class PeakPair {
 
 
   @JsonProperty(JSON_PROPERTY_REFERENCE_PEAK)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
   public void setReferencePeak(Integer referencePeak) {
     this.referencePeak = referencePeak;
   }

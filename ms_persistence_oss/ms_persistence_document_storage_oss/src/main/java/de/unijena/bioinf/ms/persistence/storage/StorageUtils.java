@@ -66,6 +66,7 @@ public class StorageUtils {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
         exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()).stream().map(MergedMSnSpectrum::toMs2Spectrum).toList() : List.of());
+        exp.setMergedMs2Spectrum(spectra.getMergedMSnSpectrum() != null ? spectra.getMergedMSnSpectrum() : null);
         exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
                 .filter(Objects::nonNull).collect(Collectors.toList()));
         exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
@@ -123,7 +124,7 @@ public class StorageUtils {
                 exp.removeAnnotation(Smiles.class);
                 tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
             }
-            builder.mergedMSnSpectrum(Spectrums.from(tmpSpec));
+            builder.mergedMSnSpectrum(exp.getMergedMs2Spectrum() == null ? Spectrums.from(tmpSpec) : exp.getMergedMs2Spectrum());
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
 
