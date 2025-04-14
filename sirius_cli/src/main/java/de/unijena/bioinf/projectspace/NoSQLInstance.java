@@ -423,8 +423,8 @@ public class NoSQLInstance implements Instance {
 
     @SneakyThrows
     @Override
-    public void saveSpectraSearchResult(@Nullable SpectralSearchResult result) {
-        List<SpectraMatch> matches = result == null ? List.of() : result.getResults().stream()
+    public void saveSpectraSearchResult(@Nullable List<SpectralSearchResult.SearchResult> results) {
+        List<SpectraMatch> matches = results == null ? List.of() : results.stream()
                 .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
                 .collect(Collectors.toList());
 

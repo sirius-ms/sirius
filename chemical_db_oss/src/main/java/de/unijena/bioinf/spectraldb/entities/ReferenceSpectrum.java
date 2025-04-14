@@ -6,6 +6,8 @@ import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 
 public interface ReferenceSpectrum {
 
+    long getUuid();
+
     ReferenceLibrarySpectrum getQuerySpectrum();
 
     String getLibraryName();

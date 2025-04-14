@@ -41,6 +41,7 @@ import org.openscience.cdk.interfaces.IBond;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 //todo this whole class is duplicated code with Spectrums class in the middleware.
@@ -276,7 +277,7 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
             }
 
             if (isMergedM2) {
-                boolean found = findCorrectPeakInMergedMs2Spectrum(tree, f, spectrum, peak, annotatedFormulas, dev, precursorMz);
+                boolean found = findCorrectPeakMs2Spectrum(tree, f, spectrum, peak, annotatedFormulas, dev, precursorMz, this::logDebug);
                 if (!found) {
                     if (f == tree.getRoot()) {
                         logWarn("Root fragment '{}' of the fragmentation tree could not be assigned to a peak in the merged MS2 spectrum.", f.getFormula());
@@ -296,6 +297,9 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         return annotatedFormulas;
     }
 
+    /**
+     * Annotates peaks of a spectrum that was used to compute the tree based on exact mass matches against peak masses stored in the trees fragments.
+     */
     public static boolean findCorrectPeakInInputFragmentationSpectrum(Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, InterruptionCheck interruptionCheck) throws InterruptedException {
         //the FTree store spectrum indices for the original peaks. However, at this stage I rather don't want to make assumptions on the order of the spectra in MSData. Hence, we check all original peaks (from different spectra).
         if (peak.isArtificial()){
@@ -319,7 +323,11 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
         return false;
     }
 
-    private boolean findCorrectPeakInMergedMs2Spectrum(FTree tree, Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, de.unijena.bioinf.ChemistryBase.ms.Deviation dev, Double precursorMz) {
+    /**
+     * Annotates peaks of a ms2 spectrum based on mass matches with a given mass deviation against peak masses trees fragments.
+     * allows to annotate peaks of spectra that are slightly different from the original spectra used to compute the tree
+     */
+    public static boolean findCorrectPeakMs2Spectrum(FTree tree, Fragment f, Spectrum<? extends Peak> spectrum, de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak peak, Fragment[] annotatedFormulas, de.unijena.bioinf.ChemistryBase.ms.Deviation dev, Double precursorMz, Consumer<String> logConsumer) {
         if (f == tree.getRoot()){
             //the precursor mass (MS1) may be used for the root fragment. First check, if there is some exact mz match. Else use most intense beak in proximity.
             int i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.binarySearch(spectrum, peak.getMass());
@@ -338,7 +346,7 @@ public class SpectrumAnnotationJJob extends BasicMasterJJob<AnnotatedMsMsData> {
                 i = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mostIntensivePeakWithin(spectrum, peak.getMass(), dev);
                 {
                     boolean isPrecursorFragment = precursorMz != null && dev.inErrorWindow(peak.getMass(), precursorMz);
-                    if (!isPrecursorFragment) logDebug("Fragment '{}' in the fragmentation tree does not correspond to an exactly matching m/z in the merged MS2 spectrum. And it is not the 'precursor' of an adduct ion type.", f.getFormula());
+                    if (!isPrecursorFragment) logConsumer.accept(String.format("Fragment '%s' in the fragmentation tree does not correspond to an exactly matching m/z in the merged MS2 spectrum. And it is not the 'precursor' of an adduct ion type.", f.getFormula()));
                 }
             }
             if (i >= 0) {

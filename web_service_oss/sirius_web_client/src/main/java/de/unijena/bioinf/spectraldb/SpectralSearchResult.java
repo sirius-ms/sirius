@@ -81,6 +81,10 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private SpectrumType spectrumType;
         private boolean analog; // true if analog query result
 
+        public boolean isIdentity(){
+            return !isAnalog();
+        }
+
         /**
          * This is the uuid of the corresponding reference spectrum
          */

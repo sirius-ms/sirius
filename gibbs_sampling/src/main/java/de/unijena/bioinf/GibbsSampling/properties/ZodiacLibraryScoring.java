@@ -26,6 +26,12 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
 
     /**
+     * Specifies whether adding library search based anchors is used or not.
+     */
+    @DefaultProperty public final boolean enabled;
+
+
+    /**
      * Lambda used in the scoring function of spectral library hits. The higher this value the higher are librar hits weighted in ZODIAC scoring.
      */
     @DefaultProperty public final double lambda; //1000
@@ -38,10 +44,12 @@ public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
     public ZodiacLibraryScoring() {
         lambda = Double.NaN;
         minCosine = Double.NaN;
+        enabled = true;
     }
 
-    public ZodiacLibraryScoring(double lambda, double minCosine) {
+    public ZodiacLibraryScoring(double lambda, double minCosine, boolean enabled) {
         this.lambda = lambda;
         this.minCosine = minCosine;
+        this.enabled = enabled;
     }
 }
