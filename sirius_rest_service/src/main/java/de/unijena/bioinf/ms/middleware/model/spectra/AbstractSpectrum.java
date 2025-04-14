@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -89,6 +90,27 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     @Getter
     @Setter
     protected Integer scanNumber = -1;
+
+    /**
+     * True if spectrum is in cosine query normalized format.
+     * Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "false")
+    @Getter @Setter
+    protected boolean cosineQuery;
+
+    /**
+     * A separate precursor peak field to either mark the precursor in the peaklist or
+     * provide the precursor peak separately from the spectrum in case the spectrum is in a preprocessed form where
+     * the precursor peak has been removed for library matching.
+     *
+     * NULL if the spectrum does not contain the precursor peak.
+     *
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Getter @Setter
+    protected SimplePeak precursorPeak;
+
 
     /**
      * The peaks of this spectrum which might contain additional annotations such as molecular formulas.

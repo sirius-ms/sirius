@@ -19,12 +19,13 @@
 |**splash** | **String** |  |  [optional] |
 |**molecularFormula** | **String** |  |  [optional] |
 |**adduct** | **String** |  |  [optional] |
-|**exactMass** | **String** |  |  [optional] |
+|**exactMass** | **Double** |  |  [optional] |
 |**smiles** | **String** |  |  [optional] |
-|**target** | **SpectrumType** |  |  [optional] |
 |**type** | **SpectralMatchType** |  |  [optional] |
 |**inchiKey** | **String** |  |  |
+|**referenceSpectrumType** | **SpectrumType** |  |  [optional] |
 |**referenceSpectrum** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |
+|**querySpectrumType** | **SpectrumType** |  |  [optional] |
 
 
 
