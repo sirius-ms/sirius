@@ -82,8 +82,6 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("AnalogueSearchSettings.minNumOfPeaks", value);
     }
 
-
-
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
@@ -102,7 +100,6 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
 
     @Override
     public InstanceJob.Factory<SpectraSearchSubtoolJob> call() throws Exception {
-        //todo we need a cleanup mechanism for the cache
         SpectraCache cache = new SpectraCache(
                 ApplicationCore.WEB_API.getChemDB(),
                 defaultConfigOptions.config.createInstanceWithDefaults(SpectralSearchDB.class).searchDBs
