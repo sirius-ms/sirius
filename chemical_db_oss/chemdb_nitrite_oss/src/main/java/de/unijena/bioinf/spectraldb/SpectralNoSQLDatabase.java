@@ -340,8 +340,9 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             if (mergedRefQuery.getIndividualSpectraUIDs().length <= 3 || spectralSimilarityUpperboundExceeded(Stream.concat(query.stream(), Stream.of(mergedQuery)).toList(), mergedRefQuery.getQuerySpectrum(), settings)) {
                 for (long uid : mergedRefQuery.getIndividualSpectraUIDs()) {
                     for (Ms2ReferenceSpectrum spec : withLibrary(storage.find(Filter.where("uuid").eq(uid), Ms2ReferenceSpectrum.class, "querySpectrum"))) {
-                        hits.addAll(getHits(query, spec, settings));
-                        if (mergedQuery != null)
+                        if (settings.containsQueryType(SpectrumType.SPECTRUM))
+                            hits.addAll(getHits(query, spec, settings));
+                        if (mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM))
                             getHits(List.of(mergedQuery), spec, settings).stream()
                                     .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
                     }
@@ -353,8 +354,9 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         if (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM)) {
             // search in merged library spectra
             fillLibrary(mergedRefQuery);
-            hits.addAll(getHits(query, mergedRefQuery, settings));
-            if (mergedQuery != null)
+            if (settings.containsQueryType(SpectrumType.SPECTRUM))
+                hits.addAll(getHits(query, mergedRefQuery, settings));
+            if (mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM))
                 getHits(List.of(mergedQuery), mergedRefQuery, settings).stream()
                         .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
         }

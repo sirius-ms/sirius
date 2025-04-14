@@ -158,9 +158,9 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                         analogueSearchSettings.getMaxNumOfHits() + identitySearchSettings.getMaxNumOfHits());
 
 
-                for (int k = 0; k < identitySearchSettings.getMaxNumOfHits() && k < identityHits.size(); ++k)
+                for (int k = 0; k < identitySearchSettings.getMaxNumOfHits() && k < identityHits.size(); k++)
                     rankedHits.add(new SpectralSearchResult.SearchResult(identityHits.get(k), k + 1));
-                for (int k = 0; k < analogueSearchSettings.getMaxNumOfHits() && k < analogHits.size(); ++k)
+                for (int k = 0; k < analogueSearchSettings.getMaxNumOfHits() && k < analogHits.size(); k++)
                     rankedHits.add(new SpectralSearchResult.SearchResult(analogHits.get(k), k + 1));
 
                 return rankedHits;
