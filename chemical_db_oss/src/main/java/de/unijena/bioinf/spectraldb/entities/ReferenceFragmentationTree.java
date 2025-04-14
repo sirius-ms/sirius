@@ -8,8 +8,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -63,7 +63,7 @@ public class ReferenceFragmentationTree {
         FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
         List<ReferenceFragment> orderedByMass = new ArrayList<>();
         Fragment root = tree.getRoot();
-        SimpleSpectrum peaks = new SimpleSpectrum(merged.getQuerySpectrum());
+        ReferenceLibraryMergedSpectrum querySpectrum = merged.getQuerySpectrum();
         for (Fragment f : tree.getFragments()) {
             ReferenceFragment g = new ReferenceFragment();
             g.setMz(ano!=null ? ano.get(f).getMass() : null);
@@ -74,7 +74,7 @@ public class ReferenceFragmentationTree {
             g.setIonType(PrecursorIonType.getPrecursorIonType(f.getIonization()));
             g.setNormalizedIntensity(g.getIntensity()!=null ? g.getIntensity() : 0);
             // find peak in merged spectrum
-            int index = Spectrums.mostIntensivePeakWithin(peaks, g.getMz()!=null ? g.getMz() : g.getIonType().neutralMassToPrecursorMass(g.getFormula().getMass()), dev);
+            int index = Spectrums.mostIntensivePeakWithin(querySpectrum, g.getMz()!=null ? g.getMz() : g.getIonType().neutralMassToPrecursorMass(g.getFormula().getMass()), dev);
             g.setPeakIndex(index);
             map.put(f,g);
             orderedByMass.add(g);

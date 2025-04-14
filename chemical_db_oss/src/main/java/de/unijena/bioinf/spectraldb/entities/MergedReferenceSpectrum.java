@@ -20,7 +20,7 @@ public class MergedReferenceSpectrum implements ReferenceSpectrum {
     private long uuid;
 
     /**
-     * The uids of spectra used to generate this merged spectra.
+     * The uuids of spectra used to generate this merged spectra.
      * We use an array here cause at the time the merged spectrum is generated it knows its child spectra.
      */
     private long[] individualSpectraUIDs;

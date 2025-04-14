@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.spectraldb.LibraryHit;
@@ -42,6 +43,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -103,6 +105,32 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+
+    @Override
+    public Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stream<MergedReferenceSpectrum> getMergedReferenceSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, boolean withSpectrum) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MergedReferenceSpectrum getMergedReferenceSpectrum(String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public ReferenceFragmentationTree getReferenceTree(long uuid) throws ChemicalDatabaseException {
         throw new UnsupportedOperationException();
     }
@@ -123,14 +151,14 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
-    public Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) {
+    public Iterable<Ms2ReferenceSpectrum> fetchSpectralData(Iterable<Ms2ReferenceSpectrum> references) {
         return StreamSupport.stream(references.spliterator(), false)
-                .peek(this::getSpectralData)
+                .peek(this::fetchSpectralData)
                 .toList(); //todo use single db request instead
     }
 
     @Override
-    public Ms2ReferenceSpectrum getSpectralData(Ms2ReferenceSpectrum reference) {
+    public Ms2ReferenceSpectrum fetchSpectralData(Ms2ReferenceSpectrum reference) {
         reference.setSpectrum(jdbi.withExtension(Dao.class, db -> db.findSpectrumByUUID(reference.getUuid())));
         return reference;
     }
