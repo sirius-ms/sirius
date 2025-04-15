@@ -70,7 +70,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
                         .splash(row[5])
                         .candidateInChiKey(row[6])
                         .smiles(row[7])
-                        .similarity(new SpectralSimilarity(Double.parseDouble(row[8]), Integer.parseInt(row[9]), null))
+                        .similarity(new SpectralSimilarity(Float.parseFloat(row[8]), Integer.parseInt(row[9]), null))
                         .exactMass(Double.parseDouble(row[10]))
                         .molecularFormula(MolecularFormula.parseOrThrow(row[11]))
                         .adduct(PrecursorIonType.fromString(row[12]))

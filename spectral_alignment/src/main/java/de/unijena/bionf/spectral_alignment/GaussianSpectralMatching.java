@@ -95,7 +95,7 @@ public class GaussianSpectralMatching extends AbstractSpectralMatching {
                 ++i;
             }
         }
-        return  new SpectralSimilarity(score, matchedPairs);
+        return  new SpectralSimilarity((float) score, matchedPairs);
     }
 
     protected double scorePeaks(Peak lp, Peak rp) {
