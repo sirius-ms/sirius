@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum SpectralMatchType {
   
-  COSINE("COSINE"),
+  IDENTITY("IDENTITY"),
   
   ANALOG("ANALOG");
 

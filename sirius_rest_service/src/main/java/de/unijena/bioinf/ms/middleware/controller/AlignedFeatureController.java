@@ -28,22 +28,22 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.*;
 import io.swagger.v3.oas.annotations.Hidden;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -60,6 +60,7 @@ import java.util.Optional;
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/aligned-features")
 @io.swagger.v3.oas.annotations.tags.Tag(name = "Features", description = "This feature based API allows access features (aligned over runs) and there Annotations of " +
@@ -84,37 +85,46 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Get all available features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     *
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeature> getAlignedFeaturesPaged(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, msDataAsCosineQuery, removeNone(optFields));
     }
 
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), removeNone(optFields))
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), msDataAsCosineQuery, removeNone(optFields))
                 .getContent();
     }
 
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
      *
-     * @param projectId        project-space to delete from.
+     * @param projectId project-space to delete from.
      */
     @PutMapping(value = "/delete")
     public void deleteAlignedFeatures(@PathVariable String projectId, @RequestBody List<String> alignedFeatureIds) {
@@ -153,14 +163,18 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeature(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, msDataAsCosineQuery, removeNone(optFields));
     }
 
     /**
@@ -265,11 +279,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Summarize matched reference spectra for the given 'alignedFeatureId'.
      * If a 'inchiKey' (2D) is provided, summarizes only contains matches for the database compound with the given InChI key.
      *
-     * @param projectId         project-space to read from.
-     * @param alignedFeatureId  feature (aligned over runs) the structure candidates belong to.
-     * @param minSharedPeaks    min threshold of shared peaks.
-     * @param minSimilarity     min spectral similarity threshold.
-     * @param inchiKey 2D inchi key of the compound in the structure database.
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks   min threshold of shared peaks.
+     * @param minSimilarity    min spectral similarity threshold.
+     * @param inchiKey         2D inchi key of the compound in the structure database.
      * @return Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/summary", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -317,16 +331,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         }
 
         if (matches != null && removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
-                    db -> {
-                        try {
-                            Ms2ReferenceSpectrum spec = chemDbService.db().getMs2ReferenceSpectrum(db, match.getUuid(), true);
-                            match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-                        } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
-                        }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
-            ));
+            matches.getContent().forEach(this::extractRefSpectraSneaky);
         return matches;
     }
 
@@ -354,7 +359,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId id of the library match to be returned.
+     * @param matchId          id of the library match to be returned.
      * @return Spectral library match with requested mathcId.
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -367,19 +372,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
 
         if (removeNone(optFields).contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
-                    db -> {
-                        try {
-                            ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
-                            if (spec.getQuerySpectrum() != null)
-                                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-
-
-                        } catch (ChemicalDatabaseException e) {
-                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: {}", match.getUuid(), e);
-                        }
-                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: {}", match.getDbName())
-            );
+            extractRefSpectraSneaky(match);
         return match;
     }
 
@@ -390,7 +383,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
-     * @param matchId id of the library match to be returned.
+     * @param matchId          id of the library match to be returned.
      * @return Spectral library match with requested mathcId.
      */
     @Operation(operationId = "getStructureAnnotatedSpectralLibraryMatchExperimental")
@@ -401,28 +394,23 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
                 .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
 
-        @NotNull
-        CustomDataSources.Source db = CustomDataSources.getSourceFromNameOpt(match.getDbName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
+        ReferenceSpectrum spec = extractRefSpectra(match);
 
-        ReferenceSpectrum spec;
-        try {
-            spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getTarget().asSpectrumType());
-            if (spec.getQuerySpectrum() != null)
-                match.setReferenceSpectrum(BasicSpectrum.from(spec, true));
-        } catch (ChemicalDatabaseException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find Spectrum: '%s' in database '%s'. %s", match.getUuid(), match.getDbName(), e.getMessage()));
-        }
-
-        if (match.getTarget() != SpectralLibraryMatch.TargetType.MERGED)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Loading annotation is currently only supported for MergedSpectra. But spectrum: '%s' in database '%s' is of type %s.", match.getUuid(), match.getDbName(), match.getTarget()));
-
-        try {
-            ReferenceFragmentationTree refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
-            return Spectrums.createReferenceMsMsWithAnnotations(spec.getQuerySpectrum(), refTree.asFTree(), spec.getSmiles());
-        } catch (ChemicalDatabaseException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));
-        }
+        return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
+            try {
+                ReferenceFragmentationTree refTree = null;
+                if (match.getReferenceSpectrumType() == SpectrumType.MERGED_SPECTRUM) {
+                    refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
+                } else {
+                    // todo this does needs more queries then necessary. We should maybe allow for direct tree retrieval.
+                    MergedReferenceSpectrum mergedSpec = chemDbService.db().getMergedReferenceSpectrum(db, spec.getCandidateInChiKey(), spec.getPrecursorIonType(), false);
+                    refTree = chemDbService.db().getReferenceTree(db, mergedSpec.getUuid());
+                }
+                return Spectrums.createReferenceMsMsWithAnnotations(spec, refTree.asFTree());
+            } catch (ChemicalDatabaseException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find ftree for spectrum: '%s' in database '%s'.", match.getUuid(), match.getDbName()));
+            }
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load ftree for Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
     }
 
 
@@ -430,13 +418,18 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
      *
      * @param projectId        project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belong sto.
+     * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
+     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                         peak assignments and reference spectra.
      * @return Mass Spec data of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/ms-data", produces = MediaType.APPLICATION_JSON_VALUE)
-    public MsData getMsData(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
+    public MsData getMsData(@PathVariable String projectId, @PathVariable String alignedFeatureId,
+                            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+    ) {
         MsData msData = projectsProvider.getProjectOrThrow(projectId)
-                .findAlignedFeaturesById(alignedFeatureId, AlignedFeature.OptField.msData).getMsData();
+                .findAlignedFeaturesById(alignedFeatureId, asCosineQuery, AlignedFeature.OptField.msData).getMsData();
         if (msData == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MsData for '" + idString(projectId, alignedFeatureId) + "' not found!");
         return msData;
@@ -446,35 +439,43 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * Page of FormulaResultContainers available for this feature with minimal information.
      * Can be enriched with an optional results overview.
      *
-     * @param projectId        project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param projectId           project-space to read from.
+     * @param alignedFeatureId    feature (aligned over runs) the formula result belongs to.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<FormulaCandidate> getFormulaCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
+                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, msDataAsCosineQuery, removeNone(optFields));
     }
 
     /**
      * List of FormulaResultContainers available for this feature with minimal information.
      * Can be enriched with an optional results overview.
      *
-     * @param projectId        project-space to read from.
-     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param projectId           project-space to read from.
+     * @param alignedFeatureId    feature (aligned over runs) the formula result belongs to.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<FormulaCandidate> getFormulaCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
-        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), msDataAsCosineQuery, optFields).stream().toList();
     }
 
     /**
@@ -484,17 +485,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return FormulaCandidate of this feature (aligned over runs) with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaCandidate getFormulaCandidate(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
 
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, removeNone(optFields));
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, msDataAsCosineQuery, removeNone(optFields));
     }
 
     /**
@@ -596,10 +601,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                                                            @PathVariable String alignedFeatureId,
                                                            @PathVariable String formulaId,
                                                            @PathVariable String inchiKey,
-                                                           @RequestParam(defaultValue = "-1") int spectrumIndex
+                                                           @RequestParam(defaultValue = "-1") int spectrumIndex,
+                                                           @RequestParam(defaultValue = "false") boolean asCosineQuery
     ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, formulaId, alignedFeatureId);
+                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, formulaId, alignedFeatureId, asCosineQuery);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -621,17 +627,22 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
+     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                         peak assignments and reference spectra.
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
      */
     @Operation(operationId = "getStructureAnnotatedMsDataExperimental")
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AnnotatedMsMsData getStructureAnnotatedMsData(@PathVariable String projectId,
-                                                         @PathVariable String alignedFeatureId,
-                                                         @PathVariable String formulaId,
-                                                         @PathVariable String inchiKey
+    public AnnotatedMsMsData getStructureAnnotatedMsData(
+            @PathVariable String projectId,
+            @PathVariable String alignedFeatureId,
+            @PathVariable String formulaId,
+            @PathVariable String inchiKey,
+            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByStructureId(inchiKey, formulaId, alignedFeatureId);
+                .findAnnotatedMsMsDataByStructureId(inchiKey, formulaId, alignedFeatureId, asCosineQuery);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -673,7 +684,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
     public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.fragmentationTree)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.fragmentationTree)
                 .getFragmentationTree();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "FragmentationTree for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -692,12 +703,15 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @return Fragmentation spectrum annotated with fragment formulas and losses.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(@PathVariable String projectId,
-                                                         @PathVariable String alignedFeatureId,
-                                                         @PathVariable String formulaId,
-                                                         @RequestParam(defaultValue = "-1") int spectrumIndex) {
+    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(
+            @PathVariable String projectId,
+            @PathVariable String alignedFeatureId,
+            @PathVariable String formulaId,
+            @RequestParam(defaultValue = "-1") int spectrumIndex,
+            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+    ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId);
+                .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId, asCosineQuery);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -716,15 +730,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
+     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                         peak assignments and reference spectra.
      * @return Fragmentation spectra annotated with fragment formulas and losses.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-msmsdata", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(@PathVariable String projectId,
-                                                         @PathVariable String alignedFeatureId,
-                                                         @PathVariable String formulaId
+    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(
+            @PathVariable String projectId,
+            @PathVariable String alignedFeatureId,
+            @PathVariable String formulaId,
+            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByFormulaId(formulaId, alignedFeatureId);
+                .findAnnotatedMsMsDataByFormulaId(formulaId, alignedFeatureId, asCosineQuery);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Data for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -747,7 +767,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public IsotopePatternAnnotation getIsotopePatternAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.isotopePattern)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.isotopePattern)
                 .getIsotopePatternAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -767,7 +787,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation", produces = MediaType.APPLICATION_JSON_VALUE)
     public LipidAnnotation getLipidAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         LipidAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.lipidAnnotation)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId,false, FormulaCandidate.OptField.lipidAnnotation)
                 .getLipidAnnotation();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Lipid annotation for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -787,7 +807,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fingerprint", produces = MediaType.APPLICATION_JSON_VALUE)
     public double[] getFingerprintPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         double[] res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.predictedFingerprint)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.predictedFingerprint)
                 .getPredictedFingerprint();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Fingerprint for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -805,7 +825,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/canopus-prediction", produces = MediaType.APPLICATION_JSON_VALUE)
     public CanopusPrediction getCanopusPrediction(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CanopusPrediction res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.canopusPredictions)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.canopusPredictions)
                 .getCanopusPrediction();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -825,7 +845,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/best-compound-classes", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompoundClasses getBestMatchingCompoundClasses(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         CompoundClasses res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.compoundClasses)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.compoundClasses)
                 .getCompoundClasses();
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
@@ -839,7 +859,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId      project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
@@ -862,16 +882,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature which quantity should be read out
-     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @param type             quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return Quant table row for this feature
      */
     @Operation(operationId = "getQuantTableRowExperimental")
     @GetMapping(value = "/{alignedFeatureId}/quant-table-row", produces = MediaType.APPLICATION_JSON_VALUE)
     public QuantTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeatureOrCompound(alignedFeatureId, type, QuantRowType.FEATURES);
-        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
+        if (quantificationForAlignedFeature.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
     }
 
@@ -884,20 +905,20 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to read from.
-     * @param type quantification type.
+     * @param type      quantification type.
      * @return Quant table if akk feature in this project
      */
     @GetMapping(value = "/quant-table", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(operationId = "getFeatureQuantTableExperimental")
     public QuantTable getQuantification(@PathVariable String projectId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantMeasure type) {
         Optional<QuantTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantification(type, QuantRowType.FEATURES);
-        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type );
+        if (quantificationForAlignedFeature.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + projectId + " and quantification type " + type);
         else return quantificationForAlignedFeature.get();
     }
 
 
     /**
-     *
      * [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId).
      * <p>
      * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention
@@ -910,16 +931,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId feature which intensities should be read out
-     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
+     * @param includeAll       when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return Traces of the given feature.
      */
     @Operation(operationId = "getTracesExperimental")
     @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll ) {
+    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId, includeAll);
-        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
+        if (traceSet.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId));
         else return traceSet.get();
     }
 
@@ -928,20 +950,21 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId project-space to read from.
+     * @param projectId        project-space to read from.
      * @param alignedFeatureId one feature that is considered the main feature of the adduct network
      */
     @Operation(operationId = "getAdductNetworkWithMergedTracesExperimental")
     @GetMapping(value = "/{alignedFeatureId}/adducts", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceSet getAdductNetworkWithMergedTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
         Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetsForFeatureWithCorrelatedIons(alignedFeatureId);
-        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
+        if (traceSet.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId));
         else return traceSet.get();
     }
 
     //region tags and groups
+
     /**
-     *
      * [EXPERIMENTAL] Get features (aligned over runs) by tag.
      *
      * <h2>Supported filter syntax</h2>
@@ -949,7 +972,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>The filter string must contain one or more clauses. A clause is prefíxed
      * by a field name.
      * </p>
-     *
+     * <p>
      * Currently the only searchable fields are names of tags ({@code tagName}) followed by a clause that is valued for the value type of the tag (See TagDefinition).
      * Tag name based field need to be prefixed with the namespace {@code tags.}.
      * Possible value types of tags are <strong>bool</strong>, <strong>integer</strong>, <strong>real</strong>, <strong>text</strong>, <strong>date</strong>, or <strong>time</strong> - tag value
@@ -972,13 +995,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * <p>The syntax allows to build complex filter queries such as:</p>
      *
      * <p>{@code tags.city:"new york" AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag<=3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag<2022-01-01 OR tags.time:12\:00\:00 OR tags.time:[12\:00\:00 TO 14\:00\:00] OR tags.time<10\:00\:00 }</p>
-     *
+     * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId    project space to get features (aligned over runs) from.
-     * @param filter       tag filter.
-     * @param pageable     pageable.
-     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project space to get features (aligned over runs) from.
+     * @param filter    tag filter.
+     * @param pageable  pageable.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
      */
     @Operation(operationId = "getAlignedFeaturesByTagExperimental")
@@ -1002,14 +1025,13 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
-     *
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.
      * <p>
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
-     * @param projectId  project-space to add to.
-     * @param alignedFeatureId      run to add tags to.
-     * @param tags       tags to add.
+     * @param projectId        project-space to add to.
+     * @param alignedFeatureId run to add tags to.
+     * @param tags             tags to add.
      * @return the tags that have been added
      */
     @Operation(operationId = "addTagsToAlignedFeatureExperimental")
@@ -1026,7 +1048,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId        project-space to delete from.
      * @param alignedFeatureId feature (aligned over runs) to delete tag from.
-     * @param tagName     name of the tag to delete.
+     * @param tagName          name of the tag to delete.
      */
     @Operation(operationId = "removeTagFromAlignedFeatureExperimental")
     @DeleteMapping(value = "/tags/{alignedFeatureId}/{tagName}")
@@ -1041,7 +1063,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      *
      * @param projectId project-space to delete from.
-     * @param groupName     tag group name.
+     * @param groupName tag group name.
      * @param pageable  pageable.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return tagged features (aligned over runs)
@@ -1067,6 +1089,32 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     protected static String idString(String pid, String fid, String foId) {
         return "'" + pid + "/" + fid + "/" + foId + "'";
     }
+
+
+    @NotNull
+    private ReferenceSpectrum extractRefSpectra(SpectralLibraryMatch match) throws ResponseStatusException {
+        return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
+            try {
+                ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getReferenceSpectrumType());
+                if (spec.getQuerySpectrum() != null)
+                    match.setReferenceSpectrum(Spectrums.createReferenceMsMs(spec));
+                return spec;
+            } catch (ChemicalDatabaseException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not find Spectrum: '%s' in database '%s'. %s", match.getUuid(), match.getDbName(), e.getMessage()));
+            }
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Could not load Spectrum: '%s'. Database '%s' does not exist!", match.getUuid(), match.getDbName())));
+    }
+
+    @Nullable
+    private ReferenceSpectrum extractRefSpectraSneaky(SpectralLibraryMatch match) {
+        try {
+            return extractRefSpectra(match);
+        } catch (ResponseStatusException e) {
+            log.error(e.getReason(), e);
+            return null;
+        }
+    }
+
     // endregion
 
 }
