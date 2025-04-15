@@ -870,6 +870,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Compound convertToApiCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
+                                          boolean msDataAsCosineQuery,
                                           @NotNull EnumSet<Compound.OptField> optFields,
                                           @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Compound.CompoundBuilder builder = Compound.builder()
@@ -897,7 +898,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         // features
         List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList -> featuresList.stream()
-                .map(f -> convertToApiFeature(f, mergedFeatureFields))).toList();
+                .map(f -> convertToApiFeature(f, msDataAsCosineQuery, mergedFeatureFields))).toList();
         builder.features(features);
 
         if (optFields.contains(Compound.OptField.consensusAnnotations))
@@ -1022,7 +1023,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeature convertToApiFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    private AlignedFeature convertToApiFeature(AlignedFeatures features, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(features.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
@@ -1059,7 +1060,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             project().fetchMsData(features);
-            features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
+            features.getMSData().map(msd -> MsData.of(msd, msDataAsCosineQuery)).ifPresent(builder::msData);
         }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
@@ -1241,18 +1242,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return cSum;
     }
 
-    private MsData convertMSData(MSData msData) {
-        MsData.MsDataBuilder builder = MsData.builder();
-        if (msData.getMergedMs1Spectrum() != null)
-            builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
-        if (msData.getMergedMSnSpectrum() != null)
-            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra().get(0).getMergedPrecursorMz()));
-
-        builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList() : List.of());
-        //MS1Spectra are not set since they are not stored in default MSData object.
-        return builder.build();
-    }
-
     private static final EnumSet<FormulaCandidate.OptField> needTree = EnumSet.of(
             FormulaCandidate.OptField.fragmentationTree, FormulaCandidate.OptField.annotatedSpectrum,
             FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation,
@@ -1260,11 +1249,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     );
 
     private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
-        return convertFormulaCandidate(null, candidate, EnumSet.noneOf(FormulaCandidate.OptField.class));
+        return convertFormulaCandidate(null, false, candidate, EnumSet.noneOf(FormulaCandidate.OptField.class));
     }
 
     @SneakyThrows
-    private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
+    private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, boolean msDataAsCosineQuery, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
                 .formulaId(String.valueOf(fid))
@@ -1296,7 +1285,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.lipidAnnotation(AnnotationUtils.asLipidAnnotation(ftree));
             if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
                 //todo this is not efficient an loads spectra a second time as well as the whole experiment. we need no change spectra annotation code to improve this.
-                builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId()));
+                builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId(), msDataAsCosineQuery));
             if (msData != null && optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
                 SimpleSpectrum isotopePattern = msData.getIsotopePattern();
                 if (isotopePattern != null) {
@@ -1327,6 +1316,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable,
+                                        boolean msDataAsCosineQuery,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream =
@@ -1336,7 +1326,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFeatureFields.contains(AlignedFeature.OptField.msData))
             stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
 
-        List<Compound> compounds = stream.map(c -> convertToApiCompound(c, optFields, optFeatureFields)).toList();
+        List<Compound> compounds = stream.map(c -> convertToApiCompound(c, msDataAsCosineQuery, optFields, optFeatureFields)).toList();
 
         long total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
@@ -1364,12 +1354,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
         project().importCompounds(dbc);
-        return dbc.stream().map(c -> convertToApiCompound(c, optFields, optFieldsFeatures)).toList();
+        return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
 
     @SneakyThrows
     @Override
-    public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    public Compound findCompoundById(String compoundId, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         long id = Long.parseLong(compoundId);
         return storage().getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                 .map(c -> {
@@ -1377,7 +1367,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
                         c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
                     }
-                    return convertToApiCompound(c, optFields, optFeatureFields);
+                    return convertToApiCompound(c, msDataAsCosineQuery, optFields, optFeatureFields);
                 })
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
@@ -1424,9 +1414,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         List<AlignedFeature> features = findPageStr(AlignedFeatures.class, pageable, this::sortFeature)
-                .map(alf -> convertToApiFeature(alf, optFields)).toList();
+                .map(alf -> convertToApiFeature(alf, msDataAsCosineQuery, optFields)).toList();
 
         long total = storage().countAll(AlignedFeatures.class);
 
@@ -1458,10 +1448,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         long id = Long.parseLong(alignedFeatureId);
         return storage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(a -> convertToApiFeature(a, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+                .map(a -> convertToApiFeature(a, msDataAsCosineQuery, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
@@ -2007,7 +1997,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
+    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
 
         //load ms data only once per formula candidate
@@ -2030,7 +2020,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
-        List<FormulaCandidate> candidates = stream.map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+        List<FormulaCandidate> candidates = stream.map(fc -> convertFormulaCandidate(msData, msDataAsCosineQuery, fc, optFields)).toList();
 
         long total = project().countByFeatureId(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
 
@@ -2039,7 +2029,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
+    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
 
@@ -2050,7 +2040,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .peek(fc -> {
                     if (fc.getAlignedFeatureId() != longAFId)
                         throw new ResponseStatusException(BAD_REQUEST, "Formula candidate exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
-                }).map(fc -> convertFormulaCandidate(msData, fc, optFields)).findFirst().orElse(null);
+                }).map(fc -> convertFormulaCandidate(msData, msDataAsCosineQuery, fc, optFields)).findFirst().orElse(null);
     }
 
     @Override
@@ -2191,16 +2181,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
-        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId, longAFId);
+        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId, longAFId, asCosineQuery);
     }
 
     @SneakyThrows
-    private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId) {
-        //todo we want to do this without ms2 experiment
-        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(alignedFeatureId)
+    private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId, boolean asCosineQuery) {
+        MSData msdata = storage().getByPrimaryKey(alignedFeatureId, MSData.class)
                 .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
 
         FTree ftree = project().findByFormulaIdStr(formulaId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
@@ -2211,21 +2200,31 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
-        if (specIndex < 0)
-            return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, smiles);
-        else
-            return Spectrums.createMsMsWithAnnotations(exp.getMs2Spectra().get(specIndex), ftree, smiles);
+        if (specIndex < 0) {
+            Spectrum<Peak> mergedSpec = msdata.getMergedMSnSpectrum();
+            if (mergedSpec == null)
+                throw new ResponseStatusException(NOT_FOUND, "Merged MS2 was requested (idx = -1) but does not exist!");
+
+            double precursorMz = msdata.getMsnSpectra().stream().mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz)
+                    .average().orElseThrow();
+
+            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, mergedSpec, ftree, smiles, asCosineQuery);
+        } else {
+            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles, asCosineQuery);
+        }
     }
 
     @SneakyThrows
     @Override
-    public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+    public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
 
-        //todo we want to do this without ms2 experiment
-        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(longAFId)
+        MSData msdata = storage().getByPrimaryKey(longAFId, MSData.class)
                 .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
+
+        if (msdata.getMsnSpectra() == null || msdata.getMsnSpectra().isEmpty())
+            throw new ResponseStatusException(BAD_REQUEST, "Could not find MS/MS spectra to annotate for feature with id: " + alignedFeatureId);
 
         FTree ftree = project().findByFormulaIdStr(longFId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
                 .orElse(null);
@@ -2235,7 +2234,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
-        return AnnotatedMsMsData.of(exp, ftree, smiles);
+        return AnnotatedMsMsData.of(msdata, ftree, smiles, asCosineQuery);
     }
 
     @SneakyThrows

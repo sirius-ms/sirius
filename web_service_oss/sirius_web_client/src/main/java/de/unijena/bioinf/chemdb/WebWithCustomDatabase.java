@@ -38,8 +38,7 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
-import lombok.Getter;
-import lombok.Setter;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,7 +131,9 @@ public class WebWithCustomDatabase {
 
         final OptionalLong requestFilterOpt = extractFilterBits(dbs);
         if (requestFilterOpt.isPresent()) {
-            api.consumeStructureDB(requestFilterOpt.getAsLong(), restCache, restDb -> candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType)));
+            api.consumeStructureDB(requestFilterOpt.getAsLong(), restCache, restDb -> {
+                candidates.addAll(restDb.lookupMolecularFormulas(ionMass, deviation, ionType));
+            });
         }
 
         for (CustomDatabase cdb : dbs.stream().filter(CustomDataSources.Source::isCustomSource).distinct().map(this::asCustomDB).toList()) {
@@ -196,7 +197,7 @@ public class WebWithCustomDatabase {
         return lookupSpectraStr(precursorMz, deviation, false, dbs);
     }
 
-    public Stream<Ms2ReferenceSpectrum> lookupSpectraStr(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) {
+    public Stream<Ms2ReferenceSpectrum> lookupSpectraStr(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
                 return StreamSupport.stream(speclib.lookupSpectra(precursorMz, deviation, withData).spliterator(), false);
@@ -206,16 +207,16 @@ public class WebWithCustomDatabase {
         });
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) {
+    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         //todo spectlib: add remote db support
         return lookupSpectraStr(precursorMz, deviation, withData, dbs).toList();
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, Collection<CustomDataSources.Source> dbs) {
+    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         return lookupSpectra(inchiKey2d, false, dbs);
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData, Collection<CustomDataSources.Source> dbs) {
+    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         //todo spectlib: add remote db support
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
@@ -227,11 +228,11 @@ public class WebWithCustomDatabase {
         }).toList();
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, Collection<CustomDataSources.Source> dbs) {
+    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         return lookupSpectra(formula, false, dbs);
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData, Collection<CustomDataSources.Source> dbs) {
+    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         //todo spectlib: add remote db support
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
@@ -243,7 +244,6 @@ public class WebWithCustomDatabase {
         }).toList();
     }
 
-
     public List<LibraryHit> queryAgainstLibraryWithPrecursorMass(List<ReferenceLibrarySpectrum> query, double precursorMass, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
@@ -254,6 +254,7 @@ public class WebWithCustomDatabase {
 
         }).toList();
     }
+
     public List<LibraryHit> queryAgainstLibrary(List<ReferenceLibrarySpectrum> query, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
@@ -269,6 +270,7 @@ public class WebWithCustomDatabase {
     public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
         return getMs2ReferenceSpectrum(db, uuid, false);
     }
+
     public ReferenceFragmentationTree getReferenceTree(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
         try {
             return asCustomDB(db).toSpectralLibraryOrThrow().getReferenceTree(uuid);
@@ -282,22 +284,54 @@ public class WebWithCustomDatabase {
         return spectralLibrary.getReferenceSpectrum(uuid, spectrumType);
     }
 
-    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
+    public MergedReferenceSpectrum getMergedReferenceSpectrum(CustomDataSources.Source db, String candidateInChiKey, PrecursorIonType precursorIonType, boolean withSpectrum) throws ChemicalDatabaseException {
+        SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
+        return spectralLibrary.getMergedReferenceSpectrum(candidateInChiKey, precursorIonType, withSpectrum);
+    }
+
+    public Ms2ReferenceSpectrum getMs2ReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withSpectrum) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
         Ms2ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid);
-        if (withData)
-            spectralLibrary.getSpectralData(spec);
+        if (withSpectrum)
+            spectralLibrary.fetchSpectralData(spec);
         return spec;
     }
-    public List<MergedReferenceSpectrum> getMergedSpectra(Collection<CustomDataSources.Source> db) {
-        final ArrayList<MergedReferenceSpectrum> spectra = new ArrayList<>();
-        extractReqCustomSpectraDBs(db).forEach(x-> {
-            try {
-                x.forEachMergedSpectrum(spectra::add);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+
+
+    /**
+     * Provides all MergedReferenceSpectrum (positive ion mode -> left, negative ion mode -> right) grouped by datasource
+     * @param dbs data sources to include
+     */
+    public Pair<Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>, Map<CustomDataSources.Source, List<MergedReferenceSpectrum>>> getAllMergedSpectra(Collection<CustomDataSources.Source> dbs) {
+        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectraPos = new HashMap<>();
+        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectraNeg = new HashMap<>();
+        dbs.stream().filter(CustomDataSources.Source::isCustomSource).forEach(db ->
+                asCustomDB(db).toSpectralLibrary().ifPresent(specLib -> {
+                    try {
+                        specLib.forEachMergedSpectrum(s -> {
+                            if (s.getPrecursorIonType().isPositive())
+                                spectraPos.computeIfAbsent(db, k -> new ArrayList<>()).add(s);
+                            else
+                                spectraNeg.computeIfAbsent(db, k -> new ArrayList<>()).add(s);
+                        });
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
+        return Pair.of(spectraPos, spectraNeg);
+    }
+
+    public Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> getMergedSpectra(double precursorMz, int chargeAndPolarity, Deviation precursorDeviation, Collection<CustomDataSources.Source> dbs) {
+        final Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> spectra = new HashMap<>();
+        dbs.stream().filter(CustomDataSources.Source::isCustomSource).forEach(db ->
+                asCustomDB(db).toSpectralLibrary().ifPresent(specLib -> {
+                    try {
+                        specLib.getMergedReferenceSpectra(precursorMz, chargeAndPolarity, precursorDeviation).
+                                forEach(s -> spectra.computeIfAbsent(db, k -> new ArrayList<>()).add(s));
+                    } catch (ChemicalDatabaseException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
         return spectra;
     }
 
@@ -320,17 +354,28 @@ public class WebWithCustomDatabase {
     }
 
     private List<SpectralLibrary> extractReqCustomSpectraDBs(Collection<CustomDataSources.Source> dbs) {
+        return extractReqCustomSpectraDBsStr(dbs).toList();
+    }
+
+    private Stream<SpectralLibrary> extractReqCustomSpectraDBsStr(Collection<CustomDataSources.Source> dbs) {
         return dbs.stream()
                 .filter(CustomDataSources.Source::isCustomSource)
                 .map(this::asCustomDB)
                 .map(CustomDatabase::toSpectralLibrary)
-                .flatMap(Optional::stream).toList();
+                .flatMap(Optional::stream);
     }
 
-    private CustomDatabase asCustomDB(CustomDataSources.Source db) {
+    public CustomDatabase asCustomDB(String dbName) {
+        CustomDataSources.Source source = CustomDataSources.getSourceFromName(dbName);
+        if (source == null)
+            throw new IllegalArgumentException("Requested DB not found!");
+        return asCustomDB(source);
+    }
+
+    public CustomDatabase asCustomDB(CustomDataSources.Source db) {
         if (db.noCustomSource())
             throw new IllegalArgumentException("Requested DB is not a custom DB!");
-        return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db);
+        return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, false, fp);
     }
 
 
@@ -381,7 +426,8 @@ public class WebWithCustomDatabase {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof FormulaKey that)) return false;
+            if (!(o instanceof FormulaKey)) return false;
+            FormulaKey that = (FormulaKey) o;
             return formula.equals(that.formula) &&
                     ionType.equals(that.ionType);
         }
@@ -457,10 +503,16 @@ public class WebWithCustomDatabase {
 
         final HashMap<String, Set<FingerprintCandidate>> customInChIs = new HashMap<>();
         final Set<FingerprintCandidate> restDbInChIs;
-        @Setter
-        @Getter
         private long requestFilter;
         final long restFilter;
+
+        public long getRequestFilter() {
+            return requestFilter;
+        }
+
+        public void setRequestFilter(long requestFilter) {
+            this.requestFilter = requestFilter;
+        }
 
         public void addToRequestFilter(long bitsToAdd) {
             setRequestFilter(requestFilter | bitsToAdd);
