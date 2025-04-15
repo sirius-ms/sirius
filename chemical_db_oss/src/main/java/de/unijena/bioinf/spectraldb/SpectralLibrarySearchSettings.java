@@ -40,7 +40,12 @@ public class SpectralLibrarySearchSettings {
     protected Deviation precursorDeviation;
 
     /**
-     * Type of spectrum
+     * Types of query spectra that shall be matched
+     */
+    protected Set<SpectrumType> queryTypes;
+
+    /**
+     * Types of target (reference) spectra that shall be matched
      */
     protected Set<SpectrumType> targetTypes;
 
@@ -60,6 +65,17 @@ public class SpectralLibrarySearchSettings {
             targetTypes.add(targetType);
     }
 
+    public boolean containsQueryType(SpectrumType queryType) {
+        return queryTypes != null && queryTypes.contains(queryType);
+    }
+
+    public void addQueryType(SpectrumType queryType) {
+        if (queryTypes == null)
+            queryTypes = EnumSet.of(queryType);
+        else
+            queryTypes.add(queryType);
+    }
+
     @Override
     public SpectralLibrarySearchSettings clone() {
         SpectralLibrarySearchSettings clone = new SpectralLibrarySearchSettings(
@@ -68,6 +84,7 @@ public class SpectralLibrarySearchSettings {
                 this.maxNumOfHits,
                 this.matchingType,
                 this.precursorDeviation != null ? new Deviation(this.precursorDeviation.getPpm()) : null,
+                new HashSet<>(this.queryTypes),
                 new HashSet<>(this.targetTypes)
         );
 
