@@ -73,7 +73,7 @@ public class SpectralLibraryMatch {
   private Integer rank;
 
   public static final String JSON_PROPERTY_SIMILARITY = "similarity";
-  private Double similarity;
+  private Float similarity;
 
   public static final String JSON_PROPERTY_SHARED_PEAKS = "sharedPeaks";
   private Integer sharedPeaks;
@@ -176,7 +176,7 @@ public class SpectralLibraryMatch {
     this.rank = rank;
   }
 
-  public SpectralLibraryMatch similarity(Double similarity) {
+  public SpectralLibraryMatch similarity(Float similarity) {
     
     this.similarity = similarity;
     return this;
@@ -190,14 +190,14 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public Double getSimilarity() {
+  public Float getSimilarity() {
     return similarity;
   }
 
 
   @JsonProperty(JSON_PROPERTY_SIMILARITY)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSimilarity(Double similarity) {
+  public void setSimilarity(Float similarity) {
     this.similarity = similarity;
   }
 

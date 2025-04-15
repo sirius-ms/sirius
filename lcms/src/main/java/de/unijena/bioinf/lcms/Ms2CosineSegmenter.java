@@ -432,7 +432,7 @@ public class Ms2CosineSegmenter {
 
         public SpectralSimilarity cosine(CosineQuery other) {
             SpectralSimilarity score = new IntensityWeightedSpectralAlignment(new Deviation(20)).score(spectrum, other.spectrum);
-            return new SpectralSimilarity(score.similarity / Math.sqrt(selfNorm*other.selfNorm), score.getSharedPeakPairs());
+            return new SpectralSimilarity((float)(score.similarity / Math.sqrt(selfNorm*other.selfNorm)), score.getSharedPeakPairs());
         }
     }
 

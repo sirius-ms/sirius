@@ -10584,7 +10584,7 @@
           "similarity": {
             "type": "number",
             "description": "Similarity between query and reference spectrum",
-            "format": "double"
+            "format": "float"
           },
           "sharedPeaks": {
             "type": "integer",

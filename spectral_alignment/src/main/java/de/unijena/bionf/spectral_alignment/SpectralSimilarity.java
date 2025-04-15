@@ -35,7 +35,7 @@ import java.util.Objects;
 @Builder
 @Jacksonized
 public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
-    public final double similarity;
+    public final float similarity;
     public final int sharedPeaks;
 
     /**
@@ -66,11 +66,11 @@ public class SpectralSimilarity implements Comparable<SpectralSimilarity> {
         this.sharedPeakPairs = IntLists.EMPTY_LIST;
     }
 
-    public SpectralSimilarity(double similarity, @Nullable IntList sharedPeakPairs) {
+    public SpectralSimilarity(float similarity, @Nullable IntList sharedPeakPairs) {
         this(similarity, sharedPeakPairs == null ? 0 : sharedPeakPairs.size() >> 1, sharedPeakPairs);
     }
 
-    public SpectralSimilarity(double similarity, int sharedPeaks, @Nullable IntList sharedPeakPairs) {
+    public SpectralSimilarity(float similarity, int sharedPeaks, @Nullable IntList sharedPeakPairs) {
         this.similarity = similarity;
         this.sharedPeaks = sharedPeaks;
         this.sharedPeakPairs = sharedPeakPairs;

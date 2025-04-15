@@ -35,8 +35,6 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
-import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -336,49 +334,58 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     public Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException {
         List<LibraryHit> hits = new ArrayList<>();
 
-        if (settings.containsTargetType(SpectrumType.SPECTRUM)) {
-            if (mergedRefQuery.getIndividualSpectraUIDs().length <= 3 || spectralSimilarityUpperboundExceeded(Stream.concat(query.stream(), Stream.of(mergedQuery)).toList(), mergedRefQuery.getQuerySpectrum(), settings)) {
+        boolean doMergedQuery = mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM);
+        List<ReferenceLibrarySpectrum> queriesToProcess = !settings.containsQueryType(SpectrumType.SPECTRUM) ? List.of() : query;
+
+
+        int singleQueries = settings.containsQueryType(SpectrumType.SPECTRUM) ? query.size() : 0;
+        int mergedQueries = doMergedQuery ? 1 : 0;
+
+        int numRefs = (settings.containsTargetType(SpectrumType.SPECTRUM) ? mergedRefQuery.getIndividualSpectraUIDs().length : 0 ) + (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM) ? 1 : 0);
+
+        // only perform upper bound computation if there is a change to save time with it.
+        if ((singleQueries + mergedQueries) * numRefs > 2 * singleQueries + mergedQueries) {
+            ReferenceLibrarySpectrum mergedRefUpperBoundQuery = mergedRefQuery.getQuerySpectrum().asUpperboundQuerySpectrum();
+            doMergedQuery = doMergedQuery && settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings));
+            queriesToProcess = queriesToProcess.stream().filter(q -> settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings))).toList();
+        }
+
+        //check if there is any query left to compute before retrieving ref spectra.
+        if (doMergedQuery || !queriesToProcess.isEmpty()) {
+            // only retrieve single ref spectra and compute cosine if they are a target
+            if (settings.containsTargetType(SpectrumType.SPECTRUM)) {
                 for (long uid : mergedRefQuery.getIndividualSpectraUIDs()) {
                     for (Ms2ReferenceSpectrum spec : withLibrary(storage.find(Filter.where("uuid").eq(uid), Ms2ReferenceSpectrum.class, "querySpectrum"))) {
-                        if (settings.containsQueryType(SpectrumType.SPECTRUM))
+                        if (!queriesToProcess.isEmpty()) // compute single query spectra if requested and above bound
                             hits.addAll(getHits(query, spec, settings));
-                        if (mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM))
+                        if (doMergedQuery) // compute merged query if provided, requested and above bound
                             getHits(List.of(mergedQuery), spec, settings).stream()
                                     .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
                     }
                 }
-
             }
-        }
 
-        if (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM)) {
-            // search in merged library spectra
-            fillLibrary(mergedRefQuery);
-            if (settings.containsQueryType(SpectrumType.SPECTRUM))
-                hits.addAll(getHits(query, mergedRefQuery, settings));
-            if (mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM))
-                getHits(List.of(mergedQuery), mergedRefQuery, settings).stream()
-                        .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
+            // only retrieve compute merged ref spectra if they are a target
+            if (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM)) {
+                // search in merged library spectra
+                fillLibrary(mergedRefQuery);
+                if (!queriesToProcess.isEmpty()) // compute single query spectra if requested and above bound
+                    hits.addAll(getHits(query, mergedRefQuery, settings));
+                if (doMergedQuery) // compute merged query if provided, requested and above bound
+                    getHits(List.of(mergedQuery), mergedRefQuery, settings).stream()
+                            .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
+            }
         }
 
         return hits.stream();
     }
 
-    private final static FastCosine fastCosine = new FastCosine();
     private SpectralSimilarity spectralSimilarity(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right, SpectralLibrarySearchSettings settings) {
-        if (settings.getMatchingType()== SpectralMatchingType.FAST_COSINE) return fastCosine.fastCosine(left,right);
-        else if (settings.getMatchingType()==SpectralMatchingType.MODIFIED_COSINE) return fastCosine.fastModifiedCosine(left,right);
+        if (settings.getMatchingType() == SpectralMatchingType.FAST_COSINE)
+            return getFastCosine().fastCosine(left, right);
+        else if (settings.getMatchingType() == SpectralMatchingType.MODIFIED_COSINE)
+            return getFastCosine().fastModifiedCosine(left, right);
         else throw new UnsupportedOperationException();
-    }
-
-    private boolean spectralSimilarityUpperboundExceeded(List<ReferenceLibrarySpectrum> left, ReferenceLibraryMergedSpectrum right, SpectralLibrarySearchSettings settings) {
-        ReferenceLibrarySpectrum rightUpperBoundQuery = right.asUpperboundQuerySpectrum();
-        for (ReferenceLibrarySpectrum l : left) {
-            if (settings.exceeded(spectralSimilarity(l, rightUpperBoundQuery, settings))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private List<LibraryHit> getHits(List<ReferenceLibrarySpectrum> left, Ms2ReferenceSpectrum right, SpectralLibrarySearchSettings settings) {

@@ -53,7 +53,7 @@ public class SpectralLibraryMatch {
      * Similarity between query and reference spectrum
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    public final Double similarity;
+    public final Float similarity;
 
     /**
      * Number of shared/matched peaks
