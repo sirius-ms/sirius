@@ -379,7 +379,7 @@ public class SiriusProjectDatabaseImplTest {
                         .candidateInChiKey("MYWUZJCMWCOHBA")
                         .dbName("SpecLib-9000")
                         .dbId("42")
-                        .similarity(SpectralSimilarity.builder().similarity(.9).sharedPeaks(23).build())
+                        .similarity(SpectralSimilarity.builder().similarity(.9f).sharedPeaks(23).build())
                         .smiles("C[C@@H](CC1=CC=CC=C1)NC")
                         .molecularFormula(MolecularFormula.parseOrThrow("C10H15N"))
                         .adduct(PrecursorIonType.fromString("[M+H]+"))
