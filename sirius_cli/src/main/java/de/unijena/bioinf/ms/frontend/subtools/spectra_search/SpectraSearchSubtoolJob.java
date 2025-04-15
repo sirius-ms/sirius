@@ -223,9 +223,8 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                             Math.max(settings.getMinSimilarity(), allHits.peek().getSimilarity().similarity));
                 }
             } else {
-                LibraryHit min = allHits.peek();
-                if (hit.compareTo(min) > 0){
-                    allHits.remove(min);
+                if (hit.compareTo(allHits.peek()) > 0){
+                    allHits.poll();
                     allHits.add(hit);
                     //increase bound
                     settings.setMinSimilarity(
