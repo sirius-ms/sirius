@@ -25,12 +25,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -89,50 +85,5 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
             peaks.add(new SimplePeak(masses[i], intensities[i]));
 
         absIntensityFactor = intFactor;
-    }
-
-    /**
-     *
-     * @param ref
-     * @param renormalize if true, the square root transformation that was applied on library spectra is removed
-     * @return
-     */
-    public static BasicSpectrum from(ReferenceSpectrum ref, boolean renormalize) {
-        Spectrum<Peak> s = ref.getQuerySpectrum();
-        if (renormalize) {
-            SimpleMutableSpectrum buf = new SimpleMutableSpectrum(s);
-            for (int j=0; j < buf.size(); ++j) {
-                buf.setIntensityAt(j, buf.getIntensityAt(j)*buf.getIntensityAt(j));
-            }
-        }
-        BasicSpectrum spec = new BasicSpectrum(s);
-        // basic information
-        spec.setMsLevel(2);
-        spec.setPrecursorMz(ref.getPrecursorMz());
-        // extended information
-        if (ref instanceof Ms2ReferenceSpectrum) {
-            Ms2ReferenceSpectrum ms2ref = (Ms2ReferenceSpectrum) ref;
-            spec.setName(ms2ref.getName());
-            if (ms2ref.getInstrumentation() != null) {
-                spec.setInstrument(ms2ref.getInstrumentation().description());
-            } else if (ms2ref.getInstrumentType() != null && ms2ref.getInstrument() != null
-                    && !ms2ref.getInstrumentType().isBlank() && !ms2ref.getInstrument().isBlank()) {
-                spec.setInstrument(ms2ref.getInstrumentType() + " (" + ms2ref.getInstrument() + ")");
-            } else if (ms2ref.getInstrumentType() != null && !ms2ref.getInstrumentType().isBlank()) {
-                spec.setInstrument(ms2ref.getInstrumentType());
-            } else if (ms2ref.getInstrument() != null && !ms2ref.getInstrument().isBlank()) {
-                spec.setInstrument(ms2ref.getInstrument());
-            }
-            if (ms2ref.getCollisionEnergy() != null) {
-                spec.setCollisionEnergy(ms2ref.getCollisionEnergy());
-            } else {
-                spec.setCollisionEnergyStr(ms2ref.getCe());
-            }
-            spec.setCollisionEnergy(ms2ref.getCollisionEnergy());;
-        } else if (ref instanceof MergedReferenceSpectrum) {
-            spec.setName("Merged spectrum");
-            spec.setCollisionEnergyStr("merged");
-        }
-        return spec;
     }
 }

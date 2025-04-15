@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -41,8 +40,6 @@ import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerN
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
@@ -50,19 +47,14 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
-import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectrumType;
-import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
-import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
-import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
-import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
@@ -104,9 +96,8 @@ public class ZodiacSubToolJob extends DataSetJob {
         //this is the zodiac input
         final Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = new HashMap<>(instances.size());
         //this is to know which zodiac result belongs to which instance
-        final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new HashMap<>(instances.size());
+        final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new LinkedHashMap<>(instances.size());
         //this is to identify which formula results belongs to the score
-        final FastCosine fastCosine = new FastCosine();
         int polarity = 0;
         final Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
         {
@@ -115,8 +106,8 @@ public class ZodiacSubToolJob extends DataSetJob {
                         .filter(fc -> fc.hasAnnotation(FTree.class)).toList();
                 if (!inputData.isEmpty()) {
                     Ms2Experiment exp = instance.getExperiment();
-                    final int charge = exp.getPrecursorIonType().getCharge()>0 ? 1 : -1;
-                    if (polarity==0) {
+                    final int charge = exp.getPrecursorIonType().getCharge() > 0 ? 1 : -1;
+                    if (polarity == 0) {
                         polarity = charge;
                     } else {
                         if (polarity != charge) {
@@ -131,151 +122,15 @@ public class ZodiacSubToolJob extends DataSetJob {
                 }
             }
         }
-        final int projectSpaceCharge = polarity;
-        final Deviation dev = new Deviation(10);
-        BasicMasterJJob<LibraryResults> libraryJob = submitSubJob(new BasicMasterJJob<LibraryResults>(JobType.CPU) {
-            @Override
-            protected LibraryResults compute() throws Exception {
-                //todo are these settings used?
-                final SpectralLibrarySearchSettings settings = SpectralLibrarySearchSettings.conservativeDefaultForModifiedCosine();
-                List<LibraryHit> anchors = new ArrayList<>();
-                settings.setTargetType(SpectrumType.MERGED_SPECTRUM);
-                settings.setMatchingType(SpectralMatchingType.MODIFIED_COSINE);
-                settings.setMinCosine(0.6f);
-                settings.setMinimumNumberOfPeaks(6);
 
-                List<CustomDataSources.Source> allSelectableDbs = CustomDataSources.getAllSelectableDbs();
-                List<MergedReferenceSpectrum> mergedSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(allSelectableDbs);
-                final HashMap<String, LongOpenHashSet> ids = new HashMap<>();
-                final List<BasicJJob<List<de.unijena.bioinf.spectraldb.LibraryHit>>> jobs = new ArrayList<>();
-                final List<Ms2Experiment> exps = new ArrayList<>();
-                for (Ms2Experiment exp : ms2ExperimentToInstance.keySet()) {
-                    jobs.add(submitSubJob(new BasicJJob<List<de.unijena.bioinf.spectraldb.LibraryHit>>() {
-                        @Override
-                        protected List<de.unijena.bioinf.spectraldb.LibraryHit> compute() throws Exception {
-                            final ReferenceLibrarySpectrum spec = fastCosine.prepareQuery(exp);
-                            // only trust analog matches if they have a high number of shared peaks
-                            final int analogMinNumberOfPeaks = Math.max(6, (int)Math.min(spec.size() * 0.33f, 12));
-                            // also do exact m/z search
-                            List<de.unijena.bioinf.spectraldb.LibraryHit> allHits = new ArrayList<>();
-                            // search through merged spectra
-                            for (MergedReferenceSpectrum db : mergedSpectra) {
-                                SpectralSimilarity sim = fastCosine.fastModifiedCosine(spec, db.getQuerySpectrum());
-                                if (sim.similarity>1) {
-                                    if (sim.similarity > 1.1) {
-                                        throw new RuntimeException("Cosine similarity above 1: " + sim);
-                                    } else { // due to rounding errors, the cosine similarity can be slightly above 1
-                                        sim = new SpectralSimilarity(1d, sim.getSharedPeakPairs());
-                                    }
-                                } else if (sim.similarity < 0) {
-                                    if (sim.similarity < -0.1) {
-                                        throw new RuntimeException("Cosine similarity below 0: " + sim); //todo either don't throw and return no hits. Or catch at some level so that only the one instace fails.
-                                    } else { // due to rounding errors, the cosine similarity can be slightly below 0
-                                        sim = new SpectralSimilarity(0d, sim.getSharedPeakPairs());
-                                    }
-                                }
+        Ms2Experiment settings = instances.getFirst().getExperiment();
 
-                                if (sim.sharedPeaks >= 6 && sim.similarity >= 0.6) {
-                                    final boolean analog = !dev.inErrorWindow(db.getPrecursorMz(), spec.getParentMass());
-                                    if (!analog || sim.sharedPeaks>=analogMinNumberOfPeaks) {
-                                        allHits.add(new de.unijena.bioinf.spectraldb.LibraryHit(0, sim, db, analog));
-                                    }
-                                }
-                            }
-                            // also add individual spectra
-                            allHits.addAll(ApplicationCore.WEB_API.getChemDB().queryAgainstLibraryWithPrecursorMass(
-                                fastCosine.prepareQueriesFromAllMsMs(exp), exp.getIonMass(), exp.getPrecursorIonType().getCharge(),
-                                    SpectralLibrarySearchSettings.conservativeDefaultForCosine(), allSelectableDbs
-                            ));
-                            // get best overall match
-                            allHits.sort(Comparator.comparingDouble(x->-x.getSimilarity().similarity));
-                            return allHits;
-                        }
-                    }));
-                    exps.add(exp);
-                }
-                int expWithMatch = 0;
-                for (int i=0; i < exps.size(); ++i) {
-                    List<de.unijena.bioinf.spectraldb.LibraryHit> hits = jobs.get(i).takeResult();
-                    if (hits==null || hits.isEmpty()) continue;
-                    ++expWithMatch;
-                    final de.unijena.bioinf.spectraldb.LibraryHit bestHit = hits.get(0);
-
-                    if (dev.inErrorWindow(exps.get(i).getIonMass(), bestHit.getExactMass())) {
-                        anchors.add(new LibraryHit(
-                                exps.get(i), bestHit.getMolecularFormula(), bestHit.getSmiles(), bestHit.getAdduct(), bestHit.getSimilarity().similarity, bestHit.getSimilarity().sharedPeaks,
-                                LibraryHitQuality.Gold, bestHit.getExactMass()
-                        ));
-                    } else {
-                        ids.computeIfAbsent(bestHit.getDbName(), x -> new LongOpenHashSet()).add(bestHit.getUuid());
-                    }
-                    // for analog search, we only store the top 10 in database
-                    int topKAnalog = 0;
-                    ListIterator<de.unijena.bioinf.spectraldb.LibraryHit> iter = hits.listIterator();
-                    while (iter.hasNext()) {
-                        if (iter.next().isAnalog()) {
-                            if (++topKAnalog>=10) iter.remove(); //todo this and other parameters above must be changeable. I would store more analogues.
-                        }
-                    }
-                    // store the top hits in database
-                    {
-                        Instance instance = ms2ExperimentToInstance.get(exps.get(i));
-                        List<SpectralSearchResult.SearchResult> rs = new ArrayList<>();
-                        for (int r=0; r < hits.size(); ++r) {
-                            rs.add(new SpectralSearchResult.SearchResult(hits.get(r), r+1));
-                        }
-                        instance.deleteSpectraSearchResult();
-                        instance.saveSpectraSearchResult(new SpectralSearchResult(
-                                fastCosine.getMaxDeviation(),
-                                fastCosine.getMaxDeviation(),
-                                SpectralMatchingType.MODIFIED_COSINE,
-                                rs
-                        ));
-                    }
-
-                    if (i % 50 == 0) {
-                        long idcount = ids.values().stream().mapToLong(x->x.size()).sum();
-                        System.out.println(i + " / " + exps.size()+ " compounds searched with " + expWithMatch + " having any match. " + idcount + " analogues and " + anchors.size() + " exact hits so far.");
-                    }
-                }
-
-                {
-                    WebWithCustomDatabase chemDB = ApplicationCore.WEB_API.getChemDB();
-                    List<FTree> trees = new ArrayList<>();
-                    for (Map.Entry<String, LongOpenHashSet> entry : ids.entrySet()) {
-                        CustomDataSources.Source source = CustomDataSources.getSourceFromName(entry.getKey());
-                        if (source==null) {
-                            System.err.println("Do not find " + entry.getKey());
-                        }
-                        for (long id : entry.getValue()) {
-                            trees.add(chemDB.getReferenceTree(source, id).asFTree());
-                        }
-                    }
-                    return new LibraryResults(trees, anchors);
-                }
-            }
-        });
-
-
-        Ms2Experiment settings = instances.get(0).getExperiment();
-        //TODO CHEEEEEECK REOMPUTE
-//        if (instances.stream().anyMatch(it -> isRecompute(it) || (treeToId.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
-//            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
-
-
-        // TODO: we might want to do that for SIRIUS
         checkForInterruption();
 
         updateProgress(Math.round(.02 * maxProgress), "Use caching of formulas.");
         final HashMap<MolecularFormula, MolecularFormula> formulaMap = new HashMap<>();
-        {
-
-            for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
-                trees.forEach(tree -> {
-                    cacheFormulasInTree(tree, formulaMap);
-                });
-            }
-        }
+        for (List<FTree> trees : ms2ExperimentToTreeCandidates.values())
+            trees.forEach(tree -> cacheFormulasInTree(tree, formulaMap));
 
         checkForInterruption();
 
@@ -314,7 +169,8 @@ public class ZodiacSubToolJob extends DataSetJob {
         updateProgress(Math.round(.04 * maxProgress));
 
 
-        if (instances.size() == 0) return;
+        if (instances.isEmpty())
+            return;
 
         checkForInterruption();
 
@@ -326,17 +182,68 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         logInfo("Cluster enabled? " + clusterEnabled.value);
 
+        // load library search results and use them
+        List<LibraryHit> anchors = new ArrayList<>();
+        final HashMap<String, LongOpenHashSet> ids = new HashMap<>();
+        AtomicInteger expWithMatch = new AtomicInteger(0);
+        AtomicInteger progress = new AtomicInteger(0);
 
-        LibraryResults libraryResults = libraryJob.takeResult();
+        ms2ExperimentToInstance.forEach((exp, instance) -> {
+            List<SpectralSearchResult.SearchResult> hits = instance.getSpectraMatches().stream()
+                    .filter(m -> m.getSpectrumType() == SpectrumType.MERGED_SPECTRUM)
+                    .sorted(Comparator.reverseOrder())
+                    .toList();
+
+            if (hits.isEmpty())
+                return;
+
+            expWithMatch.incrementAndGet();
+
+            // add the best identity hit as anchor.
+            if (exp.getAnnotationOrDefault(ZodiacLibraryScoring.class).enabled) {
+                hits.stream().filter(SpectralSearchResult.SearchResult::isIdentity).findFirst()
+                        .map(bestHit -> new LibraryHit(
+                                exp, bestHit.getMolecularFormula(), bestHit.getSmiles(), bestHit.getAdduct(), bestHit.getSimilarity().similarity, bestHit.getSimilarity().sharedPeaks,
+                                LibraryHitQuality.Gold, bestHit.getExactMass()))
+                        .ifPresent(anchors::add);
+            }
+
+            // add good analog hit as additional node
+            ZodiacAnalogueNodes analogueSettings = exp.getAnnotationOrDefault(ZodiacAnalogueNodes.class);
+            if (analogueSettings.enabled) {
+                hits.stream().filter(SpectralSearchResult.SearchResult::isAnalog).findFirst()
+                        .filter(bestHit -> bestHit.getSimilarity().similarity >= analogueSettings.minModifiedCosine && bestHit.getSimilarity().sharedPeaks >= analogueSettings.minSharedPeaks)
+                        .ifPresent(bestHit -> ids.computeIfAbsent(bestHit.getDbName(), x -> new LongOpenHashSet()).add(bestHit.getUuid()));
+            }
+
+            if (progress.incrementAndGet() % 50 == 0) {
+                long idcount = ids.values().stream().mapToLong(LongOpenHashSet::size).sum();
+                System.out.println(progress.get() + " / " + ms2ExperimentToInstance.size() + " compounds searched with " + expWithMatch + " having any match. " + idcount + " analogues and " + anchors.size() + " exact hits so far.");
+            }
+        });
+
+
+        WebWithCustomDatabase chemDB = ApplicationCore.WEB_API.getChemDB();
+        List<FTree> trees = new ArrayList<>();
+        for (Map.Entry<String, LongOpenHashSet> entry : ids.entrySet()) {
+            CustomDataSources.Source source = CustomDataSources.getSourceFromName(entry.getKey());
+            if (source == null) {
+                System.err.println("Do not find " + entry.getKey());
+            }
+            for (long id : entry.getValue()) {
+                trees.add(chemDB.getReferenceTree(source, id).asFTree());
+            }
+        }
+        LibraryResults libraryResults = new LibraryResults(trees, anchors);
+
         for (FTree t : libraryResults.nodes) {
-            cacheFormulasInTree(t,formulaMap);
+            cacheFormulasInTree(t, formulaMap);
         }
         formulaMap.clear(); // free memory
 
         //node scoring
         NodeScorer[] nodeScorers;
-        if (!libraryResults.anchors.isEmpty()) { //todo include library hits from SIRIUS spectral library search as anchors. Don't use a separate input file anymore
-            //todo implement option to set all anchors as good quality compounds
+        if (!libraryResults.anchors.isEmpty()) {
             logWarn("use " + libraryResults.anchors.size() + " library hits as anchors.");
             ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, Collections.emptySet())};
@@ -408,23 +315,11 @@ public class ZodiacSubToolJob extends DataSetJob {
             }
         });
 
-        //todo if this are non temporary fields, they have to be implemented as project-space entities
-        try { //ensure that summary does not crash job
-            if (cliOptions.summaryFile != null)
-                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
-        } catch (
-                Exception e) {
-            logError("Error when writing Deprecated ZodiacSummary", e);
-        }
-
-        try { //ensure that summary does not crash job
-            if (cliOptions.bestMFSimilarityGraphFile != null)
-                ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
-        } catch (
-                Exception e) {
-            logError("Error when writing ZODIAC graph", e);
-        }
+        // some internal summary writer that writes summaries from memory and does only work during computation time
+        // the information is gone after computation has been finished.
+        writeInofficialSummaries(scoreResults, clusterResults);
     }
+
 
     private static void cacheFormulasInTree(FTree tree, HashMap<MolecularFormula, MolecularFormula> formulaMap) {
         for (Fragment f : tree) {
@@ -504,18 +399,23 @@ public class ZodiacSubToolJob extends DataSetJob {
         return true;
     }
 
-//    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
-//        List<LibraryHit> anchors;
-//        Path libraryHitsFile = cliOptions.libraryHitsFile;
-//        try {
-//            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
-//        } catch (IOException e) {
-//            logError("Cannot load library hits from file.", e);
-//            return null;
-//        }
-//        return anchors;
-//    }
+    private void writeInofficialSummaries(Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults, ZodiacResultsWithClusters clusterResults) {
+        try { //ensure that summary does not crash job
+            if (cliOptions.summaryFile != null)
+                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+        } catch (
+                Exception e) {
+            logError("Error when writing Deprecated ZodiacSummary", e);
+        }
 
+        try { //ensure that summary does not crash job
+            if (cliOptions.bestMFSimilarityGraphFile != null)
+                ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
+        } catch (
+                Exception e) {
+            logError("Error when writing ZODIAC graph", e);
+        }
+    }
 
     @Override
     public String getToolName() {

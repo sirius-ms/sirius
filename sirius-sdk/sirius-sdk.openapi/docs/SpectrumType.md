@@ -7,7 +7,7 @@
 
 * `SPECTRUM` (value: `"SPECTRUM"`)
 
-* `MERGED` (value: `"MERGED"`)
+* `MERGED_SPECTRUM` (value: `"MERGED_SPECTRUM"`)
 
 
 

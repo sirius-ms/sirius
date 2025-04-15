@@ -82,7 +82,7 @@ public class GuiProjectManager implements Closeable {
 
         //todo can be parallelizec to import project opening performance
         List<InstanceBean> tmp = siriusClient.features()
-                .getAlignedFeatures(projectId, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                .getAlignedFeatures(projectId, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                 .stream().map(f -> new InstanceBean(f, this)).toList();
 
         this.innerList = new ArrayList<>(tmp.size());
@@ -252,7 +252,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     protected AlignedFeature getFeature(@NotNull String featureId, @NotNull List<AlignedFeatureOptField> optFields) {
-        return siriusClient.features().getAlignedFeature(projectId, featureId, optFields);
+        return siriusClient.features().getAlignedFeature(projectId, featureId, false, optFields);
     }
 
     public String getProjectId() {

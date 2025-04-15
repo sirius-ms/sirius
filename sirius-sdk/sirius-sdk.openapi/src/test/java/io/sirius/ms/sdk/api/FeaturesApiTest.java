@@ -68,7 +68,7 @@ public class FeaturesApiTest {
 
         // Verifying that fetching the deleted feature throws an exception
         WebClientResponseException exception = assertThrows(WebClientResponseException.class, () ->
-                instance.getAlignedFeature(projectId, alignedFeatureId, null));
+                instance.getAlignedFeature(projectId, alignedFeatureId, false, null));
 
         // Asserting that the exception is a 404 (not found)
         Assertions.assertEquals(404, exception.getStatusCode().value());
@@ -83,7 +83,7 @@ public class FeaturesApiTest {
                 AlignedFeatureOptField.MSDATA
         );
 
-        List<AlignedFeature> response = instance.getAlignedFeatures(projectId, featureOptFields);
+        List<AlignedFeature> response = instance.getAlignedFeatures(projectId, false, featureOptFields);
 
         assertNotNull(response);
         assertTrue(!response.isEmpty() && response.size() <= 2);
@@ -92,10 +92,10 @@ public class FeaturesApiTest {
     @Test
     public void testGetAlignedFeature() {
         String projectId = project.getProjectId();
-        List<AlignedFeature> features = instance.getAlignedFeatures(projectId, null);
+        List<AlignedFeature> features = instance.getAlignedFeatures(projectId, false, null);
         String alignedFeatureId = features.getFirst().getAlignedFeatureId();
 
-        AlignedFeature response = instance.getAlignedFeature(projectId, alignedFeatureId, null);
+        AlignedFeature response = instance.getAlignedFeature(projectId, alignedFeatureId, false, null);
 
         assertNotNull(response);
         Assertions.assertEquals("595969845215149616", response.getAlignedFeatureId());
@@ -104,11 +104,11 @@ public class FeaturesApiTest {
     @Test
     public void testGetFormulaCandidate() {
         String projectId = project.getProjectId();
-        List<AlignedFeature> features = instance.getAlignedFeatures(projectId, null);
+        List<AlignedFeature> features = instance.getAlignedFeatures(projectId, false, null);
         String alignedFeatureId = features.getFirst().getAlignedFeatureId();
         String formulaId = "595969889171455582";
 
-        FormulaCandidate response = instance.getFormulaCandidate(projectId, alignedFeatureId, formulaId, null);
+        FormulaCandidate response = instance.getFormulaCandidate(projectId, alignedFeatureId, formulaId, false, null);
 
         assertNotNull(response);
         Assertions.assertEquals(formulaId, response.getFormulaId());
@@ -119,7 +119,7 @@ public class FeaturesApiTest {
         String projectId = project.getProjectId();
         String alignedFeatureId = featureIdGet;
 
-        List<FormulaCandidate> response = instance.getFormulaCandidates(projectId, alignedFeatureId, null);
+        List<FormulaCandidate> response = instance.getFormulaCandidates(projectId, alignedFeatureId, false, null);
 
         assertNotNull(response);
         assertEquals(1, response.size());

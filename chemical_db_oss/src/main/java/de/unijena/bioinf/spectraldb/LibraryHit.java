@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,35 +39,32 @@ public class LibraryHit implements Comparable<LibraryHit> {
     private String smiles;
 
     public LibraryHit(int queryIndex, SpectralSimilarity similarity, Ms2ReferenceSpectrum spectrum, boolean analog) {
-        this.queryIndex = queryIndex;
-        this.similarity = similarity;
+        this(queryIndex, similarity, (ReferenceSpectrum) spectrum, analog);
+        // Ms2Reference Data
         this.spectrumType = SpectrumType.SPECTRUM;
-        this.analog = analog;
         this.dbId = spectrum.getLibraryId();
-        this.dbName = spectrum.getLibraryName();
-        this.uuid = spectrum.getUuid();
         this.splash = spectrum.getSplash();
-        this.molecularFormula = spectrum.getFormula();
-        this.adduct = spectrum.getPrecursorIonType();
-        this.exactMass = spectrum.getExactMass();
-        this.smiles = spectrum.getSmiles();
-        this.candidateInChiKey = spectrum.getCandidateInChiKey();
     }
 
     public LibraryHit(int queryIndex, SpectralSimilarity similarity, MergedReferenceSpectrum spectrum, boolean analog) {
-        this.queryIndex = queryIndex;
-        this.similarity = similarity;
+        this(queryIndex, similarity, (ReferenceSpectrum) spectrum, analog);
+        //Merged Spectrum data
         this.spectrumType = SpectrumType.MERGED_SPECTRUM;
         this.dbId = null;
-        this.dbName = spectrum.getLibraryName();
-        this.uuid = spectrum.getUuid();
         this.splash = null;
+    }
+
+    private LibraryHit(int queryIndex, SpectralSimilarity similarity, ReferenceSpectrum spectrum, boolean analog) {
+        this.queryIndex = queryIndex;
+        this.similarity = similarity;
+        this.uuid = spectrum.getUuid();
+        this.analog = analog;
+        this.dbName = spectrum.getLibraryName();
         this.molecularFormula = spectrum.getFormula();
         this.adduct = spectrum.getPrecursorIonType();
         this.exactMass = spectrum.getExactMass();
         this.smiles = spectrum.getSmiles();
         this.candidateInChiKey = spectrum.getCandidateInChiKey();
-        this.analog = analog;
     }
 
     /**

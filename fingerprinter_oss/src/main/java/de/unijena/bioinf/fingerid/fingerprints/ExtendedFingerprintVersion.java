@@ -68,6 +68,11 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
             return innerDatabase.lookupStructuresByFormula(formula);
         }
 
+        @Override
+        public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+            return innerDatabase.lookupStructuresByInChI(inchiKey2d);
+        }
+
         protected <T extends Collection<FingerprintCandidate>> T wrap(T orig, List<FingerprintCandidate> collection) throws ChemicalDatabaseException {
             for (FingerprintCandidate fc : collection) {
                 final TShortArrayList sc = new TShortArrayList(fc.getFingerprint().toIndizesArray());
@@ -92,8 +97,8 @@ public class ExtendedFingerprintVersion extends FingerprintVersion {
         }
 
         @Override
-        public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-            return innerDatabase.lookupManyInchisByInchiKeys(inchi_keys);
+        public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
+            return innerDatabase.lookupManyInchisByInchiKeys(inchiKeys2d);
         }
 
         @Override
