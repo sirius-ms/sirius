@@ -347,7 +347,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         if ((singleQueries + mergedQueries) * numRefs > 2 * singleQueries + mergedQueries) {
             ReferenceLibrarySpectrum mergedRefUpperBoundQuery = mergedRefQuery.getQuerySpectrum().asUpperboundQuerySpectrum();
             doMergedQuery = doMergedQuery && settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings));
-            queriesToProcess = queriesToProcess.stream().filter(q -> settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings))).toList();
+            queriesToProcess = queriesToProcess.stream().filter(q -> settings.exceeded(spectralSimilarity(q, mergedRefUpperBoundQuery, settings))).toList();
         }
 
         //check if there is any query left to compute before retrieving ref spectra.
