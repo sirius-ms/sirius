@@ -52,7 +52,7 @@ public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching
      */
     public SpectralSimilarity score1To1(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right) {
         if (left.isEmpty() || right.isEmpty())
-            return new SpectralSimilarity(0d, 0, IntLists.EMPTY_LIST);
+            return new SpectralSimilarity(0f, 0, IntLists.EMPTY_LIST);
         MatchesMatrix backtrace = new MatchesMatrix();
         double[] scoreRowBefore = new double[left.size()];
         double[] scoreRow = new double[left.size()];
@@ -142,7 +142,7 @@ public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching
         }
 
         IntList matchedPeaks = backtraceAndCountMatchedPeaks(left, right, backtrace, maxScorePos, (j == nr ? nr - 1 : j));
-        return new SpectralSimilarity(maxScore, matchedPeaks);
+        return new SpectralSimilarity((float) maxScore, matchedPeaks);
 
     }
 
