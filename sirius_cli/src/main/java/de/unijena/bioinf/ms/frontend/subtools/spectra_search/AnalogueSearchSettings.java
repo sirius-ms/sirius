@@ -19,8 +19,8 @@ public class AnalogueSearchSettings extends SpectralLibrarySearchSettings implem
     @Getter
     protected boolean enabled;
 
-    public AnalogueSearchSettings(boolean enabled, float minSimilarity, int minNumOfPeaks, int maxNumOfHits, SpectralMatchingType matchingType, Deviation precursorDeviation, Set<SpectrumType> targetTypes) {
-        super(minSimilarity, minNumOfPeaks, maxNumOfHits, matchingType, precursorDeviation, targetTypes);
+    public AnalogueSearchSettings(boolean enabled, float minSimilarity, int minNumOfPeaks, int maxNumOfHits, SpectralMatchingType matchingType, Deviation precursorDeviation, Set<SpectrumType> queryTypes, Set<SpectrumType> targetTypes) {
+        super(minSimilarity, minNumOfPeaks, maxNumOfHits, matchingType, precursorDeviation, queryTypes, targetTypes);
         this.enabled = enabled;
     }
 
@@ -32,8 +32,9 @@ public class AnalogueSearchSettings extends SpectralLibrarySearchSettings implem
             @DefaultProperty(propertyKey = "maxNumOfHits") int maxNumOfHits,
             @DefaultProperty(propertyKey = "matchingType") SpectralMatchingType matchingType,
             @DefaultProperty(propertyKey = "precursorDeviation") Deviation precursorDeviation,
+            @DefaultProperty(propertyKey = "queryTypes") Set<SpectrumType> queryTypes,
             @DefaultProperty(propertyKey = "targetTypes") Set<SpectrumType> targetTypes
     ) {
-        return new AnalogueSearchSettings(enabled, minSimilarity, minNumOfPeaks, maxNumOfHits, matchingType, precursorDeviation, targetTypes);
+        return new AnalogueSearchSettings(enabled, minSimilarity, minNumOfPeaks, maxNumOfHits, matchingType, precursorDeviation, queryTypes, targetTypes);
     }
 }
