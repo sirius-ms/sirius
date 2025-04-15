@@ -375,7 +375,7 @@ public class WebWithCustomDatabase {
     public CustomDatabase asCustomDB(CustomDataSources.Source db) {
         if (db.noCustomSource())
             throw new IllegalArgumentException("Requested DB is not a custom DB!");
-        return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, false, fp);
+        return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db);
     }
 
 
