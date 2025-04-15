@@ -25,11 +25,15 @@ import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Doctype>> extends CustomDatabase {
 
     protected final DB database;
@@ -48,7 +52,13 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
 
     @Override
     public void deleteDatabase() {
-        throw new UnsupportedOperationException("Please use CustomDatabases.delete()!");
+        String location = database.location();
+        try {
+            database.close();
+            Files.delete(Path.of(location));
+        } catch (IOException e) {
+            log.error("Error deleting database at {}. Please remove it manually.", location, e);
+        }
     }
 
     @Override
@@ -74,7 +84,7 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
         } else if (settingsDocs.size() > 1) {
             throw new IllegalArgumentException("Too many custom DB settings! Please reimport.");
         }
-        return Optional.of(settingsDocs.get(0));
+        return Optional.of(settingsDocs.getFirst());
     }
 
     @Override
@@ -88,12 +98,12 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     }
 
     @Override
-    public AbstractChemicalDatabase toChemDBOrThrow() throws IOException {
+    public AbstractChemicalDatabase toChemDBOrThrow() {
         return database;
     }
 
     @Override
-    public WriteableChemicalDatabase toWriteableChemDBOrThrow() throws IOException {
+    public WriteableChemicalDatabase toWriteableChemDBOrThrow() {
         return database;
     }
 
