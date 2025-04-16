@@ -129,7 +129,7 @@ public class FastCosine {
                 ++j;
             }
         }
-        return new SpectralSimilarity(similarity, matchedPeaks);
+        return new SpectralSimilarity((float) similarity, matchedPeaks);
     }
 
     public SpectralSimilarity fastReverseCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
@@ -158,7 +158,7 @@ public class FastCosine {
                 ++i;
             }
         }
-        return new SpectralSimilarity(similarity, matchedPeaks);
+        return new SpectralSimilarity((float) similarity, matchedPeaks);
     }
 
     public SpectralSimilarity fastModifiedCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
