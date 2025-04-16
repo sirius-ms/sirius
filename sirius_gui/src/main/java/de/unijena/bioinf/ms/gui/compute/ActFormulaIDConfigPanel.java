@@ -27,7 +27,7 @@ import java.awt.*;
 
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
-    public ActFormulaIDConfigPanel(SiriusGui gui, Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
-        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, owner, ecs, ms2, displayAdvancedParameters));
+    public ActFormulaIDConfigPanel(SiriusGui gui, Dialog owner, java.util.List<InstanceBean> ecs, GlobalConfigPanel globalConfigPanel, boolean ms2, boolean displayAdvancedParameters) {
+        super(gui, "SIRIUS", Icons.SIRIUS.derive(32,32), () -> new FormulaIDConfigPanel(gui, owner, ecs, globalConfigPanel, ms2, displayAdvancedParameters));
     }
 }

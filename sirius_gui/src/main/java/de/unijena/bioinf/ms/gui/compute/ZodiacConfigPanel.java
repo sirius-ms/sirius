@@ -32,7 +32,7 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
     private final JCheckBox twoStep;
 
     public ZodiacConfigPanel(boolean displayAdvancedParameters) {
-        super(ZodiacOptions.class, displayAdvancedParameters);
+        super(ZodiacOptions.class, displayAdvancedParameters, Layout.VERTICAL);
 
         candidatesAt300 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1);
         candidatesAt800 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1);
@@ -43,6 +43,7 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
         createPanel();
     }
     private void createPanel() {
+        //todo add library search parameters
 
         final TwoColumnPanel general = new TwoColumnPanel();
         general.addNamed("Considered candidates at 300m/z", candidatesAt300);
