@@ -295,14 +295,18 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             return db;
         }
 
-        private boolean removeDatabase(CdkFingerprintVersion version) throws IOException {
+        private boolean removeDatabase(CdkFingerprintVersion version) {
             String nameOrLocation = mode.removeParas.nameOrLocation;
             if (nameOrLocation == null || nameOrLocation.isBlank())
                 throw new IllegalArgumentException("Database location to remove not specified!");
 
             String location = nameOrLocationToLocation(nameOrLocation);
-            CustomDatabase db = CustomDatabases.open(location, version);
-            CustomDatabases.remove(db, mode.removeParas.delete);
+            try {
+                CustomDatabase db = CustomDatabases.open(location, version);
+                CustomDatabases.remove(db, mode.removeParas.delete);
+            } catch (Exception e) {
+                logWarn("\n==> Error opening database " + nameOrLocation + ":\n" + e.getMessage() + "\nIt will be removed from custom databases.");
+            }
             CustomDBPropertyUtils.removeDBbyLocation(location);
 
             return true;
