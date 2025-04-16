@@ -68,12 +68,16 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
         return pToStyle;
     }
 
-    public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
+    public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, int minimum, int maximum, int stepSize) {
         return makeParameterSpinner(parameterKey, Integer.parseInt(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().intValue()));
     }
 
     public JSpinner makeDoubleParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
         return makeParameterSpinner(parameterKey, Double.parseDouble(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().doubleValue()));
+    }
+
+    public JSpinner makeFloatParameterSpinner(@NotNull String parameterKey, float minimum, float maximum, float stepSize) {
+        return makeParameterSpinner(parameterKey, Double.parseDouble(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().floatValue()));
     }
 
     public JSpinner makeParameterSpinner(@NotNull String parameterKey, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {

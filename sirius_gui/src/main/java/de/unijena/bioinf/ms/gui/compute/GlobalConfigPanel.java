@@ -93,8 +93,6 @@ public class GlobalConfigPanel extends ConfigPanel {
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                     PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                     0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
             if (hasMs2) {
                 smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);

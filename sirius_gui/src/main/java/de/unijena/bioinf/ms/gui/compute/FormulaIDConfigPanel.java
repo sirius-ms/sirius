@@ -42,8 +42,7 @@ import java.util.Map;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class
-FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
+public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
 
@@ -150,14 +149,6 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     protected boolean isBatchDialog() {
         return ecs.size() != 1;
-    }
-
-    private void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
-        JLabel label = new JLabel(name);
-        panel.add(label, control);
-
-        addAdvancedComponent(label);
-        addAdvancedComponent(control);
     }
 
     public int getNumOfCandidates() {

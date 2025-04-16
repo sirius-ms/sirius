@@ -91,6 +91,7 @@ public class BatchComputeDialog extends JDialog {
 
     private GlobalConfigPanel globalConfigPanel;
     // tool configurations
+    private ActSpectraSearchConfigPanel spectraSearchConfigPanel; //Library search configs
     private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
     private ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
@@ -159,6 +160,10 @@ public class BatchComputeDialog extends JDialog {
                 // make subtool config panels
                 globalConfigPanel = new GlobalConfigPanel(gui, this, compoundsToProcess, ms2);
                 addConfigPanel("Global Configuration", globalConfigPanel);
+
+                spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel, ms2, isAdvancedView);
+                addConfigPanel("Spectral Library Search", spectraSearchConfigPanel);
+
                 formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, globalConfigPanel, ms2, isAdvancedView);
                 JPanel formulaRow = addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
@@ -500,11 +505,11 @@ public class BatchComputeDialog extends JDialog {
         sub.getConfigMap().putAll(preset.getConfigMap());
         sub.getConfigMap().putAll(getAllUIParameterBindings());
 
+        if (spectraSearchConfigPanel.isToolSelected()) {
+            sub.setSpectraSearchParams(new SpectralLibrarySearch().enabled(true));
+        }
+
         if (formulaIDConfigPanel.isToolSelected()) {
-            if (checkResult == null || isConnected(checkResult) || isWarningOnly(checkResult))
-                sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
-            else
-                log.warn("Do not perform spectral matching due to missing server connection.");
             sub.setFormulaIdParams(new Sirius().enabled(true));
         }
 
@@ -534,7 +539,7 @@ public class BatchComputeDialog extends JDialog {
      * @return a map of all parameter bindings from the UI elements
      */
     private Map<String, String> getAllUIParameterBindings() {
-        HashMap<String, String> bindings = Stream.of(globalConfigPanel, formulaIDConfigPanel.content, zodiacConfigs.content, fingerprintAndCanopusConfigPanel.content, csiSearchConfigs.content, msNovelistConfigs.content)
+        HashMap<String, String> bindings = Stream.of(globalConfigPanel, spectraSearchConfigPanel.content, formulaIDConfigPanel.content, zodiacConfigs.content, fingerprintAndCanopusConfigPanel.content, csiSearchConfigs.content, msNovelistConfigs.content)
                 .map(ConfigPanel::asConfigMap)
                 .collect(HashMap::new, HashMap::putAll, HashMap::putAll);
         bindings.put("RecomputeResults", Boolean.toString(recomputeBox.isSelected()));
@@ -623,6 +628,7 @@ public class BatchComputeDialog extends JDialog {
         toggle.addEventToggleSelected(selected -> {
             isAdvancedView = !isAdvancedView;
 
+            spectraSearchConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
             formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
             zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
         });
@@ -876,6 +882,9 @@ public class BatchComputeDialog extends JDialog {
                 configMap.putAll(preset.getConfigMap());
 
             globalConfigPanel.applyValuesFromPreset(configMap);
+
+            spectraSearchConfigPanel.applyValuesFromPreset(preset.getSpectraSearchParams() != null && Boolean.TRUE.equals(preset.getSpectraSearchParams().isEnabled()), configMap);
+
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 
