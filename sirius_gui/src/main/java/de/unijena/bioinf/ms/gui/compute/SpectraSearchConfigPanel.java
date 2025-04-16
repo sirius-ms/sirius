@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<SpectraSearchOptions> {
     private final SiriusGui gui;
-    private final GlobalConfigPanel globalConfigPanel;
+    final GlobalConfigPanel globalConfigPanel;
     private final boolean ms2;
 
 
