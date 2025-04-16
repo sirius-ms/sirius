@@ -204,8 +204,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     ? createNewDB(location, name, version)
                     : openExistingDB(location, version);
 
-            if (mode.importParas.input == null || mode.importParas.input.isEmpty())
+            if (mode.importParas.input == null || mode.importParas.input.isEmpty()) {
+                db.close();
                 return true;
+            }
 
             Map<Boolean, List<Path>> groups = mode.importParas.input.stream()
                     .flatMap(FileUtils::sneakyWalk)
@@ -265,6 +267,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 throw new RuntimeException(e);
             }
 
+            db.close();
             return true;
         }
 

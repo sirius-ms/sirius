@@ -62,6 +62,15 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     }
 
     @Override
+    public void close() {
+        try {
+            database.close();
+        } catch (IOException e) {
+            log.error("Error closing database at {}.", database.location(), e);
+        }
+    }
+
+    @Override
     public String storageLocation() {
         return database.location();
     }
