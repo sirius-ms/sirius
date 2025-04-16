@@ -29,7 +29,6 @@ import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -94,20 +93,17 @@ public class CustomDatabases {
         }
 
         CustomDatabase db;
-        Closeable storage;
         if (location.endsWith(CUSTOM_DB_SUFFIX)) {
             ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version);
             db = new NoSQLCustomDatabase<>(nitriteDb);
-            storage = nitriteDb;
         } else {
             CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
             db = new BlobCustomDatabase<>(blobDb, version);
-            storage = blobDb;
         }
         db.getSettings();
         String dbName = db.name();
         if (CustomDataSources.containsDB(dbName)) {
-            storage.close();
+            db.close();
             throw new RuntimeException("Datasource with name " + dbName + " already exists.");
         }
         CustomDataSources.addCustomSourceIfAbsent(db);
@@ -144,6 +140,7 @@ public class CustomDatabases {
     public static void remove(CustomDatabase db, boolean delete) {
         CUSTOM_DATABASES.remove(db.storageLocation());
         CustomDataSources.removeCustomSource(db.name());
+        db.close();
         if (delete) {
             db.deleteDatabase();
         }
