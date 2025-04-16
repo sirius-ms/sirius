@@ -89,6 +89,7 @@ public class BatchComputeDialog extends JDialog {
     private JCheckBox recomputeBox;
     private JButton showCommand;
 
+    private GlobalConfigPanel globalConfigPanel;
     // tool configurations
     private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
@@ -156,17 +157,19 @@ public class BatchComputeDialog extends JDialog {
             ms2 = compoundsToProcess.stream().anyMatch(InstanceBean::hasMsMs) || compoundsToProcess.isEmpty();  // Empty compounds if the dialog is opened to edit presets, ms2 UI should be active
             {
                 // make subtool config panels
-                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
-                addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
+                globalConfigPanel = new GlobalConfigPanel(gui, this, compoundsToProcess, ms2);
+                addConfigPanel("Global Configuration", globalConfigPanel);
+                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, globalConfigPanel, ms2, isAdvancedView);
+                JPanel formulaRow = addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
                 final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
 
                 zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView, compoundsToProcess.size());
                 fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-                csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
+                csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
                 msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
                 if (!isSingleCompound() && ms2) {
-                    addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
+                    addConfigPanelToRow("ZODIAC - Network-based molecular formula re-ranking", zodiacConfigs, formulaRow);
                     zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
                 }
 
@@ -531,8 +534,8 @@ public class BatchComputeDialog extends JDialog {
      * @return a map of all parameter bindings from the UI elements
      */
     private Map<String, String> getAllUIParameterBindings() {
-        HashMap<String, String> bindings = Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
-                .map(ActivatableConfigPanel::asConfigMap)
+        HashMap<String, String> bindings = Stream.of(globalConfigPanel, formulaIDConfigPanel.content, zodiacConfigs.content, fingerprintAndCanopusConfigPanel.content, csiSearchConfigs.content, msNovelistConfigs.content)
+                .map(ConfigPanel::asConfigMap)
                 .collect(HashMap::new, HashMap::putAll, HashMap::putAll);
         bindings.put("RecomputeResults", Boolean.toString(recomputeBox.isSelected()));
         return bindings;
@@ -555,7 +558,7 @@ public class BatchComputeDialog extends JDialog {
     }
 
     private boolean warnNoAdductSelected() {
-        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected() && !isAnyAdductSelected(formulaIDConfigPanel)) {
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected() && !isAnyAdductSelected()) {
             new WarningDialog(this, "Please select at least one adduct.");
             return true;
         } else {
@@ -563,8 +566,8 @@ public class BatchComputeDialog extends JDialog {
         }
     }
 
-    private boolean isAnyAdductSelected(ActFormulaIDConfigPanel configPanel) {
-        return !configPanel.getContent().getSelectedAdducts().isEmpty();
+    private boolean isAnyAdductSelected() {
+        return !globalConfigPanel.getSelectedAdducts().isEmpty();
     }
 
     private void updateConnectionBanner(ConnectionCheck checkResult) {
@@ -872,8 +875,7 @@ public class BatchComputeDialog extends JDialog {
             if (preset.getConfigMap() != null)
                 configMap.putAll(preset.getConfigMap());
 
-            csiSearchConfigs.getContent().getStructureSearchStrategy().removeDivergingDatabaseListener();
-
+            globalConfigPanel.applyValuesFromPreset(configMap);
             formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
             zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
 

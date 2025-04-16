@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,14 @@ public abstract class SubToolConfigPanelAdvancedParams<C> extends SubToolConfigP
     protected boolean displayAdvancedParameters;
     protected final List<Component> advancedParametersComponents;
 
-
     public SubToolConfigPanelAdvancedParams(Class<C> annotatedObject, boolean displayAdvancedParameters) {
         super(annotatedObject);
+        this.displayAdvancedParameters = displayAdvancedParameters;
+        advancedParametersComponents = new ArrayList<>();
+    }
+
+    public SubToolConfigPanelAdvancedParams(Class<C> annotatedObject, boolean displayAdvancedParameters, @NotNull Layout layout) {
+        super(annotatedObject, layout);
         this.displayAdvancedParameters = displayAdvancedParameters;
         advancedParametersComponents = new ArrayList<>();
     }
