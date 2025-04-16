@@ -205,7 +205,6 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     : openExistingDB(location, version);
 
             if (mode.importParas.input == null || mode.importParas.input.isEmpty()) {
-                db.close();
                 return true;
             }
 
@@ -260,14 +259,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             checkForInterruption();
             submitJob(dbjob).awaitResult();
             logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
-            System.out.println("-----------------------------------END");
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
 
-            db.close();
             return true;
         }
 

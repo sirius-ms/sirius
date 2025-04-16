@@ -169,7 +169,7 @@ public class ChemDbServiceImpl implements ChemDbService {
             CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version());
             CustomDBPropertyUtils.addDB(location.toAbsolutePath().toString(), databaseId);
             return SearchableDatabases.of(newDb);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when creating user database at: " + location, e);
         }
     }
