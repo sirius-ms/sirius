@@ -26,12 +26,14 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -55,7 +57,6 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
 
         pubChemFallback = new JCheckBox();
-        pubChemFallback.setSelected(true);
         pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
 
         parameterBindings.put("StructureSearchDB", () -> {
@@ -66,6 +67,18 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
                     .collect(Collectors.joining(","));
         });
 
+        // listen for pubchem selection to enable/disable pubchem as fallback option
+        searchDbSource.getSearchDBList().checkBoxList.addCheckBoxListener(e -> {
+            @SuppressWarnings("unchecked")
+            SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+            if (item.getDatabaseId().equals(DataSource.PUBCHEM.name())) {
+                pubChemFallback.setSelected(e.getStateChange() != ItemEvent.SELECTED);
+            }
+        });
+
+        pubChemFallback.setSelected(searchDbSource.getSearchDBList().checkBoxList.getCheckedItems().stream()
+                .map(SearchableDatabase::getDatabaseId)
+                .anyMatch(n -> n.equals(DataSource.PUBCHEM.name())));
 
         //confidence score approximate mode settings
         confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(

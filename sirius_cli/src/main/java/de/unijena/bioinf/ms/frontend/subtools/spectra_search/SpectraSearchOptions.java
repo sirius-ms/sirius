@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import picocli.CommandLine;
 
 import java.util.List;
