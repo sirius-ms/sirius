@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
+    enum Layout{HORIZONTAL, VERTICAL};
+
     protected final ParameterBinding parameterBindings;
 
     @Override
@@ -39,16 +41,28 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public ConfigPanel() {
-        this(new ParameterBinding());
+        this(Layout.HORIZONTAL);
+    }
+
+    public ConfigPanel(@NotNull Layout layout) {
+        this(new ParameterBinding(), layout);
     }
 
     public ConfigPanel(ParameterBinding parameterBindings) {
+        this(parameterBindings, Layout.HORIZONTAL);
+    }
+
+    public ConfigPanel(ParameterBinding parameterBindings, @NotNull Layout layout) {
         this.parameterBindings = parameterBindings;
-        applyDefaultLayout(this);
+        applyDefaultLayout(this, layout);
     }
 
     protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle) {
-        RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, GuiUtils.LARGE_GAP);
+        return applyDefaultLayout(pToStyle, Layout.HORIZONTAL);
+    }
+
+    protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle, @NotNull Layout layout) {
+        RelativeLayout rl = new RelativeLayout(layout.ordinal(), GuiUtils.LARGE_GAP);
         rl.setAlignment(RelativeLayout.LEADING);
         pToStyle.setLayout(rl);
         return pToStyle;
@@ -111,6 +125,7 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
 
     /**
      * Changes widget values to the values from the provided preset
+     *
      * @param preset config map with values for all parameters
      * @throws UnsupportedOperationException if the parameter values are not compatible with the UI or if this panel does not support setting values from a preset
      */
