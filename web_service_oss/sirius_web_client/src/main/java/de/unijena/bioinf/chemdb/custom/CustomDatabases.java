@@ -100,7 +100,11 @@ public class CustomDatabases {
             CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
             db = new BlobCustomDatabase<>(blobDb, version);
         }
-        db.getSettings();
+        try {
+            db.getSettings();
+        } finally {
+            db.close();
+        }
         String dbName = db.name();
         if (CustomDataSources.containsDB(dbName)) {
             db.close();
@@ -125,13 +129,16 @@ public class CustomDatabases {
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir);
             }
-            db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location), version));
+            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version);
+            db = new NoSQLCustomDatabase<>(storage);
+            db.writeSettings(config);
+            storage.getStorage().flush();
         } else {
             BlobStorage bs = BlobStorages.createDefault(PROPERTY_PREFIX, location);
             bs.setTags(Map.of(TAG_COMPRESSION, Compressible.Compression.GZIP.name()));
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
+            db.writeSettings(config);
         }
-        db.writeSettings(config);
         CustomDataSources.addCustomSourceIfAbsent(db);
         CUSTOM_DATABASES.put(location, db);
         return db;
