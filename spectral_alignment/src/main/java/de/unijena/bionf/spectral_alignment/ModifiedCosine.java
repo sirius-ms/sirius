@@ -287,7 +287,7 @@ public class ModifiedCosine extends AbstractSpectralMatching {
         private final double score;
 
         public SpectralSimilarity getSimilarity() {
-            return new SpectralSimilarity(score, assignment);
+            return new SpectralSimilarity((float) score, assignment);
         }
     }
 }

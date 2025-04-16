@@ -93,7 +93,7 @@ public class SpectralAlignmentTest {
         GaussianSpectralMatching gaussianAlignment = new GaussianSpectralMatching(new Deviation(10));
         SpectralSimilarity spectralSimilarity = gaussianAlignment.score(left, right);
 
-        assertEquals(49735.919716217, spectralSimilarity.similarity, 1e-9);
+        assertEquals(49735.919716217, spectralSimilarity.similarity, 0.01);
         assertEquals(3, spectralSimilarity.sharedPeaks);
     }
 
