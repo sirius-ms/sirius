@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<SpectraSearchOptions> {
-    private final SiriusGui gui;
     final GlobalConfigPanel globalConfigPanel;
     private final boolean ms2;
 
@@ -24,9 +23,8 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
     private JCheckBox enableAnalogSearch;
 
 
-    public SpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel, boolean ms2, boolean displayAdvancedParameters) {
-        super(SpectraSearchOptions.class, displayAdvancedParameters);
-        this.gui = gui;
+    public SpectraSearchConfigPanel(GlobalConfigPanel globalConfigPanel, boolean ms2) {
+        super(SpectraSearchOptions.class, false);
         this.globalConfigPanel = globalConfigPanel;
         this.ms2 = ms2;
 
@@ -35,7 +33,8 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
 
 
     private void createPanel() {
-        // todo add retention time matching search her if avalaiblabel
+        // todo add retention time matching search here if available
+        //todo disable if no ms2
 
         parameterBindings.put("SpectralSearchDB", () ->
                 globalConfigPanel.getSearchDBs().stream()

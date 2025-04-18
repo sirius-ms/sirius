@@ -62,18 +62,15 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
 
     private final GlobalConfigPanel computeConfigPanel;
 
-
-    protected final Dialog owner;
     protected final SiriusGui gui;
 
     protected boolean hasMs2;
 
 
-    public FormulaIDConfigPanel(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, GlobalConfigPanel computeConfigPanel, boolean ms2, boolean displayAdvancedParameters) {
-        super(SiriusOptions.class, displayAdvancedParameters);
+    public FormulaIDConfigPanel(SiriusGui gui, List<InstanceBean> ecs, GlobalConfigPanel computeConfigPanel, boolean ms2) {
+        super(SiriusOptions.class, false, Layout.VERTICAL);
         this.allInstances = gui.getMainFrame().getCompounds();
         this.ecs = ecs;
-        this.owner = owner;
         this.gui = gui;
         this.computeConfigPanel = computeConfigPanel;
         this.hasMs2 = ms2;
@@ -83,17 +80,13 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
 
     private void createPanel() {
 
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        final JPanel center = applyDefaultLayout(new JPanel());
-        add(center);
-
         parameterBindings.put("AdductSettings.prioritizeInputFileAdducts", () -> Boolean.toString(isBatchDialog()));
 
         // configure small stuff panel
         {
             final TwoColumnPanel smallParameters = new TwoColumnPanel();
             TextHeaderBoxPanel header = new TextHeaderBoxPanel("General", smallParameters);
-            center.add(header);
+            add(header);
             addAdvancedComponent(header);
 
             isotopeSettingsFilter = makeParameterCheckBox("IsotopeSettings.filter");
@@ -116,7 +109,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
 
 
 
-        formulaSearchStrategy = new FormulaSearchStrategy(gui, owner, ecs, hasMs2, isBatchDialog(), parameterBindings, computeConfigPanel);
+        formulaSearchStrategy = new FormulaSearchStrategy(gui, ecs, hasMs2, isBatchDialog(), parameterBindings, computeConfigPanel);
         add(formulaSearchStrategy);
         treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
         comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);

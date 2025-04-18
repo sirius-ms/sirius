@@ -32,8 +32,8 @@ public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPan
 
     private final int compoundsNumber;
 
-    public ActZodiacConfigPanel(SiriusGui gui, boolean displayAdvancedParameters, int compoundsNumber) {
-        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), () -> new ZodiacConfigPanel(displayAdvancedParameters));
+    public ActZodiacConfigPanel(SiriusGui gui, int compoundsNumber) {
+        super(gui, "ZODIAC", Icons.ZODIAC.derive(32,32), () -> new ZodiacConfigPanel());
         this.compoundsNumber = compoundsNumber;
     }
 

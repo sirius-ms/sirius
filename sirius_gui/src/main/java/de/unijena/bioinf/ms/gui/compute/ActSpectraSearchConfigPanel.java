@@ -29,8 +29,8 @@ import java.util.Map;
 
 public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraSearchConfigPanel> {
 
-    public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel, boolean ms2, boolean displayAdvancedParameters) {
-        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32,32), () -> new SpectraSearchConfigPanel(gui, globalConfigPanel, ms2, displayAdvancedParameters));
+    public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel, boolean ms2) {
+        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32,32), () -> new SpectraSearchConfigPanel(globalConfigPanel, ms2));
 
         globalConfigPanel.getSearchDBList().checkBoxList.addCheckBoxListener(e -> {
             @SuppressWarnings("unchecked")
@@ -38,16 +38,22 @@ public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraS
             if (item.isCustomDb()){
                 if (e.getStateChange() == ItemEvent.SELECTED && !activationButton.isSelected() ) {
                     activationButton.setSelected(true);
+                    setComponentsEnabled(activationButton.isSelected());
                 } else if (e.getStateChange() == ItemEvent.DESELECTED && activationButton.isSelected()) {
-                    if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb))
+                    if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
                         activationButton.setSelected(false);
+                        setComponentsEnabled(activationButton.isSelected());
+                    }
                 }
             }
         });
 
-        if (activationButton.isSelected())
-            if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb))
+        if (activationButton.isSelected()) {
+            if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
                 activationButton.setSelected(false);
+                setComponentsEnabled(activationButton.isSelected());
+            }
+        }
     }
 
     @Override
