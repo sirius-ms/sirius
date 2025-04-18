@@ -13,10 +13,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -92,7 +89,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     protected Strategy strategy;
 
-    protected final Dialog owner;
     protected final SiriusGui gui;
     protected final List<InstanceBean> ecs;
     protected final boolean isMs2;
@@ -119,9 +115,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final JComboBox<Strategy> strategyBox;
 
-    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
+    public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
-        this.owner = owner;
         this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
@@ -131,57 +126,51 @@ public class FormulaSearchStrategy extends ConfigPanel {
         //in single mode: does compound has MS1 data?
         this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && ecs.getFirst().hasMs1();
 
+
+
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
         strategyComponents.put(Strategy.BOTTOM_UP, new ArrayList<>());
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
         strategyComponents.put(Strategy.PROVIDED, new ArrayList<>());
-        strategyBox = isMs2 ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values()) : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO, Strategy.DATABASE, Strategy.PROVIDED});
+        strategyBox = isMs2
+                ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values())
+                : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO, Strategy.DATABASE, Strategy.PROVIDED});
 
-        this.setLayout(new BorderLayout());
         this.loadable = createLoadablePanel();
-        this.add(loadable, BorderLayout.CENTER);
+
+        setLayout(new BorderLayout());
+        add(loadable, BorderLayout.CENTER);
 
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
     }
 
 
+
     private LoadablePanel createLoadablePanel() {
-        final JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
 
-        final JPanel formulaSearchStrategySelection = new JPanel();
-        formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
-        formulaSearchStrategySelection.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
+        final Box content = Box.createVerticalBox();
 
-        content.add(formulaSearchStrategySelection);
+        content.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));
+        content.add(strategyBox);
         content.add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
-
-        JPanel strategyCardContainer = new JPanel();
-        strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.PAGE_AXIS));
 
         strategy = (Strategy) strategyBox.getSelectedItem();
 
+        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", globalConfigPanel.getSearchDBStrings()) : ",");
         JPanel defaultStrategyParameters = createDefaultStrategyParameters();
-        JPanel databaseStrategyParameters = createDatabaseStrategyParameters();
         JPanel providedStrategyParameters = createProvidedStrategyParameters();
 
         strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyParameters);
-        strategyComponents.get(Strategy.DATABASE).add(databaseStrategyParameters);
         strategyComponents.get(Strategy.PROVIDED).add(providedStrategyParameters);
 
-        strategyCardContainer.add(defaultStrategyParameters);
-        strategyCardContainer.add(databaseStrategyParameters);
-        strategyCardContainer.add(providedStrategyParameters);
+        content.add(defaultStrategyParameters);
+        content.add(providedStrategyParameters);
 
         elementFilterPanel = createElementFilterPanel();
-        strategyCardContainer.add(elementFilterPanel);
-
-        content.add(strategyCardContainer);
+        content.add(elementFilterPanel);
 
         hideAllStrategySpecific();
         showStrategySpecific(strategy, true);
@@ -192,7 +181,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             showStrategySpecific(strategy, true);
         });
 
-        return new LoadablePanel(content);
+        // titled container
+        return new LoadablePanel(TextHeaderPanel.wrap("Molecular formula generation", content));
     }
 
     private void showStrategySpecific(Strategy s, boolean show) {
@@ -204,10 +194,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private JPanel createDefaultStrategyParameters() {
-        JPanel parameterPanel = applyDefaultLayout(new JPanel());
-        ((RelativeLayout) parameterPanel.getLayout()).setBorderGap(0);
-        parameterPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-
         final TwoColumnPanel options = new TwoColumnPanel();
 
         denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
@@ -224,17 +210,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
-        parameterPanel.add(new TextHeaderBoxPanel("General", options));
-
-        return parameterPanel;
-    }
-
-    private JPanel createDatabaseStrategyParameters() {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
-
-        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", globalConfigPanel.getSearchDBStrings()) : ",");
-        return card;
+        return TextHeaderPanel.wrap("General", options);
     }
 
     private JPanel createProvidedStrategyParameters() {
@@ -261,13 +237,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
         card.add(buttonPanel);
 
         addFormulas.addActionListener(e -> {
-
             Box addFormulasDialogContents = Box.createVerticalBox();
             addFormulasDialogContents.add(new JLabel("Paste formulas separated by whitespace, commas or semicolons"));
             JTextArea textArea = new JTextArea(5, 20);
             addFormulasDialogContents.add(new JScrollPane(textArea));
-
-            if (JOptionPane.showConfirmDialog(this.owner, addFormulasDialogContents, "Add formulas", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            if (JOptionPane.showConfirmDialog(owner, addFormulasDialogContents, "Add formulas", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
                 String input = textArea.getText();
                 List<String> unparsed = new ArrayList<>();
                 for (String formula : input.split("[\\s,;]+")) {
@@ -281,7 +256,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
                     }
                 }
                 if (!unparsed.isEmpty()) {
-                    JOptionPane.showMessageDialog(this.owner, "Could not parse formulas:\n" + String.join("\n", unparsed), "", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(owner, "Could not parse formulas:\n" + String.join("\n", unparsed), "", JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -373,6 +348,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(elementFilterEnforcedTextBox.getText());
             Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(elementFilterDetectableElementsTextBox, allAutoDetectableElements) : null;
+            Window owner = SwingUtilities.getWindowAncestor(this);
             ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
             if (dialog.isSuccess()) {
                 elementFilterEnforcedTextBox.setText(dialog.getConstraints().toString(","));
@@ -399,10 +375,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         });
 
-        JPanel elementFilterPanel = applyDefaultLayout(new JPanel());
-        elementFilterPanel.add(new TextHeaderBoxPanel("Element Filter", filterFields));
-
-        return elementFilterPanel;
+        return TextHeaderPanel.wrap("Element Filter", filterFields);
     }
 
     @Nullable
@@ -507,6 +480,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             Set<PrecursorIonType> adducts = globalConfigPanel.getSelectedAdducts().getAdducts();
             experiment.setAnnotation(AdductSettings.class, AdductSettings.newInstance(adducts, Collections.emptySet(), adducts, false, true));
             ProcessedInput pi = pp.preprocess(experiment);
+            Window owner = SwingUtilities.getWindowAncestor(this);
 
             pi.getAnnotation(FormulaConstraints.class).
                     ifPresentOrElse(c -> formulaConstraintsTextBox.setText(c.toString(",")),

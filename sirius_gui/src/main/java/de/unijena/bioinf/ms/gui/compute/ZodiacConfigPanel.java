@@ -31,8 +31,8 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
     private final JSpinner candidatesAt300, candidatesAt800, edgeThreshold, minLocalConnections;
     private final JCheckBox twoStep;
 
-    public ZodiacConfigPanel(boolean displayAdvancedParameters) {
-        super(ZodiacOptions.class, displayAdvancedParameters, Layout.VERTICAL);
+    public ZodiacConfigPanel() {
+        super(ZodiacOptions.class, false, Layout.VERTICAL);
 
         candidatesAt300 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1);
         candidatesAt800 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1);

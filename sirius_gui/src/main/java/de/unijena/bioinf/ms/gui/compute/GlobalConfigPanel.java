@@ -64,16 +64,14 @@ public class GlobalConfigPanel extends ConfigPanel {
     protected final List<InstanceBean> allInstances;
     protected final List<InstanceBean> ecs;
 
-    protected final Dialog owner;
     protected final SiriusGui gui;
 
     protected boolean hasMs2;
 
-    public GlobalConfigPanel(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean ms2) {
+    public GlobalConfigPanel(SiriusGui gui,List<InstanceBean> ecs, boolean ms2) {
         super();
         this.allInstances = gui.getMainFrame().getCompounds();
         this.ecs = ecs;
-        this.owner = owner;
         this.gui = gui;
         this.hasMs2 = ms2;
 
@@ -85,7 +83,6 @@ public class GlobalConfigPanel extends ConfigPanel {
         {
             final TwoColumnPanel smallParameters = new TwoColumnPanel();
             center.add(smallParameters);
-//            center.add(new TextHeaderBoxPanel("General", smallParameters));
 
             profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
             smallParameters.addNamed("Instrument", profileSelector);
@@ -142,7 +139,6 @@ public class GlobalConfigPanel extends ConfigPanel {
             searchDBList.selectDefaultDatabases();
             center.add(searchDBList);
         }
-
     }
 
     private void refreshAdducts(Set<PrecursorIonType> possibleAdducts, Set<PrecursorIonType> selectedAdducts) {
@@ -209,7 +205,8 @@ public class GlobalConfigPanel extends ConfigPanel {
             throw new UnsupportedOperationException("Enforced adducts differ from fallback adducts.");
         }
 
-        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, isBatchDialog(), !isBatchDialog()); //in batch-mode we always use the fallback adducts (only) - adding detected adducts was no good idea, since there are too many of them.
+        //in batch-mode we always use the fallback adducts (only) - adding detected adducts was no good idea, since there are too many of them.
+        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, isBatchDialog(), !isBatchDialog());
         refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
     }
 
