@@ -19,6 +19,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import net.miginfocom.swing.MigLayout;
+import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -115,6 +117,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final JComboBox<Strategy> strategyBox;
 
+    /**
+     * We define a preferred width sind to prevent resizing during change of  values.
+     */
+    private static final int PANEL_WIDTH = 400;
+
     public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
         this.gui = gui;
@@ -144,34 +151,33 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
 
-        setPreferredSize(new Dimension(350, getPreferredSize().height));
-        setMaximumSize(new Dimension(350, getMaximumSize().height));
+        setPreferredSize(new Dimension(PANEL_WIDTH, getPreferredSize().height));
+        setMaximumSize(new Dimension(PANEL_WIDTH, getMaximumSize().height));
     }
 
 
 
     private LoadablePanel createLoadablePanel() {
+        JPanel content =  new JPanel(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10", "", ""));
 
-        final Box content = Box.createVerticalBox();
+        content.add(new JXTitledSeparator("Strategy"),"alignx left, aligny top, growx, wrap");
 
-        content.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));
-        content.add(strategyBox);
-        content.add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
-
+        strategyBox.setPreferredSize(new Dimension(PANEL_WIDTH, strategyBox.getPreferredSize().height));
+        content.add(strategyBox,"alignx left, aligny top, wrap");
         strategy = (Strategy) strategyBox.getSelectedItem();
 
-        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", globalConfigPanel.getSearchDBStrings()) : ",");
         JPanel defaultStrategyParameters = createDefaultStrategyParameters();
         JPanel providedStrategyParameters = createProvidedStrategyParameters();
+        createDatabaseStrategyParameters();
 
         strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyParameters);
         strategyComponents.get(Strategy.PROVIDED).add(providedStrategyParameters);
 
-        content.add(defaultStrategyParameters);
-        content.add(providedStrategyParameters);
+        content.add(defaultStrategyParameters,"alignx left, aligny top, wrap");
+        content.add(providedStrategyParameters, "alignx left, aligny top, wrap");
 
         elementFilterPanel = createElementFilterPanel();
-        content.add(elementFilterPanel);
+        content.add(elementFilterPanel, "alignx left, aligny top, wrap");
 
         hideAllStrategySpecific();
         showStrategySpecific(strategy, true);
@@ -183,7 +189,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         });
 
         // titled container
-        return new LoadablePanel(TextHeaderPanel.wrap("Molecular formula generation", content));
+        return new LoadablePanel(content);
     }
 
     private void showStrategySpecific(Strategy s, boolean show) {
@@ -212,6 +218,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         });
 
         return options;
+    }
+
+    private void createDatabaseStrategyParameters() {
+        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", globalConfigPanel.getSearchDBStrings()) : ",");
     }
 
     private JPanel createProvidedStrategyParameters() {

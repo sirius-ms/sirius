@@ -10,6 +10,7 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,9 @@ public class ComputeToolPanel extends JPanel {
     private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
 
     public ComputeToolPanel(SiriusGui gui, List<InstanceBean> compoundsToProcess, boolean hasMs2) {
+        this(gui, compoundsToProcess, hasMs2, null);
+    }
+    public ComputeToolPanel(SiriusGui gui, List<InstanceBean> compoundsToProcess, boolean hasMs2, Integer preferredWidth) {
         super(new MigLayout("insets 0", "[left]20[left]","[top][top][top][top][top][top][top][top][top][top]"));
         setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP));
 
@@ -40,7 +44,12 @@ public class ComputeToolPanel extends JPanel {
         csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
         msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
-        add(new JXTitledSeparator("Global Configuration"), "cell 0 0, spanx 2, growx, aligny top, wrap");
+        JXTitledSeparator sep = new JXTitledSeparator("Global Configuration");
+        //just to prevent resizing of toplevel separators
+        if (preferredWidth != null)
+            sep.setPreferredSize(new Dimension(preferredWidth - 2*GuiUtils.MEDIUM_GAP - 15 , sep.getPreferredSize().height));
+
+        add(sep, "cell 0 0, spanx 2, growx, aligny top, wrap");
         add(globalConfigPanel, "cell 0 1, spanx 2, aligny top, wrap");
 
         add(new JXTitledSeparator("SIRIUS - Molecular Formula Identification"), "cell 0 4, growx, aligny top, wrap");
