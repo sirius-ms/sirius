@@ -52,6 +52,8 @@ public class BatchComputeDialog extends JDialog {
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
+        setPreferredSize(new Dimension(1070, 970));
+
         gui.getConnectionMonitor().checkConnectionInBackground();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -71,7 +73,7 @@ public class BatchComputeDialog extends JDialog {
             main.add(presetPanel, BorderLayout.NORTH);
 
             //make scrollable center panel
-            toolsPanel = new ComputeToolPanel(gui, compoundsToProcess, ms2);
+            toolsPanel = new ComputeToolPanel(gui, compoundsToProcess, ms2, getPreferredSize().width);
 
             final JScrollPane mainSP = new JScrollPane(toolsPanel);
             mainSP.setBorder(BorderFactory.createEtchedBorder());
@@ -110,7 +112,6 @@ public class BatchComputeDialog extends JDialog {
         //finalize panel build and make the dialog visible
         setResizable(false);
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
-        setPreferredSize(new Dimension(1050, 970));
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
