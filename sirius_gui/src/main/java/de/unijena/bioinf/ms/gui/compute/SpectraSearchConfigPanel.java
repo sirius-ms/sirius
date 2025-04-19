@@ -4,7 +4,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.AnalogueSearchSettings;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.IdentitySearchSettings;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -71,7 +70,9 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
 
 
         TextHeaderBoxPanel generalPanel = new TextHeaderBoxPanel("Identity Search", identitySearch);
-        add(generalPanel);
+        add(generalPanel, "aligny top");
+
+
 
         // Analogue Search params
         final TwoColumnPanel analogSearch = new TwoColumnPanel();
@@ -94,7 +95,7 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
         addAdvancedParameter(analogSearch, "Matches stored", analogMaxHits);
 
         TextHeaderBoxPanel edgePanel = new TextHeaderBoxPanel("Analogue Search", analogSearch);
-        add(edgePanel);
+        add(edgePanel,"aligny top");
     }
 
 

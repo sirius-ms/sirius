@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -68,7 +66,7 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
 
 
     public FormulaIDConfigPanel(SiriusGui gui, List<InstanceBean> ecs, GlobalConfigPanel computeConfigPanel, boolean ms2) {
-        super(SiriusOptions.class, false, Layout.VERTICAL);
+        super(SiriusOptions.class, false);
         this.allInstances = gui.getMainFrame().getCompounds();
         this.ecs = ecs;
         this.gui = gui;
@@ -85,32 +83,32 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
         // configure small stuff panel
         {
             final TwoColumnPanel smallParameters = new TwoColumnPanel();
-            TextHeaderBoxPanel header = new TextHeaderBoxPanel("General", smallParameters);
-            add(header);
-            addAdvancedComponent(header);
-
             isotopeSettingsFilter = makeParameterCheckBox("IsotopeSettings.filter");
-            addAdvancedParameter(smallParameters, "Filter by isotope pattern", isotopeSettingsFilter);
+            smallParameters.addNamed("Filter by isotope pattern", isotopeSettingsFilter);
 
             ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
 
             if (hasMs2)
-                addAdvancedParameter(smallParameters, "MS/MS isotope scorer", ms2IsotpeSetting);
+                smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
 
             candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
-            addAdvancedParameter(smallParameters, "Candidates stored", candidatesSpinner);
+            smallParameters.addNamed("Candidates stored", candidatesSpinner);
 
             candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIonization", 0, 10000, 1);
-            addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
+            smallParameters.addNamed("Min candidates per ionization stored", candidatesPerIonSpinner);
 
             enforceElGordo = makeParameterCheckBox("EnforceElGordoFormula");  //El Gordo detects lipids and by default fixes the formula
-            addAdvancedParameter(smallParameters,"Fix formula for detected lipid", enforceElGordo);
+            smallParameters.addNamed("Fix formula for detected lipid", enforceElGordo);
+
+            TextHeaderBoxPanel header = new TextHeaderBoxPanel("General", smallParameters);
+            add(header, "aligny top, wrap");
+            addAdvancedComponent(header);
         }
 
-
-
+        //configure formulaSearchStrategy
         formulaSearchStrategy = new FormulaSearchStrategy(gui, ecs, hasMs2, isBatchDialog(), parameterBindings, computeConfigPanel);
-        add(formulaSearchStrategy);
+        add(formulaSearchStrategy, "aligny top, wrap");
+
         treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
         comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
         mzHeuristic = makeIntParameterSpinner("UseHeuristic.useHeuristicAboveMz", 0, 3000, 5);
@@ -121,21 +119,12 @@ public class FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<Siriu
             final TwoColumnPanel ilpOptions = new TwoColumnPanel();
 
             ilpOptions.addNamed("Tree timeout", treeTimeout);
-
             ilpOptions.addNamed("Compound timeout", comoundTimeout);
-
             ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
-
             ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
-            final JPanel technicalParameters = new JPanel();
-            RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, 0);
-            rl.setAlignment(RelativeLayout.LEADING);
-            technicalParameters.setLayout(rl);
-            technicalParameters.add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
-            technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
-            technicalParameters.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-            add(technicalParameters);
+            TextHeaderBoxPanel technicalParameters = new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions);
+            add(technicalParameters, "aligny top, wrap");
             addAdvancedComponent(technicalParameters);
         }
     }

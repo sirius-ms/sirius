@@ -19,9 +19,7 @@ import io.sirius.ms.sdk.model.SearchableDatabase;
 import it.unimi.dsi.fastutil.Pair;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class GlobalConfigPanel extends ConfigPanel {
@@ -75,14 +73,9 @@ public class GlobalConfigPanel extends ConfigPanel {
         this.gui = gui;
         this.hasMs2 = ms2;
 
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        final JPanel center = applyDefaultLayout(new JPanel());
-        add(center);
-        add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
-
         {
             final TwoColumnPanel smallParameters = new TwoColumnPanel();
-            center.add(smallParameters);
+            add(smallParameters, "aligny top");
 
             profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
             smallParameters.addNamed("Instrument", profileSelector);
@@ -115,7 +108,9 @@ public class GlobalConfigPanel extends ConfigPanel {
             }
 
             adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + Na]+"), false));
-            center.add(adductList);
+
+            add(adductList);
+
             parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
             enforceAdducts = new JToggleButton("enforce", false);
@@ -137,7 +132,7 @@ public class GlobalConfigPanel extends ConfigPanel {
             searchDBList = DBSelectionListPanel.newInstance("Search DBs", gui.getSiriusClient(), Collections::emptyList);
 //            GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, ""); //todo add description
             searchDBList.selectDefaultDatabases();
-            center.add(searchDBList);
+            add(searchDBList);
         }
     }
 
