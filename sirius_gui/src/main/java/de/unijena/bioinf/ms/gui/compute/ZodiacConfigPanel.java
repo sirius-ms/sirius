@@ -32,7 +32,7 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
     private final JCheckBox twoStep;
 
     public ZodiacConfigPanel() {
-        super(ZodiacOptions.class, false, Layout.VERTICAL);
+        super(ZodiacOptions.class, false);
 
         candidatesAt300 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1);
         candidatesAt800 = makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1);
@@ -51,7 +51,7 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
         general.addNamed("Use  2-step approach", twoStep);
         TextHeaderBoxPanel generalPanel = new TextHeaderBoxPanel("General", general);
         addAdvancedComponent(generalPanel);
-        add(generalPanel);
+        add(generalPanel, "wrap");
 
         final TwoColumnPanel edgeFilter = new TwoColumnPanel();
         edgeFilter.addNamed("Edge Threshold", edgeThreshold);

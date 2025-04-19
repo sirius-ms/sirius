@@ -20,8 +20,8 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.function.Function;
 
 public abstract class ConfigPanel extends JPanel implements ParameterProvider {
-    enum Layout{HORIZONTAL, VERTICAL};
-
     protected final ParameterBinding parameterBindings;
 
     @Override
@@ -41,31 +39,12 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public ConfigPanel() {
-        this(Layout.HORIZONTAL);
-    }
-
-    public ConfigPanel(@NotNull Layout layout) {
-        this(new ParameterBinding(), layout);
+        this(new ParameterBinding());
     }
 
     public ConfigPanel(ParameterBinding parameterBindings) {
-        this(parameterBindings, Layout.HORIZONTAL);
-    }
-
-    public ConfigPanel(ParameterBinding parameterBindings, @NotNull Layout layout) {
+        super(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10, gapx 15", "", ""));
         this.parameterBindings = parameterBindings;
-        applyDefaultLayout(this, layout);
-    }
-
-    protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle) {
-        return applyDefaultLayout(pToStyle, Layout.HORIZONTAL);
-    }
-
-    protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle, @NotNull Layout layout) {
-        RelativeLayout rl = new RelativeLayout(layout.ordinal(), GuiUtils.LARGE_GAP);
-        rl.setAlignment(RelativeLayout.LEADING);
-        pToStyle.setLayout(rl);
-        return pToStyle;
     }
 
     public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, int minimum, int maximum, int stepSize) {

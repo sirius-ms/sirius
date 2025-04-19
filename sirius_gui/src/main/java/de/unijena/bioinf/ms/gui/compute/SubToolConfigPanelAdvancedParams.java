@@ -21,12 +21,6 @@ public abstract class SubToolConfigPanelAdvancedParams<C> extends SubToolConfigP
         advancedParametersComponents = new ArrayList<>();
     }
 
-    public SubToolConfigPanelAdvancedParams(Class<C> annotatedObject, boolean displayAdvancedParameters, @NotNull Layout layout) {
-        super(annotatedObject, layout);
-        this.displayAdvancedParameters = displayAdvancedParameters;
-        advancedParametersComponents = new ArrayList<>();
-    }
-
     protected void addAdvancedComponent(Component c) {
         advancedParametersComponents.add(c);
         c.setVisible(displayAdvancedParameters);

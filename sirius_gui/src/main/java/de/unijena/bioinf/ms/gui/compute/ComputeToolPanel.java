@@ -5,11 +5,11 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.*;
+import net.miginfocom.swing.MigLayout;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,43 +28,49 @@ public class ComputeToolPanel extends JPanel {
     private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
 
     public ComputeToolPanel(SiriusGui gui, List<InstanceBean> compoundsToProcess, boolean hasMs2) {
-        super();
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
-        setBorder(BorderFactory.createEmptyBorder());
+        super(new MigLayout("insets 0", "[left]20[left]","[top][top][top][top][top][top][top][top][top][top]"));
+        setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP));
 
         // make subtool config panels
         globalConfigPanel = new GlobalConfigPanel(gui, compoundsToProcess, hasMs2);
-        addConfigPanel("Global Configuration", globalConfigPanel);
-
         spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel, hasMs2);
-        addConfigPanel("Spectral Library Search", spectraSearchConfigPanel);
-
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
-        JPanel formulaRow = addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
-        final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
-
         zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size());
         fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
         csiSearchConfigs = new ActFingerblastConfigPanel(gui, globalConfigPanel);
         msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
-        if (compoundsToProcess.size() != 1 && hasMs2) {
-            addConfigPanelToRow("ZODIAC - Network-based molecular formula re-ranking", zodiacConfigs, formulaRow);
-            zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
-        }
+        add(new JXTitledSeparator("Global Configuration"), "cell 0 0, spanx 2, growx, aligny top, wrap");
+        add(globalConfigPanel, "cell 0 1, spanx 2, aligny top, wrap");
+
+        add(new JXTitledSeparator("SIRIUS - Molecular Formula Identification"), "cell 0 4, growx, aligny top, wrap");
+        add(formulaIDConfigPanel, "cell 0 5, aligny top,  wrap");
 
         if (hasMs2) {
+            final boolean formulasAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isFormulaSearch());
             final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getComputedTools().isCanopus());
 
-            addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
-            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
+            add(new JXTitledSeparator("Spectral Library Search"), "cell 0 2, growx, spanx 2, aligny top, wrap");
+            add(spectraSearchConfigPanel, "cell 0 3, spanx 2, aligny top, wrap");
 
-            JPanel searchRow = addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
-            addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
+            if (compoundsToProcess.size() != 1 && compoundsToProcess.stream().filter(InstanceBean::hasMsMs).limit(10).count() == 10) {
+                add(new JXTitledSeparator("ZODIAC - Network-based molecular formula re-ranking"), "cell 1 4, growx, aligny top, wrap");
+                add(zodiacConfigs, "cell 1 5, aligny top, wrap");
+            }
+
+            add(new JXTitledSeparator("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction"), "cell 0 6, growx, spanx 2, aligny top, wrap");
+            add(fingerprintAndCanopusConfigPanel, "cell 0 7, spanx 2, aligny top, wrap");
+
+            add(new JXTitledSeparator("CSI:FingerID - Structure Database Search"), "cell 0 8, growx, aligny top, wrap");
+            add(csiSearchConfigs, "cell 0 9, aligny top, wrap");
+
+            add(new JXTitledSeparator("MSNovelist - De Novo Structure Generation"), "cell 1 8, growx, aligny top, wrap");
+            add(msNovelistConfigs, "cell 1 9, aligny top, wrap");
+
+
+            fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
             csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
             msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-
             // computing formulaId will discard fingerprints, so we need to enable it for structure search
             formulaIDConfigPanel.addToolDependencyListener((c, enabled) -> {
                 if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
@@ -141,38 +147,6 @@ public class ComputeToolPanel extends JPanel {
         spectraSearchConfigPanel.content.setDisplayAdvancedParameters(displayAdvanced);
         formulaIDConfigPanel.content.setDisplayAdvancedParameters(displayAdvanced);
         zodiacConfigs.content.setDisplayAdvancedParameters(displayAdvanced);
-    }
-
-    private JPanel addConfigPanelToRow(String header, JPanel configPanel, JPanel row) {
-        JPanel topAlignedStack = new JPanel() {
-            @Override
-            public int getBaseline(int width, int height) {
-                return 0;
-            }
-
-            @Override
-            public BaselineResizeBehavior getBaselineResizeBehavior() {
-                return BaselineResizeBehavior.CONSTANT_ASCENT;
-            }
-        };
-
-        topAlignedStack.setLayout(new BorderLayout());
-        JXTitledSeparator title = new JXTitledSeparator(header);
-        title.setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP));
-        topAlignedStack.add(title, BorderLayout.NORTH);
-        topAlignedStack.add(configPanel, BorderLayout.CENTER);
-        row.add(topAlignedStack);
-        return row;
-    }
-
-    private JPanel addConfigPanel(String header, JPanel configPanel) {
-        FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP);
-        flowLayout.setAlignOnBaseline(true);
-        JPanel flowContainer = new JPanel(flowLayout);
-        flowContainer.setBorder(BorderFactory.createEmptyBorder());
-        addConfigPanelToRow(header, configPanel, flowContainer);
-        add(flowContainer);
-        return flowContainer;
     }
 
     public Stream<ActivatableConfigPanel<?>> getToolStream(){

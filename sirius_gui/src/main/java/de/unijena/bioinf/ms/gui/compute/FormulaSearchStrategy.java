@@ -126,8 +126,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         //in single mode: does compound has MS1 data?
         this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && ecs.getFirst().hasMs1();
 
-
-
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
         strategyComponents.put(Strategy.BOTTOM_UP, new ArrayList<>());
@@ -145,6 +143,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
+
+        setPreferredSize(new Dimension(350, getPreferredSize().height));
+        setMaximumSize(new Dimension(350, getMaximumSize().height));
     }
 
 
@@ -210,7 +211,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
-        return TextHeaderPanel.wrap("General", options);
+        return options;
     }
 
     private JPanel createProvidedStrategyParameters() {
