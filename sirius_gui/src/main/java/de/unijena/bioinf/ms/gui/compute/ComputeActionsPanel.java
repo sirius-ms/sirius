@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import lombok.Getter;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ public class ComputeActionsPanel extends JPanel {
 
     public ComputeActionsPanel(int numOfInstances) {
         super(new GridLayout(1, 3));
+        setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.SMALL_GAP, 0, GuiUtils.SMALL_GAP));
 
         JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         recomputeBox = new JCheckBox("Recompute already computed tasks?", false);

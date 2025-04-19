@@ -108,8 +108,9 @@ public class BatchComputeDialog extends JDialog {
         });
 
         //finalize panel build and make the dialog visible
-        setPreferredSize(new Dimension(1150, 1024));
+        setResizable(false);
         setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        setPreferredSize(new Dimension(1050, 970));
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);

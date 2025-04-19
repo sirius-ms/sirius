@@ -58,6 +58,8 @@ public class ComputePresetAndBannerPanel extends JPanel {
         this.gui = gui;
         this.singleCompoundMode = singleCompoundMode;
         this.ms2Mode = ms2Mode;
+        setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.SMALL_GAP, 0, GuiUtils.SMALL_GAP));
+
         add(makeBanners(), BorderLayout.NORTH);
 
         Box topLine = Box.createHorizontalBox();
