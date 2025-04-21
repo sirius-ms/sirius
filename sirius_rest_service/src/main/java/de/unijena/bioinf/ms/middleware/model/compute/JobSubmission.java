@@ -134,13 +134,11 @@ public class JobSubmission extends AbstractSubmission {
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap, boolean includeCustomDbsForStructureSearch) {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-        //default search dbs for spectra and structure. Formula only if db search is used.
-        //for spectral library search we add all custom sources since users currently cannot set parameters for spectral library search
-        List<String> spectraSearchDbs = Stream.concat(Stream.of(
-                        CustomDataSources.getSourceFromName(DataSource.BIO.name())),
-                CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList();
-        //for structure database search (CSI) we only use BIO so that results are (mostly) consistent for different users with different custom DBs
-        List<String> structureSearchDbs = includeCustomDbsForStructureSearch ? spectraSearchDbs : Collections.singletonList(DataSource.BIO.name());
+        //for database search (CSI, spectral library) we only use BIO per default so that results are (mostly)
+        // consistent for different users with different custom DBs
+        List<String> searchDbs = includeCustomDbsForStructureSearch
+                ? Stream.concat(Stream.of(CustomDataSources.getSourceFromName(DataSource.BIO.name())), CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList()
+                : Collections.singletonList(DataSource.BIO.name());
 
 
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
@@ -148,12 +146,12 @@ public class JobSubmission extends AbstractSubmission {
                 .enforcedAdducts(settings.getEnforced().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .detectableAdducts(settings.getDetectable().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
                 .recompute(false)
-                .spectraSearchParams(SpectralLibrarySearch.builderWithDefaults().spectraSearchDBs(spectraSearchDbs).build())
+                .spectraSearchParams(SpectralLibrarySearch.builderWithDefaults().spectraSearchDBs(searchDbs).enabled(includeCustomDbsForStructureSearch).build())
                 .formulaIdParams(Sirius.buildDefault())
                 .zodiacParams(Zodiac.buildDefault())
                 .fingerprintPredictionParams(FingerprintPrediction.buildDefault())
                 .canopusParams(Canopus.buildDefault())
-                .structureDbSearchParams(StructureDbSearch.builderWithDefaults().structureSearchDBs(structureSearchDbs).build())
+                .structureDbSearchParams(StructureDbSearch.builderWithDefaults().structureSearchDBs(searchDbs).build())
                 .msNovelistParams(MsNovelist.buildDefault());
         if (includeConfigMap) {
             final Map<String, String> configMap = new HashMap<>();
