@@ -212,7 +212,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             ZodiacAnalogueNodes analogueSettings = exp.getAnnotationOrDefault(ZodiacAnalogueNodes.class);
             if (analogueSettings.enabled) {
                 hits.stream().filter(SpectralSearchResult.SearchResult::isAnalog).findFirst()
-                        .filter(bestHit -> bestHit.getSimilarity().similarity >= analogueSettings.minModifiedCosine && bestHit.getSimilarity().sharedPeaks >= analogueSettings.minSharedPeaks)
+                        .filter(bestHit -> bestHit.getSimilarity().similarity >= analogueSettings.minSimilarity && bestHit.getSimilarity().sharedPeaks >= analogueSettings.minSharedPeaks)
                         .ifPresent(bestHit -> ids.computeIfAbsent(bestHit.getDbName(), x -> new LongOpenHashSet()).add(bestHit.getUuid()));
             }
 
@@ -246,7 +246,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         if (!libraryResults.anchors.isEmpty()) {
             logWarn("use " + libraryResults.anchors.size() + " library hits as anchors.");
             ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
-            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, Collections.emptySet())};
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minSimilarity, Collections.emptySet())};
         } else {
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
         }
