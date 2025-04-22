@@ -25,6 +25,7 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
  */
 
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 
 import javax.swing.*;
@@ -34,6 +35,8 @@ import java.awt.*;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class FormulaListHeaderPanel extends JPanel {
+    private FormulaListCompactView formulaListCompactView;
+
     public FormulaListHeaderPanel(FormulaList table, JComponent center) {
         this(table,center,false);
     }
@@ -46,13 +49,14 @@ public class FormulaListHeaderPanel extends JPanel {
         if (detailed){
             add(new FormulaListDetailView(formulaList),BorderLayout.NORTH);
         }else{
-            FormulaListCompactView formulaListCompactView = new FormulaListCompactView(formulaList);
+            formulaListCompactView = new FormulaListCompactView(formulaList);
             add(formulaListCompactView,BorderLayout.NORTH);
-            formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_Formulas);
-            formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Fingerprint_Formulas);
         }
         add(center,BorderLayout.CENTER);
+    }
 
-
+    public void addTutorialInformationToCompactView(SoftwareTourInfo tourInfo) {
+        if (formulaListCompactView == null) throw new NullPointerException("This panel has no FormulaListCompactView");
+        formulaListCompactView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
     }
 }
