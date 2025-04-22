@@ -35,20 +35,21 @@ import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bionf.fastcosine.FastCosine;
+import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static de.unijena.bioinf.spectraldb.SpectralLibrary.FAST_COSINE;
 
 public class SpectraSearchSubtoolJob extends InstanceJob {
 
@@ -98,20 +99,19 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             return;
         }
         final Ms2Experiment exp = inst.getExperiment();
-        final FastCosine fastCosine = new FastCosine();
 
         double precursorMz = exp.getIonMass();
 
-        AnalogueSearchSettings analogueSearchSettings = exp.getAnnotationOrDefault(AnalogueSearchSettings.class);
-        IdentitySearchSettings identitySearchSettings = exp.getAnnotationOrDefault(IdentitySearchSettings.class);
+        SpectralLibrarySearchSettings analogueSearchSettings = exp.getAnnotationOrDefault(AnalogueSearchSettings.class).clone();
+        SpectralLibrarySearchSettings identitySearchSettings = exp.getAnnotationOrDefault(IdentitySearchSettings.class).clone();
 
         Map<CustomDataSources.Source, List<MergedReferenceSpectrum>> mergedReferenceSpectra;
 
-        if (analogueSearchSettings.enabled) {
+        if (exp.getAnnotationOrDefault(AnalogueSearchSettings.class).enabled) {
             //spectra cache already contains the information about the selected databases.
             mergedReferenceSpectra = cache.getAllMergedSpectra(exp.getPrecursorIonType().getCharge());
         } else {
-            mergedReferenceSpectra = ApplicationCore.WEB_API.getChemDB().getMergedSpectra(
+            mergedReferenceSpectra = cache.getChemDB().getMergedSpectra(
                     precursorMz, exp.getPrecursorIonType().getCharge(),
                     identitySearchSettings.getPrecursorDeviation(), cache.getSelectedDbs()
             );
@@ -121,29 +121,22 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         List<SpectralSearchResult.SearchResult> result = submitJob(new BasicJJob<List<SpectralSearchResult.SearchResult>>() {
             @Override
             protected List<SpectralSearchResult.SearchResult> compute() throws Exception {
-                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x -> fastCosine.prepareQuery(exp.getIonMass(), x)).toList();
-                ReferenceLibrarySpectrum mergedQuery = fastCosine.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
+                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x -> FAST_COSINE.prepareQuery(exp.getIonMass(), x)).toList();
+                ReferenceLibrarySpectrum mergedQuery = FAST_COSINE.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
 
-                List<LibraryHit> identityHits = new ArrayList<>();
-                List<LibraryHit> analogHits = new ArrayList<>();
+                PriorityQueue<LibraryHit> identityHits = new PriorityQueue<>();
+                PriorityQueue<LibraryHit> analogHits = new PriorityQueue<>();
+
                 for (Map.Entry<CustomDataSources.Source, List<MergedReferenceSpectrum>> e : mergedReferenceSpectra.entrySet()) {
                     SpectralLibrary db = cache.getChemDB().asCustomDB(e.getKey()).toSpectralLibrary().orElseThrow();
                     for (MergedReferenceSpectrum mergedRefSpec : e.getValue()) {
-                        SpectralLibrarySearchSettings settings = null;
+//                        final String refStructInchi = mergedRefSpec.getCandidateInChiKey();
                         if (identitySearchSettings.getPrecursorDeviation().inErrorWindow(precursorMz, mergedRefSpec.getExactMass())) {
-                            settings = identitySearchSettings;
+                            List<LibraryHit> hits = db.queryAgainstLibraryByMergedReference(mergedRefSpec, identitySearchSettings, queries, mergedQuery).toList();
+                            addHitsAndUpdateBounds(identityHits, hits, identitySearchSettings);
                         } else if (!analogueSearchSettings.getPrecursorDeviation().inErrorWindow(precursorMz, mergedRefSpec.getExactMass())) {
-                            settings = analogueSearchSettings;
-                        }
-
-                        if (settings != null) {
-                            db.queryAgainstLibraryByMergedReference(mergedRefSpec, settings, queries, mergedQuery)
-                                    .forEach(hit -> {
-                                        if (hit.isAnalog())
-                                            analogHits.add(hit);
-                                        else
-                                            identityHits.add(hit);
-                                    });
+                            List<LibraryHit> hits = db.queryAgainstLibraryByMergedReference(mergedRefSpec, analogueSearchSettings, queries, mergedQuery).toList();
+                            addHitsAndUpdateBounds(analogHits, hits, analogueSearchSettings);
                         }
                     }
                 }
@@ -151,17 +144,15 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                 if (identityHits.isEmpty() && analogHits.isEmpty())
                     return null;
 
-                identityHits.sort(Comparator.reverseOrder());
-                analogHits.sort(Comparator.reverseOrder());
+
 
                 List<SpectralSearchResult.SearchResult> rankedHits = new ArrayList<>(
                         analogueSearchSettings.getMaxNumOfHits() + identitySearchSettings.getMaxNumOfHits());
 
-
-                for (int k = 0; k < identitySearchSettings.getMaxNumOfHits() && k < identityHits.size(); k++)
-                    rankedHits.add(new SpectralSearchResult.SearchResult(identityHits.get(k), k + 1));
-                for (int k = 0; k < analogueSearchSettings.getMaxNumOfHits() && k < analogHits.size(); k++)
-                    rankedHits.add(new SpectralSearchResult.SearchResult(analogHits.get(k), k + 1));
+                AtomicInteger rank = new AtomicInteger(0);
+                identityHits.stream().sorted(Comparator.reverseOrder()).forEach(hit -> rankedHits.add(new SpectralSearchResult.SearchResult(hit, rank.incrementAndGet())));
+                rank.set(0);
+                analogHits.stream().sorted(Comparator.reverseOrder()).forEach(hit -> rankedHits.add(new SpectralSearchResult.SearchResult(hit, rank.incrementAndGet())));
 
                 return rankedHits;
             }
@@ -220,6 +211,51 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         builder.append("\n#######################  END  #######################\n");
         logger.info(builder.toString());
 
+    }
+
+    private static void addHitsAndUpdateBounds(PriorityQueue<LibraryHit> allHits, List<LibraryHit> nuHits, SpectralLibrarySearchSettings settings) {
+        for (LibraryHit hit : nuHits) {
+            if (allHits.size() < settings.getMaxNumOfHits()) {
+                allHits.add(hit);
+                // increase bound
+                if (allHits.size() == settings.getMaxNumOfHits()) {
+                    settings.setMinSimilarity(
+                            Math.max(settings.getMinSimilarity(), allHits.peek().getSimilarity().similarity));
+                }
+            } else {
+                if (hit.compareTo(allHits.peek()) > 0){
+                    allHits.poll();
+                    allHits.add(hit);
+                    //increase bound
+                    settings.setMinSimilarity(
+                            Math.max(settings.getMinSimilarity(), allHits.peek().getSimilarity().similarity));
+                }
+            }
+        }
+    };
+
+    private SpectralSimilarity spectralSimilarity(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right, SpectralLibrarySearchSettings settings) {
+        if (settings.getMatchingType() == SpectralMatchingType.FAST_COSINE) return FAST_COSINE.fastCosine(left, right);
+        else if (settings.getMatchingType() == SpectralMatchingType.MODIFIED_COSINE)
+            return FAST_COSINE.fastModifiedCosine(left, right);
+        else throw new UnsupportedOperationException();
+    }
+
+    private void checkBound(List<ReferenceLibrarySpectrum> queries, ReferenceLibrarySpectrum mergedQuery, ReferenceLibraryMergedSpectrum mergedRef, SpectralLibrarySearchSettings settings) {
+        ReferenceLibrarySpectrum mergedRefUpperBound = mergedRef.asUpperboundQuerySpectrum();
+        ReferenceLibrarySpectrum mergedQueryUpperBound = mergedQuery;
+        SpectralSimilarity mergedSim = spectralSimilarity(mergedQueryUpperBound, mergedRefUpperBound, settings);
+        SpectralSimilarity maxSim = mergedSim;
+        for (ReferenceLibrarySpectrum l : queries) {
+            SpectralSimilarity sim = spectralSimilarity(l, mergedRefUpperBound, settings);
+            if (sim.compareTo(maxSim) > 0) maxSim = sim;
+        }
+        if (maxSim.compareTo(mergedSim) > 0) {
+            System.out.printf("Merged < Single: MergedSim=%s, MergedPeak=%s vs MaxSim=%s, MaxPeaks=%s ",
+                    mergedSim.similarity, mergedSim.sharedPeaks, maxSim.similarity, maxSim.sharedPeaks);
+            System.out.println();
+        }
+        ;
     }
 
     @Override
