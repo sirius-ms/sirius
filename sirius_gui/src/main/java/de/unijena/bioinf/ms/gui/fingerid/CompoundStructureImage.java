@@ -61,6 +61,8 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
     protected AtomContainerRenderer renderer;
     protected Color backgroundColor;
 
+    protected JLabel scoreLabel;
+
     public CompoundStructureImage(SiriusGui gui) {
         this(StandardGenerator.HighlightStyle.OuterGlow, gui);
     }
@@ -84,14 +86,25 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
 
         renderer.getRenderer2DModel().set(StandardGenerator.AnnotationColor.class,
                 Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+
+        //add score as separate label to be able to reference it
+        setLayout(null); // Disable automatic layout management
+        scoreLabel = new JLabel();
+        scoreLabel.setFont(scoreFont);
+        scoreLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+        scoreLabel.setOpaque(false); // Ensure it blends into the background
+        add(scoreLabel);
+
         setVisible(true);
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (molecule.hasAtomContainer())
+        if (molecule.hasAtomContainer()) {
             renderImage((Graphics2D) g);
+            updateScoreLabel();
+        }
     }
 
     private void renderImage(final Graphics2D gg) {
@@ -119,14 +132,20 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
             final int h = (int) (y + bound.getHeight());
             gg.drawString(fromulaString, x, h - 2);
         }
+    }
 
-        //todo change to gif
-        final String scoreText = decimalFormat.format(molecule.getScore());
-        double tw = gg.getFontMetrics(scoreFont).getStringBounds(scoreText, gg).getWidth();
+    private void updateScoreLabel() {
+        String scoreText = decimalFormat.format(molecule.getScore());
+        scoreLabel.setText(scoreText);
 
-        gg.setFont(scoreFont);
-        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-        gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
+        // Calculate exact position based on panel size
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
+        int textWidth = scoreLabel.getFontMetrics(scoreLabel.getFont()).stringWidth(scoreText);
+        int x = panelWidth - textWidth - 4;
+        int y = panelHeight - 20; // Adjust to match previous position using gg.drawString()
+
+        scoreLabel.setBounds(x, y, textWidth + 4, 20);
     }
 
     @Override
