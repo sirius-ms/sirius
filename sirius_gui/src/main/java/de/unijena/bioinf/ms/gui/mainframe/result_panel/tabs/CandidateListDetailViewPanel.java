@@ -22,15 +22,21 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Function;
 
 public class CandidateListDetailViewPanel extends JPanel implements PanelDescription, Loadable {
     @Override
@@ -50,8 +56,15 @@ public class CandidateListDetailViewPanel extends JPanel implements PanelDescrip
 
     public CandidateListDetailViewPanel(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(new BorderLayout());
-        list = new CandidateListDetailView(resultPanel, sourceList, gui, instanceBean -> instanceBean.getComputedTools().isStructureSearch());
+        Function<InstanceBean, Boolean> wasComputed = instanceBean -> instanceBean.getComputedTools().isStructureSearch();
+        list = new CandidateListDetailView(resultPanel, sourceList, gui, wasComputed);
         add(list, BorderLayout.CENTER);
+
+        list.getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            if (instanceBean != null && wasComputed.apply(instanceBean) && !resultElements.isEmpty()) {
+                Jobs.runEDTLater(() -> initSoftwareTour(gui.getProperties()));
+            }
+        });
     }
 
     @Override
@@ -61,5 +74,9 @@ public class CandidateListDetailViewPanel extends JPanel implements PanelDescrip
        else
            list.showCenterCard(ActionList.ViewState.DATA);
        return loading;
+    }
+
+    public void initSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DatabaseSearchTabTourKey, guiProperties);
     }
 }

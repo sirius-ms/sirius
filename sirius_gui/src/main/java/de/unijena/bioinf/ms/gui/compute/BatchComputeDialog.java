@@ -41,6 +41,8 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -271,6 +273,8 @@ public class BatchComputeDialog extends JDialog {
                     Jobs.runEDTLater(() -> updateConnectionBanner(stateEvent.getConnectionCheck()));
             };
             gui.getConnectionMonitor().addConnectionListener(connectionListener);
+
+            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
         });
 
         setPreferredSize(new Dimension(1150, 1024));
@@ -636,6 +640,7 @@ public class BatchComputeDialog extends JDialog {
         panel.add(new JLabel("Preset"));
 
         presetDropdown = new JComboBox<>();
+        presetDropdown.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.BatchCompute_PresetDropDown);
 
         panel.add(presetDropdown);
 

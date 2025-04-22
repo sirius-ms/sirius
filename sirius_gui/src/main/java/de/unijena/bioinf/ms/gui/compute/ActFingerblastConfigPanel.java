@@ -21,12 +21,14 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
     public ActFingerblastConfigPanel(@NotNull SiriusGui gui, @Nullable final FormulaIDConfigPanel syncSource) {
-        super(gui, "Search DBs", Icons.DB_LENS.derive(32,32), true, () -> new FingerblastConfigPanel(gui, syncSource));
+        super(gui, "Search DBs", Icons.DB_LENS.derive(32,32), true, () -> new FingerblastConfigPanel(gui, syncSource),
+                SoftwareTourInfoStore.BatchCompute_Fingerblast);
         notConnectedMessage = "Can't connect to structure db server!";
     }
 
