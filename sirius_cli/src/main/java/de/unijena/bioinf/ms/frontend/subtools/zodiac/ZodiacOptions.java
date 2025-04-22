@@ -74,10 +74,10 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
         defaultConfigOptions.changeOption("ZodiacLibraryScoring.enable", value);
     }
 
-    @Option(names = "--min-cosine-anchors", descriptionKey = "ZodiacLibraryScoring.minCosine",
+    @Option(names = "--min-similarity-anchors", descriptionKey = "ZodiacLibraryScoring.minSimilarity",
             description = {"Spectral library hits must have at least this cosine or higher to be considered as anchors in scoring.", "Value must be in [0,1]."})
     public void setMinCosine(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minSimilarity", value);
     }
 
     @Option(names = "--lambda-anchors", descriptionKey = "ZodiacLibraryScoring.lambda",
@@ -96,10 +96,10 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
         defaultConfigOptions.changeOption("ZodiacAnalogueNodes.enable", value);
     }
 
-    @Option(names = "--min-cosine-analogue", descriptionKey = "ZodiacAnalogueNodes.minModifiedCosine",
-            description = {"Analogue search hits must have at least this cosine or higher to be considered as additional node in ZODIAC network scoring.", "Value must be in [0,1]."})
+    @Option(names = "--min-similarity-analogue", descriptionKey = "ZodiacAnalogueNodes.minSimilarity",
+            description = {"Analogue search hits must have at least this modified cosine or higher to be considered as additional node in ZODIAC network scoring.", "Value must be in [0,1]."})
     public void setAnalogueMinModCosine(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacAnalogueNodes.minModifiedCosine", value);
+        defaultConfigOptions.changeOption("ZodiacAnalogueNodes.minSimilarity", value);
     }
 
     @Option(names = "--min-peaks-analogue", descriptionKey = "ZodiacAnalogueNodes.minSharedPeaks",
