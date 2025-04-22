@@ -20,10 +20,15 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListDetailView;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,10 +63,21 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription, Lo
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, formulaListDetailView, spectrumTreeView);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
+
+        //software tour
+        siriusResultElements.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            if (instanceBean != null && sre != null && sre.getFTreeJson().isPresent()) {
+                Jobs.runEDTLater(() -> initSoftwareTour(gui.getProperties()));
+            }
+        });
     }
 
     @Override
     public boolean setLoading(boolean loading, boolean absolute) {
         return formulaListDetailView.setLoading(loading, absolute) /*& spectrumTreeView.setLoading(loading, absolute)*/;
+    }
+
+    public void initSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.FormulaTabTourKey, guiProperties);
     }
 }

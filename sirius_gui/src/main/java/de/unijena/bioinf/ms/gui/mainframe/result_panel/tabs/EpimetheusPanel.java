@@ -23,9 +23,13 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,12 +79,14 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
         public EpimetheusPanelCandidateListTableView(StructureList list) {
             super(list);
+            centerCardPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_List);
         }
 
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
             ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO.derive(24,24), "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            showMSNovelist.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_DeNovoFilter);
             showMSNovelist.setSelected(true);
             tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
 
@@ -91,5 +97,9 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
             return tb;
         }
+    }
+
+    public void initSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.EpimetheusTabTourKey, guiProperties);
     }
 }

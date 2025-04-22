@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatche
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
@@ -88,6 +89,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
                 filter.setToolTipText("Show database filters");
             }
         });
+        filter.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_DatabaseFilter);
         tb.add(filter);
 //        tb.addSeparator();
 

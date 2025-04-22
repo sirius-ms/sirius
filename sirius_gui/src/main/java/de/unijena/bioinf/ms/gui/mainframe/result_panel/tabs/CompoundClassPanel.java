@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,7 @@ public class CompoundClassPanel extends JPanel implements Loadable, PanelDescrip
         super(new BorderLayout());
 
         final CompoundClassTableView center = new CompoundClassTableView(table);
+        center.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_Predictions);
         final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements, gui);
         sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center);
         loadablePanel = new LoadablePanel(sp);
