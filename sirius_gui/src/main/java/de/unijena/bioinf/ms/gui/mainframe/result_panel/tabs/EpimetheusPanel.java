@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,6 +56,7 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
         this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
 
         SubstructurePanel substructurePanel = new SubstructurePanel(structureList.getGui());
+        substructurePanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_SpectralVisualization);
         candidateTable.getFilteredSelectionModel().addListSelectionListener(substructurePanel);
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, substructurePanel);
