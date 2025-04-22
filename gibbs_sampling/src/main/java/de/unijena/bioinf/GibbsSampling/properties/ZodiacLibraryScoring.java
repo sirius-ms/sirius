@@ -39,17 +39,17 @@ public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
     /**
      * Spectral library hits must have at least this cosine or higher to be considered in scoring. Value must be in [0,1].
      */
-    @DefaultProperty public final double minCosine; //0.5
+    @DefaultProperty public final double minSimilarity; //0.5
 
     public ZodiacLibraryScoring() {
         lambda = Double.NaN;
-        minCosine = Double.NaN;
+        minSimilarity = Double.NaN;
         enabled = true;
     }
 
-    public ZodiacLibraryScoring(double lambda, double minCosine, boolean enabled) {
+    public ZodiacLibraryScoring(double lambda, double minSimilarity, boolean enabled) {
         this.lambda = lambda;
-        this.minCosine = minCosine;
+        this.minSimilarity = minSimilarity;
         this.enabled = enabled;
     }
 }
