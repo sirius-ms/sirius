@@ -25,7 +25,7 @@ public class CustomDBPropertyUtils {
      */
     public static LinkedHashMap<String, String> getCustomDBs() {
         LinkedHashMap<String, String> dbs = new LinkedHashMap<>();
-        String[] dbStrings = PropertyManager.getProperty(PROP_KEY).split(DB_DELIMITER);
+        String[] dbStrings = PropertyManager.getProperty(PROP_KEY, null, "").split(DB_DELIMITER);
         for (String dbString : dbStrings) {
             String name, location;
             if (dbString.contains(NAME_DELIMITER)) {
