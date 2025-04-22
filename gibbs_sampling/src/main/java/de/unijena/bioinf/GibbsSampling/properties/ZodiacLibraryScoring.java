@@ -22,6 +22,7 @@ package de.unijena.bioinf.GibbsSampling.properties;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
 
@@ -32,8 +33,9 @@ public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
 
 
     /**
-     * Lambda used in the scoring function of spectral library hits. The higher this value the higher are librar hits weighted in ZODIAC scoring.
+     * Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring.
      */
+    @Schema(hidden = true)
     @DefaultProperty public final double lambda; //1000
 
     /**
