@@ -30,8 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.ZodiacAnalogueNodes;
 import io.sirius.ms.sdk.model.ZodiacEdgeFilterThresholds;
 import io.sirius.ms.sdk.model.ZodiacEpochs;
+import io.sirius.ms.sdk.model.ZodiacLibraryScoring;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -44,7 +46,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Zodiac.JSON_PROPERTY_CONSIDERED_CANDIDATES_AT800_MZ,
   Zodiac.JSON_PROPERTY_RUN_IN_TWO_STEPS,
   Zodiac.JSON_PROPERTY_EDGE_FILTER_THRESHOLDS,
-  Zodiac.JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS
+  Zodiac.JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS,
+  Zodiac.JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS,
+  Zodiac.JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Zodiac {
@@ -65,6 +69,12 @@ public class Zodiac {
 
   public static final String JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS = "gibbsSamplerParameters";
   private ZodiacEpochs gibbsSamplerParameters;
+
+  public static final String JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS = "librarySearchAnchors";
+  private ZodiacLibraryScoring librarySearchAnchors;
+
+  public static final String JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS = "analogueSearchAnchors";
+  private ZodiacAnalogueNodes analogueSearchAnchors;
 
   public Zodiac() {
   }
@@ -219,6 +229,56 @@ public class Zodiac {
     this.gibbsSamplerParameters = gibbsSamplerParameters;
   }
 
+  public Zodiac librarySearchAnchors(ZodiacLibraryScoring librarySearchAnchors) {
+    
+    this.librarySearchAnchors = librarySearchAnchors;
+    return this;
+  }
+
+   /**
+   * Get librarySearchAnchors
+   * @return librarySearchAnchors
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ZodiacLibraryScoring getLibrarySearchAnchors() {
+    return librarySearchAnchors;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LIBRARY_SEARCH_ANCHORS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLibrarySearchAnchors(ZodiacLibraryScoring librarySearchAnchors) {
+    this.librarySearchAnchors = librarySearchAnchors;
+  }
+
+  public Zodiac analogueSearchAnchors(ZodiacAnalogueNodes analogueSearchAnchors) {
+    
+    this.analogueSearchAnchors = analogueSearchAnchors;
+    return this;
+  }
+
+   /**
+   * Get analogueSearchAnchors
+   * @return analogueSearchAnchors
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ZodiacAnalogueNodes getAnalogueSearchAnchors() {
+    return analogueSearchAnchors;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ANALOGUE_SEARCH_ANCHORS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAnalogueSearchAnchors(ZodiacAnalogueNodes analogueSearchAnchors) {
+    this.analogueSearchAnchors = analogueSearchAnchors;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -233,12 +293,14 @@ public class Zodiac {
         Objects.equals(this.consideredCandidatesAt800Mz, zodiac.consideredCandidatesAt800Mz) &&
         Objects.equals(this.runInTwoSteps, zodiac.runInTwoSteps) &&
         Objects.equals(this.edgeFilterThresholds, zodiac.edgeFilterThresholds) &&
-        Objects.equals(this.gibbsSamplerParameters, zodiac.gibbsSamplerParameters);
+        Objects.equals(this.gibbsSamplerParameters, zodiac.gibbsSamplerParameters) &&
+        Objects.equals(this.librarySearchAnchors, zodiac.librarySearchAnchors) &&
+        Objects.equals(this.analogueSearchAnchors, zodiac.analogueSearchAnchors);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, consideredCandidatesAt300Mz, consideredCandidatesAt800Mz, runInTwoSteps, edgeFilterThresholds, gibbsSamplerParameters);
+    return Objects.hash(enabled, consideredCandidatesAt300Mz, consideredCandidatesAt800Mz, runInTwoSteps, edgeFilterThresholds, gibbsSamplerParameters, librarySearchAnchors, analogueSearchAnchors);
   }
 
   @Override
@@ -251,6 +313,8 @@ public class Zodiac {
     sb.append("    runInTwoSteps: ").append(toIndentedString(runInTwoSteps)).append("\n");
     sb.append("    edgeFilterThresholds: ").append(toIndentedString(edgeFilterThresholds)).append("\n");
     sb.append("    gibbsSamplerParameters: ").append(toIndentedString(gibbsSamplerParameters)).append("\n");
+    sb.append("    librarySearchAnchors: ").append(toIndentedString(librarySearchAnchors)).append("\n");
+    sb.append("    analogueSearchAnchors: ").append(toIndentedString(analogueSearchAnchors)).append("\n");
     sb.append("}");
     return sb.toString();
   }

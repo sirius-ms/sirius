@@ -14,6 +14,8 @@ User/developer friendly parameter subset for the ZODIAC tool (Network base molec
 |**runInTwoSteps** | **Boolean** | As default ZODIAC runs a 2-step approach. First running &#39;good quality compounds&#39; only, and afterwards including the remaining. |  [optional] |
 |**edgeFilterThresholds** | [**ZodiacEdgeFilterThresholds**](ZodiacEdgeFilterThresholds.md) |  |  [optional] |
 |**gibbsSamplerParameters** | [**ZodiacEpochs**](ZodiacEpochs.md) |  |  [optional] |
+|**librarySearchAnchors** | [**ZodiacLibraryScoring**](ZodiacLibraryScoring.md) |  |  [optional] |
+|**analogueSearchAnchors** | [**ZodiacAnalogueNodes**](ZodiacAnalogueNodes.md) |  |  [optional] |
 
 
 
