@@ -106,8 +106,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 showCenterCard(ActionList.ViewState.DATA);
         });
 
-        ListModel<FingerprintCandidateBean> listModel = new DefaultEventListModel<>(filteredSource);
-        candidateList = new CandidateInnerList(listModel);
+        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
         this.resultPanel = resultPanel;
         this.gui = gui;

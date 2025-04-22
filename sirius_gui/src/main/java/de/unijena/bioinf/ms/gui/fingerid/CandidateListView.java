@@ -36,7 +36,6 @@ import java.awt.event.ActionListener;
 
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
-//    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
     private DBFilterPanel dbFilterPanel;
     protected JToggleButton loadAll;
     protected ActionListener loadDataActionListener;
@@ -67,17 +66,9 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.setFloatable(false);
         tb.setBorderPainted(false);
         tb.setRollover(true);
-//        tb.setLayout(new WrapLayout(FlowLayout.CENTER, 0, 0));
-
-//        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
 
         dbFilterPanel = new DBFilterPanel(source);
         dbFilterPanel.toggle();
-
-//        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
-//        tb.addSeparator();
-//        tb.addSeparator();
-
 
         final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN.derive(24,24), "Show database filters");
         filter.addActionListener(e -> {
@@ -91,7 +82,6 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         });
         filter.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_DatabaseFilter);
         tb.add(filter);
-//        tb.addSeparator();
 
         loadAll = new ToolbarToggleButton(Icons.LOAD_ALL.derive(24,24), "Load all Candidates (Might be many!).");
         loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), true, false);
@@ -109,8 +99,6 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField)
-//                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
-//                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }
