@@ -23,6 +23,6 @@ public class WeightedRecallSpectralAlignment extends RecallSpectralAlignment{
             intensitySum += p.getIntensity();
 
         double weightedRecall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : matchedIntensitySum / intensitySum;
-        return new SpectralSimilarity(weightedRecall, matchedPeaks);
+        return new SpectralSimilarity((float) weightedRecall, matchedPeaks);
     }
 }

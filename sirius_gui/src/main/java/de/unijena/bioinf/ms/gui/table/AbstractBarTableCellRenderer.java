@@ -79,7 +79,7 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
 
     //override this method if you have to modify the value of the cell for view
     protected Double getValue(Object value) {
-        return value == null ? Double.NaN : (Double) value;
+        return value == null ? Double.NaN : ((Number) value).doubleValue();
     }
 
     protected double getPercentage(JTable table, double value, boolean isSelected, boolean hasFocus, int row, int column) {
