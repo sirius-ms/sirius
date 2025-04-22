@@ -116,6 +116,7 @@ public class ResultPanel extends JTabbedPane {
         FormulaListHeaderPanel formulaHeaderFingerprint;
         if (fingerprintList != null) {
             formulaHeaderFingerprint = new FormulaListHeaderPanel(siriusResultElements, fingerprintTab);
+            formulaHeaderFingerprint.addTutorialInformationToCompactView(SoftwareTourInfoStore.Fingerprint_Formulas);
             addTab("Predicted Fingerprints", null, formulaHeaderFingerprint, fingerprintTab.getDescription());
             fingerprintList.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
                 checkAndInitFingerprintSoftwareTour(formulaHeaderFingerprint, instanceBean, gui);
@@ -133,6 +134,7 @@ public class ResultPanel extends JTabbedPane {
                         .flatMap(List::stream).map(CompoundClassBean::new).toList());
         canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements);
         FormulaListHeaderPanel formulaHeaderCanopus = new FormulaListHeaderPanel(siriusResultElements, canopusTab);
+        formulaHeaderCanopus.addTutorialInformationToCompactView(SoftwareTourInfoStore.Canopus_Formulas);
         compoundClassList.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
             checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, instanceBean, gui);
         });
