@@ -9,7 +9,7 @@
 |------------ | ------------- | ------------- | -------------|
 |**specMatchId** | **String** |  |  [optional] |
 |**rank** | **Integer** |  |  [optional] |
-|**similarity** | **Double** | Similarity between query and reference spectrum |  |
+|**similarity** | **Float** | Similarity between query and reference spectrum |  |
 |**sharedPeaks** | **Integer** | Number of shared/matched peaks |  [optional] |
 |**sharedPeakMapping** | [**List&lt;PeakPair&gt;**](PeakPair.md) | List of paired/matched peak indices.   Maps indices of peaks from the query spectrum (mass sorted)  to indices of matched peaks in the reference spectrum (mass sorted) |  [optional] |
 |**querySpectrumIndex** | **Integer** |  |  |

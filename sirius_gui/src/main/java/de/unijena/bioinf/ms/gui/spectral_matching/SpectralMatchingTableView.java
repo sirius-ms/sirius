@@ -185,7 +185,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 //                        if (element.getReference().getInstrumentation() != null)
 //                            baseList.add(element.getReference().getInstrumentation().toString());
                 }),
-                new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity())),
+                new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity().doubleValue())),
                 new MinMaxMatcherEditor<>(peaksSlider, (baseList, element) -> baseList.add((double) element.getMatch().getSharedPeaks()))
         );
     }

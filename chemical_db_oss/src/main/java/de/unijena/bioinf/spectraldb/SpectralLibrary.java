@@ -28,6 +28,7 @@ import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
+import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,11 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public interface SpectralLibrary {
+    FastCosine FAST_COSINE = new FastCosine();
+
+    default FastCosine getFastCosine() {
+        return FAST_COSINE;
+    }
 
     long countAllSpectra() throws IOException;
 
