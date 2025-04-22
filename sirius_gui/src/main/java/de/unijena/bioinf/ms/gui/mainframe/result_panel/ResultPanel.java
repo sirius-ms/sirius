@@ -153,7 +153,7 @@ public class ResultPanel extends JTabbedPane {
 
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView, gui);
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
@@ -172,7 +172,7 @@ public class ResultPanel extends JTabbedPane {
             } else if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
                 //canopus tab
                 checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
-            } else if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+            } else if (selectedComponent == structureAnnoTab && combinedStructureListSubstructureView.getSelectedElement() != null) {
                 //epimetheus tab
                 structureAnnoTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {

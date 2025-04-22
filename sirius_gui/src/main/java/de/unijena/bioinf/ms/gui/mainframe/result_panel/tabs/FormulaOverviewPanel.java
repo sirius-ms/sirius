@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListDetailView;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
@@ -57,7 +56,10 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription, Lo
         super(new BorderLayout());
 
         formulaListDetailView = new FormulaListDetailView(siriusResultElements);
+        formulaListDetailView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Formulas_List);
+
         spectrumTreeView = new SpectraTreePanel(siriusResultElements, siriusGui);
+        spectrumTreeView.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Formulas_SpectraAndTree);
 
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, formulaListDetailView, spectrumTreeView);
@@ -67,7 +69,7 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription, Lo
         //software tour
         siriusResultElements.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
             if (instanceBean != null && sre != null && sre.getFTreeJson().isPresent()) {
-                Jobs.runEDTLater(() -> initSoftwareTour(gui.getProperties()));
+                Jobs.runEDTLater(() -> initSoftwareTour(siriusGui.getProperties()));
             }
         });
     }
