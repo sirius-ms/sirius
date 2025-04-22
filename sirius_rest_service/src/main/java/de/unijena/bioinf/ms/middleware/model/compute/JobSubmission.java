@@ -136,10 +136,10 @@ public class JobSubmission extends AbstractSubmission {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         //for database search (CSI, spectral library) we only use BIO per default so that results are (mostly)
         // consistent for different users with different custom DBs
-        List<String> searchDbs = includeCustomDbsForStructureSearch
-                ? Stream.concat(Stream.of(CustomDataSources.getSourceFromName(DataSource.BIO.name())), CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList()
-                : Collections.singletonList(DataSource.BIO.name());
-
+        List<String> searchDbs = Arrays.stream(DataSource.valuesAllBioOnly()).map(DataSource::name).toList();
+        if (includeCustomDbsForStructureSearch)
+            CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource).distinct()
+                    .map(CustomDataSources.Source::name).forEach(searchDbs::add);
 
         JobSubmissionBuilder<?, ?> b = JobSubmission.builder()
                 .fallbackAdducts(settings.getFallback().stream().map(PrecursorIonType::toString).collect(Collectors.toList()))
@@ -185,7 +185,7 @@ public class JobSubmission extends AbstractSubmission {
     public List<String> asConfigToolCommand() {
         List<String> configTool = new ArrayList<>();
         configTool.add("config");
-        asCombinedConfigMap().forEach((k, v) -> {
+        asCombinedConfigMap(true).forEach((k, v) -> {
             if (v == null){
                 configTool.add("--" + k);
             } else {
@@ -202,21 +202,23 @@ public class JobSubmission extends AbstractSubmission {
      * The map combines the map representation from all tools and the map representation
      * of the submission. Parameters set in the object (non-null) will override values in the global config
      * map if the JobSubmission object.
+     * @param enabledOnly specify wheter parameters of no-enabled tools should be omitted or not
      * @return Combined config map
      */
     @JsonIgnore
-    public Map<String, String> asCombinedConfigMap() {
+    public Map<String, String> asCombinedConfigMap(boolean enabledOnly) {
         Map<String, String> combined = asConfigMap();
-        getEnabledTools().stream().map(Tool::asConfigMap).forEach(combined::putAll);
+        getTools().stream().filter(s -> !enabledOnly || s.isEnabled()).map(Tool::asConfigMap)
+                .forEach(combined::putAll);
         return combined;
     }
 
     /**
-     * Merges the result of {@link #asCombinedConfigMap()} into the config map if this JobSubmission.
+     * Merges the result of {@link #asCombinedConfigMap(boolean enabledOnly)} into the config map if this JobSubmission.
      */
     @JsonIgnore
     public void mergeCombinedConfigMap() {
-        setConfigMap(asCombinedConfigMap());
+        setConfigMap(asCombinedConfigMap(false));
     }
 
     @JsonIgnore
@@ -236,8 +238,13 @@ public class JobSubmission extends AbstractSubmission {
     }
 
     @JsonIgnore
-    public List<Tool<?>> getEnabledTools() {
+    public List<Tool<?>> getTools() {
         return Stream.of(spectraSearchParams, formulaIdParams, zodiacParams, fingerprintPredictionParams, canopusParams, structureDbSearchParams, msNovelistParams)
-                .filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
+                .filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    @JsonIgnore
+    public List<Tool<?>> getEnabledTools() {
+        return getTools().stream().filter(Objects::nonNull).filter(Tool::isEnabled).collect(Collectors.toList());
     }
 }

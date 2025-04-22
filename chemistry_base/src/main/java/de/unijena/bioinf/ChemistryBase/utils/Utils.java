@@ -29,10 +29,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -187,5 +184,31 @@ public class Utils {
     public static <T> boolean notNullOrEmpty(@Nullable final T[] s) {
         return !isNullOrEmpty(s);
     }
+
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> getIfIdenticalOrNull(Collection<T>... sets) {
+        // Filter out null sets
+        List<? extends Set<T>> nonNullSets = Arrays.stream(sets).filter(Objects::nonNull).map(HashSet::new).toList();
+
+        // If there are 0 or 1 sets after filtering, they are trivially identical
+        if (nonNullSets.size() == 1)
+            return nonNullSets.getFirst();
+        if (nonNullSets.isEmpty())
+            return Set.of();
+
+        // Compare the first set with all others
+        Set<T> firstSet = nonNullSets.getFirst();
+        if (nonNullSets.stream().skip(1).allMatch(set -> set.size() == firstSet.size() && set.containsAll(firstSet)))
+            return firstSet;
+        return null;
+    }
+
+    public static <T> Optional<Set<T>> getIfIdentical(Collection<T>... sets) {
+        return Optional.ofNullable(getIfIdenticalOrNull(sets));
+    }
+
+
+
 
 }

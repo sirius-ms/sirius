@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.AnalogueSearchSettings;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.IdentitySearchSettings;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
@@ -143,10 +145,11 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     public static SpectralLibrarySearch.SpectralLibrarySearchBuilder<?, ?> builderWithDefaults() {
         IdentitySearchSettings libSearchSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IdentitySearchSettings.class);
         AnalogueSearchSettings analogueSearchSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AnalogueSearchSettings.class);
+        SpectralSearchDB searchDBs = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralSearchDB.class);
 
         return SpectralLibrarySearch.builder()
                 .enabled(true)
-                .spectraSearchDBs(null)
+                .spectraSearchDBs(searchDBs.searchDBs.stream().map(CustomDataSources.Source::name).toList())
                 .precursorDeviationPpm(libSearchSettings.getPrecursorDeviation().getPpm())
                 .minSimilarity(libSearchSettings.getMinSimilarity())
                 .minNumOfPeaks(libSearchSettings.getMinNumOfPeaks())

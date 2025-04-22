@@ -15,17 +15,14 @@ import java.util.stream.Collectors;
 
 public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<SpectraSearchOptions> {
     final GlobalConfigPanel globalConfigPanel;
-    private final boolean ms2;
-
 
     protected JSpinner identityPrecursorDev, identityMinSimilarity, identityMinPeaks, identityMaxHits, analogMinSimilarity, analogMinPeaks, analogMaxHits;
     private JCheckBox enableAnalogSearch;
 
 
-    public SpectraSearchConfigPanel(GlobalConfigPanel globalConfigPanel, boolean ms2) {
+    public SpectraSearchConfigPanel(GlobalConfigPanel globalConfigPanel) {
         super(SpectraSearchOptions.class, false);
         this.globalConfigPanel = globalConfigPanel;
-        this.ms2 = ms2;
 
         createPanel();
     }
@@ -34,14 +31,13 @@ public class SpectraSearchConfigPanel extends SubToolConfigPanelAdvancedParams<S
     private void createPanel() {
         // todo add retention time matching search here if available
         //todo disable if no ms2
+        //todo add msms peak mass deviation
 
         parameterBindings.put("SpectralSearchDB", () ->
                 globalConfigPanel.getSearchDBs().stream()
-                        .filter(db -> db.isCustomDb())
                         .map(SearchableDatabase::getDatabaseId)
                         .collect(Collectors.joining(",")));
 
-        parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel) globalConfigPanel.ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
         final TwoColumnPanel identitySearch = new TwoColumnPanel();
 
