@@ -5,6 +5,7 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.*;
+import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +21,19 @@ import java.util.stream.Stream;
 public class ComputeToolPanel extends JPanel {
     public static final String PRESET_FROZEN_MESSAGE = "Could not load preset.";
 
-    private final GlobalConfigPanel globalConfigPanel; // global configurations
-    private final ActSpectraSearchConfigPanel spectraSearchConfigPanel; //Library search configs
+
+
+    @Getter private final GlobalConfigPanel globalConfigPanel; // global configurations
+    @Getter private final ActSpectraSearchConfigPanel spectraSearchConfigPanel; //Library search configs
     private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
     private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
     private final ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
     private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
     private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
+
+    private Stream<ActivatableConfigPanel<?>> getToolStream(){
+        return Stream.of(spectraSearchConfigPanel, formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs);
+    }
 
     public ComputeToolPanel(SiriusGui gui, List<InstanceBean> compoundsToProcess, boolean hasMs2) {
         this(gui, compoundsToProcess, hasMs2, null);
@@ -37,7 +44,7 @@ public class ComputeToolPanel extends JPanel {
 
         // make subtool config panels
         globalConfigPanel = new GlobalConfigPanel(gui, compoundsToProcess, hasMs2);
-        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel, hasMs2);
+        spectraSearchConfigPanel = new ActSpectraSearchConfigPanel(gui, globalConfigPanel);
         formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, compoundsToProcess, globalConfigPanel, hasMs2);
         zodiacConfigs = new ActZodiacConfigPanel(gui, compoundsToProcess.size());
         fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
@@ -90,20 +97,18 @@ public class ComputeToolPanel extends JPanel {
         }
     }
 
-    public void disableControls(boolean freeze){
-        if (freeze){
-            Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
-                    .forEach(panel -> {
-                        if (panel.isToolSelected()) {
-                            panel.activationButton.doClick(0);
-                        }
-                        panel.setButtonEnabled(false, PRESET_FROZEN_MESSAGE);
-                    });
-        }else {
-            Stream.of(formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs)
-                    .forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
+    public void disableControls(boolean freeze) {
+        GuiUtils.setEnabled(globalConfigPanel, !freeze);
+        if (freeze) {
+            getToolStream().forEach(panel -> {
+                if (panel.isToolSelected()) {
+                    panel.activationButton.doClick(0);
+                }
+                panel.setButtonEnabled(false, PRESET_FROZEN_MESSAGE);
+            });
+        } else {
+            getToolStream().forEach(panel -> panel.setButtonEnabled(true, PRESET_FROZEN_MESSAGE));
         }
-        globalConfigPanel.setEnabled(freeze);
     }
 
     public JobSubmission makeJobSubmission(JobSubmission preset, boolean recompute) {
@@ -152,14 +157,28 @@ public class ComputeToolPanel extends JPanel {
         return bindings;
     }
 
+    public void applyValuesFromPreset(@NotNull JobSubmission preset, @NotNull Map<String, String> configMap) {
+        globalConfigPanel.applyValuesFromPreset(configMap);
+
+        spectraSearchConfigPanel.applyValuesFromPreset(preset.getSpectraSearchParams() != null && Boolean.TRUE.equals(preset.getSpectraSearchParams().isEnabled()), configMap);
+
+        formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
+        zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
+
+        boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
+        boolean canopusEnabled = preset.getCanopusParams() != null && Boolean.TRUE.equals(preset.getCanopusParams().isEnabled());
+        if (fpEnabled != canopusEnabled) {
+            throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously.");
+        }
+        fingerprintAndCanopusConfigPanel.applyValuesFromPreset(fpEnabled, configMap);
+        csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
+        msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
+    }
+
     public void setDisplayAdvancedParameters(boolean displayAdvanced) {
         spectraSearchConfigPanel.content.setDisplayAdvancedParameters(displayAdvanced);
         formulaIDConfigPanel.content.setDisplayAdvancedParameters(displayAdvanced);
         zodiacConfigs.content.setDisplayAdvancedParameters(displayAdvanced);
-    }
-
-    public Stream<ActivatableConfigPanel<?>> getToolStream(){
-        return Stream.of(spectraSearchConfigPanel, formulaIDConfigPanel, zodiacConfigs, fingerprintAndCanopusConfigPanel, csiSearchConfigs, msNovelistConfigs);
     }
 
     public boolean warnNoMethodIsSelected() {
@@ -186,24 +205,6 @@ public class ComputeToolPanel extends JPanel {
         fingerprintAndCanopusConfigPanel.destroy(); //Combines CSI:FingerID predict and CANOPUS configs
         csiSearchConfigs.destroy(); //CSI:FingerID search configs
         msNovelistConfigs.destroy(); //MsNovelist configs
-    }
-
-    public void applyValuesFromPreset(@NotNull JobSubmission preset, @NotNull Map<String, String> configMap) {
-        globalConfigPanel.applyValuesFromPreset(configMap);
-
-        spectraSearchConfigPanel.applyValuesFromPreset(preset.getSpectraSearchParams() != null && Boolean.TRUE.equals(preset.getSpectraSearchParams().isEnabled()), configMap);
-
-        formulaIDConfigPanel.applyValuesFromPreset(preset.getFormulaIdParams() != null && Boolean.TRUE.equals(preset.getFormulaIdParams().isEnabled()), configMap);
-        zodiacConfigs.applyValuesFromPreset(preset.getZodiacParams() != null && Boolean.TRUE.equals(preset.getZodiacParams().isEnabled()), configMap);
-
-        boolean fpEnabled = preset.getFingerprintPredictionParams() != null && Boolean.TRUE.equals(preset.getFingerprintPredictionParams().isEnabled());
-        boolean canopusEnabled = preset.getCanopusParams() != null && Boolean.TRUE.equals(preset.getCanopusParams().isEnabled());
-        if (fpEnabled != canopusEnabled) {
-            throw new UnsupportedOperationException("Fingerprint and Canopus are not enabled/disabled simultaneously.");
-        }
-        fingerprintAndCanopusConfigPanel.applyValuesFromPreset(fpEnabled, configMap);
-        csiSearchConfigs.applyValuesFromPreset(preset.getStructureDbSearchParams() != null && Boolean.TRUE.equals(preset.getStructureDbSearchParams().isEnabled()), configMap);
-        msNovelistConfigs.applyValuesFromPreset(preset.getMsNovelistParams() != null && Boolean.TRUE.equals(preset.getMsNovelistParams().isEnabled()), configMap);
     }
 
 }

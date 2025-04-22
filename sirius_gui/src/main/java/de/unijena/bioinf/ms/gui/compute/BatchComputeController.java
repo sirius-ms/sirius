@@ -15,6 +15,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.gui.compute.ComputePresetAndBannerPanel.DEFAULT_PRESET_NAME;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 @Slf4j
@@ -91,6 +93,26 @@ public class BatchComputeController {
         // add tools panel controls
         presetPanel.addAdvancedViewListener(toolsPanel::setDisplayAdvancedParameters);
         toolsPanel.setDisplayAdvancedParameters(presetPanel.isAdvancedView());
+        // auto enable library search for default preset if custom db is selected.
+        // auto disable for all presets if all custom dbs have been unselected
+        // todo remove/change if remote spec libs are available.
+        toolsPanel.getGlobalConfigPanel().getSearchDBList().checkBoxList.addCheckBoxListener(e -> {
+            @SuppressWarnings("unchecked")
+            SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+            if (item.isCustomDb()){
+                ActSpectraSearchConfigPanel spectralPanel = toolsPanel.getSpectraSearchConfigPanel();
+                // we only
+                if (DEFAULT_PRESET_NAME.equals(presetPanel.getSelectedPreset().getName()) && e.getStateChange() == ItemEvent.SELECTED && !spectralPanel.activationButton.isSelected() ) {
+                    spectralPanel.activationButton.setSelected(true);
+                    spectralPanel.setComponentsEnabled(spectralPanel.activationButton.isSelected());
+                } else if (e.getStateChange() == ItemEvent.DESELECTED && spectralPanel.activationButton.isSelected()) {
+                    if ( toolsPanel.getGlobalConfigPanel().getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
+                        spectralPanel.activationButton.setSelected(false);
+                        spectralPanel.setComponentsEnabled(spectralPanel.activationButton.isSelected());
+                    }
+                }
+            }
+        });
 
         // add action panel controls
         computeActionsPanel.getShowCommand().addActionListener(e -> {
@@ -159,7 +181,7 @@ public class BatchComputeController {
             if (selectedStoredPreset.isEditable()) {
                 // If custom DBs change, preset will have an outdated list that causes a warning,
                 // they will be all selected anyway, so we can ignore it
-                Set<String> ignoredHiddenParameters = Set.of("SpectralSearchDB");
+                Set<String> ignoredHiddenParameters = Set.of();
 
                 Set<String> uiParameters = new HashSet<>(toolsPanel.getAllUIParameterBindings().keySet());
                 uiParameters.add("RecomputeResults");

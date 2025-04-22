@@ -6,6 +6,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
+import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -21,6 +25,8 @@ import it.unimi.dsi.fastutil.Pair;
 import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.getIfIdenticalOrNull;
 
 public class GlobalConfigPanel extends ConfigPanel {
 
@@ -60,17 +66,14 @@ public class GlobalConfigPanel extends ConfigPanel {
 
 
     protected final List<InstanceBean> allInstances;
-    protected final List<InstanceBean> ecs;
-
-    protected final SiriusGui gui;
+    protected final List<InstanceBean> selectedInstances;
 
     protected boolean hasMs2;
 
-    public GlobalConfigPanel(SiriusGui gui,List<InstanceBean> ecs, boolean ms2) {
+    public GlobalConfigPanel(SiriusGui gui, List<InstanceBean> selectedInstances, boolean ms2) {
         super();
-        this.allInstances = gui.getMainFrame().getCompounds();
-        this.ecs = ecs;
-        this.gui = gui;
+        this.allInstances = gui.getProjectManager().INSTANCE_LIST;
+        this.selectedInstances = selectedInstances;
         this.hasMs2 = ms2;
 
         {
@@ -174,15 +177,7 @@ public class GlobalConfigPanel extends ConfigPanel {
         Instrument instrument = Arrays.stream(Instrument.values()).filter(i -> i.profile.equalsIgnoreCase(profileString)).findFirst()
                 .orElseThrow(() -> new RuntimeException("Could not parse algorithm profile " + profileString + "."));
         profileSelector.setSelectedItem(instrument);
-
-
-        if (preset.get("MS2MassDeviation.allowedMassDeviation").equals(preset.get("SpectralMatchingMassDeviation.allowedPeakDeviation"))
-                && preset.get("MS2MassDeviation.allowedMassDeviation").equals(preset.get("SpectralMatchingMassDeviation.allowedPrecursorDeviation"))) {
-            Deviation d = Deviation.fromString(preset.get("MS2MassDeviation.allowedMassDeviation"));
-            ppmSpinner.setValue(d.getPpm());
-        } else {
-            throw new UnsupportedOperationException("Properties MS2MassDeviation.allowedMassDeviation, SpectralMatchingMassDeviation.allowedPeakDeviation, SpectralMatchingMassDeviation.allowedPrecursorDeviation should all have the same value.");
-        }
+        ppmSpinner.setValue(Deviation.fromString(preset.get("MS2MassDeviation.allowedMassDeviation")).getPpm());
 
         Set<PrecursorIonType> fallbackAdducts;
         Set<PrecursorIonType> enforcedAdducts;
@@ -203,10 +198,42 @@ public class GlobalConfigPanel extends ConfigPanel {
         //in batch-mode we always use the fallback adducts (only) - adding detected adducts was no good idea, since there are too many of them.
         Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(fallbackAdducts, isBatchDialog(), !isBatchDialog());
         refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
+
+        /*
+        In Gui panel we only use a single database selector for all specifiable databases but in general each tool has
+        its own db parameter that can be specified in a preset. So we need to check whether they are all the same or
+        and if not we have to lock the GUI for the preset.
+        */
+        List<CustomDataSources.Source> formulaSearchDB = Optional.ofNullable(preset.get("FormulaSearchDB"))
+                .map(FormulaSearchDB::fromString)
+                .filter(s ->  s != FormulaSearchDB.CONSIDER_ALL_FORMULAS)
+                .filter(s ->  !s.isEmpty())
+                .map(FormulaSearchDB::getSearchDBs)
+                .orElse(null);
+        List<CustomDataSources.Source> structureSearchDBs = Optional.ofNullable(preset.get("StructureSearchDB"))
+                .map(StructureSearchDB::fromString)
+                .map(StructureSearchDB::getSearchDBs)
+                .orElse(null);
+        List<CustomDataSources.Source> spectralSearchDBs = Optional.ofNullable(preset.get("SpectralSearchDB"))
+                .map(SpectralSearchDB::fromString)
+                .map(SpectralSearchDB::getSearchDBs)
+                .orElse(null);
+
+        Set<CustomDataSources.Source> searchDbs = getIfIdenticalOrNull(spectralSearchDBs, structureSearchDBs, formulaSearchDB);
+        if (searchDbs != null) {
+            searchDBList.checkBoxList.uncheckAll();
+            if (searchDbs.isEmpty()) {
+                searchDBList.selectDefaultDatabases();
+            }else {
+                searchDBList.select(searchDbs);
+            }
+        } else {
+            throw new UnsupportedOperationException("FormulaSearchDB, StructureSearchDB and SpectralSearchDB are not identical.= in preset. GUI only supports identical values. Preset can still be used but not modified in GUI");
+        }
     }
 
     protected boolean isBatchDialog() {
-        return ecs.size() != 1;
+        return selectedInstances.size() != 1;
     }
 
     /**
@@ -217,13 +244,13 @@ public class GlobalConfigPanel extends ConfigPanel {
      */
     private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(Set<PrecursorIonType> fallbackSelection, boolean forceFallback, boolean addBaseIonizationForDetected) {
 
-        if (ecs.isEmpty()) {  // get adducts from settings
+        if (selectedInstances.isEmpty()) {  // get adducts from settings
             Set<PrecursorIonType> possible = PeriodicTable.getInstance().getAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toCollection(HashSet::new));
             possible.addAll(fallbackSelection);
             return Pair.of(possible, fallbackSelection);
         }
 
-        Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream()
+        Set<PrecursorIonType> detectedAdductsOrCharge = selectedInstances.stream()
                 .map(InstanceBean::getDetectedAdductsOrCharge)
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());
@@ -237,7 +264,7 @@ public class GlobalConfigPanel extends ConfigPanel {
                 .collect(Collectors.toSet());
 
         // list of adducts to be shown in the Compute panel
-        Set<PrecursorIonType> possibleAdducts = gui.getProjectManager().INSTANCE_LIST.stream()
+        Set<PrecursorIonType> possibleAdducts = allInstances.stream()
                 .map(InstanceBean::getDetectedAdducts)
                 .flatMap(Set::stream)
                 .filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged())

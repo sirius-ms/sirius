@@ -150,7 +150,7 @@ public enum DataSource {
         return !isBioOnly(flag);
     }
 
-    public static DataSource[] valuesALLBio() {
+    public static DataSource[] valuesAllBioOnly() {
         return Arrays.stream(DataSource.values()).filter(DataSource::isBioOnly).filter(it -> it != BIO)
                 .toArray(DataSource[]::new);
     }

@@ -21,32 +21,14 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 
-import java.awt.event.ItemEvent;
 import java.util.Map;
 
 public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraSearchConfigPanel> {
 
-    public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel, boolean ms2) {
-        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32,32), () -> new SpectraSearchConfigPanel(globalConfigPanel, ms2));
-
-        globalConfigPanel.getSearchDBList().checkBoxList.addCheckBoxListener(e -> {
-            @SuppressWarnings("unchecked")
-            SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
-            if (item.isCustomDb()){
-                if (e.getStateChange() == ItemEvent.SELECTED && !activationButton.isSelected() ) {
-                    activationButton.setSelected(true);
-                    setComponentsEnabled(activationButton.isSelected());
-                } else if (e.getStateChange() == ItemEvent.DESELECTED && activationButton.isSelected()) {
-                    if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
-                        activationButton.setSelected(false);
-                        setComponentsEnabled(activationButton.isSelected());
-                    }
-                }
-            }
-        });
+    public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel) {
+        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel));
 
         if (activationButton.isSelected()) {
             if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
