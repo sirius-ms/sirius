@@ -29,6 +29,7 @@ import io.sirius.ms.sdk.model.JobProgress;
 import io.sirius.ms.sse.DataObjectEvent;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Flow;
 
@@ -125,7 +126,8 @@ public class SseProgressJJob extends WaiterJJob<Job> {
         setState(JobState.valueOf(p.getState().name()));
 
         if (p.getState() == io.sirius.ms.sdk.model.JobState.FAILED) {
-            crash(new Exception(p.getErrorMessage()));
+            String errorMessage = Objects.requireNonNullElse(p.getErrorMessage(), "Job " + projectId + "." + jobId + " failed.");
+            crash(new Exception(errorMessage));
             return true;
         }
 
