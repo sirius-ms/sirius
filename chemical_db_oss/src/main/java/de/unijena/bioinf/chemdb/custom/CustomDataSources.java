@@ -283,6 +283,9 @@ public class CustomDataSources {
 
     public static List<Source> getAllSelectableDbs() {
         return sourcesStream().filter(CustomDataSources::isSearchable)
+                //filter cli short-cut flags
+                .filter(it -> it.flag() != DataSource.ALL.flag())
+                .filter(it -> it.flag() != DataSource.BIO.flag())
                 .collect(Collectors.toList());
     }
 
