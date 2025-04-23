@@ -32,7 +32,6 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
     protected CommandLine.Model.CommandSpec commandSpec;
 
    public SubToolConfigPanel(Class<C> annotatedObject) {
-        super();
         commandSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(annotatedObject);
     }
 

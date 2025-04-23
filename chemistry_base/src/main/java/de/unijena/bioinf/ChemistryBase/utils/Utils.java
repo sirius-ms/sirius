@@ -199,7 +199,7 @@ public class Utils {
 
         // Compare the first set with all others
         Set<T> firstSet = nonNullSets.getFirst();
-        if (nonNullSets.stream().skip(1).allMatch(set -> set.size() == firstSet.size() && set.containsAll(firstSet)))
+        if (nonNullSets.stream().skip(1).allMatch(firstSet::equals))
             return firstSet;
         return null;
     }
