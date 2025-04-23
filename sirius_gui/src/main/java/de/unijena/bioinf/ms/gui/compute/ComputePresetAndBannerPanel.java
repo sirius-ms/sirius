@@ -8,6 +8,7 @@ import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.MessageBanner;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.ToggleListener;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -106,6 +107,7 @@ public class ComputePresetAndBannerPanel extends JPanel {
         panel.add(new JLabel("Preset"));
 
         presetDropdown = new JComboBox<>();
+        presetDropdown.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.BatchCompute_PresetDropDown);
 
         panel.add(presetDropdown);
 

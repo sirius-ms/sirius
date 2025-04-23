@@ -28,6 +28,8 @@ import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.extern.slf4j.Slf4j;
@@ -108,6 +110,8 @@ public class BatchComputeDialog extends JDialog {
             }
             presetPanel.updateConnectionBanner(checkResult);
         });
+
+        Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
 
         //finalize panel build and make the dialog visible
         setResizable(false);
