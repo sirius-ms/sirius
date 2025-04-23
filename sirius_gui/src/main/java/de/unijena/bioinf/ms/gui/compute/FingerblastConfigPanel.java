@@ -26,14 +26,14 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.SearchableDatabase;
-import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,34 +44,41 @@ import java.util.stream.Collectors;
 
 //here we can show fingerid options. If it becomes too much, we can change this to a setting like tabbed pane
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
-    @Getter
-    private final StructureSearchStrategy structureSearchStrategy;
     private final JCheckBox pubChemFallback;
     private final JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox;
 
     protected final SiriusGui gui;
-    protected final FormulaIDConfigPanel syncSource;
+    protected final GlobalConfigPanel syncSource;
 
-    public FingerblastConfigPanel(SiriusGui gui, @Nullable final FormulaIDConfigPanel syncSource) {
+    public FingerblastConfigPanel(SiriusGui gui, @NotNull final GlobalConfigPanel searchDbSource) {
         super(FingerblastOptions.class);
         this.gui = gui;
-        this.syncSource = syncSource;
+        this.syncSource = searchDbSource;
 
 
         pubChemFallback = new JCheckBox();
-        pubChemFallback.setSelected(true);
         pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
 
-        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null, pubChemFallback::isSelected);
-
         parameterBindings.put("StructureSearchDB", () -> {
-            List<SearchableDatabase> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
+            List<SearchableDatabase> checkedDBs = searchDbSource.getSearchDBs();
             return checkedDBs.isEmpty() ? "," : checkedDBs.stream()
                     .map(SearchableDatabase::getDatabaseId)
                     .filter(db -> !(db.equals(DataSource.PUBCHEM.name()) && pubChemFallback.isSelected()))
                     .collect(Collectors.joining(","));
         });
 
+        // listen for pubchem selection to enable/disable pubchem as fallback option
+        searchDbSource.getSearchDBList().checkBoxList.addCheckBoxListener(e -> {
+            @SuppressWarnings("unchecked")
+            SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+            if (item.getDatabaseId().equals(DataSource.PUBCHEM.name())) {
+                pubChemFallback.setSelected(e.getStateChange() != ItemEvent.SELECTED);
+            }
+        });
+
+        pubChemFallback.setSelected(searchDbSource.getSearchDBList().checkBoxList.getCheckedItems().stream()
+                .map(SearchableDatabase::getDatabaseId)
+                .anyMatch(n -> n.equals(DataSource.PUBCHEM.name())));
 
         //confidence score approximate mode settings
         confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(
@@ -90,7 +97,6 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         checkBoxPanel.setPreferredSize(new Dimension(confidenceModeBox.getPreferredSize().width, checkBoxPanel.getPreferredSize().height));  // Prevent resizing on unchecking checkbox
 
         add(new TextHeaderBoxPanel("Search strategy", additionalOptions));
-        add(structureSearchStrategy);
 
         parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> {
             if (!pubChemFallback.isSelected()) {
@@ -104,21 +110,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         pubChemFallback.addChangeListener(e -> {
             List.of(confLabel, confidenceModeBox).forEach(c -> c.setVisible(pubChemFallback.isSelected()));
-            refreshPubChem();
         });
-    }
-
-    public void refreshPubChem() {
-        JCheckBoxList<SearchableDatabase> dbList = structureSearchStrategy.getSearchDBList().checkBoxList;
-        SearchableDatabase pubChemDB = gui.getSiriusClient().databases().getDatabase(DataSource.PUBCHEM.name(), false);
-        if (pubChemFallback.isSelected()) {
-            dbList.setItemEnabled(pubChemDB, false);
-            dbList.uncheck(pubChemDB);
-            dbList.setItemToolTip(pubChemDB, "PubChem will be used as fallback");
-        } else {
-            dbList.setItemEnabled(pubChemDB, true);
-            dbList.setItemToolTip(pubChemDB, null);
-        }
     }
 
     @Override
@@ -130,7 +122,5 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             pubChemFallback.setSelected(true);
             confidenceModeBox.setSelectedItem(expansiveMode);
         }
-
-        structureSearchStrategy.applyValuesFromPreset(preset);
     }
 }
