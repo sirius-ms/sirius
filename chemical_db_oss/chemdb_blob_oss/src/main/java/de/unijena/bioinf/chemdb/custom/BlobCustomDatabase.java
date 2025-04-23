@@ -50,7 +50,16 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
         try {
             storage.deleteBucket();
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when deleting data storage bucked. Please remove manually at your storage provider. ");
+            LoggerFactory.getLogger(getClass()).error("Error when deleting data storage bucked. Please remove manually at your storage provider.", e);
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            storage.close();
+        } catch (IOException e) {
+            LoggerFactory.getLogger(getClass()).error("Error when closing data storage.", e);
         }
     }
 

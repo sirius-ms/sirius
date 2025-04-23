@@ -43,6 +43,7 @@ public class JobConfigService {
 
     private StoredJobSubmission createMS1Config() {
         JobSubmission js = getDefaultJobConfig(false);
+        js.getSpectraSearchParams().setEnabled(false);
         js.getFormulaIdParams().setPerformDenovoBelowMz(Double.POSITIVE_INFINITY);
         js.getFormulaIdParams().setPerformBottomUpSearch(false);
         js.getFingerprintPredictionParams().setEnabled(false);
@@ -61,8 +62,9 @@ public class JobConfigService {
         // Same DBs as by default in GUI
         Set<CustomDataSources.Source> defaultDBs = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
         defaultDBs.addAll(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
-        // set formula and structure search dbs to the same database by default.
+        // set formula spectra and structure search dbs to the same database by default.
         js.getFormulaIdParams().setFormulaSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
+        js.getSpectraSearchParams().setSpectraSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
         js.getStructureDbSearchParams().setStructureSearchDBs(defaultDBs.stream().map(CustomDataSources.Source::name).toList());
 
         return wrapSubmission(DB_SEARCH_CONFIG_NAME, false, js);

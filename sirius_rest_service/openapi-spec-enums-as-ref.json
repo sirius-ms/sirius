@@ -7280,7 +7280,7 @@
           {
             "name": "includeCustomDbsForStructureSearch",
             "in": "query",
-            "description": "if true, default database selection of structure db search contains also all available custom DB.",
+            "description": "if true, default database selection of structure db search\n                                           spectral library search contains also all available custom DB.\n                                           If No custom dbs are selected, spectral library search is disabled by default.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8878,9 +8878,32 @@
           },
           "gibbsSamplerParameters": {
             "$ref": "#/components/schemas/ZodiacEpochs"
+          },
+          "librarySearchAnchors": {
+            "$ref": "#/components/schemas/ZodiacLibraryScoring"
+          },
+          "analogueSearchAnchors": {
+            "$ref": "#/components/schemas/ZodiacAnalogueNodes"
           }
         },
         "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).\n Needs results from Formula/SIRIUS Tool",
+        "nullable": true
+      },
+      "ZodiacAnalogueNodes": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "minSimilarity": {
+            "type": "number",
+            "format": "double"
+          },
+          "minSharedPeaks": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
         "nullable": true
       },
       "ZodiacEdgeFilterThresholds": {
@@ -8915,6 +8938,19 @@
           "numberOfMarkovChains": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "nullable": true
+      },
+      "ZodiacLibraryScoring": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "minSimilarity": {
+            "type": "number",
+            "format": "double"
           }
         },
         "nullable": true

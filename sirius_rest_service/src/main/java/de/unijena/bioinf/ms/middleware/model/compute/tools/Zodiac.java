@@ -76,6 +76,18 @@ public class Zodiac extends Tool<ZodiacOptions> {
     @Schema(nullable = true)
     ZodiacEpochs gibbsSamplerParameters;
 
+    /**
+     * Configure the use of identity spectral library search results as anchors in ZODIAC network
+     */
+    @Schema(nullable = true)
+    ZodiacLibraryScoring librarySearchAnchors;
+
+    /**
+     * Configure the use of analogue spectral library search results as anchors in ZODIAC network
+     */
+    @Schema(nullable = true)
+    ZodiacAnalogueNodes analogueSearchAnchors;
+
     private Zodiac() {
         super(ZodiacOptions.class);
     }
@@ -87,6 +99,13 @@ public class Zodiac extends Tool<ZodiacOptions> {
                 .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt300Mz", consideredCandidatesAt300Mz)
                 .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
                 .putIfNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
+
+                .putIfNonNullObj("ZodiacLibraryScoring.enabled", librarySearchAnchors, it -> it.enabled)
+                .putIfNonNullObj("ZodiacLibraryScoring.minSimilarity", librarySearchAnchors, it -> it.minSimilarity)
+
+                .putIfNonNullObj("ZodiacAnalogueNodes.enabled", analogueSearchAnchors, it -> it.enabled)
+                .putIfNonNullObj("ZodiacAnalogueNodes.minSimilarity", analogueSearchAnchors, it -> it.minSimilarity)
+                .putIfNonNullObj("ZodiacAnalogueNodes.minSharedPeaks", analogueSearchAnchors, it -> it.minSharedPeaks)
 
                 .putIfNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
                 .putIfNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
@@ -107,6 +126,8 @@ public class Zodiac extends Tool<ZodiacOptions> {
                 .consideredCandidatesAt300Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value)
                 .consideredCandidatesAt800Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value)
                 .runInTwoSteps(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value)
+                .librarySearchAnchors(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacLibraryScoring.class))
+                .analogueSearchAnchors(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacAnalogueNodes.class))
                 .edgeFilterThresholds(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class))
                 .gibbsSamplerParameters(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class));
     }

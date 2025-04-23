@@ -52,7 +52,7 @@ public class SpectraMatchingJJobTest {
     @Test
     public void testGetJJobsForDb() throws ChemicalDatabaseException {
         Deviation dev = new Deviation(10);
-        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null, SpectralMatchingType.MODIFIED_COSINE);
         CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(dev));
 
         Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum();
