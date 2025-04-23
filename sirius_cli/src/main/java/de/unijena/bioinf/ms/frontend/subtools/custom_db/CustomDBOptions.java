@@ -29,7 +29,6 @@ import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -40,11 +39,13 @@ import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -117,7 +118,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         @Option(names = "--remove", required = true,
                 description = "Name (--show) or path of the custom database to remove from SIRIUS.",
                 order = 301)
-        String location = null;
+        String nameOrLocation = null;
 
         @Option(names = {"--delete", "-d"}, defaultValue = "false",
                 description = "Delete removed custom database from filesystem/server.", order = 310)
@@ -145,8 +146,6 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         final InputFilesOptions input;
         private JJob<Boolean> dbjob = null;
 
-        private JJob<Boolean> sjob = null;
-
         public CustomDBWorkflow(InputFilesOptions input) {
             super(JJob.JobType.SCHEDULER);
             this.input = input;
@@ -160,142 +159,193 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         @Override
         protected Boolean compute() throws Exception {
             final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
-            //loads all current available dbs
-            CustomDatabases.load(version);
 
             if (mode.importParas != null) {
-                if (mode.importParas.location == null || mode.importParas.location.isBlank()) {
-                    logWarn("\n==> No location data given! Nothing to do.\n");
-                    return false;
-                }
-
-                checkForInterruption();
-
-                if (mode.importParas.name == null || mode.importParas.name.isBlank())
-                    mode.importParas.name = CustomDatabases.sanitizeDbName(Path.of(mode.importParas.location.substring(0, mode.importParas.location.lastIndexOf('.'))).getFileName().toString());
-
-                checkConflictingName(mode.importParas.location, mode.importParas.name);
-
-                CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
-                        .usedFingerprints(List.of(version.getUsedFingerprints()))
-                        .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
-                        .name(mode.importParas.name)
-                        .displayName(mode.importParas.displayName)
-                        .matchRtOfReferenceSpectra(false)
-                        .statistics(new CustomDatabaseSettings.Statistics())
-                        .build();
-
-                final CustomDatabase db = CustomDatabases.createOrOpen(mode.importParas.location, settings, version);
-                writeDBProperties();
-
-                logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
-
-                if (mode.importParas.input == null || mode.importParas.input.isEmpty())
-                    return true;
-
-                Map<Boolean, List<Path>> groups = mode.importParas.input.stream()
-                        .flatMap(FileUtils::sneakyWalk)
-                        .filter(Files::isRegularFile)
-                        .distinct()
-                        .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
-
-                List<Path> spectrumFiles = groups.get(true);
-                List<Path> structureFiles = groups.get(false);
-
-                logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
-
-                final AtomicLong totalBytesToRead = new AtomicLong(0);
-                for (Path file : structureFiles)
-                    totalBytesToRead.addAndGet(Files.size(file));
-                for (Path file : spectrumFiles)
-                    totalBytesToRead.addAndGet(Files.size(file));
-
-                totalBytesToRead.set((long) Math.ceil(totalBytesToRead.get() * 1.6)); //just some preloading to do last inserts
-
-
-                final AtomicLong bytesRead = new AtomicLong(0);
-                CustomDatabaseImporter.Listener listener = new CustomDatabaseImporter.Listener() {
-                    @Override
-                    public void newFingerprint(InChI inChI, int numOfBytes) {
-                        updateProgress(0, totalBytesToRead.addAndGet(numOfBytes), bytesRead.addAndGet(numOfBytes), "Added FP for " + inChI.key2D());
-                    }
-
-                    @Override
-                    public void bytesRead(int numOfBytes) {
-                        updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading Data...");
-                    }
-
-                    @Override
-                    public void newInChI(List<InChI> inChIs) {
-                        progressInfo("Imported " + inChIs.size() + " Compounds.");
-//                        updateProgress(0, totalBytesToRead.addAndGet(inChIs.size()), bytesRead.addAndGet(inChIs.size()), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
-                    }
-                };
-
-                checkForInterruption();
-
-                dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
-                        spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
-                        ApplicationCore.IFP_CACHE(),
-                        mode.importParas.writeBuffer
-                );
-                checkForInterruption();
-                submitJob(dbjob).awaitResult();
-                logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
-                return true;
+                return importIntoDB(version);
             } else if (mode.removeParas != null) {
-                if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
-                    throw new IllegalArgumentException("Database location to remove not specified!");
-
-                CustomDatabases.getCustomDatabase(mode.removeParas.location, version)
-                        .ifPresentOrElse(db -> {
-                                    CustomDatabases.remove(db, mode.removeParas.delete);
-                                    writeDBProperties();
-                                }, () -> logWarn("\n==> No custom database with location '" + mode.removeParas.location + "' found.\n")
-                        );
-                return true;
+                return removeDatabase(version);
             } else if (mode.showParas != null) {
-                if (mode.showParas.db == null) {
-                    List<CustomDataSources.CustomSource> sources = CustomDataSources.getCustomSources();
-
-                    if (sources.isEmpty()) {
-                        logWarn("\n==> No Custom database found!\n");
-                        return false;
-                    }
-
-                    sources.forEach(source -> {
-                        printDBInfo(CustomDatabases.getCustomDatabaseBySource(source, version));
-                        System.out.println();
-                        System.out.println();
-                    });
-
-                    CustomDataSources.getAllCustomDatabaseLocations().stream().filter(Files::notExists).forEach(p -> {
-                        printMissingDB(p);
-                        System.out.println();
-                        System.out.println();
-                    });
-
-                    return true;
+                if (mode.showParas.db == null || mode.showParas.db.isBlank()) {
+                    return showAllDBs(version);
                 } else {
-                    CustomDatabases.getCustomDatabase(mode.showParas.db, version)
-                            .ifPresentOrElse(
-                                    CustomDBOptions.this::printDBInfo,
-                                    () -> logWarn("\n==> No custom database with location '" + mode.showParas.db + "' found.\n"));
-                    return false;
+                    return showDB(version);
                 }
             }
             throw new IllegalArgumentException("Either '--import', '--remove' or '--show' must be specified.");
         }
+
+        private @NotNull Boolean importIntoDB(CdkFingerprintVersion version) throws InterruptedException, IOException, ExecutionException {
+            String location = mode.importParas.location;
+            String name = mode.importParas.name;
+            if ((location == null || location.isBlank()) && (name == null || name.isBlank())) {
+                logWarn("\n==> No location/name given! Exiting.\n");
+                return false;
+            }
+
+            checkForInterruption();
+
+            boolean isNewDb = false;
+
+            LinkedHashMap<String, String> existingDBs = CustomDBPropertyUtils.getCustomDBs();
+            if (existingDBs.containsKey(location)) {
+                name = existingDBs.get(location);
+            } else if (existingDBs.containsValue(name)) {
+                location = CustomDBPropertyUtils.getLocationByName(existingDBs, name).orElseThrow();
+            } else {
+                if (location == null || location.isBlank()) {
+                    logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
+                    return false;
+                } else {
+                    isNewDb = true;
+                }
+            }
+
+            CustomDatabase db = isNewDb
+                    ? createNewDB(location, name, version)
+                    : openExistingDB(location, version);
+
+            if (mode.importParas.input == null || mode.importParas.input.isEmpty()) {
+                return true;
+            }
+
+            Map<Boolean, List<Path>> groups = mode.importParas.input.stream()
+                    .flatMap(FileUtils::sneakyWalk)
+                    .filter(Files::isRegularFile)
+                    .distinct()
+                    .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFileName().toString())));
+
+            List<Path> spectrumFiles = groups.get(true);
+            List<Path> structureFiles = groups.get(false);
+
+            logInfo("Importing new structures to custom database '" + db.name() + "'...");
+
+            final AtomicLong totalBytesToRead = new AtomicLong(0);
+            for (Path file : structureFiles)
+                totalBytesToRead.addAndGet(Files.size(file));
+            for (Path file : spectrumFiles)
+                totalBytesToRead.addAndGet(Files.size(file));
+
+            totalBytesToRead.set((long) Math.ceil(totalBytesToRead.get() * 1.6)); //just some preloading to do last inserts
+
+
+            final AtomicLong bytesRead = new AtomicLong(0);
+            CustomDatabaseImporter.Listener listener = new CustomDatabaseImporter.Listener() {
+                @Override
+                public void newFingerprint(InChI inChI, int numOfBytes) {
+                    updateProgress(0, totalBytesToRead.addAndGet(numOfBytes), bytesRead.addAndGet(numOfBytes), "Added FP for " + inChI.key2D());
+                }
+
+                @Override
+                public void bytesRead(int numOfBytes) {
+                    updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading Data...");
+                }
+
+                @Override
+                public void newInChI(List<InChI> inChIs) {
+                    progressInfo("Imported " + inChIs.size() + " Compounds.");
+//                        updateProgress(0, totalBytesToRead.addAndGet(inChIs.size()), bytesRead.addAndGet(inChIs.size()), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
+                }
+            };
+
+            checkForInterruption();
+
+            dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
+                    spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
+                    structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
+                    listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
+                    ApplicationCore.IFP_CACHE(),
+                    mode.importParas.writeBuffer
+            );
+            checkForInterruption();
+            submitJob(dbjob).awaitResult();
+            logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
+
+            return true;
+        }
+
+
+        private CustomDatabase createNewDB(String location, String name, CdkFingerprintVersion version) throws IOException {
+            if (name == null || name.isBlank())
+                name = CustomDatabases.sanitizeDbName(CustomDBPropertyUtils.getDBName(location));
+
+            CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
+                    .usedFingerprints(List.of(version.getUsedFingerprints()))
+                    .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
+                    .name(name)
+                    .displayName(mode.importParas.displayName)
+                    .matchRtOfReferenceSpectra(false)
+                    .statistics(new CustomDatabaseSettings.Statistics())
+                    .build();
+
+            CustomDatabase db = CustomDatabases.create(location, settings, version);
+            CustomDBPropertyUtils.addDB(location, name);
+
+            logInfo("New database added to SIRIUS. Use 'structure --db=\"" + db.name() + "\"' to search in this database.");
+            return db;
+        }
+
+        private CustomDatabase openExistingDB(String location, CdkFingerprintVersion version) throws IOException {
+            CustomDatabase db = CustomDatabases.open(location, true, version);
+            logInfo("Opened existing database" + db.name() + ".");
+            return db;
+        }
+
+        private boolean removeDatabase(CdkFingerprintVersion version) {
+            String nameOrLocation = mode.removeParas.nameOrLocation;
+            if (nameOrLocation == null || nameOrLocation.isBlank())
+                throw new IllegalArgumentException("Database location to remove not specified!");
+
+            String location = nameOrLocationToLocation(nameOrLocation);
+            try {
+                CustomDatabase db = CustomDatabases.open(location, version);
+                CustomDatabases.remove(db, mode.removeParas.delete);
+            } catch (Exception e) {
+                logWarn("\n==> Error opening database " + nameOrLocation + ":\n" + e.getMessage() + "\nIt will be removed from custom databases.");
+            }
+            CustomDBPropertyUtils.removeDBbyLocation(location);
+
+            return true;
+        }
+
+        private @NotNull Boolean showAllDBs(CdkFingerprintVersion version) {
+            LinkedHashMap<String, String> customDBs = CustomDBPropertyUtils.getCustomDBs();
+
+            if (customDBs.isEmpty()) {
+                logWarn("\n==> No Custom database found!\n");
+                return false;
+            }
+
+            for (Map.Entry<String, String> e : customDBs.entrySet()) {
+                String location = e.getKey();
+                String name = e.getValue();
+                try {
+                    CustomDatabase db = CustomDatabases.open(location, version);
+                    printDBInfo(db);
+                } catch (Exception ex) {
+                    printDBError(location, name, ex.getMessage());
+                }
+            }
+
+            return true;
+        }
+
+        private boolean showDB(CdkFingerprintVersion version) {
+            String location = nameOrLocationToLocation(mode.showParas.db);
+            try {
+                CustomDatabase db = CustomDatabases.open(location, version);
+                printDBInfo(db);
+            } catch (Exception ex) {
+                printDBError(location, CustomDBPropertyUtils.getCustomDBs().get(location), ex.getMessage());
+            }
+            return true;
+        }
+
 
         @Override
         public void cancel() {
             cancel(false);
             if (dbjob != null)
                 dbjob.cancel();
-            if (sjob != null)
-                sjob.cancel();
         }
     }
 
@@ -315,30 +365,28 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             System.out.println("Used Fingerprints: [ '" + s.getUsedFingerprints().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
         }
         System.out.println("###############  END  ###############");
+        System.out.println();
+        System.out.println();
     }
 
-    private void printMissingDB(Path p) {
-        System.out.println("#####  Error : Missing DB file  #####");
-        System.out.println("Name: " + p.getFileName().toString().split("\\.")[0]);
-        System.out.println("Location: " + p);
+    private void printDBError(String location, String name, String error) {
+        System.out.println("#####  Error Opening Database  #####");
+        System.out.println("Name: " + name);
+        System.out.println("Location: " + location);
+        System.out.println("Error: " + error);
+        System.out.println("###############  END  ###############");
+        System.out.println();
+        System.out.println();
     }
 
-    public static void writeDBProperties() {
-        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(CustomDataSources.PROP_KEY, CustomDataSources.sourcesStream()
-                .filter(CustomDataSources.Source::isCustomSource)
-                .map(c -> (CustomDataSources.CustomSource) c)
-                .sorted(Comparator.comparing(CustomDataSources.Source::name))
-                .map(CustomDataSources.CustomSource::location)
-                .collect(Collectors.joining(",")));
+    private String nameOrLocationToLocation(String nameOrLocation) {
+        LinkedHashMap<String, String> existingDBs = CustomDBPropertyUtils.getCustomDBs();
+        if (existingDBs.containsKey(nameOrLocation)) {
+            return nameOrLocation;
+        } else if (existingDBs.containsValue(nameOrLocation)) {
+            return CustomDBPropertyUtils.getLocationByName(existingDBs, nameOrLocation).orElseThrow();
+        } else {
+            throw new IllegalArgumentException("Database " + nameOrLocation + " is not found.");
+        }
     }
-
-    private static void checkConflictingName(@NotNull String location, @NotNull String dbName) {
-        CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)
-                .filter(db -> db.name().equals(dbName) && !location.equals(db.isCustomSource() ? ((CustomDataSources.CustomSource) db).location() : null))
-                .findAny()
-                .ifPresent(db -> {
-                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.URI());
-                });
-    }
-
 }
