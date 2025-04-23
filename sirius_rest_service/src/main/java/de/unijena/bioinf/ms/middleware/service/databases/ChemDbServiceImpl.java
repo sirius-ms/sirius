@@ -27,7 +27,7 @@ import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
@@ -49,8 +49,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions.writeDBProperties;
-
 @Slf4j
 public class ChemDbServiceImpl implements ChemDbService {
     private final WebAPI<?> webAPI;
@@ -65,10 +63,9 @@ public class ChemDbServiceImpl implements ChemDbService {
         try {
             //request fingerprint version to init db and check compatibility
             final CdkFingerprintVersion version = version();
-            //loads all current available dbs
-            CustomDatabases.load(version);
+            CustomDBPropertyUtils.loadAllCustomDBs(version);
         } catch (Exception e) {
-            log.error("Error when loading Custom databases", e);
+            log.error("Error loading custom databases", e);
         }
     }
 
@@ -87,7 +84,7 @@ public class ChemDbServiceImpl implements ChemDbService {
 
     @Override
     public SearchableDatabase importById(@NotNull String databaseId, List<InputResource<?>> inputResources, int bufferSize) {
-        CustomDatabase db = CustomDatabases.getCustomDatabaseByName(databaseId, version())
+        CustomDatabase db = CustomDatabases.getCustomDatabaseByName(databaseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Database with id '" + databaseId + "' does not exist."));
 
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
@@ -104,7 +101,7 @@ public class ChemDbServiceImpl implements ChemDbService {
     @Override
     public SearchableDatabase findById(@NotNull String databaseId, boolean includeStats) {
         return CustomDataSources.getSourceFromNameOpt(databaseId).map(s -> s.isCustomSource() && includeStats
-                        ? CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                        ? CustomDatabases.getCustomDatabaseByName(s.name())
                         .map(SearchableDatabases::of)
                         .orElse(SearchableDatabases.of(s))
                         : SearchableDatabases.of(s))
@@ -116,7 +113,7 @@ public class ChemDbServiceImpl implements ChemDbService {
         return new PageImpl<>(CustomDataSources.sourcesStream().skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(s -> {
                     if (s.isCustomSource() && includeStats)
-                        return CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                        return CustomDatabases.getCustomDatabaseByName(s.name())
                                 .map(SearchableDatabases::of).orElse(SearchableDatabases.of(s));
                     return SearchableDatabases.of(s);
                 }).toList(), pageable, CustomDataSources.size());
@@ -126,16 +123,22 @@ public class ChemDbServiceImpl implements ChemDbService {
     public List<SearchableDatabase> findAll(boolean includeStats, boolean includeWithErrors) {
         ArrayList<SearchableDatabase> dbs = CustomDataSources.sourcesStream().map(s -> {
             if (s.isCustomSource() && includeStats)
-                return CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                return CustomDatabases.getCustomDatabaseByName(s.name())
                         .map(SearchableDatabases::of).orElse(SearchableDatabases.of(s));
             return SearchableDatabases.of(s);
         }).collect(Collectors.toCollection(ArrayList::new));
         if (includeWithErrors) {
-            for (Path location : CustomDataSources.getAllCustomDatabaseLocations()) {
-                if (!Files.exists(location)) {
-                    dbs.add(SearchableDatabases.ofMissing(location));
-                }
-            }
+            CustomDBPropertyUtils.getCustomDBs().entrySet().stream()
+                    .filter(e -> !CustomDataSources.containsDB(e.getValue()))  // missing custom DBs
+                    .forEach(e -> {
+                        String location = e.getKey();
+                        String name = e.getValue();
+                        try {
+                            dbs.add(SearchableDatabases.of(CustomDatabases.open(location, true, version())));
+                        } catch (Exception ex) {
+                            dbs.add(SearchableDatabases.ofInvalid(location, name, ex.getMessage()));
+                        }
+                    });
         }
         return dbs;
     }
@@ -164,9 +167,9 @@ public class ChemDbServiceImpl implements ChemDbService {
             }
 
             CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version());
-            CustomDBOptions.writeDBProperties();
+            CustomDBPropertyUtils.addDB(location.toAbsolutePath().toString(), databaseId);
             return SearchableDatabases.of(newDb);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when creating user database at: " + location, e);
         }
     }
@@ -205,35 +208,28 @@ public class ChemDbServiceImpl implements ChemDbService {
                         "Databases with the names '" + idError + "' already exist.");
         }
 
-        List<SearchableDatabase> dbs = pathToDatabases.stream().map(location -> {
+        return pathToDatabases.stream().map(location -> {
             try {
                 CustomDatabase newDb = CustomDatabases.open(location, true, version());
+                CustomDBPropertyUtils.addDB(location, newDb.name());
                 return SearchableDatabases.of(newDb);
             } catch (IOException e) {
-                log.error("Error when opening user database from: " + location, e);
+                log.error("Error when opening user database from: {}", location, e);
                 return null;
             }
         }).filter(Objects::nonNull).toList();
-
-        writeDBProperties();
-        return dbs;
     }
 
     @Override
     public void remove(String databaseId, boolean delete) {
-        try {
-            CustomDatabases.getCustomDatabaseByName(databaseId, version()).ifPresent(db -> CustomDatabases.remove(db, delete));
-        } catch (Exception e) {
-            log.error("Error when removing custom database: {}", databaseId, e);
-            CustomDatabases.remove(databaseId);
-        }finally {
-            writeDBProperties();
-        }
+        CustomDatabases.getCustomDatabaseByName(databaseId)
+                .ifPresent(db -> CustomDatabases.remove(db, delete));
+        CustomDBPropertyUtils.removeDBbyName(databaseId);
     }
 
     @Override
     public SearchableDatabase update(@NotNull String databaseId, @NotNull SearchableDatabaseParameters dbUpdate) {
         //TODO nightsky: implement modification of Displayname and RT matching.
-        throw new UnsupportedOperationException("Updating Custom databases is not yest supported");
+        throw new UnsupportedOperationException("Updating Custom databases is not yet supported");
     }
 }

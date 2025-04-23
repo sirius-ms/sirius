@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -66,6 +65,11 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("IdentitySearchSettings.minNumOfPeaks", value);
     }
 
+    @CommandLine.Option(names = "--max-hits", descriptionKey = "IdentitySearchSettings.maxNumOfHits")
+    public void setMaxNumHitsIdentity(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("IdentitySearchSettings.maxNumOfHits", value);
+    }
+
 
     @CommandLine.Option(names = "--analogue-search", descriptionKey = "AnalogueSearchSettings.enabled")
     public void setEnableAnalogueSearch(boolean value) throws Exception {
@@ -80,6 +84,11 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     @CommandLine.Option(names = "--min-peaks-analogue", descriptionKey = "AnalogueSearchSettings.minNumOfPeaks")
     public void setMinNumPeaksAnalogue(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AnalogueSearchSettings.minNumOfPeaks", value);
+    }
+
+    @CommandLine.Option(names = "--max-hits-analogue", descriptionKey = "AnalogueSearchSettings.maxNumOfHits")
+    public void setMaxNumHitsAnalogue(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("AnalogueSearchSettings.maxNumOfHits", value);
     }
 
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")

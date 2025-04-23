@@ -1,5 +1,9 @@
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +14,6 @@ import java.util.List;
 public abstract class SubToolConfigPanelAdvancedParams<C> extends SubToolConfigPanel<C> {
     protected boolean displayAdvancedParameters;
     protected final List<Component> advancedParametersComponents;
-
 
     public SubToolConfigPanelAdvancedParams(Class<C> annotatedObject, boolean displayAdvancedParameters) {
         super(annotatedObject);
@@ -26,5 +29,13 @@ public abstract class SubToolConfigPanelAdvancedParams<C> extends SubToolConfigP
     public void setDisplayAdvancedParameters(boolean display) {
         displayAdvancedParameters = display;
         advancedParametersComponents.forEach(c -> c.setVisible(displayAdvancedParameters));
+    }
+
+    protected void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
+        JLabel label = new JLabel(name);
+        panel.add(label, control);
+
+        addAdvancedComponent(label);
+        addAdvancedComponent(control);
     }
 }
