@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.Map;
 public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraSearchConfigPanel> {
 
     public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel) {
-        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel));
+        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel), SoftwareTourInfoStore.BatchCompute_SpectraSearch);
 
         if (activationButton.isSelected()) {
             if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
