@@ -393,8 +393,10 @@ Class | Method | HTTP request | Description
  - [UseHeuristic](docs/UseHeuristic.md)
  - [ValueType](docs/ValueType.md)
  - [Zodiac](docs/Zodiac.md)
+ - [ZodiacAnalogueNodes](docs/ZodiacAnalogueNodes.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)
  - [ZodiacEpochs](docs/ZodiacEpochs.md)
+ - [ZodiacLibraryScoring](docs/ZodiacLibraryScoring.md)
 
 
 <a id="documentation-for-authorization"></a>

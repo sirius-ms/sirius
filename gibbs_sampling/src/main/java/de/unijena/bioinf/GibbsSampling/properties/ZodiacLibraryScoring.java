@@ -22,6 +22,7 @@ package de.unijena.bioinf.GibbsSampling.properties;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
 
@@ -32,24 +33,25 @@ public class ZodiacLibraryScoring implements Ms2ExperimentAnnotation {
 
 
     /**
-     * Lambda used in the scoring function of spectral library hits. The higher this value the higher are librar hits weighted in ZODIAC scoring.
+     * Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring.
      */
+    @Schema(hidden = true)
     @DefaultProperty public final double lambda; //1000
 
     /**
      * Spectral library hits must have at least this cosine or higher to be considered in scoring. Value must be in [0,1].
      */
-    @DefaultProperty public final double minCosine; //0.5
+    @DefaultProperty public final double minSimilarity; //0.5
 
     public ZodiacLibraryScoring() {
         lambda = Double.NaN;
-        minCosine = Double.NaN;
+        minSimilarity = Double.NaN;
         enabled = true;
     }
 
-    public ZodiacLibraryScoring(double lambda, double minCosine, boolean enabled) {
+    public ZodiacLibraryScoring(double lambda, double minSimilarity, boolean enabled) {
         this.lambda = lambda;
-        this.minCosine = minCosine;
+        this.minSimilarity = minSimilarity;
         this.enabled = enabled;
     }
 }

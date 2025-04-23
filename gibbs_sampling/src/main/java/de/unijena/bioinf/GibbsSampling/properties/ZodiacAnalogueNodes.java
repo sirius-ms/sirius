@@ -21,7 +21,7 @@ public class ZodiacAnalogueNodes implements Ms2ExperimentAnnotation {
      * Minimal modified cosine needed to add the analog hit separate node to the network.
      */
     @DefaultProperty
-    public final double minModifiedCosine;
+    public final double minSimilarity;
 
     /**
      * Minimal number of share peaks needed to dd the analog hit separate node to the network.
@@ -31,7 +31,7 @@ public class ZodiacAnalogueNodes implements Ms2ExperimentAnnotation {
 
     protected ZodiacAnalogueNodes() {
         this.enabled = false;
-        this.minModifiedCosine = 0;
+        this.minSimilarity = 0;
         this.minSharedPeaks = 0;
     }
 }
