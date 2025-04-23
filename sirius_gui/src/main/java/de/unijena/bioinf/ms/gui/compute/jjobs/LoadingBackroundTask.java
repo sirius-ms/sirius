@@ -170,11 +170,13 @@ public class LoadingBackroundTask<T> extends JDialog implements ActionListener {
         pack();
         setLocationRelativeTo(getOwner());
         setResizable(false);
-        setVisible(true);
 
         // just in case first event was missed due to pre-submission
-        if (job.getSourceJob().getState().ordinal() > JJob.JobState.RUNNING.ordinal())
+        if (job.getSourceJob().getState().ordinal() > JJob.JobState.RUNNING.ordinal()) {
             dispose();
+        } else {
+            setVisible(true);
+        }
     }
 
 

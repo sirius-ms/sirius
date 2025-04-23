@@ -20,14 +20,20 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,19 +55,23 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
     protected final StructureList structureList;
     protected final EpimetheusPanelCandidateListTableView candidateTable;
     private final LoadablePanel loadablePanel;
+    private final SpectraVisualizationPanel overviewSVP;
 
-    public EpimetheusPanel(final StructureList structureList) {
+    public EpimetheusPanel(final StructureList structureList, @NotNull SiriusGui gui) {
         super(new BorderLayout());
         this.structureList = structureList;
-        this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
+        candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
+        overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false);
+        overviewSVP.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_SpectralVisualization);
 
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
             Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
-            sre.ifPresentOrElse(bean ->
+            sre.ifPresentOrElse(bean -> {
                     structureList.readDataByConsumer(d ->
-                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles())),
+                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles()));
+                    Jobs.runEDTLater(() -> initSoftwareTour(gui.getProperties()));
+                    },
                     overviewSVP::clear);
         });
 
@@ -81,16 +91,22 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
         return candidateTable;
     }
 
+    public boolean hasData() {
+        return overviewSVP.msData != null;
+    }
+
     protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {
 
         public EpimetheusPanelCandidateListTableView(StructureList list) {
             super(list);
+            centerCardPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_List);
         }
 
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
             ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO.derive(24,24), "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            showMSNovelist.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_DeNovoFilter);
             showMSNovelist.setSelected(true);
             tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
 
@@ -101,5 +117,9 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
 
             return tb;
         }
+    }
+
+    public void initSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.EpimetheusTabTourKey, guiProperties);
     }
 }
