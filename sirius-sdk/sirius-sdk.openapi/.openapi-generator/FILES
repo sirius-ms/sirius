@@ -139,8 +139,10 @@ docs/TraceSetExperimental.md
 docs/UseHeuristic.md
 docs/ValueType.md
 docs/Zodiac.md
+docs/ZodiacAnalogueNodes.md
 docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
+docs/ZodiacLibraryScoring.md
 src/main/java/io/sirius/ms/sdk/api/CompoundStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
@@ -288,5 +290,7 @@ src/main/java/io/sirius/ms/sdk/model/TraceSetExperimental.java
 src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/ValueType.java
 src/main/java/io/sirius/ms/sdk/model/Zodiac.java
+src/main/java/io/sirius/ms/sdk/model/ZodiacAnalogueNodes.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/io/sirius/ms/sdk/model/ZodiacEpochs.java
+src/main/java/io/sirius/ms/sdk/model/ZodiacLibraryScoring.java

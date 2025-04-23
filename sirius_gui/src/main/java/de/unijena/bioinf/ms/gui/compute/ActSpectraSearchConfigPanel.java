@@ -22,17 +22,28 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 
-public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
-    public ActFingerblastConfigPanel(@NotNull SiriusGui gui, @Nullable final GlobalConfigPanel saerchDbSource) {
-        super(gui, "Search DBs", Icons.DB_LENS.derive(32,32), true, () -> new FingerblastConfigPanel(gui, saerchDbSource), SoftwareTourInfoStore.BatchCompute_Fingerblast);
-        notConnectedMessage = "Can't connect to structure db server!";
+import java.util.Map;
+
+public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraSearchConfigPanel> {
+
+    public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel) {
+        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel), SoftwareTourInfoStore.BatchCompute_SpectraSearch);
+
+        if (activationButton.isSelected()) {
+            if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {
+                activationButton.setSelected(false);
+                setComponentsEnabled(activationButton.isSelected());
+            }
+        }
     }
 
     @Override
-    protected void setComponentsEnabled(boolean enabled) {
-        super.setComponentsEnabled(enabled);
+    public void applyValuesFromPreset(boolean enable, Map<String, String> preset) {
+        if (enable)
+            if (content.globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb))
+                enable = false;
+        super.applyValuesFromPreset(enable, preset);
     }
 }

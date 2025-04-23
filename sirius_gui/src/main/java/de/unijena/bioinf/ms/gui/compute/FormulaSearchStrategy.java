@@ -7,24 +7,20 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
-import de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
-import io.sirius.ms.sdk.model.SearchableDatabase;
+import net.miginfocom.swing.MigLayout;
+import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +35,7 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.chemdb.annotations.SearchableDBAnnotation.NO_DB;
 
 public class FormulaSearchStrategy extends ConfigPanel {
+
     public enum Strategy implements DescriptiveOptions {
         DEFAULT("De novo + bottom up (recommended)", "Perform both a bottom up search and de novo molecular formula generation."),
         BOTTOM_UP("Bottom up", "Generate molecular formula candidates using bottom up search: if a fragement + precursor loss have candidates in the formula database, these are combined to a precursor formula candidate."),
@@ -94,15 +91,13 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     protected Strategy strategy;
 
-    protected final Dialog owner;
     protected final SiriusGui gui;
     protected final List<InstanceBean> ecs;
     protected final boolean isMs2;
     protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
-    protected final FormulaIDConfigPanel formulaIDConfigPanel;
+    protected final GlobalConfigPanel globalConfigPanel;
 
-    protected DBSelectionListPanel searchDBList;
     protected JComboBox<ElementAlphabetStrategy> defaultStrategyElementFilterSelector;
     protected JPanel elementFilterPanel;
     protected JCheckBox elementFilterForBottomUp, elementFilterForDatabase;
@@ -122,14 +117,18 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final JComboBox<Strategy> strategyBox;
 
-    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, FormulaIDConfigPanel formulaIDConfigPanel) {
+    /**
+     * We define a preferred width sind to prevent resizing during change of  values.
+     */
+    private static final int PANEL_WIDTH = 400;
+
+    public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
-        this.owner = owner;
         this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
-        this.formulaIDConfigPanel = formulaIDConfigPanel;
+        this.globalConfigPanel = globalConfigPanel;
 
         //in single mode: does compound has MS1 data?
         this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && ecs.getFirst().hasMs1();
@@ -140,54 +139,45 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
         strategyComponents.put(Strategy.PROVIDED, new ArrayList<>());
-        strategyBox = isMs2 ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values()) : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO, Strategy.DATABASE, Strategy.PROVIDED});
+        strategyBox = isMs2
+                ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values())
+                : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO, Strategy.DATABASE, Strategy.PROVIDED});
 
-        this.setLayout(new BorderLayout());
         this.loadable = createLoadablePanel();
-        this.add(loadable, BorderLayout.CENTER);
+
+        setLayout(new BorderLayout());
+        add(loadable, BorderLayout.CENTER);
 
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
+
+        setPreferredSize(new Dimension(PANEL_WIDTH, getPreferredSize().height));
+        setMaximumSize(new Dimension(PANEL_WIDTH, getMaximumSize().height));
     }
 
-    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
-        return searchDBList;
-    }
+
 
     private LoadablePanel createLoadablePanel() {
-        final JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.PAGE_AXIS));
+        JPanel content =  new JPanel(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10", "", ""));
 
-        final JPanel formulaSearchStrategySelection = new JPanel();
-        formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
-        formulaSearchStrategySelection.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
+        content.add(new JXTitledSeparator("Strategy"),"alignx left, aligny top, growx, wrap");
 
-        content.add(formulaSearchStrategySelection);
-        content.add(Box.createRigidArea(new Dimension(0, GuiUtils.MEDIUM_GAP)));
-
-        JPanel strategyCardContainer = new JPanel();
-        strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.LINE_AXIS));
-
+        strategyBox.setPreferredSize(new Dimension(PANEL_WIDTH, strategyBox.getPreferredSize().height));
+        content.add(strategyBox,"alignx left, aligny top, wrap");
         strategy = (Strategy) strategyBox.getSelectedItem();
 
         JPanel defaultStrategyParameters = createDefaultStrategyParameters();
-        JPanel databaseStrategyParameters = createDatabaseStrategyParameters();
         JPanel providedStrategyParameters = createProvidedStrategyParameters();
+        createDatabaseStrategyParameters();
 
         strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyParameters);
-        strategyComponents.get(Strategy.DATABASE).add(databaseStrategyParameters);
         strategyComponents.get(Strategy.PROVIDED).add(providedStrategyParameters);
 
-        strategyCardContainer.add(defaultStrategyParameters);
-        strategyCardContainer.add(databaseStrategyParameters);
-        strategyCardContainer.add(providedStrategyParameters);
+        content.add(defaultStrategyParameters,"alignx left, aligny top, wrap");
+        content.add(providedStrategyParameters, "alignx left, aligny top, wrap");
 
         elementFilterPanel = createElementFilterPanel();
-        strategyCardContainer.add(elementFilterPanel);
-
-        content.add(strategyCardContainer);
+        content.add(elementFilterPanel, "alignx left, aligny top, wrap");
 
         hideAllStrategySpecific();
         showStrategySpecific(strategy, true);
@@ -198,6 +188,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             showStrategySpecific(strategy, true);
         });
 
+        // titled container
         return new LoadablePanel(content);
     }
 
@@ -210,10 +201,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private JPanel createDefaultStrategyParameters() {
-        JPanel parameterPanel = applyDefaultLayout(new JPanel());
-        ((RelativeLayout) parameterPanel.getLayout()).setBorderGap(0);
-        parameterPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-
         final TwoColumnPanel options = new TwoColumnPanel();
 
         denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
@@ -230,20 +217,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
-        parameterPanel.add(new TextHeaderBoxPanel("General", options));
-
-        return parameterPanel;
+        return options;
     }
 
-    private JPanel createDatabaseStrategyParameters() {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
-
-        initDatabasePanel();
-        searchDBList.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-
-        card.add(searchDBList);
-        return card;
+    private void createDatabaseStrategyParameters() {
+        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", globalConfigPanel.getSearchDBStrings()) : ",");
     }
 
     private JPanel createProvidedStrategyParameters() {
@@ -270,13 +248,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
         card.add(buttonPanel);
 
         addFormulas.addActionListener(e -> {
-
             Box addFormulasDialogContents = Box.createVerticalBox();
             addFormulasDialogContents.add(new JLabel("Paste formulas separated by whitespace, commas or semicolons"));
             JTextArea textArea = new JTextArea(5, 20);
             addFormulasDialogContents.add(new JScrollPane(textArea));
-
-            if (JOptionPane.showConfirmDialog(this.owner, addFormulasDialogContents, "Add formulas", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            Window owner = SwingUtilities.getWindowAncestor(this);
+            if (JOptionPane.showConfirmDialog(owner, addFormulasDialogContents, "Add formulas", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
                 String input = textArea.getText();
                 List<String> unparsed = new ArrayList<>();
                 for (String formula : input.split("[\\s,;]+")) {
@@ -290,7 +267,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
                     }
                 }
                 if (!unparsed.isEmpty()) {
-                    JOptionPane.showMessageDialog(this.owner, "Could not parse formulas:\n" + String.join("\n", unparsed), "", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(owner, "Could not parse formulas:\n" + String.join("\n", unparsed), "", JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -317,15 +294,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         //todo we will need a parameter binding to ignore the input file config in single-compute-mode. Hence, these CandidateFormulas are not overriden
 
         return card;
-    }
-
-    private void initDatabasePanel() {
-        searchDBList = DBSelectionListPanel.newInstance("Use DB formulas only", gui.getSiriusClient(), Collections::emptyList);
-        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-
-        searchDBList.selectDefaultDatabases();
-
-        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
     }
 
     private JPanel createElementFilterPanel() {
@@ -391,6 +359,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(elementFilterEnforcedTextBox.getText());
             Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(elementFilterDetectableElementsTextBox, allAutoDetectableElements) : null;
+            Window owner = SwingUtilities.getWindowAncestor(this);
             ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
             if (dialog.isSuccess()) {
                 elementFilterEnforcedTextBox.setText(dialog.getConstraints().toString(","));
@@ -417,10 +386,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         });
 
-        JPanel elementFilterPanel = applyDefaultLayout(new JPanel());
-        elementFilterPanel.add(new TextHeaderBoxPanel("Element Filter", filterFields));
-
-        return elementFilterPanel;
+        return TextHeaderPanel.wrap("Element Filter", filterFields);
     }
 
     @Nullable
@@ -522,9 +488,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
             FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
             formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
             experiment.setAnnotation(FormulaSettings.class, formulaSettings);
-            Set<PrecursorIonType> adducts = formulaIDConfigPanel.getSelectedAdducts().getAdducts();
+            Set<PrecursorIonType> adducts = globalConfigPanel.getSelectedAdducts().getAdducts();
             experiment.setAnnotation(AdductSettings.class, AdductSettings.newInstance(adducts, Collections.emptySet(), adducts, false, true));
             ProcessedInput pi = pp.preprocess(experiment);
+            Window owner = SwingUtilities.getWindowAncestor(this);
 
             pi.getAnnotation(FormulaConstraints.class).
                     ifPresentOrElse(c -> formulaConstraintsTextBox.setText(c.toString(",")),
@@ -559,19 +526,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     protected boolean isBottomUpOrDatabaseStrategy() {
         return (strategy == Strategy.BOTTOM_UP || strategy == Strategy.DATABASE);
-    }
-
-
-    public List<SearchableDatabase> getFormulaSearchDBs() {
-        return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toList());
-    }
-
-    public Strategy getSelectedStrategy() {
-        return strategy;
     }
 
     private static class ElementDetectionButton extends JButton {
@@ -614,8 +568,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         if (s == Strategy.DATABASE) {
-            searchDBList.checkBoxList.uncheckAll();
-            searchDBList.select(SearchableDBAnnotation.makeDB(preset.get("FormulaSearchDB")));
             elementFilterForDatabase.setSelected(Boolean.parseBoolean(preset.get("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates")));
         }
 

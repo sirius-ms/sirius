@@ -20,12 +20,8 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
@@ -45,22 +41,24 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
     private Deviation precursorDev;
     private Deviation peakDev;
     private double precursorMz;
+    private final SpectralMatchingType alignmentType;
     private List<Ms2ReferenceSpectrum> references;
-    public SpectraMatchingJJob(List<Ms2ReferenceSpectrum> references, Ms2Experiment experiment) {
+
+    public SpectraMatchingJJob(List<Ms2ReferenceSpectrum> references, Ms2Experiment experiment, SpectralMatchingType alignmentType) {
         super(JobType.CPU);
         this.experiment = experiment;
         this.references = references;
+        this.alignmentType = alignmentType;
     }
 
     @Override
     protected SpectralSearchResult compute() throws Exception {
-        peakDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPeakDeviation;
-        precursorDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
+        //todo we have to make this compatible with fast cosine or at least with the spectra search parameters.
+        peakDev = experiment.getAnnotationOrDefault(MS2MassDeviation.class).standardMassDeviation;
+        precursorDev = experiment.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
         precursorMz = experiment.getIonMass();
 
         List<Ms2Spectrum<Peak>> queries = experiment.getMs2Spectra();
-
-        SpectralMatchingType alignmentType = experiment.getAnnotationOrDefault(SpectralMatchingScorer.class).spectralMatchingType;
 
         queryUtils = new CosineQueryUtils(alignmentType.getScorer(peakDev));
         List<CosineQuerySpectrum> cosineQueries = getCosineQueries(queryUtils, peakDev, precursorMz, queries);
