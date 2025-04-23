@@ -100,16 +100,20 @@ public class CustomDatabases {
             CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
             db = new BlobCustomDatabase<>(blobDb, version);
         }
+
         try {
             db.getSettings();
-        } finally {
+        } catch (Exception e) {
             db.close();
+            throw new RuntimeException(e);
         }
+
         String dbName = db.name();
         if (CustomDataSources.containsDB(dbName)) {
             db.close();
             throw new RuntimeException("Datasource with name " + dbName + " already exists.");
         }
+
         CustomDataSources.addCustomSourceIfAbsent(db);
         CUSTOM_DATABASES.put(location, db);
         return db;
