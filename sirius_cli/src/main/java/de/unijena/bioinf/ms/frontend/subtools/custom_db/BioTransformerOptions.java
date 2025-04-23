@@ -126,28 +126,4 @@ public class BioTransformerOptions {
 
     }
 
-
-
-/*    public static class BioTransformerParas {
-        boolean useDB;
-        boolean useSubstructure;
-        MetabolicTransformation metabolicTransformation;
-        int p2Mode;
-        int cyp450Mode;
-        int iterations;
-    }
-        public BioTransformerParas toBioTransformerParas() {
-            BioTransformerParas paras = new BioTransformerParas();
-            paras.useDB = bioTransformer.biotransformer.useDB;
-            paras.useSubstructure = bioTransformer.biotransformer.useSubstructure;
-            paras.metabolicTransformation = bioTransformer.biotransformer.metabolicTransformation;
-            paras.p2Mode = bioTransformer.biotransformer.p2Mode.ordinal();
-            paras.cyp450Mode = cyp450Mode.ordinal();
-            paras.iterations = bioTransformer.biotransformer.iterations;
-
-            return new BioTransformerParas();
-        }
-*/
-
-
 }

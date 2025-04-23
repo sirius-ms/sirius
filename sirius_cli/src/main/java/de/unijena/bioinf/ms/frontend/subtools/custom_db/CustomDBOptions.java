@@ -238,10 +238,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 };
 
                 checkForInterruption();
-                if (mode.importParas.bioTransformerOptions != null){
-                    //TODO configure importer to run bio transformer stuff...
-                    //collect parameters and prepare them to be added to the importer
-                }
+//                if (mode.importParas.bioTransformerOptions != null){
+//                    //TODO configure importer to run bio transformer stuff...
+//                    //collect parameters and prepare them to be added to the importer
+//                }
 
                 dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
@@ -258,6 +258,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
 
                 dbjob.awaitResult();
+                writeDBProperties();
                 return true;
             } else if (mode.removeParas != null) {
                 if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
