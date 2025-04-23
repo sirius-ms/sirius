@@ -69,8 +69,8 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
                 .filter(CustomDataSources.Source::noCustomSource)
                 .map(s -> ((CustomDataSources.EnumSource) s).source())
                 .map(ds -> ds.publication).map(pub -> {
-                    String citation = pub.getCitationText();
-                    String doi = pub.getDoi();
+                    String citation = pub.citationText();
+                    String doi = pub.doi();
                     if (citation == null) return null;
                     if (doi == null) return citation;
                     return citation + "\ndoi: " + doi;
