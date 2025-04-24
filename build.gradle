@@ -105,8 +105,6 @@ ext {
 
     System.out.println("----> Following platform detected: " + siriusTargetPlatform)
 
-    javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
-
     //locations of runtime libraries
     //jre path relative tu app home
     lib_path = 'lib'

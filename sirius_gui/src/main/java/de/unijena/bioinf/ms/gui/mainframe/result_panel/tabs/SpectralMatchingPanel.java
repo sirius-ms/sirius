@@ -27,17 +27,17 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-import static de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel.*;
 
 public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
 
 
-    private final SpectraVisualizationPanel spectraVisualizationPanel;
+    private final JCefBrowserPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
     @NotNull
     private final LoadablePanel loadablePanel;
@@ -46,15 +46,16 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
 
-        this.spectraVisualizationPanel = new SpectraVisualizationPanel(MS2_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY, MS2_MERGED_DISPLAY);
+        this.spectraVisualizationPanel = null; //todo add pectra matching mirror plot panel.
         this.tableView = new SpectralMatchingTableView(matchList);
+        //todo implement
         this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
-            DefaultEventSelectionModel<SpectralMatchBean> selections = (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource();
-            selections.getSelected().stream().findFirst().ifPresentOrElse(
-                    matchBean ->
-                            matchList.readDataByConsumer(instanceBean ->
-                                    spectraVisualizationPanel.resultsChanged(instanceBean, matchList, matchBean)),
-                    spectraVisualizationPanel::clear);
+            ((DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
+                    .ifPresentOrElse(matchBean ->
+                                    matchList.readDataByConsumer(instanceBean ->
+                                                    System.out.println()), //todo update data for panel
+//                                            spectraVisualizationPanel.updateSelectedStructureCandidate(instanceBean, matchList, matchBean)),
+                            () -> spectraVisualizationPanel.updateSelectedFeature(null));
         });
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
