@@ -144,20 +144,37 @@ public class CustomDatabaseImporter {
 
     public synchronized void updateStatistics() throws IOException {
         synchronized (database) {
+            CustomDatabase.logger.info("Updating database statistics...");
+
             // update tags & statistics
             database.toSpectralLibrary()
                     .ifPresent(sl -> {
                         try {
-                            database.getStatistics().spectra().set(sl.countAllSpectra());
+                            long spectraCount = sl.countAllSpectra();
+                            CustomDatabase.logger.info("Found " + spectraCount + " spectra in database");
+                            database.getStatistics().spectra().set(spectraCount);
                         } catch (IOException e) {
+                            CustomDatabase.logger.error("Error counting spectra", e);
                             throw new RuntimeException(e);
                         }
                     });
 
-            database.database.updateTags(null, -1);
-            database.getStatistics().compounds().set(database.database.countAllFingerprints());
-            database.getStatistics().formulas().set(database.database.countAllFormulas());
-            database.writeSettings();
+            try {
+                database.database.updateTags(null, -1);
+                long compoundCount = database.database.countAllFingerprints();
+                long formulaCount = database.database.countAllFormulas();
+
+                CustomDatabase.logger.info("Found " + compoundCount + " compounds and " + formulaCount + " formulas in database");
+
+                database.getStatistics().compounds().set(compoundCount);
+                database.getStatistics().formulas().set(formulaCount);
+                database.writeSettings();
+
+                CustomDatabase.logger.info("Database statistics updated successfully");
+            } catch (Exception e) {
+                CustomDatabase.logger.error("Error updating database statistics", e);
+                throw e;
+            }
         }
     }
 
@@ -401,13 +418,32 @@ public class CustomDatabaseImporter {
                     result.stream().map(res -> res.getBiotranformations().stream().map(t -> t.))
 */
                     if (bioTransformerSettings != null) {
+                        CustomDatabase.logger.info("BioTransformer settings detected: " + bioTransformerSettings.getMetabolicTransformation() +
+                                ", CYP450 Mode: " + bioTransformerSettings.getCyp450Mode() +
+                                ", P2 Mode: " + bioTransformerSettings.getP2Mode() +
+                                ", Iterations: " + bioTransformerSettings.getIterations());
+                        CustomDatabase.logger.info("Preparing to transform " + key2DToComp.size() + " molecules");
                         BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
                         job.setSubstrates(
                                 key2DToComp.values().stream()
                                         .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
                                         .toList()
                         );
+                        CustomDatabase.logger.info("Created BioTransformerJJob with " + job.getSubstrates().size() + " substrates");
+                        for (IAtomContainer container : job.getSubstrates()) {
+                            try {
+                                CustomDatabase.logger.info("Substrate SMILES: " + smilesGen.create(container));
+                            } catch (Exception e) {
+                                CustomDatabase.logger.error("Error generating SMILES for substrate", e);
+                            }
+                        }
+                        CustomDatabase.logger.info("Submitting BioTransformerJJob to job manager");
                         List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                        CustomDatabase.logger.info("BioTransformerJJob completed with " + transformationResults.size() + " results");
+                        for (BioTransformerResult result : transformationResults) {
+                            CustomDatabase.logger.info("Result contains " + result.getBiotranformations().size() + " biotransformations");
+                            CustomDatabase.logger.info("Result contains " + result.getAllProductContainers().size() + " product containers");
+                        }
 
                         // 2. Transformations in Molecule konvertieren
 
@@ -430,6 +466,11 @@ public class CustomDatabaseImporter {
                                     }
                                 })
                                 .toList(); // oder .collect(Collectors.toList()); je nach Java-Version/Präferenz
+
+                        CustomDatabase.logger.info("Created " + transformedMolecules.size() + " transformed molecules");
+                        for (Molecule mol : transformedMolecules) {
+                            CustomDatabase.logger.info("Transformed molecule: " + mol.smiles + ", InChI Key: " + mol.inchi.key2D());
+                        }
 
 
                         //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
@@ -459,6 +500,8 @@ public class CustomDatabaseImporter {
                                 CustomDatabase.logger.error("Error deduplicating molecule. Skipping: " + newMolecule.ids + " - " + newMolecule.name, e);
                             }
                         }
+                        CustomDatabase.logger.info("After transformation, key2DToComp contains " + key2DToComp.size() + " unique molecules");
+
                     }
 
 
@@ -496,7 +539,26 @@ public class CustomDatabaseImporter {
                 }
             }
         }
+        // Check database writability
+        try {
+            CustomDatabase.logger.info("Checking database writability...");
+            boolean canWrite = database.toWriteableChemDB().isPresent();
+            CustomDatabase.logger.info("Database is " + (canWrite ? "writable" : "NOT writable"));
+
+            if (!canWrite) {
+                CustomDatabase.logger.error("Database is not writable! This may explain why no transformations are being saved.");
+            } else {
+                // Try to get statistics to verify database access
+                CustomDatabase.logger.info("Current database statistics: Compounds=" +
+                        database.getStatistics().getCompounds() +
+                        ", Formulas=" + database.getStatistics().getFormulas() +
+                        ", Spectra=" + database.getStatistics().getSpectra());
+            }
+        } catch (Exception e) {
+            CustomDatabase.logger.error("Error checking database writability", e);
+        }
     }
+
 
     private void lookupAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
         synchronized (database) {
