@@ -4,6 +4,7 @@ import biotransformer.transformation.Biotransformation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.experimental.Delegate;
@@ -14,7 +15,7 @@ import java.util.concurrent.Callable;
 
 @Accessors(fluent = false, chain = true)
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
-
+    @Getter
     @Setter
     List<IAtomContainer> substrates;
 
