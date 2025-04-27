@@ -53,6 +53,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
 
+    @Getter
     private final SiriusGui gui;
 
     @Getter
