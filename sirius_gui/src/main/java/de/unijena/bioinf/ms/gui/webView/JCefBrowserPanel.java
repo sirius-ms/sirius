@@ -262,6 +262,10 @@ public class JCefBrowserPanel extends JPanel {
         executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
     }
 
+    public void updateSelectedSpectralMatch(@Nullable String alignedFeatureId, @Nullable String matchId) {
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
+    }
+
     private static String parseNullable(@Nullable String s) {
        return s == null || s.isBlank() ? "null" : ("'" + s + "'");
     }

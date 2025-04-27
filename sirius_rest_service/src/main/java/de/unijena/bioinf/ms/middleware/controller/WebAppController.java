@@ -12,7 +12,8 @@ public class WebAppController {
             "/KMD", "/KMD/**",
             "/formulaTreeView", "/formulaTreeView/**",
             "/epi", "/epi/**",
-            "/lcms", "/lcms/**"
+            "/lcms", "/lcms/**",
+            "/libmatch", "/libmatch/**"
     })
     public String serveReactApp(Model model, HttpServletRequest request) {
         // Dynamically build the base URL from the request
