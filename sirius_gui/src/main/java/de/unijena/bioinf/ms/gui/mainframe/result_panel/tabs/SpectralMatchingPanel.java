@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
@@ -32,30 +33,32 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 
 
 public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
 
-
-    private final JCefBrowserPanel spectraVisualizationPanel;
+    private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
     @NotNull
     private final LoadablePanel loadablePanel;
 
-
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
 
-        this.spectraVisualizationPanel = null; //todo add pectra matching mirror plot panel.
+        this.spectraVisualizationPanel = new SpectraVisualizationPanel(matchList.getGui());
         this.tableView = new SpectralMatchingTableView(matchList);
-        //todo implement
+
         this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
             ((DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
                     .ifPresentOrElse(matchBean ->
                                     matchList.readDataByConsumer(instanceBean ->
-                                                    System.out.println()), //todo update data for panel
-//                                            spectraVisualizationPanel.updateSelectedStructureCandidate(instanceBean, matchList, matchBean)),
-                            () -> spectraVisualizationPanel.updateSelectedFeature(null));
+                                            spectraVisualizationPanel.updateSelectedSpectralMatch(
+                                                    instanceBean != null ? instanceBean.getFeatureId() : null,
+                                                    matchBean.getMatch().getSpecMatchId())),
+                            () -> matchList.readDataByConsumer(instanceBean ->
+                                    spectraVisualizationPanel.updateSelectedSpectralMatch(
+                                            instanceBean != null ? instanceBean.getFeatureId() : null, null)));
         });
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
@@ -63,6 +66,14 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
         loadablePanel = new LoadablePanel(major);
         add(loadablePanel, BorderLayout.CENTER);
         matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
+    }
+
+    private static class SpectraVisualizationPanel extends JCefBrowserPanel {
+
+        public SpectraVisualizationPanel(SiriusGui siriusGui) {
+            super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/libmatch")
+                    + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+        }
     }
 
     @Override
@@ -80,5 +91,4 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
                 + "For the selected match in the upper panel, the bottom panel shows a comparison of the experimental and reference spectrum."
                 + "</html>";
     }
-
 }
