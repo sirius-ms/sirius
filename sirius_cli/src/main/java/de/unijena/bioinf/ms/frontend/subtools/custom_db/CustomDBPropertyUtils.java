@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -25,18 +26,22 @@ public class CustomDBPropertyUtils {
      */
     public static LinkedHashMap<String, String> getCustomDBs() {
         LinkedHashMap<String, String> dbs = new LinkedHashMap<>();
-        String[] dbStrings = PropertyManager.getProperty(PROP_KEY, null, "").split(DB_DELIMITER);
-        for (String dbString : dbStrings) {
-            String name, location;
-            if (dbString.contains(NAME_DELIMITER)) {
-                String[] parts = dbString.split(NAME_DELIMITER);
-                location = parts[0];
-                name = parts[1];
-            } else {
-                location = dbString;
-                name = getDBName(location);
+
+        String prop = PropertyManager.getProperty(PROP_KEY, null, "");
+        if (!prop.isBlank()) {
+            String[] dbStrings = prop.split(DB_DELIMITER);
+            for (String dbString : dbStrings) {
+                String name, location;
+                if (dbString.contains(NAME_DELIMITER)) {
+                    String[] parts = dbString.split(NAME_DELIMITER);
+                    location = parts[0];
+                    name = parts[1];
+                } else {
+                    location = dbString;
+                    name = getDBName(location);
+                }
+                dbs.put(location, name);
             }
-            dbs.put(location, name);
         }
         return dbs;
     }
@@ -88,6 +93,7 @@ public class CustomDBPropertyUtils {
 
     private static void saveDBs(LinkedHashMap<String, String> dbs) {
         String dbString = dbs.entrySet().stream()
+                .filter(e -> Utils.notNullOrBlank(e.getKey()))
                 .map(e -> e.getKey() + (getDBName(e.getKey()).equals(e.getValue()) ? "" : NAME_DELIMITER + e.getValue()))
                 .collect(Collectors.joining(DB_DELIMITER));
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(PROP_KEY, dbString);
