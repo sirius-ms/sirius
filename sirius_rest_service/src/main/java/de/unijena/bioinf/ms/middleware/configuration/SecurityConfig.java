@@ -45,45 +45,19 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 if (corsAllowedOrigins != null)
-                    registry.addMapping("/api/**").allowedOrigins(corsAllowedOrigins).allowedMethods(corsAllowedMethods.split(","));
+                    registry.addMapping("/api/**")
+                            .allowedOrigins(corsAllowedOrigins)
+                            .allowedMethods(corsAllowedMethods.split(","));
             }
 
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                //todo generic solution to easily add more apps
-
-
-
-
-                // React views
-                registry.addResourceHandler("/KMD/**", "/formulaTreeView/**", "epi/**", "/lcms/**")
-                        .addResourceLocations("classpath:/static/sirius_java_integrated/")
-                        .resourceChain(true)
-                        .addResolver(new PathResourceResolver() {
-                            @Override
-                            protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                                Resource resource = location.createRelative(resourcePath);
-                                return resource.exists() && resource.isReadable() ? resource :
-                                        location.createRelative("index.html");
-                            }
-                        });
-
                 //assets for react views
                 registry.addResourceHandler("/assets/**")
-                        .addResourceLocations("classpath:/static/sirius_java_integrated/assets/");
+                        .addResourceLocations("classpath:/templates/sirius_java_integrated/assets/");
 
-                // just some basic example for testing.
-                registry.addResourceHandler("/apps/hello-world/")
-                        .addResourceLocations("classpath:/static/hello-world/")
-                        .resourceChain(true)
-                        .addResolver(new PathResourceResolver() {
-                            @Override
-                            protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                                Resource resource = location.createRelative(resourcePath);
-                                return resource.exists() && resource.isReadable() ? resource :
-                                        location.createRelative("index.html");
-                            }
-                        });
+                registry.addResourceHandler("/sirius_java_integrated/**")
+                        .addResourceLocations("classpath:/templates/sirius_java_integrated/");
             }
         };
     }

@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -33,30 +32,5 @@ public class RedirectController {
     @RequestMapping(path = {"/", "/api", "/api/"})
     public String swaggerRoot() {
         return "redirect:/swagger-ui.html";
-    }
-
-    @GetMapping({
-            "/KMD", "/KMD/**",
-            "/formulaTreeView", "/formulaTreeView/**",
-            "/epi", "/epi/**",
-            "/lcms", "/lcms/**"
-    })
-    public String forwardKmdView() {
-        return "forward:/sirius_java_integrated/index.html";
-    }
-
-    @GetMapping({"/d3-colorbar.js", })
-    public String forwardD3ColorbarJs() {
-        return "forward:/sirius_java_integrated/d3-colorbar.js";
-    }
-
-    @GetMapping({"/treeViewer.js"})
-    public String forwardTreeViewerJs() {
-        return "forward:/sirius_java_integrated/treeViewer.js";
-    }
-
-    @GetMapping({"/apps/hello-world", "/apps/hello-world/**"})
-    public String forwardHelloWorld() {
-        return "forward:/hello-world/index.html";
     }
 }
