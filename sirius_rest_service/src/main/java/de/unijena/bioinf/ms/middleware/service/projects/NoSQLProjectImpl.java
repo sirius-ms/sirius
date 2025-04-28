@@ -2234,9 +2234,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .orElse(null);
 
         //todo we retrieve the complete candidate just for the smile. Maybe add smiles to match?
-        String smiles = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class)
-                .map(CompoundCandidate::getSmiles)
-                .orElse(null);
+        FingerprintCandidate candidate = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class).orElse(null);
+        String smiles = candidate == null ? null : candidate.getSmiles();
+        String name = candidate == null ? null : candidate.getName();
 
         if (specIndex < 0) {
             Spectrum<Peak> mergedSpec = msdata.getMergedMSnSpectrum();
@@ -2246,9 +2246,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             double precursorMz = msdata.getMsnSpectra().stream().mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz)
                     .average().orElseThrow();
 
-            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, mergedSpec, ftree, smiles, asCosineQuery);
+            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, mergedSpec, ftree, smiles, name, asCosineQuery);
         } else {
-            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles, asCosineQuery);
+            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles, name, asCosineQuery);
         }
     }
 
@@ -2268,11 +2268,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .orElse(null);
 
         //todo we retrieve the complete candidate just for the smile. Maybe add smiles to match?
-        String smiles = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class)
-                .map(CompoundCandidate::getSmiles)
-                .orElse(null);
+        FingerprintCandidate candidate = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class).orElse(null);
+        String smiles = candidate == null ? null : candidate.getSmiles();
+        String name = candidate == null ? null : candidate.getName();
 
-        return AnnotatedMsMsData.of(msdata, ftree, smiles, asCosineQuery);
+        return AnnotatedMsMsData.of(msdata, ftree, smiles, name, asCosineQuery);
     }
 
     @SneakyThrows

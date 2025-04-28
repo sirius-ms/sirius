@@ -75,6 +75,16 @@ public class SpectrumAnnotation {
     /**
      * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
      * <p>
+     * Name of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation.
+     * <p>
+     * Null if substructure annotation not available or not requested.
+     */
+    @Schema(nullable = true)
+    private String structureAnnotationName;
+
+    /**
+     * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.
+     * <p>
      * SVG graphics of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation
      * Substructure highlighting (bond and atom indices) refers to this SVG.
      * <p>
