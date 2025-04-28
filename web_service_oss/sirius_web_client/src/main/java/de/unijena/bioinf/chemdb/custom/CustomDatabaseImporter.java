@@ -146,6 +146,7 @@ public class CustomDatabaseImporter {
         } finally {
             performSpectraMergingIfNecessary();
             updateStatistics();
+            database.database.getStorage().flush();
         }
     }
 
