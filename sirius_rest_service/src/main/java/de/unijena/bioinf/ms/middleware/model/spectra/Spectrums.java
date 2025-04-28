@@ -219,19 +219,27 @@ public class Spectrums {
         if (ftree == null)
             return spectrum;
 
-        String candidateSmiles = refSpectrum.getSmiles();
-
         Fragment[] fragments = annotateFragmentsToSingleMsMs(specSource, ftree, specSource.getParentMass(), true);
-        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
+        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments),  refSpectrum.getSmiles(), refSpectrum.getName());
     }
 
 
-    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(double precursorMz, @NotNull Spectrum<Peak> mergedMs2Peaks, @Nullable FTree ftree, boolean asCosineQuery) {
-        return createMergedMsMsWithAnnotations(precursorMz, mergedMs2Peaks, ftree, null, asCosineQuery);
+    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(double precursorMz,
+                                                                    @NotNull Spectrum<Peak> mergedMs2Peaks,
+                                                                    @Nullable FTree ftree,
+                                                                    boolean asCosineQuery
+    ) {
+        return createMergedMsMsWithAnnotations(precursorMz, mergedMs2Peaks, ftree, null, null, asCosineQuery);
     }
 
     @SneakyThrows
-    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(double precursorMz, @NotNull Spectrum<Peak> mergedMs2Peaks, @Nullable FTree ftree, @Nullable String candidateSmiles, boolean asCosineQuery) {
+    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(double precursorMz,
+                                                                    @NotNull Spectrum<Peak> mergedMs2Peaks,
+                                                                    @Nullable FTree ftree,
+                                                                    @Nullable String candidateSmiles,
+                                                                    @Nullable String candidateName,
+                                                                    boolean asCosineQuery
+    ) {
         AnnotatedSpectrum annotatedPeaks;
         if (asCosineQuery){
             ReferenceLibrarySpectrum query = FAST_COSINE.prepareQuery(precursorMz, mergedMs2Peaks);
@@ -250,12 +258,18 @@ public class Spectrums {
                 annotatedPeaks,
                 ftree,
                 candidateSmiles,
+                candidateName,
                 asCosineQuery
         );
     }
 
     @SneakyThrows
-    public static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull MergedMSnSpectrum specSource, @Nullable FTree ftree, @Nullable String candidateSmiles, boolean asCosineQuery) {
+    public static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull MergedMSnSpectrum specSource,
+                                                              @Nullable FTree ftree,
+                                                              @Nullable String candidateSmiles,
+                                                              @Nullable String candidateName,
+                                                              boolean asCosineQuery
+    ) {
         double precursorMz = specSource.getMergedPrecursorMz();
         AnnotatedSpectrum annotatedPeaks;
         if (asCosineQuery){
@@ -275,25 +289,36 @@ public class Spectrums {
                 annotatedPeaks,
                 ftree,
                 candidateSmiles,
+                candidateName,
                 asCosineQuery
         );
     }
 
 
     @SneakyThrows
-    private static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @Nullable FTree ftree, @Nullable String candidateSmiles, boolean isModifiedMs2) {
+    private static AnnotatedSpectrum createMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum,
+                                                               @Nullable FTree ftree,
+                                                               @Nullable String candidateSmiles,
+                                                               @Nullable String candidateName,
+                                                               boolean isModifiedMs2
+    ) {
         if (ftree == null)
             return spectrum;
         Fragment[] fragments = annotateFragmentsToSingleMsMs(spectrum, ftree, spectrum.getPrecursorMz(), isModifiedMs2);
-        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles);
+        return makeMsMsWithAnnotations(spectrum, ftree, Arrays.asList(fragments), candidateSmiles, candidateName);
     }
 
-    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum, @NotNull FTree ftree, @NotNull Collection<Fragment> fragments, @Nullable String candidateSmiles) throws CDKException {
+    private static AnnotatedSpectrum makeMsMsWithAnnotations(@NotNull AnnotatedSpectrum spectrum,
+                                                             @NotNull FTree ftree,
+                                                             @NotNull Collection<Fragment> fragments,
+                                                             @Nullable String candidateSmiles,
+                                                             @Nullable String candidateName
+    ) throws CDKException {
         //compute substructure annotations //todo do we want to do this somewhere else? We need a cancellable job in the api anyways
         final InsilicoFragmentationResult structureAnno = candidateSmiles == null ? null
                 : SiriusJobs.runInBackground(new InsilicoFragmentationPeakAnnotator().makeJJob(ftree, candidateSmiles)
                 .asType(JJob.JobType.TINY_BACKGROUND)).takeResult(); //executed as tiny background job to be computed instantly for immediate response
-        setSpectrumAnnotation(spectrum, ftree, structureAnno, candidateSmiles);
+        setSpectrumAnnotation(spectrum, ftree, structureAnno, candidateSmiles, candidateName);
         setPeakAnnotations(spectrum, ftree, fragments, structureAnno);
 
         // DEBUGGING/VALIDATION: Show tree annotations stats
@@ -364,9 +389,11 @@ public class Spectrums {
     /*
     duplicate code in SpectrumAnnotationJJob.setSpectrumAnnotation (require different AnnotatedSpectrum/Peaks). Both need to be changed consistently.
      */
-    private static void setSpectrumAnnotation(AnnotatedSpectrum spectrum, @Nullable FTree ftree,
+    private static void setSpectrumAnnotation(AnnotatedSpectrum spectrum,
+                                              @Nullable FTree ftree,
                                               @Nullable InsilicoFragmentationResult structureAnno,
-                                              @Nullable String candidateSmiles
+                                              @Nullable String candidateSmiles,
+                                              @Nullable String candidateName
     ) throws CDKException {
         if (ftree == null)
             return;
@@ -391,6 +418,7 @@ public class Spectrums {
 
         if (structureAnno != null) {
             specAnno.structureAnnotationSmiles(candidateSmiles)
+                    .structureAnnotationName(candidateName)
                     .structureAnnotationScore(structureAnno.getScore());
             specAnno.structureAnnotationSvg(smilesToSVG(candidateSmiles));
         }
