@@ -41,13 +41,13 @@ public class AnnotatedMsMsData {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected List<AnnotatedSpectrum> ms2Spectra;
 
-    public static AnnotatedMsMsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, @Nullable FTree ftree, @Nullable String candidateSmiles, boolean asCosineQuery) {
+    public static AnnotatedMsMsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, @Nullable FTree ftree, @Nullable String candidateSmiles, @Nullable String candidateName, boolean asCosineQuery) {
         double precursorMz = msData.getMsnSpectra().stream()
                 .mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().orElseThrow();
 
         return AnnotatedMsMsData.builder()
-                .ms2Spectra(msData.getMsnSpectra().stream().map(spec -> Spectrums.createMsMsWithAnnotations(spec, ftree, candidateSmiles, asCosineQuery)).toList())
-                .mergedMs2(Spectrums.createMergedMsMsWithAnnotations(precursorMz, msData.getMergedMSnSpectrum(), ftree, candidateSmiles, asCosineQuery))
+                .ms2Spectra(msData.getMsnSpectra().stream().map(spec -> Spectrums.createMsMsWithAnnotations(spec, ftree, candidateSmiles, candidateName, asCosineQuery)).toList())
+                .mergedMs2(Spectrums.createMergedMsMsWithAnnotations(precursorMz, msData.getMergedMSnSpectrum(), ftree, candidateSmiles, candidateName, asCosineQuery))
                 .build();
     }
 }
