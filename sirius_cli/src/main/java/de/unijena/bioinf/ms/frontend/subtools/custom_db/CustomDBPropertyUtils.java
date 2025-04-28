@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -19,7 +20,7 @@ public class CustomDBPropertyUtils {
 
     public static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
     public static final String DB_DELIMITER = ",";
-    public static final String NAME_DELIMITER = ":";
+    public static final String NAME_DELIMITER = "|";
 
     /**
      * @return a map from location to DB name in the order they are listed in the property
@@ -33,7 +34,7 @@ public class CustomDBPropertyUtils {
             for (String dbString : dbStrings) {
                 String name, location;
                 if (dbString.contains(NAME_DELIMITER)) {
-                    String[] parts = dbString.split(NAME_DELIMITER);
+                    String[] parts = dbString.split(Pattern.quote(NAME_DELIMITER));
                     location = parts[0];
                     name = parts[1];
                 } else {
