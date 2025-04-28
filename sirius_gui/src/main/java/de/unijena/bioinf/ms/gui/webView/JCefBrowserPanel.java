@@ -263,7 +263,7 @@ public class JCefBrowserPanel extends JPanel {
     }
 
     public void updateSelectedSpectralMatch(@Nullable String alignedFeatureId, @Nullable String matchId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
+        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
     }
 
     private static String parseNullable(@Nullable String s) {
