@@ -7,7 +7,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class WebAppController {
-    
+    //minimal react app for testing purposes.
+    @GetMapping({"/apps/hello-world", "/apps/hello-world/**"})
+    public String serveHelloWorld() {
+        return "hello-world/index";
+    }
+
     @GetMapping({
             "/KMD", "/KMD/**",
             "/formulaTreeView", "/formulaTreeView/**",
@@ -15,7 +20,7 @@ public class WebAppController {
             "/lcms", "/lcms/**",
             "/libmatch", "/libmatch/**"
     })
-    public String serveReactApp(Model model, HttpServletRequest request) {
+    public String serveReactViewsApp(Model model, HttpServletRequest request) {
         // Dynamically build the base URL from the request
         String baseUrl = request.getScheme() + "://" + request.getServerName();
 
@@ -36,22 +41,20 @@ public class WebAppController {
         model.addAttribute("apiBaseUrl", baseUrl);
         return "sirius_java_integrated/index";
     }
-    
-    // Handle the JS files that were previously redirected
+
+    // Serve these JS files as static resources
     @GetMapping({"/d3-colorbar.js"})
     public String d3ColorbarJs() {
-        // Still serve these as static resources
         return "forward:/sirius_java_integrated/d3-colorbar.js";
+    }
+
+    @GetMapping({"/d3.v5.min.js"})
+    public String d3v5Js() {
+        return "forward:/sirius_java_integrated/d3.v5.min.js";
     }
     
     @GetMapping({"/treeViewer.js"})
     public String treeViewerJs() {
-        // Still serve these as static resources
         return "forward:/sirius_java_integrated/treeViewer.js";
-    }
-
-    @GetMapping({"/apps/hello-world", "/apps/hello-world/**"})
-    public String forwardHelloWorld() {
-        return "hello-world/index";
     }
 }
