@@ -4,6 +4,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.ListSelectionEvent;
@@ -12,9 +13,27 @@ import java.net.URI;
 
 public class SubstructurePanel extends JCefBrowserPanel implements ListSelectionListener {
     //todo make loadable by using swing based spinner
+
+    public SubstructurePanel(SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
+        super(makeURL(siriusGui, structureCandidate) , siriusGui);
+    }
+
     public SubstructurePanel(SiriusGui siriusGui) {
-        super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/epi")
-                + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+        this(siriusGui, null);
+    }
+
+    private static String makeURL(@NotNull SiriusGui gui, @Nullable FingerprintCandidateBean structureCandidate) {
+        String fid = null;
+        String formulaId = null;
+        String inchi = null;
+
+        if (structureCandidate != null) {
+            fid = structureCandidate.getParentFeatureId();
+            formulaId = structureCandidate.getCandidate().getFormulaId();
+            inchi = structureCandidate.getInChiKey();
+        }
+        return URI.create(gui.getSiriusClient().getApiClient().getBasePath()).resolve("/epi")
+                + makeParameters(gui.getProjectManager().getProjectId(), fid, formulaId, inchi, null);
     }
 
 

@@ -55,7 +55,7 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
         this.structureList = structureList;
         this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
 
-        SubstructurePanel substructurePanel = new SubstructurePanel(structureList.getGui());
+        SubstructurePanel substructurePanel = new SubstructurePanel(structureList.getGui(), structureList.getSelectedElement());
         substructurePanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Epimetheus_SpectralVisualization);
         candidateTable.getFilteredSelectionModel().addListSelectionListener(substructurePanel);
 

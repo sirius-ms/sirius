@@ -38,8 +38,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
+import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
@@ -91,7 +90,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private final SiriusGui gui;
 
     /**
-     *
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
      */
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> wasComputed) {
@@ -321,10 +319,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new SpectralMatchingDialog(
-                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean, gui)
-        ).setVisible(true));
+        Jobs.runEDTLater(() -> new SubstructureMatchingDialog(
+                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, candidateBean)
+                .setVisible(true));
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
