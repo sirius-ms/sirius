@@ -1,8 +1,4 @@
-package de.unijena.bioinf.ms.biotransformer;//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
+package de.unijena.bioinf.ms.biotransformer;
 
 
 import biotransformer.biosystems.BioSystem.BioSystemName;
