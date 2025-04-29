@@ -407,22 +407,25 @@ public class CustomDatabaseImporter {
                     // 2. Transformations in Molecule konvertieren
 
                     List<Molecule> transformedMolecules = transformationResults.stream()
-                            // Iteriere über alle Ergebnisse der Biotransformationen
-                            .flatMap(result -> result.getBiotranformations().stream())
-                            // Iteriere über ale AtomContainer aus Tranformations
-                            .flatMap(transformation -> {
-                                IAtomContainerSet products = transformation.getProducts(); // Zugriff auf das IAtomContainerSet
-                                return StreamSupport.stream(products.atomContainers().spliterator(), false) //  Iterable in Stream
-                                        .map(container -> {
-                                            try {
-                                                InChIGenerator inchi= generateInChI(container);
-                                                return new Molecule(container,new Smiles(smilesGen.create(container)),new InChI(inchi.getInchiKey(),inchi.getInchi()));
-                                            } catch (CDKException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                        }); // Konvertiere jeden IAtomContainer in ein Molecule
+                            // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
+                            .flatMap(result -> result.getAllProductContainers().stream()) // Verwende die neue Methode
+                            // Konvertiere jeden IAtomContainer in ein Molecule
+                            .map(container -> {
+                                try {
+                                    // Die Logik zur Erstellung von Molecule bleibt gleich
+                                    InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
+                                    String inchiValue = inchiGenerator.getInchi();
+                                    String inchiKey = inchiGenerator.getInchiKey();
+                                    String smilesValue = smilesGen.create(container);
+
+                                    return new Molecule(container, new Smiles(smilesValue), new InChI(inchiValue, inchiKey));
+                                } catch (CDKException e) {
+                                    // Passende Fehlerbehandlung, hier RuntimeException wie im Original
+                                    throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                                }
                             })
-                            .toList();
+                            .toList(); // oder .collect(Collectors.toList()); je nach Java-Version/Präferenz
+
 
                     //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
 
@@ -656,15 +659,15 @@ public class CustomDatabaseImporter {
     @Getter
     public static class Molecule {
         @NotNull
-        private final InChI inchi;
+         final InChI inchi;
         @NotNull
-        private final Smiles smiles;
-        private final Set<String> ids = new HashSet<>();
-        private String name = null;
+         final Smiles smiles;
+         final Set<String> ids = new HashSet<>();
+         String name = null;
         @NotNull
-        private final IAtomContainer container;
+         final IAtomContainer container;
 
-        private Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
+          Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
             this.container = container;
             this.smiles = smiles;
             this.inchi = inchi;
