@@ -50,6 +50,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     private InstanceBean instanceBean;
+    @Getter
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
 

@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.webView;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -35,6 +36,7 @@ import org.cef.handler.CefLifeSpanHandler;
 import org.cef.handler.CefLifeSpanHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
 import org.cef.network.CefRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,6 +70,25 @@ public class JCefBrowserPanel extends JPanel {
     private static final String CSS_DARK_RESOURCE = "/js/styles-dark.css";
 
     protected static String THEME_REST_PARA = "?theme=" + (Colors.isDarkTheme() ? "dark" : "light");
+
+    protected static String makeParameters(@NotNull String projectId){
+        return THEME_REST_PARA + "&pid=" + projectId;
+    }
+    protected static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
+                                           @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId
+    ){
+        StringBuilder params = new StringBuilder(makeParameters(projectId));
+        if (Utils.notNullOrBlank(alignedFeatureId))
+            params.append("&fid=").append(alignedFeatureId);
+        if (Utils.notNullOrBlank(formulaId))
+            params.append("&formulaId=").append(formulaId);
+        if (Utils.notNullOrBlank(inchiKey))
+            params.append("&inchikey=").append(inchiKey);
+        if (Utils.notNullOrBlank(matchId))
+            params.append("&matchid=").append(matchId);
+
+        return params.toString();
+    }
 
     public static JCefBrowserPanel makeHTMLTextPanel(String htmlText, SiriusGui browserProvider) {
         return makeHTMLTextPanel(htmlText, browserProvider, Colors.BACKGROUND);
