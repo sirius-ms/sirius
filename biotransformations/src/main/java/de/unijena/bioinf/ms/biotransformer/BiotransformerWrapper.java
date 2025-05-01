@@ -1,35 +1,20 @@
 package de.unijena.bioinf.ms.biotransformer;
 
 
-import biotransformer.biosystems.BioSystem.BioSystemName;
+import biotransformer.biosystems.BioSystem.*;
 import biotransformer.railsappspecific.*;
 import biotransformer.transformation.Biotransformation;
+import biotransformer.utils.BiotransformerSequence;
+import biotransformer.utils.BiotransformerSequenceStep;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
+import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import biotransformer.utils.BiotransformerSequenceStep;
-import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IChemObjectBuilder;
-
-import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
-
 public class BiotransformerWrapper{
 
-    public BiotransformerWrapper() {
-
-    }
-public static IAtomContainer SetMolecule(String smiles) throws Exception {
-        IChemObjectBuilder builder = SilentChemObjectBuilder.getInstance();
-        SmilesParser smiParser = new SmilesParser(builder);
-        return smiParser.parseSmiles(smiles);
-
-}
-
-
-
-public static List<Biotransformation> abioticTransformer(IAtomContainer singleMolecule,int nrOfSteps) throws Exception {
+public static List<Biotransformation> abioticTransformer(IAtomContainer singleMolecule, int nrOfSteps) throws Exception {
     AbioticTransformer_rails abiotic_bt = new AbioticTransformer_rails(false, false);
     return abiotic_bt.applyAbioticTransformationsChain(singleMolecule, true, true, nrOfSteps, (double) 0.5F);
 }
@@ -90,13 +75,7 @@ public static List<Biotransformation> multiBioTransformer(IAtomContainer singleM
 
 
 
-
-
-
-   /* public static void main(String[] args) throws Exception {
-
-
-
+    public static void main(String[] args) throws Exception {
         BiotransformerSequence_rails biotransformerSeqeuence = null;
         BiotransformerSequence btq_for_mf = null;
         // default
@@ -106,15 +85,13 @@ public static List<Biotransformation> multiBioTransformer(IAtomContainer singleM
         boolean useSub = false;
         Double massThreshold = (double)1500.0F;
 
-        String smile = "CC(C)C1=CC=C(C)C=C1O";
+        String smiles = "CC(C)C1=CC=C(C)C=C1O";
         int steps= 2;
         int cypmode = 3;
         ArrayList<Biotransformation> biotransformations;
-        //biotransformations = BiotransformerWrapper.AllHumanTransformer(smile, steps, p2Mode, cypmode, useDB, useSub);
+        IAtomContainer molecule = InChISMILESUtils.getAtomContainerFromSmiles(smiles);
 
-        BiotransformerWrapper.AllHumanTransformer(smile, steps, p2Mode, cypmode, useDB, useSub);
-
-
-
-    }*/
+        List<Biotransformation> result = BiotransformerWrapper.allHumanTransformer(molecule, steps, p2Mode, Cyp450Mode.COMBINED, useDB, useSub);
+        System.out.println("RESULTS: " + result.size());
+    }
 }
