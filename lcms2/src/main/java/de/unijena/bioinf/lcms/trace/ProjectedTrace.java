@@ -4,6 +4,7 @@ import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -70,7 +71,7 @@ public class ProjectedTrace implements Serializable {
         this.rawIntensities = rawIntensities;
         this.projectedIntensities = projectedIntensities;
         if (projectedMz.length>= 100*rawMz.length) {
-            throw new RuntimeException("Something weird is going on here oO");
+            LoggerFactory.getLogger(ProjectedTrace.class).warn("Low amount of datapoints for feature with mass "+averagedMz+" in sample "+sampleId+" compared to merged trace");
         }
     }
 

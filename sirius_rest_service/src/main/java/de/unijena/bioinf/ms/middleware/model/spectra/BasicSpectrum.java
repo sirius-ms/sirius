@@ -43,6 +43,7 @@ import java.util.List;
         creatorVisibility = JsonAutoDetect.Visibility.NONE,
         isGetterVisibility = JsonAutoDetect.Visibility.NONE)
 public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
+
     public BasicSpectrum(@NotNull List<SimplePeak> peaks) {
         this.peaks = peaks;
     }

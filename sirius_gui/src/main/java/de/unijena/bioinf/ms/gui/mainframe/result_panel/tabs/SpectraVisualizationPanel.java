@@ -60,9 +60,7 @@ import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sdk.model.AnnotatedSpectrum;
 import io.sirius.ms.sdk.model.BasicSpectrum;
 import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntComparators;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +89,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrEmpty;
@@ -122,6 +119,20 @@ public class SpectraVisualizationPanel extends JPanel implements
     public static final String MS1_DISPLAY = "MS1", MS1_MIRROR_DISPLAY = "MS1 mirror-plot", MS2_DISPLAY = "MS2", MS2_MIRROR_DISPLAY = "MS2 mirror-plot",
             MS2_MERGED_DISPLAY = "merged";
 
+
+    public final static String SQRT = "square root";
+    public final static String KEEPINT = "no";
+    public final static String[] intensityTransformModes = new String[]{
+            KEEPINT, SQRT
+    };
+
+    public final static String MAXNORM = "l∞ (max)";
+    public final static String SUMNORM = "l1 (sum)";
+    public final static String L2 = "l2";
+    public final static String[] normalizationModes = new String[]{
+            MAXNORM, L2, SUMNORM
+    };
+
     public enum FileFormat {
         svg, pdf, json, none
     }
@@ -135,6 +146,8 @@ public class SpectraVisualizationPanel extends JPanel implements
 
     JComboBox<String> modesBox;
     JComboBox<String> ceBox;
+    JComboBox<String> normBox;
+    JComboBox<String> intBox;
     String preferredMode;
     private final JButton saveButton;
     JFrame popupOwner;
@@ -147,7 +160,7 @@ public class SpectraVisualizationPanel extends JPanel implements
     private final WebViewJPanel compoundDetails;
 
     private final boolean ms2MirrorEnabled;
-    private SpectralSimilarity[] similarities;
+    private Int2ObjectMap<SpectralSimilarity> similarities;
     private IntList queryIndices;
     private SpectralMatchBean selectedMatchBean;
 
@@ -189,6 +202,28 @@ public class SpectraVisualizationPanel extends JPanel implements
         toolBar.add(l);
         toolBar.add(modesBox);
         toolBar.add(ceBox);
+
+        //todo it makes no sense to show this for every spectrum plot. E.g. isotope mirror plot. Discuss what we actually need here.
+        intBox = new JComboBox<>(intensityTransformModes);
+        normBox = new JComboBox<>(normalizationModes);
+        toolBar.add(new JLabel("Norm: "));
+        toolBar.add(normBox);
+        toolBar.add(new JLabel("Intensity transform: "));
+        toolBar.add(intBox);
+
+        if (preferredMode.equals(MS2_MIRROR_DISPLAY)) {
+            intBox.setSelectedItem(SQRT);
+            normBox.setSelectedItem(L2);
+        } else if (preferredMode.equals(MS1_MIRROR_DISPLAY)) {
+            intBox.setSelectedItem(KEEPINT);
+            normBox.setSelectedItem(MAXNORM);
+        } else {
+            intBox.setSelectedItem(KEEPINT);
+            normBox.setSelectedItem(MAXNORM);
+        }
+        intBox.addItemListener(this);
+        normBox.addItemListener(this);
+
 
         toolBar.addSeparator(new Dimension(10, 10));
         saveButton = Buttons.getExportButton24("Export spectra");
@@ -276,11 +311,10 @@ public class SpectraVisualizationPanel extends JPanel implements
                     spectrum = msData.getMs1Spectra().getFirst();
 
                 if (spectrum != null) {
-                    spectrum = normalize(spectrum, Normalization.Max);
 
                     if (mode.equals(MS1_DISPLAY)) {
                         //match already extracted pattern to highlight peaks, remove patter from result
-                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? normalize(isotopePatternAnnotation.getIsotopePattern(), Normalization.Max) : null);
+                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
                         if (ob.getSpectra().size() > 1 && ob.getPeakMatches().size() > 1) {
                             ob.getSpectra().remove(1);
                             ob.getPeakMatches().remove(1);
@@ -288,7 +322,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                         jsonSpectra = ob;
                     } else if (mode.equals(MS1_MIRROR_DISPLAY)) {
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
-                            jsonSpectra = matchSpectra(spectrum, normalize(isotopePatternAnnotation.getSimulatedPattern(), Normalization.Max));
+                            jsonSpectra = matchSpectra(spectrum, isotopePatternAnnotation.getSimulatedPattern());
                         } else {
                             showError("No isotope pattern available!");
                             LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Cannot show mirror plot!");
@@ -300,17 +334,17 @@ public class SpectraVisualizationPanel extends JPanel implements
             } else if (mode.equals(MS2_DISPLAY)) {
                 if (ce_index == -1) { //merged ms/ms
                     if (annotatedMsMsData != null && annotatedMsMsData.getMergedMs2() != null) {
-                        jsonSpectra = SpectraViewContainer.of(annotatedMsMsData.getMergedMs2());
+                        jsonSpectra = SpectraViewContainer.of(annotatedMsMsData.getMergedMs2(), getNormalizationMode(), getIntensityMode());
                         smiles = annotatedMsMsData.getMergedMs2().getSpectrumAnnotation().getStructureAnnotationSmiles();
                     } else
-                        jsonSpectra = SpectraViewContainer.of(msData.getMergedMs2());
+                        jsonSpectra = SpectraViewContainer.of(msData.getMergedMs2(), getNormalizationMode(), getIntensityMode());
                 } else {
                     if (annotatedMsMsData != null && !annotatedMsMsData.getMs2Spectra().isEmpty()) {
                         AnnotatedSpectrum spec = annotatedMsMsData.getMs2Spectra().get(ce_index);
-                        jsonSpectra = SpectraViewContainer.of(spec);
+                        jsonSpectra = SpectraViewContainer.of(spec, getNormalizationMode(), getIntensityMode());
                         smiles = spec.getSpectrumAnnotation().getStructureAnnotationSmiles();
                     } else
-                        jsonSpectra = SpectraViewContainer.of(msData.getMs2Spectra().get(ce_index));
+                        jsonSpectra = SpectraViewContainer.of(msData.getMs2Spectra().get(ce_index), getNormalizationMode(), getIntensityMode());
                 }
             } else if (mode.equals(MS2_MIRROR_DISPLAY)) {
                 if (selectedMatchBean == null || selectedMatchBean.getReference().isEmpty()) {
@@ -327,7 +361,7 @@ public class SpectraVisualizationPanel extends JPanel implements
                 BasicSpectrum s = ce_index >= 0 && ce_index < msData.getMs2Spectra().size() ?
                         msData.getMs2Spectra().get(queryIndices.getInt(ce_index)) : msData.getMs2Spectra().getFirst();
 
-                jsonSpectra = SpectraViewContainer.of(List.of(s, selectedMatchBean.getReference().get()));
+                jsonSpectra = SpectraViewContainer.of(List.of(s, selectedMatchBean.getReference().get()), getNormalizationMode(), getIntensityMode());
                 smiles = selectedMatchBean.getMatch().getSmiles();
             } else {
                 showError("Mode not supported!");
@@ -362,25 +396,26 @@ public class SpectraVisualizationPanel extends JPanel implements
         }
     }
 
-    // TODO remove after API has normalization parameter
-    private BasicSpectrum normalize(BasicSpectrum spectrum, Normalization normalization) {
-        SimpleMutableSpectrum mutable = new SimpleMutableSpectrum(spectrum.getPeaks().size());
-        spectrum.getPeaks().stream()
-                .filter(peak -> peak.getMz() != null && peak.getIntensity() != null)
-                .forEach(peak -> mutable.addPeak(peak.getMz(), peak.getIntensity()));
-        spectrum.setAbsIntensityFactor(Spectrums.normalize(mutable, Normalization.Max));
-        spectrum.setPeaks(IntStream.range(0, mutable.size()).mapToObj(i -> {
-            SimplePeak peak = new SimplePeak();
-            peak.setMz(mutable.getMzAt(i));
-            peak.setIntensity(mutable.getIntensityAt(i));
-            return peak;
-        }).toList());
-        return spectrum;
+    private Normalization getNormalizationMode() {
+        switch ((String)normBox.getSelectedItem()) {
+            case SUMNORM: return Normalization.Sum(1d);
+            case L2: return Normalization.L2();
+            case MAXNORM: return Normalization.Max;
+        }
+        return Normalization.Max;
+    }
+
+    private SpectraViewContainer.IntensityTransform getIntensityMode() {
+        switch ((String)intBox.getSelectedItem()) {
+            case KEEPINT: return SpectraViewContainer.IntensityTransform.No;
+            case SQRT: return SpectraViewContainer.IntensityTransform.Sqrt;
+        }
+        return SpectraViewContainer.IntensityTransform.No;
     }
 
     private SpectraViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum, @Nullable BasicSpectrum pattern) {
         if (pattern == null)
-            return SpectraViewContainer.of(spectrum);
+            return SpectraViewContainer.of(spectrum, getNormalizationMode(), getIntensityMode());
         return matchSpectra(spectrum, pattern,
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).massDifferenceDeviation);
     }
@@ -408,9 +443,11 @@ public class SpectraVisualizationPanel extends JPanel implements
         return new SpectraViewContainer<>(
                 Stream.of(spectrum, pattern).collect(Collectors.toCollection(ArrayList::new)),
                 Stream.of(Arrays.asList(peakMatchesSpectrum), Arrays.asList(peakMatchesPattern))
-                        .collect(Collectors.toCollection(ArrayList::new)));
+                        .collect(Collectors.toCollection(ArrayList::new)), getNormalizationMode().getMode(), getIntensityMode());
     }
 
+    //duplicate code with Spectrums class in middleware api
+    @Deprecated
     public static String makeSVG(String smiles) {
         try {
             final MolecularGraph graph = new MolecularGraph(
@@ -571,13 +608,11 @@ public class SpectraVisualizationPanel extends JPanel implements
 
                                         if (matchList != null && matchBean != null) {
                                             selectedMatchBean = matchBean;
-                                            similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
+                                            similarities = new Int2ObjectOpenHashMap<>(msData.getMs2Spectra().size() + 1);
                                             queryIndices = new IntArrayList();
                                             for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
-                                                similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
-                                                        match.getMatch().getSimilarity(),
-                                                        match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
-                                                );
+                                                similarities.put((int) match.getMatch().getQuerySpectrumIndex(),
+                                                        new SpectralSimilarity(match.getMatch().getSimilarity(), getIntArrayList(match)));
                                                 queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
                                             }
                                             queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
@@ -666,6 +701,19 @@ public class SpectraVisualizationPanel extends JPanel implements
         }
     }
 
+    private static @Nullable IntArrayList getIntArrayList(SpectralMatchBean match) {
+        List<PeakPair> pairs = match.getMatch().getSharedPeakMapping();
+        IntArrayList arrayPairs = null;
+        if (pairs != null) {
+            arrayPairs = new IntArrayList(pairs.size() * 2);
+            for (PeakPair pair : pairs) {
+                arrayPairs.add(pair.getQueryPeak());
+                arrayPairs.add(pair.getReferencePeak());
+            }
+        }
+        return arrayPairs;
+    }
+
     private void clearData() {
         msData = null;
         smiles = null;
@@ -678,17 +726,19 @@ public class SpectraVisualizationPanel extends JPanel implements
     private void updateCEBox(MsData msData) {
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
+
         if (ms2MirrorEnabled) {
-            SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
+            SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, null);
             int maxIndex = -1;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
-                if (similarities != null && similarities[i] != null) {
+                if (similarities != null && similarities.containsKey(i)) {
+                    SpectralSimilarity sim = similarities.get(i);
                     BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
                     String collisionEnergy = spectrum.getCollisionEnergy();
                     ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy +
-                            String.format(" (%.1f %% similarity, %d shared peaks)", 100 * similarities[i].similarity, similarities[i].sharedPeaks));
-                    if (similarities[i].similarity > maxSimilarity.similarity || (Math.abs(similarities[i].similarity - maxSimilarity.similarity) < 1E-3 && similarities[i].sharedPeaks > maxSimilarity.sharedPeaks)) {
-                        maxSimilarity = similarities[i];
+                            String.format(" (%.1f %% similarity, %d shared peaks)", 100 * sim.similarity, sim.sharedPeaks));
+                    if (sim.similarity > maxSimilarity.similarity || (Math.abs(sim.similarity - maxSimilarity.similarity) < 1E-3 && sim.sharedPeaks > maxSimilarity.sharedPeaks)) {
+                        maxSimilarity = sim;
                         maxIndex++;
                     }
                 }

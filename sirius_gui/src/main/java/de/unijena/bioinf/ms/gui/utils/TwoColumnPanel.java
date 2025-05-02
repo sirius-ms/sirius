@@ -37,7 +37,6 @@ public class TwoColumnPanel extends JPanel {
         super();
         setLayout(new GridBagLayout());
         setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
-
         left = new GridBagConstraints();
         left.gridx = 0;
         left.fill = GridBagConstraints.NONE;

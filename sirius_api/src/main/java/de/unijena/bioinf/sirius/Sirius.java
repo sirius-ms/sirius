@@ -87,8 +87,7 @@ public class Sirius {
         this.getMs2Analyzer().registerPlugin(new AdductNeutralizationPlugin());
 
         this.getMs2Analyzer().registerPlugin(new BottomUpSearch());
-
-        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin()); //must be executed after BottomUpSearch, so it can also filter these formulas
+        this.getMs2Analyzer().registerPlugin(new IsotopePatternInMs1Plugin(getMs1Analyzer())); //must be executed after BottomUpSearch, so it can also filter these formulas
         this.getMs2Analyzer().registerPlugin(new ElGordoPlugin()); //must be executed after IsotopePatternInMs1Plugin, so it is not filtered out
     }
 

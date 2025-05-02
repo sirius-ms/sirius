@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -36,6 +35,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
@@ -59,8 +59,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("name"))
-
                 .addRepository(LCMSRun.class,
                         Index.nonUnique("name"))
 
@@ -140,7 +138,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default Stream<AlignedFeatures> getAllAlignedFeatures() throws IOException {
-        return getStorage().findAllStr(AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
+        return getAlignedFeatures(null);
+    }
+
+    default Stream<AlignedFeatures> getAlignedFeatures(Filter filter) throws IOException {
+        return getStorage().findStr(filter, AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
     }
 
     @SneakyThrows

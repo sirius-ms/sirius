@@ -76,6 +76,9 @@ public class QuestionDialog extends DoNotShowAgainDialog {
     }
 
     public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey, @Nullable ReturnValue dontShowAgainReturn) {
+        this(owner, title, questionSupplier, propertyKey, dontShowAgainReturn, true);
+    }
+    public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey, @Nullable ReturnValue dontShowAgainReturn, boolean visible) {
         super(owner, title, questionSupplier, propertyKey);
         if (propertyKey != null) {
             rv = PropertyManager.getEnum(propertyKey, ReturnValue.class);
@@ -86,7 +89,7 @@ public class QuestionDialog extends DoNotShowAgainDialog {
             }
         }
         rv = ReturnValue.Cancel;
-        this.setVisible(true);
+        this.setVisible(visible);
     }
 
     @Override

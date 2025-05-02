@@ -66,6 +66,7 @@ public class StorageUtils {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
         exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()).stream().map(MergedMSnSpectrum::toMs2Spectrum).toList() : List.of());
+        exp.setMergedMs2Spectrum(spectra.getMergedMSnSpectrum() != null ? spectra.getMergedMSnSpectrum() : null);
         exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
                 .filter(Objects::nonNull).collect(Collectors.toList()));
         exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
@@ -108,7 +109,7 @@ public class StorageUtils {
                 .mergedMs1Spectrum(mergedMs1);
 
         if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
-            List<ProcessedPeak> tmpSpec = null;
+            List<ProcessedPeak> tmpSpec;
             try {
                 tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
             } catch (Exception e) {
@@ -123,7 +124,7 @@ public class StorageUtils {
                 exp.removeAnnotation(Smiles.class);
                 tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
             }
-            builder.mergedMSnSpectrum(Spectrums.from(tmpSpec));
+            builder.mergedMSnSpectrum(exp.getMergedMs2Spectrum() == null ? Spectrums.from(tmpSpec) : exp.getMergedMs2Spectrum());
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
 
@@ -149,7 +150,7 @@ public class StorageUtils {
 
         Feature feature = Feature.builder()
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
-                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
+                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(exp.getIonMass()))
                 .charge((byte) charge)
                 //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
 //                .apexIntensity()
