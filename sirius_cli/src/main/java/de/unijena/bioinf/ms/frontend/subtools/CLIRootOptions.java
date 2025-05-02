@@ -128,25 +128,28 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         defaultConfigOptions.changeOption("RecomputeResults", para);
     }
 
-    @Option(names = "--maxmz", description = "Only considers compounds with a precursor m/z lower or equal [--maxmz]. All other compounds in the input will be skipped.", defaultValue = "Infinity", order = 110)
+    @Deprecated(forRemoval = true) //sirius 7
+    @Option(names = "--maxmz", description = "[DEPRECATED] Only considers compounds with a precursor m/z lower or equal [--maxmz] when importing peak-list data into project. All other features in the input data will be skipped.", defaultValue = "Infinity", order = 110, hidden = true)
     public double maxMz;
 
 
     @Option(names = {"--no-citations", "--noCitations", "--noCite"}, description = "Do not write summary files to the project-space", order = 299)
-    private void setNoCitationInfo(boolean noCitations) throws Exception {
+    private void setNoCitationInfo(boolean noCitations) {
         PropertyManager.DEFAULTS.changeConfig("PrintCitations", String.valueOf(!noCitations)); //this is a bit hacky
     }
 
+    @Deprecated(forRemoval = true)
     @Option(names = {"--no-project-check"}, description = "Disable compatibility check for the project-space.", order = 300, hidden = true)
-    private void setSkipProjectCheck(boolean noProjectCheck) throws Exception {
+    private void setSkipProjectCheck(boolean noProjectCheck) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project-check", String.valueOf(noProjectCheck)); //this is a bit hacky
     }
     //endregion
 
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    @Deprecated(forRemoval = true)
     @Option(names = {"--zip-provider"}, description = "Specify the Provider for handling zip compressed resources (e.g. project-space). Valid values: ${COMPLETION-CANDIDATES}", hidden = true, order = 298)
-    private void setZipProvider(ZipProvider provider) throws Exception {
+    private void setZipProvider(ZipProvider provider) {
         PropertyManager.setProperty("de.unijena.bioinf.sirius.project.zipProvider", provider.name());
     }
 
@@ -160,6 +163,9 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     @CommandLine.ArgGroup(exclusive = false, order = 300)
     private InputFilesOptions inputFiles;
+
+    @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Filter the features to process: %n|@", order = 400)
+    private AlignedFeaturesFilterOptions alignedFeaturesFilterOptions;
 
     @Override
     public InputFilesOptions getInput() {
@@ -188,6 +194,9 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
                     @Override
                     protected ProjectSpaceManager compute() throws Exception {
                         NoSQLProjectSpaceManager space = psFactory.createOrOpen(psOpts.getOutputProjectLocation());
+                        if (alignedFeaturesFilterOptions != null) {
+                            space.setAlignedFeaturesFilter(alignedFeaturesFilterOptions.createFilter());
+                        }
                         if (space != null) {
                             if (input != null) //run import only if something was given
                                 submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();

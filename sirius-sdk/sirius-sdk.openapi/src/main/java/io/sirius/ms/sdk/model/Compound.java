@@ -33,9 +33,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import io.sirius.ms.sdk.model.AlignedFeature;
 import io.sirius.ms.sdk.model.ConsensusAnnotationsCSI;
 import io.sirius.ms.sdk.model.ConsensusAnnotationsDeNovo;
+import io.sirius.ms.sdk.model.Tag;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -51,7 +54,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Compound.JSON_PROPERTY_FEATURES,
   Compound.JSON_PROPERTY_CONSENSUS_ANNOTATIONS,
   Compound.JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO,
-  Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS
+  Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS,
+  Compound.JSON_PROPERTY_TAGS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Compound {
@@ -81,6 +85,9 @@ public class Compound {
 
   public static final String JSON_PROPERTY_CUSTOM_ANNOTATIONS = "customAnnotations";
   private ConsensusAnnotationsCSI customAnnotations;
+
+  public static final String JSON_PROPERTY_TAGS = "tags";
+  private Map<String, Tag> tags;
 
   public Compound() {
   }
@@ -318,6 +325,39 @@ public class Compound {
     this.customAnnotations = customAnnotations;
   }
 
+  public Compound tags(Map<String, Tag> tags) {
+    
+    this.tags = tags;
+    return this;
+  }
+
+  public Compound putTagsItem(String key, Tag tagsItem) {
+    if (this.tags == null) {
+      this.tags = new HashMap<>();
+    }
+    this.tags.put(key, tagsItem);
+    return this;
+  }
+
+   /**
+   * Key: tagName, value: tag
+   * @return tags
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Map<String, Tag> getTags() {
+    return tags;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TAGS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTags(Map<String, Tag> tags) {
+    this.tags = tags;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -335,12 +375,13 @@ public class Compound {
         Objects.equals(this.features, compound.features) &&
         Objects.equals(this.consensusAnnotations, compound.consensusAnnotations) &&
         Objects.equals(this.consensusAnnotationsDeNovo, compound.consensusAnnotationsDeNovo) &&
-        Objects.equals(this.customAnnotations, compound.customAnnotations);
+        Objects.equals(this.customAnnotations, compound.customAnnotations) &&
+        Objects.equals(this.tags, compound.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundId, name, rtStartSeconds, rtEndSeconds, neutralMass, features, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations);
+    return Objects.hash(compoundId, name, rtStartSeconds, rtEndSeconds, neutralMass, features, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations, tags);
   }
 
   @Override
@@ -356,6 +397,7 @@ public class Compound {
     sb.append("    consensusAnnotations: ").append(toIndentedString(consensusAnnotations)).append("\n");
     sb.append("    consensusAnnotationsDeNovo: ").append(toIndentedString(consensusAnnotationsDeNovo)).append("\n");
     sb.append("    customAnnotations: ").append(toIndentedString(customAnnotations)).append("\n");
+    sb.append("    tags: ").append(toIndentedString(tags)).append("\n");
     sb.append("}");
     return sb.toString();
   }

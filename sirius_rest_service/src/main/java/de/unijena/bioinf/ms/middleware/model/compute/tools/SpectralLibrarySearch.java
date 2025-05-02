@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
+import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.AnalogueSearchSettings;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.IdentitySearchSettings;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -52,25 +54,68 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     List<String> spectraSearchDBs;
 
     /**
-     * Maximum allowed mass deviation in ppm for matching peaks.
-     */
-    @Schema(nullable = true)
-    private Double peakDeviationPpm;
-
-    /**
      * Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.
      */
     @Schema(nullable = true)
     private Double precursorDeviationPpm;
 
     /**
+     * Minimal spectral similarity of a spectral match to be considered a hit.
+     */
+    @Schema(nullable = true)
+    private Float minSimilarity;
+
+    /**
+     * Minimal number of matching peaks of a spectral match to be considered a hit.
+     */
+    @Schema(nullable = true)
+    private Integer minNumOfPeaks;
+
+
+
+    /**
+     * Enable analogue search in addition to the identity spectral library search
+     */
+    @Schema
+    private Boolean enableAnalogueSearch = false;
+
+    /**
+     * Minimal spectral similarity of a spectral match to be considered an analogue hit.
+     */
+    @Schema(nullable = true)
+    private Float minSimilarityAnalogue;
+
+    /**
+     * Minimal number of matching peaks of a spectral match to be considered an analogue hit.
+     */
+    @Schema(nullable = true)
+    private Integer minNumOfPeaksAnalogue;
+
+
+
+
+
+
+
+    /**
+     * NO LONGER SUPPORTED (IGNORED)
      * Specify scoring method to match spectra
      * INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.
      * GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.
      * MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
      */
     @Schema(nullable = true)
-    private SpectralMatchingType scoring;
+    @Deprecated(forRemoval = true)
+    private SpectralMatchingType scoring = null;
+
+    /**
+     * NO LONGER SUPPORTED (IGNORED)
+     * Maximum allowed mass deviation in ppm for matching peaks.
+     */
+    @Schema(nullable = true)
+    @Deprecated(forRemoval = true)
+    private Double peakDeviationPpm = null;
+
 
     private SpectralLibrarySearch() {
         super(SpectraSearchOptions.class);
@@ -80,9 +125,15 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
                 .putIfNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db))
-                .putIfNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
-                .putIfNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
-                .putIfNonNull("SpectralMatchingScorer", scoring)
+
+                .putIfNonNull("IdentitySearchSettings.precursorDeviation", precursorDeviationPpm, it -> it + " ppm")
+                .putIfNonNull("IdentitySearchSettings.minSimilarity", minSimilarity)
+                .putIfNonNull("IdentitySearchSettings.minNumOfPeaks", minNumOfPeaks)
+
+                .putIfNonNull("AnalogueSearchSettings.enabled", enableAnalogueSearch)
+                .putIfNonNull("AnalogueSearchSettings.minSimilarity", minSimilarityAnalogue)
+                .putIfNonNull("AnalogueSearchSettings.minNumOfPeaks", minNumOfPeaksAnalogue)
+
                 .putIfNonNull("SpectralSearchLog", 0)
                 .toUnmodifiableMap();
     }
@@ -92,14 +143,21 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     }
 
     public static SpectralLibrarySearch.SpectralLibrarySearchBuilder<?, ?> builderWithDefaults() {
+        IdentitySearchSettings libSearchSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(IdentitySearchSettings.class);
+        AnalogueSearchSettings analogueSearchSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AnalogueSearchSettings.class);
+        SpectralSearchDB searchDBs = PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralSearchDB.class);
+
         return SpectralLibrarySearch.builder()
                 .enabled(true)
-                .spectraSearchDBs(null)
-                .peakDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
-                        .allowedPeakDeviation.getPpm())
-                .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
-                        .allowedPrecursorDeviation.getPpm())
-                .scoring(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingScorer.class)
-                        .spectralMatchingType);
+                .spectraSearchDBs(searchDBs.searchDBs.stream().map(CustomDataSources.Source::name).toList())
+                .precursorDeviationPpm(libSearchSettings.getPrecursorDeviation().getPpm())
+                .minSimilarity(libSearchSettings.getMinSimilarity())
+                .minNumOfPeaks(libSearchSettings.getMinNumOfPeaks())
+                .enableAnalogueSearch(analogueSearchSettings.isEnabled())
+                .minSimilarityAnalogue(analogueSearchSettings.getMinSimilarity())
+                .minNumOfPeaksAnalogue(analogueSearchSettings.getMinNumOfPeaks())
+                //deprecated fields are set to null.
+                .peakDeviationPpm(null)
+                .scoring(null);
     }
 }

@@ -95,7 +95,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return this.storage.findStr(Filter.where("mass").beetweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
+            return this.storage.findStr(Filter.where("mass").betweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
                     .map(c -> c.getFormulaCandidate(dbFlag, ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -133,6 +133,17 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         }
     }
 
+    @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        try {
+            return storage.getByPrimaryKey(inchiKey2d, FingerprintCandidateWrapper.class)
+                    .map(fpw -> fpw.getFingerprintCandidate(name(), dbFlag))
+                    .orElse(null);
+        } catch (IOException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
     public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         try {
             String[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray(String[]::new);
@@ -149,8 +160,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        return lookupFingerprintsByInchisStr(inchi_keys).map(FingerprintCandidate::getInchi).toList();
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
+        return lookupFingerprintsByInchisStr(inchiKeys2d).map(FingerprintCandidate::getInchi).toList();
     }
 
     @Override

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.scan;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import lombok.*;
 
@@ -51,6 +52,9 @@ public class AbstractScan {
      * Collisional Cross-Section (CCS) in Å^2
      */
     protected double ccs;
+
+    @JsonProperty(defaultValue = "true")
+    protected boolean centroided;
 
     /**
      * The actual spectrum that has been measured (masses and intensities)

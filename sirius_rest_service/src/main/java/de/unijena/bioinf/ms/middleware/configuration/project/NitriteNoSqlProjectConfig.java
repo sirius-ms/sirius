@@ -24,6 +24,8 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.ms.middleware.service.search.FakeLuceneSearchService;
+import de.unijena.bioinf.ms.middleware.service.search.SearchService;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -43,9 +45,18 @@ public class NitriteNoSqlProjectConfig {
     }
 
     @Bean
+    public SearchService searchService() {
+        return new FakeLuceneSearchService();
+    }
+
+    @Bean
     @DependsOn({"jobManager"})
     @SuppressWarnings("unchecked")
-    public ProjectsProvider<?> projectsProvider(ComputeService computeService, EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService);
+    public ProjectsProvider<?> projectsProvider(ComputeService computeService,
+                                                SearchService searchService,
+                                                EventService<?> eventService,
+                                                ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory
+    ) {
+        return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService, searchService);
     }
 }

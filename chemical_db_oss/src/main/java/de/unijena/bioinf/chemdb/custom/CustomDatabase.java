@@ -40,6 +40,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
 
     public abstract void deleteDatabase();
+    public abstract void close();
 
     protected CustomDatabaseSettings settings;
 

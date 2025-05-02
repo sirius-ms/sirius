@@ -26,10 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -37,6 +37,16 @@ public class Utils {
     public static final Comparator<String> ALPHANUMERIC_COMPARATOR_NULL_LAST = Comparator.nullsLast(new AlphanumComparator());
     public static final Comparator<Double> DOUBLE_DESC_NULL_LAST = Comparator.nullsLast(Comparator.reverseOrder());
     public static final Comparator<Double> DOUBLE_ASC_NULL_LAST = Comparator.nullsLast(Comparator.naturalOrder());
+
+    public static ZonedDateTime epochLongToZonedDateTime(long epochMillis) {
+        return epochLongToZonedDateTime(epochMillis, ZoneId.systemDefault());
+    }
+    public static ZonedDateTime epochLongToZonedDateTime(long epochMillis, ZoneId zone) {
+        // Convert milliseconds to Instant
+        Instant instant = Instant.ofEpochMilli(epochMillis);
+        // Convert Instant to ZonedDateTime
+        return instant.atZone(zone);
+    }
 
     public static int[] shortsToInts(short[] shorts){
         int[] ints = new int[shorts.length];
@@ -174,5 +184,31 @@ public class Utils {
     public static <T> boolean notNullOrEmpty(@Nullable final T[] s) {
         return !isNullOrEmpty(s);
     }
+
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> getIfIdenticalOrNull(Collection<T>... sets) {
+        // Filter out null sets
+        List<? extends Set<T>> nonNullSets = Arrays.stream(sets).filter(Objects::nonNull).map(HashSet::new).toList();
+
+        // If there are 0 or 1 sets after filtering, they are trivially identical
+        if (nonNullSets.size() == 1)
+            return nonNullSets.getFirst();
+        if (nonNullSets.isEmpty())
+            return Set.of();
+
+        // Compare the first set with all others
+        Set<T> firstSet = nonNullSets.getFirst();
+        if (nonNullSets.stream().skip(1).allMatch(firstSet::equals))
+            return firstSet;
+        return null;
+    }
+
+    public static <T> Optional<Set<T>> getIfIdentical(Collection<T>... sets) {
+        return Optional.ofNullable(getIfIdenticalOrNull(sets));
+    }
+
+
+
 
 }

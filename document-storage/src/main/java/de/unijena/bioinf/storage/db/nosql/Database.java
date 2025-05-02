@@ -52,6 +52,11 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     //force to write data to disk
     void flush();
 
+    /**
+     * Compact the database to reduce its size on disk.
+     */
+    void compact();
+
     //region CRUD operations
 
     <T> int insert(T object) throws IOException;

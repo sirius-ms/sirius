@@ -40,7 +40,7 @@ public class MsMsQuerySpectrum {
         final double R = header.getPrecursorMz() + isolationWindow.getRightOffset();
         int target = Spectrums.mostIntensivePeakWithin(ms1Spectrum, header.getPrecursorMz(), new Deviation(10));
         if (target<0) {
-            target = findPrecursorPeak(header, ms1Spectrum, L, R, header.getPrecursorMz(), originalSpectrum);
+            target = findPrecursorPeak(header, ms1Spectrum,  header.getPrecursorMz(), L, R, originalSpectrum);
         }
         exactParentMass = ms1Spectrum.getMzAt(target);
         int left=target-1, right=target+1;
@@ -66,8 +66,10 @@ public class MsMsQuerySpectrum {
         {
             final int left = Spectrums.getFirstPeakGreaterOrEqualThan(originalSpectrum, l);
             final int right = Spectrums.getFirstPeakGreaterOrEqualThan(originalSpectrum, r);
-            if (left>=0 && right >=0) precursorsInMsMs = Spectrums.subspectrum(originalSpectrum, left, right+1);
-            ms2norm = Spectrums.getMaximalIntensity(precursorsInMsMs);
+            if (left>=0 && right >=0) {
+                precursorsInMsMs = Spectrums.subspectrum(originalSpectrum, left, right+1 - left);
+                ms2norm = Spectrums.getMaximalIntensity(precursorsInMsMs);
+            }
         }
         SimpleSpectrum precursorsInMs=null;
         double ms1norm = 0;
@@ -75,9 +77,11 @@ public class MsMsQuerySpectrum {
         {
             final int left = Spectrums.getFirstPeakGreaterOrEqualThan(ms1Spectrum, l);
             final int right = Spectrums.getFirstPeakGreaterOrEqualThan(ms1Spectrum, r);
-            if (left>=0 && right >=0) precursorsInMs = Spectrums.subspectrum(ms1Spectrum, left, right+1);
-            ms1norm = Spectrums.getMaximalIntensity(precursorsInMs);
-            ms1Offset = left;
+            if (left>=0 && right >=0) {
+                precursorsInMs = Spectrums.subspectrum(ms1Spectrum, left, right + 1 - left);
+                ms1norm = Spectrums.getMaximalIntensity(precursorsInMs);
+                ms1Offset = left;
+            }
         }
         // search for proper precursor mass
         if (precursorsInMs==null) {

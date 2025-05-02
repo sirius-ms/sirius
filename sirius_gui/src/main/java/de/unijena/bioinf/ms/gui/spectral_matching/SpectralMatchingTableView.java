@@ -90,11 +90,11 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         Comparator<?> dbLinkComparator = Comparator.comparing((SpectralMatchBean b) -> b.getDBLink().toString());
 
-        table.comparatorChooser.getComparatorsForColumn(8).clear();
-        table.comparatorChooser.getComparatorsForColumn(8).add(ceComparator);
-
         table.comparatorChooser.getComparatorsForColumn(10).clear();
-        table.comparatorChooser.getComparatorsForColumn(10).add(dbLinkComparator);
+        table.comparatorChooser.getComparatorsForColumn(10).add(ceComparator);
+
+        table.comparatorChooser.getComparatorsForColumn(12).clear();
+        table.comparatorChooser.getComparatorsForColumn(12).add(dbLinkComparator);
 
         table.setSelectionModel(filteredSelectionModel);
 
@@ -128,7 +128,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         return null;
                     }
                 }, DBLink::getId);
-        linkRenderer.registerToTable(table, 10);
+        linkRenderer.registerToTable(table, 12);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
@@ -185,7 +185,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 //                        if (element.getReference().getInstrumentation() != null)
 //                            baseList.add(element.getReference().getInstrumentation().toString());
                 }),
-                new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity())),
+                new MinMaxMatcherEditor<>(scoreSlider, (baseList, element) -> baseList.add(element.getMatch().getSimilarity().doubleValue())),
                 new MinMaxMatcherEditor<>(peaksSlider, (baseList, element) -> baseList.add((double) element.getMatch().getSharedPeaks()))
         );
     }

@@ -1,14 +1,11 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.SearchableDatabase;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -33,10 +30,10 @@ public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase>
             checkBoxList.uncheckAll();
             select(bioDB);});
 
-        Arrays.stream(all.getActionListeners()).forEach(l -> all.removeActionListener(l));
+        Arrays.stream(all.getActionListeners()).forEach(all::removeActionListener);
         all.addActionListener(e -> {
             checkBoxList.checkAll();
-            deactivatedDBs.get().stream().forEach(db -> checkBoxList.uncheck(db));
+            deactivatedDBs.get().forEach(checkBoxList::uncheck);
         });
     }
 
@@ -62,18 +59,8 @@ public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase>
     }
 
     public void selectDefaultDatabases() {
-        selectFormulaSearchDBs();
-        selectStructureSearchDBs();
+        // since we use a simplified parameter model where only one db is specified for all tools we always use bio
+        // as default instead of parsing tool specific default values.
+        select(bioDB);
     }
-
-    public void selectFormulaSearchDBs() {
-        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs);
-    }
-
-    public void selectStructureSearchDBs() {
-        select(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs);
-    }
-
-
-
 }

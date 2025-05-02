@@ -23,6 +23,8 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,8 +32,9 @@ import java.awt.*;
 /**
  * @author Markus Fleischauer
  */
+@Getter
 public class SiriusToolbar extends JToolBar {
-    private ToolbarButton logsB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
+    private ToolbarButton logsB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, sample, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
 
@@ -66,11 +69,16 @@ public class SiriusToolbar extends JToolBar {
 
         //compute
         computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(gui, true));
+        computeAllB.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.ComputeAllButton);
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
+        addSeparator(new Dimension(20, 20));
+
+        sample = new ToolbarButton(SiriusActions.SHOW_SAMPLE.getInstance(gui, true));
+        add(sample);
         addSeparator(new Dimension(20, 20));
 
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
@@ -81,6 +89,7 @@ public class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
         logsB = new ToolbarButton(SiriusActions.SHOW_LOG.getInstance(true));
         add(logsB);
+        logsB.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Log);
 
         settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(gui, true));
         add(settings);
@@ -104,67 +113,4 @@ public class SiriusToolbar extends JToolBar {
         setFloatable(false);
     }
 
-    public ToolbarButton getLogsB() {
-        return logsB;
-    }
-
-    public ToolbarButton getCreateB() {
-        return createB;
-    }
-
-    public ToolbarButton getOpenB() {
-        return openB;
-    }
-
-    public ToolbarButton getSaveB() {
-        return saveB;
-    }
-
-    public ToolbarButton getExportB() {
-        return exportB;
-    }
-
-    public ToolbarButton getSummB() {
-        return summB;
-    }
-
-    public ToolbarButton getFbmnB() {
-        return fbmnB;
-    }
-
-    public ToolbarButton getImportB() {
-        return importB;
-    }
-
-    public ToolbarButton getComputeAllB() {
-        return computeAllB;
-    }
-
-    public ToolbarButton getJobs() {
-        return jobs;
-    }
-
-    public ToolbarButton getDb() {
-        return db;
-    }
-
-    public ToolbarButton getConnect() {
-        return connect;
-    }
-
-    public ToolbarButton getSettings() {
-        return settings;
-    }
-
-    public ToolbarButton getAccount() {
-        return account;
-    }
-
-    public ToolbarButton getHelp() {
-        return help;
-    }
-
-    public ToolbarButton getAbout() {
-        return about;
-    }
 }

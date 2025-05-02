@@ -40,25 +40,15 @@ public class StacktraceDialog extends JDialog implements ActionListener, KeyList
     private JScrollPane sc;
     private String fullmsg;
 
-    public StacktraceDialog(Frame owner, String message, String stackTrace ) {
-        super(owner,true);
+    public StacktraceDialog(Window owner, String message, String stackTrace ) {
+        super(owner, DEFAULT_MODALITY_TYPE);
         initDialog(message, stackTrace);
     }
 
-    public StacktraceDialog(Frame owner, String message, Throwable exception) {
-        super(owner,true);
+    public StacktraceDialog(Window owner, String message, Throwable exception) {
+        super(owner, DEFAULT_MODALITY_TYPE);
         initDialog(message, getStacktrace(exception));
     }
-    public StacktraceDialog(Dialog owner, String message, String stackTrace ) {
-        super(owner,true);
-        initDialog(message, stackTrace);
-    }
-
-    public StacktraceDialog(Dialog owner, String message, Throwable exception) {
-        super(owner,true);
-        initDialog(message, getStacktrace(exception));
-    }
-
 
     private String getStacktrace(Throwable exception) {
         final StringWriter sw = new StringWriter();

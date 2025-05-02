@@ -29,13 +29,6 @@ import java.io.IOException;
 import java.security.SecureRandom;
 
 public class SecurityService {
-
-    public static final String ERROR_CODE_SEPARATOR = ":;:";
-    public static final String TERMS_MISSING =  "terms_missing";
-    public static final String EMAIL_VERIFICATION_MISSING =  "email_verification_missing";
-    public static final String SUB_EXPIRED =  "subscription_expired";
-    public static final String LIMIT_REACHED =  "limit_reached";
-
     public static String generateSecurityToken() {
         final SecureRandom rand = new SecureRandom();
         final byte[] bytes = new byte[48];

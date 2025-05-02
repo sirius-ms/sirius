@@ -4,6 +4,8 @@ apply plugin: 'application'
 version =  siriusFrontendVersion
 
 dependencies {
+    annotationProcessor project(':default_properties:processor')
+
     // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
     implementation 'org.slf4j:slf4j-jdk14:2.0.7'
     implementation "de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}"
@@ -64,5 +66,5 @@ dependencies {
 
     //test
     testImplementation project(":utils")
-    testImplementation "com.bright-giant:sirius-test-data:1.0-SNAPSHOT"
+//    testImplementation "com.bright-giant:sirius-test-data:1.0-SNAPSHOT"
 }
