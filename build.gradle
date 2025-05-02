@@ -88,7 +88,7 @@ ext {
     swagger_version = "2.2.26"
 
     jaxb_version = "2.3.9"
-    picocli_version = '4.7.5'
+    picocli_version = '4.7.7'
     jakarta_version = '3.1.0'
     jakarta_annotation_version = "3.0.0"
 
