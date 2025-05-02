@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Loss;
+import de.unijena.bioinf.GibbsSampling.LibraryHitQuality;
 import de.unijena.bioinf.GibbsSampling.Zodiac;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.GibbsSampling.ZodiacUtils;
@@ -37,18 +38,23 @@ import de.unijena.bioinf.GibbsSampling.model.distributions.ScoreProbabilityDistr
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorer;
 import de.unijena.bioinf.GibbsSampling.model.scorer.CommonFragmentAndLossScorerNoiseIntensityWeighted;
 import de.unijena.bioinf.GibbsSampling.properties.*;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectrumType;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ZodiacSubToolJob extends DataSetJob {
@@ -79,6 +85,10 @@ public class ZodiacSubToolJob extends DataSetJob {
         return inst.hasZodiacResult();
     }
 
+    record LibraryResults(List<FTree> nodes, List<LibraryHit> anchors) {
+
+    }
+
     @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         logInfo("START ZODIAC JOB");
@@ -86,8 +96,9 @@ public class ZodiacSubToolJob extends DataSetJob {
         //this is the zodiac input
         final Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = new HashMap<>(instances.size());
         //this is to know which zodiac result belongs to which instance
-        final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new HashMap<>(instances.size());
+        final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new LinkedHashMap<>(instances.size());
         //this is to identify which formula results belongs to the score
+        int polarity = 0;
         final Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
         {
             for (Instance instance : instances) {
@@ -95,6 +106,16 @@ public class ZodiacSubToolJob extends DataSetJob {
                         .filter(fc -> fc.hasAnnotation(FTree.class)).toList();
                 if (!inputData.isEmpty()) {
                     Ms2Experiment exp = instance.getExperiment();
+                    final int charge = exp.getPrecursorIonType().getCharge() > 0 ? 1 : -1;
+                    if (polarity == 0) {
+                        polarity = charge;
+                    } else {
+                        if (polarity != charge) {
+                            //todo this should be supported at some point.
+                            LoggerFactory.getLogger(ZodiacSubToolJob.class).error("Different ion mode polarities in the same project space are not allowed.");
+                            continue;
+                        }
+                    }
                     ms2ExperimentToInstance.put(exp, instance);
                     ms2ExperimentToTreeCandidates.put(exp, inputData.stream().map(sc -> sc.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()));
                     inputData.forEach(p -> treeToId.put(p.getAnnotationOrThrow(FTree.class), p));
@@ -102,33 +123,14 @@ public class ZodiacSubToolJob extends DataSetJob {
             }
         }
 
+        Ms2Experiment settings = instances.getFirst().getExperiment();
 
-        Ms2Experiment settings = instances.get(0).getExperiment();
-        //TODO CHEEEEEECK REOMPUTE
-//        if (instances.stream().anyMatch(it -> isRecompute(it) || (treeToId.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
-//            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
-
-
-        // TODO: we might want to do that for SIRIUS
         checkForInterruption();
 
         updateProgress(Math.round(.02 * maxProgress), "Use caching of formulas.");
-        {
-            HashMap<MolecularFormula, MolecularFormula> formulaMap = new HashMap<>();
-
-            for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
-                trees.forEach(tree -> {
-                    for (Fragment f : tree) {
-                        formulaMap.putIfAbsent(f.getFormula(), f.getFormula());
-                        f.setFormula(formulaMap.get(f.getFormula()), f.getIonization());
-                    }
-                    for (Loss l : tree.losses()) {
-                        formulaMap.putIfAbsent(l.getFormula(), l.getFormula());
-                        l.setFormula(formulaMap.get(l.getFormula()));
-                    }
-                });
-            }
-        }
+        final HashMap<MolecularFormula, MolecularFormula> formulaMap = new HashMap<>();
+        for (List<FTree> trees : ms2ExperimentToTreeCandidates.values())
+            trees.forEach(tree -> cacheFormulasInTree(tree, formulaMap));
 
         checkForInterruption();
 
@@ -167,7 +169,8 @@ public class ZodiacSubToolJob extends DataSetJob {
         updateProgress(Math.round(.04 * maxProgress));
 
 
-        if (instances.size() == 0) return;
+        if (instances.isEmpty())
+            return;
 
         checkForInterruption();
 
@@ -179,23 +182,71 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         logInfo("Cluster enabled? " + clusterEnabled.value);
 
+        // load library search results and use them
+        List<LibraryHit> anchors = new ArrayList<>();
+        final HashMap<String, LongOpenHashSet> ids = new HashMap<>();
+        AtomicInteger expWithMatch = new AtomicInteger(0);
+        AtomicInteger progress = new AtomicInteger(0);
+
+        ms2ExperimentToInstance.forEach((exp, instance) -> {
+            List<SpectralSearchResult.SearchResult> hits = instance.getSpectraMatches().stream()
+                    .filter(m -> m.getSpectrumType() == SpectrumType.MERGED_SPECTRUM)
+                    .sorted(Comparator.reverseOrder())
+                    .toList();
+
+            if (hits.isEmpty())
+                return;
+
+            expWithMatch.incrementAndGet();
+
+            // add the best identity hit as anchor.
+            if (exp.getAnnotationOrDefault(ZodiacLibraryScoring.class).enabled) {
+                hits.stream().filter(SpectralSearchResult.SearchResult::isIdentity).findFirst()
+                        .map(bestHit -> new LibraryHit(
+                                exp, bestHit.getMolecularFormula(), bestHit.getSmiles(), bestHit.getAdduct(), bestHit.getSimilarity().similarity, bestHit.getSimilarity().sharedPeaks,
+                                LibraryHitQuality.Gold, bestHit.getExactMass()))
+                        .ifPresent(anchors::add);
+            }
+
+            // add good analog hit as additional node
+            ZodiacAnalogueNodes analogueSettings = exp.getAnnotationOrDefault(ZodiacAnalogueNodes.class);
+            if (analogueSettings.enabled) {
+                hits.stream().filter(SpectralSearchResult.SearchResult::isAnalog).findFirst()
+                        .filter(bestHit -> bestHit.getSimilarity().similarity >= analogueSettings.minSimilarity && bestHit.getSimilarity().sharedPeaks >= analogueSettings.minSharedPeaks)
+                        .ifPresent(bestHit -> ids.computeIfAbsent(bestHit.getDbName(), x -> new LongOpenHashSet()).add(bestHit.getUuid()));
+            }
+
+            if (progress.incrementAndGet() % 50 == 0) {
+                long idcount = ids.values().stream().mapToLong(LongOpenHashSet::size).sum();
+                System.out.println(progress.get() + " / " + ms2ExperimentToInstance.size() + " compounds searched with " + expWithMatch + " having any match. " + idcount + " analogues and " + anchors.size() + " exact hits so far.");
+            }
+        });
+
+
+        WebWithCustomDatabase chemDB = ApplicationCore.WEB_API.getChemDB();
+        List<FTree> trees = new ArrayList<>();
+        for (Map.Entry<String, LongOpenHashSet> entry : ids.entrySet()) {
+            CustomDataSources.Source source = CustomDataSources.getSourceFromName(entry.getKey());
+            if (source == null) {
+                System.err.println("Do not find " + entry.getKey());
+            }
+            for (long id : entry.getValue()) {
+                trees.add(chemDB.getReferenceTree(source, id).asFTree());
+            }
+        }
+        LibraryResults libraryResults = new LibraryResults(trees, anchors);
+
+        for (FTree t : libraryResults.nodes) {
+            cacheFormulasInTree(t, formulaMap);
+        }
+        formulaMap.clear(); // free memory
+
         //node scoring
         NodeScorer[] nodeScorers;
-        List<LibraryHit> anchors = null;
-        final boolean includeLibraryHitsAsAnchorsHere = false;
-        if (includeLibraryHitsAsAnchorsHere) { //todo include library hits from SIRIUS spectral library search as anchors. Don't use a separate input file anymore
-//            //todo implement option to set all anchors as good quality compounds
-//            logInfo("use library hits as anchors.");
-//            ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
-//
-//            anchors = parseAnchors(new ArrayList<>(ms2ExperimentToTreeCandidates.keySet()));
-//
-//            Reaction[] reactions = ZodiacUtils.parseReactions(1);
-//            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
-//            for (Reaction reaction : reactions) {
-//                netSingleReactionDiffs.add(reaction.netChange());
-//            }
-//            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, netSingleReactionDiffs)};
+        if (!libraryResults.anchors.isEmpty()) {
+            logWarn("use " + libraryResults.anchors.size() + " library hits as anchors.");
+            ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
+            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minSimilarity, Collections.emptySet())};
         } else {
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
         }
@@ -227,12 +278,14 @@ public class ZodiacSubToolJob extends DataSetJob {
         checkForInterruption();
 
         Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
-                anchors,
+                libraryResults.anchors,
                 nodeScorers,
                 new EdgeScorer[]{scoreProbabilityDistributionEstimator},
                 edgeFilter,
                 -1, clusterEnabled.value, zodiacRunInTwoSteps.value, null
         );
+
+        zodiac.addExtraNodes(libraryResults.nodes);
 
         checkForInterruption();
 
@@ -262,21 +315,20 @@ public class ZodiacSubToolJob extends DataSetJob {
             }
         });
 
-        //todo if this are non temporary fields, they have to be implemented as project-space entities
-        try { //ensure that summary does not crash job
-            if (cliOptions.summaryFile != null)
-                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
-        } catch (
-                Exception e) {
-            logError("Error when writing Deprecated ZodiacSummary", e);
-        }
+        // some internal summary writer that writes summaries from memory and does only work during computation time
+        // the information is gone after computation has been finished.
+        writeInofficialSummaries(scoreResults, clusterResults);
+    }
 
-        try { //ensure that summary does not crash job
-            if (cliOptions.bestMFSimilarityGraphFile != null)
-                ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
-        } catch (
-                Exception e) {
-            logError("Error when writing ZODIAC graph", e);
+
+    private static void cacheFormulasInTree(FTree tree, HashMap<MolecularFormula, MolecularFormula> formulaMap) {
+        for (Fragment f : tree) {
+            formulaMap.putIfAbsent(f.getFormula(), f.getFormula());
+            f.setFormula(formulaMap.get(f.getFormula()), f.getIonization());
+        }
+        for (Loss l : tree.losses()) {
+            formulaMap.putIfAbsent(l.getFormula(), l.getFormula());
+            l.setFormula(formulaMap.get(l.getFormula()));
         }
     }
 
@@ -347,18 +399,23 @@ public class ZodiacSubToolJob extends DataSetJob {
         return true;
     }
 
-//    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
-//        List<LibraryHit> anchors;
-//        Path libraryHitsFile = cliOptions.libraryHitsFile;
-//        try {
-//            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
-//        } catch (IOException e) {
-//            logError("Cannot load library hits from file.", e);
-//            return null;
-//        }
-//        return anchors;
-//    }
+    private void writeInofficialSummaries(Map<Ms2Experiment, Map<FTree, ZodiacScore>> scoreResults, ZodiacResultsWithClusters clusterResults) {
+        try { //ensure that summary does not crash job
+            if (cliOptions.summaryFile != null)
+                ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
+        } catch (
+                Exception e) {
+            logError("Error when writing Deprecated ZodiacSummary", e);
+        }
 
+        try { //ensure that summary does not crash job
+            if (cliOptions.bestMFSimilarityGraphFile != null)
+                ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
+        } catch (
+                Exception e) {
+            logError("Error when writing ZODIAC graph", e);
+        }
+    }
 
     @Override
     public String getToolName() {

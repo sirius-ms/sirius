@@ -18,13 +18,10 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -43,9 +40,6 @@ import java.util.stream.Collectors;
  */
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-
-//    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
-//            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
 
     /*
     currently selected values
@@ -99,6 +93,8 @@ public class CompoundFilterModel implements SiriusPCS {
     @Nullable
     private DbFilter dbFilter;
 
+    @Getter
+    private BlankSubtraction blankSubtraction;
 
     /*
     min/max possible values
@@ -135,6 +131,7 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param maxConfidence
      */
     public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+        this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
@@ -365,6 +362,10 @@ public class CompoundFilterModel implements SiriusPCS {
         adducts = Set.of();
         setHasMs1(false);
         setHasMsMs(false);
+        blankSubtraction.setBlankSubtractionEnabled(false);
+        blankSubtraction.setCtrlSubtractionEnabled(false);
+        blankSubtraction.setBlankSubtractionFoldChange(2.0);
+        blankSubtraction.setCtrlSubtractionFoldChange(2.0);
     }
 
     public enum LipidFilter {

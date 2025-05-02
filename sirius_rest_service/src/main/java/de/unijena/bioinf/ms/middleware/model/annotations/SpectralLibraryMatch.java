@@ -20,10 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,6 +34,7 @@ import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -45,15 +49,34 @@ public class SpectralLibraryMatch {
 
     public final Integer rank;
 
+    /**
+     * Similarity between query and reference spectrum
+     */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    public final Double similarity;
+    public final Float similarity;
 
+    /**
+     * Number of shared/matched peaks
+     */
     public final Integer sharedPeaks;
+
+    /**
+     * List of paired/matched peak indices.
+     *
+     * Maps indices of peaks from the query spectrum (mass sorted)
+     * to indices of matched peaks in the reference spectrum (mass sorted)
+     */
+    private final List<PeakPair> sharedPeakMapping;
 
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final Integer querySpectrumIndex;
 
+    @JsonInclude
+    @Schema
+    public SpectrumType getQuerySpectrumType() {
+        return getQuerySpectrumIndex() < 0 ? SpectrumType.MERGED_SPECTRUM : SpectrumType.SPECTRUM;
+    }
 
     private final String dbName;
 
@@ -66,24 +89,40 @@ public class SpectralLibraryMatch {
 
     private final String molecularFormula;
     private final String adduct;
-    private final String exactMass;
+    private final Double exactMass;
     private final String smiles;
+
+    @Schema(defaultValue = "IDENTITY")
+    private final MatchType type;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final String inchiKey;
+
+    @Schema(defaultValue = "SPECTRUM")
+    private final SpectrumType referenceSpectrumType;
 
     @Schema(nullable = true)
     @Setter
     private BasicSpectrum referenceSpectrum;
 
-    public static SpectralLibraryMatch of(@NotNull SpectraMatch match){
+    public static SpectralLibraryMatch of(@NotNull SpectraMatch match) {
         return of(match.getSearchResult(), String.valueOf(match.getSpecMatchId()));
     }
-    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result, String id){
+
+    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result, String id) {
         SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
         if (result.getSimilarity() != null) {
             builder.similarity(result.getSimilarity().similarity);
             builder.sharedPeaks(result.getSimilarity().sharedPeaks);
+
+            IntList mapping = result.getSimilarity().getSharedPeakPairs();
+            if (mapping != null) {
+                List<PeakPair> peakPairs = new ArrayList<>(mapping.size() >> 1);
+                for (int i = 0; i < mapping.size(); i += 2)
+                    peakPairs.add(PeakPair.of(mapping.getInt(i), mapping.getInt(i + 1)));
+
+                builder.sharedPeakMapping(peakPairs);
+            }
         }
 
         builder.rank(result.getRank())
@@ -93,8 +132,10 @@ public class SpectralLibraryMatch {
                 .dbId(result.getDbId())
                 .uuid(result.getUuid())
                 .splash(result.getSplash())
-                .exactMass(Double.toString(result.getExactMass()))
+                .exactMass(result.getExactMass())
                 .smiles(result.getSmiles())
+                .referenceSpectrumType(result.getSpectrumType() == SpectrumType.MERGED_SPECTRUM ? SpectrumType.MERGED_SPECTRUM : SpectrumType.SPECTRUM)
+                .type(result.isAnalog() ? MatchType.ANALOG : MatchType.IDENTITY)
                 .inchiKey(result.getCandidateInChiKey());
 
         if (result.getMolecularFormula() != null) {
@@ -105,16 +146,39 @@ public class SpectralLibraryMatch {
         }
         return builder.build();
     }
+
     @Deprecated
-    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result){
+    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result) {
         return of(result, null);
     }
 
     @Deprecated
-    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result, @Nullable String candidateInChiKey){
+    public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result, @Nullable String candidateInChiKey) {
         return result.getResults().stream()
                 .filter(s -> candidateInChiKey == null || candidateInChiKey.equals(s.getCandidateInChiKey()))
-                .map(m-> SpectralLibraryMatch.of(m, null))
+                .map(m -> SpectralLibraryMatch.of(m, null))
                 .toList();
+    }
+
+    @Schema(name = "SpectralMatchType")
+    public enum MatchType {
+        /**
+         * Identity match: Search with narrow mass window to identify the exact compound.
+         */
+        IDENTITY,
+        /**
+         * Analog/Hybrid search against any mass to find compounds similar to the query
+         */
+        ANALOG;
+    }
+
+    @Schema(name = "PeakPair")
+    public record PeakPair(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int queryPeak,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int referencePeak
+    ) {
+        public static PeakPair of(int queryIndex, int referenceIndex) {
+            return new PeakPair(queryIndex, referenceIndex);
+        }
     }
 }

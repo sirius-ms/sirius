@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,21 +35,22 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter @Setter
 public class MutableMs2Experiment implements Ms2Experiment {
 
     private PrecursorIonType precursorIonType;
     private List<SimpleSpectrum> ms1Spectra;
     private SimpleSpectrum mergedMs1Spectrum;
     private List<MutableMs2Spectrum> ms2Spectra;
-
+    @Nullable
+    private SimpleSpectrum mergedMs2Spectrum;
     private double ionMass;
     private MolecularFormula molecularFormula;
     private String name;
 
     @Nullable
     private String featureId;
-
-
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private Annotated.Annotations<Ms2ExperimentAnnotation> annotations;
 
     @Override
@@ -90,10 +94,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
         return this;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
     @Nullable
     public URI getSource() {
@@ -122,75 +122,6 @@ public class MutableMs2Experiment implements Ms2Experiment {
             setAnnotation(SpectrumFileSource.class, (SpectrumFileSource) sourcelocation);
         else if (sourcelocation instanceof MsFileSource)
             setAnnotation(MsFileSource.class, (MsFileSource) sourcelocation);
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public PrecursorIonType getPrecursorIonType() {
-        return precursorIonType;
-    }
-
-    @Override
-    public List<SimpleSpectrum> getMs1Spectra() {
-        return ms1Spectra;
-    }
-
-    @Override
-    public SimpleSpectrum getMergedMs1Spectrum() {
-        return mergedMs1Spectrum;
-    }
-
-    @Override
-    public List<MutableMs2Spectrum> getMs2Spectra() {
-        return ms2Spectra;
-    }
-
-    @Override
-    public double getIonMass() {
-        return ionMass;
-    }
-
-    @Override
-    public MolecularFormula getMolecularFormula() {
-        return molecularFormula;
-    }
-
-    public void setPrecursorIonType(PrecursorIonType precursorIonType) {
-        this.precursorIonType = precursorIonType;
-    }
-
-    public void setMs1Spectra(List<SimpleSpectrum> ms1Spectra) {
-        this.ms1Spectra = ms1Spectra;
-    }
-
-    public void setMergedMs1Spectrum(SimpleSpectrum mergedMs1Spectrum) {
-        this.mergedMs1Spectrum = mergedMs1Spectrum;
-    }
-
-    public void setMs2Spectra(List<MutableMs2Spectrum> ms2Spectra) {
-        this.ms2Spectra = ms2Spectra;
-    }
-
-    public void setIonMass(double ionMass) {
-        this.ionMass = ionMass;
-    }
-
-    public void setMolecularFormula(MolecularFormula molecularFormula) {
-        this.molecularFormula = molecularFormula;
-    }
-
-    @Nullable
-    @Override
-    public String getFeatureId() {
-        return featureId;
-    }
-
-    public void setFeatureId(String featureId) {
-        this.featureId = featureId;
     }
 
     @Override

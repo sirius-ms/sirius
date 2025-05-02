@@ -28,19 +28,15 @@ import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getCustomDatabaseDirectory;
 import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
 
 @Slf4j
@@ -55,50 +51,14 @@ public class CustomDatabases {
         return inputName.replaceAll("[^a-zA-Z0-9-_]", "_");
     }
 
-    //todo we should cache blob database as well if the use caching here.
-    private final static Map<String, NoSQLCustomDatabase<?, ?>> NOSQL_LIBRARIES = new ConcurrentHashMap<>();
-
-    private static NoSQLCustomDatabase<?, ?> getNoSQLibrary(String location, CdkFingerprintVersion version) throws IOException {
-        synchronized (NOSQL_LIBRARIES) {
-            if (!NOSQL_LIBRARIES.containsKey(location)) {
-                try {
-                    NoSQLCustomDatabase<?, ?> db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location), version));
-                    NOSQL_LIBRARIES.put(location, db);
-                } catch (Exception e) {
-                    throw new IOException(e);
-                }
-            }
-            return NOSQL_LIBRARIES.get(location);
-        }
-    }
-
-    private static volatile boolean loaded = false;
-
-    public static void load(CdkFingerprintVersion version) {
-        if (!loaded) {
-            synchronized (CustomDatabases.class) {
-                if (!loaded) {
-                    @NotNull List<CustomDatabase> dbs = openAll(true, version);
-                    log.info("Loaded custom databases: {}", dbs.stream().map(CustomDatabase::name).collect(Collectors.joining(", ")));
-                    loaded = true;
-                }
-            }
-        }
-    }
-
-
-    public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name, CdkFingerprintVersion version) {
-        return getCustomDatabaseByName(name, version).
-                orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
-    }
+    private final static Map<String, CustomDatabase> CUSTOM_DATABASES = new ConcurrentHashMap<>();
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name, CdkFingerprintVersion version) {
+    public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name) {
         try {
-            @NotNull List<CustomDatabase> custom = getCustomDatabases(version);
-            for (CustomDatabase customDatabase : custom)
-                if (customDatabase.name().equalsIgnoreCase(name))
-                    return Optional.of(customDatabase);
+            return CUSTOM_DATABASES.values().stream()
+                    .filter(db -> db.name().equalsIgnoreCase(name))
+                    .findFirst();
         } catch (Exception e) {
             log.error("Error when loading custom database with name: {}", name, e);
         }
@@ -106,119 +66,66 @@ public class CustomDatabases {
     }
 
     @NotNull
-    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull Path dbDir, CdkFingerprintVersion version) {
-        try {
-            return Optional.of(getCustomDatabaseByPathOrThrow(dbDir, version));
-        } catch (RuntimeException e) {
-            LoggerFactory.getLogger(CustomDatabases.class).error(e.getMessage(), e.getCause());
-            return Optional.empty();
-        }
+    public static Optional<CustomDatabase> getCustomDatabaseByPath(@NotNull String location) {
+        return Optional.ofNullable(CUSTOM_DATABASES.get(location));
     }
 
-    public static @NotNull Optional<CustomDatabase> getCustomDatabase(@NotNull String nameOrPath, CdkFingerprintVersion version) {
-        Optional<CustomDatabase> it = getCustomDatabaseByName(nameOrPath, version);
-        if (it.isEmpty())
-            it = getCustomDatabaseByPath(Path.of(nameOrPath), version);
-        return it;
-    }
-
-
-    @NotNull
-    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, CdkFingerprintVersion version) {
-        return getCustomDatabaseByPathOrThrow(dbDir, true, version);
+    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db) {
+        return getCustomDatabaseByPath(db.location()).orElseThrow();
     }
 
     @NotNull
-    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, boolean up2date, CdkFingerprintVersion version) {
-        try {
-            return open(dbDir.toAbsolutePath().toString(), up2date, version);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load DB from path: " + dbDir, e);
-        }
-    }
-
-    @NotNull
-    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, CdkFingerprintVersion version) {
-        return getCustomDatabaseByPathOrThrow(Path.of(db.location()), version);
-    }
-
-    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, boolean up2date, CdkFingerprintVersion version) {
-        return getCustomDatabaseByPathOrThrow(Path.of(db.location()), up2date, version);
-    }
-
-    @NotNull
-    public static List<CustomDatabase> getCustomDatabases(CdkFingerprintVersion version) {
-        return getCustomDatabases(true, version);
-    }
-
-    @NotNull
-    public static List<CustomDatabase> getCustomDatabases(final boolean up2date, CdkFingerprintVersion version) {
-        return openAll(up2date, version);
-    }
-
-    @NotNull
-    public static List<CustomDatabase> openAll(boolean up2date, CdkFingerprintVersion version) {
-        final List<CustomDatabase> databases = new ArrayList<>();
-
-        for (Path location : CustomDataSources.getAllCustomDatabaseLocations()) {
-            if (!Files.exists(location)) {
-                log.warn(
-                        "Database location '{}' does not exist. Database will not be available in SIRIUS.",
-                        location);
-                continue;
-            }
-
-            try {
-                final CustomDatabase db = open(location.toString(), version);
-                if (up2date && db.needsUpgrade())
-                    throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
-
-                databases.add(db);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-        return databases.stream().distinct().collect(Collectors.toList());
-    }
-
-    @NotNull
-    public static CustomDatabase open(String bucketLocation, boolean up2date, CdkFingerprintVersion version) throws IOException {
-        final CustomDatabase db = open(bucketLocation, version);
+    public static CustomDatabase open(String location, boolean up2date, CdkFingerprintVersion version) throws IOException {
+        final CustomDatabase db = open(location, version);
         if (!up2date || !db.needsUpgrade())
             return db;
-        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures.");
     }
 
     public static CustomDatabase open(String location, CdkFingerprintVersion version) throws IOException {
+        CustomDatabase cached = CUSTOM_DATABASES.get(location);
+        if (cached != null) {
+            return cached;
+        }
+
+        if (!Files.exists(Path.of(location))) {
+            throw new FileNotFoundException("Trying to open a custom DB at non-existing location " + location);
+        }
+
         CustomDatabase db;
         if (location.endsWith(CUSTOM_DB_SUFFIX)) {
-            db = getNoSQLibrary(location, version);
+            ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version);
+            db = new NoSQLCustomDatabase<>(nitriteDb);
         } else {
-            db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
+            CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
+            db = new BlobCustomDatabase<>(blobDb, version);
         }
 
-        db.getSettings(); //readsSetting only if not exists...
+        try {
+            db.getSettings();
+        } catch (Exception e) {
+            db.close();
+            throw new RuntimeException(e);
+        }
+
+        String dbName = db.name();
+        if (CustomDataSources.containsDB(dbName)) {
+            db.close();
+            throw new RuntimeException("Datasource with name " + dbName + " already exists.");
+        }
+
         CustomDataSources.addCustomSourceIfAbsent(db);
+        CUSTOM_DATABASES.put(location, db);
         return db;
-    }
-
-    public static CustomDatabase createOrOpen(String location, CustomDatabaseSettings config, CdkFingerprintVersion version) throws IOException {
-        final Path custom = getCustomDatabaseDirectory();
-        if (!location.contains("/"))
-            location = custom.resolve(location).toAbsolutePath().toString();
-
-        if (location.endsWith(CUSTOM_DB_SUFFIX) && Files.isRegularFile(Path.of(location))) {
-            return open(location, version);
-        } else if (BlobStorages.exists(PROPERTY_PREFIX, location)) {
-            return open(location, version);
-        }
-        return create(location, config, version);
     }
 
     public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version) throws IOException {
         //sanitize db name:
         if (!config.getName().equals(sanitizeDbName(config.getName())))
-            throw new IllegalArgumentException("Unsupported databse name. Name was: '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
+            throw new IllegalArgumentException("Unsupported database name '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
+        if (CustomDataSources.containsDB(config.getName())) {
+            throw new RuntimeException("Datasource with name " + config.getName() + " already exists.");
+        }
 
         CustomDatabase db;
         if (location.endsWith(CUSTOM_DB_SUFFIX)) {
@@ -226,51 +133,27 @@ public class CustomDatabases {
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir);
             }
-            db = getNoSQLibrary(location, version);
+            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version);
+            db = new NoSQLCustomDatabase<>(storage);
+            db.writeSettings(config);
+            storage.getStorage().flush();
         } else {
             BlobStorage bs = BlobStorages.createDefault(PROPERTY_PREFIX, location);
             bs.setTags(Map.of(TAG_COMPRESSION, Compressible.Compression.GZIP.name()));
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
+            db.writeSettings(config);
         }
-        db.writeSettings(config);
         CustomDataSources.addCustomSourceIfAbsent(db);
+        CUSTOM_DATABASES.put(location, db);
         return db;
     }
 
-    public static boolean remove(String dbId) {
-        return CustomDataSources.removeCustomSource(dbId);
-    }
-
     public static void remove(CustomDatabase db, boolean delete) {
+        CUSTOM_DATABASES.remove(db.storageLocation());
+        CustomDataSources.removeCustomSource(db.name());
+        db.close();
         if (delete) {
-            try {
-                delete(db);
-            } catch (IOException e) {
-                LoggerFactory.getLogger(CustomDatabases.class).error("Error deleting database.", e);
-            }
-        } else {
-            CustomDataSources.removeCustomSource(db.name());
-        }
-    }
-
-    public static void delete(CustomDatabase database) throws IOException {
-        try {
-            if (database instanceof NoSQLCustomDatabase<?, ?>) {
-                synchronized (NOSQL_LIBRARIES) {
-                    if (!NOSQL_LIBRARIES.containsKey(database.storageLocation())) {
-                        throw new IllegalArgumentException("Unknown library: " + database.storageLocation());
-                    }
-                    NoSQLCustomDatabase<?, ?> db = NOSQL_LIBRARIES.remove(database.storageLocation());
-                    db.database.close();
-                    Files.delete(Path.of(db.storageLocation()));
-                }
-            } else if (database instanceof BlobCustomDatabase<?>) {
-                database.deleteDatabase();
-            } else {
-                throw new IllegalArgumentException();
-            }
-        } finally {
-            CustomDataSources.removeCustomSource(database.name());
+            db.deleteDatabase();
         }
     }
 }

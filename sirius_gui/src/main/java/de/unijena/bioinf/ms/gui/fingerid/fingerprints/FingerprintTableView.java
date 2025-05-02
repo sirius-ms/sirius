@@ -25,6 +25,7 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TableComparatorChooser;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
@@ -58,8 +59,10 @@ public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyB
         TableComparatorChooser.install(actionTable, sortedSource, AbstractTableComparatorChooser.SINGLE_COLUMN);
         actionTable.setSelectionModel(getFilteredSelectionModel());
         actionTable.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(-1));
+        JScrollPane scrollPane = new JScrollPane(actionTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Fingerprint_Predictions);
         this.add(
-                new JScrollPane(actionTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
+                scrollPane,
                 BorderLayout.CENTER
         );
 
@@ -114,6 +117,7 @@ public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyB
         tb.addSeparator();
         tb.add(new NameFilterRangeSlider("Number of heavy atoms:", atomSizeSlider));
         tb.addSeparator();
+        tb.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Fingerprint_Filter);
         return tb;
     }
 

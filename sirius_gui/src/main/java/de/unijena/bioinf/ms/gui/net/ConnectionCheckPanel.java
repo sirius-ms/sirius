@@ -29,10 +29,7 @@ import de.unijena.bioinf.ms.gui.utils.HyperlinkJTextPane;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import io.sirius.ms.sdk.model.ConnectionCheck;
-import io.sirius.ms.sdk.model.ConnectionError;
-import io.sirius.ms.sdk.model.ConnectionErrorClass;
-import io.sirius.ms.sdk.model.Subscription;
+import io.sirius.ms.sdk.model.*;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +177,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
         final List<ConnectionError> errors = check.getErrors();
 
-        if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(io.sirius.ms.sdk.model.ConnectionErrorType.WARNING)).findAny().isEmpty()) {
+        if (errors.isEmpty()) {
             //case 0 NO ERROR
             resultPanel.add(makeHTMLTextPanel("Connection to SIRIUS web services successfully established!", Colors.TEXT_GOOD), BorderLayout.CENTER);
         } else {
@@ -235,11 +232,23 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
                     if (!noLoginButtons)
                         resultPanel.add(new JButton(SiriusActions.SIGN_IN.getInstance(gui, true)), BorderLayout.SOUTH);
                     break;
-                case LICENSE:
-                    resultPanel.add(makeHTMLTextPanel(
-                            err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
-                    ), BorderLayout.CENTER);
+                case LICENSE:{
+                    if (err.getSiriusErrorCode() == 56){
+                        //limit reached
+                        resultPanel.add(
+                                makeHTMLTextPanel(err.getSiriusMessage() + addHtmlErrorText(err), Colors.TEXT_WARN),
+                                BorderLayout.CENTER
+                        );
+                        resultPanel.add(new JButton(ActionUtils.deriveFrom(
+                                evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
+                                SiriusActions.MANAGE_ACCOUNT.getInstance(gui, true))), BorderLayout.SOUTH);
+                    } else {
+                        resultPanel.add(makeHTMLTextPanel(
+                                err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err), Colors.TEXT_WARN
+                        ), BorderLayout.CENTER);
+                    }
                     break;
+                }
                 case TERMS:
                     resultPanel.add(makeHTMLTextPanel(
                             err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
@@ -303,7 +312,7 @@ public class ConnectionCheckPanel extends LoadablePanel implements PropertyChang
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt instanceof ConnectionMonitor.ConnectionStateEvent cEvt)
+        if (evt instanceof ConnectionMonitor.ConnectionEvent cEvt)
             refreshPanel(cEvt.getConnectionCheck());
     }
 }

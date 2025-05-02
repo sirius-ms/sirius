@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -39,7 +40,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Ms2ReferenceSpectrum {
+public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
 
     @Id
     private long uuid;
@@ -108,6 +109,7 @@ public class Ms2ReferenceSpectrum {
 
     /**
      * Name of the spectrum.
+     * Usually contains the name of the measured compound
      */
     private String name;
 
@@ -133,7 +135,15 @@ public class Ms2ReferenceSpectrum {
      */
     private String splash;
 
+    /**
+     * Original spectrum
+     */
     private SimpleSpectrum spectrum;
+
+    /**
+     * Processed spectrum for fast cosine calculation
+     */
+    private ReferenceLibrarySpectrum querySpectrum;
 
     private double retentionTime;
 

@@ -34,8 +34,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
+
+    Pattern PROJECT_FILENAME_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
+
     @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment);
 
     @NotNull Optional<? extends Instance> findInstance(Object id);
@@ -60,9 +64,9 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
         return getCanopusNpcData(charge).isPresent();
     }
 
-    int countFeatures();
+    int countAllFeatures();
 
-    int countCompounds();
+    int countAllCompounds();
 
     long sizeInBytes();
 
@@ -72,7 +76,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
 
     @Override
     default int size() {
-        return countFeatures();
+        return countAllFeatures();
     }
 
     default boolean isEmpty() {
@@ -100,6 +104,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
 
     void flush() throws IOException;
 
+    void compact();
 
     void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException;
 

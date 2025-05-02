@@ -37,10 +37,12 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -65,11 +67,13 @@ import static de.unijena.bioinf.projectspace.FormulaResultBean.ensureDefaultOptF
 public class InstanceBean implements SiriusPCS {
     private static final Logger log = LoggerFactory.getLogger(InstanceBean.class);
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+    @Getter
     private final String featureId;
     private volatile AlignedFeature sourceFeature;
     private volatile MsData msData;
     private volatile SpectralMatchingCache spectralMatchingCache;
 
+    @Getter
     @NotNull
     private final GuiProjectManager projectManager;
 
@@ -130,7 +134,11 @@ public class InstanceBean implements SiriusPCS {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
         synchronized (InstanceBean.this) {
-            InstanceBean.this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+            try {
+                InstanceBean.this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+            } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
+                InstanceBean.this.sourceFeature = null;
+            }
             InstanceBean.this.spectralMatchingCache = null;
         }
         if (evt instanceof BackgroundComputationsStateEvent pce) {
@@ -174,10 +182,6 @@ public class InstanceBean implements SiriusPCS {
         return getProjectManager().getClient();
     }
 
-    public GuiProjectManager getProjectManager() {
-        return projectManager;
-    }
-
 
     @NotNull
     public AlignedFeature getSourceFeature() {
@@ -203,16 +207,12 @@ public class InstanceBean implements SiriusPCS {
                 // we update every time here since we do not know which optional fields are already loaded.
                 if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
                     sourceFeature = withIds((pid, fid) ->
-                            getClient().features().getAlignedFeature(pid, fid, of));
+                            getClient().features().getAlignedFeature(pid, fid, false, of));
                 return sourceFeature;
             }
         }
         return sourceFeature;
 
-    }
-
-    public String getFeatureId() {
-        return featureId;
     }
 
     public String getName() {
@@ -230,7 +230,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public AlignedFeatureQualityExperimental getQualityReport() {
-        return withIds((pid, fid) -> getClient().features().getAlignedFeaturesQualityExperimentalWithResponseSpec(pid, fid)
+        return withIds((pid, fid) -> getClient().features().getAlignedFeatureQualityExperimentalWithResponseSpec(pid, fid)
                 .bodyToMono(AlignedFeatureQualityExperimental.class).onErrorComplete().block());
     }
 
@@ -332,7 +332,7 @@ public class InstanceBean implements SiriusPCS {
 
     public List<FormulaResultBean> getFormulaCandidates() {
         return withIds((pid, fid) -> getClient().features()
-                .getFormulaCandidates(pid, fid, ensureDefaultOptFields(null)))
+                .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
                 .stream()
                 .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
                 .toList();
@@ -341,10 +341,6 @@ public class InstanceBean implements SiriusPCS {
 
     /**
      * retrieves database and de novo structure candidates and merges identical structures
-     *
-     * @param topK
-     * @param fp
-     * @return
      */
     public List<FingerprintCandidateBean> getBothStructureCandidates(int topK, boolean fp, boolean loadDatabaseHits, boolean loadDenovo) {
         final List<FingerprintCandidateBean> database = !loadDatabaseHits ? Collections.emptyList() : toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
@@ -453,12 +449,16 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public MsData getMsData() {
+        return getMsData(false);
+    }
+
+    public MsData getMsData(boolean asCosineQuery) {
         //double-checked locking, msData must be volatile
         if (msData == null) {
             synchronized (this) {
                 if (msData == null) {
                     msData = sourceFeature().map(AlignedFeature::getMsData)
-                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId())));
+                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asCosineQuery)));
                 }
                 return msData;
             }

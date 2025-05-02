@@ -29,29 +29,17 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 	private JButton close;
 	protected JPanel south;
 	
-	public ExceptionDialog(Frame owner, String message) {
+	public ExceptionDialog(Window owner, String message) {
 		this(owner, message, "Error");
 	}
-	public ExceptionDialog(Frame owner, String message, String title) {
-		super(owner,true);
-		setTitle(title);
-		initDialog(message);
-		this.setVisible(true);
-	}
-	
-	public ExceptionDialog(Dialog owner, String message) {
-		this(owner,message, "Error");
-	}
-
-	public ExceptionDialog(Dialog owner, String message, String title) {
-		super(owner,true);
+	public ExceptionDialog(Window owner, String message, String title) {
+		super(owner, DEFAULT_MODALITY_TYPE);
 		setTitle(title);
 		initDialog(message);
 		this.setVisible(true);
 	}
 	
 	public void initDialog(String message) {
-		
 		this.setLayout(new BorderLayout());
 		JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,10));
 		Icon icon = UIManager.getIcon("OptionPane.errorIcon");
@@ -65,8 +53,6 @@ public class ExceptionDialog extends JDialog implements ActionListener{
 		this.add(south,BorderLayout.SOUTH);
 		this.pack();
 		setLocationRelativeTo(getParent());
-
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
