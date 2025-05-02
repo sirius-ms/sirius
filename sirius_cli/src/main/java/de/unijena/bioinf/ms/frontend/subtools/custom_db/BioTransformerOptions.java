@@ -12,14 +12,19 @@ import java.util.Stack;
 // --transfromation HUMAN_CUSTOM_MULTI --seq-step CYP450 --seq-iterations 3  --seq-step PHASE_2 --seq-iterations 1
 
 public class BioTransformerOptions {
-    @CommandLine.ArgGroup(multiplicity = "1", exclusive = true, order = 301)
+    @CommandLine.Option(names = "--cyp450Mode", description = """
+            Specify the CYP450 prediction Mode:
+            (1) CypReact + BioTransformer rules (RULE_BASED)
+            (2) CyProduct only (CY_PRODUCT)
+            (3) Combined: CypReact + BioTransformer rules + CyProducts (COMBINED)."""
+            , defaultValue = "RULE_BASED", order = 301)
+    public Cyp450Mode cyp450Mode; // CYP450 Mode
+
+
+    @CommandLine.ArgGroup(multiplicity = "1", exclusive = true, order = 309)
     public BioTransformer bioTransformer;
 
-    @CommandLine.Option(names = "--cyp450Mode", description = "Specify the CYP450 predictoin Mode here: 1) CypReact + BioTransformer\n" +
-            " rules; 2) CyProduct only; 3) Combined: CypReact + BioTransformer rules +\n" +
-            " CyProducts.\n" +
-            " Default mode is 1.", defaultValue = "RULE_BASED", order = 309)
-    public Cyp450Mode cyp450Mode; // CYP450 Mode
+
 
     public BioTransformerSettings toBioTransformerSetting() {
         BioTransformerSettings settings = new BioTransformerSettings()
@@ -39,10 +44,10 @@ public class BioTransformerOptions {
 
 
     public static class BioTransformer {
-        @CommandLine.ArgGroup(exclusive = false, heading = "### Single Transformer Options ###\n", order = 310)
+        @CommandLine.ArgGroup(exclusive = false, order = 310)
         Single biotransformer;
 
-        @CommandLine.ArgGroup(exclusive = false, multiplicity = "1..5", heading = "### Sequential Transformation Options ###\n", order = 320)
+        @CommandLine.ArgGroup(exclusive = false, multiplicity = "1..5", order = 320)
         List<Sequence> bioTransformerSequence;
     }
 
@@ -60,14 +65,14 @@ public class BioTransformerOptions {
                 " user for the EC-based, CYP450, Phase II, and Environmental microbial\n" +
                 " biotransformers. The default value is 1.", defaultValue = "1",parameterConsumer = RangeValidator.class, order = 312)
         private int iterations; // Number of iterations
+
+        //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db.
         @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
                 " feature.", defaultValue = "true", order = 313)
         private boolean useDB; // Use the database flag
-        @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want to enable the using first\n" +
-                " 14 characters of InChIKey when retrieving from database feature.", defaultValue = "false", order = 314)
+
+        @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
         private boolean useSubstructure; // Use the substructure flag
-
-
 
         }
 

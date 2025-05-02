@@ -76,19 +76,13 @@ public static List<Biotransformation> multiBioTransformer(IAtomContainer singleM
 
 
     public static void main(String[] args) throws Exception {
-        BiotransformerSequence_rails biotransformerSeqeuence = null;
-        BiotransformerSequence btq_for_mf = null;
         // default
-        int cyp450Mode = 1;
         int p2Mode = 1;
         boolean useDB = true;
         boolean useSub = false;
-        Double massThreshold = (double)1500.0F;
+        int steps= 2;
 
         String smiles = "CC(C)C1=CC=C(C)C=C1O";
-        int steps= 2;
-        int cypmode = 3;
-        ArrayList<Biotransformation> biotransformations;
         IAtomContainer molecule = InChISMILESUtils.getAtomContainerFromSmiles(smiles);
 
         List<Biotransformation> result = BiotransformerWrapper.allHumanTransformer(molecule, steps, p2Mode, Cyp450Mode.COMBINED, useDB, useSub);
