@@ -42,7 +42,6 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
-import de.unijena.bioinf.chemdb.SpectraLibraryUpdateManager;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -55,7 +54,6 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -72,7 +70,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -93,8 +90,6 @@ public class CustomDatabaseImporter {
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
     protected SmilesGenerator smilesGen;
     protected SmilesParser smilesParser;
-    protected InChIGeneratorFactory inchiGenFactory;
-    protected InChIGenerator inchiGen;
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
     protected final IFingerprinterCache ifpCache;
@@ -348,7 +343,6 @@ public class CustomDatabaseImporter {
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
         synchronized (spectraBuffer) {
             spectraBuffer.addAll(spectra);
-//            for (Listener l : listeners) l.newSpectra(spectraBuffer.size());
             if (spectraBuffer.size() > specBufferSize)
                 flushSpectraBuffer();
         }
@@ -412,20 +406,7 @@ public class CustomDatabaseImporter {
 
                     checkCancellation();
 
-/*
-                    // todo Jonas: this could be the right place to create and run tranformer jobs if needed
-                    // run transformer as configured on all molecule in key2DToComp (valueset)
-                    // add tranformation tesult molecules to key2DToComp (2d deduplication as above)
-
-                    BioTransformerJJob job = new BioTransformerJJob();
-                    job.setSubstrates(key2DToComp.values().stream()
-                            .map(comp -> comp.molecule.container)
-                            .toList());
-
-                    List<BioTransformerResult> result = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
-                    //todo convert AtomContains in results into Molecules and perform  deduplication as done above.
-                    result.stream().map(res -> res.getBiotranformations().stream().map(t -> t.))
-*/
+                    //todo @JFleisch In methode auslagern
                     if (bioTransformerSettings != null) {
                         CustomDatabase.logger.info("BioTransformer settings detected: " + bioTransformerSettings.getMetabolicTransformation() +
                                 ", CYP450 Mode: " + bioTransformerSettings.getCyp450Mode() +
@@ -433,11 +414,11 @@ public class CustomDatabaseImporter {
                                 ", Iterations: " + bioTransformerSettings.getIterations());
                         CustomDatabase.logger.info("Preparing to transform " + key2DToComp.size() + " molecules");
                         BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
-                        job.setSubstrates(
-                                key2DToComp.values().stream()
-                                        .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
-                                        .toList()
+                        job.setSubstrates(key2DToComp.values().stream()
+                                .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                                .toList()
                         );
+
                         CustomDatabase.logger.info("Created BioTransformerJJob with " + job.getSubstrates().size() + " substrates");
                         for (IAtomContainer container : job.getSubstrates()) {
                             try {
@@ -446,7 +427,9 @@ public class CustomDatabaseImporter {
                                 CustomDatabase.logger.error("Error generating SMILES for substrate", e);
                             }
                         }
+
                         CustomDatabase.logger.info("Submitting BioTransformerJJob to job manager");
+                        //todo @MFleisch check job dependency.
                         List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
                         CustomDatabase.logger.info("BioTransformerJJob completed with " + transformationResults.size() + " results");
                         for (BioTransformerResult result : transformationResults) {
@@ -455,7 +438,6 @@ public class CustomDatabaseImporter {
                         }
 
                         // 2. Transformations in Molecule konvertieren
-
                         List<Molecule> transformedMolecules = transformationResults.stream()
                                 // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
                                 .flatMap(result -> result.getAllProductContainers().stream()) // Verwende die neue Methode
@@ -467,23 +449,19 @@ public class CustomDatabaseImporter {
                                         String inchiValue = inchiGenerator.getInchi();
                                         String inchiKey = inchiGenerator.getInchiKey();
                                         String smilesValue = smilesGen.create(container);
+                                        //todo molecules need names, we do not yet know what users want to see here but lets start with:  "BT: <Parent molecule name> [<Reaction>]"
 
-                                        return new Molecule(container, new Smiles(smilesValue), new InChI(inchiValue, inchiKey));
+                                        return new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
                                     } catch (CDKException e) {
                                         // Passende Fehlerbehandlung, hier RuntimeException wie im Original
                                         throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
                                     }
-                                })
-                                .toList(); // oder .collect(Collectors.toList()); je nach Java-Version/Präferenz
+                                }).toList();
 
                         CustomDatabase.logger.info("Created " + transformedMolecules.size() + " transformed molecules");
                         for (Molecule mol : transformedMolecules) {
                             CustomDatabase.logger.info("Transformed molecule: " + mol.smiles + ", InChI Key: " + mol.inchi.key2D());
                         }
-
-
-                        //TODO: welche ? subrstrates oder Products? beide? und wie einfügen??
-
 
                         // 3. Deduplikation basierend auf InChIKey-2D
                         for (Molecule newMolecule : transformedMolecules) {

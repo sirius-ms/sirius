@@ -176,7 +176,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     return showDB(version);
                 }
             }
-            throw new IllegalArgumentException("Either '--import', '--remove' or '--show' must be specified.");
+            throw new IllegalArgumentException("Either '--input', '--remove' or '--show' must be specified.");
         }
 
         private @NotNull Boolean importIntoDB(CdkFingerprintVersion version) throws InterruptedException, IOException, ExecutionException {
