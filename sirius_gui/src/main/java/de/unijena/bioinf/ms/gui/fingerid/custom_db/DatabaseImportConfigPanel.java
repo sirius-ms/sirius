@@ -14,14 +14,14 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.SearchableDatabase;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -274,10 +274,25 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
 
+        JPanel toggleBox = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JToggleSwitch biotransformerSwitch = new JToggleSwitch();
+        biotransformerSwitch.setPreferredSize(new Dimension(40, 28));
+        toggleBox.add(biotransformerSwitch);
+        toggleBox.add(Box.createHorizontalGlue());
+
+        smalls.addNamed("BioTransformer 3", toggleBox, GuiUtils.formatToolTip("If enabled BioTransformer 3 will be used to apply configured biotransformations to all input structures. Input structures and their transformation products will be added to the database."), GuiUtils.SMALL_GAP);
+        BiotranformerConfigPanel biotranformerConfigPanel = new BiotranformerConfigPanel();
+        smalls.add(biotranformerConfigPanel);
+        biotransformerSwitch.addEventToggleSelected(evt -> {
+            biotranformerConfigPanel.setVisible(evt);
+            biotranformerConfigPanel.setEnabled(evt);
+        });
+        biotranformerConfigPanel.setVisible(biotransformerSwitch.isSelected());
+        biotranformerConfigPanel.setEnabled(biotransformerSwitch.isSelected());
         return withErrorMessageWrapper;
     }
 
-    private Box createCompoundsBox() {
+    private JComponent createCompoundsBox() {
         final Box box = Box.createVerticalBox();
 
         String inputParameter = "input";
@@ -299,13 +314,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         fileListButtons.add(addFiles);
 
         box.add(fileListButtons);
-
-        Border border = BorderFactory.createCompoundBorder(
-                BorderFactory.createEmptyBorder(10, 0, 0, 0),
-                BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Drop or add compound and/or spectra files")
-        );
-        box.setBorder(border);
-
 
         JFileChooser importFileChooser = new JFileChooser();
         importFileChooser.setMultiSelectionEnabled(true);
@@ -359,7 +367,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), removeFilesActionName);
         fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
 
-        return box;
+        TextHeaderPanel<Box> r =  new TextHeaderPanel<>("Add compound and/or spectra files" , box,0, GuiUtils.MEDIUM_GAP);
+        r.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.MEDIUM_GAP,0,GuiUtils.MEDIUM_GAP));
+        return r;
     }
 
     private JPanel createImportButton() {
