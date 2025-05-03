@@ -61,7 +61,7 @@ class ImportDatabaseDialog extends JDialog {
         super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
 
-        setPreferredSize(new Dimension(640, 480));
+        setPreferredSize(new Dimension(600, 720));
 
         configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db);
         add(configPanel);
