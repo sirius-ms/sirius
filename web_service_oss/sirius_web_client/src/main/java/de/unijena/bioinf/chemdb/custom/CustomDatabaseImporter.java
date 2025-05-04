@@ -140,17 +140,17 @@ public class CustomDatabaseImporter {
 
     public synchronized void updateStatistics() throws IOException {
         synchronized (database) {
-            CustomDatabase.logger.info("Updating database statistics...");
+            log.info("Updating database statistics...");
 
             // update tags & statistics
             database.toSpectralLibrary()
                     .ifPresent(sl -> {
                         try {
                             long spectraCount = sl.countAllSpectra();
-                            CustomDatabase.logger.info("Found " + spectraCount + " spectra in database");
+                            log.info("Found " + spectraCount + " spectra in database");
                             database.getStatistics().spectra().set(spectraCount);
                         } catch (IOException e) {
-                            CustomDatabase.logger.error("Error counting spectra", e);
+                            log.error("Error counting spectra", e);
                             throw new RuntimeException(e);
                         }
                     });
@@ -160,15 +160,15 @@ public class CustomDatabaseImporter {
                 long compoundCount = database.database.countAllFingerprints();
                 long formulaCount = database.database.countAllFormulas();
 
-                CustomDatabase.logger.info("Found " + compoundCount + " compounds and " + formulaCount + " formulas in database");
+                log.info("Found " + compoundCount + " compounds and " + formulaCount + " formulas in database");
 
                 database.getStatistics().compounds().set(compoundCount);
                 database.getStatistics().formulas().set(formulaCount);
                 database.writeSettings();
 
-                CustomDatabase.logger.info("Database statistics updated successfully");
+                log.info("Database statistics updated successfully");
             } catch (Exception e) {
-                CustomDatabase.logger.error("Error updating database statistics", e);
+                log.error("Error updating database statistics", e);
                 throw e;
             }
         }
@@ -408,87 +408,71 @@ public class CustomDatabaseImporter {
 
                     //todo @JFleisch In methode auslagern
                     if (bioTransformerSettings != null) {
-                        CustomDatabase.logger.info("BioTransformer settings detected: " + bioTransformerSettings.getMetabolicTransformation() +
-                                ", CYP450 Mode: " + bioTransformerSettings.getCyp450Mode() +
-                                ", P2 Mode: " + bioTransformerSettings.getP2Mode() +
-                                ", Iterations: " + bioTransformerSettings.getIterations());
-                        CustomDatabase.logger.info("Preparing to transform " + key2DToComp.size() + " molecules");
+                        log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
                         BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
                         job.setSubstrates(key2DToComp.values().stream()
                                 .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
                                 .toList()
                         );
 
-                        CustomDatabase.logger.info("Created BioTransformerJJob with " + job.getSubstrates().size() + " substrates");
-                        for (IAtomContainer container : job.getSubstrates()) {
-                            try {
-                                CustomDatabase.logger.info("Substrate SMILES: " + smilesGen.create(container));
-                            } catch (Exception e) {
-                                CustomDatabase.logger.error("Error generating SMILES for substrate", e);
-                            }
-                        }
+                        try {
+                            log.debug("Submitting BioTransformerJJob to job manager");
+                            List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
-                        CustomDatabase.logger.info("Submitting BioTransformerJJob to job manager");
-                        //todo @MFleisch check job dependency.
-                        List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
-                        CustomDatabase.logger.info("BioTransformerJJob completed with " + transformationResults.size() + " results");
-                        for (BioTransformerResult result : transformationResults) {
-                            CustomDatabase.logger.info("Result contains " + result.getBiotranformations().size() + " biotransformations");
-                            CustomDatabase.logger.info("Result contains " + result.getAllProductContainers().size() + " product containers");
-                        }
+//                            log.info("BioTransformer completed with {} products.", transformationResults.stream()
+//                                    .map(BioTransformerResult::getBiotranformations).filter(Objects::nonNull)
+//                                    .mapToInt(Collection::size).sum());
 
-                        // 2. Transformations in Molecule konvertieren
-                        List<Molecule> transformedMolecules = transformationResults.stream()
-                                // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
-                                .flatMap(result -> result.getAllProductContainers().stream()) // Verwende die neue Methode
-                                // Konvertiere jeden IAtomContainer in ein Molecule
-                                .map(container -> {
-                                    try {
-                                        // Die Logik zur Erstellung von Molecule bleibt gleich
-                                        InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
-                                        String inchiValue = inchiGenerator.getInchi();
-                                        String inchiKey = inchiGenerator.getInchiKey();
-                                        String smilesValue = smilesGen.create(container);
-                                        //todo molecules need names, we do not yet know what users want to see here but lets start with:  "BT: <Parent molecule name> [<Reaction>]"
+                            // 2. Transformations in Molecule konvertieren
+                            List<Molecule> transformedMolecules = transformationResults.stream()
+                                    // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
+                                    .flatMap(result -> result.getAllProductContainers().stream()) // Verwende die neue Methode
+                                    // Konvertiere jeden IAtomContainer in ein Molecule
+                                    .map(container -> {
+                                        try {
+                                            // Die Logik zur Erstellung von Molecule bleibt gleich
+                                            InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
+                                            String inchiValue = inchiGenerator.getInchi();
+                                            String inchiKey = inchiGenerator.getInchiKey();
+                                            String smilesValue = smilesGen.create(container);
+                                            //todo molecules need names, we do not yet know what users want to see here but lets start with:  "BT: <Parent molecule name> [<Reaction>]"
 
-                                        return new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
-                                    } catch (CDKException e) {
-                                        // Passende Fehlerbehandlung, hier RuntimeException wie im Original
-                                        throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                                            return new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
+                                        } catch (CDKException e) {
+                                            // Passende Fehlerbehandlung, hier RuntimeException wie im Original
+                                            throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                                        }
+                                    }).toList();
+
+
+                            // 3. Deduplikation basierend auf InChIKey-2D
+                            for (Molecule newMolecule : transformedMolecules) {
+                                try {
+                                    final InChI inchi = newMolecule.inchi;
+                                    final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
+                                    if (key2DToComp.containsKey(key2d)) {
+                                        // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
+                                        Comp existingComp = key2DToComp.get(key2d);
+                                        existingComp.molecule.ids.addAll(newMolecule.ids);
+                                        if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
+                                                (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
+                                                        existingComp.molecule.name.length() > newMolecule.name.length())) {
+                                            existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
+                                        }
+                                    } else {
+                                        // Neues Molekül hinzufügen
+                                        Comp newComp = new Comp(newMolecule);
+                                        key2DToComp.put(key2d, newComp);
                                     }
-                                }).toList();
-
-                        CustomDatabase.logger.info("Created " + transformedMolecules.size() + " transformed molecules");
-                        for (Molecule mol : transformedMolecules) {
-                            CustomDatabase.logger.info("Transformed molecule: " + mol.smiles + ", InChI Key: " + mol.inchi.key2D());
-                        }
-
-                        // 3. Deduplikation basierend auf InChIKey-2D
-                        for (Molecule newMolecule : transformedMolecules) {
-                            try {
-                                final InChI inchi = newMolecule.inchi;
-                                final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
-                                if (key2DToComp.containsKey(key2d)) {
-                                    // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
-                                    Comp existingComp = key2DToComp.get(key2d);
-                                    existingComp.molecule.ids.addAll(newMolecule.ids);
-                                    if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
-                                            (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
-                                                    existingComp.molecule.name.length() > newMolecule.name.length())) {
-                                        existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
-                                    }
-                                } else {
-                                    // Neues Molekül hinzufügen
-                                    Comp newComp = new Comp(newMolecule);
-                                    key2DToComp.put(key2d, newComp);
+                                } catch (IllegalArgumentException e) {
+                                    // Fehlerhafte Moleküle ignorieren, aber loggen
+                                    log.error("Error deduplicating molecule. Skipping: {} - {}", newMolecule.ids, newMolecule.name, e);
                                 }
-                            } catch (IllegalArgumentException e) {
-                                // Fehlerhafte Moleküle ignorieren, aber loggen
-                                CustomDatabase.logger.error("Error deduplicating molecule. Skipping: " + newMolecule.ids + " - " + newMolecule.name, e);
                             }
+                            log.info("After transformation, molecule buffer contains {} unique molecules", key2DToComp.size());
+                        } catch (ExecutionException e) {
+                            log.warn("BioTransformer completed with Error: {}", e.getMessage());
                         }
-                        CustomDatabase.logger.info("After transformation, key2DToComp contains " + key2DToComp.size() + " unique molecules");
-
                     }
 
 
@@ -541,24 +525,6 @@ public class CustomDatabaseImporter {
                     moleculeBuffer.clear();
                 }
             }
-        }
-        // Check database writability
-        try {
-            CustomDatabase.logger.info("Checking database writability...");
-            boolean canWrite = database.toWriteableChemDB().isPresent();
-            CustomDatabase.logger.info("Database is " + (canWrite ? "writable" : "NOT writable"));
-
-            if (!canWrite) {
-                CustomDatabase.logger.error("Database is not writable! This may explain why no transformations are being saved.");
-            } else {
-                // Try to get statistics to verify database access
-                CustomDatabase.logger.info("Current database statistics: Compounds=" +
-                        database.getStatistics().getCompounds() +
-                        ", Formulas=" + database.getStatistics().getFormulas() +
-                        ", Spectra=" + database.getStatistics().getSpectra());
-            }
-        } catch (Exception e) {
-            CustomDatabase.logger.error("Error checking database writability", e);
         }
     }
 
