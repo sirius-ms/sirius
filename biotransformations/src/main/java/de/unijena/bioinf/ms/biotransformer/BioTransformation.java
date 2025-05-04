@@ -1,27 +1,28 @@
 package de.unijena.bioinf.ms.biotransformer;
 
-import io.siriusms.shadow.bt.cdk.AtomContainerSet;
 import lombok.Builder;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Builder
 @Getter
 public class BioTransformation {
     @NotNull
     @Builder.Default
-    private AtomContainerSet substrates = new AtomContainerSet();
+    private Set<IAtomContainer> substrates = Set.of();
     @Nullable
     private String reactionType;
     @NotNull
     @Builder.Default
-    private ArrayList<String> enzymeNames = new ArrayList();
+    private List<String> enzymeNames = List.of();
     @NotNull
     @Builder.Default
-    private AtomContainerSet products = new AtomContainerSet();
+    private Set<IAtomContainer> products = Set.of();
     @Nullable
     private String bioSystemName;
     @Builder.Default
