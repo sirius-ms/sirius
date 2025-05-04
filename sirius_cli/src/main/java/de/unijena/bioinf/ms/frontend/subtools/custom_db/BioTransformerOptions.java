@@ -17,7 +17,7 @@ public class BioTransformerOptions {
             (1) CypReact + BioTransformer rules (RULE_BASED)
             (2) CyProduct only (CY_PRODUCT)
             (3) Combined: CypReact + BioTransformer rules + CyProducts (COMBINED)."""
-            , defaultValue = "RULE_BASED", order = 301)
+            , defaultValue = "COMBINED", order = 301)
     public Cyp450Mode cyp450Mode; // CYP450 Mode
 
 
@@ -33,7 +33,7 @@ public class BioTransformerOptions {
                 .setIterations(bioTransformer.biotransformer.iterations)
                 .setUseDB(bioTransformer.biotransformer.useDB)
                 .setUseSub(bioTransformer.biotransformer.useSubstructure)
-                .setP2Mode(bioTransformer.biotransformer.p2Mode.P2ModeOrdinal());
+                .setP2Mode(bioTransformer.biotransformer.p2Mode);
 
         if (bioTransformer.bioTransformerSequence != null)
             bioTransformer.bioTransformerSequence.forEach(s ->
@@ -55,7 +55,7 @@ public class BioTransformerOptions {
         @CommandLine.Option(names = {"--transformation"},completionCandidates = MetabolicTransformationSingleCandidates.class,required = true, order = 311)
         private MetabolicTransformation metabolicTransformation;
 
-        @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII predictoin Mode here: 1) BioTransformer rules; 2)\n" +
+        @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII prediction Mode here: 1) BioTransformer rules; 2)\n" +
                 " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
                 " rules.\n" +
                 " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
