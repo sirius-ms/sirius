@@ -21,23 +21,41 @@ public class BioTransformerOptions {
     public Cyp450Mode cyp450Mode; // CYP450 Mode
 
 
+    @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII prediction Mode here: 1) BioTransformer rules; 2)\n" +
+            " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
+            " rules.\n" +
+            " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
+    private P2Mode p2Mode;
+
+    //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db.
+    @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
+            " feature.", defaultValue = "true", order = 313)
+    private boolean useDB; // Use the database flag
+
+    @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
+    private boolean useSubstructure; // Use the substructure flag
+
     @CommandLine.ArgGroup(multiplicity = "1", exclusive = true, order = 309)
     public BioTransformer bioTransformer;
-
 
 
     public BioTransformerSettings toBioTransformerSetting() {
         BioTransformerSettings settings = new BioTransformerSettings()
                 .setCyp450Mode(cyp450Mode)
-                .setMetabolicTransformation(bioTransformer.biotransformer.metabolicTransformation)
-                .setIterations(bioTransformer.biotransformer.iterations)
-                .setUseDB(bioTransformer.biotransformer.useDB)
-                .setUseSub(bioTransformer.biotransformer.useSubstructure)
-                .setP2Mode(bioTransformer.biotransformer.p2Mode);
+                .setUseDB(useDB)
+                .setUseSub(useSubstructure)
+                .setP2Mode(p2Mode);
 
-        if (bioTransformer.bioTransformerSequence != null)
+        if (bioTransformer.biotransformer != null) {
+            settings.setMetabolicTransformation(bioTransformer.biotransformer.metabolicTransformation)
+                    .setIterations(bioTransformer.biotransformer.iterations);
+        } else if (bioTransformer.bioTransformerSequence != null) {
+            settings.setMetabolicTransformation(MetabolicTransformation.HUMAN_CUSTOM_MULTI);
             bioTransformer.bioTransformerSequence.forEach(s ->
                     settings.addSequenceStep(s.metabolicTransformation, s.iterations));
+        } else {
+            throw new IllegalArgumentException("Either a single/predefined metabolic transformation or a custom transformation sequence must be given.");
+        }
 
         return settings;
     }
@@ -52,34 +70,20 @@ public class BioTransformerOptions {
     }
 
     public static class Single {
-        @CommandLine.Option(names = {"--transformation"},completionCandidates = MetabolicTransformationSingleCandidates.class,required = true, order = 311)
+        @CommandLine.Option(names = {"--transformation"}, completionCandidates = MetabolicTransformationSingleCandidates.class, required = true, order = 311)
         private MetabolicTransformation metabolicTransformation;
 
-        @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII prediction Mode here: 1) BioTransformer rules; 2)\n" +
-                " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
-                " rules.\n" +
-                " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
-        private P2Mode p2Mode;
 
         @CommandLine.Option(names = {"--iterations"}, description = "The number of steps for the prediction. This option can be set by the\n" +
                 " user for the EC-based, CYP450, Phase II, and Environmental microbial\n" +
-                " biotransformers. The default value is 1.", defaultValue = "1",parameterConsumer = RangeValidator.class, order = 312)
+                " biotransformers. The default value is 1.", defaultValue = "1", parameterConsumer = RangeValidator.class, order = 312)
         private int iterations; // Number of iterations
 
-        //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db.
-        @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
-                " feature.", defaultValue = "true", order = 313)
-        private boolean useDB; // Use the database flag
-
-        @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
-        private boolean useSubstructure; // Use the substructure flag
-
-        }
+    }
 
 
-        // todo Check if all of this parameters should be changeable.
-        // todo write validation method that checks whether parameter match transformation type.
-
+    // todo Check if all of this parameters should be changeable.
+    // todo write validation method that checks whether parameter match transformation type.
 
 
     public static class Sequence {
@@ -89,6 +93,7 @@ public class BioTransformerOptions {
                 throw new CommandLine.PicocliException("Metabolic transformation: '" + metabolicTransformation + "' is not allowed in transformation sequence.");
             this.metabolicTransformation = metabolicTransformation;
         }
+
         public MetabolicTransformation metabolicTransformation;
 
         @CommandLine.Option(names = "--seq-iterations", defaultValue = "1", order = 322)
@@ -98,10 +103,11 @@ public class BioTransformerOptions {
 
     public static class MetabolicTransformationSingleCandidates implements Iterable<String> {
         @Override
-        public java.util.@NotNull Iterator<String> iterator(){
+        public java.util.@NotNull Iterator<String> iterator() {
             return MetabolicTransformation.valueSingleOnly().stream().map(MetabolicTransformation::name).iterator();
         }
     }
+
     public static class MetabolicTransformationSequenceCandidates implements Iterable<String> {
         @Override
         public java.util.@NotNull Iterator<String> iterator() {
@@ -118,7 +124,7 @@ public class BioTransformerOptions {
             int intValue = Integer.parseInt(value);
 
             // Bereich prüfen
-            if (intValue < 1 || intValue > 3) {
+            if (intValue < 1 || intValue > 4) {
                 throw new CommandLine.ParameterException(
                         commandSpec.commandLine(),
                         String.format("Invalid value '%s' for option '%s': Value must be between 1 and 3.", value, argSpec.getValue())

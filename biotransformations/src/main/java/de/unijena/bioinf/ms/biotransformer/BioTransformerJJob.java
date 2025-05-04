@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.biotransformer;
 
-import biotransformer.transformation.Biotransformation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -11,7 +10,9 @@ import lombok.experimental.Delegate;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 @Accessors(fluent = false, chain = true)
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
@@ -34,36 +35,46 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
 
     @Override
     protected List<BioTransformerResult> compute() throws Exception {
-        List<JJob<List<Biotransformation>>> jobs =
+        List<JJob<List<BioTransformation>>> jobs =
                 switch (getMetabolicTransformation()) {
                     case PHASE_1_CYP450 -> substrates.stream().map(ia -> makeJob(() ->
-                                    BiotransformerWrapper.cyp450BTransformer(ia, getIterations(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
+                                    BioTransformerWrapper.cyp450BTransformer(ia, getIterations(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                     case EC_BASED -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.ecBasedBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
+                            BioTransformerWrapper.ecBasedBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case PHASE_2 -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), isUseDB(), isUseSub()))).toList();
+                            BioTransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), isUseDB(), isUseSub()))).toList();
                     case HUMAN_GUT -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.hGutBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
+                            BioTransformerWrapper.hGutBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ENV_MICROBIAL -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.envMicrobialTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
+                            BioTransformerWrapper.envMicrobialTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ALL_HUMAN -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
+                            BioTransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                     case ABIOTIC -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.abioticTransformer(ia, getIterations()))).toList();
+                            BioTransformerWrapper.abioticTransformer(ia, getIterations()))).toList();
                     case HUMAN_CUSTOM_MULTI -> substrates.stream().map(ia -> makeJob(() ->
-                                    BiotransformerWrapper.multiBioTransformer(ia, settings.getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
+                                    BioTransformerWrapper.multiBioTransformer(ia, settings.getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                 };
-        //TODO:
-        submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::takeResult);
+        submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::getResult);
 
-        return jobs.stream().map(JJob::takeResult).map(BioTransformerResult::new).toList(); //results here
+        return jobs.stream()
+                .map(job -> {
+                    try {
+                        return job.awaitResult();
+                    } catch (ExecutionException e) {
+                        logError("Error when calling BioTransformer. Skipping the result. Some transformation products might be missing. Message: "+ e.getMessage());
+                        logDebug("Error when calling BioTransformer. Skipping the result. Some transformation products might be missing.", e);
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .map(BioTransformerResult::new).toList(); //results here
     }
 
 
-    private static JJob<List<Biotransformation>> makeJob(Callable<List<Biotransformation>> callable) {
+    private static JJob<List<BioTransformation>> makeJob(Callable<List<BioTransformation>> callable) {
         return new BasicJJob<>() {
             @Override
-            protected List<Biotransformation> compute() throws Exception {
+            protected List<BioTransformation> compute() throws Exception {
                 return callable.call();
             }
         };

@@ -1,7 +1,5 @@
 package de.unijena.bioinf.ms.biotransformer;
 
-import biotransformer.transformation.Biotransformation;
-import lombok.Getter;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
@@ -9,14 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class BioTransformerResult {
-    @Getter
-    private final List<Biotransformation> biotranformations;
-
-    public BioTransformerResult(List<Biotransformation> biotranformations) {
-        this.biotranformations = biotranformations;
-    }
-
+public record BioTransformerResult(List<BioTransformation> biotranformations) {
     /**
      * Sammelt alle Produkt-IAtomContainer aus allen Biotransformationen in diesem Ergebnis.
      * Kapselt den direkten Zugriff auf die externe Biotransformation-Bibliothek.
@@ -33,5 +24,4 @@ public class BioTransformerResult {
                 })
                 .collect(Collectors.toList());
     }
-
 }

@@ -6,6 +6,8 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.BioTransformerOptions;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import io.sirius.ms.sdk.model.BioTransformerParameters;
+import io.sirius.ms.sdk.model.BioTransformerSequenceStep;
 import lombok.Getter;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,11 @@ import static java.awt.event.ItemEvent.SELECTED;
 public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerOptions> {
     public static final java.util.List<MetaboTransWrapper> OVERALL_TRANSFORMATIONS = makeOverallTransformations();
     private final JComboBox<MetaboTransWrapper> transformationModes;
+    private final JComboBox<Cyp450ModeWrapper> cypModeBox;
+    private final JSpinner overallIterations;
+
+    private List<JComboBox<MetaboTransWrapper>> bioTransSequence;
+    private List<JSpinner> bioTransSequenceIterations;
 
     private static java.util.List<MetaboTransWrapper> makeOverallTransformations() {
         List<MetaboTransWrapper> trans = Arrays.stream(MetabolicTransformation.values())
@@ -49,15 +56,15 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
         transformationModes = makeTransformationBox(OVERALL_TRANSFORMATIONS, OVERALL_TRANSFORMATIONS.getLast());
         settings.addNamed("Metabolic Transformation", transformationModes);
 
-        JComboBox<Cyp450ModeWrapper> cypModeBox = new JComboBox<>();
+        cypModeBox = new JComboBox<>();
         Stream.concat(Arrays.stream(Cyp450Mode.values()).map(Cyp450ModeWrapper::new), Stream.of(Cyp450ModeWrapper.NONE))
                 .forEach(cypModeBox::addItem);
         cypModeBox.setSelectedItem(Cyp450ModeWrapper.DEFAULT);
         settings.addNamed("CYP450 Mode", cypModeBox);
 
-        JSpinner iterations = makeIterationsSpinner((MetaboTransWrapper) transformationModes.getSelectedItem());
+        overallIterations = makeIterationsSpinner((MetaboTransWrapper) transformationModes.getSelectedItem());
         JLabel iterationsLabel = new JLabel("Number of Reaction Iterations");
-        settings.add(iterationsLabel, iterations);
+        settings.add(iterationsLabel, overallIterations);
 
 
         JPanel multiTransPanel = makeMultiTransPanel();
@@ -70,16 +77,14 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
             if (evt.getStateChange() == SELECTED) {
                 //configure cypbox
                 MetaboTransWrapper trans = (MetaboTransWrapper) evt.getItem();
-                SpinnerNumberModel iterModel = ((SpinnerNumberModel) iterations.getModel());
 
-                updateIterationSpinner(iterationsLabel, iterations, trans);
+                updateIterationSpinner(iterationsLabel, overallIterations, trans);
                 if (trans.isTransformationSequence()) {
                     if (!cypModeBox.isEnabled()) {
                         cypModeBox.removeItem(Cyp450ModeWrapper.NONE);
                         cypModeBox.setSelectedItem(Cyp450ModeWrapper.DEFAULT);
                         cypModeBox.setEnabled(true);
                     }
-
 
                     multiTransPanel.setEnabled(true);
                     multiTransPanel.setVisible(true);
@@ -117,10 +122,10 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
 
     }
 
-    private static JPanel makeMultiTransPanel() {
+    private JPanel makeMultiTransPanel() {
         JPanel multiTransPanel = new JPanel(new MigLayout("fill", "[grow]10[]40[]10[]", ""));
-        List<JComboBox<MetaboTransWrapper>> bioTransBoxes = new ArrayList<>();
-        List<JSpinner> iterSpinners = new ArrayList<>();
+        bioTransSequence = new ArrayList<>();
+        bioTransSequenceIterations = new ArrayList<>();
 
         // Create components for 4 steps
         for (int i = 0; i < 4; i++) {
@@ -130,7 +135,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
             // Create transformation dropdown - defaulting to NONE
             JComboBox<MetaboTransWrapper> bioTransBox = makeTransformationBox(SEQUENCE_TRANSFORMATIONS, MetaboTransWrapper.NONE);
             multiTransPanel.add(bioTransBox);
-            bioTransBoxes.add(bioTransBox);
+            bioTransSequence.add(bioTransBox);
 
             // Create iterations label
             multiTransPanel.add(new JLabel("Iterations:"));
@@ -139,7 +144,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
             JSpinner iterSpin = makeIterationsSpinner(null);
             iterSpin.setEnabled(false); // Disabled by default since NONE is selected
             multiTransPanel.add(iterSpin, "wrap");
-            iterSpinners.add(iterSpin);
+            bioTransSequenceIterations.add(iterSpin);
 
             // Add listener to update iterations when transformation changes
             final int currentStep = i;
@@ -149,13 +154,13 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
                     updateIterationSpinner(null, iterSpin, trans);
 
                     if (trans.equals(MetaboTransWrapper.NONE)) {
-                        bioTransBoxes.stream().skip(Math.max(1, currentStep + 1)).forEach(it -> {
+                        bioTransSequence.stream().skip(Math.max(1, currentStep + 1)).forEach(it -> {
                             it.setSelectedItem(MetaboTransWrapper.NONE);
                             it.setEnabled(false);
                         });
                     } else {
-                        if (currentStep < bioTransBoxes.size() - 1)
-                            bioTransBoxes.get(currentStep + 1).setEnabled(true);
+                        if (currentStep < bioTransSequence.size() - 1)
+                            bioTransSequence.get(currentStep + 1).setEnabled(true);
                     }
                 }
             });
@@ -163,13 +168,87 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
             updateIterationSpinner(null, iterSpin, (MetaboTransWrapper) bioTransBox.getSelectedItem());
         }
 
-        bioTransBoxes.stream().skip(1).forEach(it -> it.setEnabled(false));
-        iterSpinners.stream().skip(1).forEach(it -> it.setEnabled(false));
+        bioTransSequence.stream().skip(1).forEach(it -> it.setEnabled(false));
+        bioTransSequenceIterations.stream().skip(1).forEach(it -> it.setEnabled(false));
 
         return new TextHeaderPanel<>("Specify biotransformation sequence", multiTransPanel, MEDIUM_GAP, SMALL_GAP);
     }
 
-    public static JComboBox<MetaboTransWrapper> makeTransformationBox(@NotNull Collection<MetaboTransWrapper> possibleValues, @Nullable MetaboTransWrapper selected) {
+    public BioTransformerParameters asBioTransformerParameters() {
+        MetaboTransWrapper selectedOverallMode = (MetaboTransWrapper) transformationModes.getSelectedItem();
+        if (!isEnabled() || selectedOverallMode == null || selectedOverallMode.isNone())
+            return null;
+
+        BioTransformerParameters params = new BioTransformerParameters();
+        if (cypModeBox.getSelectedItem() != null && cypModeBox.getSelectedItem() != Cyp450ModeWrapper.NONE)
+            params.cyp450Mode(io.sirius.ms.sdk.model.Cyp450Mode.fromValue(((Cyp450ModeWrapper)cypModeBox.getSelectedItem()).cyp450Mode.name()));
+
+        if (selectedOverallMode.isTransformationSequence()){
+            if (bioTransSequence == null || bioTransSequence.isEmpty())
+                return null;
+
+            Iterator<JComboBox<MetaboTransWrapper>> bioTransSequenceIter = bioTransSequence.iterator();
+            Iterator<JSpinner> bioTransSequenceIterationsIter = bioTransSequenceIterations.iterator();
+            while (bioTransSequenceIter.hasNext()) {
+                JComboBox<MetaboTransWrapper> bioTransStepSelector =  bioTransSequenceIter.next();
+                JSpinner iterationSelector = bioTransSequenceIterationsIter.next();
+
+                MetaboTransWrapper bioTransStep = (MetaboTransWrapper) bioTransStepSelector.getSelectedItem();
+                if (!isEnabled() || bioTransStep == null || bioTransStep.isNone())
+                    break;
+
+                params.addBioTransformerSequenceStepsItem(
+                        convertToSequenceStep(bioTransStep, (Integer) iterationSelector.getValue()));
+            }
+        } else {
+            params.setBioTransformerSequenceSteps(List.of(
+                    convertToSequenceStep(selectedOverallMode, (Integer) overallIterations.getValue())));
+        }
+
+        return params;
+    }
+
+    @Override
+    public List<String> asParameterList() {
+        //we do no validation here since validation happened in asBioTransformerParameters
+        BioTransformerParameters paras = asBioTransformerParameters();
+        if (paras == null)
+            return List.of();
+
+        List<String> paraList = super.asParameterList();
+        if (paras.getCyp450Mode() != null)
+            paraList.add("--cyp450Mode=" +  paras.getCyp450Mode().name());
+
+
+        if (paras.getBioTransformerSequenceSteps().size() == 1){
+            BioTransformerSequenceStep step = paras.getBioTransformerSequenceSteps().getFirst();
+            paraList.add("--transformation=" +  step.getMetabolicTransformation().name());
+            paraList.add("--iterations=" +  step.getIterations());
+        } else {
+            paras.getBioTransformerSequenceSteps().forEach(step -> {
+                paraList.add("--seq-step=" +  step.getMetabolicTransformation().name());
+                paraList.add("--seq-iterations=" +  step.getIterations());
+            });
+        }
+        return paraList;
+    }
+
+    private static BioTransformerSequenceStep convertToSequenceStep(MetaboTransWrapper metabolicTransformation, int iteration){
+        if (metabolicTransformation == null || metabolicTransformation.isNone() || metabolicTransformation.isTransformationSequence())
+            throw new IllegalArgumentException("MetabolicTransformation cannot be null or custom multi");
+
+        if (metabolicTransformation.isSuperBio())
+            return new BioTransformerSequenceStep()
+                    .metabolicTransformation(io.sirius.ms.sdk.model.MetabolicTransformation.ALL_HUMAN)
+                    .iterations(4);
+
+        return new BioTransformerSequenceStep()
+                .metabolicTransformation(io.sirius.ms.sdk.model.MetabolicTransformation.fromValue(metabolicTransformation.getMetaboTrans().name()))
+                .iterations(iteration);
+
+    }
+
+    private static JComboBox<MetaboTransWrapper> makeTransformationBox(@NotNull Collection<MetaboTransWrapper> possibleValues, @Nullable MetaboTransWrapper selected) {
         JComboBox<MetaboTransWrapper> box = new JComboBox<>();
         possibleValues.forEach(box::addItem);
 
@@ -178,11 +257,11 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
         return box;
     }
 
-    public static void updateIterationSpinner(@NotNull JSpinner spinnerToUpdate, @Nullable MetaboTransWrapper boundaries) {
+    private static void updateIterationSpinner(@NotNull JSpinner spinnerToUpdate, @Nullable MetaboTransWrapper boundaries) {
         updateIterationSpinner(null, spinnerToUpdate, boundaries);
     }
 
-    public static void updateIterationSpinner(@Nullable JLabel spinnerLabel, @NotNull JSpinner spinnerToUpdate, @Nullable MetaboTransWrapper boundaries) {
+    private static void updateIterationSpinner(@Nullable JLabel spinnerLabel, @NotNull JSpinner spinnerToUpdate, @Nullable MetaboTransWrapper boundaries) {
         SpinnerNumberModel iterModel = (SpinnerNumberModel) spinnerToUpdate.getModel();
 
         // reset to default
@@ -225,7 +304,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
         }
     }
 
-    public static JSpinner makeIterationsSpinner(@Nullable MetaboTransWrapper boundaries) {
+    private static JSpinner makeIterationsSpinner(@Nullable MetaboTransWrapper boundaries) {
         JSpinner iterations = new JSpinner(new SpinnerNumberModel(1, 1, 3, 1));
         iterations.setMinimumSize(new Dimension(70, 26));
         iterations.setPreferredSize(new Dimension(95, 26));
@@ -236,7 +315,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
     }
 
     @Getter
-    public static class Cyp450ModeWrapper {
+    private static class Cyp450ModeWrapper {
         public static final Cyp450ModeWrapper NONE = new Cyp450ModeWrapper("None");
         public static final Cyp450ModeWrapper DEFAULT = new Cyp450ModeWrapper(Cyp450Mode.COMBINED);
 
@@ -278,7 +357,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
     }
 
     @Getter
-    public static class MetaboTransWrapper {
+    private static class MetaboTransWrapper {
         public static final MetaboTransWrapper NONE = new MetaboTransWrapper("None");
         public static final MetaboTransWrapper SUPER_BIO = new MetaboTransWrapper("Human and Human Gut Microbial (SuperBio)");
 
@@ -302,7 +381,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
         }
 
         public boolean isTransformationSequence() {
-            return isTransformation() && metaboTrans == MetabolicTransformation.HUMAN_CUSTOM_MULTI;
+            return metaboTrans == MetabolicTransformation.HUMAN_CUSTOM_MULTI;
         }
 
         public boolean isSuperBio() {

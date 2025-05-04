@@ -93,6 +93,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private final SiriusGui gui;
 
     private final PropertyChangeListener connectionListener;
+    private JToggleSwitch biotransformerSwitch;
+    private BiotranformerConfigPanel biotranformerConfigPanel;
+
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
         super(CustomDBOptions.class);
         this.gui = gui;
@@ -275,13 +278,13 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Buffer Size", bufferSize);
 
         JPanel toggleBox = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JToggleSwitch biotransformerSwitch = new JToggleSwitch();
+        biotransformerSwitch = new JToggleSwitch();
         biotransformerSwitch.setPreferredSize(new Dimension(40, 28));
         toggleBox.add(biotransformerSwitch);
         toggleBox.add(Box.createHorizontalGlue());
 
         smalls.addNamed("BioTransformer 3", toggleBox, GuiUtils.formatToolTip("If enabled BioTransformer 3 will be used to apply configured biotransformations to all input structures. Input structures and their transformation products will be added to the database."), GuiUtils.SMALL_GAP);
-        BiotranformerConfigPanel biotranformerConfigPanel = new BiotranformerConfigPanel();
+        biotranformerConfigPanel = new BiotranformerConfigPanel();
         smalls.add(biotranformerConfigPanel);
         biotransformerSwitch.addEventToggleSelected(evt -> {
             biotranformerConfigPanel.setVisible(evt);
@@ -400,4 +403,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         return Arrays.stream(fileListModel.toArray()).anyMatch(f -> supportedSpectraFiles.accept((File) f));
     }
 
+    @Override
+    public List<String> asParameterList() {
+        List<String> paras = super.asParameterList();
+        if (biotransformerSwitch != null && biotransformerSwitch.isSelected() && biotranformerConfigPanel != null)
+            paras.addAll(biotranformerConfigPanel.asParameterList());
+        return paras;
+    }
 }
