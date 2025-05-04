@@ -41,13 +41,13 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
                     case EC_BASED -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.ecBasedBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case PHASE_2 -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode(), isUseDB(), isUseSub()))).toList();
+                            BiotransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), isUseDB(), isUseSub()))).toList();
                     case HUMAN_GUT -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.hGutBTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ENV_MICROBIAL -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.envMicrobialTransformer(ia, getIterations(), isUseDB(), isUseSub()))).toList();
                     case ALL_HUMAN -> substrates.stream().map(ia -> makeJob(() ->
-                            BiotransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
+                            BiotransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), getCyp450Mode(), isUseDB(), isUseSub()))).toList();
                     case ABIOTIC -> substrates.stream().map(ia -> makeJob(() ->
                             BiotransformerWrapper.abioticTransformer(ia, getIterations()))).toList();
                     case HUMAN_CUSTOM_MULTI -> substrates.stream().map(ia -> makeJob(() ->

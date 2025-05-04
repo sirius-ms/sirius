@@ -15,10 +15,8 @@ public class BiotransformerRunner {
         BiotransformerSequence_rails biotransformerSeqeuence = null;
         BiotransformerSequence btq_for_mf = null;
         // default
-        int p2Mode = 1;
         boolean useDB = true;
         boolean useSub = false;
-        Double massThreshold = (double) 1500.0F;
 
         String smile = "CC(C)C1=CC=C(C)C=C1O";
         int steps = 2;
@@ -35,7 +33,7 @@ public class BiotransformerRunner {
         BioTransformerSettings settings = new BioTransformerSettings().
                 setMetabolicTransformation(MetabolicTransformation.ALL_HUMAN)
                 .setCyp450Mode(cypmode)
-                .setP2Mode(p2Mode)
+                .setP2Mode(P2Mode.BT_RULE_BASED)
                 .setIterations(steps)
                 .setUseDB(useDB)
                 .setUseSub(useSub);

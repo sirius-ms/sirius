@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
-import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,16 +109,19 @@ public class SearchableDatabaseController {
      *
      * @param databaseId database to import into
      * @param inputFiles files to be imported
-     * @return Job of the import command to be executed.
+     * @param bioTransformerParameters configuration for biotransformer execution. If null BioTransformer will not be applied.
+     * @return Meta-Infomation of the affected database after the import has been performed.
      */
     @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
-                                                 @RequestBody MultipartFile[] inputFiles,
+                                                 @RequestPart MultipartFile[] inputFiles,
+                                                 @RequestPart(required = false) BioTransformerParameters bioTransformerParameters,
                                                  @RequestParam(defaultValue = "1000") int bufferSize
     ) {
         return chemDbService.importById(
                 databaseId,
                 Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                bioTransformerParameters,
                 bufferSize
         );
     }
@@ -135,7 +137,7 @@ public class SearchableDatabaseController {
 //     */
 //    @PostMapping(value = "/{databaseId}/import/from-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 //    public Job importIntoDatabaseAsJob(@PathVariable String databaseId,
-//                                       @RequestBody MultipartFile[] inputFiles,
+//                                       @RequestPart MultipartFile[] inputFiles,
 //                                       @RequestParam(defaultValue = "1000") int bufferSize,
 //                                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
 //    ) {
