@@ -16,6 +16,8 @@ docs/Axes.md
 docs/BackgroundComputationsStateEvent.md
 docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
+docs/BioTransformerParameters.md
+docs/BioTransformerSequenceStep.md
 docs/Canopus.md
 docs/CanopusPrediction.md
 docs/Category.md
@@ -38,6 +40,7 @@ docs/ConsensusAnnotationsCSI.md
 docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
+docs/Cyp450Mode.md
 docs/DBLink.md
 docs/DataImportEvent.md
 docs/DataQuality.md
@@ -72,8 +75,10 @@ docs/LicenseInfo.md
 docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
+docs/MetabolicTransformation.md
 docs/MsData.md
 docs/MsNovelist.md
+docs/P2Mode.md
 docs/PageMetadata.md
 docs/PagedModelAlignedFeature.md
 docs/PagedModelCompound.md
@@ -180,6 +185,8 @@ src/main/java/io/sirius/ms/sdk/model/Axes.java
 src/main/java/io/sirius/ms/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/io/sirius/ms/sdk/model/BasicSpectrum.java
 src/main/java/io/sirius/ms/sdk/model/BinaryFingerprint.java
+src/main/java/io/sirius/ms/sdk/model/BioTransformerParameters.java
+src/main/java/io/sirius/ms/sdk/model/BioTransformerSequenceStep.java
 src/main/java/io/sirius/ms/sdk/model/Canopus.java
 src/main/java/io/sirius/ms/sdk/model/CanopusPrediction.java
 src/main/java/io/sirius/ms/sdk/model/Category.java
@@ -200,6 +207,7 @@ src/main/java/io/sirius/ms/sdk/model/ConsensusAnnotationsCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusAnnotationsDeNovo.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionCSI.java
 src/main/java/io/sirius/ms/sdk/model/ConsensusCriterionDeNovo.java
+src/main/java/io/sirius/ms/sdk/model/Cyp450Mode.java
 src/main/java/io/sirius/ms/sdk/model/DBLink.java
 src/main/java/io/sirius/ms/sdk/model/DataImportEvent.java
 src/main/java/io/sirius/ms/sdk/model/DataQuality.java
@@ -228,8 +236,10 @@ src/main/java/io/sirius/ms/sdk/model/LcmsSubmissionParameters.java
 src/main/java/io/sirius/ms/sdk/model/LicenseInfo.java
 src/main/java/io/sirius/ms/sdk/model/LipidAnnotation.java
 src/main/java/io/sirius/ms/sdk/model/LossEdge.java
+src/main/java/io/sirius/ms/sdk/model/MetabolicTransformation.java
 src/main/java/io/sirius/ms/sdk/model/MsData.java
 src/main/java/io/sirius/ms/sdk/model/MsNovelist.java
+src/main/java/io/sirius/ms/sdk/model/P2Mode.java
 src/main/java/io/sirius/ms/sdk/model/PageMetadata.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelAlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/PagedModelCompound.java
