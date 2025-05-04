@@ -43,7 +43,7 @@ public class BioTransformerParameters {
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "true")
     @Builder.Default
-    private boolean useDB = false;
+    private boolean useDB = true;
 
     /**
      * Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can
