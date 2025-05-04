@@ -10,9 +10,7 @@ import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BioTransformerWrapper {
@@ -84,10 +82,21 @@ public class BioTransformerWrapper {
     }
     private static BioTransformation toSiriusTransformation(Biotransformation source){
         BioTransformation.BioTransformationBuilder b = BioTransformation.builder()
-                .substrates(source.getSubstrates())
-                .products(source.getProducts())
                 .enzymeNames(source.getEnzymeNames())
                 .reactionType(source.getReactionType());
+
+        if (source.getProducts() != null){
+            Set<IAtomContainer> products = new LinkedHashSet<>();
+            source.getProducts().atomContainers().forEach(products::add);
+            b.products(products);
+        }
+
+        if (source.getSubstrates() != null){
+            Set<IAtomContainer> substrates = new LinkedHashSet<>();
+            source.getSubstrates().atomContainers().forEach(substrates::add);
+            b.substrates(substrates);
+        }
+
         if (source.getBioSystemName() != null)
             b.bioSystemName(source.getBioSystemName().name());
         if (source.getScore() != null)

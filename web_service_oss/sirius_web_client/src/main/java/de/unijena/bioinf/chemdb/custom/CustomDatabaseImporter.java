@@ -403,78 +403,21 @@ public class CustomDatabaseImporter {
                             log.error("Error when flushing molecule. Skipping: {} - {}", c.ids, c.name, e);
                         }
                     }
-
                     checkCancellation();
 
-                    //todo @JFleisch In methode auslagern
                     if (bioTransformerSettings != null) {
-                        log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
-                        BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
-                        job.setSubstrates(key2DToComp.values().stream()
-                                .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
-                                .toList()
-                        );
-
                         try {
-                            log.debug("Submitting BioTransformerJJob to job manager");
-                            List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                            log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
+                            timer.startTask("BioTransformer");
+                            applyBiotransformations(key2DToComp);
+                            log.info("After transformation, molecule buffer contains {} unique molecules. BioTransformer took: {}", key2DToComp.size(), timer.endTask());
 
-//                            log.info("BioTransformer completed with {} products.", transformationResults.stream()
-//                                    .map(BioTransformerResult::getBiotranformations).filter(Objects::nonNull)
-//                                    .mapToInt(Collection::size).sum());
-
-                            // 2. Transformations in Molecule konvertieren
-                            List<Molecule> transformedMolecules = transformationResults.stream()
-                                    // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
-                                    .flatMap(result -> result.getAllProductContainers().stream()) // Verwende die neue Methode
-                                    // Konvertiere jeden IAtomContainer in ein Molecule
-                                    .map(container -> {
-                                        try {
-                                            // Die Logik zur Erstellung von Molecule bleibt gleich
-                                            InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
-                                            String inchiValue = inchiGenerator.getInchi();
-                                            String inchiKey = inchiGenerator.getInchiKey();
-                                            String smilesValue = smilesGen.create(container);
-                                            //todo molecules need names, we do not yet know what users want to see here but lets start with:  "BT: <Parent molecule name> [<Reaction>]"
-
-                                            return new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
-                                        } catch (CDKException e) {
-                                            // Passende Fehlerbehandlung, hier RuntimeException wie im Original
-                                            throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
-                                        }
-                                    }).toList();
-
-
-                            // 3. Deduplikation basierend auf InChIKey-2D
-                            for (Molecule newMolecule : transformedMolecules) {
-                                try {
-                                    final InChI inchi = newMolecule.inchi;
-                                    final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
-                                    if (key2DToComp.containsKey(key2d)) {
-                                        // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
-                                        Comp existingComp = key2DToComp.get(key2d);
-                                        existingComp.molecule.ids.addAll(newMolecule.ids);
-                                        if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
-                                                (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
-                                                        existingComp.molecule.name.length() > newMolecule.name.length())) {
-                                            existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
-                                        }
-                                    } else {
-                                        // Neues Molekül hinzufügen
-                                        Comp newComp = new Comp(newMolecule);
-                                        key2DToComp.put(key2d, newComp);
-                                    }
-                                } catch (IllegalArgumentException e) {
-                                    // Fehlerhafte Moleküle ignorieren, aber loggen
-                                    log.error("Error deduplicating molecule. Skipping: {} - {}", newMolecule.ids, newMolecule.name, e);
-                                }
-                            }
-                            log.info("After transformation, molecule buffer contains {} unique molecules", key2DToComp.size());
                         } catch (ExecutionException e) {
+                            timer.endTask();
                             log.warn("BioTransformer completed with Error: {}", e.getMessage());
                         }
                     }
-
+                    checkCancellation();
 
                     try {
                         log.info("Looking up compounds to merge with existing fps...");
@@ -528,6 +471,83 @@ public class CustomDatabaseImporter {
         }
     }
 
+
+    private void applyBiotransformations(final ConcurrentHashMap<String, Comp> key2DToComp) throws ExecutionException {
+        if (bioTransformerSettings != null) {
+            BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
+            job.setSubstrates(key2DToComp.values().stream()
+                    .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                    .toList()
+            );
+
+
+            log.debug("Submitting BioTransformerJJob to job manager");
+            List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+            // 2. Transformations in Molecule konvertieren
+            List<Molecule> transformedMolecules = transformationResults.stream()
+                    // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
+                    .flatMap(result -> result.biotranformations().stream()) // Verwende die neue Methode
+                    // Konvertiere jeden IAtomContainer in ein Molecule
+                    .flatMap(bioTransformation -> {
+                        IAtomContainer parent = bioTransformation.getSubstrates().iterator().next();
+                        Comp parentCompound = null;
+                        try {
+                            //todo would be nicer to store the mapping instead of loading inchi again
+                            InChI inchi = InChISMILESUtils.getInchi(parent, false);
+                            parentCompound = key2DToComp.get(inchi.key2D());
+                        } catch (CDKException e) {
+                            log.error("Error when building inchi from BiotTanformer substrate.", e);
+                        }
+
+                        final String parentName = parentCompound != null && parentCompound.molecule.getName() != null ? parentCompound.molecule.getName() : "Unknown";
+
+                        return bioTransformation.getProducts().stream().map(container -> {
+                            try {
+                                // Die Logik zur Erstellung von Molecule bleibt gleich
+                                InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
+                                String inchiValue = inchiGenerator.getInchi();
+                                String inchiKey = inchiGenerator.getInchiKey();
+                                String smilesValue = smilesGen.create(container);
+
+                                Molecule molecule = new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
+                                molecule.name = String.format("BT-%s: %s [%s]", bioTransformation.getBioSystemName(), parentName, bioTransformation.getReactionType());
+
+                                return molecule;
+                            } catch (CDKException e) {
+                                // Passende Fehlerbehandlung, hier RuntimeException wie im Original
+                                throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                            }
+                        });
+                    }).toList();
+
+
+            // 3. Deduplikation basierend auf InChIKey-2D
+            for (Molecule newMolecule : transformedMolecules) {
+                try {
+                    final InChI inchi = newMolecule.inchi;
+                    final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
+                    if (key2DToComp.containsKey(key2d)) {
+                        // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
+                        Comp existingComp = key2DToComp.get(key2d);
+                        existingComp.molecule.ids.addAll(newMolecule.ids);
+                        if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
+                                (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
+                                        existingComp.molecule.name.length() > newMolecule.name.length())) {
+                            existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
+                        }
+                    } else {
+                        // Neues Molekül hinzufügen
+                        Comp newComp = new Comp(newMolecule);
+                        key2DToComp.put(key2d, newComp);
+                    }
+                } catch (IllegalArgumentException e) {
+                    // Fehlerhafte Moleküle ignorieren, aber loggen
+                    log.error("Error deduplicating molecule. Skipping: {} - {}", newMolecule.ids, newMolecule.name, e);
+                }
+            }
+        }
+    }
 
     private void lookupAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
         synchronized (database) {
