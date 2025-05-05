@@ -27,9 +27,9 @@ public class BioTransformerOptions {
             " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
     private P2Mode p2Mode;
 
-    //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db.
+    //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db. We disable ist for now per default
     @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
-            " feature.", defaultValue = "true", order = 313)
+            " feature.", defaultValue = "false", order = 313)
     private boolean useDB; // Use the database flag
 
     @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
