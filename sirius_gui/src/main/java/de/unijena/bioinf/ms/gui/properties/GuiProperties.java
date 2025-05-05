@@ -25,6 +25,8 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeSupport;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class GuiProperties {
 
@@ -105,4 +107,19 @@ public final class GuiProperties {
 
     }
     //endregion
+
+    //over all GUI instances
+    private static Set<String> tutorialsThisSession = new HashSet<>();
+
+    public synchronized boolean isAskedTutorialThisSession(String tutorialKey) {
+        return tutorialsThisSession.contains(tutorialKey);
+    }
+
+    public synchronized void setTutorialKnownForThisSession(String tutorialKey) {
+        tutorialsThisSession.add(tutorialKey);
+    }
+
+    public synchronized void resetAllTutorialsKnownForThisSession() {
+        tutorialsThisSession.clear();
+    }
 }

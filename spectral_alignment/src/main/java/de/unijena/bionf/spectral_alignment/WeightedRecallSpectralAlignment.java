@@ -3,8 +3,7 @@ package de.unijena.bionf.spectral_alignment;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 public class WeightedRecallSpectralAlignment extends RecallSpectralAlignment{
 
@@ -14,13 +13,16 @@ public class WeightedRecallSpectralAlignment extends RecallSpectralAlignment{
 
     @Override
     public SpectralSimilarity score(OrderedSpectrum<Peak> msrdSpectrum, OrderedSpectrum<Peak> predSpectrum){
-        List<Peak> matchedMsrdPeaks = this.getMatchedMsrdPeaks(msrdSpectrum, predSpectrum);
+        IntList matchedPeaks = this.getMatchedPeaks(msrdSpectrum, predSpectrum);
 
         double matchedIntensitySum = 0d, intensitySum = 0d;
-        for(Peak p : matchedMsrdPeaks) matchedIntensitySum += p.getIntensity();
-        for(Peak p : msrdSpectrum) intensitySum += p.getIntensity();
+
+        for (int i = 0; i < matchedPeaks.size(); i += 2)
+            matchedIntensitySum += msrdSpectrum.getPeakAt(matchedPeaks.getInt(i)).getIntensity();
+        for(Peak p : msrdSpectrum)
+            intensitySum += p.getIntensity();
 
         double weightedRecall = (msrdSpectrum.isEmpty() || predSpectrum.isEmpty()) ? 0d : matchedIntensitySum / intensitySum;
-        return new SpectralSimilarity(weightedRecall, matchedMsrdPeaks.size());
+        return new SpectralSimilarity((float) weightedRecall, matchedPeaks);
     }
 }

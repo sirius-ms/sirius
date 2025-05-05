@@ -213,6 +213,29 @@ public class Utils {
         return !isNullOrEmpty(s);
     }
 
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public static <T> Set<T> getIfIdenticalOrNull(Collection<T>... sets) {
+        // Filter out null sets
+        List<? extends Set<T>> nonNullSets = Arrays.stream(sets).filter(Objects::nonNull).map(HashSet::new).toList();
+
+        // If there are 0 or 1 sets after filtering, they are trivially identical
+        if (nonNullSets.size() == 1)
+            return nonNullSets.getFirst();
+        if (nonNullSets.isEmpty())
+            return Set.of();
+
+        // Compare the first set with all others
+        Set<T> firstSet = nonNullSets.getFirst();
+        if (nonNullSets.stream().skip(1).allMatch(firstSet::equals))
+            return firstSet;
+        return null;
+    }
+
+    public static <T> Optional<Set<T>> getIfIdentical(Collection<T>... sets) {
+        return Optional.ofNullable(getIfIdenticalOrNull(sets));
+    }
+
 
     public static final int LARGE_BATCH_SIZE = 50_000;
 
