@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.TaskTimer;
 import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
@@ -38,8 +39,7 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.spectraldb.SpectraLibraryUpdateManager;
-import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
+import de.unijena.bioinf.chemdb.SpectraLibraryUpdateManager;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -144,9 +144,9 @@ public class CustomDatabaseImporter {
         try {
             flushAll();
         } finally {
-            System.out.println("START MERGING SPECTRA!");
             performSpectraMergingIfNecessary();
             updateStatistics();
+            database.database.getStorage().flush();
         }
     }
 
@@ -346,7 +346,7 @@ public class CustomDatabaseImporter {
         // start downloading
         if (!moleculeBuffer.isEmpty()) {
             synchronized (moleculeBuffer) {
-                long FlushTime = System.currentTimeMillis();
+                TaskTimer timer = TaskTimer.createStarted("Buffer Processing");
                 checkCancellation();
                 try {
                     final ConcurrentHashMap<String, Comp> key2DToComp = new ConcurrentHashMap<>(moleculeBuffer.size());
@@ -366,52 +366,57 @@ public class CustomDatabaseImporter {
                                 key2DToComp.put(key2d, comp);
                             }
                         } catch (IllegalArgumentException e) {
-                            CustomDatabase.logger.error("Error when flushing molecule. Skipping: " + c.ids + " - " + c.name, e);
+                            log.error("Error when flushing molecule. Skipping: {} - {}", c.ids, c.name, e);
                         }
                     }
+
                     checkCancellation();
 
-                    CustomDatabase.logger.info("Looking up compounds to find existing fps");
                     try {
-                        long lookupTime = System.currentTimeMillis();
+                        log.info("Looking up compounds to merge with existing fps...");
+                        timer.startTask("Compound Lookup");
                         lookupAndAnnotateMissingCandidates(key2DToComp);
-                        long lookupTime2 = System.currentTimeMillis();
-                        System.out.println((lookupTime2-lookupTime) + " ms for looking up " + key2DToComp.size() + " molecules");
+                        log.info("Compound look up and merging done in {}.", timer.endTask());
                     } catch (Exception e) {
                         // if lookup fails, we can still download or compute locally and override
-                        CustomDatabase.logger.error(e.getMessage(), e);
+                        timer.endTask();
+                        log.error(e.getMessage(), e);
                     }
-                    checkCancellation();
-                    long downloadTime1 = System.currentTimeMillis();
-                    CustomDatabase.logger.info("Try downloading missing fps");
-                    try { //try to download fps for compound
-                        downloadAndAnnotateMissingCandidates(key2DToComp);
-                    } catch (Exception e) {
-                        // if download fails, we can still compute locally
-                        CustomDatabase.logger.error(e.getMessage(), e);
-                    }
-                    long downloadTime2 = System.currentTimeMillis();
-                    System.out.println((downloadTime2-downloadTime1) + " ms for downloading fingerprints of " + key2DToComp.size() + " molecules.");
                     checkCancellation();
 
-                    CustomDatabase.logger.info("Computing missing fps that are still missing.");
-                    long fpTime = System.currentTimeMillis();
+
+                    try { //try to download fps for compound
+                        log.info("Try downloading missing fps...");
+                        timer.startTask("Download FPs");
+                        downloadAndAnnotateMissingCandidates(key2DToComp);
+                        log.info("Downloaded missing fps in {}.", timer.endTask());
+                    } catch (Exception e) {
+                        // if download fails, we can still compute locally
+                        timer.endTask();
+                        log.error(e.getMessage(), e);
+                    }
+
+                    checkCancellation();
+
+                    log.info("Computing fps that are still missing...");
+                    timer.startTask("Compute FPs");
                     computeAndAnnotateMissingCandidates(key2DToComp);
-                    long fpTime2 = System.currentTimeMillis();
-                    System.out.println((fpTime2-fpTime) + " ms for computing fingerprints of " + key2DToComp.size() + " molecules.");
+                    log.info("Computed missing fps in {}.", timer.endTask());
+
                     checkCancellation();
-                    long storeTime1 = System.currentTimeMillis();
+
+                    log.info("Storing compounds and fps...");
+                    timer.startTask("Store Data");
                     storeCandidates(key2DToComp.values().stream().map(c -> c.candidate).filter(Objects::nonNull).toList());
-                    long storeTime2 = System.currentTimeMillis();
-                    System.out.println((storeTime2-storeTime1)  +  " ms for storing fingerprints.");
-                    checkCancellation();
-                    long FlushTime2 = System.currentTimeMillis();
-                    System.out.println((FlushTime2-FlushTime) + " ms for flushing molecules");
+                    log.info("Stored compounds and fps in {}.", timer.endTask());
+
+                    timer.stop();
+                    log.info("Processed buffer with {} molecules in {}.", moleculeBuffer.size(), timer);
                 } catch (Exception e) {
                     //now we might have inconsistent data -> fail/stop import.
-                    CustomDatabase.logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     cancel();
-                    throw new RuntimeException("Databse import failed!", e);
+                    throw new RuntimeException("Database import failed!", e);
                 } finally {
                     moleculeBuffer.clear();
                 }
@@ -459,7 +464,6 @@ public class CustomDatabaseImporter {
                         if (toAdd != null) {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
                             clearAndCreateLinksAndName(toAdd);
-                            //CustomDatabase.logger.info("{} downloaded", toAdd.candidate.getCandidate(null, null).getInchi().in2D);
                             notifyFingerprintCreation(toAdd);
                         }
                     }
@@ -485,7 +489,7 @@ public class CustomDatabaseImporter {
                             fcalc = getFingerprintCalculator();
                             c.candidate = fcalc.computeNewCandidate(c.molecule); //adding links and name info is done here.
                             notifyFingerprintCreation(c);
-                        }catch (RuntimeException e) {
+                        } catch (RuntimeException e) {
                             System.err.println("ERROR FOR :" + c.key2D() + "\t" + c.inChI2D() + "\t" + c.molecule.smiles);
                             e.printStackTrace();
                         } finally {
@@ -506,7 +510,7 @@ public class CustomDatabaseImporter {
                     j.cancel(true);
                 j.awaitResult();
             } catch (ExecutionException e) {
-                CustomDatabase.logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         });
     }
@@ -630,7 +634,7 @@ public class CustomDatabaseImporter {
         }
 
         private FingerprintCandidateWrapper computeNewCandidate(Molecule molecule) throws CDKException, IllegalArgumentException, UnknownElementException {
-            CustomDatabase.logger.info("Compute fingerprint for {}", molecule.getInchi().in2D);
+            log.info("Compute fingerprint for {}", molecule.getInchi().in2D);
             final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
             final FingerprintCandidate fc = new FingerprintCandidate(molecule.getInchi(), fps);

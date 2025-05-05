@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,17 +35,19 @@ import java.util.List;
 @Getter
 @Builder
 public class AnnotatedMsMsData {
-
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected AnnotatedSpectrum mergedMs2;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     protected List<AnnotatedSpectrum> ms2Spectra;
 
-    public static AnnotatedMsMsData of(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
+    public static AnnotatedMsMsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, @Nullable FTree ftree, @Nullable String candidateSmiles, @Nullable String candidateName, boolean asCosineQuery) {
+        double precursorMz = msData.getMsnSpectra().stream()
+                .mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().orElseThrow();
+
         return AnnotatedMsMsData.builder()
-                .ms2Spectra(Spectrums.createMsMsWithAnnotations(exp, ftree, candidateSmiles))
-                .mergedMs2(Spectrums.createMergedMsMsWithAnnotations(exp, ftree, candidateSmiles))
+                .ms2Spectra(msData.getMsnSpectra().stream().map(spec -> Spectrums.createMsMsWithAnnotations(spec, ftree, candidateSmiles, candidateName, asCosineQuery)).toList())
+                .mergedMs2(Spectrums.createMergedMsMsWithAnnotations(precursorMz, msData.getMergedMSnSpectrum(), ftree, candidateSmiles, candidateName, asCosineQuery))
                 .build();
     }
 }

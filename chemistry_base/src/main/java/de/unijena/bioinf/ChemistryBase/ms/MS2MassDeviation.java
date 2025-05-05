@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class MS2MassDeviation extends MassDeviation {
 
     /**
-     * @param allowedMassDeviation NumberOfCandidates
+     * @param allowedMassDeviation maximum allowed mass accuracy. Only molecular formulas within this mass window are considered.
      * @param standardMassDeviation expected mass accuracy of the instrument. Is used for the scoring.
      * @param massDifferenceDeviation expected mass accuracy of the instrument for two close peaks or for recalibrated spectra. Should be smaller than the standard mass deviation. This value is only used for isotope pattern analysis in MS/MS
      */

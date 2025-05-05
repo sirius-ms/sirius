@@ -136,7 +136,7 @@ public class NoSQLProjectTest {
         ).build());
 
         List<Compound> compounds = project.addCompounds(imports, null, EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData));
-        List<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+        List<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), false, EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
         assertEquals(1, compounds.size());
         assertEquals(1, compounds2.size());
@@ -193,7 +193,7 @@ public class NoSQLProjectTest {
                 .build());
 
         List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
-        List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+        List<AlignedFeature> features2 = project.findAlignedFeatures(null, Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
 
         assertEquals(1, features.size());

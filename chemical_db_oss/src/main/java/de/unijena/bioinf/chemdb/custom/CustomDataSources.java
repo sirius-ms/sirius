@@ -51,33 +51,10 @@ public class CustomDataSources {
 
     public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
-    public static final String PROP_KEY = "de.unijena.bioinf.chemdb.custom.source";
 
     @NotNull
     public static Path getCustomDatabaseDirectory() {
         return getDatabaseDirectory().resolve(CUSTOM_DB_DIR);
-    }
-
-    /**
-     * @return all locations of custom databases according to properties. May contain non-existent paths.
-     */
-    public static List<Path> getAllCustomDatabaseLocations() {
-        List<Path> locations = new ArrayList<>();
-
-        final Path customDBDir = getCustomDatabaseDirectory();
-        String customDBs = PropertyManager.getProperty(PROP_KEY);
-
-        if (customDBs != null && !customDBs.isBlank()) {
-            for (String location : customDBs.split("\\s*,\\s*")) {
-                if (!location.contains("/")) {
-                    locations.add(customDBDir.resolve(location).toAbsolutePath());
-                } else {
-                    locations.add(Path.of(location));
-                }
-            }
-        }
-
-        return locations;
     }
 
     @NotNull
@@ -283,6 +260,9 @@ public class CustomDataSources {
 
     public static List<Source> getAllSelectableDbs() {
         return sourcesStream().filter(CustomDataSources::isSearchable)
+                //filter cli short-cut flags
+                .filter(it -> it.flag() != DataSource.ALL.flag())
+                .filter(it -> it.flag() != DataSource.BIO.flag())
                 .collect(Collectors.toList());
     }
 
