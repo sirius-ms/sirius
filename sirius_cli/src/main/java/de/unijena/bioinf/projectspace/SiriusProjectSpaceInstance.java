@@ -746,10 +746,8 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public synchronized void saveSpectraSearchResult(SpectralSearchResult result) {
-        CompoundContainer container = loadCompoundContainer();
-        container.annotate(result);
-        updateCompound(container, SpectralSearchResult.class);
+    public void saveSpectraSearchResult(@Nullable List<SpectralSearchResult.SearchResult> results) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override

@@ -221,7 +221,9 @@ public class JobController {
      *
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search
+     *                                           spectral library search contains also all available custom DB.
+     *                                           If No custom dbs are selected, spectral library search is disabled by default.
      * @return {@link JobSubmission} with all parameters set to default values.
      */
     @GetMapping(value = "/default-job-config", produces = MediaType.APPLICATION_JSON_VALUE)

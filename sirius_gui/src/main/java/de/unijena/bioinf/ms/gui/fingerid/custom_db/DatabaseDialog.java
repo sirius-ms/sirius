@@ -115,11 +115,7 @@ public class DatabaseDialog extends JDialog {
                         ).awaitResult();
                     } catch (ExecutionException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
-
-                        if (ex.getCause() != null)
-                            new StacktraceDialog(DatabaseDialog.this, ex.getCause().getMessage(), ex.getCause());
-                        else
-                            new StacktraceDialog(DatabaseDialog.this, "Unexpected error when removing custom DB!", ex);
+                        Jobs.runEDTLater(() -> new StacktraceDialog(DatabaseDialog.this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
                     } catch (Exception ex2) {
                         LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
                         if (getOwner() instanceof Frame)

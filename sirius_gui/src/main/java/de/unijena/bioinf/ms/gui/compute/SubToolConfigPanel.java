@@ -31,7 +31,7 @@ import java.util.function.Function;
 public abstract class SubToolConfigPanel<C> extends ConfigPanel {
     protected CommandLine.Model.CommandSpec commandSpec;
 
-    public SubToolConfigPanel(Class<C> annotatedObject) {
+   public SubToolConfigPanel(Class<C> annotatedObject) {
         commandSpec = CommandLine.Model.CommandSpec.forAnnotatedObject(annotatedObject);
     }
 

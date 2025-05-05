@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.babelms.cef;
 
-import com.github.f4b6a3.tsid.Tsid;
-import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -30,10 +28,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.hypersistence.tsid.TSID;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -57,6 +55,7 @@ import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
 
+@Slf4j
 public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
     private final static QName qName = new QName("Compound");
@@ -168,10 +167,10 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
         mfe.msPeaks.getP().stream().filter(p -> {
             if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
-                LoggerFactory.getLogger(getClass()).warn("Skipping potential precursor at '" + p.getX() + "Da' (and corresponding MS/MS) due to an unsupported ion type '" + p.getS() + "'.");
+                log.warn("Skipping potential precursor at '{}Da' (and corresponding MS/MS) due to an unsupported ion type '{}'.", p.getX(), p.getS());
                 return false;
             } else if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
-                LoggerFactory.getLogger(getClass()).debug("Skipping isotope peak during precursor search '" + p.getX() + "Da' ('" + p.getS() + "')."); //todo to debug
+                log.debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS()); //todo to debug
                 return false;
             } else {
                 return true;
@@ -185,7 +184,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
         // We are not sure what adduct it was, unlike when multiple adducts were detected
         if (siriusCompounds.size() == 1) {
-            MutableMs2Experiment exp = (MutableMs2Experiment) siriusCompounds.get(0);
+            MutableMs2Experiment exp = (MutableMs2Experiment) siriusCompounds.getFirst();
             exp.setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
         }
 
@@ -227,7 +226,12 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         List<RetentionTime> ms2Rts = new ArrayList<>();
 
         for (Spectrum spec : compound.getSpectrum()) {
-            if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
+            if (spec.msPeaks == null) {
+                Optional<Spectrum> s = Optional.of(spec);
+                log.warn("Spectrum of type '{}' with precursor mass '{}' has no peaks. Skipping this spectrum.",
+                        s.map(Spectrum::getType).orElse("N/A"),
+                        s.map(Spectrum::getMzOfInterest).map(MzOfInterest::getMz).map(BigDecimal::doubleValue).map(String::valueOf).orElse("N/A"));
+            }else if (spec.type.equalsIgnoreCase("MFE") || spec.type.equalsIgnoreCase("FBF")) {
                 // ignore was already handled beforehand.
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
                 ms1Spectra.add(makeMs1Spectrum(spec));
@@ -237,9 +241,9 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 parseRT(spec).ifPresent(ms2Rts::add);
             } else {
                 Optional<Spectrum> s = Optional.of(spec);
-                LoggerFactory.getLogger(getClass()).warn("Spectrum of type '" + s.map(Spectrum::getType).orElse("N/A")
-                        + "' with precursor mass '" + s.map(Spectrum::getMzOfInterest).map(MzOfInterest::getMz).map(BigDecimal::doubleValue).map(String::valueOf).orElse("N/A")
-                        + "' is either not supported or it does not correspond to a supported precursor. Skipping this spectrum.");
+                log.warn("Spectrum of type '{}' with precursor mass '{}' is either not supported or it does not correspond to a supported precursor. Skipping this spectrum.",
+                        s.map(Spectrum::getType).orElse("N/A"),
+                        s.map(Spectrum::getMzOfInterest).map(MzOfInterest::getMz).map(BigDecimal::doubleValue).map(String::valueOf).orElse("N/A"));
             }
         }
 

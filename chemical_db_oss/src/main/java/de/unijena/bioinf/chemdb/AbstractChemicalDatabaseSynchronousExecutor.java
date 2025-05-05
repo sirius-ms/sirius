@@ -79,6 +79,12 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     }
 
     @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        ChemicalDatabaseFuture<CompoundCandidate> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresByInChI",new Class<?>[]{Iterable.class}, new Object[]{inchiKey2d});
+        return future.get();
+    }
+
+    @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         ChemicalDatabaseFuture<T> future = new ChemicalDatabaseFuture<>(executor, "lookupStructuresAndFingerprintsByFormula", new Class<?>[]{Long.class, MolecularFormula.class, Collection.class}, new Object[]{filter, formula, fingerprintCandidates});
         return future.get();
@@ -91,8 +97,8 @@ public class AbstractChemicalDatabaseSynchronousExecutor implements AbstractChem
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
-        ChemicalDatabaseFuture<List<InChI>> future = new ChemicalDatabaseFuture<>(executor, "lookupManyInchisByInchiKeys", new Class<?>[]{Iterable.class}, new Object[]{inchi_keys});
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
+        ChemicalDatabaseFuture<List<InChI>> future = new ChemicalDatabaseFuture<>(executor, "lookupManyInchisByInchiKeys", new Class<?>[]{Iterable.class}, new Object[]{inchiKeys2d});
         return future.get();
     }
 

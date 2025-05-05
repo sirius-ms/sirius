@@ -24,6 +24,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
@@ -41,10 +42,13 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.StringReader;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
@@ -295,7 +299,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     protected AlignedFeature getFeature(@NotNull String featureId, @NotNull List<AlignedFeatureOptField> optFields) {
-        return siriusClient.features().getAlignedFeature(projectId, featureId, optFields);
+        return siriusClient.features().getAlignedFeature(projectId, featureId, false, optFields);
     }
 
     public String getProjectId() {
@@ -306,9 +310,32 @@ public class GuiProjectManager implements Closeable {
         return siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.NONE)).getLocation();
     }
 
+    public ProjectInfo getProjectInfo(List<ProjectInfoOptField> optFields) {
+        return siriusClient.projects().getProject(projectId, optFields);
+    }
+
     public ProjectInfo getProjectInfo() {
-        return siriusClient.projects().getProject(
-                projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+        return getProjectInfo(List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.COMPATIBILITYINFO));
+    }
+
+    public ProjectInfo compactWithLoading(Window parent) {
+        if (siriusClient.jobs().hasJobs(projectId, false)) {
+            if (JOptionPane.showConfirmDialog(parent,"There are running jobs. They will be canceled before compacting.", null, JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) {
+                return null;
+            }
+        }
+        LoadingBackroundTask<ProjectInfo> loadingDialog = Jobs.runInBackgroundAndLoad(parent, "Compacting...", this::compact);
+        if (loadingDialog.isCanceled()) {
+            JOptionPane.showMessageDialog(parent, "<html>Compacting will continue in the background.<br>In the meantime, the project is closed and will have to be opened manually.</html>", null, JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        return loadingDialog.getResult();
+    }
+
+    public ProjectInfo compact() {
+        String location = getProjectLocation();
+        siriusClient.projects().closeProject(projectId, true);
+        return siriusClient.projects().openProject(projectId, location, List.of(ProjectInfoOptField.SIZEINFORMATION));
     }
 
     @Override

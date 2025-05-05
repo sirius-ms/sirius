@@ -23,6 +23,7 @@ package de.unijena.bioinf.chemdb.annotations;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 
 public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation {
     public final static String NO_DB = "none";
+    @Getter
     public final List<CustomDataSources.Source> searchDBs;
     private final long filter;
 

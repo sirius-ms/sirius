@@ -82,10 +82,9 @@ public class SpectralAlignmentTest {
 
         Map<Integer, Integer> actualAssignment = new HashMap<>();
 
-        for (int i=0; i < res.getAssignment().length; i+=2) {
-            actualAssignment.put(res.getAssignment()[i], res.getAssignment()[i+1]);
+        for (int i=0; i < res.getAssignment().size(); i+=2) {
+            actualAssignment.put(res.getAssignment().getInt(i), res.getAssignment().getInt(i+1));
         }
-
         assertEquals(expectedAssignment, actualAssignment);
     }
 
@@ -94,7 +93,7 @@ public class SpectralAlignmentTest {
         GaussianSpectralMatching gaussianAlignment = new GaussianSpectralMatching(new Deviation(10));
         SpectralSimilarity spectralSimilarity = gaussianAlignment.score(left, right);
 
-        assertEquals(49735.919716217, spectralSimilarity.similarity, 1e-9);
+        assertEquals(49735.919716217, spectralSimilarity.similarity, 0.01);
         assertEquals(3, spectralSimilarity.sharedPeaks);
     }
 

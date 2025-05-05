@@ -22,17 +22,15 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import lombok.AllArgsConstructor;
 
 @DefaultProperty
+@AllArgsConstructor
 public class SpectralSearchLog implements Ms2ExperimentAnnotation {
 
     public final int value;
 
     private SpectralSearchLog() {
         value = 0;
-    }
-
-    public SpectralSearchLog(int value) {
-        this.value = value;
     }
 }

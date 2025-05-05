@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.filter.FeatureFilterModel;
 import de.unijena.bioinf.ms.gui.utils.filter.QualityFilter;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -38,7 +39,6 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -109,6 +109,7 @@ public class CompoundList {
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
+        openFilterPanelButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.OpenFilterPanelButton);
         openFilterPanelButton.setToolTipText("Open filter panel");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
@@ -127,7 +128,7 @@ public class CompoundList {
                 compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
                 if (!compoundListSelectionModel.isSelectionEmpty())
                     compoundListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
-                notifyListenerSelectionChange(e);
+                notifyListenerSelectionChange();
             }
         });
 
@@ -236,7 +237,7 @@ public class CompoundList {
             l.listChanged(event.copy(), compoundListSelectionModel, total);
     }
 
-    private void notifyListenerSelectionChange(ListSelectionEvent event) {
+    private void notifyListenerSelectionChange() {
         final java.util.List<InstanceBean> selected = Collections.unmodifiableList(compoundListSelectionModel.getSelected());
         final java.util.List<InstanceBean> deselected = Collections.unmodifiableList(compoundListSelectionModel.getDeselected());
         long total = projectManager.getTotalInstances();

@@ -27,9 +27,12 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,6 +70,7 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
             ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS.derive(24,24), "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
             showDatabaseHits.setSelected(true);
             tb.add(showDatabaseHits, getIndexOfSecondGap(tb) + 1);
+            showDatabaseHits.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DeNovo_Filter);
 
             loadAll.removeActionListener(loadDataActionListener);
             loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true);
@@ -84,5 +88,9 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
         else
             list.showCenterCard(ActionList.ViewState.DATA);
         return loading;
+    }
+
+    public void initSoftwareTour(GuiProperties guiProperties) {
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DeNovoStructuresTabTourKey, guiProperties);
     }
 }

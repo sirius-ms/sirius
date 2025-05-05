@@ -24,24 +24,26 @@ import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.Getter;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
-public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
+public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends JPanel {
 
     public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
 
@@ -60,17 +62,17 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected Set<String> disabledReasons = new HashSet<>();
     protected String notConnectedMessage = "Cannot connect to the server";  // Can be overridden in subclasses
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
-        this(gui, toolname, buttonIcon, false, contentSuppl);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, buttonIcon, false, contentSuppl, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
-        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl, tourInfo);
     }
 
-    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
-        super();
-        left.anchor = GridBagConstraints.NORTH;
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl, SoftwareTourInfo tourInfo) {
+        super(new MigLayout("insets 0", "[left]10[left]","[top]"));
+
         this.toolName = toolname;
         this.content = contentSuppl.get();
         this.gui = gui;
@@ -89,7 +91,12 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
             this.toolDescription = new String[]{};
 
         activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
-        add(activationButton, content);
+        add(activationButton,"cell 0 0");
+        add(content, "cell 1 0, growx, wrap");
+
+        if (tourInfo != null) {
+            activationButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, tourInfo);
+        }
 
         if (checkServerConnection) {
             listener = evt -> processConnectionCheck(((ConnectionMonitor.ConnectionEvent) evt).getConnectionCheck());

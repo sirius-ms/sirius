@@ -41,7 +41,7 @@ public class InfoDialog extends WarningDialog {
         super(owner, title, messageProvider, propertyKey);
     }
 
-    protected InfoDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
+    public InfoDialog(JDialog owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
         super(owner, title, messageProvider, propertyKey, setVisible);
     }
 
@@ -61,7 +61,7 @@ public class InfoDialog extends WarningDialog {
         super(owner, title, messageProvider, propertyKey);
     }
 
-    protected InfoDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
+    public InfoDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
         super(owner, title, messageProvider, propertyKey, setVisible);
     }
 

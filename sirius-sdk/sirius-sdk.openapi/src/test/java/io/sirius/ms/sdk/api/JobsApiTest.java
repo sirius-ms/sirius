@@ -205,7 +205,7 @@ public class JobsApiTest {
             assertNotNull(config);
 
             // Retrieving aligned features for the project
-            List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), null)
+            List<String> features = featuresApi.getAlignedFeatures(project.getProjectId(), false, null)
                     .stream()
                     .map(AlignedFeature::getAlignedFeatureId)
                     .toList();

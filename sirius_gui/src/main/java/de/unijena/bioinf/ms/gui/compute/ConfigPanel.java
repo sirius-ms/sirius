@@ -20,8 +20,8 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,23 +43,20 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
     }
 
     public ConfigPanel(ParameterBinding parameterBindings) {
+        super(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10, gapx 15", "", ""));
         this.parameterBindings = parameterBindings;
-        applyDefaultLayout(this);
     }
 
-    protected JPanel applyDefaultLayout(@NotNull final JPanel pToStyle) {
-        RelativeLayout rl = new RelativeLayout(RelativeLayout.X_AXIS, GuiUtils.LARGE_GAP);
-        rl.setAlignment(RelativeLayout.LEADING);
-        pToStyle.setLayout(rl);
-        return pToStyle;
-    }
-
-    public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
+    public JSpinner makeIntParameterSpinner(@NotNull String parameterKey, int minimum, int maximum, int stepSize) {
         return makeParameterSpinner(parameterKey, Integer.parseInt(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().intValue()));
     }
 
     public JSpinner makeDoubleParameterSpinner(@NotNull String parameterKey, double minimum, double maximum, double stepSize) {
         return makeParameterSpinner(parameterKey, Double.parseDouble(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().doubleValue()));
+    }
+
+    public JSpinner makeFloatParameterSpinner(@NotNull String parameterKey, float minimum, float maximum, float stepSize) {
+        return makeParameterSpinner(parameterKey, Double.parseDouble(PropertyManager.DEFAULTS.getConfigValue(parameterKey)), minimum, maximum, stepSize, m -> String.valueOf(m.getNumber().floatValue()));
     }
 
     public JSpinner makeParameterSpinner(@NotNull String parameterKey, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {
@@ -111,6 +108,7 @@ public abstract class ConfigPanel extends JPanel implements ParameterProvider {
 
     /**
      * Changes widget values to the values from the provided preset
+     *
      * @param preset config map with values for all parameters
      * @throws UnsupportedOperationException if the parameter values are not compatible with the UI or if this panel does not support setting values from a preset
      */

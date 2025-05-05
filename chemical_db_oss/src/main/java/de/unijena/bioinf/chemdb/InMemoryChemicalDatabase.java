@@ -167,6 +167,11 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        return candidatePerKey.get(inchiKey2d);
+    }
+
+    @Override
     public List<FingerprintCandidate> lookupFingerprintsByInchis(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         for (String key : inchi_keys)
@@ -176,9 +181,9 @@ public class InMemoryChemicalDatabase implements AbstractChemicalDatabase {
     }
 
     @Override
-    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
+    public List<InChI> lookupManyInchisByInchiKeys(Iterable<String> inchiKeys2d) throws ChemicalDatabaseException {
         final ArrayList<InChI> candidates = new ArrayList<>();
-        for (String key : inchi_keys)
+        for (String key : inchiKeys2d)
             if (candidatePerKey.containsKey(key))
                 candidates.add(candidatePerKey.get(key).getInchi());
         return candidates;

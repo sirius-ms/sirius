@@ -40,7 +40,9 @@ public enum SpectralMatchingType {
   
   GAUSSIAN("GAUSSIAN"),
   
-  MODIFIED_COSINE("MODIFIED_COSINE");
+  MODIFIED_COSINE("MODIFIED_COSINE"),
+  
+  FAST_COSINE("FAST_COSINE");
 
   private String value;
 

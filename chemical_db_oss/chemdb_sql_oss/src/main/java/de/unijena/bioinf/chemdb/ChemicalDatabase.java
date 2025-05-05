@@ -349,13 +349,35 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
     }
 
 
-    private final static String SELECT_BY_FORMULA = "SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM ";
-    private final static String SELECT_BY_FORMULA_FILTERED = SELECT_BY_FORMULA + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & %s) != 0";
-    private final static String SELECT_BY_FORMULA_UNFILTERED = SELECT_BY_FORMULA + STRUCTURES_TABLE + " WHERE formula = ?";
+    private final static String SELECT_COMPOUND = "SELECT inchi_key_1, inchi, name, smiles, flags, xlogp FROM ";
+    private final static String SELECT_BY_FORMULA_FILTERED = SELECT_COMPOUND + STRUCTURES_TABLE + " WHERE formula = ? AND (flags & %s) != 0";
+    private final static String SELECT_BY_FORMULA_UNFILTERED = SELECT_COMPOUND + STRUCTURES_TABLE + " WHERE formula = ?";
+    private final static String SELECT_BY_INCHIKEY = SELECT_COMPOUND + STRUCTURES_TABLE + " WHERE inchi_key_1 = ?";
+
+    @Override
+    public CompoundCandidate lookupStructuresByInChI(String inchiKey2d) throws ChemicalDatabaseException {
+        try (final PooledConnection<Connection> c = connection.orderConnection()) {
+            return lookupStructuresByInChI(inchiKey2d, c);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (IOException | SQLException e) {
+            throw new ChemicalDatabaseException(e);
+        }
+    }
+
+    private CompoundCandidate lookupStructuresByInChI(String inchiKey2d, @NotNull final PooledConnection<Connection> c) throws SQLException {
+        final PreparedStatement statement = c.connection.prepareStatement(SELECT_BY_INCHIKEY);
+        statement.setString(1, inchiKey2d);
+
+        try (final ResultSet set = statement.executeQuery()) {
+            if (set.next())
+                return toCompoundCandidate(set);
+            return null;
+        }
+    }
 
     private List<CompoundCandidate> lookupStructuresByFormula(long filter, @NotNull MolecularFormula formula, @NotNull final PooledConnection<Connection> c) throws SQLException {
-
-
         final PreparedStatement statement;
         if (filter == 0) {
             statement = c.connection.prepareStatement(SELECT_BY_FORMULA_UNFILTERED);
@@ -367,15 +389,20 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
         ArrayList<CompoundCandidate> candidates = new ArrayList<>();
         try (final ResultSet set = statement.executeQuery()) {
             while (set.next()) {
-                final CompoundCandidate candidate = new CompoundCandidate(newInChI(set.getString(1), set.getString(2)));
-                candidate.setName(set.getString(3));
-                candidate.setSmiles(set.getString(4));
-                candidate.setBitset(set.getLong(5));
-                candidate.setXlogp(set.getObject(6) != null ? set.getDouble(6): Double.NaN);
+                final CompoundCandidate candidate = toCompoundCandidate(set);
                 candidates.add(candidate);
             }
         }
         return candidates;
+    }
+
+    private static CompoundCandidate toCompoundCandidate(ResultSet set) throws SQLException {
+        final CompoundCandidate candidate = new CompoundCandidate(newInChI(set.getString(1), set.getString(2)));
+        candidate.setName(set.getString(3));
+        candidate.setSmiles(set.getString(4));
+        candidate.setBitset(set.getLong(5));
+        candidate.setXlogp(set.getObject(6) != null ? set.getDouble(6) : Double.NaN);
+        return candidate;
     }
 
 

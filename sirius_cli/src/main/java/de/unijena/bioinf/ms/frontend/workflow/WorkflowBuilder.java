@@ -32,8 +32,8 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
+import de.unijena.bioinf.ms.frontend.subtools.project.ProjectOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
-import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
@@ -43,6 +43,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -76,11 +77,8 @@ import java.util.stream.Stream;
 
 public class WorkflowBuilder {
     //root
+    @Getter
     private CommandLine.Model.CommandSpec rootSpec;
-
-    public CommandLine.Model.CommandSpec getRootSpec() {
-        return rootSpec;
-    }
 
     public final RootOptions<?> rootOptions;
 
@@ -89,6 +87,7 @@ public class WorkflowBuilder {
 
     //standalone tools
     public final CustomDBOptions customDBOptions;
+    public final ProjectOptions projectOptions;
 
 //    public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
@@ -151,6 +150,7 @@ public class WorkflowBuilder {
         );
 
         customDBOptions = new CustomDBOptions();
+        projectOptions = new ProjectOptions();
 //        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
@@ -188,7 +188,7 @@ public class WorkflowBuilder {
     protected Object[] standaloneTools() {
         return Stream.concat(
                 Stream.concat(
-                        Stream.of(customDBOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
+                        Stream.of(customDBOptions, projectOptions, /*similarityMatrixOptions,*/ decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
                         additionalTools.stream()
                 ), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
@@ -366,7 +366,7 @@ public class WorkflowBuilder {
     private void configureInvalidator(ToolChainOptions<?, ?> toolChainOptions, ToolChainJob.Factory<?> task) {
         final Set<Class<? extends ToolChainOptions<?, ?>>> reachable = new LinkedHashSet<>();
         Set<Class<? extends ToolChainOptions<?, ?>>> tmp = Set.copyOf(toolChainOptions.getDependentSubCommands());
-        while (tmp != null && !tmp.isEmpty()) {
+        while (!tmp.isEmpty()) {
             reachable.addAll(tmp);
             tmp = tmp.stream().map(toolChainTools::get).map(ToolChainOptions::getDependentSubCommands)
                     .flatMap(Collection::stream).collect(Collectors.toSet());

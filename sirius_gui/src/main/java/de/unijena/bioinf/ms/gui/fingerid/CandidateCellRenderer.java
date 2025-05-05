@@ -67,15 +67,16 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     }
 
 
-    private CompoundStructureImage image;
-    private DescriptionPanel descriptionPanel;
+    protected CompoundStructureImage image;
+    protected DescriptionPanel descriptionPanel;
     private JPanel allStructureInfoWithoutRank;
 
 
     private FingerprintCandidateBean currentCandidate;
 
 
-    private final JLabel nameLabel, rankLabel;
+    private final JLabel nameLabel;
+    protected final JLabel rankLabel;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
@@ -94,7 +95,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         rankLabel.setVerticalAlignment(SwingConstants.CENTER);
         rankLabel.setHorizontalAlignment(SwingConstants.CENTER);
         rankLabel.setBorder(new EmptyBorder(1, 10, 1, 10));
-
         rankLabel.setOpaque(true);
 
         allStructureInfoWithoutRank = new JPanel(new BorderLayout());

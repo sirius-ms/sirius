@@ -369,7 +369,7 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -406,7 +406,7 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
      * @return JobSubmission
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -421,7 +421,7 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
      * @return ResponseEntity&lt;JobSubmission&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -436,7 +436,7 @@ public class JobsApi {
      * <p><b>200</b> - {@link JobSubmission JobSubmission} with all parameters set to default values.
      * @param includeConfigMap if true, generic configmap with-defaults will be included
      * @param moveParametersToConfigMap if true, object-based parameters will be converted to and added to the generic configMap parameters
-     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search contains also all available custom DB.
+     * @param includeCustomDbsForStructureSearch if true, default database selection of structure db search                                            spectral library search contains also all available custom DB.                                            If No custom dbs are selected, spectral library search is disabled by default.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

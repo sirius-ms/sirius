@@ -32,9 +32,10 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DecimalFormat;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1039,5 +1040,19 @@ public class FileUtils {
 
     public static final Pattern compileGlobToRegex(String glob) {
         return Pattern.compile(convertGlobToRegex(glob));
+    }
+
+    public static String sizeToReadableString(long bytes) {
+        if (bytes < 1000) {
+            return bytes + " B";
+        }
+        String prefixes = "kMGTPE";
+        int i = 0;
+        while (bytes >= 1000_000) {
+            i++;
+            bytes /= 1000;
+        }
+        DecimalFormat f = new DecimalFormat("0.#");
+        return String.format("%s %cB", f.format(bytes / 1000d), prefixes.charAt(i));
     }
 }

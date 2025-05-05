@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectrumAnnotation.JSON_PROPERTY_MASS_DEVIATION_MZ,
   SpectrumAnnotation.JSON_PROPERTY_MASS_DEVIATION_PPM,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES,
+  SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG,
   SpectrumAnnotation.JSON_PROPERTY_STRUCTURE_ANNOTATION_SCORE
 })
@@ -65,6 +66,9 @@ public class SpectrumAnnotation {
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SMILES = "structureAnnotationSmiles";
   private String structureAnnotationSmiles;
+
+  public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME = "structureAnnotationName";
+  private String structureAnnotationName;
 
   public static final String JSON_PROPERTY_STRUCTURE_ANNOTATION_SVG = "structureAnnotationSvg";
   private String structureAnnotationSvg;
@@ -225,6 +229,31 @@ public class SpectrumAnnotation {
     this.structureAnnotationSmiles = structureAnnotationSmiles;
   }
 
+  public SpectrumAnnotation structureAnnotationName(String structureAnnotationName) {
+    
+    this.structureAnnotationName = structureAnnotationName;
+    return this;
+  }
+
+   /**
+   * EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.  &lt;p&gt;  Name of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation.  &lt;p&gt;  Null if substructure annotation not available or not requested.
+   * @return structureAnnotationName
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getStructureAnnotationName() {
+    return structureAnnotationName;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_ANNOTATION_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStructureAnnotationName(String structureAnnotationName) {
+    this.structureAnnotationName = structureAnnotationName;
+  }
+
   public SpectrumAnnotation structureAnnotationSvg(String structureAnnotationSvg) {
     
     this.structureAnnotationSvg = structureAnnotationSvg;
@@ -290,13 +319,14 @@ public class SpectrumAnnotation {
         Objects.equals(this.massDeviationMz, spectrumAnnotation.massDeviationMz) &&
         Objects.equals(this.massDeviationPpm, spectrumAnnotation.massDeviationPpm) &&
         Objects.equals(this.structureAnnotationSmiles, spectrumAnnotation.structureAnnotationSmiles) &&
+        Objects.equals(this.structureAnnotationName, spectrumAnnotation.structureAnnotationName) &&
         Objects.equals(this.structureAnnotationSvg, spectrumAnnotation.structureAnnotationSvg) &&
         Objects.equals(this.structureAnnotationScore, spectrumAnnotation.structureAnnotationScore);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(molecularFormula, adduct, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationSvg, structureAnnotationScore);
+    return Objects.hash(molecularFormula, adduct, exactMass, massDeviationMz, massDeviationPpm, structureAnnotationSmiles, structureAnnotationName, structureAnnotationSvg, structureAnnotationScore);
   }
 
   @Override
@@ -309,6 +339,7 @@ public class SpectrumAnnotation {
     sb.append("    massDeviationMz: ").append(toIndentedString(massDeviationMz)).append("\n");
     sb.append("    massDeviationPpm: ").append(toIndentedString(massDeviationPpm)).append("\n");
     sb.append("    structureAnnotationSmiles: ").append(toIndentedString(structureAnnotationSmiles)).append("\n");
+    sb.append("    structureAnnotationName: ").append(toIndentedString(structureAnnotationName)).append("\n");
     sb.append("    structureAnnotationSvg: ").append(toIndentedString(structureAnnotationSvg)).append("\n");
     sb.append("    structureAnnotationScore: ").append(toIndentedString(structureAnnotationScore)).append("\n");
     sb.append("}");

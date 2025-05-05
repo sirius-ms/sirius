@@ -24,8 +24,6 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
 
-import java.nio.file.Path;
-
 public class SearchableDatabases {
     public static SearchableDatabase of(CustomDataSources.Source source) {
         SearchableDatabase.SearchableDatabaseBuilder<?, ?> b = SearchableDatabase.builder()
@@ -58,15 +56,14 @@ public class SearchableDatabases {
         return b.build();
     }
 
-    public static SearchableDatabase ofMissing(Path location) {
-        String name = location.getFileName().toString().split("\\.")[0];
+    public static SearchableDatabase ofInvalid(String location, String name, String errorMessage) {
         SearchableDatabase.SearchableDatabaseBuilder<?, ?> b = SearchableDatabase.builder()
                 .databaseId(name)
                 .displayName(name)
                 .customDb(true)
-                .location(location.toString())
+                .location(location)
                 .searchable(false)
-                .errorMessage("Missing database file at " + location);
+                .errorMessage(errorMessage);
 
         return b.build();
     }

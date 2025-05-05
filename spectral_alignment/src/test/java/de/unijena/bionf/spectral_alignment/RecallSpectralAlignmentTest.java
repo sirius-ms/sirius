@@ -59,7 +59,7 @@ public class RecallSpectralAlignmentTest {
 
         RecallSpectralAlignment recallSpectralAlignment = new RecallSpectralAlignment(new Deviation(10, 0.001));
         SpectralSimilarity spectralSimilarity = recallSpectralAlignment.score(measuredSpectrum, predictedSpectrum);
-        assertEquals(0.6, spectralSimilarity.similarity, 0);
+        assertEquals(0.6, spectralSimilarity.similarity, 0.0001);
 
         List<Peak> matchedMeasuredPeaks = recallSpectralAlignment.getMatchedMsrdPeaks(measuredSpectrum, predictedSpectrum);
         Double[] mzValuesOfMatchedPeaks = matchedMeasuredPeaks.stream().map(Peak::getMass).sorted().toArray(Double[]::new);

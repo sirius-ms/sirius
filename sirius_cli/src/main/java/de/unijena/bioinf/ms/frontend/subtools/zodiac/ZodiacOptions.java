@@ -64,21 +64,49 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     //ZodiacRatioOfConsideredCandidatesPerIonization only available via config
 
-    ///////////////////////
-    //library hits     ///
-    /////////////////////
-    //todo we want to include library hits from SIRIUS spectral library search as anchors. Not sure, if we will use these parameters or if the library search parameters are sufficient.
-//    @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
-//            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.", "Value must be in [0,1]."})
-//    public void setMinCosine(DefaultParameter value) throws Exception {
-//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
-//    }
-//
-//    @Option(names = "--lambda", descriptionKey = "ZodiacLibraryScoring.lambda",
-//            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
-//    public void setLambda(DefaultParameter value) throws Exception {
-//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
-//    }
+    ////////////////////////////
+    // Identity library hits //
+    ///////////////////////////
+
+    @Option(names = "--identity-search-anchors", descriptionKey = "ZodiacLibraryScoring.enable",
+            description = {"Enable spectral library hits as anchors in ZODIAC network."})
+    public void setEnableLibrary(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.enable", value);
+    }
+
+    @Option(names = "--min-similarity-anchors", descriptionKey = "ZodiacLibraryScoring.minSimilarity",
+            description = {"Spectral library hits must have at least this cosine or higher to be considered as anchors in scoring.", "Value must be in [0,1]."})
+    public void setMinCosine(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minSimilarity", value);
+    }
+
+    @Option(names = "--lambda-anchors", descriptionKey = "ZodiacLibraryScoring.lambda",
+            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
+    public void setLambda(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
+    }
+
+    ///////////////////////////
+    // Analog library hits  //
+    //////////////////////////
+
+    @Option(names = "--analogue-search-nodes", descriptionKey = "ZodiacAnalogueNodes.enable",
+            description = {"Enable Analogue search hits as additional informative nodes in ZODIAC network.", "Value must be in [0,1]."})
+    public void setEnableAnalogueNodes(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacAnalogueNodes.enable", value);
+    }
+
+    @Option(names = "--min-similarity-analogue", descriptionKey = "ZodiacAnalogueNodes.minSimilarity",
+            description = {"Analogue search hits must have at least this modified cosine or higher to be considered as additional node in ZODIAC network scoring.", "Value must be in [0,1]."})
+    public void setAnalogueMinModCosine(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacAnalogueNodes.minSimilarity", value);
+    }
+
+    @Option(names = "--min-peaks-analogue", descriptionKey = "ZodiacAnalogueNodes.minSharedPeaks",
+            description = {"Analogue search hits must have at least this number of shared peaks to be considered as additional node in ZODIAC network scoring."})
+    public void setAnalogueMinSharedPeaks(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("ZodiacAnalogueNodes.minSharedPeaks", value);
+    }
 
 
     ///////////////////////

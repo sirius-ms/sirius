@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import io.sirius.ms.sdk.model.CompoundClass;
 import io.sirius.ms.sdk.model.CompoundClasses;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -137,16 +138,19 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             TextHeaderBoxPanel t;
             t = new TextHeaderBoxPanel("Main Classes", mainClassPanel);
             Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            t.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_MainClass);
             container.add(t);
             t = new TextHeaderBoxPanel("Description", descriptionPanel);
             Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
             container.add(t);
             t = new TextHeaderBoxPanel("Alternative Classes", alternativeClassPanels);
             Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            t.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_AlternativeClasses);
             container.add(t);
             //if (npcClasses.length>0)
             t = new TextHeaderBoxPanel("Natural Product Classes", npcPanel);
             Arrays.stream(t.getComponents()).forEach(c -> c.setForeground(Colors.FOREGROUND_DATA));;
+            t.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_NPClasses);
             container.add(t);
         }
         revalidate();
