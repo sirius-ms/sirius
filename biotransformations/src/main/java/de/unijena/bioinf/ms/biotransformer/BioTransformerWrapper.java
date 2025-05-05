@@ -6,7 +6,6 @@ import biotransformer.btransformers.Biotransformer;
 import biotransformer.railsappspecific.*;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.utils.BiotransformerSequenceStep;
-import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtomContainer;
 
@@ -17,31 +16,31 @@ public class BioTransformerWrapper {
 
     public static List<BioTransformation> abioticTransformer(IAtomContainer singleMolecule, int nrOfSteps) throws Exception {
         AbioticTransformer_rails abiotic_bt = new AbioticTransformer_rails(false, false);
-        return toSiriusTransformations(abiotic_bt.applyAbioticTransformationsChain(singleMolecule, true, true, nrOfSteps, (double) 0.5F));
+        return toSiriusTransformations(abiotic_bt.applyAbioticTransformationsChain(singleMolecule, true, true, nrOfSteps, 0.5d));
     }
 
 
     public static List<BioTransformation> cyp450BTransformer(IAtomContainer singleMolecule, int nrOfSteps, Cyp450Mode cyp450Mode, boolean useDB, boolean useSub) throws Exception {
         Cyp450BTransformer_rails cyp450bt = new Cyp450BTransformer_rails(BioSystemName.HUMAN, useDB, useSub);
-        return toSiriusTransformations(cyp450bt.predictCyp450BiotransformationChainByMode(singleMolecule, true, true, nrOfSteps, (double) 0.5F, cyp450Mode.getCyp450ModeOrdinal()));
+        return toSiriusTransformations(cyp450bt.predictCyp450BiotransformationChainByMode(singleMolecule, true, true, nrOfSteps, 0.5d, cyp450Mode.getCyp450ModeOrdinal()));
 
     }
 
     public static List<BioTransformation> ecBasedBTransformer(IAtomContainer singleMolecule, int nrOfSteps, boolean useDB, boolean useSub) throws Exception {
         ECBasedBTransformer_rails ecbt = new ECBasedBTransformer_rails(BioSystemName.HUMAN, useDB, useSub);
-        return toSiriusTransformations(ecbt.simulateECBasedMetabolismChain(singleMolecule, true, true, nrOfSteps, (double) 0.5F));
+        return toSiriusTransformations(ecbt.simulateECBasedMetabolismChain(singleMolecule, true, true, nrOfSteps, 0.5d));
 
     }
 
     public static List<BioTransformation> hGutBTransformer(IAtomContainer singleMolecule, int nrOfSteps, boolean useDB, boolean useSub) throws Exception {
         HGutBTransformer_rails hgut = new HGutBTransformer_rails(useDB, useSub);
-        return toSiriusTransformations(hgut.simulateGutMicrobialMetabolism(singleMolecule, true, true, nrOfSteps, (double) 0.5F));
+        return toSiriusTransformations(hgut.simulateGutMicrobialMetabolism(singleMolecule, true, true, nrOfSteps, 0.5d));
 
     }
 
     public static List<BioTransformation> phaseIIBTransformer(IAtomContainer singleMolecule, int nrOfSteps, int p2Mode, boolean useDB, boolean useSub) throws Exception {
         PhaseIIBTransformer_rails phase2b = new PhaseIIBTransformer_rails(BioSystemName.HUMAN, useDB, useSub);
-        return toSiriusTransformations(phase2b.applyPhase2TransformationsChainAndReturnBiotransformations(singleMolecule, true, true, true, nrOfSteps, (double) 0.5F, p2Mode));
+        return toSiriusTransformations(phase2b.applyPhase2TransformationsChainAndReturnBiotransformations(singleMolecule, true, true, true, nrOfSteps, 0.5d, p2Mode));
 
     }
 
@@ -55,7 +54,7 @@ public class BioTransformerWrapper {
 
     public static List<BioTransformation> envMicrobialTransformer(IAtomContainer singleMolecule, int nrOfSteps, boolean useDB, boolean useSub) throws Exception {
         EnvMicroBTransformer_rails ebt = new EnvMicroBTransformer_rails(useDB, useSub);
-        return toSiriusTransformations(ebt.applyEnvMicrobialTransformationsChain(singleMolecule, true, true, nrOfSteps, (double) 0.5F));
+        return toSiriusTransformations(ebt.applyEnvMicrobialTransformationsChain(singleMolecule, true, true, nrOfSteps, 0.5d));
 
     }
 
@@ -70,7 +69,7 @@ public class BioTransformerWrapper {
 
 
         BiotransformerSequence_rails biotransformerSequence = new BiotransformerSequence_rails(bioTransSeq, useDB, useSub);
-        return toSiriusTransformations(biotransformerSequence.runSequence(singleMolecule, 0.5F, cyp450Mode.getCyp450ModeOrdinal()));
+        return toSiriusTransformations(biotransformerSequence.runSequence(singleMolecule, 0.5d, cyp450Mode.getCyp450ModeOrdinal()));
 
     }
 
@@ -113,19 +112,5 @@ public class BioTransformerWrapper {
             default ->
                     throw new IllegalArgumentException("Unsupported metabolic transformation: " + metabolicTransformation);
         };
-    }
-
-    public static void main(String[] args) throws Exception {
-        // default
-        int p2Mode = 1;
-        boolean useDB = true;
-        boolean useSub = false;
-        int steps = 2;
-
-        String smiles = "CC(C)C1=CC=C(C)C=C1O";
-        IAtomContainer molecule = InChISMILESUtils.getAtomContainerFromSmiles(smiles);
-
-        List<BioTransformation> result = BioTransformerWrapper.allHumanTransformer(molecule, steps, p2Mode, Cyp450Mode.COMBINED, useDB, useSub);
-        System.out.println("RESULTS: " + result.size());
     }
 }
