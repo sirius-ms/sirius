@@ -191,7 +191,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 //load feature index in pages to have content memory consumption
                 if (searchService.isEmpty(projectId, AlignedFeature.class)) {
                     Pages.forEach(
-                            pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, AlignedFeature.INDEXED_OPT_FIELDS)),
+                            pageable -> Utils.withTimeR("===> Loaded feature page for Indexing", w -> findAlignedFeatures(pageable, false, AlignedFeature.INDEXED_OPT_FIELDS)),
                             page -> Utils.withTime("===> Added feature page to Index", w -> searchService.addDocuments(projectId, page.getContent()))
                     );
 
@@ -254,7 +254,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 if (Utils.notNullOrEmpty(alignedFeaturesToUpdate)) {
                     Partition<Long> partition = Partition.ofSize(alignedFeaturesToUpdate.stream().sorted().toList(), LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
-                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, EnumSet.of(AlignedFeature.OptField.qualities));
+                        List<AlignedFeature> alfs = findAlignedFeaturesByIds(ids, false, EnumSet.of(AlignedFeature.OptField.qualities));
                         searchService.addDocuments(projectId, alfs);
                     }
                 }
@@ -304,7 +304,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     Partition<Long> partition = Partition.ofSize(idsToUpdate, LARGE_BATCH_SIZE);
                     for (List<Long> ids : partition) {
                         List<AlignedFeature> alfs = Utils.withTimeRIo("===> Loaded feature page for Indexing", w ->
-                                findAlignedFeaturesByIds(ids, AlignedFeature.INDEXED_OPT_FIELDS)
+                                findAlignedFeaturesByIds(ids, false, AlignedFeature.INDEXED_OPT_FIELDS)
                         );
                         Utils.withTime("===> Updated features from page in Index", w -> searchService.updateDocuments(projectId, alfs));
                     }
@@ -1213,7 +1213,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             if (feature.getMsData() == null)
                 project().findByFeatureIdStr(alignedFeatureId, MSData.class).findAny()
-                        .map(msd -> MsData.of(msd, msDataAsCosineQuery)
+                        .map(msd -> MsData.of(msd, msDataAsCosineQuery))
                         .ifPresent(feature::setMsData);
         } else {
             feature.setMsData(null);
@@ -1539,10 +1539,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<Compound> findCompounds(@Nullable String searchQuery,
                                         Pageable pageable,
+                                        boolean msDataAsCosineQuery,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         if (searchQuery == null || searchQuery.isBlank())
-            return findCompounds(pageable, optFields, optFeatureFields);
+            return findCompounds(pageable, msDataAsCosineQuery, optFields, optFeatureFields);
 
         throw new ResponseStatusException(METHOD_NOT_ALLOWED, "Searching compounds is not yet supported!");
 
@@ -1568,7 +1569,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<Compound> findCompounds(Pageable pageable,
                                         boolean msDataAsCosineQuery,
                                         @NotNull EnumSet<Compound.OptField> optFields,
-                                        @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+                                        @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields
+    ) {
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream =
                 findPageStr(storage(), de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable)
                         .peek(project()::fetchAdductFeatures);
@@ -1585,11 +1587,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    public Page<Compound> findCompoundsByGroup(@NotNull String groupName,
+                                               Pageable pageable,
+                                               boolean msDataAsCosineQuery,
+                                               @NotNull EnumSet<Compound.OptField> optFields,
+                                               @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields
+    ) {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
-        return findCompounds(tagGroup.get().getLuceneQuery(), pageable, optFields, optFeatureFields);
+        return findCompounds(tagGroup.get().getLuceneQuery(), pageable, msDataAsCosineQuery, optFields, optFeatureFields);
     }
 
     private void setProjectTypeOrThrow(SiriusProjectDocumentDatabase<? extends Database<?>> ps) {
@@ -1660,7 +1667,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, boolean msDataAsCosineQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
@@ -1693,11 +1700,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      */
     @SneakyThrows
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         List<AlignedFeature> features = annotateApiFeatures(
                 pageable.isUnpaged()
                         ? storage().findAllStr(AlignedFeatures.class)
                         : storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize()),
+                msDataAsCosineQuery,
                 optFields);
 
         StopWatch w = new StopWatch();
@@ -1711,13 +1719,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
 
-    private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, @NotNull EnumSet<AlignedFeature.OptField> optFields) throws IOException {
+    private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) throws IOException {
         return annotateApiFeatures(
                 storage().findStr(Filter.where("alignedFeatureId").in(featureIds.toArray(Long[]::new)), AlignedFeatures.class),
+                msDataAsCosineQuery,
                 optFields);
     }
 
-    private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         StopWatch w = new StopWatch();
         w.start();
 
@@ -1817,7 +1826,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .parallel()
                 .map(alf -> {
                     long fid = alf.getAlignedFeatureId();
-                    AlignedFeature apiFeture = convertToApiFeature(alf, EnumSet.noneOf(AlignedFeature.OptField.class));
+                    AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
                     apiFeture.setQualities(convertToQualityMap(quality.get(fid)));
                     apiFeture.setComputedTools(computed.get(fid));
                     apiFeture.setTags(tags.get(fid));
@@ -1825,7 +1834,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFields.contains(AlignedFeature.OptField.indexedTopAnnotations) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
                         apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
                     //add additional anotations that are not yes covered by bulk retrieval.
-                    annotateApiFeature(fid, apiFeture, optFields);
+                    annotateApiFeature(fid, apiFeture, msDataAsCosineQuery, optFields);
                     return apiFeture;
                 }).toList();
 
@@ -1856,11 +1865,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         Optional<TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
-        return findAlignedFeatures(tagGroup.get().getLuceneQuery(), pageable, optFields);
+        return findAlignedFeatures(tagGroup.get().getLuceneQuery(), pageable, msDataAsCosineQuery, optFields);
     }
 
     @SneakyThrows

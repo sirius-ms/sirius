@@ -78,14 +78,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
     Optional<TraceSet> getTraceSetsForFeatureWithCorrelatedIons(String alignedFeatureId);
 
-    Page<Compound> findCompounds(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
+    Page<Compound> findCompounds(@Nullable String searchQuery,
+                                 Pageable pageable,
+                                 boolean msDataAsCosineQuery,
+                                 @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompounds(Pageable pageable,
                                  boolean msDataAsCosineQuery,
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
-    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
-                                 @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
                                 @Nullable InstrumentProfile profile,
@@ -111,31 +113,26 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId);
 
-    Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+    Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
-    default Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, @NotNull AlignedFeature.OptField... optFields){
-        return findAlignedFeatures(searchQuery, pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
+    default Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull AlignedFeature.OptField... optFields){
+        return findAlignedFeatures(searchQuery, pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
-
-    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {
-        return findAlignedFeatures(pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
-    }
-
-    List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
-
-    Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
-
-
-    List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
-                                            @Nullable InstrumentProfile profile,
-                                            @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, AlignedFeature.OptField... optFields) {
         return findAlignedFeatures(pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
 
+    List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
+
+    Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+
+    List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @Nullable InstrumentProfile profile,
+                                            @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataAsCosineQuery, AlignedFeature.OptField... optFields) {
         return findAlignedFeaturesById(alignedFeatureId, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));

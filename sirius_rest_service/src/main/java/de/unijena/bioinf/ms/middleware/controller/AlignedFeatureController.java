@@ -140,6 +140,31 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     }
 
     /**
+     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param pageable  pageable.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged features (aligned over runs)
+     */
+    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+                                                          @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, msDataAsCosineQuery, optFields);
+    }
+
+    /**
      * Get all available features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
@@ -1060,24 +1085,6 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @Override
     public void removeTags(String projectId, String alignedFeatureId, String tagName) {
         TaggableController.super.removeTags(projectId, alignedFeatureId, tagName);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get features (aligned over runs) by tag group.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged features (aligned over runs)
-     */
-
-    @Operation(operationId = "getAlignedFeaturesByGroupExperimental")
-    @Override
-    public Page<AlignedFeature> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<AlignedFeature.OptField> optFields) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, optFields);
     }
 
     @Override

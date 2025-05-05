@@ -260,6 +260,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "compact",
+            "in": "query",
+            "description": "if true, compact project storage after closing. DEPRECATED: Compacting acts on the local filesystem and will likely be removed in a later version.",
+            "required": false,
+            "deprecated": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -2239,6 +2250,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -2431,6 +2452,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -3820,6 +3851,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -4233,7 +4274,7 @@
           {
             "name": "projectId",
             "in": "path",
-            "description": "project space to get compounds (group of ion identities) from.",
+            "description": "project-space to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -4280,6 +4321,16 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -4407,6 +4458,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -4421,6 +4482,31 @@
                   "consensusAnnotations",
                   "consensusAnnotationsDeNovo",
                   "customAnnotations",
+                  "tags"
+                ]
+              },
+              "default": [
+                "none"
+              ]
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "msData",
+                  "indexedTopAnnotations",
+                  "topAnnotations",
+                  "topAnnotationsDeNovo",
+                  "computedTools",
+                  "qualities",
                   "tags"
                 ]
               },
@@ -4514,6 +4600,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5173,10 +5269,20 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
-            "description": "feature (aligned over runs) the Mass Spec data belong sto.",
+            "description": "feature (aligned over runs) the Mass Spec data belongs to.",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -5219,6 +5325,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5300,6 +5416,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -5399,6 +5525,15 @@
               "format": "int32",
               "default": -1
             }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5458,6 +5593,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -6248,6 +6393,15 @@
               "format": "int32",
               "default": -1
             }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -6298,6 +6452,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "asCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -6374,6 +6538,16 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -7051,6 +7225,16 @@
             }
           },
           {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -7152,6 +7336,16 @@
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "msDataAsCosineQuery",
+            "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           },
           {
@@ -7343,7 +7537,7 @@
           {
             "name": "includeCustomDbsForStructureSearch",
             "in": "query",
-            "description": "if true, default database selection of structure db search contains also all available custom DB.",
+            "description": "if true, default database selection of structure db search\n                                           spectral library search contains also all available custom DB.\n                                           If No custom dbs are selected, spectral library search is disabled by default.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -8800,27 +8994,58 @@
               "nullable": true
             }
           },
-          "peakDeviationPpm": {
-            "type": "number",
-            "description": "Maximum allowed mass deviation in ppm for matching peaks.",
-            "format": "double",
-            "nullable": true
-          },
           "precursorDeviationPpm": {
             "type": "number",
             "description": "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.",
             "format": "double",
             "nullable": true
           },
+          "minSimilarity": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered a hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaks": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered a hit.",
+            "format": "int32",
+            "nullable": true
+          },
+          "enableAnalogueSearch": {
+            "type": "boolean",
+            "description": "Enable analogue search in addition to the identity spectral library search"
+          },
+          "minSimilarityAnalogue": {
+            "type": "number",
+            "description": "Minimal spectral similarity of a spectral match to be considered an analogue hit.",
+            "format": "float",
+            "nullable": true
+          },
+          "minNumOfPeaksAnalogue": {
+            "type": "integer",
+            "description": "Minimal number of matching peaks of a spectral match to be considered an analogue hit.",
+            "format": "int32",
+            "nullable": true
+          },
           "scoring": {
             "type": "string",
-            "description": "Specify scoring method to match spectra\n INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.\n GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.\n MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.",
+            "description": "NO LONGER SUPPORTED (IGNORED)\n Specify scoring method to match spectra\n INTENSITY: Intensity weighted. Each peak matches at most one peak in the other spectrum.\n GAUSSIAN: Treat peaks as (un-normalized) Gaussians and score overlapping areas of PDFs. Each peak might score against multiple peaks in the other spectrum.\n MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.",
             "nullable": true,
+            "deprecated": true,
             "enum": [
               "INTENSITY",
               "GAUSSIAN",
-              "MODIFIED_COSINE"
+              "MODIFIED_COSINE",
+              "FAST_COSINE"
             ]
+          },
+          "peakDeviationPpm": {
+            "type": "number",
+            "description": "NO LONGER SUPPORTED (IGNORED)\n Maximum allowed mass deviation in ppm for matching peaks.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
           }
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",
@@ -8918,9 +9143,32 @@
           },
           "gibbsSamplerParameters": {
             "$ref": "#/components/schemas/ZodiacEpochs"
+          },
+          "librarySearchAnchors": {
+            "$ref": "#/components/schemas/ZodiacLibraryScoring"
+          },
+          "analogueSearchAnchors": {
+            "$ref": "#/components/schemas/ZodiacAnalogueNodes"
           }
         },
         "description": "User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).\n Needs results from Formula/SIRIUS Tool",
+        "nullable": true
+      },
+      "ZodiacAnalogueNodes": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "minSimilarity": {
+            "type": "number",
+            "format": "double"
+          },
+          "minSharedPeaks": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
         "nullable": true
       },
       "ZodiacEdgeFilterThresholds": {
@@ -8955,6 +9203,19 @@
           "numberOfMarkovChains": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "nullable": true
+      },
+      "ZodiacLibraryScoring": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "minSimilarity": {
+            "type": "number",
+            "format": "double"
           }
         },
         "nullable": true
@@ -9051,6 +9312,7 @@
       },
       "BasicSpectrum": {
         "required": [
+          "cosineQuery",
           "peaks"
         ],
         "type": "object",
@@ -9087,6 +9349,14 @@
             "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
             "format": "int32",
             "nullable": true
+          },
+          "cosineQuery": {
+            "type": "boolean",
+            "description": "True if spectrum is in cosine query normalized format.\n Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.",
+            "default": false
+          },
+          "precursorPeak": {
+            "$ref": "#/components/schemas/SimplePeak"
           },
           "peaks": {
             "type": "array",
@@ -9353,6 +9623,7 @@
       },
       "AnnotatedSpectrum": {
         "required": [
+          "cosineQuery",
           "peaks"
         ],
         "type": "object",
@@ -9389,6 +9660,14 @@
             "description": "Scan number of the spectrum.\n Might be null for artificial spectra with no scan number (e.g. Simulated Isotope patterns or merged spectra)",
             "format": "int32",
             "nullable": true
+          },
+          "cosineQuery": {
+            "type": "boolean",
+            "description": "True if spectrum is in cosine query normalized format.\n Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.",
+            "default": false
+          },
+          "precursorPeak": {
+            "$ref": "#/components/schemas/SimplePeak"
           },
           "peaks": {
             "type": "array",
@@ -10184,6 +10463,23 @@
         },
         "nullable": true
       },
+      "PeakPair": {
+        "required": [
+          "queryPeak",
+          "referencePeak"
+        ],
+        "type": "object",
+        "properties": {
+          "queryPeak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "referencePeak": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "SpectralLibraryMatch": {
         "required": [
           "inchiKey",
@@ -10202,11 +10498,20 @@
           },
           "similarity": {
             "type": "number",
-            "format": "double"
+            "description": "Similarity between query and reference spectrum",
+            "format": "float"
           },
           "sharedPeaks": {
             "type": "integer",
+            "description": "Number of shared/matched peaks",
             "format": "int32"
+          },
+          "sharedPeakMapping": {
+            "type": "array",
+            "description": "List of paired/matched peak indices.\n\n Maps indices of peaks from the query spectrum (mass sorted)\n to indices of matched peaks in the reference spectrum (mass sorted)",
+            "items": {
+              "$ref": "#/components/schemas/PeakPair"
+            }
           },
           "querySpectrumIndex": {
             "type": "integer",
@@ -10232,32 +10537,40 @@
             "type": "string"
           },
           "exactMass": {
-            "type": "string"
+            "type": "number",
+            "format": "double"
           },
           "smiles": {
             "type": "string"
           },
-          "target": {
-            "type": "string",
-            "default": "SPECTRUM",
-            "enum": [
-              "SPECTRUM",
-              "MERGED"
-            ]
-          },
           "type": {
             "type": "string",
-            "default": "COSINE",
+            "default": "IDENTITY",
             "enum": [
-              "COSINE",
+              "IDENTITY",
               "ANALOG"
             ]
           },
           "inchiKey": {
             "type": "string"
           },
+          "referenceSpectrumType": {
+            "type": "string",
+            "default": "SPECTRUM",
+            "enum": [
+              "SPECTRUM",
+              "MERGED_SPECTRUM"
+            ]
+          },
           "referenceSpectrum": {
             "$ref": "#/components/schemas/BasicSpectrum"
+          },
+          "querySpectrumType": {
+            "type": "string",
+            "enum": [
+              "SPECTRUM",
+              "MERGED_SPECTRUM"
+            ]
           }
         },
         "nullable": true
@@ -10296,6 +10609,11 @@
           "structureAnnotationSmiles": {
             "type": "string",
             "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n \u003cp\u003e\n Smiles of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation\n Substructure highlighting (bond and atom indices) refer to this specific SMILES.\n If you standardize or canonicalize this SMILES in any way the indices of substructure highlighting might\n not match correctly anymore.\n \u003cp\u003e\n Null if substructure annotation not available or not requested.",
+            "nullable": true
+          },
+          "structureAnnotationName": {
+            "type": "string",
+            "description": "EXPERIMENTAL: This field is experimental and may be changed (or even removed) without notice until it is declared stable.\n \u003cp\u003e\n Name of the structure candidate used to derive substructure peak annotations via epimetheus insilico fragmentation.\n \u003cp\u003e\n Null if substructure annotation not available or not requested.",
             "nullable": true
           },
           "structureAnnotationSvg": {

@@ -412,12 +412,13 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundRequestCreation(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundRequestCreation(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -438,6 +439,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -460,14 +462,15 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return Compound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Compound getCompound(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public Compound getCompound(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -476,14 +479,15 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Compound> getCompoundWithHttpInfo(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<Compound> getCompoundWithHttpInfo(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -492,13 +496,14 @@ public class CompoundsApi {
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundWithResponseSpec(String projectId, String compoundId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundWithResponseSpec(String projectId, String compoundId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundRequestCreation(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Returns the full quantification table of compounds
@@ -763,12 +768,13 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsRequestCreation(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsRequestCreation(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -784,6 +790,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -805,14 +812,15 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Compound> getCompounds(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public List<Compound> getCompounds(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -820,14 +828,15 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -835,13 +844,14 @@ public class CompoundsApi {
      * List of all available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsWithResponseSpec(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsRequestCreation(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
@@ -852,11 +862,13 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getCompoundsByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -880,7 +892,9 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -904,64 +918,71 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return PagedModelCompound
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public PagedModelCompound getCompoundsByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
-     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;PagedModelCompound&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<PagedModelCompound> getCompoundsByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
-     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getCompoundsByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields) throws WebClientResponseException {
-        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, optFields);
-    }
-    /**
-     * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
-     * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project space to get compounds (group of ion identities) from.
-     * @param searchQuery search query in lucene syntax.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsPageExperimentalRequestCreation(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
+        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return ResponseEntity&lt;PagedModelCompound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<PagedModelCompound> getCompoundsByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
+        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getCompoundsByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures);
+    }
+    /**
+     * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
+     * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     * <p><b>200</b> - tagged compounds (group of ion identities)
+     * @param projectId project-space to read from.
+     * @param searchQuery search query in lucene syntax.
+     * @param page Zero-based page index (0..N)
+     * @param size The size of the page to be returned
+     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return PagedModelCompound
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getCompoundsPageExperimentalRequestCreation(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -981,6 +1002,7 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -1001,56 +1023,59 @@ public class CompoundsApi {
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param projectId project-space to read from.
      * @param searchQuery search query in lucene syntax.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PagedModelCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelCompound getCompoundsPageExperimental(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PagedModelCompound getCompoundsPageExperimental(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param projectId project-space to read from.
      * @param searchQuery search query in lucene syntax.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;PagedModelCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelCompound> getCompoundsPageExperimentalWithHttpInfo(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<PagedModelCompound> getCompoundsPageExperimentalWithHttpInfo(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelCompound> localVarReturnType = new ParameterizedTypeReference<PagedModelCompound>() {};
-        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
      * [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space.   &lt;h2&gt;Supported filter syntax&lt;/h2&gt;   &lt;p&gt;The filter string must contain one or more clauses. A clause is prefíxed  by a field name.  &lt;/p&gt;  &lt;p&gt;  Currently the only searchable fields are names of tags (&lt;code&gt;tagName&lt;/code&gt;) followed by a clause that is valued for the value type of the tag (See TagDefinition).  Tag name based field need to be prefixed with the namespace &lt;code&gt;tags.&lt;/code&gt;.  Possible value types of tags are &lt;strong&gt;bool&lt;/strong&gt;, &lt;strong&gt;integer&lt;/strong&gt;, &lt;strong&gt;real&lt;/strong&gt;, &lt;strong&gt;text&lt;/strong&gt;, &lt;strong&gt;date&lt;/strong&gt;, or &lt;strong&gt;time&lt;/strong&gt; - tag value   &lt;p&gt;The format of the &lt;strong&gt;date&lt;/strong&gt; type is &lt;code&gt;yyyy-MM-dd&lt;/code&gt; and of the &lt;strong&gt;time&lt;/strong&gt; type is &lt;code&gt;HH\\:mm\\:ss&lt;/code&gt;.&lt;/p&gt;   &lt;p&gt;A clause may be:&lt;/p&gt;  &lt;ul&gt;      &lt;li&gt;a &lt;strong&gt;term&lt;/strong&gt;: field name followed by a colon and the search term, e.g. &lt;code&gt;tags.MyTagA:sample&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;phrase&lt;/strong&gt;: field name followed by a colon and the search phrase in doublequotes, e.g. &lt;code&gt;tags.MyTagA:&amp;quot;Some Text&amp;quot;&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;regular expression&lt;/strong&gt;: field name followed by a colon and the regex in slashes, e.g. &lt;code&gt;tags.MyTagA:/[mb]oat/&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;comparison&lt;/strong&gt;: field name followed by a comparison operator and a value, e.g. &lt;code&gt;tags.MyTagB&amp;lt;3&lt;/code&gt;&lt;/li&gt;      &lt;li&gt;a &lt;strong&gt;range&lt;/strong&gt;: field name followed by a colon and an open (indiced by &lt;code&gt;[ &lt;/code&gt; and &lt;code&gt;] &lt;/code&gt;) or (semi-)closed range (indiced by &lt;code&gt;{&lt;/code&gt; and &lt;code&gt;}&lt;/code&gt;), e.g. &lt;code&gt;tags.MyTagB:[* TO 3] &lt;/code&gt;&lt;/li&gt;  &lt;/ul&gt;   &lt;p&gt;Clauses may be &lt;strong&gt;grouped&lt;/strong&gt; with brackets &lt;code&gt;( &lt;/code&gt; and &lt;code&gt;) &lt;/code&gt; and / or &lt;strong&gt;joined&lt;/strong&gt; with &lt;code&gt;AND&lt;/code&gt; or &lt;code&gt;OR &lt;/code&gt; (or &lt;code&gt;&amp;amp;&amp;amp; &lt;/code&gt; and &lt;code&gt;|| &lt;/code&gt;)&lt;/p&gt;   &lt;h3&gt;Example&lt;/h3&gt;   &lt;p&gt;The syntax allows to build complex filter queries such as:&lt;/p&gt;   &lt;p&gt;&lt;code&gt;tags.city:&amp;quot;new york&amp;quot; AND tags.ATextTag:/[mb]oat/ AND tags.count:[1 TO *] OR tags.realNumberTag&amp;lt;&#x3D;3.2 OR tags.MyDateTag:2024-01-01 OR tags.MyDateTag:[2023-10-01 TO 2023-12-24] OR tags.MyDateTag&amp;lt;2022-01-01 OR tags.time:12\\:00\\:00 OR tags.time:[12\\:00\\:00 TO 14\\:00\\:00] OR tags.time&amp;lt;10\\:00\\:00 &lt;/code&gt;&lt;/p&gt;  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - tagged compounds (group of ion identities)
-     * @param projectId project space to get compounds (group of ion identities) from.
+     * @param projectId project-space to read from.
      * @param searchQuery search query in lucene syntax.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsPageExperimentalWithResponseSpec(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsPageExperimentalWithResponseSpec(String projectId, String searchQuery, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsPageExperimentalRequestCreation(projectId, searchQuery, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures);
     }
     /**
      * [EXPERIMENTAL] Get all tags associated with this Compound
