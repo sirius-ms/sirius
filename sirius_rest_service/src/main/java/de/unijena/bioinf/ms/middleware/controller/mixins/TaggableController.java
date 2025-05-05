@@ -23,32 +23,14 @@ package de.unijena.bioinf.ms.middleware.controller.mixins;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagSubmission;
 import jakarta.validation.Valid;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.EnumSet;
 import java.util.List;
 
 public interface TaggableController<T, O extends Enum<O>> extends ProjectProvidingController {
     Class<T> getTagTarget();
-    /**
-     * Get group of objects by previously defined group.
-     *
-     * @param projectId project-space to delete from.
-     * @param groupName     tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged objects
-     */
-    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
-    Page<T> getObjectsByGroup(@PathVariable String projectId,
-                                      @RequestParam String groupName,
-                                      @ParameterObject Pageable pageable,
-                                      @RequestParam(defaultValue = "none") EnumSet<O> optFields
-    );
+
     /**
      * Get all tags associated with this Object
      *

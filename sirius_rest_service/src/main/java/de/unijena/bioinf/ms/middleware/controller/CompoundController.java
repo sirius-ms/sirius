@@ -128,6 +128,32 @@ public class CompoundController implements TaggableController<Compound, Compound
     }
 
     /**
+     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.
+     * <p>
+     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
+     *
+     * @param projectId project-space to delete from.
+     * @param groupName tag group name.
+     * @param pageable  pageable.
+     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                            peak assignments and reference spectra.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return tagged compounds (group of ion identities)
+     */
+    @Operation(operationId = "getCompoundsByGroupExperimental")
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Compound> getCompoundsByGroup(@PathVariable String projectId,
+                                              @RequestParam String groupName,
+                                              @ParameterObject Pageable pageable,
+                                              @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+                                              @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
+                                              @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findCompoundsByGroup(groupName, pageable, msDataAsCosineQuery, optFields, optFieldsFeatures);
+    }
+
+    /**
      * List of all available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
@@ -317,23 +343,6 @@ public class CompoundController implements TaggableController<Compound, Compound
     @Override
     public void removeTags(String projectId, String compoundId, String tagName) {
         TaggableController.super.removeTags(projectId, compoundId, tagName);
-    }
-
-    /**
-     * [EXPERIMENTAL] Get compounds (group of ion identities) by tag group.
-     * <p>
-     * [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
-     *
-     * @param projectId project-space to delete from.
-     * @param groupName tag group name.
-     * @param pageable  pageable.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @return tagged compounds (group of ion identities)
-     */
-    @Operation(operationId = "getCompoundsByGroupExperimental")
-    @Override
-    public Page<Compound> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Compound.OptField> optFields) {
-        return projectsProvider.getProjectOrThrow(projectId).findRunsByGroup(groupName, pageable, optFields);
     }
 
     @Override

@@ -234,7 +234,7 @@ public class GuiProjectManager implements Closeable {
 
         Runnable r = () -> {
             List<InstanceBean> tmpInst = siriusClient.features()
-                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filteredQuery, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
+                    .getAlignedFeaturesPageExperimental(projectId, 0, Integer.MAX_VALUE, sortQuery, filteredQuery, false, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS)
                     .getContent().stream().map(f -> new InstanceBean(f, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this)).toList();
 
             INSTANCE_LIST.getReadWriteLock().writeLock().lock();

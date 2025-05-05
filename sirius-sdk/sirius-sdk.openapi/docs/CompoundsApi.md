@@ -300,7 +300,7 @@ No authorization required
 
 ## getCompound
 
-> Compound getCompound(projectId, compoundId, optFields, optFieldsFeatures)
+> Compound getCompound(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures)
 
 Get compound (group of ion identities) with the given identifier from the specified project-space.
 
@@ -324,10 +324,11 @@ public class Example {
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String compoundId = "compoundId_example"; // String | identifier of the compound (group of ion identities) to access.
+        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            Compound result = apiInstance.getCompound(projectId, compoundId, optFields, optFieldsFeatures);
+            Compound result = apiInstance.getCompound(projectId, compoundId, msDataAsCosineQuery, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompound");
@@ -347,6 +348,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **compoundId** | **String**| identifier of the compound (group of ion identities) to access. | |
+| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)|  | [optional] |
 
@@ -580,7 +582,7 @@ No authorization required
 
 ## getCompounds
 
-> List&lt;Compound&gt; getCompounds(projectId, optFields, optFieldsFeatures)
+> List&lt;Compound&gt; getCompounds(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures)
 
 List of all available compounds (group of ion identities) in the given project-space.
 
@@ -603,10 +605,11 @@ public class Example {
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
+        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            List<Compound> result = apiInstance.getCompounds(projectId, optFields, optFieldsFeatures);
+            List<Compound> result = apiInstance.getCompounds(projectId, msDataAsCosineQuery, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompounds");
@@ -625,6 +628,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
+| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)|  | [optional] |
 
@@ -650,7 +654,7 @@ No authorization required
 
 ## getCompoundsByGroupExperimental
 
-> PagedModelCompound getCompoundsByGroupExperimental(projectId, groupName, page, size, sort, optFields)
+> PagedModelCompound getCompoundsByGroupExperimental(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures)
 
 [EXPERIMENTAL] Get compounds (group of ion identities) by tag group
 
@@ -677,9 +681,11 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            PagedModelCompound result = apiInstance.getCompoundsByGroupExperimental(projectId, groupName, page, size, sort, optFields);
+            PagedModelCompound result = apiInstance.getCompoundsByGroupExperimental(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundsByGroupExperimental");
@@ -702,7 +708,9 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)|  | [optional] |
 
 ### Return type
 
@@ -726,7 +734,7 @@ No authorization required
 
 ## getCompoundsPageExperimental
 
-> PagedModelCompound getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, optFields, optFieldsFeatures)
+> PagedModelCompound getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures)
 
 [EXPERIMENTAL] Page of available compounds (group of ion identities) in the given project-space
 
@@ -748,15 +756,16 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project space to get compounds (group of ion identities) from.
+        String projectId = "projectId_example"; // String | project-space to read from.
         String searchQuery = "searchQuery_example"; // String | search query in lucene syntax.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            PagedModelCompound result = apiInstance.getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, optFields, optFieldsFeatures);
+            PagedModelCompound result = apiInstance.getCompoundsPageExperimental(projectId, searchQuery, page, size, sort, msDataAsCosineQuery, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getCompoundsPageExperimental");
@@ -774,11 +783,12 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project space to get compounds (group of ion identities) from. | |
+| **projectId** | **String**| project-space to read from. | |
 | **searchQuery** | **String**| search query in lucene syntax. | [optional] |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)|  | [optional] |
 

@@ -200,10 +200,15 @@ public class RunController implements TaggableController<Run, Run.OptField> {
      * @return tagged runs
      */
     @Operation(operationId = "getRunsByGroupExperimental")
-    @Override
-    public Page<Run> getObjectsByGroup(String projectId, String groupName, Pageable pageable, EnumSet<Run.OptField> optFields) {
+    @GetMapping(value = "/grouped", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Run> getRunsByGroup(@PathVariable String projectId,
+                                                          @RequestParam String groupName,
+                                                          @ParameterObject Pageable pageable,
+                                                          @RequestParam(defaultValue = "none") EnumSet<Run.OptField> optFields
+    ) {
         return projectsProvider.getProjectOrThrow(projectId).findRunsByGroup(groupName, pageable, optFields);
     }
+
 
     @Override
     public Class<Run> getTagTarget() {
