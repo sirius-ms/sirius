@@ -51,7 +51,7 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 
     private final ChemicalAlphabet chemicalAlphabet;
     private final int[] upperbounds, lowerbounds;
-    private final List<FormulaFilter> filters;
+    protected final List<FormulaFilter> filters;
 
     private final static Pattern INTERVAL = Pattern.compile("\\[(?:(\\d*)\\s*-\\s*)?(\\d*)?\\]");
 
