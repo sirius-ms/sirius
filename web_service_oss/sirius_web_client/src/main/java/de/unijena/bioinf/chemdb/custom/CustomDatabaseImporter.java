@@ -100,7 +100,7 @@ public class CustomDatabaseImporter {
     private final BioTransformerSettings bioTransformerSettings;
 
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerSettings settings) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerSettings bioTransformerSettings) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -116,16 +116,13 @@ public class CustomDatabaseImporter {
         smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         smilesParser.kekulise(true);
 
-        this.bioTransformerSettings = settings;
+        this.bioTransformerSettings = bioTransformerSettings;
 
     }
 
     public InChIGenerator generateInChI(IAtomContainer container) throws CDKException {
         InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
-        InChIGenerator generator = factory.getInChIGenerator(container);
-
-        return generator;
-
+        return factory.getInChIGenerator(container);
     }
 
     private void throwIfShutdown() {
@@ -830,7 +827,7 @@ public class CustomDatabaseImporter {
             @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
             @Nullable IFingerprinterCache ifpCache,
             int bufferSize,
-            BioTransformerSettings settings
+            BioTransformerSettings bioTransformerSettings
     ) {
         return new BasicJJob<Boolean>() {
             CustomDatabaseImporter importer;
@@ -838,7 +835,7 @@ public class CustomDatabaseImporter {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize, settings);
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize, bioTransformerSettings);
                 if (listener != null)
                     importer.addListener(listener);
                 importToDatabase(spectrumFiles, structureFiles, importer);
