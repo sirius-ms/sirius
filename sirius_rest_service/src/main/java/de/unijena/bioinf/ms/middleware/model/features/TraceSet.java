@@ -119,6 +119,7 @@ public class TraceSet {
         @Schema(nullable = true)
         private String sampleName;
         private String label;
+        private String color;
         private double[] intensities;
         private Annotation[] annotations;
         private double mz;

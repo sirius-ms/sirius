@@ -22,11 +22,11 @@ package de.unijena.bioinf.ms.gui.utils;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +40,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -188,31 +188,58 @@ public class GuiUtils {
         return Pair.of(p, label);
     }
 
-    public static void openURLOrError(@NotNull Frame owner, URI url) {
+
+    public static void openURLInSystemBrowserOrError(@NotNull URI url) {
+        openURLInSystemBrowserOrError(url, null);
+    }
+
+    public static void openURLInSystemBrowserOrError(@NotNull URI url, @Nullable SiriusGui browserProvider) {
+        openURLInSystemBrowserOrError(null, url, browserProvider);
+    }
+
+    public static void openURLInSystemBrowserOrError(@Nullable Frame owner, @NotNull URI url, @Nullable SiriusGui browserProvider) {
         try {
-            openURL(owner, url, true);
+            openURLInSystemBrowser(owner, url, browserProvider);
         } catch (IOException e) {
             new ExceptionDialog(owner, "Error opening URL '" + url + "'. Cause: " + e.getMessage());
         }
     }
 
-    public static void openURL(@NotNull Window owner, URI url) throws IOException {
-        openURL(owner, url, true);
+    public static void openURLInSystemBrowser(@Nullable Window owner, URI url, @Nullable SiriusGui fallbackBrowserProvider) throws IOException {
+        openURL(owner, url, fallbackBrowserProvider, true);
     }
 
-    public static void openURL(@NotNull Window owner, URI url, boolean useSystemBrowser) throws IOException {
-        openURL(owner, url, null, useSystemBrowser);
+    public static void openURLInSystemBrowser(@NotNull URI url,  @Nullable SiriusGui browserProvider) throws IOException {
+        openURLInSystemBrowser(null, url, browserProvider);
     }
 
+    public static void openURLInSystemBrowser(@NotNull URI url) throws IOException {
+        openURLInSystemBrowser(null, url, null);
+    }
 
-    public static void openURL(@Nullable Window owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@NotNull URI url,  @Nullable SiriusGui browserProvider, boolean useSystemBrowser) throws IOException {
+        openURL(null, url, browserProvider, useSystemBrowser);
+    }
+
+    public static void openURL(@Nullable Window owner, @NotNull URI url, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
+        openURL(owner, url, null, browserProvider, trySystemBrowserFirst);
+    }
+
+    public static void openURL(@NotNull URI url, @Nullable String title, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
+        openURL(null, url, title, browserProvider, trySystemBrowserFirst);
+    }
+
+    public static void openURL(@Nullable Window owner, @NotNull URI url, @Nullable String title, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
+        if (owner == null && browserProvider != null)
+            owner = browserProvider.getMainFrame();
+
         if (url == null)
             if (owner instanceof JDialog dialog)
                 new ExceptionDialog(dialog, "Cannot open empty URL!");
             else
                 new ExceptionDialog((Frame) owner, "Cannot open empty URL!");
 
-        if (useSystemBrowser) {
+        if (trySystemBrowserFirst || browserProvider == null) {
             try {
                 if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().browse(url);
@@ -227,10 +254,16 @@ public class GuiUtils {
             }
         }
 
+        if (browserProvider == null)
+           throw new IOException("Could not open URL in System Browser. NO fallback given!", new NullPointerException("Provider for internal browser is null!"));
+
         if (owner instanceof JDialog dialog)
-            new WebViewBrowserDialog(dialog, title == null ? "SIRIUS WebView" : title, url);
+            browserProvider.newBrowserPopUp(dialog, title == null ? "SIRIUS WebView" : title, url);
+        else if (owner instanceof JFrame frame)
+            browserProvider.newBrowserPopUp(frame, title == null ? "SIRIUS WebView" : title, url);
         else
-            new WebViewBrowserDialog((Frame) owner, title == null ? "SIRIUS WebView" : title, url);
+            browserProvider.newBrowserPopUp(title == null ? "SIRIUS WebView" : title, url);
+
     }
 
     /**

@@ -66,7 +66,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         Show showParas;
         @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Import custom database: %n|@", order = 200)
         Import importParas;
-        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Remove custom database: %n|@", order = 300)
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Remove custom database: %n|@", order = 400)
         Remove removeParas;
 
     }
@@ -112,16 +112,19 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 "Directories will be recursively expanded."
         }, order = 220)
         private List<Path> input;
+
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Bio Transformations: %n|@", order = 150)
+        private BioTransformerOptions bioTransformerOptions;
     }
 
     public static class Remove {
         @Option(names = "--remove", required = true,
                 description = "Name (--show) or path of the custom database to remove from SIRIUS.",
-                order = 301)
+                order = 401)
         String nameOrLocation = null;
 
         @Option(names = {"--delete", "-d"}, defaultValue = "false",
-                description = "Delete removed custom database from filesystem/server.", order = 310)
+                description = "Delete removed custom database from filesystem/server.", order = 410)
         boolean delete;
     }
 
@@ -171,7 +174,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     return showDB(version);
                 }
             }
-            throw new IllegalArgumentException("Either '--import', '--remove' or '--show' must be specified.");
+            throw new IllegalArgumentException("Either '--input', '--remove' or '--show' must be specified.");
         }
 
         private @NotNull Boolean importIntoDB(CdkFingerprintVersion version) throws InterruptedException, IOException, ExecutionException {
@@ -254,7 +257,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                     listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
                     ApplicationCore.IFP_CACHE(),
-                    mode.importParas.writeBuffer
+                    mode.importParas.writeBuffer,
+                    mode.importParas.bioTransformerOptions != null ? mode.importParas.bioTransformerOptions.toBioTransformerSetting() : null
             );
             checkForInterruption();
             submitJob(dbjob).awaitResult();

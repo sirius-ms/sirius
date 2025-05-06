@@ -34,7 +34,7 @@ import java.awt.*;
  */
 @Getter
 public class SiriusToolbar extends JToolBar {
-    private ToolbarButton logsB, createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, sample, jobs, db, connect, settings, account, /*bug,*/
+    private ToolbarButton logsB, createB, openB, saveB, summB, fbmnB, importB, computeAllB, sample, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
 
@@ -102,9 +102,6 @@ public class SiriusToolbar extends JToolBar {
 
         help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(gui, true));
         add(help);
-
-      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance(mf, true));
-        add(bug);*/
 
         about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(gui, true));
         add(about);

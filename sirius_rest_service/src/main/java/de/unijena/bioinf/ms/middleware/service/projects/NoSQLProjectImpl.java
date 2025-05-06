@@ -37,6 +37,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.Pages;
+import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -60,10 +61,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
-import de.unijena.bioinf.ms.persistence.model.core.run.InstrumentConfig;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
+import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -106,9 +104,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -505,10 +506,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // only use features with LC/MS information
         List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
 
+        // get all samples in the project
+        List<LCMSRun> allSamples = storage.findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).toList();
+        long[] allSampleIds = allSamples.stream().mapToLong(AbstractLCMSRun::getRunId).toArray();
+        // generate colors
+        List<Color> allColors = ColorGenerator.generateColors(allSamples.size());
+
         List<LCMSRun> samples = new ArrayList<>();
+        List<Color> colors = new ArrayList<>();
         for (int k = 0; k < features.size(); ++k) {
-            samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
-            storage.fetchChild(samples.get(k), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
+            int index = Arrays.binarySearch(allSampleIds, features.get(k).getRunId());
+            samples.add(index >= 0 ? allSamples.get(index) : null);
+            colors.add(index >= 0 ? allColors.get(index) : null);
+            if (index >= 0)
+                storage.fetchChild(samples.get(k), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         }
 
         MergedLCMSRun merged = storage.getByPrimaryKey(feature.getRunId(), MergedLCMSRun.class).orElse(null);
@@ -593,6 +604,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     trace.setId(String.valueOf(features.get(k).getFeatureId()));
                     trace.setSampleId(String.valueOf(features.get(k).getRunId()));
                     trace.setSampleName(samples.get(k) == null ? "unknown" : samples.get(k).getName());
+
+                    trace.setColor(ColorGenerator.colorToCss(colors.get(k)));
 
                     trace.setIntensities(vec);
                     trace.setLabel(trace.getSampleName());
@@ -683,6 +696,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         LongOpenHashSet alreadyFetched = new LongOpenHashSet();
         alreadyFetched.add(maybeMergedTrace.get().getMergedTraceId());
+        int numOfColors = 1;
         if (mainFeature.getAdductNetworkId() != null) {
             Optional<AdductNetwork> maybeNetwork = storage.getByPrimaryKey(mainFeature.getAdductNetworkId(), AdductNetwork.class);
             if (maybeNetwork.isPresent()) {
@@ -693,6 +707,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     Optional<AlignedFeatures> fr = storage.getByPrimaryKey(node.getAlignedFeatureId(), AlignedFeatures.class);
                     if (tr.isPresent() && fr.isPresent()) {
                         traces.add(TraceSet.Trace.of(String.format(Locale.US, "[CORRELATED] m/z = %.4f", fr.get().getAverageMass()), merged, fr.get(), tr.get(), retentionTimeAxis));
+                        numOfColors++;
                         offsets.add(tr.get().getScanIndexOffset());
                         storage.fetchAllChildren(fr.get(), "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
                         for (AlignedIsotopicFeatures g : fr.get().getIsotopicFeatures().orElse(Collections.emptyList())) {
@@ -710,6 +725,22 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 traceSet.setAdductNetwork(de.unijena.bioinf.ms.middleware.model.networks.AdductNetwork.from(network));
             }
         }
+
+        List<Color> allColors = ColorGenerator.generateColors(numOfColors);
+        traces.getFirst().setColor(ColorGenerator.colorToCss(allColors.getFirst()));
+
+        // choose a new color for each adduct,
+        // desaturate the last adducts' color for isotopes
+        Color color = allColors.getFirst();
+        for (int i = 1, j = 0; i < traces.size(); i++) {
+            if (!traces.get(i).getLabel().contains("[ISOTOPE]")) {
+                color = allColors.get(++j);
+            } else {
+                color = ColorGenerator.desaturate(color);
+            }
+            traces.get(i).setColor(ColorGenerator.colorToCss(color));
+        }
+
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
         traceSet.setSampleName(merged.getName());
         traceSet.setSampleId(String.valueOf(merged.getRunId()));
@@ -756,6 +787,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         HashMap<Long, LCMSRun> samples = new HashMap<>();
         HashMap<Long, SourceTrace> sources = new HashMap<>();
         HashMap<Long, Set<Long>> sample2sources = new HashMap<>();
+
+        // get all samples in the project
+        long[] allSampleIds = storage.findAllStr(LCMSRun.class, "runId", Database.SortOrder.ASCENDING).mapToLong(LCMSRun::getRunId).toArray();
+        // generate colors
+        List<Color> allColors = ColorGenerator.generateColors(allSampleIds.length);
 
         HashMap<Long, List<Feature>> sample2Feature = new HashMap<>();
         for (int k = 0; k < allMergedFeatures.size(); ++k) {
@@ -851,6 +887,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             trace.setId("-1");
             trace.setSampleId(String.valueOf(sampleKey));
             trace.setSampleName(samples.get(sampleKey) == null ? "unknown" : samples.get(sampleKey).getName());
+
+            int colorIndex = Arrays.binarySearch(allSampleIds, sampleKey);
+            trace.setColor(colorIndex >= 0 ? ColorGenerator.colorToCss(allColors.get(colorIndex)) : null);
 
             trace.setIntensities(traceIntensities);
             trace.setLabel(trace.getSampleName());

@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.utils;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 
 public class HyperlinkJTextPane extends JTextPane {
-    public HyperlinkJTextPane(String text) {
+    public HyperlinkJTextPane(String text, SiriusGui gui) {
         super();
         // Set the editor kit to handle HTML
         setEditorKit(new HTMLEditorKit());
@@ -22,7 +23,7 @@ public class HyperlinkJTextPane extends JTextPane {
         addHyperlinkListener(e -> {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 try {
-                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(e.getURL().toString()), true);
+                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(e.getURL().toString()), gui, true);
                 } catch (IOException ex) {
                     LoggerFactory.getLogger(this.getClass()).error("Could not open URL: {}", e.getURL().toString(), ex);
                 }

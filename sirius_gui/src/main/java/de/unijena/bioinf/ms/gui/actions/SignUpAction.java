@@ -20,17 +20,17 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.auth.UserPortal;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 
 import javax.swing.*;
-import java.awt.*;
 import java.net.URI;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public class SignUpAction extends AbstractUserPortalAction {
-    public SignUpAction(Frame popupOwner) {
-        super("Create Account", popupOwner);
+    public SignUpAction(SiriusGui gui) {
+        super("Create Account", gui);
         putValue(Action.SHORT_DESCRIPTION, "Create a new SIRIUS user account.");
     }
 

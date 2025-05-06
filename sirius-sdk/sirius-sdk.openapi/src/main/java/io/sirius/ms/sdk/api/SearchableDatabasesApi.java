@@ -2,6 +2,7 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
+import io.sirius.ms.sdk.model.BioTransformerParameters;
 import java.io.File;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import io.sirius.ms.sdk.model.SearchableDatabaseParameters;
@@ -507,18 +508,23 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
+     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
+     * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
-     * @param inputFiles The inputFiles parameter
+     * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
             throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'inputFiles' is set
+        if (inputFiles == null) {
+            throw new WebClientResponseException("Missing the required parameter 'inputFiles' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -534,6 +540,8 @@ public class SearchableDatabasesApi {
         
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+        if (bioTransformerParameters != null)
+            formParams.add("bioTransformerParameters", bioTransformerParameters);
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -553,45 +561,48 @@ public class SearchableDatabasesApi {
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
+     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
+     * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
-     * @param inputFiles The inputFiles parameter
+     * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase importIntoDatabase(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    public SearchableDatabase importIntoDatabase(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).bodyToMono(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
+     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
+     * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
-     * @param inputFiles The inputFiles parameter
+     * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).toEntity(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters).toEntity(localVarReturnType).block();
     }
 
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
+     * <p><b>200</b> - Meta-Infomation of the affected database after the import has been performed.
      * @param databaseId database to import into
+     * @param inputFiles files to be imported
      * @param bufferSize The bufferSize parameter
-     * @param inputFiles The inputFiles parameter
+     * @param bioTransformerParameters The bioTransformerParameters parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
-        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles);
+    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, List<File> inputFiles, Integer bufferSize, BioTransformerParameters bioTransformerParameters) throws WebClientResponseException {
+        return importIntoDatabaseRequestCreation(databaseId, inputFiles, bufferSize, bioTransformerParameters);
     }
     /**
      * 

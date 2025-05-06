@@ -79,7 +79,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
             public void hyperlinkUpdate(HyperlinkEvent e) {
                 if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                     try {
-                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(UpdatePanel.this), e.getURL().toURI());
+                        GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(UpdatePanel.this), e.getURL().toURI(), gui);
                     } catch (Exception error) {
                         LoggerFactory.getLogger(this.getClass()).error(error.getMessage(), error);
                     }
@@ -105,7 +105,7 @@ public class UpdatePanel extends LoadablePanel implements PropertyChangeListener
         downloadButton.addActionListener(evt -> {
             try {
                 if (info.getLatestSiriusLink() != null)
-                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(UpdatePanel.this), URI.create(info.getLatestSiriusLink()));
+                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(UpdatePanel.this), URI.create(info.getLatestSiriusLink()), gui);
             } catch (IOException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }

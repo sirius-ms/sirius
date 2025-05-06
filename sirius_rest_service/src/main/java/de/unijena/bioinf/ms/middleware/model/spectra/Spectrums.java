@@ -131,7 +131,7 @@ public class Spectrums {
                 basicSpec.setPrecursorPeak(new SimplePeak(mergedMs2Peaks.getPeakAt(precursorIdx)));
         }
         basicSpec.setCosineQuery(asCosineQuery);
-        return decorateMergedMsMs(new BasicSpectrum(mergedMs2Peaks), precursorMz);
+        return basicSpec;
     }
 
     public static BasicSpectrum createReferenceMsMs(ReferenceSpectrum ref) {

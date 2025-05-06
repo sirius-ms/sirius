@@ -105,10 +105,6 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
         return Optional.ofNullable(getMatch().getRank()).orElse(0);
     }
 
-    public InstanceBean getParentInstance() {
-        return instance;
-    }
-
     protected void setMatchesTopStructureHit(boolean matchesTopStructureHit) {
         boolean old = this.matchesTopStructureHit;
         this.matchesTopStructureHit = matchesTopStructureHit;

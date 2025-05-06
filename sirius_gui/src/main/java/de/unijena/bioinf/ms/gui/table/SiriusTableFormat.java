@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import ca.odell.glazedlists.gui.TableFormat;
-import de.unijena.bioinf.ms.gui.table.list_stats.ListStats;
 
 import java.util.function.Function;
 

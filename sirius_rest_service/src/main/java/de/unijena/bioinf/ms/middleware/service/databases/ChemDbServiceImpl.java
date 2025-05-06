@@ -28,6 +28,7 @@ import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
+import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
@@ -83,7 +84,7 @@ public class ChemDbServiceImpl implements ChemDbService {
     }
 
     @Override
-    public SearchableDatabase importById(@NotNull String databaseId, List<InputResource<?>> inputResources, int bufferSize) {
+    public SearchableDatabase importById(@NotNull String databaseId, @NotNull List<InputResource<?>> inputResources, @Nullable BioTransformerParameters bioTransformerParameters, int bufferSize) {
         CustomDatabase db = CustomDatabases.getCustomDatabaseByName(databaseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Database with id '" + databaseId + "' does not exist."));
 
@@ -91,8 +92,9 @@ public class ChemDbServiceImpl implements ChemDbService {
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
         SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(
-                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache, bufferSize))
-                .takeResult();
+                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache,
+                bufferSize, bioTransformerParameters != null ? bioTransformerParameters.toSettings() : null)
+        ).takeResult();
 
         return SearchableDatabases.of(db);
 

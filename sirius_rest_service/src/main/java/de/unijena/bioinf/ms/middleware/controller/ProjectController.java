@@ -139,8 +139,8 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importMsRunDataAsJob(@PathVariable String projectId,
-                                    @RequestBody MultipartFile[] inputFiles,
-                                    LcmsSubmissionParameters parameters,
+                                    @RequestPart MultipartFile[] inputFiles,
+                                    @RequestPart LcmsSubmissionParameters parameters,
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
@@ -165,8 +165,8 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(@PathVariable String projectId,
-                                        @RequestBody MultipartFile[] inputFiles,
-                                        LcmsSubmissionParameters parameters
+                                        @RequestPart MultipartFile[] inputFiles,
+                                        @RequestPart LcmsSubmissionParameters parameters
     ) {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
@@ -252,7 +252,7 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importPreprocessedDataAsJob(@PathVariable String projectId,
-                                           @RequestBody MultipartFile[] inputFiles,
+                                           @RequestPart MultipartFile[] inputFiles,
                                            @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
@@ -275,7 +275,7 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importPreprocessedData(@PathVariable String projectId,
-                                               @RequestBody MultipartFile[] inputFiles,
+                                               @RequestPart MultipartFile[] inputFiles,
                                                @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {

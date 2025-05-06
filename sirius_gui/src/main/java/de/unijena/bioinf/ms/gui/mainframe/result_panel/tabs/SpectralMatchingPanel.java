@@ -21,47 +21,65 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
+import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URI;
 
-import static de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel.*;
 
 public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
-
 
     private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
     @NotNull
     private final LoadablePanel loadablePanel;
 
-
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
 
-        this.spectraVisualizationPanel = new SpectraVisualizationPanel(MS2_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY, MS2_MERGED_DISPLAY);
+        this.spectraVisualizationPanel = new SpectraVisualizationPanel(matchList.getGui(), matchList.getSelectedElement());
         this.tableView = new SpectralMatchingTableView(matchList);
-        this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
-            DefaultEventSelectionModel<SpectralMatchBean> selections = (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource();
-            selections.getSelected().stream().findFirst().ifPresentOrElse(
-                    matchBean ->
-                            matchList.readDataByConsumer(instanceBean ->
-                                    spectraVisualizationPanel.resultsChanged(instanceBean, matchList, matchBean)),
-                    spectraVisualizationPanel::clear);
-        });
+
+        this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> (
+                (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
+                .ifPresentOrElse(matchBean ->
+                                matchList.readDataByConsumer(instanceBean ->
+                                        spectraVisualizationPanel.updateSelectedSpectralMatch(
+                                                instanceBean != null ? instanceBean.getFeatureId() : null,
+                                                matchBean.getMatch().getSpecMatchId())),
+                        () -> matchList.readDataByConsumer(instanceBean ->
+                                spectraVisualizationPanel.updateSelectedSpectralMatch(
+                                        instanceBean != null ? instanceBean.getFeatureId() : null, null))));
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
         major.setDividerLocation(250);
         loadablePanel = new LoadablePanel(major);
         add(loadablePanel, BorderLayout.CENTER);
         matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
+    }
+
+    private static class SpectraVisualizationPanel extends JCefBrowserPanel {
+
+        public SpectraVisualizationPanel(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean) {
+            super(makeUrl(siriusGui, matchBean), siriusGui);
+        }
+
+        private static String makeUrl(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean){
+            String fid = matchBean != null ? matchBean.getInstance().getFeatureId() : null;
+            String mid = matchBean != null ? matchBean.getMatch().getSpecMatchId() : null;
+            return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/libmatch")
+                    + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, mid);
+        }
     }
 
     @Override
@@ -79,5 +97,4 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
                 + "For the selected match in the upper panel, the bottom panel shows a comparison of the experimental and reference spectrum."
                 + "</html>";
     }
-
 }

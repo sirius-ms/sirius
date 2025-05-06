@@ -19,15 +19,15 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 public class OpenQuickstartDocumentationAction extends OpenInDocsAction {
-    public OpenQuickstartDocumentationAction(Frame popupOwner) {
-        super("Quick Start", "quick-start", popupOwner);
+    public OpenQuickstartDocumentationAction(SiriusGui gui) {
+        super("Quick Start", "quick-start", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.ROCKET.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Open quick-start guide.");
     }

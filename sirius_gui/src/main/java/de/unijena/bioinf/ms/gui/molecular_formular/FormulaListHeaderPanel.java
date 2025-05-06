@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.molecular_formular;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 31.01.17.
- */
 
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfo;
@@ -32,7 +27,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class FormulaListHeaderPanel extends JPanel {
     private FormulaListCompactView formulaListCompactView;

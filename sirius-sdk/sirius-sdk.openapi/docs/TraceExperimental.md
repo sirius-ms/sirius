@@ -12,6 +12,7 @@ EXPERIMENTAL: This schema is experimental and may be changed (or even removed) w
 |**sampleId** | **String** |  |  [optional] |
 |**sampleName** | **String** |  |  [optional] |
 |**label** | **String** |  |  [optional] |
+|**color** | **String** |  |  [optional] |
 |**intensities** | **List&lt;Double&gt;** |  |  [optional] |
 |**annotations** | [**List&lt;TraceAnnotationExperimental&gt;**](TraceAnnotationExperimental.md) |  |  [optional] |
 |**mz** | **Double** |  |  [optional] |

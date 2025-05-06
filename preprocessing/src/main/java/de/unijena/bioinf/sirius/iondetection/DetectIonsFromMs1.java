@@ -55,7 +55,7 @@ public class DetectIonsFromMs1 implements AdductDetection {
             } else return null;
         }
 
-        Spectrums.normalizeToMax(mutableSpectrum, 100d);
+        Spectrums.normalize(mutableSpectrum, Normalization.Max(100d));
         Spectrums.applyBaseline(mutableSpectrum, 1d);
 //        //changed
         Spectrums.filterIsotpePeaks(mutableSpectrum, dev.massDifferenceDeviation, 0.3, 1, 5, new ChemicalAlphabet());
