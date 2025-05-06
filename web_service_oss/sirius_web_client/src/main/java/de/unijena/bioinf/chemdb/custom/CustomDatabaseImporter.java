@@ -39,7 +39,9 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.chemdb.SpectraLibraryUpdateManager;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
+import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -49,6 +51,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.inchi.InChIGenerator;
+import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
@@ -93,8 +97,10 @@ public class CustomDatabaseImporter {
     //todo we should estimate this based on the file format instead.
     private static final int BYTE_EQUIVALENTS = 52428;
 
+    private final BioTransformerSettings bioTransformerSettings;
+
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize, BioTransformerSettings bioTransformerSettings) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
@@ -109,6 +115,14 @@ public class CustomDatabaseImporter {
         smilesGen = SmilesGenerator.generic().aromatic();
         smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
         smilesParser.kekulise(true);
+
+        this.bioTransformerSettings = bioTransformerSettings;
+
+    }
+
+    public InChIGenerator generateInChI(IAtomContainer container) throws CDKException {
+        InChIGeneratorFactory factory = InChIGeneratorFactory.getInstance();
+        return factory.getInChIGenerator(container);
     }
 
     private void throwIfShutdown() {
@@ -123,20 +137,37 @@ public class CustomDatabaseImporter {
 
     public synchronized void updateStatistics() throws IOException {
         synchronized (database) {
+            log.info("Updating database statistics...");
+
             // update tags & statistics
             database.toSpectralLibrary()
                     .ifPresent(sl -> {
                         try {
-                            database.getStatistics().spectra().set(sl.countAllSpectra());
+                            long spectraCount = sl.countAllSpectra();
+                            log.info("Found " + spectraCount + " spectra in database");
+                            database.getStatistics().spectra().set(spectraCount);
                         } catch (IOException e) {
+                            log.error("Error counting spectra", e);
                             throw new RuntimeException(e);
                         }
                     });
 
-            database.database.updateTags(null, -1);
-            database.getStatistics().compounds().set(database.database.countAllFingerprints());
-            database.getStatistics().formulas().set(database.database.countAllFormulas());
-            database.writeSettings();
+            try {
+                database.database.updateTags(null, -1);
+                long compoundCount = database.database.countAllFingerprints();
+                long formulaCount = database.database.countAllFormulas();
+
+                log.info("Found " + compoundCount + " compounds and " + formulaCount + " formulas in database");
+
+                database.getStatistics().compounds().set(compoundCount);
+                database.getStatistics().formulas().set(formulaCount);
+                database.writeSettings();
+
+                log.info("Database statistics updated successfully");
+            } catch (Exception e) {
+                log.error("Error updating database statistics", e);
+                throw e;
+            }
         }
     }
 
@@ -305,10 +336,10 @@ public class CustomDatabaseImporter {
         }
     }
 
+
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
         synchronized (spectraBuffer) {
             spectraBuffer.addAll(spectra);
-//            for (Listener l : listeners) l.newSpectra(spectraBuffer.size());
             if (spectraBuffer.size() > specBufferSize)
                 flushSpectraBuffer();
         }
@@ -369,7 +400,20 @@ public class CustomDatabaseImporter {
                             log.error("Error when flushing molecule. Skipping: {} - {}", c.ids, c.name, e);
                         }
                     }
+                    checkCancellation();
 
+                    if (bioTransformerSettings != null) {
+                        try {
+                            log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
+                            timer.startTask("BioTransformer");
+                            applyBiotransformations(key2DToComp);
+                            log.info("After transformation, molecule buffer contains {} unique molecules. BioTransformer took: {}", key2DToComp.size(), timer.endTask());
+
+                        } catch (ExecutionException e) {
+                            timer.endTask();
+                            log.warn("BioTransformer completed with Error: {}", e.getMessage());
+                        }
+                    }
                     checkCancellation();
 
                     try {
@@ -419,6 +463,84 @@ public class CustomDatabaseImporter {
                     throw new RuntimeException("Database import failed!", e);
                 } finally {
                     moleculeBuffer.clear();
+                }
+            }
+        }
+    }
+
+
+    private void applyBiotransformations(final ConcurrentHashMap<String, Comp> key2DToComp) throws ExecutionException {
+        if (bioTransformerSettings != null) {
+            BioTransformerJJob job = new BioTransformerJJob(bioTransformerSettings);
+            job.setSubstrates(key2DToComp.values().stream()
+                    .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
+                    .toList()
+            );
+
+
+            log.debug("Submitting BioTransformerJJob to job manager");
+            List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+
+            // 2. Transformations in Molecule konvertieren
+            List<Molecule> transformedMolecules = transformationResults.stream()
+                    // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
+                    .flatMap(result -> result.biotranformations().stream()) // Verwende die neue Methode
+                    // Konvertiere jeden IAtomContainer in ein Molecule
+                    .flatMap(bioTransformation -> {
+                        IAtomContainer parent = bioTransformation.getSubstrates().iterator().next();
+                        Comp parentCompound = null;
+                        try {
+                            //todo would be nicer to store the mapping instead of loading inchi again
+                            InChI inchi = InChISMILESUtils.getInchi(parent, false);
+                            parentCompound = key2DToComp.get(inchi.key2D());
+                        } catch (CDKException e) {
+                            log.error("Error when building inchi from BiotTanformer substrate.", e);
+                        }
+
+                        final String parentName = parentCompound != null && parentCompound.molecule.getName() != null ? parentCompound.molecule.getName() : "Unknown";
+
+                        return bioTransformation.getProducts().stream().map(container -> {
+                            try {
+                                // Die Logik zur Erstellung von Molecule bleibt gleich
+                                InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
+                                String inchiValue = inchiGenerator.getInchi();
+                                String inchiKey = inchiGenerator.getInchiKey();
+                                String smilesValue = smilesGen.create(container);
+
+                                Molecule molecule = new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
+                                molecule.name = String.format("BT-%s: %s [%s]", bioTransformation.getBioSystemName(), parentName, bioTransformation.getReactionType());
+
+                                return molecule;
+                            } catch (CDKException e) {
+                                // Passende Fehlerbehandlung, hier RuntimeException wie im Original
+                                throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                            }
+                        });
+                    }).toList();
+
+
+            // 3. Deduplikation basierend auf InChIKey-2D
+            for (Molecule newMolecule : transformedMolecules) {
+                try {
+                    final InChI inchi = newMolecule.inchi;
+                    final String key2d = inchi.key2D(); // InChIKey-2D als Schlüssel
+                    if (key2DToComp.containsKey(key2d)) {
+                        // Wenn Molekül bereits existiert, IDs zusammenfügen und Namen vergleichen
+                        Comp existingComp = key2DToComp.get(key2d);
+                        existingComp.molecule.ids.addAll(newMolecule.ids);
+                        if ((newMolecule.name != null && !newMolecule.name.isBlank()) &&
+                                (existingComp.molecule.name == null || existingComp.molecule.name.isBlank() ||
+                                        existingComp.molecule.name.length() > newMolecule.name.length())) {
+                            existingComp.molecule.name = newMolecule.name; // Kürzeren oder besseren Namen übernehmen
+                        }
+                    } else {
+                        // Neues Molekül hinzufügen
+                        Comp newComp = new Comp(newMolecule);
+                        key2DToComp.put(key2d, newComp);
+                    }
+                } catch (IllegalArgumentException e) {
+                    // Fehlerhafte Moleküle ignorieren, aber loggen
+                    log.error("Error deduplicating molecule. Skipping: {} - {}", newMolecule.ids, newMolecule.name, e);
                 }
             }
         }
@@ -592,15 +714,15 @@ public class CustomDatabaseImporter {
     @Getter
     public static class Molecule {
         @NotNull
-        private final InChI inchi;
+        final InChI inchi;
         @NotNull
-        private final Smiles smiles;
-        private final Set<String> ids = new HashSet<>();
-        private String name = null;
+        final Smiles smiles;
+        final Set<String> ids = new HashSet<>();
+        String name = null;
         @NotNull
-        private final IAtomContainer container;
+        final IAtomContainer container;
 
-        private Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
+        Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
             this.container = container;
             this.smiles = smiles;
             this.inchi = inchi;
@@ -704,8 +826,8 @@ public class CustomDatabaseImporter {
             @Nullable CustomDatabaseImporter.Listener listener,
             @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
             @Nullable IFingerprinterCache ifpCache,
-            int bufferSize
-
+            int bufferSize,
+            BioTransformerSettings bioTransformerSettings
     ) {
         return new BasicJJob<Boolean>() {
             CustomDatabaseImporter importer;
@@ -713,7 +835,7 @@ public class CustomDatabaseImporter {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize);
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize, bioTransformerSettings);
                 if (listener != null)
                     importer.addListener(listener);
                 importToDatabase(spectrumFiles, structureFiles, importer);
