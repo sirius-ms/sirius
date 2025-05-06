@@ -24,7 +24,7 @@ import static de.unijena.bioinf.ms.gui.utils.GuiUtils.MEDIUM_GAP;
 import static de.unijena.bioinf.ms.gui.utils.GuiUtils.SMALL_GAP;
 import static java.awt.event.ItemEvent.SELECTED;
 
-public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerOptions> {
+public class BiotransformerConfigPanel extends SubToolConfigPanel<BioTransformerOptions> {
     public static final java.util.List<MetaboTransWrapper> OVERALL_TRANSFORMATIONS = makeOverallTransformations();
     private final JComboBox<MetaboTransWrapper> transformationModes;
     private final JComboBox<Cyp450ModeWrapper> cypModeBox;
@@ -46,7 +46,7 @@ public class BiotranformerConfigPanel extends SubToolConfigPanel<BioTransformerO
             Stream.of(MetaboTransWrapper.NONE)
     ).toList();
 
-    public BiotranformerConfigPanel() {
+    public BiotransformerConfigPanel() {
         super(BioTransformerOptions.class);
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createEmptyBorder());
