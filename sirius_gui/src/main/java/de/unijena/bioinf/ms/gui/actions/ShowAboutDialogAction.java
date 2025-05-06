@@ -37,6 +37,6 @@ public class ShowAboutDialogAction extends AbstractGuiAction {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        new AboutDialog(mainFrame,false);
+        new AboutDialog(gui,false);
     }
 }

@@ -81,8 +81,8 @@ public class NoSQLProjectTest {
 
     @Test
     public void testCompounds() {
-        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
-        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
+        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
 
         ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
         ms2.setMsLevel(2);
@@ -140,8 +140,8 @@ public class NoSQLProjectTest {
 
     @Test
     public void testFeatures() {
-        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
-        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
+        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
 
         ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
         ms2.setMsLevel(2);

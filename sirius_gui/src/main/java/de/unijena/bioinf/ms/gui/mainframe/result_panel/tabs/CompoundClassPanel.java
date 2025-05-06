@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassDetailView;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassTableView;
@@ -51,12 +52,12 @@ public class CompoundClassPanel extends JPanel implements Loadable, PanelDescrip
 
     final JSplitPane sp;
     final LoadablePanel loadablePanel;
-    public CompoundClassPanel(CompoundClassList table, FormulaList siriusResultElements) {
+    public CompoundClassPanel(CompoundClassList table, FormulaList siriusResultElements, SiriusGui gui) {
         super(new BorderLayout());
 
         final CompoundClassTableView center = new CompoundClassTableView(table);
         center.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.Canopus_Predictions);
-        final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements);
+        final CompoundClassDetailView detail = new CompoundClassDetailView(siriusResultElements, gui);
         sp = new JSplitPane(JSplitPane.VERTICAL_SPLIT, detail, center);
         loadablePanel = new LoadablePanel(sp);
         add(loadablePanel, BorderLayout.CENTER);

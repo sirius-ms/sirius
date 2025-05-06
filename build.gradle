@@ -93,7 +93,7 @@ ext {
     jakarta_annotation_version = "3.0.0"
 
 
-    spring_boot_version = "3.4.0"
+    spring_boot_version = "3.4.5"
     springdoc_version = "2.6.0"
 
     junit_version = '5.11.4'
@@ -104,8 +104,6 @@ ext {
     ) as String)
 
     System.out.println("----> Following platform detected: " + siriusTargetPlatform)
-
-    javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
 
     //locations of runtime libraries
     //jre path relative tu app home

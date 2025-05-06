@@ -17,7 +17,11 @@ Spectrum model with peak annotations based on the fragmentation tree and Epimeth
 |**cosineQuery** | **Boolean** | True if spectrum is in cosine query normalized format.  Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra. |  |
 |**precursorPeak** | [**SimplePeak**](SimplePeak.md) |  |  [optional] |
 |**peaks** | [**List&lt;AnnotatedPeak&gt;**](AnnotatedPeak.md) | The peaks of this spectrum which might contain additional annotations such as molecular formulas. |  |
-|**absIntensityFactor** | **Double** | Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra) |  [optional] |
+|**absIntensityFactor** | **Double** | Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)  &lt;p&gt;  DEPRECATED: Spectra are always returned with raw intensities.  Use provided normalization factors to normalize on the fly. |  [optional] |
+|**maxNormFactor** | **Double** | Factor to convert absolute intensities to MAX norm. |  [optional] |
+|**sumNormFactor** | **Double** | Factor to convert absolute intensities to SUM norm. |  [optional] |
+|**l2NormFactor** | **Double** | Factor to convert absolute intensities to L2 (Euclidean) norm. |  [optional] |
+|**firstPeakNormFactor** | **Double** | Factor to convert absolute intensities to normalize intensities by first peak intensity. |  [optional] |
 |**spectrumAnnotation** | [**SpectrumAnnotation**](SpectrumAnnotation.md) |  |  [optional] |
 
 

@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
