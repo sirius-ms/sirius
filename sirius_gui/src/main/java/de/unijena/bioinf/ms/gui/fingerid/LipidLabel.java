@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
@@ -43,7 +44,7 @@ import java.util.Locale;
 public class LipidLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean> {
 
 
-
+    private final SiriusGui gui;
     public static URI makeLipidMapsFuzzySearchLink(String abbrev) {
         String encAbb = URLEncoder.encode(abbrev, StandardCharsets.UTF_8);
         return URI.create(String.format(Locale.US, "https://www.lipidmaps.org/data/structure/LMSDFuzzySearch.php?Name=%s&s=%s&SortResultsBy=Name", encAbb, encAbb));
@@ -85,6 +86,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
             }
         });
 
+        gui = source.getGui();
         source.addActiveResultChangedListener(this);
     }
 
@@ -123,7 +125,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
     private void open(URI uri) {
         if (uri != null) {
             try {
-                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), uri);
+                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), uri, gui);
             } catch (IOException e) {
                 LoggerFactory.getLogger(getClass()).error("Error when opening link '{}.", uri, e);
             }

@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -62,26 +61,14 @@ public class AnnotatedSpectrum extends AbstractSpectrum<AnnotatedPeak> {
     }
 
     public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec) {
-        this(spec, true);
+        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec),null);
     }
 
-    public AnnotatedSpectrum(@NotNull Spectrum<Peak> spec, boolean makeRelative) {
-        Double factor = null;
-        if (makeRelative) {
-            double maxInt = spec.getMaxIntensity();
-            if (maxInt > 1d){
-                factor = maxInt;
-                spec = Spectrums.getNormalizedSpectrum(spec, Normalization.Max);
-            }
-        }
-        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), factor, null);
+    public AnnotatedSpectrum(double[] masses, double[] intensities, @Nullable PeakAnnotation[] peakAnnotations) {
+        init(masses, intensities, peakAnnotations);
     }
 
-    public AnnotatedSpectrum(double[] masses, double[] intensities, @Nullable Double intFactor, @Nullable PeakAnnotation[] peakAnnotations) {
-        init(masses, intensities, intFactor, peakAnnotations);
-    }
-
-    protected void init(double[] masses, double[] intensities, @Nullable Double intFactor, @Nullable PeakAnnotation[] peakAnnotations) {
+    protected void init(double[] masses, double[] intensities, @Nullable PeakAnnotation[] peakAnnotations) {
         if (masses == null)
             throw new IllegalArgumentException("Masses are Null but must be non Null.");
         if (intensities == null)
@@ -99,7 +86,7 @@ public class AnnotatedSpectrum extends AbstractSpectrum<AnnotatedPeak> {
                 peaks.add(new AnnotatedPeak(masses[i], intensities[i], null));
         }
 
-        absIntensityFactor = intFactor;
+        computeNormalizationFactors();
     }
 
 

@@ -9108,7 +9108,32 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
+          },
+          "maxNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to MAX norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "sumNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to SUM norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "l2NormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to L2 (Euclidean) norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "firstPeakNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to normalize intensities by first peak intensity.",
             "format": "double",
             "nullable": true
           }
@@ -9419,7 +9444,32 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
+          },
+          "maxNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to MAX norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "sumNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to SUM norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "l2NormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to L2 (Euclidean) norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "firstPeakNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to normalize intensities by first peak intensity.",
             "format": "double",
             "nullable": true
           },
@@ -10839,6 +10889,9 @@
             "nullable": true
           },
           "label": {
+            "type": "string"
+          },
+          "color": {
             "type": "string"
           },
           "intensities": {

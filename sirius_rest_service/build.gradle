@@ -35,11 +35,9 @@ dependencies {
 
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
-    }
-
-//    implementation 'org.springframework.boot:spring-boot-starter-tomcat'
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    //thymeleaf to serve react app
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-jetty'
 
     //spring data for pagination and sorting

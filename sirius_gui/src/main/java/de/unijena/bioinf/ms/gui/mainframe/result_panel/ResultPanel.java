@@ -59,6 +59,7 @@ public class ResultPanel extends JTabbedPane {
     private final SiriusGui gui;
 
     private final FormulaOverviewPanel formulasTab;
+
     private LCMSViewerPanel lcmsTab;
     private final CandidateListDetailViewPanel structuresTab;
     private final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
@@ -67,6 +68,7 @@ public class ResultPanel extends JTabbedPane {
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
     private SpectralMatchingPanel spectralMatchingTab;
+    private final KendrickMassDefectPanel massDefectTab;
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
@@ -104,7 +106,6 @@ public class ResultPanel extends JTabbedPane {
         formulasTab = new FormulaOverviewPanel(siriusResultElements, gui);
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
-
         // fingerprint tab
         fingerprintList = null;
         try {
@@ -126,13 +127,12 @@ public class ResultPanel extends JTabbedPane {
         }
 
 
-
         // canopus tab
         compoundClassList = new CompoundClassList(siriusResultElements,
                 sre -> sre.getCanopusPrediction()
                         .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
                         .flatMap(List::stream).map(CompoundClassBean::new).toList());
-        canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements);
+        canopusTab = new CompoundClassPanel(compoundClassList, siriusResultElements, gui);
         FormulaListHeaderPanel formulaHeaderCanopus = new FormulaListHeaderPanel(siriusResultElements, canopusTab);
         formulaHeaderCanopus.addTutorialInformationToCompactView(SoftwareTourInfoStore.Canopus_Formulas);
         compoundClassList.addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
@@ -140,12 +140,10 @@ public class ResultPanel extends JTabbedPane {
         });
         addTab("Compound Classes", null, formulaHeaderCanopus, canopusTab.getDescription());
 
-
         // structure db search tab
         databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
         structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
-
 
         // combined denovo structure db search tabs
         combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
@@ -155,9 +153,11 @@ public class ResultPanel extends JTabbedPane {
 
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
-        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView, gui);
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
+        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
+        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
 
         //software tour listener
         addChangeListener(e -> {
@@ -172,7 +172,7 @@ public class ResultPanel extends JTabbedPane {
             } else if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
                 //canopus tab
                 checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
-            } else if (selectedComponent == structureAnnoTab && structureAnnoTab.hasData()) {
+            } else if (selectedComponent == structureAnnoTab && combinedStructureListSubstructureView.getSelectedElement() != null) {
                 //epimetheus tab
                 structureAnnoTab.initSoftwareTour(gui.getProperties());
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
@@ -230,7 +230,7 @@ public class ResultPanel extends JTabbedPane {
 
     private void addLcmsTab() {
         if (lcmsTab == null)
-            lcmsTab = new LCMSViewerPanel(siriusResultElements);
+            lcmsTab = new LCMSViewerPanel(gui, siriusResultElements);
 
         insertTab("LC-MS", null, lcmsTab, lcmsTab.getDescription(), 0);
     }

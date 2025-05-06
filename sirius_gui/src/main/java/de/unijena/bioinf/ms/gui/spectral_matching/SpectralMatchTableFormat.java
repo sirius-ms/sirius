@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.gui.spectral_matching;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import io.sirius.ms.sdk.model.BasicSpectrum;
+
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;

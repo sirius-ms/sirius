@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
@@ -61,10 +62,14 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
 
     protected JPanel container;
 
-    public CompoundClassDetailView(FormulaList siriusResultElements) {
+    protected SiriusGui gui;
+
+    public CompoundClassDetailView(FormulaList siriusResultElements, SiriusGui gui) {
         super();
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setAlignmentX(0f);
+        this.gui = gui;
+
         mainClassPanel = new JPanel();
         mainClassPanel.setAlignmentX(0f);
         mainClassPanel.setLayout(new WrapLayout(WrapLayout.LEFT));
@@ -101,7 +106,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                 Iterator<CompoundClass> it = compoundClasses.getClassyFireLineage().iterator();
                 while (it.hasNext()) {
                     CompoundClass cfClass =  it.next();
-                    mainClassPanel.add(new ClassifClass(cfClass, cfClass == mainClass));
+                    mainClassPanel.add(new ClassifClass(cfClass, cfClass == mainClass, gui));
                     if (it.hasNext()) {
                         final JLabel comp = new JLabel("\u203A");
 //                        comp.setBorder(BorderFactory.createEmptyBorder(3 * ClassifClass.PADDING, 0, 0, 0)); //roughly centered
@@ -115,7 +120,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             alternativeClassPanels.removeAll();
             if (compoundClasses.getClassyFireAlternatives() != null && !compoundClasses.getClassyFireAlternatives().isEmpty())
                 compoundClasses.getClassyFireAlternatives().
-                        forEach(cfClass -> alternativeClassPanels.add(new ClassifClass(cfClass, false)));
+                        forEach(cfClass -> alternativeClassPanels.add(new ClassifClass(cfClass, false, gui)));
 
             // npc panel
             npcPanel.removeAll();
@@ -213,6 +218,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
     protected static class ClassifClass extends JPanel implements MouseListener {
 
         protected final CompoundClass cfClass;
+        private final SiriusGui gui;
 
         protected TextLayout typeName, className;
         protected Rectangle classBox, typeBox;
@@ -222,10 +228,11 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         protected static final int PADDING = 4, SAFETY_DISTANCE = 4, GAP_TOP = 4;
         protected boolean main;
 
-        public ClassifClass(CompoundClass cfClass, boolean main) {
+        public ClassifClass(CompoundClass cfClass, boolean main, SiriusGui gui) {
             super();
             setToolTipText("<html><p>Probability: <b>" + (int) (Math.round(cfClass.getProbability() * 100)) + " %</b></p><p>" + cfClass.getDescription() + "</p>");
             this.main = main;
+            this.gui = gui;
             this.cfClass = cfClass;
             typeFont = Fonts.FONT_MEDIUM.deriveFont(10f);
             typeName = new TextLayout(cfClass.getLevel(), typeFont, new FontRenderContext(null, false, false));
@@ -278,7 +285,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
-                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())));
+                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), URI.create(String.format("http://classyfire.wishartlab.com/tax_nodes/C%07d", cfClass.getId())), gui);
             } catch (IOException ex) {
                 LoggerFactory.getLogger(CompoundClassDetailView.class).error("Failed to open webbrowser");
             }
