@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
