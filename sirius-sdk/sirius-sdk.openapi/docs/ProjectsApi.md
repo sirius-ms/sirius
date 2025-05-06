@@ -586,7 +586,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | Files to import into project.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
         try {
             ImportResult result = apiInstance.importMsRunData(projectId, inputFiles, parameters);
@@ -608,8 +608,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
-| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
+| **inputFiles** | **List&lt;File&gt;**| Files to import into project. | |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | |
 
 ### Return type
 
@@ -633,7 +633,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, optFields, inputFiles, parameters)
+> Job importMsRunDataAsJob(projectId, inputFiles, parameters, optFields)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -656,11 +656,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | Files to import into project.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | 
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, optFields, inputFiles, parameters);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, inputFiles, parameters, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -679,9 +679,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
+| **inputFiles** | **List&lt;File&gt;**| Files to import into project. | |
+| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
-| **parameters** | [**LcmsSubmissionParameters**](LcmsSubmissionParameters.md)|  | [optional] |
 
 ### Return type
 
@@ -847,7 +847,7 @@ No authorization required
 
 ## importPreprocessedData
 
-> ImportResult importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles)
+> ImportResult importPreprocessedData(projectId, inputFiles, ignoreFormulas, allowMs1Only)
 
 Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
 
@@ -870,11 +870,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to import into.
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to import into project
         Boolean ignoreFormulas = false; // Boolean | 
         Boolean allowMs1Only = true; // Boolean | 
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            ImportResult result = apiInstance.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
+            ImportResult result = apiInstance.importPreprocessedData(projectId, inputFiles, ignoreFormulas, allowMs1Only);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importPreprocessedData");
@@ -893,9 +893,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to import into. | |
+| **inputFiles** | **List&lt;File&gt;**| files to import into project | |
 | **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
 | **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 
@@ -919,7 +919,7 @@ No authorization required
 
 ## importPreprocessedDataAsJob
 
-> Job importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles)
+> Job importPreprocessedDataAsJob(projectId, inputFiles, ignoreFormulas, allowMs1Only, optFields)
 
 Import ms/ms data from the given format into the specified project-space as background job.
 
@@ -942,12 +942,12 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to import into.
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
         Boolean ignoreFormulas = false; // Boolean | 
         Boolean allowMs1Only = true; // Boolean | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
+            Job result = apiInstance.importPreprocessedDataAsJob(projectId, inputFiles, ignoreFormulas, allowMs1Only, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsJob");
@@ -966,10 +966,10 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to import into. | |
+| **inputFiles** | **List&lt;File&gt;**|  | |
 | **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
 | **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 

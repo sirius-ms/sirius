@@ -79,7 +79,7 @@ public class SearchableDatabasesApiTest {
                     TestSetup.getInstance().getDbImportStructures().toFile(),
                     TestSetup.getInstance().getDbImportSpectrum().toFile());
 
-                var db = instance.importIntoDatabase(databaseId, null, inputFiles);
+                var db = instance.importIntoDatabase(databaseId, inputFiles, 1000, null);
                 assertEquals(22, db.getNumberOfStructures());
                 assertEquals(1, db.getNumberOfReferenceSpectra());
 

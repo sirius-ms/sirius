@@ -61,6 +61,9 @@ dependencies {
 
     api 'org.jbibtex:jbibtex:1.0.17'
 
+    api project(":chemical_db_oss")
+    api project(":chemical_db_oss:chemdb_nitrite_oss")
+
     //test
     testImplementation project(":utils")
 //    testImplementation "com.bright-giant:sirius-test-data:1.0-SNAPSHOT"
