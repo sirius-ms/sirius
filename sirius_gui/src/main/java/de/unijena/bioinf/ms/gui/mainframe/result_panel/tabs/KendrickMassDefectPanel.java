@@ -24,12 +24,12 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
     }
 
     @Override
-    public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+    public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, long fullSize) {
         //selection change will also happen if list change affects selection
     }
 
     @Override
-    public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+    public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, long fullSize) {
         updateSelectedFeature(Optional.ofNullable(selected)
                 .map(List::getFirst).map(InstanceBean::getFeatureId).orElse(null));
     }
