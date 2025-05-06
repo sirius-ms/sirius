@@ -1620,14 +1620,17 @@
           }
         ],
         "requestBody": {
-          "description": "files to import into project",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1636,8 +1639,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1716,6 +1718,9 @@
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
@@ -1728,8 +1733,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1901,14 +1905,18 @@
           }
         ],
         "requestBody": {
-          "description": "Files to import into project.",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles",
+                  "parameters"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "Files to import into project.",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1920,8 +1928,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1979,14 +1986,18 @@
           }
         ],
         "requestBody": {
-          "description": "Files to import into project.",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles",
+                  "parameters"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "Files to import into project.",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1998,8 +2009,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -2842,28 +2852,33 @@
           }
         ],
         "requestBody": {
-          "description": "files to be imported",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "files to be imported",
                     "items": {
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "bioTransformerParameters": {
+                    "$ref": "#/components/schemas/BioTransformerParameters"
                   }
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Job of the import command to be executed.",
+            "description": "Meta-Infomation of the affected database after the import has been performed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10918,6 +10933,72 @@
           },
           "jobSubmission": {
             "$ref": "#/components/schemas/JobSubmission"
+          }
+        }
+      },
+      "BioTransformerParameters": {
+        "required": [
+          "bioTransformerSequenceSteps",
+          "cyp450Mode",
+          "p2Mode"
+        ],
+        "type": "object",
+        "properties": {
+          "cyp450Mode": {
+            "type": "string",
+            "description": "Specify the Phase I/Cyp450 mode for all provided BioTransformerSequenceSteps. Will only be applied to Steps that\n require the Cyp450 mode as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified\n that do not need the Cyp450 mode.",
+            "nullable": true,
+            "default": "COMBINED",
+            "enum": [
+              "RULE_BASED",
+              "CY_PRODUCT",
+              "COMBINED"
+            ]
+          },
+          "p2Mode": {
+            "type": "string",
+            "description": "Specify the Phase II mode for all provided BioTransformerSequenceSteps. Will only be applied to Steps that\n require the Phase II mode  as parameter. Can be null in cases where only BioTransformerSequenceSteps are specified\n that do not need the Phase II mode.",
+            "nullable": true,
+            "default": "BT_RULE_BASED",
+            "enum": [
+              "BT_RULE_BASED",
+              "P2_RULE_ONLY",
+              "COMBINED_RULES"
+            ]
+          },
+          "useDB": {
+            "type": "boolean",
+            "description": "\"Specify if you want to enable the retrieving from database (HMDB) feature.\"",
+            "default": true
+          },
+          "bioTransformerSequenceSteps": {
+            "type": "array",
+            "description": "Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can\n only be used as singletons (list size of one).",
+            "items": {
+              "$ref": "#/components/schemas/BioTransformerSequenceStep"
+            }
+          }
+        }
+      },
+      "BioTransformerSequenceStep": {
+        "type": "object",
+        "properties": {
+          "metabolicTransformation": {
+            "type": "string",
+            "enum": [
+              "PHASE_1_CYP450",
+              "EC_BASED",
+              "PHASE_2",
+              "HUMAN_GUT",
+              "ENV_MICROBIAL",
+              "ALL_HUMAN",
+              "ABIOTIC",
+              "HUMAN_CUSTOM_MULTI"
+            ]
+          },
+          "iterations": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

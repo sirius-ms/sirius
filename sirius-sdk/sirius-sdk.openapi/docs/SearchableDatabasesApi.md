@@ -410,7 +410,7 @@ No authorization required
 
 ## importIntoDatabase
 
-> SearchableDatabase importIntoDatabase(databaseId, bufferSize, inputFiles)
+> SearchableDatabase importIntoDatabase(databaseId, inputFiles, bufferSize, bioTransformerParameters)
 
 Start import of structure and spectra files into the specified database.
 
@@ -433,10 +433,11 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
+        List<File> inputFiles = Arrays.asList(); // List<File> | files to be imported
         Integer bufferSize = 1000; // Integer | 
-        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        BioTransformerParameters bioTransformerParameters = new BioTransformerParameters(); // BioTransformerParameters | 
         try {
-            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, bufferSize, inputFiles);
+            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, inputFiles, bufferSize, bioTransformerParameters);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabase");
@@ -455,8 +456,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **databaseId** | **String**| database to import into | |
+| **inputFiles** | **List&lt;File&gt;**| files to be imported | |
 | **bufferSize** | **Integer**|  | [optional] [default to 1000] |
-| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **bioTransformerParameters** | [**BioTransformerParameters**](BioTransformerParameters.md)|  | [optional] |
 
 ### Return type
 
@@ -475,7 +477,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Job of the import command to be executed. |  -  |
+| **200** | Meta-Infomation of the affected database after the import has been performed. |  -  |
 
 
 ## removeDatabase
