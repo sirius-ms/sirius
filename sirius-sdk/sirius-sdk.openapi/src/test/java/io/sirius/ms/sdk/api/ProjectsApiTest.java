@@ -159,7 +159,7 @@ public class ProjectsApiTest {
     public void importPreprocessedDataTest(String file, int expected) {
         Path f = TestSetup.getInstance().getDataDir().resolve(file);
         List<File> inputFiles = List.of(f.toFile());
-        instance.importPreprocessedData(project.getProjectId(), true, null, inputFiles);
+        instance.importPreprocessedData(project.getProjectId(), inputFiles, true, null);
 
         List<AlignedFeature> alignedFeatures = featureApiInstance.getAlignedFeatures(project.getProjectId(), false, null);
         assertNotNull(alignedFeatures);
@@ -173,7 +173,7 @@ public class ProjectsApiTest {
 
         File f = TestSetup.getInstance().getDataDir().resolve("Kaempferol.ms").toFile();
         List<File> files = Collections.nCopies(20, f);
-        instance.importPreprocessedData(projectId, true, null, files);
+        instance.importPreprocessedData(projectId, files, true, null);
 
         // delete all features
         List<String> allFeatureIds = featureApiInstance.getAlignedFeatures(projectId, false, null).stream().map(AlignedFeature::getAlignedFeatureId).toList();
