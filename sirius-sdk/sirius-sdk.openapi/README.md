@@ -39,6 +39,13 @@ Refer to the [OSSRH Guide](http://central.sonatype.org/pages/ossrh-guide.html) f
 Add this dependency to your project's POM:
 
 ```xml
+<repositories>
+  <repository>
+    <id>gitlab-maven</id>
+    <url>https://gitlab.com/api/v4/projects/66031889/packages/maven</url>
+  </repository>
+</repositories>
+
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
@@ -53,8 +60,9 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
-    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
+    maven {
+      url 'https://gitlab.com/api/v4/projects/66031889/packages/maven'
+    }
   }
 
   dependencies {
