@@ -78,7 +78,7 @@ public abstract class DoNotShowAgainDialog extends JDialog {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                         try {
-                            GuiUtils.openURL(DoNotShowAgainDialog.this, e.getURL().toURI());
+                            GuiUtils.openURLInSystemBrowserOrError(e.getURL().toURI());
                         } catch (Exception error) {
                             LoggerFactory.getLogger(this.getClass()).error(error.getMessage(), error);
                         }

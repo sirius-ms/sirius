@@ -124,7 +124,8 @@ public class StorageUtils {
                 exp.removeAnnotation(Smiles.class);
                 tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
             }
-            builder.mergedMSnSpectrum(exp.getMergedMs2Spectrum() == null ? Spectrums.from(tmpSpec) : exp.getMergedMs2Spectrum());
+            builder.mergedMSnSpectrum(exp.getMergedMs2Spectrum() == null ? Spectrums.from(tmpSpec.stream()
+                    .map(p -> new SimplePeak(p.getMass(), p.getSumIntensity())).toList()) : exp.getMergedMs2Spectrum());
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
 
@@ -152,10 +153,6 @@ public class StorageUtils {
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(exp.getIonMass()))
                 .charge((byte) charge)
-                //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
-//                .apexIntensity()
-//                .apexMass()
-//                .snr()
                 .build();
 
         AlignedFeatures alignedFeature = AlignedFeatures.singleton(feature, msData);

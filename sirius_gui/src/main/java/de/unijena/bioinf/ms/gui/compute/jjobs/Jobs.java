@@ -20,10 +20,12 @@
 package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.jjobs.SwingJJobContainer;
+import de.unijena.bioinf.jjobs.SwingJobManager;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
 import de.unijena.bioinf.sirius.Sirius;
-import javafx.application.Platform;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -31,7 +33,6 @@ import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
 import static de.unijena.bioinf.ms.gui.utils.loading.ProgressPanel.DEFAULT_PROGRESS_STRING;
@@ -125,53 +126,13 @@ public class Jobs { //todo convert to nonstatic class
         return LoadingBackroundTask.runInBackground(owner, title, indeterminateProgress, MANAGER(), task);
     }
 
-    /**
-     * Runs the specified {@link Runnable} on the
-     * JavaFX application thread and waits for completion.
-     *
-     * @param action the {@link Runnable} to run
-     * @throws NullPointerException if {@code action} is {@code null}
-     */
-    public static void runJFXAndWait(Runnable action) throws InterruptedException {
-        if (SwingUtilities.isEventDispatchThread())
-            LoggerFactory.getLogger(Jobs.class).warn("Calling blocking JFX thread from SwingEDT Thread! DEADLOCK possible!");
-        if (action == null)
-            throw new NullPointerException("action");
 
-        // run synchronously on JavaFX thread
-        if (Platform.isFxApplicationThread()) {
-            action.run();
-            return;
-        }
-
-        // queue on JavaFX thread and wait for completion
-        final CountDownLatch doneLatch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            try {
-                action.run();
-            } finally {
-                doneLatch.countDown();
-            }
-        });
-
-        doneLatch.await();
-    }
-
-    public static void runJFXLater(Runnable action) {
-//        if (SwingUtilities.isEventDispatchThread())
-//            LoggerFactory.getLogger(Jobs.class).warn("Calling JFX thread from SwingEDT Thread!");
-        Platform.runLater(action);
-    }
 
     public static void runEDTLater(Runnable action) {
-//        if (Platform.isFxApplicationThread())
-//            LoggerFactory.getLogger(Jobs.class).warn("Calling SwingEDT thread from JFXAppl Thread!");
         SwingUtilities.invokeLater(action);
     }
 
     public static void runEDTAndWait(Runnable action) throws InvocationTargetException, InterruptedException {
-        if (Platform.isFxApplicationThread())
-            LoggerFactory.getLogger(Jobs.class).warn("Calling blocking SwingEDT thread from JFXAppl Thread! DEADLOCK possible!");
         // run synchronously on SwingEDT thread
         if (SwingUtilities.isEventDispatchThread()) {
             action.run();
