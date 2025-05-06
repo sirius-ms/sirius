@@ -14,28 +14,28 @@ import java.util.Stack;
 public class BioTransformerOptions {
     @CommandLine.Option(names = "--cyp450Mode", description = """
             Specify the CYP450 prediction Mode:
-            (1) CypReact + BioTransformer rules (RULE_BASED)
-            (2) CyProduct only (CY_PRODUCT)
-            (3) Combined: CypReact + BioTransformer rules + CyProducts (COMBINED)."""
+            RULE_BASED: CypReact + BioTransformer rules
+            CY_PRODUCT: CyProduct only
+            COMBINED: CypReact + BioTransformer rules + CyProducts."""
             , defaultValue = "COMBINED", order = 301)
-    public Cyp450Mode cyp450Mode; // CYP450 Mode
+    public Cyp450Mode cyp450Mode;
 
 
-    @CommandLine.Option(names = "--p2Mode", description = "Specify the PhaseII prediction Mode here: 1) BioTransformer rules; 2)\n" +
-            " PhaseII predictor only; 3) Combined: PhaseII predictor + BioTransformer\n" +
-            " rules.\n" +
-            " Default mode is 1.\n", defaultValue = "BT_RULE_BASED",order = 315)
+    @CommandLine.Option(names = "--p2Mode", description = """
+            Specify the PhaseII prediction Mode:
+            BT_RULE_BASED: BioTransformer rules
+            P2_RULE_ONLY: PhaseII predictor only
+            COMBINED_RULES: PhaseII predictor + BioTransformer""", defaultValue = "BT_RULE_BASED", order = 315)
     private P2Mode p2Mode;
 
     //todo should we make some hack in biotransformer to remove dependency on hmdb mysql online db. We disable ist for now per default
-    @CommandLine.Option(names = "--useDB", description = "Please specify if you want to enable the retrieving from database\n" +
-            " feature.", defaultValue = "false", order = 313)
-    private boolean useDB; // Use the database flag
+    @CommandLine.Option(names = "--useDB", description = "Retrieving from HMDB.", defaultValue = "false", order = 313)
+    private boolean useDB;
 
     @CommandLine.Option(names = "--useSubstructure", description = "Please specify if you want use 2D structure (first 14 characters of InChIKey) when retrieving from database.", defaultValue = "true", hidden = true, order = 314)
-    private boolean useSubstructure; // Use the substructure flag
+    private boolean useSubstructure;
 
-    @CommandLine.ArgGroup(multiplicity = "1", exclusive = true, order = 309)
+    @CommandLine.ArgGroup(multiplicity = "1", order = 309)
     public BioTransformer bioTransformer;
 
 
@@ -74,9 +74,10 @@ public class BioTransformerOptions {
         private MetabolicTransformation metabolicTransformation;
 
 
-        @CommandLine.Option(names = {"--iterations"}, description = "The number of steps for the prediction. This option can be set by the\n" +
-                " user for the EC-based, CYP450, Phase II, and Environmental microbial\n" +
-                " biotransformers. The default value is 1.", defaultValue = "1", parameterConsumer = RangeValidator.class, order = 312)
+        @CommandLine.Option(names = {"--iterations"}, description = """
+                The number of steps for the prediction. This option can be set by the
+                 user for the EC-based, CYP450, Phase II, and Environmental microbial
+                 biotransformers. The default value is 1.""", defaultValue = "1", parameterConsumer = RangeValidator.class, order = 312)
         private int iterations; // Number of iterations
 
     }

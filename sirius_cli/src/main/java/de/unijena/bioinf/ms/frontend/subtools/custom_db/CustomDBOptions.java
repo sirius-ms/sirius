@@ -113,9 +113,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         }, order = 220)
         private List<Path> input;
 
-
-        //todo check heading and description
-        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Bio Transformations: %n|@", order = 300)
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Bio Transformations: %n|@", order = 150)
         private BioTransformerOptions bioTransformerOptions;
     }
 
