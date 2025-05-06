@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -33,13 +34,26 @@ public class SecurityConfig {
 
     @Value("${app.cors.methods:#{null}}")
     private String corsAllowedMethods;
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                if(corsAllowedOrigins!=null)
-                    registry.addMapping("/api/**").allowedOrigins(corsAllowedOrigins).allowedMethods(corsAllowedMethods.split(","));
+                if (corsAllowedOrigins != null)
+                    registry.addMapping("/api/**")
+                            .allowedOrigins(corsAllowedOrigins)
+                            .allowedMethods(corsAllowedMethods.split(","));
+            }
+
+            @Override
+            public void addResourceHandlers(ResourceHandlerRegistry registry) {
+                //assets for react views
+                registry.addResourceHandler("/assets/**")
+                        .addResourceLocations("classpath:/templates/sirius_java_integrated/assets/");
+
+                registry.addResourceHandler("/sirius_java_integrated/**")
+                        .addResourceLocations("classpath:/templates/sirius_java_integrated/");
             }
         };
     }

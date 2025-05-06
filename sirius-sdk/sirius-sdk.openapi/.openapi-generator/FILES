@@ -295,6 +295,7 @@ src/main/java/io/sirius/ms/sdk/model/Term.java
 src/main/java/io/sirius/ms/sdk/model/Timeout.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationExperimental.java
 src/main/java/io/sirius/ms/sdk/model/TraceAnnotationTypeExperimental.java
+src/main/java/io/sirius/ms/sdk/model/TraceExperimental.java
 src/main/java/io/sirius/ms/sdk/model/TraceSetExperimental.java
 src/main/java/io/sirius/ms/sdk/model/UseHeuristic.java
 src/main/java/io/sirius/ms/sdk/model/ValueType.java

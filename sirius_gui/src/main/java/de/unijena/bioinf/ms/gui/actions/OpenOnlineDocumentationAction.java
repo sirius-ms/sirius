@@ -19,15 +19,15 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 import javax.swing.*;
-import java.awt.*;
 
 
 public class OpenOnlineDocumentationAction extends OpenInDocsAction {
-    public OpenOnlineDocumentationAction(Frame popupOwner) {
-        super("Docs", popupOwner);
+    public OpenOnlineDocumentationAction(SiriusGui gui) {
+        super("Docs", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.HELP.derive(32,32));
         putValue(Action.SHORT_DESCRIPTION,"Open online documentation.");
     }

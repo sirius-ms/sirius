@@ -39,15 +39,14 @@ ext {
     }
 
     // configure infos for bundled JRE
-    jre_version = '21.0.5'
+    jre_version = '21.0.6'
     jre_major = jre_version.split("[.]")[0]
 
     // liberica config
-    jre_distributor_version = '21.0.5+11'
+    jre_distributor_version = 'b631.42'
     jre_mac_prefix = null
-    jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-    jre_download_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
-//
+    jre_fname = "jbr_jcef-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
+    jre_download_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
 }
 
 tasks.register('downloadRuntimeImage', Download) {
@@ -61,7 +60,7 @@ tasks.register('downloadRuntimeImage', Download) {
 tasks.register('extractRuntimeImage', ExtractRuntime) {
     dependsOn downloadRuntimeImage
     inputArchive = downloadRuntimeImage.dest
-    outputDir = file(downloadRuntimeImage.dest.absolutePath.replace((project.siriusTargetPlatform.isWin() ? '.zip' : '.tar.gz'), ''))
+    outputDir = file(downloadRuntimeImage.dest.absolutePath.replace('.zip', '').replace('.tar.gz', ''))
 }
 
 subprojects {
@@ -601,7 +600,7 @@ abstract class ExtractRuntime extends DefaultTask {
         project.copy {
             includeEmptyDirs = false
             if (project.siriusTargetPlatform.isWin()) {
-                from(project.zipTree(inputArchive)) {
+                from(project.tarTree(inputArchive)) {
                     eachFile { FileCopyDetails fcd ->
                         fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
                     }
