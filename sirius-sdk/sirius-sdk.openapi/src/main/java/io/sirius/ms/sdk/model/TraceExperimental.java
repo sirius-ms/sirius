@@ -45,6 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   TraceExperimental.JSON_PROPERTY_SAMPLE_ID,
   TraceExperimental.JSON_PROPERTY_SAMPLE_NAME,
   TraceExperimental.JSON_PROPERTY_LABEL,
+  TraceExperimental.JSON_PROPERTY_COLOR,
   TraceExperimental.JSON_PROPERTY_INTENSITIES,
   TraceExperimental.JSON_PROPERTY_ANNOTATIONS,
   TraceExperimental.JSON_PROPERTY_MZ,
@@ -65,6 +66,9 @@ public class TraceExperimental {
 
   public static final String JSON_PROPERTY_LABEL = "label";
   private String label;
+
+  public static final String JSON_PROPERTY_COLOR = "color";
+  private String color;
 
   public static final String JSON_PROPERTY_INTENSITIES = "intensities";
   private List<Double> intensities = new ArrayList<>();
@@ -185,6 +189,31 @@ public class TraceExperimental {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLabel(String label) {
     this.label = label;
+  }
+
+  public TraceExperimental color(String color) {
+    
+    this.color = color;
+    return this;
+  }
+
+   /**
+   * Get color
+   * @return color
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COLOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getColor() {
+    return color;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COLOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setColor(String color) {
+    this.color = color;
   }
 
   public TraceExperimental intensities(List<Double> intensities) {
@@ -366,6 +395,7 @@ public class TraceExperimental {
         Objects.equals(this.sampleId, traceExperimental.sampleId) &&
         Objects.equals(this.sampleName, traceExperimental.sampleName) &&
         Objects.equals(this.label, traceExperimental.label) &&
+        Objects.equals(this.color, traceExperimental.color) &&
         Objects.equals(this.intensities, traceExperimental.intensities) &&
         Objects.equals(this.annotations, traceExperimental.annotations) &&
         Objects.equals(this.mz, traceExperimental.mz) &&
@@ -376,7 +406,7 @@ public class TraceExperimental {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, sampleId, sampleName, label, intensities, annotations, mz, merged, normalizationFactor, noiseLevel);
+    return Objects.hash(id, sampleId, sampleName, label, color, intensities, annotations, mz, merged, normalizationFactor, noiseLevel);
   }
 
   @Override
@@ -387,6 +417,7 @@ public class TraceExperimental {
     sb.append("    sampleId: ").append(toIndentedString(sampleId)).append("\n");
     sb.append("    sampleName: ").append(toIndentedString(sampleName)).append("\n");
     sb.append("    label: ").append(toIndentedString(label)).append("\n");
+    sb.append("    color: ").append(toIndentedString(color)).append("\n");
     sb.append("    intensities: ").append(toIndentedString(intensities)).append("\n");
     sb.append("    annotations: ").append(toIndentedString(annotations)).append("\n");
     sb.append("    mz: ").append(toIndentedString(mz)).append("\n");

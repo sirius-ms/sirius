@@ -1565,14 +1565,17 @@
           }
         ],
         "requestBody": {
-          "description": "files to import into project",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "files to import into project",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1581,8 +1584,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1654,6 +1656,9 @@
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
@@ -1666,8 +1671,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1832,14 +1836,18 @@
           }
         ],
         "requestBody": {
-          "description": "Files to import into project.",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles",
+                  "parameters"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "Files to import into project.",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1851,8 +1859,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -1903,14 +1910,18 @@
           }
         ],
         "requestBody": {
-          "description": "Files to import into project.",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles",
+                  "parameters"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "Files to import into project.",
                     "items": {
                       "type": "string",
                       "format": "binary"
@@ -1922,8 +1933,7 @@
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -2704,28 +2714,33 @@
           }
         ],
         "requestBody": {
-          "description": "files to be imported",
           "content": {
             "multipart/form-data": {
               "schema": {
+                "required": [
+                  "inputFiles"
+                ],
                 "type": "object",
                 "properties": {
                   "inputFiles": {
                     "type": "array",
+                    "description": "files to be imported",
                     "items": {
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "bioTransformerParameters": {
+                    "$ref": "#/components/schemas/BioTransformerParameters"
                   }
                 }
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
-            "description": "Job of the import command to be executed.",
+            "description": "Meta-Infomation of the affected database after the import has been performed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8964,7 +8979,32 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
+          },
+          "maxNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to MAX norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "sumNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to SUM norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "l2NormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to L2 (Euclidean) norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "firstPeakNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to normalize intensities by first peak intensity.",
             "format": "double",
             "nullable": true
           }
@@ -9285,7 +9325,32 @@
           },
           "absIntensityFactor": {
             "type": "number",
-            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)",
+            "description": "Factor to convert relative intensities to absolute intensities.\n Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)\n \u003cp\u003e\n DEPRECATED: Spectra are always returned with raw intensities.\n Use provided normalization factors to normalize on the fly.",
+            "format": "double",
+            "nullable": true,
+            "deprecated": true
+          },
+          "maxNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to MAX norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "sumNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to SUM norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "l2NormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to L2 (Euclidean) norm.",
+            "format": "double",
+            "nullable": true
+          },
+          "firstPeakNormFactor": {
+            "type": "number",
+            "description": "Factor to convert absolute intensities to normalize intensities by first peak intensity.",
             "format": "double",
             "nullable": true
           },
@@ -10358,6 +10423,79 @@
           }
         }
       },
+      "BioTransformerParameters": {
+        "required": [
+          "bioTransformerSequenceSteps",
+          "cyp450Mode",
+          "p2Mode"
+        ],
+        "type": "object",
+        "properties": {
+          "cyp450Mode": {
+            "$ref": "#/components/schemas/Cyp450Mode"
+          },
+          "p2Mode": {
+            "$ref": "#/components/schemas/P2Mode"
+          },
+          "useDB": {
+            "type": "boolean",
+            "description": "\"Specify if you want to enable the retrieving from database (HMDB) feature.\"",
+            "default": true
+          },
+          "bioTransformerSequenceSteps": {
+            "type": "array",
+            "description": "Specify BioTransformerSequenceSteps to be applied to input structures. MultiStep MetabolicTransformations can\n only be used as singletons (list size of one).",
+            "items": {
+              "$ref": "#/components/schemas/BioTransformerSequenceStep"
+            }
+          }
+        }
+      },
+      "BioTransformerSequenceStep": {
+        "type": "object",
+        "properties": {
+          "metabolicTransformation": {
+            "$ref": "#/components/schemas/MetabolicTransformation"
+          },
+          "iterations": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Cyp450Mode": {
+        "type": "string",
+        "nullable": true,
+        "default": "COMBINED",
+        "enum": [
+          "RULE_BASED",
+          "CY_PRODUCT",
+          "COMBINED"
+        ]
+      },
+      "MetabolicTransformation": {
+        "type": "string",
+        "enum": [
+          "PHASE_1_CYP450",
+          "EC_BASED",
+          "PHASE_2",
+          "HUMAN_GUT",
+          "ENV_MICROBIAL",
+          "ALL_HUMAN",
+          "ABIOTIC",
+          "HUMAN_CUSTOM_MULTI"
+        ]
+      },
+      "P2Mode": {
+        "type": "string",
+        "nullable": true,
+        "default": "BT_RULE_BASED",
+        "enum": [
+          "BT_RULE_BASED",
+          "P2_RULE_ONLY",
+          "COMBINED_RULES"
+        ]
+      },
       "AccountCredentials": {
         "type": "object",
         "properties": {
@@ -10632,6 +10770,9 @@
             "nullable": true
           },
           "label": {
+            "type": "string"
+          },
+          "color": {
             "type": "string"
           },
           "intensities": {

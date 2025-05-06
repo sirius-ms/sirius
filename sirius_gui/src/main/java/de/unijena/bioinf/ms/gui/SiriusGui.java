@@ -24,11 +24,18 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.webView.JCefBrowserDialog;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import io.sirius.ms.sdk.SiriusClient;
 import lombok.Getter;
+import org.cef.CefApp;
+import org.cef.CefClient;
+import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
+import java.net.URI;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -41,11 +48,10 @@ import java.util.function.BiFunction;
 public class SiriusGui {
     static {
         GuiUtils.initUI();
-        //debug console
-//        WebConsoleListener.setDefaultListener((webView, message, lineNumber, sourceId) -> {
-//            System.err.println("WEBVIEW: " + message + "[at " + lineNumber + "]");
-//        });
     }
+
+
+    private final CefApp cefApp;
 
     @Getter
     private final GuiProperties properties;
@@ -64,9 +70,10 @@ public class SiriusGui {
         return siriusClient;
     }
 
-    public SiriusGui(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull ConnectionMonitor connectionMonitor) {
+    public SiriusGui(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull ConnectionMonitor connectionMonitor, @NotNull CefApp cefApp) {
         this.connectionMonitor = connectionMonitor;
         this.siriusClient = siriusClient;
+        this.cefApp = cefApp;
         properties = new GuiProperties();
         projectManager = new GuiProjectManager(projectId, this.siriusClient, properties, this);
         mainFrame = new MainFrame(this);
@@ -91,4 +98,30 @@ public class SiriusGui {
     public <R> R applySiriusClient(BiFunction<SiriusClient, String, R> doWithProject) {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
     }
+
+    public CefClient newClient(){
+        return cefApp.createClient();
+    }
+
+    public CefBrowser newBrowser(String url){
+        return newBrowser(url, false);
+    }
+
+    public CefBrowser newBrowser(String url, boolean transparent){
+        return cefApp.createClient().createBrowser(url,  false, transparent);
+    }
+
+    public JDialog newBrowserPopUp(Frame owner, String title, URI url) {
+        return new JCefBrowserDialog(owner, title, url, newClient());
+    }
+
+    public JDialog newBrowserPopUp(Dialog owner, String title, URI url) {
+
+        return new JCefBrowserDialog(owner, title, url, newClient());
+    }
+
+    public JDialog newBrowserPopUp(String title, URI url) {
+        return new JCefBrowserDialog(getMainFrame(), title, url, newClient());
+    }
+
 }

@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.auth.UserPortal;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
@@ -29,7 +30,6 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.nio.file.Path;
@@ -39,19 +39,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @Slf4j
-public class ExplorerLicRegisterAction extends AbstractAction {
-    protected final Frame popupOwner;
+public class ExplorerLicRegisterAction extends AbstractGuiAction {
 
-    public ExplorerLicRegisterAction(Frame popupOwner) {
-        super("Register Explorer");
+    public ExplorerLicRegisterAction(SiriusGui gui) {
+        super("Register Explorer", gui);
         putValue(Action.SHORT_DESCRIPTION, "Check for an active MassHunter Explorer license on this PC and request the corresponding SIRIUS subscription.");
-        this.popupOwner = popupOwner;
+
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            ResultMessage resultMessage = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for Explorer license...", () -> {
+            ResultMessage resultMessage = Jobs.runInBackgroundAndLoad(mainFrame, "Checking for Explorer license...", () -> {
                 Path siriusHome = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.homeDir"));
                 Path checkerExe = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.explorer.licenseChecker", null, "ExplorerLicTester/ExplorerLicTester.exe"));
 
@@ -71,7 +70,7 @@ public class ExplorerLicRegisterAction extends AbstractAction {
                         .map(k -> k.split(":")[1]).orElse(null);
 
                 if (licenseInfo != null && licenseInfo.length() > 20) { //information should be much longer than 20 chars.
-                    GuiUtils.openURL(popupOwner, UserPortal.explorerLicURL(licenseInfo), "Register Explorer License", true);
+                    GuiUtils.openURL(mainFrame, UserPortal.explorerLicURL(licenseInfo), "Register Explorer License", gui, true);
                     return new ResultMessage(true);
                 } else {
                     return new ResultMessage(false, Stream.of(
@@ -86,11 +85,11 @@ public class ExplorerLicRegisterAction extends AbstractAction {
             }).awaitResult();
             if (!resultMessage.success) {
                 log.warn(String.join(" | ", resultMessage.message));
-                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on your system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
+                new WarningDialog(mainFrame, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on your system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
             }
         } catch (ExecutionException ex) {
             log.error("Error when checking for MassHunter Explorer license.", ex);
-            new ExceptionDialog(popupOwner, GuiUtils.formatToolTip("Error when checking for MassHunter Explorer license. Error: " + ex.getMessage(), " For details, please see the 'Log' in the top-right corner."));
+            new ExceptionDialog(mainFrame, GuiUtils.formatToolTip("Error when checking for MassHunter Explorer license. Error: " + ex.getMessage(), " For details, please see the 'Log' in the top-right corner."));
         }
     }
 

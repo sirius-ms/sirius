@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <title>SiriusJavaIntegrated</title>
+  <base href="/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!--
+  Configuration script for providing API base URL from spring boot server
+  via thymeleaf templating.
+  [OPTIONAL] Also runs without templating engine.
+  -->
+  <script th:inline="javascript">
+    window.APP_CONFIG = {
+      apiBaseUrl: /*[[${apiBaseUrl}]]*/ null
+    };
+  </script>
+  <script type="module" crossorigin src="/assets/index-D1z3177x.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C4jpOdzd.css">
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

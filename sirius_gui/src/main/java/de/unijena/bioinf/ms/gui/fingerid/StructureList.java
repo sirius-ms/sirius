@@ -24,6 +24,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
@@ -57,6 +58,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
      * Required since InstanceBean has some information (expansive search) that is specific to the database structures)
      */
     private final boolean hasDenovoStructureCandidates;
+
+    public SiriusGui getGui() {
+        return compoundList.getGui();
+    }
 
     public StructureList(final CompoundList compoundList, IOFunctions.QuadIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean hasDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
