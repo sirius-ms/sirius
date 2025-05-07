@@ -57,4 +57,9 @@ public class WebAppController {
     public String treeViewerJs() {
         return "forward:/sirius_java_integrated/treeViewer.js";
     }
+
+    @GetMapping({"/Roboto-Regular.woff2"})
+    public String robotoRegularFont() {
+        return "forward:/sirius_java_integrated/Roboto-Regular.woff2";
+    }
 }
