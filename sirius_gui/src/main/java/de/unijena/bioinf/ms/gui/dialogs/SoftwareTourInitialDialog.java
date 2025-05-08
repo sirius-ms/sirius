@@ -18,7 +18,7 @@ public class SoftwareTourInitialDialog extends QuestionDialog{
     @Override
     protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){
         super.decorateBodyPanel(boxedButtonPanel);
-        dontAsk.setText("Do not show this tour again");
+        dontAsk.setText("Do not show this tour again.");
         dontAskAnyTourAgain = new JCheckBox("Disable all tours (re-enable them via the settings).");
         dontAskAnyTourAgain.addActionListener(e -> {
             if (dontAskAnyTourAgain.isSelected()) dontAsk.setSelected(true);
