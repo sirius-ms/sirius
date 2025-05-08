@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourInitialDialog;
 import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourMessage;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
@@ -42,18 +42,18 @@ public class SoftwareTourUtils {
         }
 
     }
-    public static void checkAndInitTour(Container owner, String propertyKey, GuiProperties guiProperties) {
+    public static void checkAndInitTour(Container owner, String tutorialName, String propertyKey, GuiProperties guiProperties) {
         if (!owner.isShowing()) return; //not starting. Panel was probably decorated with data in the background
         if (guiProperties.isAskedTutorialThisSession(propertyKey)) return;
         else guiProperties.setTutorialKnownForThisSession(propertyKey);
 
-        checkAndInitTour(owner instanceof Window ? (Window) owner : SwingUtilities.getWindowAncestor(owner), owner, propertyKey);
+        checkAndInitTour(owner instanceof Window ? (Window) owner : SwingUtilities.getWindowAncestor(owner), owner, tutorialName, propertyKey);
     }
 
-    protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String propertyKey) {
+    protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String tutorialName, String propertyKey) {
         ToolTipManager.sharedInstance().setEnabled(false); //disable tool tips so they don't interfere with the tour
 
-        QuestionDialog askToStart = new QuestionDialog(windowOwner,"<html><body>Should I give you a quick tour of the interface?<br><br><small>(You can enable/disable all tours at once in the settings.)</small></body></html>", propertyKey, ReturnValue.Cancel);
+        SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
         if (askToStart.isSuccess()) {
             List<Component> allComponents = collectNestedComponents(windowOwner);
