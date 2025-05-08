@@ -76,7 +76,7 @@ public class SoftwareTourInfoStore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Note: we could add a separate tour for the advanced mode. But probably advance users don't need it?
     public static final SoftwareTourInfo BatchCompute_PresetDropDown = new SoftwareTourInfo("Presets specify the parameters of your workflow.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
-    //todo check if tour description and tool tip should be identical, or if one should be more comprehensive
+    public static final SoftwareTourInfo BatchCompute_GlobalConfig = new SoftwareTourInfo("These parameters apply to multiple tools below.<br>Selected databases are used for spectral library search and structure database search, and if specified for molecular formula annotation.", 2, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
     public static final SoftwareTourInfo BatchCompute_SpectraSearch = new SoftwareTourInfo("Activate to perform spectral library search.<br>Hits (including analogues) are used to improve formula annotation in ZODIAC<br>and can help to validate molecular structure hits from database search<br>or de novo generation.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Formula = new SoftwareTourInfo("Activate to compute molecular formulas.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_ZODIAC = new SoftwareTourInfo("Activate to optimize molecular formula annotations.<br>" +
