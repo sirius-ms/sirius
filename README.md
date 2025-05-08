@@ -146,7 +146,7 @@ Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
 
 David S Wishart , Siyang Tian , Dana Allen , Eponine Oler , Harrison Peters , Vicki W Lui , Vasuk Gautam , Yannick Djoumbou-Feunang , Russell Greiner , Thomas O Metz.
 [BioTransformer 3.0—a web server for accurately predicting metabolic transformation products](https://doi.org/10.1093/nar/gkac313)
-Nucleic Acids Research, 50(W1), W115–W123, 2022. (Cite if you are using: Biotransformer in structure database generation)
+Nucleic Acids Research, 50(W1), W115–W123, 2022. (Cite if you are using: Biotransformer for structure database generation)
 
 Shipei Xing, Sam Shen, Banghua Xu, Xiaoxiao Li and Tao Huan.
 [BUDDY: molecular formula discovery via bottom-up MS/MS interrogation.](https://doi.org/10.1038/s41592-023-01850-x)
