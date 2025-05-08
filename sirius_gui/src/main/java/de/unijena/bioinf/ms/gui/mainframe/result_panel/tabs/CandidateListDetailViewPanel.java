@@ -77,6 +77,6 @@ public class CandidateListDetailViewPanel extends JPanel implements PanelDescrip
     }
 
     public void initSoftwareTour(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DatabaseSearchTabTourKey, guiProperties);
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DatabaseSearchTabTourName, SoftwareTourInfoStore.DatabaseSearchTabTourKey, guiProperties);
     }
 }

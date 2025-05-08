@@ -271,6 +271,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //endregion
 
     private void checkAndInitSoftwareTour() {
-        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.MainFrameTourKey, gui.getProperties());
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.MainFrameTourName, SoftwareTourInfoStore.MainFrameTourKey, gui.getProperties());
     }
 }

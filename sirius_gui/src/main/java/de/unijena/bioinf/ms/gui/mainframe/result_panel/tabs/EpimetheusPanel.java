@@ -100,6 +100,6 @@ public class EpimetheusPanel extends JPanel implements Loadable, PanelDescriptio
     }
 
     public void initSoftwareTour(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.EpimetheusTabTourKey, guiProperties);
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.EpimetheusTabTourName, SoftwareTourInfoStore.EpimetheusTabTourKey, guiProperties);
     }
 }
