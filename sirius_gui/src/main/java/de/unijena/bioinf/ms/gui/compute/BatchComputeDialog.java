@@ -111,7 +111,7 @@ public class BatchComputeDialog extends JDialog {
             presetPanel.updateConnectionBanner(checkResult);
         });
 
-        Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
+        Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourName, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
 
         //finalize panel build and make the dialog visible
         setResizable(false);
