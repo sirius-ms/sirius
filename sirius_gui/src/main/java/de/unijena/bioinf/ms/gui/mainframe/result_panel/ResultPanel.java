@@ -178,7 +178,7 @@ public class ResultPanel extends JTabbedPane {
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
                 //database search tab
                 structuresTab.initSoftwareTour(gui.getProperties());
-            } else if (selectedComponent == deNovoStructuresTab && !combinedStructureListDeNovoView.getElementList().isEmpty()) {
+            } else if (selectedComponent == deNovoStructuresTab && combinedStructureListDeNovoView.getElementList().stream().anyMatch(c -> c.isDeNovo())) {
                 //de novo structures tab
                 deNovoStructuresTab.initSoftwareTour(gui.getProperties());
             }
@@ -193,19 +193,19 @@ public class ResultPanel extends JTabbedPane {
 
     private void checkAndInitCanopusSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
         if (instanceBean != null) {
-            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getCanopusPrediction(), SoftwareTourInfoStore.CanopusTabTourKey, gui);
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getCanopusPrediction(), SoftwareTourInfoStore.CanopusTabTourName, SoftwareTourInfoStore.CanopusTabTourKey, gui);
         }
     }
 
     private void checkAndInitFingerprintSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
         if (instanceBean != null) {
-            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getPredictedFingerprint(), SoftwareTourInfoStore.FingerprintTabTourKey, gui);
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getPredictedFingerprint(), SoftwareTourInfoStore.FingerprintTabTourName, SoftwareTourInfoStore.FingerprintTabTourKey, gui);
         }
     }
 
-    private void checkAndInitSoftwareTour(FormulaListHeaderPanel formulaHeader, Optional data, String tourKey, @NotNull SiriusGui gui) {
+    private void checkAndInitSoftwareTour(FormulaListHeaderPanel formulaHeader, Optional data, String tourName, String tourKey, @NotNull SiriusGui gui) {
         if (data.isPresent() && Objects.nonNull(data.get())) {
-            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeader, tourKey, gui.getProperties()));
+            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeader, tourName, tourKey, gui.getProperties()));
         }
     }
 
