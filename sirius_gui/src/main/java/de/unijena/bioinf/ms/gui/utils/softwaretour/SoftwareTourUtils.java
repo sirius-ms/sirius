@@ -53,7 +53,7 @@ public class SoftwareTourUtils {
     protected static void checkAndInitTour(Window windowOwner, Container tutorialRoot, String tutorialName, String propertyKey) {
         ToolTipManager.sharedInstance().setEnabled(false); //disable tool tips so they don't interfere with the tour
 
-        SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner,"<html><body>Should I give you a quick tour of the <b>"+tutorialName+"</b>?</body></html>", propertyKey, ReturnValue.Cancel);
+        SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
         if (askToStart.isSuccess()) {
             List<Component> allComponents = collectNestedComponents(windowOwner);

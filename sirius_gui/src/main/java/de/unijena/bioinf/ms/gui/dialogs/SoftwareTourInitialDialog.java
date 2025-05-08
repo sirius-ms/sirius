@@ -11,15 +11,15 @@ import java.awt.*;
 public class SoftwareTourInitialDialog extends QuestionDialog{
     protected JCheckBox dontAskAnyTourAgain;
 
-    public SoftwareTourInitialDialog(Window owner, String question, String propertyKey, @Nullable ReturnValue dontShowAgainReturn) {
-        super(owner, question, propertyKey, dontShowAgainReturn);
+    public SoftwareTourInitialDialog(Window owner, String tourName, String propertyKey) {
+        super(owner, "<html><body>Should I give you a quick tour of the <b>"+tourName+"</b>?</body></html>", propertyKey, ReturnValue.Cancel);
     }
 
     @Override
     protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){
         super.decorateBodyPanel(boxedButtonPanel);
         dontAsk.setText("Do not show this tour again.");
-        dontAskAnyTourAgain = new JCheckBox("Disable all tours (re-enable them via the settings).");
+        dontAskAnyTourAgain = new JCheckBox("Disable all tours (can be re-enabled in settings).");
         dontAskAnyTourAgain.addActionListener(e -> {
             if (dontAskAnyTourAgain.isSelected()) dontAsk.setSelected(true);
         });
