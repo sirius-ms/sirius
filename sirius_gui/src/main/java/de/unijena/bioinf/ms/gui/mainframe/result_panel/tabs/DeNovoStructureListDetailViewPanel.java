@@ -91,6 +91,6 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
     }
 
     public void initSoftwareTour(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DeNovoStructuresTabTourKey, guiProperties);
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.DeNovoStructuresTabTourName, SoftwareTourInfoStore.DeNovoStructuresTabTourKey, guiProperties);
     }
 }

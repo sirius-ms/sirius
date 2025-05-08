@@ -128,15 +128,8 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         });
 
         //software tour
-        JPanel softwareTourButtonPanel = new JPanel();
-        JButton disableTour = new JButton("Disable all");
-        JButton enableTour = new JButton("Enable all");
-        softwareTourButtonPanel.add(disableTour);
-        softwareTourButtonPanel.add(enableTour);
-        addNamed("Software tour", softwareTourButtonPanel);
-        disableTour.addActionListener(evt -> {
-            SoftwareTourUtils.disableAllTours();
-        });
+        JButton enableTour = new JButton("Enable all tours");
+        addNamed("Software tour", enableTour);
         enableTour.addActionListener(evt -> {
             SoftwareTourUtils.enableAllTours(gui.getProperties());
         });
