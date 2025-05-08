@@ -118,9 +118,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
     private final JComboBox<Strategy> strategyBox;
 
     /**
-     * We define a preferred width sind to prevent resizing during change of  values.
+     * We define a preferred width since to prevent resizing during change of  values.
      */
-    private static final int PANEL_WIDTH = 400;
+    private static final int PANEL_WIDTH_BATCH_MODE = 400;
+    private static final int PANEL_WIDTH_SINGLE_MODE = 500;
 
     public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
@@ -151,18 +152,20 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
 
-        setPreferredSize(new Dimension(PANEL_WIDTH, getPreferredSize().height));
-        setMaximumSize(new Dimension(PANEL_WIDTH, getMaximumSize().height));
+        setPreferredSize(new Dimension(getPanelWidth(), getPreferredSize().height));
+        setMaximumSize(new Dimension(getPanelWidth(), getMaximumSize().height));
     }
 
-
+    private int getPanelWidth() {
+        return isBatchDialog ? PANEL_WIDTH_BATCH_MODE : PANEL_WIDTH_SINGLE_MODE;
+    }
 
     private LoadablePanel createLoadablePanel() {
         JPanel content =  new JPanel(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10", "", ""));
 
         content.add(new JXTitledSeparator("Strategy"),"alignx left, aligny top, growx, wrap");
 
-        strategyBox.setPreferredSize(new Dimension(PANEL_WIDTH, strategyBox.getPreferredSize().height));
+        strategyBox.setPreferredSize(new Dimension(getPanelWidth(), strategyBox.getPreferredSize().height));
         content.add(strategyBox,"alignx left, aligny top, wrap");
         strategy = (Strategy) strategyBox.getSelectedItem();
 
