@@ -23,6 +23,9 @@ public class SoftwareTourInitialDialog extends QuestionDialog{
         dontAskAnyTourAgain.addActionListener(e -> {
             if (dontAskAnyTourAgain.isSelected()) dontAsk.setSelected(true);
         });
+        dontAsk.addActionListener(e -> {
+            if (!dontAsk.isSelected()) dontAskAnyTourAgain.setSelected(false);
+        });
         textContainer.add(dontAsk, 10, false);
         textContainer.add(dontAskAnyTourAgain);
     }
