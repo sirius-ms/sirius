@@ -16,8 +16,8 @@ class BioTransformerWrapperTest {
         String smiles = "CC(C)C1=CC=C(C)C=C1O";
         IAtomContainer molecule = InChISMILESUtils.getAtomContainerFromSmiles(smiles);
 
-        List<BioTransformation> result = BioTransformerWrapper.cyp450BTransformer(molecule, 1, Cyp450Mode.RULE_BASED, false, false);
-        assertEquals(6, result.size());
+        BioTransformerResult result = BioTransformerWrapper.cyp450BTransformer(molecule, 1, Cyp450Mode.RULE_BASED, false, false);
+        assertEquals(6, result.biotranformations().size());
     }
 
     @Test
@@ -32,7 +32,7 @@ class BioTransformerWrapperTest {
         String smiles = "CC(C)C1=CC=C(C)C=C1O";
         IAtomContainer molecule = InChISMILESUtils.getAtomContainerFromSmiles(smiles);
 
-        List<BioTransformation> result = BioTransformerWrapper.allHumanTransformer(molecule, steps, p2Mode, Cyp450Mode.COMBINED, useDB, useSub);
-        System.out.println("RESULTS: " + result.size());
+        BioTransformerResult result = BioTransformerWrapper.allHumanTransformer(molecule, steps, p2Mode, Cyp450Mode.COMBINED, useDB, useSub);
+        System.out.println("RESULTS: " + result.biotranformations().size());
     }
 }
