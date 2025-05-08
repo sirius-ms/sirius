@@ -16,6 +16,7 @@ public class SoftwareTourInfoStore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    //property keys
     public static final String MainFrameTourKey = "de.unijena.bioinf.sirius.ui.tutorial.mainFrame";
     public static final String BatchComputeTourKey = "de.unijena.bioinf.sirius.ui.tutorial.computeDialog";
 
@@ -25,6 +26,17 @@ public class SoftwareTourInfoStore {
     public static final String DatabaseSearchTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.databaseTab";
     public static final String DeNovoStructuresTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.deNovoStructuresTab";
     public static final String EpimetheusTabTourKey = "de.unijena.bioinf.sirius.ui.tutorial.epimetheusTab";
+
+    //names of each tour as shown in the dialog
+    public static final String MainFrameTourName = "main interface";
+    public static final String BatchComputeTourName = "compute dialog";
+
+    public static final String FormulaTabTourName = "molecular formula annotation tab";
+    public static final String FingerprintTabTourName = "predicted fingerprint tab";
+    public static final String CanopusTabTourName = "compound class annotation tab";
+    public static final String DatabaseSearchTabTourName = "structure database search tab";
+    public static final String DeNovoStructuresTabTourName = "de novo structure generation tab";
+    public static final String EpimetheusTabTourName = "substructure annotation and validation tab";
 
 
     //INCLUDE ALL TO TOUR KEYS HERE!
@@ -64,13 +76,13 @@ public class SoftwareTourInfoStore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Note: we could add a separate tour for the advanced mode. But probably advance users don't need it?
     public static final SoftwareTourInfo BatchCompute_PresetDropDown = new SoftwareTourInfo("Presets specify the parameters of your workflow.", 1, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
-    //todo check if tour description and tool tip should be identical, or if one should be more comprehensive
+    public static final SoftwareTourInfo BatchCompute_GlobalConfig = new SoftwareTourInfo("These parameters apply to multiple tools below.<br>Selected databases are used for spectral library search and structure database search, and if specified for molecular formula annotation.", 2, LocationHorizontal.LEFT_ALIGN_TO_RIGHT, LocationVertical.BELOW_BOTTOM);
     public static final SoftwareTourInfo BatchCompute_SpectraSearch = new SoftwareTourInfo("Activate to perform spectral library search.<br>Hits (including analogues) are used to improve formula annotation in ZODIAC<br>and can help to validate molecular structure hits from database search<br>or de novo generation.", 2, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Formula = new SoftwareTourInfo("Activate to compute molecular formulas.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_ZODIAC = new SoftwareTourInfo("Activate to optimize molecular formula annotations.<br>" +
                                                                     "This reranks molecular formula annotations from the previous step based on similarities between compounds in the whole dataset.<br>" +
                                                                     "This does not generate new annotations. Please, first read documentation on prerequisites before using this method.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
-    public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compounds classes.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
+    public static final SoftwareTourInfo BatchCompute_FingerprintCanopus = new SoftwareTourInfo("Activate to predict molecular fingerprints and compound classes.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_Fingerblast = new SoftwareTourInfo("Activate to perform structure database search.",  3, LocationHorizontal.RIGHT_SPACE, LocationVertical.CENTER);
     public static final SoftwareTourInfo BatchCompute_MsNovelist = new SoftwareTourInfo("Activate to annotate molecular structures independent of a database.<br>Molecular structures are generated based on the predicted molecular fingerprint.", 3, LocationHorizontal.LEFT_SPACE_TO_LEFT, LocationVertical.CENTER);
 
