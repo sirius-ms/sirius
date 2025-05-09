@@ -138,6 +138,9 @@ public class GuiServiceImpl implements GuiService {
         if (gui != null) {
             //todo change gui instance.
             System.out.println("Modifying gui instance not supported");
+            if (guiParameters.getFid() != null) {
+                gui.getMainFrame().getCompoundList().selectInstanceByFeatureId(guiParameters.getFid());
+            }
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }
