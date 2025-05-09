@@ -291,6 +291,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
         private CustomDatabase openExistingDB(String location, CdkFingerprintVersion version) throws IOException {
             CustomDatabase db = CustomDatabases.open(location, true, version);
+            if (!CustomDBPropertyUtils.getCustomDBs().containsKey(location)) {
+                CustomDBPropertyUtils.addDB(location, db.name());
+            }
             logInfo("Opened existing database" + db.name() + ".");
             return db;
         }
