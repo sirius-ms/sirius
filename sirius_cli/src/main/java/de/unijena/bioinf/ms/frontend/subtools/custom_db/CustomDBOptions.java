@@ -184,6 +184,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 logWarn("\n==> No location/name given! Exiting.\n");
                 return false;
             }
+            if (location != null && !Path.of(location).isAbsolute()) {
+                location = Path.of(location).toAbsolutePath().toString();
+            }
 
             checkForInterruption();
 
@@ -194,13 +197,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 name = existingDBs.get(location);
             } else if (existingDBs.containsValue(name)) {
                 location = CustomDBPropertyUtils.getLocationByName(existingDBs, name).orElseThrow();
-            } else {
-                if (location == null || location.isBlank()) {
-                    logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
-                    return false;
-                } else {
-                    isNewDb = true;
-                }
+            } else if (location == null || location.isBlank()) {
+                logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
+                return false;
+            } else if (!Files.exists(Path.of(location))) {
+                isNewDb = true;
             }
 
             CustomDatabase db = isNewDb
