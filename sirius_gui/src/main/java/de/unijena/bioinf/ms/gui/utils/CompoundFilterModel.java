@@ -96,6 +96,13 @@ public class CompoundFilterModel implements SiriusPCS {
     @Getter
     private BlankSubtraction blankSubtraction;
 
+    @Getter
+    /*
+    This is used to add a feature to the filtered list that may not pass the filter, e.g. when selecting the feature externally.
+    If a more comprehensive solution is required (e.g. allow multiple such features), just update it.
+     */
+    private String focussedFeatureId;
+
     /*
     min/max possible values
      */
@@ -256,6 +263,12 @@ public class CompoundFilterModel implements SiriusPCS {
 
     }
 
+    public void setFocussedFeatureId(String focussedFeatureId) {
+        String oldValue = this.focussedFeatureId;
+        this.focussedFeatureId = focussedFeatureId;
+        pcs.firePropertyChange("setFocussedFeatureId", oldValue, focussedFeatureId); //todo do we still need this?
+    }
+
     /**
      * filter options are active. that means selected values differ from absolute min/max
      *
@@ -366,6 +379,7 @@ public class CompoundFilterModel implements SiriusPCS {
         blankSubtraction.setCtrlSubtractionEnabled(false);
         blankSubtraction.setBlankSubtractionFoldChange(2.0);
         blankSubtraction.setCtrlSubtractionFoldChange(2.0);
+        setFocussedFeatureId(null);
     }
 
     public enum LipidFilter {

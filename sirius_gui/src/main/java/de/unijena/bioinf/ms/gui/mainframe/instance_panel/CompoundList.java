@@ -21,7 +21,10 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.event.ListEventListener;
+import ca.odell.glazedlists.matchers.AbstractMatcherEditorListenerSupport;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
+import ca.odell.glazedlists.matchers.Matcher;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
@@ -74,6 +77,7 @@ public class CompoundList {
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
+    final private MatcherEditor<InstanceBean> mainCompoundListMatchEditor;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
@@ -114,7 +118,27 @@ public class CompoundList {
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
 
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
-        backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
+        //todo adding matching of focussed feature
+        BasicEventList<MatcherEditor<InstanceBean>> listOfFilters2 = new BasicEventList<>();
+        listOfFilters2.add(compositeMatcherEditor);
+        listOfFilters2.add(new AbstractMatcherEditorListenerSupport<InstanceBean>() {
+            @Override
+            public Matcher<InstanceBean> getMatcher() {
+                return new Matcher<InstanceBean>() {
+                    @Override
+                    public boolean matches(InstanceBean item) {
+                        return item.getFeatureId().equals(compoundFilterModel.getFocussedFeatureId());
+                    }
+                };
+            }
+        });
+        CompositeMatcherEditor<InstanceBean> compositeMatcherEditor2 = new CompositeMatcherEditor<>(listOfFilters2);
+        compositeMatcherEditor2.setMode(CompositeMatcherEditor.OR);
+
+        mainCompoundListMatchEditor = compositeMatcherEditor2;
+
+
+        backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(mainCompoundListMatchEditor);
         filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
         compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
@@ -248,6 +272,11 @@ public class CompoundList {
         updateTogglesByActiveFilter();
     }
 
+    protected void addFocusFeature(String featureId) {
+        compoundFilterModel.setFocussedFeatureId(featureId);
+        compoundFilterModel.fireUpdateCompleted();
+    }
+
     private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
         //copy event is hell important to reset the iterator
         for (ExperimentListChangeListener l : listeners) {
@@ -286,4 +315,133 @@ public class CompoundList {
     public int getFullSize() {
         return sortedSource.size();
     }
+
+// *** MODIFIED METHOD START ***
+    /**
+     * Selects an InstanceBean in the list based on its featureId.
+     * If the instance is currently filtered out (i.e., not in {@link #compoundList} but present in {@link #sortedSource}),
+     * all active filters will be reset to ensure the instance becomes visible.
+     * Then, the instance will be selected in the UI.
+     *
+     * @param featureId The non-null featureId of the InstanceBean to find and select.
+     */
+    public void selectInstanceByFeatureId(@NotNull String featureId) {
+        InstanceBean targetInstance = null;
+
+        // 1. Search for the InstanceBean in the complete list (sortedSource).
+        // It's good practice to acquire a read lock if there's any chance of concurrent modification,
+        // though simple iteration is often safe with GlazedLists.
+        // sortedSource.getReadWriteLock().readLock().lock();
+        try {
+            for (InstanceBean bean : sortedSource) {
+                if (bean.getFeatureId().equals(featureId)) {
+                    targetInstance = bean;
+                    break;
+                }
+            }
+        } finally {
+            // sortedSource.getReadWriteLock().readLock().unlock();
+        }
+
+        if (targetInstance == null) {
+            System.err.println("InstanceBean with featureId '" + featureId + "' not found in the complete list (sortedSource).");
+            return;
+        }
+
+        final InstanceBean finalTargetInstance = targetInstance;
+
+        // 2. Check if the instance is currently visible in the filtered list (compoundList).
+        // The compoundList is a SwingThreadProxyList, so operations like contains() are safe.
+        if (compoundList.contains(finalTargetInstance)) {
+            // Instance is already in the filtered list, select it directly.
+            // Ensure this runs on EDT.
+            SwingUtilities.invokeLater(() -> {
+                int indexInView = compoundList.indexOf(finalTargetInstance);
+                if (indexInView != -1) {
+                    compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
+                    // You might need to ensure the JList scrolls to the selected item.
+                    // This usually happens automatically if the JList uses this selection model,
+                    // but sometimes explicit scrolling is needed via a JList reference.
+                } else {
+                    System.err.println("selectInstanceByFeatureId (already visible): InstanceBean with featureId '" + finalTargetInstance.getFeatureId() + "' was reported in compoundList but indexOf failed.");
+                }
+            });
+        } else {
+            // Instance is in the complete list but not in the filtered list.
+            // We need to reset filters and then select it *after* the list updates.
+
+            // Create a one-time listener that will select the item when the list changes.
+            ListEventListener<InstanceBean> oneTimeListener = new ListEventListener<>() {
+                @Override
+                public void listChanged(ListEvent<InstanceBean> listChanges) {
+                    // This method will be called on the EDT because compoundList is a SwingThreadProxyList.
+                    // We are interested in any change, but specifically when our target becomes available.
+
+                    // Check if the target instance is now in the list
+                    // It's possible listChanges is complex (e.g. clear then add all after filter reset)
+                    // So, directly check for containment and index.
+                    if (compoundList.contains(finalTargetInstance)) {
+                        int indexInView = compoundList.indexOf(finalTargetInstance);
+                        if (indexInView != -1) {
+                            compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
+                            // Optional: ensure visible in JList
+                        } else {
+                            // Should not happen if contains is true, but defensive.
+                            System.err.println("selectInstanceByFeatureId (after filter reset listener): InstanceBean '" + finalTargetInstance.getFeatureId() + "' found by contains() but not indexOf().");
+                        }
+                        // IMPORTANT: Remove the listener to avoid it acting on future unrelated list changes.
+                        compoundList.removeListEventListener(this);
+                    } else {
+                        // If the item is still not there after a list change event where we expected it,
+                        // it might mean resetFilter didn't make it visible for some reason, or
+                        // this event was for an intermediate state.
+                        // For simplicity, we only act when it's present.
+                        // If it never appears, the listener will eventually be GC'd if CompoundList is disposed,
+                        // but it's good practice to remove it. If it *should* appear and doesn't, that's a deeper bug.
+                        // Consider adding a timeout or a counter if this listener persists too long.
+                        // For now, if it's not the target, we wait for the *next* listChanged event,
+                        // but it's crucial that the listener is removed once the job is done.
+                        // A robust solution might also check listChanges.isReordering() or other event types
+                        // to be more precise, but contains() is a good general check.
+                    }
+                }
+            };
+
+            // Add the listener BEFORE triggering the filter reset.
+            compoundList.addListEventListener(oneTimeListener);
+
+            // Now, reset filters. This will eventually trigger listChanged on compoundList.
+//            resetFilter();
+            addFocusFeature(featureId);
+
+            // Fallback: If for some reason the list updates very quickly and the listener
+            // misses the event, or if resetFilter results in no actual change event
+            // that makes the item appear (e.g., if it was already unfiltered but just not selected),
+            // an immediate invokeLater can try one more time. This is a bit of a "belt and suspenders"
+            // approach and might be redundant if the listener works as expected.
+            SwingUtilities.invokeLater(() -> {
+                if (compoundList.contains(finalTargetInstance) &&
+                        (compountListSelectionModel.isSelectionEmpty() ||
+                                !compountListSelectionModel.getSelected().contains(finalTargetInstance))) {
+                    // If it's now available and not selected, and the listener hasn't acted yet or missed it.
+                    int indexInView = compoundList.indexOf(finalTargetInstance);
+                    if (indexInView != -1) {
+                        compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
+                    }
+                    // Attempt to remove listener here too, in case it was added but the conditions for its
+                    // own removal weren't met (e.g. item appeared too fast).
+                    // This can be tricky, ensure it doesn't interfere with the listener's own removal.
+                    // A safer way is to rely solely on the listener to remove itself.
+                    // For now, let's rely on the listener.
+                }
+//                else if (!compoundList.contains(finalTargetInstance) && compoundList.getListEventListeners().contains(oneTimeListener)) {
+//                    // If after this invokeLater the item is STILL not there, but the listener is active,
+//                    // it means the background job is likely still pending or finished without the item.
+//                    // The listener will handle it or eventually get removed.
+//                    // If the item *should* be there, it indicates resetFilter() isn't behaving as expected.
+//                }
+            });
+        }
+    }
+// *** MODIFIED METHOD END ***
 }
