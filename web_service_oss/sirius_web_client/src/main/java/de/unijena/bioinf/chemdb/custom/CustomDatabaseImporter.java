@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.TaskTimer;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
@@ -72,6 +71,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -407,7 +409,7 @@ public class CustomDatabaseImporter {
                     try {
                         log.info("Looking up compounds to merge with existing fps...");
                         timer.startTask("Compound Lookup");
-                        lookupAndAnnotateMissingCandidates(key2DToComp.values());
+                        lookupAndAnnotateMissingCandidates(key2DToComp.values(), false);
                         log.info("Compound look up and merging done in {}.", timer.endTask());
                     } catch (Exception e) {
                         // if lookup fails, we can still download or compute locally and override
@@ -420,7 +422,7 @@ public class CustomDatabaseImporter {
                     try { //try to download fps for compound
                         log.info("Try downloading missing fps...");
                         timer.startTask("Download FPs");
-                        downloadAndAnnotateMissingCandidates(key2DToComp);
+                        downloadAndAnnotateMissingCandidates(key2DToComp, true);
                         log.info("Downloaded missing fps in {}.", timer.endTask());
                     } catch (Exception e) {
                         // if download fails, we can still compute locally
@@ -504,9 +506,9 @@ public class CustomDatabaseImporter {
                                 //if null, there is no name from the custom db candidate, so we use the given one
                                 if(originCompound.candidate != null)
                                     tmpName = originCompound.candidate.getCandidate(null, null).getName();
-                                if (Utils.isNullOrBlank(tmpName))
+                                if (isNullOrBlank(tmpName))
                                     tmpName = originCompound.molecule.getName();
-                                if (Utils.isNullOrBlank(tmpName))
+                                if (isNullOrBlank(tmpName))
                                     tmpName = originCompound.key2D();
                             }
                             originReference = tmpName;
@@ -569,7 +571,7 @@ public class CustomDatabaseImporter {
 
             try {
                 log.info("Looking up transformation fps merge with transformation products...");
-                lookupAndAnnotateMissingCandidates(nuKey2DToComp.values());
+                lookupAndAnnotateMissingCandidates(nuKey2DToComp.values(), false);
                 log.info("Compound look up and merging done.");
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -577,7 +579,7 @@ public class CustomDatabaseImporter {
 
             try {
                 log.info("Try downloading missing fps for transformation products...");
-                downloadAndAnnotateMissingCandidates(nuKey2DToComp);
+                downloadAndAnnotateMissingCandidates(nuKey2DToComp, false);
                 log.info("Downloaded missing fps for transformation products.");
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -585,7 +587,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private void lookupAndAnnotateMissingCandidates(final Iterable<Comp> compounds) throws IOException {
+    private void lookupAndAnnotateMissingCandidates(final Iterable<Comp> compounds, boolean preferCustomName) throws IOException {
         synchronized (database) {
             for (Comp comp : compounds) {
                 checkCancellation();
@@ -594,14 +596,14 @@ public class CustomDatabaseImporter {
                             .findStr(Filter.where("inchiKey").eq(comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
                             .findFirst()
                             .orElse(null);
-                    mergeLinksAndNames(comp);
+                    mergeLinksAndNames(comp, preferCustomName);
                     notifyFingerprintCreation(comp);
                 }
             }
         }
     }
 
-    private void downloadAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) {
+    private void downloadAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp, boolean preferCustomName) {
         Set<MolecularFormula> formulasToSearch = key2DToComp.values().stream()
                 .filter(c -> c.candidate == null)
                 .map(comp -> {
@@ -628,7 +630,7 @@ public class CustomDatabaseImporter {
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
                         if (toAdd != null) {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
-                            clearAndCreateLinksAndName(toAdd);
+                            clearAndCreateLinksAndName(toAdd, preferCustomName);
                             notifyFingerprintCreation(toAdd);
                         }
                     }
@@ -701,17 +703,15 @@ public class CustomDatabaseImporter {
     }
 
     //used to merge information from existing entries in this custom db.
-    private void mergeLinksAndNames(@NotNull Comp comp) {
+    private static void mergeLinksAndNames(@NotNull Comp comp, boolean preferCustomName) {
         if (comp.molecule == null || comp.candidate == null)
             return;
 
         Molecule molecule = comp.molecule;
         CompoundCandidate fc = comp.candidate.getCandidate(null, null);
-
         fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
 
-        if ((molecule.name != null && !molecule.name.isBlank()) && (fc.getName() == null || fc.getName().isBlank() || fc.getName().length() > molecule.name.length()))
-            fc.setName(molecule.name);
+        determineName(comp, preferCustomName);
 
         final HashSet<DBLink> links = new HashSet<>(fc.getMutableLinks());
 
@@ -720,30 +720,45 @@ public class CustomDatabaseImporter {
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
         }
-
         fc.setLinks(new ArrayList<>(links));
     }
 
     //used to clear link data from remote db and add links of this custom db
-    private void clearAndCreateLinksAndName(@NotNull Comp comp) {
+    private static void clearAndCreateLinksAndName(@NotNull Comp comp, boolean preferCustomName) {
         if (comp.molecule == null || comp.candidate == null)
             return;
 
         Molecule molecule = comp.molecule;
         CompoundCandidate fc = comp.candidate.getCandidate(null, null);
-
         fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
-        fc.setLinks(List.of());
 
-        //set custom db name or id if name is null. otherwise keep the downloaded name from remote db.
-        if (molecule.name != null)
-            fc.setName(molecule.name);
+        determineName(comp, preferCustomName);
+
+        fc.setLinks(List.of());
 
         //override remote db links.
         if (!molecule.ids.isEmpty()) {
             fc.setLinks(molecule.ids.stream().filter(Objects::nonNull).map(id -> new DBLink(null, id)).toList()); //we add just id so that names can be added during db retrieval
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
+        }
+    }
+
+    /**
+     * @param compound Compound to be imported and updaten
+     * @param preferCustomName if true the name from the imported compound will be preferred over remote db name.
+     *                         Else determine the shorter name if there are multiple possibilities.
+     */
+    private static void determineName(@NotNull Comp compound, boolean preferCustomName) {
+        Molecule molecule = compound.molecule;
+        CompoundCandidate fc = compound.candidate.getCandidate(null, null);
+
+        if (preferCustomName){
+            if (notNullOrBlank(molecule.name))
+                fc.setName(molecule.name);
+        } else {
+            if (notNullOrBlank(molecule.name) && (isNullOrBlank(fc.getName()) || fc.getName().length() >= molecule.name.length()))
+                fc.setName(molecule.name);
         }
     }
 
