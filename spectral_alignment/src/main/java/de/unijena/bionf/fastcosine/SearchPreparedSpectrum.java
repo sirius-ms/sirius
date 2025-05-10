@@ -11,8 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Iterator;
 
-// A spectrum processed in a way that fast cosine calculation can be performed
-public class ReferenceLibrarySpectrum implements OrderedSpectrum<Peak>, Serializable {
+/**
+ * A spectrum processed in a way that fast cosine calculation can be performed
+ */
+public class SearchPreparedSpectrum implements OrderedSpectrum<Peak>, Serializable {
 
     protected final float[] intensities;
     protected final double[] mz;
@@ -21,7 +23,12 @@ public class ReferenceLibrarySpectrum implements OrderedSpectrum<Peak>, Serializ
     @Getter
     private final float parentIntensity; // not used for cosine. Set to 0 if no parent peak in spectrum
 
-    @JsonCreator ReferenceLibrarySpectrum(@JsonProperty("parentMass")  double parentMass, @JsonProperty("parentIntensity") float parentIntensity, @JsonProperty("mz") double[] mz,  @JsonProperty("intensities") float[] intensities) {
+    @JsonCreator
+    SearchPreparedSpectrum(@JsonProperty("parentMass")  double parentMass,
+                           @JsonProperty("parentIntensity") float parentIntensity,
+                           @JsonProperty("mz") double[] mz,
+                           @JsonProperty("intensities") float[] intensities
+    ) {
         this.parentMass = parentMass;
         this.parentIntensity = parentIntensity;
         this.mz = mz;

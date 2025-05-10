@@ -43,7 +43,7 @@ import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +101,7 @@ public class Spectrums {
 
         BasicSpectrum basicSpec;
         if (asCosineQuery){
-            ReferenceLibrarySpectrum query = FAST_COSINE.prepareQuery(precursorMz, ms2Peaks);
+            SearchPreparedSpectrum query = FAST_COSINE.prepareQuery(precursorMz, ms2Peaks);
             basicSpec = decorateMsMs(new BasicSpectrum(query), x);
             if (query.getParentIntensity() > 0)
                 basicSpec.setPrecursorPeak(new SimplePeak(query.getParentMass(), query.getParentIntensity()));
@@ -120,7 +120,7 @@ public class Spectrums {
         BasicSpectrum basicSpec;
 
         if (asCosineQuery){
-            ReferenceLibrarySpectrum query = FAST_COSINE.prepareQuery(precursorMz, mergedMs2Peaks);
+            SearchPreparedSpectrum query = FAST_COSINE.prepareQuery(precursorMz, mergedMs2Peaks);
             basicSpec = decorateMergedMsMs(new BasicSpectrum(query), precursorMz);
             if (query.getParentIntensity() > 0)
                 basicSpec.setPrecursorPeak(new SimplePeak(query.getParentMass(), query.getParentIntensity()));
@@ -145,7 +145,7 @@ public class Spectrums {
      * @return
      */
     public static BasicSpectrum createReferenceMsMs(ReferenceSpectrum ref, boolean renormalize) {
-        Spectrum<Peak> s = ref.getQuerySpectrum();
+        Spectrum<Peak> s = ref.getSearchPreparedSpectrum();
         if (renormalize) {
             SimpleMutableSpectrum buf = new SimpleMutableSpectrum(s);
             for (int j=0; j < buf.size(); ++j) {
@@ -191,7 +191,7 @@ public class Spectrums {
 
     @SneakyThrows
     public static AnnotatedSpectrum createReferenceMsMsWithAnnotations(@NotNull ReferenceSpectrum refSpectrum, @Nullable FTree ftree, boolean renormalize) {
-        ReferenceLibrarySpectrum specSource = refSpectrum.getQuerySpectrum();
+        SearchPreparedSpectrum specSource = refSpectrum.getSearchPreparedSpectrum();
 
         final AnnotatedSpectrum spectrum;
         if (renormalize) {
@@ -242,7 +242,7 @@ public class Spectrums {
     ) {
         AnnotatedSpectrum annotatedPeaks;
         if (asCosineQuery){
-            ReferenceLibrarySpectrum query = FAST_COSINE.prepareQuery(precursorMz, mergedMs2Peaks);
+            SearchPreparedSpectrum query = FAST_COSINE.prepareQuery(precursorMz, mergedMs2Peaks);
             annotatedPeaks = decorateMergedMsMs(new AnnotatedSpectrum(query), precursorMz);
             if (query.getParentIntensity() > 0)
                 annotatedPeaks.setPrecursorPeak(new SimplePeak(query.getParentMass(), query.getParentIntensity()));
@@ -273,7 +273,7 @@ public class Spectrums {
         double precursorMz = specSource.getMergedPrecursorMz();
         AnnotatedSpectrum annotatedPeaks;
         if (asCosineQuery){
-            ReferenceLibrarySpectrum query = FAST_COSINE.prepareQuery(precursorMz, specSource.getPeaks());
+            SearchPreparedSpectrum query = FAST_COSINE.prepareQuery(precursorMz, specSource.getPeaks());
             annotatedPeaks = decorateMsMs(new AnnotatedSpectrum(query), specSource);
             if (query.getParentIntensity() > 0)
                 annotatedPeaks.setPrecursorPeak(new SimplePeak(query.getParentMass(), query.getParentIntensity()));
