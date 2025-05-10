@@ -1096,7 +1096,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
                 ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getReferenceSpectrumType());
-                if (spec.getQuerySpectrum() != null)
+                if (spec.getSearchPreparedSpectrum() != null)
                     match.setReferenceSpectrum(Spectrums.createReferenceMsMs(spec));
                 return spec;
             } catch (ChemicalDatabaseException e) {
