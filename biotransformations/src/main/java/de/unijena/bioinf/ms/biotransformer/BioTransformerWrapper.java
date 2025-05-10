@@ -59,11 +59,12 @@ public class BioTransformerWrapper {
 
     }
 
-    public static BioTransformerResult envMicrobialTransformer(IAtomContainer singleMolecule, int nrOfSteps, boolean useDB, boolean useSub) throws Exception {
+    //todo enviPath transformer disabled until licensing is clear
+    /*public static BioTransformerResult envMicrobialTransformer(IAtomContainer singleMolecule, int nrOfSteps, boolean useDB, boolean useSub) throws Exception {
         EnvMicroBTransformer_rails ebt = new EnvMicroBTransformer_rails(useDB, useSub);
         return toSiriusTransformations(singleMolecule, ebt.applyEnvMicrobialTransformationsChain(singleMolecule, true, true, nrOfSteps, 0.5d));
 
-    }
+    }*/
 
     public static BioTransformerResult multiBioTransformer(IAtomContainer singleMolecule, List<BioTransformerSequenceStep> transformerSeq, Cyp450Mode cyp450Mode, boolean useDB, boolean useSub) throws Exception {
         if (transformerSeq == null || transformerSeq.isEmpty())
@@ -85,7 +86,8 @@ public class BioTransformerWrapper {
             case EC_BASED -> ecBasedBTransformer(ia, s.getIterations(), s.isUseDB(), s.isUseSub());
             case PHASE_2 -> phaseIIBTransformer(ia, s.getIterations(), s.getP2Mode().P2ModeOrdinal(), s.isUseDB(), s.isUseSub());
             case HUMAN_GUT -> hGutBTransformer(ia, s.getIterations(), s.isUseDB(), s.isUseSub());
-            case ENV_MICROBIAL -> envMicrobialTransformer(ia, s.getIterations(), s.isUseDB(), s.isUseSub());
+            //todo enviPath transformer disabled until licensing is clear
+//            case ENV_MICROBIAL -> envMicrobialTransformer(ia, s.getIterations(), s.isUseDB(), s.isUseSub());
             case ALL_HUMAN -> allHumanTransformer(ia, s.getIterations(), s.getP2Mode().P2ModeOrdinal(), s.getCyp450Mode(), s.isUseDB(), s.isUseSub());
             case ABIOTIC -> abioticTransformer(ia, s.getIterations());
             case HUMAN_CUSTOM_MULTI -> multiBioTransformer(ia, s.getSequenceSteps(), s.getCyp450Mode(), s.isUseDB(), s.isUseSub());
@@ -168,7 +170,8 @@ public class BioTransformerWrapper {
         return switch (metabolicTransformation) {
             case PHASE_1_CYP450 -> Biotransformer.bType.CYP450;
             case EC_BASED -> Biotransformer.bType.ECBASED;
-            case ENV_MICROBIAL -> Biotransformer.bType.ENV;
+            //todo enviPath transformer disabled until licensing is clear
+//            case ENV_MICROBIAL -> Biotransformer.bType.ENV;
             case HUMAN_GUT -> Biotransformer.bType.HGUT;
             case PHASE_2 -> Biotransformer.bType.PHASEII;
             default ->
