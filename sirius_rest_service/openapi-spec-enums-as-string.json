@@ -2242,7 +2242,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -2443,7 +2443,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -3921,7 +3921,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -4481,7 +4481,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -4723,7 +4723,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5394,7 +5394,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -5446,7 +5446,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5537,7 +5537,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5645,7 +5645,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "searchPrepared",
             "in": "query",
             "required": false,
             "schema": {
@@ -5714,7 +5714,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -6513,8 +6513,9 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "searchPrepared",
             "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -6573,7 +6574,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -6659,7 +6660,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -7433,7 +7434,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
