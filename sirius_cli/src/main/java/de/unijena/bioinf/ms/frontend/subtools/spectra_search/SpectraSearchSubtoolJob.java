@@ -35,8 +35,8 @@ import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
@@ -121,8 +121,8 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         List<SpectralSearchResult.SearchResult> result = submitJob(new BasicJJob<List<SpectralSearchResult.SearchResult>>() {
             @Override
             protected List<SpectralSearchResult.SearchResult> compute() throws Exception {
-                final List<ReferenceLibrarySpectrum> queries = exp.getMs2Spectra().stream().map(x -> FAST_COSINE.prepareQuery(exp.getIonMass(), x)).toList();
-                ReferenceLibrarySpectrum mergedQuery = FAST_COSINE.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
+                final List<SearchPreparedSpectrum> queries = exp.getMs2Spectra().stream().map(x -> FAST_COSINE.prepareQuery(exp.getIonMass(), x)).toList();
+                SearchPreparedSpectrum mergedQuery = FAST_COSINE.prepareQuery(exp.getIonMass(), exp.getMergedMs2Spectrum());
 
                 PriorityQueue<LibraryHit> identityHits = new PriorityQueue<>();
                 PriorityQueue<LibraryHit> analogHits = new PriorityQueue<>();
@@ -234,19 +234,19 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         }
     };
 
-    private SpectralSimilarity spectralSimilarity(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right, SpectralLibrarySearchSettings settings) {
+    private SpectralSimilarity spectralSimilarity(SearchPreparedSpectrum left, SearchPreparedSpectrum right, SpectralLibrarySearchSettings settings) {
         if (settings.getMatchingType() == SpectralMatchingType.FAST_COSINE) return FAST_COSINE.fastCosine(left, right);
         else if (settings.getMatchingType() == SpectralMatchingType.MODIFIED_COSINE)
             return FAST_COSINE.fastModifiedCosine(left, right);
         else throw new UnsupportedOperationException();
     }
 
-    private void checkBound(List<ReferenceLibrarySpectrum> queries, ReferenceLibrarySpectrum mergedQuery, ReferenceLibraryMergedSpectrum mergedRef, SpectralLibrarySearchSettings settings) {
-        ReferenceLibrarySpectrum mergedRefUpperBound = mergedRef.asUpperboundQuerySpectrum();
-        ReferenceLibrarySpectrum mergedQueryUpperBound = mergedQuery;
+    private void checkBound(List<SearchPreparedSpectrum> queries, SearchPreparedSpectrum mergedQuery, SearchPreparedMergedSpectrum mergedRef, SpectralLibrarySearchSettings settings) {
+        SearchPreparedSpectrum mergedRefUpperBound = mergedRef.asUpperboundQuerySpectrum();
+        SearchPreparedSpectrum mergedQueryUpperBound = mergedQuery;
         SpectralSimilarity mergedSim = spectralSimilarity(mergedQueryUpperBound, mergedRefUpperBound, settings);
         SpectralSimilarity maxSim = mergedSim;
-        for (ReferenceLibrarySpectrum l : queries) {
+        for (SearchPreparedSpectrum l : queries) {
             SpectralSimilarity sim = spectralSimilarity(l, mergedRefUpperBound, settings);
             if (sim.compareTo(maxSim) > 0) maxSim = sim;
         }

@@ -171,13 +171,13 @@ public class FastCosineBoundTest {
 
     @Test
     public void testMergedLowerboundCosine() {
-        final List<ReferenceLibrarySpectrum> spectra = new ArrayList<>();
+        final List<SearchPreparedSpectrum> spectra = new ArrayList<>();
         final FastCosine fastCosine = new FastCosine();
         for (int i=0; i < 10; ++i) {
             spectra.add(fastCosine.prepareQuery(parentMass, makeTestSpectrumSameCompound(93*(i+1), 1000)));
         }
-        final ReferenceLibraryMergedSpectrum merged = fastCosine.prepareMergedQuery(spectra);
-        final ReferenceLibrarySpectrum query = fastCosine.prepareQuery(parentMass, makeTestSpectrumSameCompound(1234, 2000));
+        final SearchPreparedMergedSpectrum merged = fastCosine.prepareMergedQuery(spectra);
+        final SearchPreparedSpectrum query = fastCosine.prepareQuery(parentMass, makeTestSpectrumSameCompound(1234, 2000));
         // the cosine of query against merged is a upperbound of query against any of the spectra!
         double maxCosine = 0d;
         for (int i=0; i < 10; ++i) {
@@ -206,8 +206,8 @@ public class FastCosineBoundTest {
 
         // runtime test
         {
-            final ReferenceLibrarySpectrum aa = fastCosine.prepareQuery(parentMass, a);
-            final ReferenceLibrarySpectrum bb = fastCosine.prepareQuery(parentMass, b);
+            final SearchPreparedSpectrum aa = fastCosine.prepareQuery(parentMass, a);
+            final SearchPreparedSpectrum bb = fastCosine.prepareQuery(parentMass, b);
             long t1 = System.currentTimeMillis();
             double cosine = 0d;
             for (int k=0; k < 1000000; ++k) {
@@ -248,8 +248,8 @@ public class FastCosineBoundTest {
 
         // runtime test
         {
-            final ReferenceLibrarySpectrum aa = fastCosine.prepareQuery(parentMass, a);
-            final ReferenceLibrarySpectrum bb = fastCosine.prepareQuery(parentMass+SHIFT, b);
+            final SearchPreparedSpectrum aa = fastCosine.prepareQuery(parentMass, a);
+            final SearchPreparedSpectrum bb = fastCosine.prepareQuery(parentMass+SHIFT, b);
             long t1 = System.currentTimeMillis();
             double cosine = 0d;
             for (int k=0; k < 1000000; ++k) {
@@ -278,8 +278,8 @@ public class FastCosineBoundTest {
         final SimpleSpectrum a = makeTestSpectrumSameCompound(4821, 12345678);
         final SimpleSpectrum b = makeMixedTestSpectrumSameCompound(91285, 6732012);
         final FastCosine fastCosine = new FastCosine();
-        ReferenceLibrarySpectrum aa = fastCosine.prepareQuery(parentMass, a);
-        ReferenceLibrarySpectrum bb = fastCosine.prepareQuery(parentMass + SHIFT, b);
+        SearchPreparedSpectrum aa = fastCosine.prepareQuery(parentMass, a);
+        SearchPreparedSpectrum bb = fastCosine.prepareQuery(parentMass + SHIFT, b);
         final SpectralSimilarity fast = fastCosine.fastModifiedCosine(aa, bb);
         System.out.println(fast);
         final SpectralSimilarity rev = fastCosine.fastReverseCosine(aa,bb);
