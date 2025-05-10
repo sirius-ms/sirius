@@ -13,7 +13,8 @@ public enum MetabolicTransformation {
     EC_BASED("EC-Based", false, 3),
     PHASE_2("Phase II", false, 1),
     HUMAN_GUT("Human Gut Microbial", false, 3),
-    ENV_MICROBIAL("Environmental Microbial", false, 1),
+    //todo enviPath transformer disabled until licensing is clear
+//    ENV_MICROBIAL("Environmental Microbial", false, 1),
     ALL_HUMAN("Human and Human Gut Microbial (AllHuman)", true, 4, false),
     ABIOTIC("Abiotic (AbioticBio)", true, 3, false),
     HUMAN_CUSTOM_MULTI("Custom Human Multi-Step (MultiBio)", true, 1, false);
@@ -26,7 +27,7 @@ public enum MetabolicTransformation {
     }
 
     private static final EnumSet<MetabolicTransformation> SINGLE_TRANSFORMATION =
-            EnumSet.of(PHASE_1_CYP450, EC_BASED, PHASE_2, HUMAN_GUT, ENV_MICROBIAL, ALL_HUMAN, ABIOTIC);
+            EnumSet.of(PHASE_1_CYP450, EC_BASED, PHASE_2, HUMAN_GUT, /*ENV_MICROBIAL,*/ ALL_HUMAN, ABIOTIC);
 
     public static EnumSet<MetabolicTransformation> valueSingleOnly(){
         return SINGLE_TRANSFORMATION;
