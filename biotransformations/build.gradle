@@ -1,7 +1,7 @@
 version = siriusVersion
 
 dependencies {
-    implementation 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min:3.0.0'
+    implementation 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
     api project(":chemical_db_oss:chemdb_utils_oss")
 
     // Dependencies from biotransformer jar
