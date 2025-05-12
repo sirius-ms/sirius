@@ -37,8 +37,10 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,7 +246,7 @@ public class WebWithCustomDatabase {
         }).toList();
     }
 
-    public List<LibraryHit> queryAgainstLibraryWithPrecursorMass(List<ReferenceLibrarySpectrum> query, double precursorMass, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
+    public List<LibraryHit> queryAgainstLibraryWithPrecursorMass(List<SearchPreparedSpectrum> query, double precursorMass, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
                 return StreamSupport.stream(speclib.queryAgainstLibraryWithPrecursorMass(precursorMass, chargeAndPolarity, settings, query).spliterator(), false);
@@ -255,7 +257,7 @@ public class WebWithCustomDatabase {
         }).toList();
     }
 
-    public List<LibraryHit> queryAgainstLibrary(List<ReferenceLibrarySpectrum> query, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
+    public List<LibraryHit> queryAgainstLibrary(List<SearchPreparedSpectrum> query, int chargeAndPolarity, SpectralLibrarySearchSettings settings, Collection<CustomDataSources.Source> dbs) {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
                 return StreamSupport.stream(speclib.queryAgainstLibrary(chargeAndPolarity, settings, query).spliterator(), false);
@@ -503,16 +505,10 @@ public class WebWithCustomDatabase {
 
         final HashMap<String, Set<FingerprintCandidate>> customInChIs = new HashMap<>();
         final Set<FingerprintCandidate> restDbInChIs;
+        @Setter
+        @Getter
         private long requestFilter;
         final long restFilter;
-
-        public long getRequestFilter() {
-            return requestFilter;
-        }
-
-        public void setRequestFilter(long requestFilter) {
-            this.requestFilter = requestFilter;
-        }
 
         public void addToRequestFilter(long bitsToAdd) {
             setRequestFilter(requestFilter | bitsToAdd);
