@@ -242,7 +242,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     }
 
     private void checkBound(List<SearchPreparedSpectrum> queries, SearchPreparedSpectrum mergedQuery, SearchPreparedMergedSpectrum mergedRef, SpectralLibrarySearchSettings settings) {
-        SearchPreparedSpectrum mergedRefUpperBound = mergedRef.asUpperboundMergedSpectrum();
+        SearchPreparedSpectrum mergedRefUpperBound = mergedRef.asUpperboundSearchPreparedSpectrum();
         SearchPreparedSpectrum mergedQueryUpperBound = mergedQuery;
         SpectralSimilarity mergedSim = spectralSimilarity(mergedQueryUpperBound, mergedRefUpperBound, settings);
         SpectralSimilarity maxSim = mergedSim;

@@ -345,7 +345,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
         // only perform upper bound computation if there is a change to save time with it.
         if ((singleQueries + mergedQueries) * numRefs > 2 * singleQueries + mergedQueries) {
-            SearchPreparedSpectrum mergedRefUpperBoundQuery = mergedRef.getSearchPreparedSpectrum().asUpperboundMergedSpectrum();
+            SearchPreparedSpectrum mergedRefUpperBoundQuery = mergedRef.getSearchPreparedSpectrum().asUpperboundSearchPreparedSpectrum();
             doMergedQuery = doMergedQuery && settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings));
             queriesToProcess = queriesToProcess.stream().filter(q -> settings.exceeded(spectralSimilarity(q, mergedRefUpperBoundQuery, settings))).toList();
         }
