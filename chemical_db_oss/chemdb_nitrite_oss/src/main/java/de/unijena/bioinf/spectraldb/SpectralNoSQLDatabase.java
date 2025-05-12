@@ -323,15 +323,15 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException {
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedReferences, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException {
         List<LibraryHit> hits = new ArrayList<>();
-        for (MergedReferenceSpectrum mergedRefQuery : mergedRefQueries)
-           queryAgainstLibraryByMergedReference(mergedRefQuery, settings, query,mergedQuery).forEach(hits::add);
+        for (MergedReferenceSpectrum mergedRef : mergedReferences)
+           queryAgainstLibraryByMergedReference(mergedRef, settings, query,mergedQuery).forEach(hits::add);
         return hits.stream();
     }
 
     @Override
-    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException {
+    public Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRef, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException {
         List<LibraryHit> hits = new ArrayList<>();
 
         boolean doMergedQuery = mergedQuery != null && settings.containsQueryType(SpectrumType.MERGED_SPECTRUM);
@@ -341,11 +341,11 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         int singleQueries = settings.containsQueryType(SpectrumType.SPECTRUM) ? query.size() : 0;
         int mergedQueries = doMergedQuery ? 1 : 0;
 
-        int numRefs = (settings.containsTargetType(SpectrumType.SPECTRUM) ? mergedRefQuery.getIndividualSpectraUIDs().length : 0 ) + (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM) ? 1 : 0);
+        int numRefs = (settings.containsTargetType(SpectrumType.SPECTRUM) ? mergedRef.getIndividualSpectraUIDs().length : 0 ) + (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM) ? 1 : 0);
 
         // only perform upper bound computation if there is a change to save time with it.
         if ((singleQueries + mergedQueries) * numRefs > 2 * singleQueries + mergedQueries) {
-            SearchPreparedSpectrum mergedRefUpperBoundQuery = mergedRefQuery.getSearchPreparedSpectrum().asUpperboundQuerySpectrum();
+            SearchPreparedSpectrum mergedRefUpperBoundQuery = mergedRef.getSearchPreparedSpectrum().asUpperboundMergedSpectrum();
             doMergedQuery = doMergedQuery && settings.exceeded(spectralSimilarity(mergedQuery, mergedRefUpperBoundQuery, settings));
             queriesToProcess = queriesToProcess.stream().filter(q -> settings.exceeded(spectralSimilarity(q, mergedRefUpperBoundQuery, settings))).toList();
         }
@@ -354,7 +354,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         if (doMergedQuery || !queriesToProcess.isEmpty()) {
             // only retrieve single ref spectra and compute cosine if they are a target
             if (settings.containsTargetType(SpectrumType.SPECTRUM)) {
-                for (long uid : mergedRefQuery.getIndividualSpectraUIDs()) {
+                for (long uid : mergedRef.getIndividualSpectraUIDs()) {
                     for (Ms2ReferenceSpectrum spec : withLibrary(storage.find(Filter.where("uuid").eq(uid), Ms2ReferenceSpectrum.class, "querySpectrum"))) {
                         if (!queriesToProcess.isEmpty()) // compute single query spectra if requested and above bound
                             hits.addAll(getHits(query, spec, settings));
@@ -368,11 +368,11 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
             // only retrieve compute merged ref spectra if they are a target
             if (settings.containsTargetType(SpectrumType.MERGED_SPECTRUM)) {
                 // search in merged library spectra
-                fillLibrary(mergedRefQuery);
+                fillLibrary(mergedRef);
                 if (!queriesToProcess.isEmpty()) // compute single query spectra if requested and above bound
-                    hits.addAll(getHits(query, mergedRefQuery, settings));
+                    hits.addAll(getHits(query, mergedRef, settings));
                 if (doMergedQuery) // compute merged query if provided, requested and above bound
-                    getHits(List.of(mergedQuery), mergedRefQuery, settings).stream()
+                    getHits(List.of(mergedQuery), mergedRef, settings).stream()
                             .peek(h -> h.setQueryIndex(-1)).forEach(hits::add);
             }
         }
