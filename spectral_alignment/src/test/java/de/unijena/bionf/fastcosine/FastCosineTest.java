@@ -697,7 +697,7 @@ class FastCosineTest {
             List<SearchPreparedSpectrum> spectraList = Arrays.asList(spectrum1, spectrum2);
             
             SearchPreparedMergedSpectrum mergedSpectrum = fastCosine.prepareMergedQuery(spectraList);
-            SearchPreparedSpectrum upperBoundSpectrum = mergedSpectrum.asUpperboundQuerySpectrum();
+            SearchPreparedSpectrum upperBoundSpectrum = mergedSpectrum.asUpperboundMergedSpectrum();
             
             // Upper bound spectrum should have similarity >= the individual similarities
             SpectralSimilarity sim1 = fastCosine.fastCosine(upperBoundSpectrum, spectrum1);
