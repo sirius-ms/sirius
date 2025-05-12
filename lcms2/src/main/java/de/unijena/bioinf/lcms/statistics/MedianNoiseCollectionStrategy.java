@@ -24,8 +24,10 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
     }
 
     protected static class CalculateMedians implements Calculation {
-        private FloatArrayList noise = new FloatArrayList();
+        private FloatArrayList noise = new FloatArrayList(), noise2 = new FloatArrayList();
         private FloatArrayList ms2Noise = new FloatArrayList();
+
+        private FloatArrayList noiseXXX = new FloatArrayList();
 
         @Override
         public void processMs1(Ms1SpectrumHeader header, SimpleSpectrum ms1Spectrum) {
@@ -37,7 +39,10 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
             }
             int perc = (int)(0.9*xs.length);
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
+            double noiseLevel2 = Quickselect.quickselectInplace(xs, 0, xs.length, (int)Math.floor(xs.length*0.1)) * 20;
             noise.add((float)noiseLevel);
+            noise2.add((float)noiseLevel2);
+
         }
 
         @Override
@@ -83,6 +88,25 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 }
                 for (; j < ms1Noises.length; ++j) {
                     ms1Noises[j] = medians[j-width];
+                }
+
+
+                ////////////////////////
+                {
+                    double averageNoiseOnAll = 0d;
+                    Arrays.sort(ms1Noises);
+                    int start = (int)Math.floor(ms1Noises.length*0.5);
+                    int end = (int)Math.ceil(ms1Noises.length*0.9);
+                    for (int k=start; k < end; ++k) averageNoiseOnAll += ms1Noises[k];
+                    averageNoiseOnAll /= (end-start);
+                    float[] noise2 = this.noise2.toFloatArray();
+                    Arrays.sort(noise2);
+                    double noiseLevel2 = Statistics.robustAverage(noise2);
+                    System.out.println(averageNoiseOnAll + " and " + noiseLevel2 + " ==> " + Math.sqrt(averageNoiseOnAll * noiseLevel2));
+
+                    averageNoiseOnAll = Math.sqrt(averageNoiseOnAll * noiseLevel2);
+
+                    Arrays.fill(ms1Noises, (float)averageNoiseOnAll);
                 }
             }
 
