@@ -74,7 +74,7 @@ public class SearchPreparedMergedSpectrum extends SearchPreparedSpectrum {
         return new SearchPreparedSpectrum(getParentMass(), getParentIntensity(), mz, intensities);
     }
 
-    public SearchPreparedSpectrum asUpperboundMergedSpectrum() {
+    public SearchPreparedSpectrum asUpperboundSearchPreparedSpectrum() {
         return new SearchPreparedSpectrum(getParentMass(), getParentIntensity(), mz, mergedMaxIntensities);
     }
 }
