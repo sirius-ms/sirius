@@ -9,7 +9,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
-import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
