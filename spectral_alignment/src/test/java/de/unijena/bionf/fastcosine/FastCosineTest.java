@@ -40,7 +40,7 @@ class FastCosineTest {
     /**
      * Creates a SearchPreparedSpectrum directly without normalization
      */
-    private SearchPreparedSpectrum createPreparedReferenceSpectrum(double parentMass, double[] mzValues, double[] intensityValues) {
+    private SearchPreparedSpectrum createSearchPreparedSpectrum(double parentMass, double[] mzValues, double[] intensityValues) {
         float[] intensities = new float[intensityValues.length];
         double norm = 0;
         for (int i = 0; i < intensityValues.length; i++) {
@@ -88,8 +88,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -114,8 +114,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -131,8 +131,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -157,8 +157,8 @@ class FastCosineTest {
             double[] mzValues2 = {100.0, 200.0, 300.0, 400.0, 499.9};
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0, 50.0};
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -178,8 +178,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastReverseCosine(spectrum1, spectrum2);
             
@@ -207,8 +207,8 @@ class FastCosineTest {
             double[] mzValues2 = {200.0, 300.0, 400.0, 500.0};  // Losses: 400, 300, 200, 100
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastReverseCosine(spectrum1, spectrum2);
             
@@ -236,8 +236,8 @@ class FastCosineTest {
             double[] mzValues2 = {150.0, 250.0, 350.0, 450.0};  // Losses: 450, 350, 250, 150
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastReverseCosine(spectrum1, spectrum2);
             
@@ -257,8 +257,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastModifiedCosine(spectrum1, spectrum2);
             
@@ -278,8 +278,8 @@ class FastCosineTest {
             double[] mzValues2 = {114.0, 214.0, 314.0, 414.0};
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastModifiedCosine(spectrum1, spectrum2);
             
@@ -313,8 +313,8 @@ class FastCosineTest {
             double[] mzValues2 = {100.0, 200.0, 314.0, 414.0};
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastModifiedCosine(spectrum1, spectrum2);
             
@@ -330,8 +330,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
             
             // We should get the same result from both methods
             SpectralSimilarity similarityCosine = fastCosine.fastCosine(spectrum1, spectrum2);
@@ -355,8 +355,8 @@ class FastCosineTest {
             double[] emptyIntensity = {};
             double parentMass = 500.0;
             
-            SearchPreparedSpectrum emptySpectrum = createPreparedReferenceSpectrum(parentMass, emptyMz, emptyIntensity);
-            SearchPreparedSpectrum normalSpectrum = createPreparedReferenceSpectrum(
+            SearchPreparedSpectrum emptySpectrum = createSearchPreparedSpectrum(parentMass, emptyMz, emptyIntensity);
+            SearchPreparedSpectrum normalSpectrum = createSearchPreparedSpectrum(
                 parentMass, 
                 new double[]{100.0, 200.0}, 
                 new double[]{1000.0, 500.0}
@@ -380,8 +380,8 @@ class FastCosineTest {
             double[] mzValues2 = {100.0000149, 200.0000299, 300.0000449};  // Within 15 ppm
             double[] intensityValues = {1000.0, 500.0, 250.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -398,8 +398,8 @@ class FastCosineTest {
             double[] mzValues2 = {300.0046, 400.00621, 500.00761};  // Just outside 15 ppm
             double[] intensityValues = {1000.0, 500.0, 250.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -416,8 +416,8 @@ class FastCosineTest {
             double[] mzValues2 = {100.0000151, 200.0000301, 300.0000451};  // Just outside 15 ppm
             double[] intensityValues = {1000.0, 500.0, 250.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             // Create a FastCosine with more permissive tolerance
             FastCosine moreTolerantFastCosine = new FastCosine(new Deviation(20), true, defaultNoiseSettings);
@@ -440,8 +440,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
 
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -473,8 +473,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -504,8 +504,8 @@ class FastCosineTest {
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             double parentMass = 500.0;
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastCosine(spectrum1, spectrum2);
             
@@ -539,8 +539,8 @@ class FastCosineTest {
             double[] mzValues2 = {200.0, 300.0, 400.0, 500.0};  // Losses: 400, 300, 200, 100
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastReverseCosine(spectrum1, spectrum2);
             
@@ -572,8 +572,8 @@ class FastCosineTest {
             double[] mzValues2 = {114.0, 214.0, 314.0, 414.0};  // Shifted by 14 Da
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastModifiedCosine(spectrum1, spectrum2);
             
@@ -606,8 +606,8 @@ class FastCosineTest {
             double[] mzValues2 = {100.0, 214.0, 300.0, 414.0};
             double[] intensityValues = {1000.0, 500.0, 250.0, 100.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass1, mzValues1, intensityValues);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass2, mzValues2, intensityValues);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass1, mzValues1, intensityValues);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass2, mzValues2, intensityValues);
             
             SpectralSimilarity similarity = fastCosine.fastModifiedCosine(spectrum1, spectrum2);
             
@@ -658,8 +658,8 @@ class FastCosineTest {
             double[] intensityValues1 = {1000.0, 500.0, 250.0, 100.0};
             double[] intensityValues2 = {900.0, 550.0, 280.0, 90.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues1);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues2);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues1);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues2);
             
             List<SearchPreparedSpectrum> spectraList = Arrays.asList(spectrum1, spectrum2);
             
@@ -691,8 +691,8 @@ class FastCosineTest {
             double[] intensityValues1 = {1000.0, 500.0, 250.0};
             double[] intensityValues2 = {800.0, 600.0, 300.0};
             
-            SearchPreparedSpectrum spectrum1 = createPreparedReferenceSpectrum(parentMass, mzValues1, intensityValues1);
-            SearchPreparedSpectrum spectrum2 = createPreparedReferenceSpectrum(parentMass, mzValues2, intensityValues2);
+            SearchPreparedSpectrum spectrum1 = createSearchPreparedSpectrum(parentMass, mzValues1, intensityValues1);
+            SearchPreparedSpectrum spectrum2 = createSearchPreparedSpectrum(parentMass, mzValues2, intensityValues2);
             
             List<SearchPreparedSpectrum> spectraList = Arrays.asList(spectrum1, spectrum2);
             
