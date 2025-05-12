@@ -11,11 +11,14 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Accessors(fluent = false, chain = true)
 public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResult>> {
+    /**
+     * The origin un-metabolized substrate (drug, toxin etc. of interest).
+     */
     @Getter
     @Setter
     List<IAtomContainer> substrates;
@@ -35,7 +38,13 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
 
     @Override
     protected List<BioTransformerResult> compute() throws Exception {
-        List<JJob<List<BioTransformation>>> jobs = substrates.stream().map(ia -> makeJob(() -> transform(ia))).toList();
+        List<JJob<BioTransformerResult>> jobs = substrates.stream().map(ia -> new BasicJJob<BioTransformerResult>() {
+            @Override
+            protected BioTransformerResult compute() throws Exception {
+                return BioTransformerWrapper.transform(ia, settings);
+            }
+        }).collect(Collectors.toList());
+
         submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::getResult);
 
         return jobs.stream()
@@ -47,30 +56,7 @@ public class BioTransformerJJob extends BasicMasterJJob<List<BioTransformerResul
                         logDebug("Error when calling BioTransformer. Skipping the result. Some transformation products might be missing.", e);
                         return null;
                     }
-                })
-                .filter(Objects::nonNull)
-                .map(BioTransformerResult::new).toList(); //results here
-    }
-
-    protected List<BioTransformation> transform(IAtomContainer ia) throws Exception {
-        return switch (getMetabolicTransformation()) {
-            case PHASE_1_CYP450 -> BioTransformerWrapper.cyp450BTransformer(ia, getIterations(), getCyp450Mode(), isUseDB(), isUseSub());
-            case EC_BASED -> BioTransformerWrapper.ecBasedBTransformer(ia, getIterations(), isUseDB(), isUseSub());
-            case PHASE_2 -> BioTransformerWrapper.phaseIIBTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), isUseDB(), isUseSub());
-            case HUMAN_GUT -> BioTransformerWrapper.hGutBTransformer(ia, getIterations(), isUseDB(), isUseSub());
-            case ENV_MICROBIAL -> BioTransformerWrapper.envMicrobialTransformer(ia, getIterations(), isUseDB(), isUseSub());
-            case ALL_HUMAN -> BioTransformerWrapper.allHumanTransformer(ia, getIterations(), getP2Mode().P2ModeOrdinal(), getCyp450Mode(), isUseDB(), isUseSub());
-            case ABIOTIC -> BioTransformerWrapper.abioticTransformer(ia, getIterations());
-            case HUMAN_CUSTOM_MULTI -> BioTransformerWrapper.multiBioTransformer(ia, settings.getSequenceSteps(), getCyp450Mode(), isUseDB(), isUseSub());
-        };
-    }
-
-    private static JJob<List<BioTransformation>> makeJob(Callable<List<BioTransformation>> callable) {
-        return new BasicJJob<>() {
-            @Override
-            protected List<BioTransformation> compute() throws Exception {
-                return callable.call();
-            }
-        };
+                }).filter(Objects::nonNull)
+                .toList(); //results here
     }
 }
