@@ -39,8 +39,8 @@ public class SpectraLibraryUpdateManager {
 
     public int addSpectra(List<Ms2ReferenceSpectrum> data) throws IOException {
         data.forEach(spec->{
-            if (spec.getQuerySpectrum()==null) {
-                spec.setQuerySpectrum(fastCosine.prepareQuery(spec.getPrecursorMz(), spec.getSpectrum()));
+            if (spec.getSearchPreparedSpectrum()==null) {
+                spec.setSearchPreparedSpectrum(fastCosine.prepareQuery(spec.getPrecursorMz(), spec.getSpectrum()));
             }
         });
         int r = this.libraryWriter.upsertSpectra(data);
@@ -91,9 +91,9 @@ public class SpectraLibraryUpdateManager {
                         for (Ms2ReferenceSpectrum spec : reader.lookupSpectra(index.inchikey, true)) {
                             if (spec.getPrecursorIonType().equals(index.ionType)) {
                                 // minimum fields required:
-                                if ((spec.getSpectrum()!=null || spec.getQuerySpectrum()!=null) && spec.getFormula()!=null) {
-                                    if (spec.getQuerySpectrum()==null) {
-                                        spec.setQuerySpectrum(fastCosine.prepareQuery(spec.getPrecursorMz(), spec.getSpectrum()));
+                                if ((spec.getSpectrum()!=null || spec.getSearchPreparedSpectrum()!=null) && spec.getFormula()!=null) {
+                                    if (spec.getSearchPreparedSpectrum()==null) {
+                                        spec.setSearchPreparedSpectrum(fastCosine.prepareQuery(spec.getPrecursorMz(), spec.getSpectrum()));
                                         updateSp.add(spec);
                                     }
                                     specs.add(spec);
@@ -136,7 +136,7 @@ public class SpectraLibraryUpdateManager {
                         merged.setCandidateInChiKey(index.inchikey);
                         merged.setPrecursorIonType(index.ionType);
                         merged.setIndividualSpectraUIDs(specs.stream().mapToLong(Ms2ReferenceSpectrum::getUuid).toArray());
-                        merged.setQuerySpectrum(fastCosine.prepareMergedQuery(specs.stream().map(Ms2ReferenceSpectrum::getQuerySpectrum).toList()));
+                        merged.setSearchPreparedSpectrum(fastCosine.prepareMergedQuery(specs.stream().map(Ms2ReferenceSpectrum::getSearchPreparedSpectrum).toList()));
                         ReferenceFragmentationTree refTree = ReferenceFragmentationTree.from(tree, merged);
                         // submit to database
                         writer.insertMergedSpecAndTree(merged, refTree);
@@ -150,7 +150,7 @@ public class SpectraLibraryUpdateManager {
 
     private static Ms2Experiment toExperiment(Index index, List<Ms2ReferenceSpectrum> spectra) {
         MutableMs2Experiment experiment = new MutableMs2Experiment();
-        experiment.setMs2Spectra(spectra.stream().map(x->new MutableMs2Spectrum(x.getSpectrum()==null ? x.getQuerySpectrum() : x.getSpectrum(), x.getPrecursorMz(), x.getCollisionEnergy(), x.getMsLevel())).toList());
+        experiment.setMs2Spectra(spectra.stream().map(x->new MutableMs2Spectrum(x.getSpectrum()==null ? x.getSearchPreparedSpectrum() : x.getSpectrum(), x.getPrecursorMz(), x.getCollisionEnergy(), x.getMsLevel())).toList());
         MolecularFormula formula = spectra.getFirst().getFormula();
         experiment.setIonMass(index.ionType.neutralMassToPrecursorMass(formula.getMass()));
         experiment.setMolecularFormula(formula);

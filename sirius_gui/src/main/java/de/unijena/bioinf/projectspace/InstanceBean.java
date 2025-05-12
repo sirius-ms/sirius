@@ -452,13 +452,13 @@ public class InstanceBean implements SiriusPCS {
         return getMsData(false);
     }
 
-    public MsData getMsData(boolean asCosineQuery) {
+    public MsData getMsData(boolean asSearchPreparedMsData) {
         //double-checked locking, msData must be volatile
         if (msData == null) {
             synchronized (this) {
                 if (msData == null) {
                     msData = sourceFeature().map(AlignedFeature::getMsData)
-                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asCosineQuery)));
+                            .orElse(withIds((pid, fid) -> getClient().features().getMsData(pid, getFeatureId(), asSearchPreparedMsData)));
                 }
                 return msData;
             }
