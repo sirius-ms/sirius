@@ -670,7 +670,7 @@ class FastCosineTest {
             assertEquals(4, mergedSpectrum.size(), "Merged spectrum should have 4 peaks");
             
             // Convert back to regular spectrum for comparison
-            SearchPreparedSpectrum regularSpectrum = mergedSpectrum.asReferenceLibrarySpectrum();
+            SearchPreparedSpectrum regularSpectrum = mergedSpectrum.asSearchPreparedSpectrum();
             
             // Test that the merged spectrum has high similarity with both source spectra
             SpectralSimilarity similarity1 = fastCosine.fastCosine(regularSpectrum, spectrum1);

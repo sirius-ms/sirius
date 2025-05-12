@@ -70,7 +70,7 @@ public class SearchPreparedMergedSpectrum extends SearchPreparedSpectrum {
         this.mergedMaxIntensities = mergedMaxIntensities;
     }
 
-    public SearchPreparedSpectrum asReferenceLibrarySpectrum() {
+    public SearchPreparedSpectrum asSearchPreparedSpectrum() {
         return new SearchPreparedSpectrum(getParentMass(), getParentIntensity(), mz, intensities);
     }
 
