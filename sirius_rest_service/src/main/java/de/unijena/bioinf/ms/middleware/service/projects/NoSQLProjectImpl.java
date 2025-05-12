@@ -28,8 +28,8 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
@@ -118,6 +118,8 @@ import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
+    private static final LongestCommonSubsequence lcs = new LongestCommonSubsequence();
+
     @NotNull
     private final String projectId;
 
@@ -1390,7 +1392,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         setProjectTypeOrThrow(project());
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
+                .peek(ci -> {
+                    //create a name from the longes common subsequence of all feauture names if name if the compound is null/blank.
+                    if (Utils.isNullOrBlank(ci.getName())) {
+                        ci.getFeatures().stream().map(FeatureImport::getName)
+                                .filter(Objects::nonNull)
+                                .filter(Predicate.not(String::isBlank))
+                                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
+                                .filter(Predicate.not(String::isBlank))
+                                .ifPresent(ci::setName);
+                    }
+                }).map(ci -> convertToProjectCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
@@ -1467,21 +1480,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
     }
 
+    /**
+     * Imports features without compound grouping. Since grouping is unknown, each feature needs to belong to its own compound.
+     * To group features as compounds together, please use add compounds instead.
+     * @param features the features to be imported into the project
+     * @param profile the instrument the features have been measured on.
+     * @param optFields opt fields to be returned as part of the imported features/
+     * @return imported features with selected opt fields and UUIDs for features and compounds.
+     */
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        LongestCommonSubsequence lcs = new LongestCommonSubsequence();
-        String name = features.stream().map(FeatureImport::getName)
-                .filter(Objects::nonNull)
-                .filter(Predicate.not(String::isBlank))
-                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
-                .filter(Predicate.not(String::isBlank))
-                .orElse(null);
-
-        CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
-        Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
-                () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
-        );
-        return compound.getFeatures();
+        List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
+        return addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields).stream()
+                .flatMap(c -> c.getFeatures().stream()).toList();
     }
 
     @SneakyThrows
