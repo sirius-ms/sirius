@@ -304,7 +304,7 @@ public class MergeTracesWithoutGapFilling {
                     //addMs2ToProjectedTrace(sample, isotopeTraces.toArray(ContiguousTrace[]::new), projectedIsotopeTrace, tracker, merged);
 
                     // update
-                    merged.getStorage().getMergeStorage().addIsotopeProjectedTrace(r.id, isotopePeak, sample.getUid(), projectedIsotopeTrace);
+                    merged.getStorage().getMergeStorage().addIsotopeProjectedTrace(r.id, chargeState, isotopePeak, sample.getUid(), projectedIsotopeTrace);
                 } else if (foundIsotopes==0) {
                     // break if there is a gap within isotope pattern
                     break;
