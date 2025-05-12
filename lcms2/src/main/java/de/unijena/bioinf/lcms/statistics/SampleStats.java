@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import lombok.*;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
@@ -54,5 +55,9 @@ public class SampleStats {
 
     public void setExpectedPeakWidth(double expectedPeakWidth) {
         this.expectedPeakWidth = expectedPeakWidth;
+    }
+
+    public void setNoiseLevel(double noiseLevel) {
+        Arrays.fill(noiseLevelPerScan, (float)noiseLevel);
     }
 }

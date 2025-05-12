@@ -377,8 +377,11 @@ public class LCMSProcessing {
         sample.setTraceStats(TraceStats.collect(sample));
     }
 
+
     private void extractTraces(ProcessedSample sample) {
         final TracePicker tracePicker = new TracePicker(sample, traceCachingStrategy, segmentationStrategy);
+        SampleStats statistics = sample.getStorage().getStatistics();
+        final FloatArrayList noiseIntensities = new FloatArrayList();
         tracePicker.setAllowedMassDeviation(sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
         traceDetectionStrategy.findPeaksForExtraction(sample, (sample1, spectrumIdx, peakIdx, spectrum) -> {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));
