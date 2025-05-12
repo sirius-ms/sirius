@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Optional;
 
 public class KendrickMassDefectPanel extends JCefBrowserPanel implements ExperimentListChangeListener, PanelDescription {
 
@@ -30,8 +29,8 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     @Override
     public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
-        updateSelectedFeature(Optional.ofNullable(selected)
-                .map(List::getFirst).map(InstanceBean::getFeatureId).orElse(null));
+        updateSelectedFeature(selected == null || selected.isEmpty() ? null
+                : selected.getFirst().getFeatureId());
     }
 
     @Override
