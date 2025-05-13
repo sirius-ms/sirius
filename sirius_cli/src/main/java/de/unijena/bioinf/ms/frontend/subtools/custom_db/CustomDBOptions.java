@@ -184,6 +184,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 logWarn("\n==> No location/name given! Exiting.\n");
                 return false;
             }
+            if (location != null && !Path.of(location).isAbsolute()) {
+                location = Path.of(location).toAbsolutePath().toString();
+            }
 
             checkForInterruption();
 
@@ -192,15 +195,21 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             LinkedHashMap<String, String> existingDBs = CustomDBPropertyUtils.getCustomDBs();
             if (existingDBs.containsKey(location)) {
                 name = existingDBs.get(location);
+                if (mode.importParas.name != null && !mode.importParas.name.isBlank() && !name.equals(mode.importParas.name)) {
+                    logWarn("\n==> Passed name " + mode.importParas.name + " does not match the current DB name " + name + " at this location and will be ignored.\n");
+                }
             } else if (existingDBs.containsValue(name)) {
                 location = CustomDBPropertyUtils.getLocationByName(existingDBs, name).orElseThrow();
-            } else {
-                if (location == null || location.isBlank()) {
-                    logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
-                    return false;
-                } else {
-                    isNewDb = true;
+                if (mode.importParas.location != null && !mode.importParas.location.isBlank()) {
+                    logWarn("\n==> Passed location " + mode.importParas.location + " does not match the current location of database " + name + " and will be ignored.\n");
                 }
+            } else if (location == null || location.isBlank()) {
+                logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
+                return false;
+            } else if (!Files.exists(Path.of(location))) {
+                isNewDb = true;
+            } else if (mode.importParas.name != null && !mode.importParas.name.isBlank()) {
+                logWarn("\n==> Passed name " + mode.importParas.name + " will be ignored, the database name will be taken from the file " + location);
             }
 
             CustomDatabase db = isNewDb
@@ -290,6 +299,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
         private CustomDatabase openExistingDB(String location, CdkFingerprintVersion version) throws IOException {
             CustomDatabase db = CustomDatabases.open(location, true, version);
+            if (!CustomDBPropertyUtils.getCustomDBs().containsKey(location)) {
+                CustomDBPropertyUtils.addDB(location, db.name());
+            }
             logInfo("Opened existing database" + db.name() + ".");
             return db;
         }
