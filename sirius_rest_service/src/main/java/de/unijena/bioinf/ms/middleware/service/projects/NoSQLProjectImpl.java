@@ -1405,7 +1405,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         setProjectTypeOrThrow(project());
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
                 .peek(ci -> {
-                    //create a name from the longes common subsequence of all feauture names if name if the compound is null/blank.
+                    //create a name from the longest common subsequence of all feature names if the compound name is null/blank.
                     if (Utils.isNullOrBlank(ci.getName())) {
                         ci.getFeatures().stream().map(FeatureImport::getName)
                                 .filter(Objects::nonNull)
