@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -57,6 +58,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -70,12 +72,13 @@ import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -993,7 +996,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
-
         AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .name(featureImport.getName())
                 .externalFeatureId(featureImport.getExternalFeatureId())
@@ -1002,16 +1004,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (featureImport.getDataQuality() != null)
             builder.dataQuality(featureImport.getDataQuality());
 
+        MS2MassDeviation ms2MassDeviation;
+        if (profile == InstrumentProfile.ORBITRAP) {
+            ms2MassDeviation = new MS2MassDeviation(new Deviation(5), new Deviation(5), Deviation.NULL_DEVIATION);
+        } else {
+            ms2MassDeviation = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
+        }
+
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
         builder.charge((byte) featureImport.getCharge());
 
-        if (featureImport.getMergedMs1() != null) {
-            SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
-            msDataBuilder.mergedMs1Spectrum(mergedMs1);
-        } else if (featureImport.getMs1Spectra() != null && !featureImport.getMs1Spectra().isEmpty()) {
+        {
             Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
-            List<ProcessedPeak> mergeMSPeaks = sirius.getMs2Preprocessor().preprocess(FeatureImports.toExperiment(featureImport)).getMergedPeaks();
-            msDataBuilder.mergedMs1Spectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.from(mergeMSPeaks));
+            MutableMs2Experiment exp = (MutableMs2Experiment) FeatureImports.toExperiment(featureImport);
+            final ProcessedInput pinput = new ProcessedInput(exp, exp);
+            sirius.getMs1Preprocessor().ms1Merging(pinput);
+            sirius.getMs1Preprocessor().isotopePatternDetection(pinput);
+
+            pinput.getAnnotation(MergedMs1Spectrum.class).ifPresent(ms1 -> msDataBuilder.mergedMs1Spectrum(ms1.mergedSpectrum));
+            pinput.getAnnotation(Ms1IsotopePattern.class).ifPresent(iso -> msDataBuilder.isotopePattern(new IsotopePattern(iso.getSpectrum(), IsotopePattern.Type.MERGED_APEX)));
         }
 
         if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
@@ -1039,7 +1050,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
                 }
             }
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MassDeviation.standardMassDeviation, true, false, msnSpectra), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
         MSData msData = msDataBuilder.build();
