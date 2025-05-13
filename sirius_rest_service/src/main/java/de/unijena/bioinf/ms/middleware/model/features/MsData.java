@@ -60,18 +60,18 @@ public class MsData {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
 
-    public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asCosineQuery) {
+    public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asSearchPreparedMsData) {
         MsData.MsDataBuilder builder = MsData.builder();
         if (msData.getMergedMs1Spectrum() != null)
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
         if (msData.getMergedMSnSpectrum() != null){
             double precursorMz = msData.getMsnSpectra().stream()
                     .mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().getAsDouble();
-            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), precursorMz, asCosineQuery));
+            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), precursorMz, asSearchPreparedMsData));
         }
 
         builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream()
-                .map(s -> Spectrums.createMsMs(s, asCosineQuery)).toList() : List.of());
+                .map(s -> Spectrums.createMsMs(s, asSearchPreparedMsData)).toList() : List.of());
         //MS1Spectra are not set since they are not stored in default MSData object.
         return builder.build();
     }
