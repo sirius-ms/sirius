@@ -76,7 +76,7 @@ public class CompoundController implements TaggableController<Compound, Compound
      * Page of available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -86,17 +86,17 @@ public class CompoundController implements TaggableController<Compound, Compound
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Compound> getCompoundsPaged(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, msDataAsCosineQuery, removeNone(optFields), removeNone(optFieldsFeatures));
+        return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, msDataSearchPrepared, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
     /**
      * List of all available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -105,10 +105,10 @@ public class CompoundController implements TaggableController<Compound, Compound
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Compound> getCompounds(@PathVariable String projectId,
-                                       @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+                                       @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
                                        @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        return getCompoundsPaged(projectId, globalConfig.unpaged(), msDataAsCosineQuery, optFields, optFieldsFeatures)
+        return getCompoundsPaged(projectId, globalConfig.unpaged(), msDataSearchPrepared, optFields, optFieldsFeatures)
                 .stream().toList();
     }
 
@@ -143,7 +143,7 @@ public class CompoundController implements TaggableController<Compound, Compound
      *
      * @param projectId  project-space to read from.
      * @param compoundId identifier of the compound (group of ion identities) to access.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
@@ -151,10 +151,10 @@ public class CompoundController implements TaggableController<Compound, Compound
      */
     @GetMapping(value = "/{compoundId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Compound getCompound(@PathVariable String projectId, @PathVariable String compoundId,
-                                @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+                                @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
                                 @RequestParam(required = false, defaultValue = "none") EnumSet<Compound.OptField> optFields,
                                 @RequestParam(required = false, defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, msDataAsCosineQuery, removeNone(optFields), removeNone(optFieldsFeatures));
+        return projectsProvider.getProjectOrThrow(projectId).findCompoundById(compoundId, msDataSearchPrepared, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
     /**

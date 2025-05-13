@@ -44,8 +44,6 @@ public enum MetabolicTransformation {
   
   HUMAN_GUT("HUMAN_GUT"),
   
-  ENV_MICROBIAL("ENV_MICROBIAL"),
-  
   ALL_HUMAN("ALL_HUMAN"),
   
   ABIOTIC("ABIOTIC"),
