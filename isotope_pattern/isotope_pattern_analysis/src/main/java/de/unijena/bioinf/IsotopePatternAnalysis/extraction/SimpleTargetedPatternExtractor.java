@@ -32,8 +32,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import org.apache.commons.lang3.Range;
 
-import java.util.ArrayList;
-
 @Deprecated
 public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction {
 
@@ -55,7 +53,6 @@ public class SimpleTargetedPatternExtractor implements TargetedPatternExtraction
                 experiment.getAnnotationOrDefault(FormulaConstraints.class).getExtendedConstraints(new FormulaConstraints(ChemicalAlphabet.getExtendedAlphabet())).getChemicalAlphabet();
 
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1);
-        final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         MS1MassDeviation dev = experiment.getAnnotationOrDefault(MS1MassDeviation.class);
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, experiment.getIonMass(), dev.allowedMassDeviation);
         if (index < 0) return null;
