@@ -120,8 +120,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
     /**
      * We define a preferred width since to prevent resizing during change of  values.
      */
-    private static final int PANEL_WIDTH_BATCH_MODE = 450;
-    private static final int PANEL_WIDTH_SINGLE_MODE = 550;
+    private static final int PANEL_WIDTH_BATCH_MODE = 470;
+    private static final int PANEL_WIDTH_SINGLE_MODE = 570;
 
     public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
@@ -435,7 +435,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
         defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
-        JLabel label = new JLabel("Apply allowed elements to");
+        JLabel label = new JLabel("Apply 'allowed elements' filter to");
         filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);
