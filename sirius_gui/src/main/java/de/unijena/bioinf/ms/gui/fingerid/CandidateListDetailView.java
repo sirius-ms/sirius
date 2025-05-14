@@ -35,11 +35,13 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
@@ -169,8 +171,29 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(OpenInBrowser2);
         popupMenu.add(highlight);
         popupMenu.add(annotateSpectrum);
+        initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
+
+    private ToolbarToggleButton filterByFmet;
+    private boolean filterByFmetEnabled;
+    private FMetFilter fmetFilter;
+    protected void initializeFunctionalMetabolomicsFunctionality() {
+        // add a special button to the toolbar
+        getSource().addActiveResultChangedListener(new ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>() {
+            @Override
+            public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+                boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(":FMet:")));
+                if (enableFmet != filterByFmetEnabled) {
+                    filterByFmetEnabled = enableFmet;
+                    filterByFmet.setVisible(filterByFmetEnabled);
+                    CandidateListDetailView.this.revalidate();
+                    CandidateListDetailView.this.repaint();
+                }
+            }
+        });
+    }
+
 
 
     @Override
@@ -187,7 +210,16 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         smartFilterTextField.setMaximumSize(new Dimension(115, smartFilterTextField.getPreferredSize().height));
 
         tb.add(filterByMolecularPropertyButton, getIndexOfFirstGap(tb));
+
+        {
+            filterByFmet = new ToolbarToggleButton(Icons.FMET_FILTER_ENABLED.derive(24,24), "Filter structure candidate list using functional metabolomics educt patterns.");
+            filterByFmet.setVisible(true);
+            tb.add(filterByFmet);
+            filterByFmetEnabled=true;
+        }
+
         tb.add(smartFilterTextField, getIndexOfFirstGap(tb));
+
 
         return tb;
     }
@@ -199,6 +231,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
         list.add(molecularPropertyMatcherEditor);
+
+        fmetFilter = new FMetFilter(filterByFmet);
+        list.add(fmetFilter);
+
         return list;
     }
 

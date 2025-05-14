@@ -377,6 +377,17 @@ public class Colors {
             public final static Color DE_NOVO_TEXT = Color.WHITE;
             public final static Color DE_NOVO_BORDER = Color.BLACK;
 
+            // special filters:
+            // rejection is used for flags that indicate a compound should be rejected/filtered out
+            // accept is used for flags that suggest a compound should be kept
+            // used for Functional Metabolomics
+            public final static Color DATABASE_FLAG_REJECTION = HIGHLIGHT_MATCHING_SUBSTRUCTURES_AGREEMENT_DISAGREE;
+            public final static Color DATABASE_FLAG_ACCEPT = HIGHLIGHT_MATCHING_SUBSTRUCTURES_AGREEMENT_GOOD;
+            public final static Color DATABASE_FLAG_ACCEPT_BORDER = Color.BLACK;
+            public final static Color DATABASE_FLAG_ACCEPT_TEXT = Color.BLACK;
+            public final static Color DATABASE_FLAG_REJECT_BORDER = Color.BLACK;
+            public final static Color DATABASE_FLAG_REJECT_TEXT = Color.BLACK;
+
             //Lipid, PFAS and such
             public final static Color SPECIAL = CUSTOM_BLUE;
             public final static Color SPECIAL_TEXT = Color.WHITE;
