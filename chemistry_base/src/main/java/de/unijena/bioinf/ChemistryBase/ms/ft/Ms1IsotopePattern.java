@@ -45,7 +45,7 @@ public class Ms1IsotopePattern implements ProcessedInputAnnotation, TreeAnnotati
     }
 
     public Ms1IsotopePattern(Spectrum<? extends Peak> ms, double score) {
-        this.spectrum = (ms.size()==0) ? EMPTY_SPECTRUM : new SimpleSpectrum(ms);
+        this.spectrum = (ms.isEmpty()) ? EMPTY_SPECTRUM : new SimpleSpectrum(ms);
         this.score = score;
     }
 
@@ -55,9 +55,12 @@ public class Ms1IsotopePattern implements ProcessedInputAnnotation, TreeAnnotati
     }
 
     public boolean isEmpty() {
-        return spectrum.size()==0;
+        return spectrum.isEmpty();
     }
 
+    public boolean notEmpty() {
+        return !isEmpty();
+    }
 
     public Peak[] getPeaks() {
         return Spectrums.extractPeakList(spectrum).toArray(new Peak[0]);

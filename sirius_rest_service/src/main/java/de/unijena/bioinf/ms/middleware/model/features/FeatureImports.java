@@ -20,54 +20,102 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.properties.PropertyManager;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toList;
+import static de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION;
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 public class FeatureImports {
 
-    public static Ms2Experiment toExperiment(FeatureImport feature) {
-        MutableMs2Experiment exp = new MutableMs2Experiment();
-        exp.setIonMass(feature.getIonMass());
-        exp.setName(feature.getName());
-        exp.setFeatureId(feature.getExternalFeatureId());
-        exp.setPrecursorIonType(PrecursorIonType.unknown(feature.getCharge()));
+    @NotNull
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts extractDetectedAdducts(FeatureImport featureImport) {
+        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
+            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
+            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
+                    da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
+            return da;
+        }
+        return new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
+    }
 
-        if (feature.getDetectedAdducts() != null && !feature.getDetectedAdducts().isEmpty()) {
-            PossibleAdducts possibleAdducts = feature.getDetectedAdducts().stream().map(PrecursorIonType::fromString)
-                    .distinct().collect(collectingAndThen(toList(), PossibleAdducts::new));
+    @NotNull
+    public static MSData extractMsData(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
+        MSData.MSDataBuilder msDataBuilder = MSData.builder();
 
-            DetectedAdducts da = new DetectedAdducts();
-            da.put(DetectedAdducts.Source.INPUT_FILE, possibleAdducts);
-            exp.setAnnotation(DetectedAdducts.class, da);
+        // build MS1 data
+        if (featureImport.getMergedMs1() != null || notNullOrEmpty(featureImport.getMs1Spectra())) {
+            MS1MassDeviation ms1dev = profile == InstrumentProfile.ORBITRAP
+                    ? new MS1MassDeviation(new Deviation(5), new Deviation(5), new Deviation(2))
+                    : PropertyManager.DEFAULTS.createInstanceWithDefaults((MS1MassDeviation.class));
 
+            SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
+                    ? new SimpleSpectrum(featureImport.getMergedMs1())
+                    : Spectrums.mergeSpectra(ms1dev.massDifferenceDeviation, true, false, featureImport.getMs1Spectra());
+            msDataBuilder.mergedMs1Spectrum(mergeMs1);
+
+            SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(mergeMs1, ms1dev, featureImport.getIonMass(), featureImport.getCharge(), true);
+            if (isotopePattern != null)
+                msDataBuilder.isotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.AVERAGE));
         }
 
-        exp.setAnnotation(RetentionTime.class, RetentionTime.of(feature.rtStartSeconds, feature.rtEndSeconds, feature.rtApexSeconds));
 
-        exp.setMs1Spectra(feature.getMs1Spectra().stream().map(SimpleSpectrum::new).toList());
-        exp.setMs2Spectra(feature.getMs2Spectra().stream().map(s ->
-                new MutableMs2Spectrum(s, s.getPrecursorMz(), s.getCollisionEnergy(),
-                        s.getMsLevel() == 0 ? 2 : s.getMsLevel(),
-                        s.getScanNumber() == null ? -1 : s.getScanNumber())).toList());
-        if (feature.getMergedMs1() != null)
-            exp.setMergedMs1Spectrum(new SimpleSpectrum(feature.getMergedMs1()));
-        return exp;
-    }
+        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
+            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+            DoubleList pmz = new DoubleArrayList();
+            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
+                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
+                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
+                mutableMs2.setMsLevel(spectrum.getMsLevel());
+                if (spectrum.getScanNumber() != null) {
+                    mutableMs2.setScanNumber(spectrum.getScanNumber());
+                }
+                if (spectrum.getCollisionEnergy() != null) {
+                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
+                }
+                if (spectrum.getPrecursorMz() != null) {
+                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
+                    pmz.add(spectrum.getPrecursorMz());
+                }
+                msnSpectra.add(mutableMs2);
+                {
+                    final Charge c = new Charge(featureImport.getCharge());
+                    msDataBuilder.msnSpectra(msnSpectra.stream()
+                            .peek(spec -> spec.setIonization(c))
+                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
+                }
+            }
 
-    public static List<Ms2Experiment> toExperiments(Collection<FeatureImport> features) {
-        return toExperimentsStr(features).toList();
-    }
+            Deviation ms2MergeDeviation;
+            if (profile == InstrumentProfile.ORBITRAP) {
+                ms2MergeDeviation = new Deviation(5);
+            } else {
+                MS2MassDeviation ms2dev =  PropertyManager.DEFAULTS.createInstanceWithDefaults((MS2MassDeviation.class));
+                ms2MergeDeviation = ms2dev.massDifferenceDeviation != NULL_DEVIATION
+                        ? ms2dev.massDifferenceDeviation : ms2dev.standardMassDeviation;
+            }
 
-    public static Stream<Ms2Experiment> toExperimentsStr(Collection<FeatureImport> features) {
-        return features.stream().map(FeatureImports::toExperiment);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MergeDeviation, true, false, msnSpectra), Normalization.Sum);
+            msDataBuilder.mergedMSnSpectrum(merged);
+        }
+
+        return msDataBuilder.build();
     }
 }
