@@ -1004,73 +1004,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (featureImport.getDataQuality() != null)
             builder.dataQuality(featureImport.getDataQuality());
 
-        MS2MassDeviation ms2MassDeviation;
-        if (profile == InstrumentProfile.ORBITRAP) {
-            ms2MassDeviation = new MS2MassDeviation(new Deviation(5), new Deviation(5), Deviation.NULL_DEVIATION);
-        } else {
-            ms2MassDeviation = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
-        }
-
-        MSData.MSDataBuilder msDataBuilder = MSData.builder();
         builder.charge((byte) featureImport.getCharge());
 
-        {
-            Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
-            MutableMs2Experiment exp = (MutableMs2Experiment) FeatureImports.toExperiment(featureImport);
-            final ProcessedInput pinput = new ProcessedInput(exp, exp);
-            sirius.getMs1Preprocessor().ms1Merging(pinput);
-            sirius.getMs1Preprocessor().isotopePatternDetection(pinput);
-
-            pinput.getAnnotation(MergedMs1Spectrum.class).ifPresent(ms1 -> msDataBuilder.mergedMs1Spectrum(ms1.mergedSpectrum));
-            pinput.getAnnotation(Ms1IsotopePattern.class).ifPresent(iso -> msDataBuilder.isotopePattern(new IsotopePattern(iso.getSpectrum(), IsotopePattern.Type.MERGED_APEX)));
-        }
-
-        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
-            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-            DoubleList pmz = new DoubleArrayList();
-            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
-                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
-                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
-                mutableMs2.setMsLevel(spectrum.getMsLevel());
-                if (spectrum.getScanNumber() != null) {
-                    mutableMs2.setScanNumber(spectrum.getScanNumber());
-                }
-                if (spectrum.getCollisionEnergy() != null) {
-                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                }
-                if (spectrum.getPrecursorMz() != null) {
-                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
-                    pmz.add(spectrum.getPrecursorMz());
-                }
-                msnSpectra.add(mutableMs2);
-                {
-                    final Charge c = new Charge(featureImport.getCharge());
-                    msDataBuilder.msnSpectra(msnSpectra.stream()
-                            .peek(spec -> spec.setIonization(c))
-                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
-                }
-            }
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MassDeviation.standardMassDeviation, true, false, msnSpectra), Normalization.Sum);
-            msDataBuilder.mergedMSnSpectrum(merged);
-        }
-        MSData msData = msDataBuilder.build();
+        MSData msData = FeatureImports.extractMsData(featureImport, profile);
         builder.msData(msData);
-
-        if (msData != null) {
-            builder.hasMs1(msData.getMergedMs1Spectrum() != null);
-            builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
-        }
+        builder.hasMs1(msData.getMergedMs1Spectrum() != null);
+        builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
         builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
+        builder.detectedAdducts(FeatureImports.extractDetectedAdducts(featureImport));
 
-        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
-            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
-            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
-                    da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
-            builder.detectedAdducts(da);
-        } else {
-            builder.detectedAdducts(new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts());
-        }
         return builder.build();
     }
 

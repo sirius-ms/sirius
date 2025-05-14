@@ -41,7 +41,11 @@ public class MergedMs1Spectrum implements ProcessedInputAnnotation {
     }
 
     public boolean isEmpty() {
-        return mergedSpectrum.size()==0;
+        return mergedSpectrum.isEmpty();
+    }
+
+    public boolean notEmpty() {
+        return !isEmpty();
     }
 
     public boolean isCorrelated() {
