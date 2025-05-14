@@ -35,12 +35,18 @@ import java.util.List;
 @JsonIgnoreProperties(value = { "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"}, ignoreUnknown = true)
 public class StructureCandidate {
 
+    @Schema(name = "StructureCandidateOptField", nullable = true)
+    public enum OptField {none, structure}
+
     protected String inchiKey;
     protected String smiles;
 
 
     @Schema(nullable = true)
     protected String structureName;
+
+    @Schema(nullable = true)
+    protected String structureSvg;
 
     @Schema(nullable = true)
     protected Double xlogP;
