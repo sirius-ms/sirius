@@ -1,3 +1,4 @@
+FunctionalMetabolomics=de.unijena.bioinf.ChemistryBase.ms.FunctionalMetabolomics
 MS1MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation
 MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
 MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
