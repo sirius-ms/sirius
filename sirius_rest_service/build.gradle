@@ -106,7 +106,7 @@ bootJar {
 openApi {
     apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("$projectDir"))
-    waitTimeInSeconds.set(20)
+    waitTimeInSeconds.set(30)
 
     outputFileName = "openapi-spec-enums-as-ref.json"
     customBootRun {
