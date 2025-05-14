@@ -120,8 +120,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
     /**
      * We define a preferred width since to prevent resizing during change of  values.
      */
-    private static final int PANEL_WIDTH_BATCH_MODE = 400;
-    private static final int PANEL_WIDTH_SINGLE_MODE = 500;
+    private static final int PANEL_WIDTH_BATCH_MODE = 450;
+    private static final int PANEL_WIDTH_SINGLE_MODE = 550;
 
     public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
@@ -331,10 +331,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
-        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, elementFilterEnforcedTextBox, buttonPanel));
-        if (elementFilterDetectableElementsTextBox != null) {
-            filterComponents.addAll(List.of(autodetectLabel, elementFilterDetectableElementsTextBox));
-        }
+        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, elementFilterEnforcedTextBox));
+        if (!isBatchDialog) filterComponents.add(buttonPanel);
         int columnWidth = elementFilterEnforcedTextBox.getPreferredSize().width;
         int sidePanelWidth = buttonPanel.getPreferredSize().width;
         elementFilterForBottomUp = addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
@@ -348,7 +346,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, elementFilterEnforcedTextBox);
         if (elementFilterDetectableElementsTextBox != null) {
-            filterFields.add(autodetectLabel, elementFilterDetectableElementsTextBox);
+            filterFields.add(autodetectLabel, elementFilterDetectableElementsTextBox, 10, false);
         }
 
 
@@ -356,6 +354,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         c.gridx = 2;
         c.gridy = constraintsGridY;
         c.gridheight = isBatchDialog ? 2 : 1;
+        if (isBatchDialog) c.insets.top = 10;
         filterFields.add(buttonPanel, c);
 
         //open element selection panel
@@ -363,9 +362,23 @@ public class FormulaSearchStrategy extends ConfigPanel {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(elementFilterEnforcedTextBox.getText());
             Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(elementFilterDetectableElementsTextBox, allAutoDetectableElements) : null;
             Window owner = SwingUtilities.getWindowAncestor(this);
-            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
+            boolean setDetectablesOnly = (!elementFilterForBottomUp.isSelected() && strategy == Strategy.BOTTOM_UP) || (!elementFilterForDatabase.isSelected() && strategy == Strategy.DATABASE);
+            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints, setDetectablesOnly);
             if (dialog.isSuccess()) {
-                elementFilterEnforcedTextBox.setText(dialog.getConstraints().toString(","));
+                FormulaConstraints newConstraints;
+                if (setDetectablesOnly) {
+                    //only remove autodetectable elements
+                    elementFilterEnforcedTextBox.getText();
+                    newConstraints = currentConstraints;
+                    dialog.getAutoDetect().stream().forEach(ele -> {
+                        if (newConstraints.hasElement(ele)) newConstraints.setBound(ele, 0, 0);
+                    });
+                } else {
+                    newConstraints = dialog.getConstraints();
+                }
+                String constraintText = newConstraints.toString(",");
+                elementFilterEnforcedTextBox.setText(constraintText.equals(",") ? null : constraintText);
+
                 if (elementFilterDetectableElementsTextBox != null) {
                     elementFilterDetectableElementsTextBox.setText(join(dialog.getAutoDetect()));
                 }
@@ -422,7 +435,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
         defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
-        JLabel label = new JLabel("Apply element filter to");
+        JLabel label = new JLabel("Apply allowed elements to");
         filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);
