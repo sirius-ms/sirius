@@ -2138,6 +2138,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return sSum;
     }
 
+    @SneakyThrows
     private StructureCandidateFormula convertStructureMatch(StructureMatch match, EnumSet<StructureCandidateScored.OptField> optFields) {
         final StructureCandidateFormula sSum = new StructureCandidateFormula();
         //FP
@@ -2146,6 +2147,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         if (optFields.contains(StructureCandidateScored.OptField.fingerprint))
             sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
+
+        if (optFields.contains(StructureCandidateScored.OptField.structure))
+            sSum.setStructureSvg(Spectrums.smilesToSVG(match.getCandidate().getSmiles()));
 
         sSum.setFormulaId(String.valueOf(match.getFormulaId()));
         sSum.setRank(match.getStructureRank());

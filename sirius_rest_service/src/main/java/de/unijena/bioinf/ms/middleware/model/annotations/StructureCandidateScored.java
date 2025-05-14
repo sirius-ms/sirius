@@ -31,8 +31,9 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(value = { "molecularFormula", "adduct", "formulaId"}, ignoreUnknown = true)
 public class StructureCandidateScored extends StructureCandidate {
-    @Schema(name = "StructureCandidateOptField", nullable = true)
-    public enum OptField {none, fingerprint, dbLinks, libraryMatches}
+
+    @Schema(name = "StructureCandidateScoredOptField", nullable = true)
+    public enum OptField {none, fingerprint, dbLinks, libraryMatches, structure}
 
     /**
      * the overall rank of this candidate among all candidates of this feature
