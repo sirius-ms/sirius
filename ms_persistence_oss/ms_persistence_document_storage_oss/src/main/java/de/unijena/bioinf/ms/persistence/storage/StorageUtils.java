@@ -102,7 +102,7 @@ public class StorageUtils {
         } catch (Exception e) {
             // When we get data from third party tools, it sometimes happens that adduct/mass/formula are
             // contradictory, usually due to a false formula annotation. Instead of throwing the data away, we try
-            // to import it without formula an unknown adduct.
+            // to import it without formula and unknown adduct.
             log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
                     exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
             ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
