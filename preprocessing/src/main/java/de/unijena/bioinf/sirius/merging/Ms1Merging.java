@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.sirius.merging;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MergedMs1Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -28,8 +27,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.sirius.ProcessedInput;
-
-import static de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION;
 
 @Provides(MergedMs1Spectrum.class)
 public class Ms1Merging {
@@ -39,11 +36,12 @@ public class Ms1Merging {
         final Ms2Experiment exp = processedInput.getExperimentInformation();
         if (exp.getMergedMs1Spectrum()!=null) {
             return new MergedMs1Spectrum(true, exp.getMergedMs1Spectrum());
-        } else if (!exp.getMs1Spectra().isEmpty()){
+        } else if (exp.getMs1Spectra().size() == 1){
+            //no need for merging for a single spectrum
+            return new MergedMs1Spectrum(false, new SimpleSpectrum(exp.getMs1Spectra().get(0)));
+        } else if (exp.getMs1Spectra().size() > 1){
             MS1MassDeviation ms1dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
-            Deviation dev = ms1dev.massDifferenceDeviation != NULL_DEVIATION
-                    ? ms1dev.massDifferenceDeviation : ms1dev.standardMassDeviation;
-            final SimpleSpectrum merged = Spectrums.mergeSpectra(dev, true, false, exp.getMs1Spectra());
+            final SimpleSpectrum merged = Spectrums.mergeSpectra(ms1dev.allowedMassDeviation, true, true, exp.getMs1Spectra());
             return new MergedMs1Spectrum(false, merged);
         } else {
             return MergedMs1Spectrum.empty();
