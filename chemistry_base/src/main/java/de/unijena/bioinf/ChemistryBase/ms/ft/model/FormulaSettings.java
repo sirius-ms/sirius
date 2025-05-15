@@ -37,12 +37,13 @@ import java.util.Set;
 public class FormulaSettings implements Ms2ExperimentAnnotation {
 
     public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING = "CHNOPFI";
-    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING = "SBBrCl"; //todo NewWorkflow: add Se?
+    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING = "SBBrClSe";
+    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_FALLBACK_STRING = "S";
 
     /**
-     * This Formula contraint allowing "only organic" formulas can e.g. be used as a default if the element filter for database search is activated in the GUI compute dialog
+     * This Formula constraint allowing "only organic" formulas can e.g. be used as a default if the element filter for database search is activated in the GUI compute dialog
      */
-    public final static FormulaConstraints ORGANIC_ELEMENT_FILTER_CHNOPSBBrClIF = FormulaConstraints.fromString(EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING+EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+    public final static FormulaConstraints ORGANIC_ELEMENT_FILTER_CHNOPSBBrClIF = FormulaConstraints.fromString(EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING+ EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING);
 
     @NotNull protected final FormulaConstraints enforced;
     @NotNull protected final FormulaConstraints fallback;
