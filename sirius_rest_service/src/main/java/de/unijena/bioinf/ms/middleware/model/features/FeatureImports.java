@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,7 @@ public class FeatureImports {
 
             SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
                     ? new SimpleSpectrum(featureImport.getMergedMs1())
-                    : Spectrums.mergeSpectra(ms1dev.massDifferenceDeviation, true, false, featureImport.getMs1Spectra());
+                    : Ms1Merging.mergeIfMoreThanOneSpectrum(featureImport.getMs1Spectra(), ms1dev.massDifferenceDeviation).mergedSpectrum;
             msDataBuilder.mergedMs1Spectrum(mergeMs1);
 
             SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(mergeMs1, ms1dev, featureImport.getIonMass(), featureImport.getCharge(), true);
@@ -108,8 +109,7 @@ public class FeatureImports {
                 ms2MergeDeviation = new Deviation(5);
             } else {
                 MS2MassDeviation ms2dev =  PropertyManager.DEFAULTS.createInstanceWithDefaults((MS2MassDeviation.class));
-                ms2MergeDeviation = ms2dev.massDifferenceDeviation != NULL_DEVIATION
-                        ? ms2dev.massDifferenceDeviation : ms2dev.standardMassDeviation;
+                ms2MergeDeviation = ms2dev.allowedMassDeviation;
             }
 
             SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MergeDeviation, true, false, msnSpectra), Normalization.Sum);
