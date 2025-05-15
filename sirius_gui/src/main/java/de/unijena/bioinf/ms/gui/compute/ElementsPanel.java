@@ -57,13 +57,16 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
 
     private final PeriodicTable periodicTable;
 
+    private final boolean setDetectablesOnly;
+
     public ElementsPanel(Window owner, int columns, FormulaConstraints enforcedElements) {
-        this(owner, columns, null, null, enforcedElements);
+        this(owner, columns, null, null, enforcedElements, false);
     }
 
-    public ElementsPanel(Window owner, int columns, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints enforced) {
-        super("Elements allowed in Molecular Formula");
+    public ElementsPanel(Window owner, int columns, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints enforced, boolean setDetectablesOnly) {
+        super(setDetectablesOnly ? "Detectable elements" : "Elements allowed in Molecular Formula");
         this.owner = owner;
+        this.setDetectablesOnly = setDetectablesOnly;
         this.individualAutoDetect = (possibleDetectable != null && enabledDetectable != null);
         if (individualAutoDetect) {
             this.possDetectableElements = new HashSet<>(possibleDetectable);
@@ -79,7 +82,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
         elementsPanel = new JPanel(new GridLayout(0, columns));
         element2Slider = new HashMap<>();
 
-        enforced.getChemicalAlphabet().getElements().stream().filter(e -> !element2Slider.containsKey(e.getSymbol()))
+        if (!setDetectablesOnly) enforced.getChemicalAlphabet().getElements().stream().filter(e -> !element2Slider.containsKey(e.getSymbol()))
                 .forEach(e -> addElementSlider(new ElementSlider(e, enforced.getLowerbound(e), enforced.getUpperbound(e))));
 
         if (individualAutoDetect) {
@@ -90,14 +93,15 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
                     });
         }
 
-        for (String symbol : additionalElementSymbols) {
-            if (!element2Slider.containsKey(symbol)) {
-                Element element = PeriodicTable.getInstance().getByName(symbol);
-                ElementSlider elementSlider = new ElementSlider(element, 0, 0);
-                addElementSlider(elementSlider);
+        if (!setDetectablesOnly) {
+            for (String symbol : additionalElementSymbols) {
+                if (!element2Slider.containsKey(symbol)) {
+                    Element element = PeriodicTable.getInstance().getByName(symbol);
+                    ElementSlider elementSlider = new ElementSlider(element, 0, 0);
+                    addElementSlider(elementSlider);
+                }
             }
         }
-
 
         scrollPane = new JScrollPane(elementsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         int width = elementsPanel.getPreferredSize().width;
@@ -114,7 +118,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
 
         lowerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
         lowerPanel.add(elementButton);
-        mainP.add(lowerPanel);
+        if (!setDetectablesOnly) mainP.add(lowerPanel);
 
     }
 
@@ -242,13 +246,18 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
         private JPanel panel;
         public ElementSlider(Element element, int min, int max){
             this.element = element;
-            //// TODO: range upper value not working
             this.slider = new SliderWithTextField(element.getSymbol(), 0, maxNumberOfOneElements, min, max);
-
             Dimension dimension = slider.nameLabel.getPreferredSize();
             slider.nameLabel.setPreferredSize(new Dimension((int)(1.5*dimension.height), dimension.height));
-            this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
-            panel.add(slider);
+
+            if (setDetectablesOnly){
+                this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,5,0));
+                JLabel symbol = new JLabel(element.getSymbol());
+                panel.add(symbol);
+            } else {
+                this.panel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
+                panel.add(slider);
+            }
             if (individualAutoDetect){
                 if (possDetectableElements.contains(element)) {
                     checkBox = new JCheckBox();
@@ -295,7 +304,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
                 slider.setEnabled(false);
             } else {
                 this.slider.refreshText();
-                slider.setEnabled(true);
+                slider.setEnabled(!setDetectablesOnly);
             }
         }
 

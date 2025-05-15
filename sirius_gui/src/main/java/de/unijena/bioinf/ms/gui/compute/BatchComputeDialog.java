@@ -54,7 +54,7 @@ public class BatchComputeDialog extends JDialog {
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
-        setPreferredSize(new Dimension(1070, 970));
+        setPreferredSize(new Dimension(1150, 970));
 
         gui.getConnectionMonitor().checkConnectionInBackground();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
