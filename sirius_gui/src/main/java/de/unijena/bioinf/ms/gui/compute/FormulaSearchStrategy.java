@@ -312,6 +312,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JLabel autodetectLabel = new JLabel("Autodetect");
         elementFilterDetectableElementsTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
         if (elementFilterDetectableElementsTextBox != null) {
+            elementFilterDetectableElementsTextBox.setToolTipText(
+                    "The 'autodetect' elements are always considered for both strategies - de novo and bottom up. Their presence is predicted from the MS1 isotope pattern if available.\n\n" +
+                            "For 'de novo' these elements are used in addition to the 'allowed elements' when generating molecular formulas.\n\n" +
+                            "For 'bottom up' they act as filter:\n" +
+                            "If element detection is performed (an MS1 isotope pattern is present) and an element was predicted not to be present, this element will be forbidden.\nIf no element detection can be performed, no element will be forbidden.");
             elementFilterDetectableElementsTextBox.setEditable(false);
             elementFilterDetectableElementsTextBox.setText(join(allAutoDetectableElements.stream().filter(e -> formulaSettings.getAutoDetectionElements().contains(e)).collect(Collectors.toList()))); //intersection of detectable elements of the used predictor and the specified detectable alphabet
         }
@@ -354,7 +359,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         c.gridx = 2;
         c.gridy = constraintsGridY;
         c.gridheight = isBatchDialog ? 2 : 1;
-        if (isBatchDialog) c.insets.top = 10;
+        if (isBatchDialog) c.insets.top = 5;
         filterFields.add(buttonPanel, c);
 
         //open element selection panel
@@ -435,7 +440,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
         defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
+        defaultStrategyElementFilterSelector.setToolTipText("The 'allowed elements' filter specifies the elements used for de novo molecular formula generation.\n" +
+                "If this selection here is set to '"+ElementAlphabetStrategy.BOTH+"', it is additionally used to filter the bottom up formulas.");
         JLabel label = new JLabel("Apply 'allowed elements' filter to");
+
         filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);
