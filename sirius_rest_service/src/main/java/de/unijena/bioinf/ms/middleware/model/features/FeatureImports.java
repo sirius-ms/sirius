@@ -112,7 +112,7 @@ public class FeatureImports {
                 ms2MergeDeviation = ms2dev.allowedMassDeviation;
             }
 
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation), Normalization.Sum);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation, false), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
 
