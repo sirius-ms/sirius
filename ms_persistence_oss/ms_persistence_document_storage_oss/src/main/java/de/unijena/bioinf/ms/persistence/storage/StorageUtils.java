@@ -120,8 +120,9 @@ public class StorageUtils {
                 .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
 
         if (!isMs1Only){
-            builder.mergedMSnSpectrum(Spectrums.from(pinput.getMergedPeaks().stream()
-                    .map(p -> new SimplePeak(p.getMass(), p.getSumIntensity())).toList()));
+            builder.mergedMSnSpectrum(Spectrums.getNormalizedSpectrum(
+                    Spectrums.from(pinput.getMergedPeaks().stream().filter(p -> !p.isSynthetic())
+                    .map(p -> new SimplePeak(p.getMass(), p.getSumIntensity())).toList()), Normalization.Sum));
             //we use the unprocessed spectra here to store the real intensities.
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
