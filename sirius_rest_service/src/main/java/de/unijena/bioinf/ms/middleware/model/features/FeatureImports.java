@@ -69,7 +69,7 @@ public class FeatureImports {
 
             SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
                     ? new SimpleSpectrum(featureImport.getMergedMs1())
-                    : Ms1Merging.mergeIfMoreThanOneSpectrum(featureImport.getMs1Spectra(), ms1dev.massDifferenceDeviation).mergedSpectrum;
+                    : Ms1Merging.mergeIfMoreThanOneSpectrum(featureImport.getMs1Spectra(), ms1dev.allowedMassDeviation).mergedSpectrum;
             msDataBuilder.mergedMs1Spectrum(mergeMs1);
 
             SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(mergeMs1, ms1dev, featureImport.getIonMass(), featureImport.getCharge(), true);
