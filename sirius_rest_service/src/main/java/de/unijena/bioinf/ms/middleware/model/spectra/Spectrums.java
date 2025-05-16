@@ -45,6 +45,7 @@ import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
 import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -63,6 +64,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 public class Spectrums {
     private static final FastCosine FAST_COSINE = new FastCosine(new Deviation(15), false, new NoiseThresholdSettings(0.001, 60, NoiseThresholdSettings.BASE_PEAK.NOT_PRECURSOR, 0));
     private static final boolean DEBUG = false;
@@ -518,6 +520,17 @@ public class Spectrums {
     //endregion
 
 
+    @Nullable
+    public static String smilesToSVGSilent(String smiles) {
+        try {
+            return smilesToSVG(smiles);
+        } catch (CDKException e) {
+            log.error("Error while generating SVG for smiles: {}.", smiles, e);
+            return null;
+        }
+    }
+
+    @NotNull
     public static String smilesToSVG(String smiles) throws CDKException {
         final MolecularGraph graph = new MolecularGraph(
                 new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles)
