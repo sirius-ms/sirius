@@ -27,9 +27,10 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
-import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.ms.gui.configs.ColorGenerator;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
@@ -57,6 +58,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNetwork;
 import de.unijena.bioinf.ms.persistence.model.core.networks.AdductNode;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.AggregationType;
@@ -70,12 +72,13 @@ import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -118,6 +121,8 @@ import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
+    private static final LongestCommonSubsequence lcs = new LongestCommonSubsequence();
+
     @NotNull
     private final String projectId;
 
@@ -991,7 +996,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
-
         AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .name(featureImport.getName())
                 .externalFeatureId(featureImport.getExternalFeatureId())
@@ -1000,64 +1004,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (featureImport.getDataQuality() != null)
             builder.dataQuality(featureImport.getDataQuality());
 
-        MSData.MSDataBuilder msDataBuilder = MSData.builder();
         builder.charge((byte) featureImport.getCharge());
 
-        if (featureImport.getMergedMs1() != null) {
-            SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
-            msDataBuilder.mergedMs1Spectrum(mergedMs1);
-        } else if (featureImport.getMs1Spectra() != null && !featureImport.getMs1Spectra().isEmpty()) {
-            Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
-            List<ProcessedPeak> mergeMSPeaks = sirius.getMs2Preprocessor().preprocess(FeatureImports.toExperiment(featureImport)).getMergedPeaks();
-            msDataBuilder.mergedMs1Spectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.from(mergeMSPeaks));
-        }
-
-        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
-            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-            DoubleList pmz = new DoubleArrayList();
-            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
-                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
-                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
-                mutableMs2.setMsLevel(spectrum.getMsLevel());
-                if (spectrum.getScanNumber() != null) {
-                    mutableMs2.setScanNumber(spectrum.getScanNumber());
-                }
-                if (spectrum.getCollisionEnergy() != null) {
-                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                }
-                if (spectrum.getPrecursorMz() != null) {
-                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
-                    pmz.add(spectrum.getPrecursorMz());
-                }
-                msnSpectra.add(mutableMs2);
-                {
-                    final Charge c = new Charge(featureImport.getCharge());
-                    msDataBuilder.msnSpectra(msnSpectra.stream()
-                            .peek(spec -> spec.setIonization(c))
-                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
-                }
-            }
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
-            msDataBuilder.mergedMSnSpectrum(merged);
-        }
-        MSData msData = msDataBuilder.build();
+        MSData msData = FeatureImports.extractMsData(featureImport, profile);
         builder.msData(msData);
-
-        if (msData != null) {
-            builder.hasMs1(msData.getMergedMs1Spectrum() != null);
-            builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
-        }
+        builder.hasMs1(msData.getMergedMs1Spectrum() != null);
+        builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
         builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
+        builder.detectedAdducts(FeatureImports.extractDetectedAdducts(featureImport));
 
-        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
-            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
-            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
-                    da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
-            builder.detectedAdducts(da);
-        } else {
-            builder.detectedAdducts(new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts());
-        }
         return builder.build();
     }
 
@@ -1390,7 +1346,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         setProjectTypeOrThrow(project());
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
+                .peek(ci -> {
+                    //create a name from the longest common subsequence of all feature names if the compound name is null/blank.
+                    if (Utils.isNullOrBlank(ci.getName())) {
+                        ci.getFeatures().stream().map(FeatureImport::getName)
+                                .filter(Objects::nonNull)
+                                .filter(Predicate.not(String::isBlank))
+                                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
+                                .filter(Predicate.not(String::isBlank))
+                                .ifPresent(ci::setName);
+                    }
+                }).map(ci -> convertToProjectCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
@@ -1467,21 +1434,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return storage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)), Feature.class).map(this::convertToApiFeature0).toList();
     }
 
+    /**
+     * Imports features without compound grouping. Since grouping is unknown, each feature needs to belong to its own compound.
+     * To group features as compounds together, please use add compounds instead.
+     * @param features the features to be imported into the project
+     * @param profile the instrument the features have been measured on.
+     * @param optFields opt fields to be returned as part of the imported features/
+     * @return imported features with selected opt fields and UUIDs for features and compounds.
+     */
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        LongestCommonSubsequence lcs = new LongestCommonSubsequence();
-        String name = features.stream().map(FeatureImport::getName)
-                .filter(Objects::nonNull)
-                .filter(Predicate.not(String::isBlank))
-                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
-                .filter(Predicate.not(String::isBlank))
-                .orElse(null);
-
-        CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
-        Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
-                () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
-        );
-        return compound.getFeatures();
+        List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
+        return addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields).stream()
+                .flatMap(c -> c.getFeatures().stream()).toList();
     }
 
     @SneakyThrows

@@ -35,8 +35,6 @@ import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import org.apache.commons.lang3.Range;
 
-import java.util.ArrayList;
-
 @Requires(MergedMs1Spectrum.class)
 @Provides(Ms1IsotopePattern.class)
 public class TargetedIsotopePatternDetection implements IsotopePatternDetection {
@@ -55,7 +53,6 @@ public class TargetedIsotopePatternDetection implements IsotopePatternDetection 
         }
 
         final Spectrum<Peak> massOrderedSpectrum = Spectrums.getMassOrderedSpectrum(ms1);
-        final ArrayList<SimpleSpectrum> patterns = new ArrayList<SimpleSpectrum>();
         MS1MassDeviation dev = processedInput.getAnnotationOrDefault(MS1MassDeviation.class);
         final int index = Spectrums.mostIntensivePeakWithin(massOrderedSpectrum, experiment.getIonMass(), dev.allowedMassDeviation);
         if (index < 0) return Spectrums.empty();

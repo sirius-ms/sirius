@@ -190,6 +190,53 @@ public class NoSQLProjectTest {
     }
 
     @Test
+    public void testFeaturesAreSingleCompounds() {
+        BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+        BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3});
+
+        ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
+        ms2.setMsLevel(2);
+        ms2.setPrecursorMz(42d);
+        ms2.setScanNumber(5);
+
+        List<FeatureImport> imports = List.of(
+                FeatureImport.builder()
+                        .name("foo")
+                        .externalFeatureId("testFID_1")
+                        .ionMass(42d)
+                        .charge(1)
+                        .detectedAdducts(Set.of("M+H+"))
+                        .rtStartSeconds(6d)
+                        .rtApexSeconds(9d)
+                        .rtEndSeconds(12d)
+                        .mergedMs1(ms1)
+                        .ms1Spectra(List.of(ms1))
+                        .ms2Spectra(List.of(ms2, ms2))
+                        .build(),
+                FeatureImport.builder()
+                        .name("foo")
+                        .externalFeatureId("testFID_2")
+                        .ionMass(133d)
+                        .charge(1)
+                        .detectedAdducts(Set.of("M+Na+"))
+                        .rtStartSeconds(600d)
+                        .rtApexSeconds(610d)
+                        .rtEndSeconds(620d)
+                        .mergedMs1(ms1)
+                        .ms1Spectra(List.of(ms1))
+                        .ms2Spectra(List.of(ms2, ms2))
+                        .build()
+        );
+
+        List<AlignedFeature> features = project.addAlignedFeatures(imports, null, EnumSet.of(AlignedFeature.OptField.msData));
+        List<AlignedFeature> features2 = project.findAlignedFeatures(Pageable.unpaged(), false, EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+
+
+        assertEquals(features.size(), features2.size());
+        assertEquals(features.size(), features2.stream().map(AlignedFeature::getCompoundId).distinct().count(),"Not each feature got a unique id!");
+    }
+
+    @Test
     public void testRuns() throws IOException {
         LCMSRun runIn = LCMSRun.builder()
                 .name("run1")
