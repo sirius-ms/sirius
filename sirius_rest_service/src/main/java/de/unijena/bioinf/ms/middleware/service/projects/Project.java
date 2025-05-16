@@ -91,6 +91,14 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     List<Feature> findFeaturesByAlignedFeatureId(String alignedFeatureId);
 
+    /**
+     * Imports features without compound grouping. Since grouping is unknows each feature needs to belong to its own compound.
+     * To group features as compounds together, please use add compounds instead.
+     * @param features the features to be imported into the project
+     * @param profile the instrument the features have been measured on.
+     * @param optFields opt fields to be returned as part of the imported features/
+     * @return imported features with selected opt fields and UUIDs for features and compounds.
+     */
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
