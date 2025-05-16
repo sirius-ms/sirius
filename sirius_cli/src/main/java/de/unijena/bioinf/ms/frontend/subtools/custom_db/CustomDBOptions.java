@@ -231,40 +231,20 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
             logInfo("Importing new structures to custom database '" + db.name() + "'...");
 
-            final AtomicLong totalBytesToRead = new AtomicLong(0);
+            long totalBytesToRead = 0;
             for (Path file : structureFiles)
-                totalBytesToRead.addAndGet(Files.size(file));
+                totalBytesToRead += Files.size(file);
             for (Path file : spectrumFiles)
-                totalBytesToRead.addAndGet(Files.size(file));
-
-            totalBytesToRead.set((long) Math.ceil(totalBytesToRead.get() * 1.6)); //just some preloading to do last inserts
-
-
-            final AtomicLong bytesRead = new AtomicLong(0);
-            CustomDatabaseImporter.Listener listener = new CustomDatabaseImporter.Listener() {
-                @Override
-                public void newFingerprint(InChI inChI, int numOfBytes) {
-                    updateProgress(0, totalBytesToRead.addAndGet(numOfBytes), bytesRead.addAndGet(numOfBytes), "Added FP for " + inChI.key2D());
-                }
-
-                @Override
-                public void bytesRead(int numOfBytes) {
-                    updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading Data...");
-                }
-
-                @Override
-                public void newInChI(List<InChI> inChIs) {
-                    progressInfo("Imported " + inChIs.size() + " Compounds.");
-//                        updateProgress(0, totalBytesToRead.addAndGet(inChIs.size()), bytesRead.addAndGet(inChIs.size()), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
-                }
-            };
+                totalBytesToRead += Files.size(file);
 
             checkForInterruption();
 
             dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                     spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                     structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                    listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
+                    createImportProgressTracker(totalBytesToRead, mode.importParas.bioTransformerOptions != null),
+                    (NoSQLCustomDatabase<?, ?>) db,
+                    ApplicationCore.WEB_API,
                     ApplicationCore.IFP_CACHE(),
                     mode.importParas.writeBuffer,
                     mode.importParas.bioTransformerOptions != null ? mode.importParas.bioTransformerOptions.toBioTransformerSetting() : null
@@ -304,6 +284,142 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             }
             logInfo("Opened existing database" + db.name() + ".");
             return db;
+        }
+
+        private CustomDatabaseImporter.Listener createImportProgressTracker(final long totalBytes, boolean biotransformation) {
+            return new CustomDatabaseImporter.Listener() {
+                private final AtomicLong readBytes = new AtomicLong(0);
+                private final AtomicLong progressDone = new AtomicLong(0);
+                private volatile long progressBeforeCurrentBatch = 0;  // before the current batch of bts or fps
+
+                private final AtomicLong fileCompoundsRemaining = new AtomicLong(0);  // after the current batch
+
+                private final AtomicLong btSourcesProcessed = new AtomicLong(0);
+                private final AtomicLong btExpanded = new AtomicLong(0);
+                final static double DEFAULT_BT_EXPANSION_RATIO = 7d;  // average bt products per source molecule, used only for the initial estimation before import statistics is available
+                private volatile long btBatchSize = 0;
+                private volatile long fpBatchSize = 0;
+
+                private final AtomicLong btDoneInBatch = new AtomicLong(0);
+                private final AtomicLong fpDoneInBatch = new AtomicLong(0);
+
+                final static int PROGRESS_PER_FP = 1;
+                final static int PROGRESS_PER_BT = 5;
+
+                private volatile long remainingProgressInBatch = 0;
+                private volatile long remainingProgressInFile = 0;
+                private volatile long progressInRemainingFiles = 0;
+
+                @Override
+                public void bytesRead(String filename, long bytesRead) {
+                    readBytes.addAndGet(bytesRead);
+                    reportUndefined("Reading " + filename);
+                }
+
+                @Override
+                public void compoundsImported(String filename, int count) {
+                    fileCompoundsRemaining.addAndGet(count);
+                    estimateProgressInRemainingFiles();
+                }
+
+                @Override
+                public void startFingerprints(int total) {
+                    if (biotransformation) {
+                        btSourcesProcessed.addAndGet(btBatchSize);
+                        btBatchSize = 0;
+                        btExpanded.addAndGet(total);
+                    } else {
+                        fileCompoundsRemaining.addAndGet(-total);
+                        estimateRemainingProgressInFile();
+                    }
+                    fpBatchSize = total;
+                    estimateRemainingProgressInBatch();
+                    progressBeforeCurrentBatch = progressDone.get();
+                }
+
+                @Override
+                public void newFingerprint(InChI inChI) {
+                    progressDone.addAndGet(PROGRESS_PER_FP);
+                    reportProgress("Fingerprints " + fpDoneInBatch.incrementAndGet() + "/" + (fpBatchSize == 0 ? "?" : fpBatchSize));
+                }
+
+                @Override
+                public void startBioTransformations(int total) {
+                    btBatchSize = total;
+                    btDoneInBatch.set(0);
+                    fileCompoundsRemaining.addAndGet(-total);
+                    estimateRemainingProgressInFile();
+                    estimateRemainingProgressInBatch();
+                    progressBeforeCurrentBatch = progressDone.get();
+                    reportProgress("Starting biotransformations...");
+                }
+
+                @Override
+                public void bioTransformation() {
+                    progressDone.addAndGet(PROGRESS_PER_BT);
+                    reportProgress("Biotransformations " + btDoneInBatch.incrementAndGet() + "/" + btBatchSize);
+                }
+
+                @Override
+                public void newInChI(List<InChI> inchis) {
+                    fpBatchSize = 0;
+                    fpDoneInBatch.set(0);
+                    remainingProgressInBatch = 0;
+                    reportUndefined("Finalizing and saving...");
+                }
+
+                /**
+                 * Should be called before BT expansion and before FP calculation
+                 */
+                private void estimateRemainingProgressInBatch() {
+                    if (btBatchSize > 0) {
+                        long estimatedExpanded = Math.round(btBatchSize * getBtExpansionRatio());
+                        remainingProgressInBatch = getProgress(btBatchSize, estimatedExpanded);
+                    } else {
+                        remainingProgressInBatch = getProgress(0, fpBatchSize);
+                    }
+//                    System.out.println("Estimated remaining progress in batch: " + remainingProgressInBatch + ", BT: " + btBatchSize + ", FP: " + fpBatchSize);
+                }
+
+                private long estimateRemainingProgressInFile() {
+                    if (biotransformation) {
+                        long estimatedExpanded = Math.round(fileCompoundsRemaining.get() * getBtExpansionRatio());
+                        remainingProgressInFile = getProgress(fileCompoundsRemaining.get(), estimatedExpanded);
+                    } else {
+                        remainingProgressInFile = getProgress(0, fileCompoundsRemaining.get());
+                    }
+//                    System.out.println("Estimated remaining progress in file: " + remainingProgressInFile + ", remaining compounds: " + fileCompoundsRemaining.get());
+                    return remainingProgressInFile;
+                }
+
+                private void estimateProgressInRemainingFiles() {
+                    long remainingBytes = totalBytes - readBytes.get();
+                    long progressUpToCurrentFile = progressDone.get() + estimateRemainingProgressInFile();
+                    progressInRemainingFiles = remainingBytes * progressUpToCurrentFile / readBytes.get();
+//                    System.out.println("Estimated remaining files progress: " + progressInRemainingFiles + ", remaining bytes: " + remainingBytes);
+                }
+
+                private double getBtExpansionRatio() {
+                    if (btExpanded.get() == 0) {
+                        return DEFAULT_BT_EXPANSION_RATIO;
+                    } else {
+                        return btSourcesProcessed.doubleValue() / btExpanded.doubleValue();
+                    }
+                }
+
+                private long getProgress(long bts, long fps) {
+                    return bts * PROGRESS_PER_BT + fps * PROGRESS_PER_FP;
+                }
+
+                private void reportProgress(String message) {
+                    long maxProgress = progressBeforeCurrentBatch + remainingProgressInBatch + remainingProgressInFile + progressInRemainingFiles;
+                    updateProgress(0, maxProgress, progressDone.get(), message);
+                }
+
+                private void reportUndefined(String message) {
+                    updateProgress(0, 1, 0, message);
+                }
+            };
         }
 
         private boolean removeDatabase(CdkFingerprintVersion version) {

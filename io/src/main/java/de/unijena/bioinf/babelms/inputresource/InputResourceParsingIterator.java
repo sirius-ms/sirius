@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 @Slf4j
 public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
@@ -44,10 +43,7 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
 
     private final Queue<Ms2Experiment> buffer = new ArrayDeque<>();
 
-    @Getter
-    private long bytesRead = 0;
-
-    List<BiConsumer<Integer, Long>> listeners = new ArrayList<>();
+    List<ImportListener> listeners = new ArrayList<>();
 
     @Getter
     private final Map<String, Exception> parsingErrors = new LinkedHashMap<>();
@@ -76,19 +72,20 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
                         parsers.put(ext, parser.getParserByExt(ext));
 
                     try (ReportingInputStream stream = next.getReportingInputStream()){
-                        stream.addBytesRaiseListener((chunkRead, totalBytesRead) -> {
-                            this.bytesRead += chunkRead;
-                            listeners.forEach(c -> c.accept(chunkRead, this.bytesRead));
-                        });
+                        stream.addBytesRaiseListener((chunkRead, totalBytesRead) -> listeners.forEach(c -> c.bytesRead(next.getFilename(), chunkRead)));
                         try (CloseableIterator<Ms2Experiment> it = parsers.get(ext).parseIterator(new BufferedReader(new InputStreamReader(stream)), next.toUri())) {
-                            it.forEachRemaining(buffer::add); //todo maybe one by one saves memory
+                            //TODO we are reading and parsing the whole file and put all Ms2Experiments into buffer
+                            // maybe better remove the buffer and serve experiments one by one from the iterator
+                            // then we could simplify import progress tracking in CustomDBOptions
+                            it.forEachRemaining(buffer::add);
+                            listeners.forEach(c -> c.readExperiments(next.getFilename(), buffer.size()));
                         }
                     }
                     if (!buffer.isEmpty())
                         break;
                 } catch (Exception e) {
                     String fileName = next.getFilename();
-                    log.error("Error parsing " + fileName, e);
+                    log.error("Error parsing {}", fileName, e);
                     parsingErrors.put(next.getFilename(), e);
                 }
             }
@@ -96,11 +93,16 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
         return !buffer.isEmpty();
     }
 
-    public synchronized void addBytesRaiseListener(BiConsumer<Integer, Long> listener) {
+    public interface ImportListener {
+        void bytesRead(String filename, long totalBytesRead);
+        void readExperiments(String filename, int count);
+    }
+
+    public synchronized void addImportListener(ImportListener listener) {
         listeners.add(listener);
     }
 
-    public synchronized void removeBytesRaiseListener(BiConsumer<Integer, Long> listener) {
+    public synchronized void removeImportListener(ImportListener listener) {
         listeners.remove(listener);
     }
 
