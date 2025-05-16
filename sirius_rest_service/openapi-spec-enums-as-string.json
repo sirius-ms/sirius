@@ -10503,6 +10503,9 @@
       "MsData": {
         "type": "object",
         "properties": {
+          "isotopePattern": {
+            "$ref": "#/components/schemas/BasicSpectrum"
+          },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
           },
@@ -10522,7 +10525,7 @@
             }
           }
         },
-        "description": "The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.\n However, at least one Spectrum field needs to be set to create a valid MsData Object.\n The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.\n \u003cp\u003e\n Each Feature can have:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra (optional)\n - many MS spectra (optional)\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
+        "description": "The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.\n However, at least one Spectrum field needs to be set to create a valid MsData Object.\n The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.\n \u003cp\u003e\n Each Feature can have:\n - One extracted isotope pattern (optional)\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra (optional)\n - many MS spectra (optional)\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
         "nullable": true
       },
       "ParentPeak": {
