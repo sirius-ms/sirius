@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION;
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 public class FeatureImports {
@@ -112,7 +112,7 @@ public class FeatureImports {
                 ms2MergeDeviation = ms2dev.allowedMassDeviation;
             }
 
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MergeDeviation, true, false, msnSpectra), Normalization.Sum);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
 

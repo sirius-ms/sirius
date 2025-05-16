@@ -23,6 +23,7 @@ package de.unijena.bioinf.sirius.merging;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.sirius.MS2Peak;
 import de.unijena.bioinf.sirius.ProcessedInput;
@@ -47,14 +48,23 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
 
     }
 
-    protected List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
-        final Deviation mergeWindow = processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation.multiply(2);
+    public static <S extends Ms2Spectrum<Peak>> SimpleSpectrum mergePeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation) {
+        return new SimpleSpectrum(Spectrums.wrap(mergeToProcessedPeaks(ms2Spectra, ionMass, ms2AllowedMassDeviation)));
+    }
+
+    protected static List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
+        final Ms2Experiment exp = processedInput.getExperimentInformation();
+        return mergeToProcessedPeaks(exp.getMs2Spectra(), exp.getIonMass(), processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation);
+    }
+
+    protected static <S extends Ms2Spectrum<Peak>> List<ProcessedPeak> mergeToProcessedPeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation) {
+        final Deviation mergeWindow = ms2AllowedMassDeviation.multiply(2);
 
         // step 1: delete close peaks within a spectrum
         final List<MS2Peak> peaks = new ArrayList<>();
 
 
-        for (MutableMs2Spectrum ms2 : processedInput.getExperimentInformation().getMs2Spectra()) {
+        for (Ms2Spectrum<Peak> ms2 : ms2Spectra) {
             final MutableMs2Spectrum sortedByIntensity = new MutableMs2Spectrum(ms2);
             Spectrums.sortSpectrumByDescendingIntensity(sortedByIntensity);
             final SimpleMutableSpectrum sortedByMass = new SimpleMutableSpectrum(ms2);
@@ -87,7 +97,6 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         Arrays.sort(mzArray, massComparator);
         int n = mzArray.length;
         // first: Merge parent peak!!!!
-        double ionMass = processedInput.getExperimentInformation().getIonMass();
         final int parentIndex = mergeParentPeak(mzArray, mergeWindow, ionMass,mergedPeaks);
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
         int subIndex = parentIndex<0 ? mzArray.length : parentIndex;
@@ -125,7 +134,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
     }
 
 
-    protected int mergeParentPeak(MS2Peak[] mzArray, Deviation mergeWindow, double parentMass, List<ProcessedPeak> peakList) {
+    protected static int mergeParentPeak(MS2Peak[] mzArray, Deviation mergeWindow, double parentMass, List<ProcessedPeak> peakList) {
         Spectrum<MS2Peak> massOrderedSpectrum = Spectrums.wrap(Arrays.asList(mzArray));
         final int properParentPeak = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, parentMass, mergeWindow);
         if (properParentPeak < 0) {
@@ -181,7 +190,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         return bestIndex;
     }
 
-    public void mergePeak(List<ProcessedPeak> peakList, ProcessedPeak newPeak, MS2Peak[] peaks, int startIndex, int endIndex) {
+    public static void mergePeak(List<ProcessedPeak> peakList, ProcessedPeak newPeak, MS2Peak[] peaks, int startIndex, int endIndex) {
         // sum up global intensities, take maximum of local intensities
         double global = 0d;
         CollisionEnergy energy = null;
