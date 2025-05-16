@@ -48,16 +48,16 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
 
     }
 
-    public static <S extends Ms2Spectrum<Peak>> SimpleSpectrum mergePeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation) {
-        return new SimpleSpectrum(Spectrums.wrap(mergeToProcessedPeaks(ms2Spectra, ionMass, ms2AllowedMassDeviation)));
+    public static <S extends Ms2Spectrum<Peak>> SimpleSpectrum mergePeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent) {
+        return new SimpleSpectrum(Spectrums.wrap(mergeToProcessedPeaks(ms2Spectra, ionMass, ms2AllowedMassDeviation, addArtificialParentPeakIfNotPresent)));
     }
 
     protected static List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
         final Ms2Experiment exp = processedInput.getExperimentInformation();
-        return mergeToProcessedPeaks(exp.getMs2Spectra(), exp.getIonMass(), processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation);
+        return mergeToProcessedPeaks(exp.getMs2Spectra(), exp.getIonMass(), processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation, true);
     }
 
-    protected static <S extends Ms2Spectrum<Peak>> List<ProcessedPeak> mergeToProcessedPeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation) {
+    protected static <S extends Ms2Spectrum<Peak>> List<ProcessedPeak> mergeToProcessedPeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent) {
         final Deviation mergeWindow = ms2AllowedMassDeviation.multiply(2);
 
         // step 1: delete close peaks within a spectrum
@@ -123,7 +123,7 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
             n -= (maxIndex - minIndex);
         }
 
-        if (parentIndex < 0) {
+        if (parentIndex < 0 && addArtificialParentPeakIfNotPresent) {
             // add artificial parent peak
             ProcessedPeak parent = new ProcessedPeak();
             parent.setMass(ionMass);
