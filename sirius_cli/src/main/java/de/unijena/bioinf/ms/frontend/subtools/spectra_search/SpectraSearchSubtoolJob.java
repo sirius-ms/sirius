@@ -21,6 +21,8 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -29,10 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.spectraldb.LibraryHit;
-import de.unijena.bioinf.spectraldb.SpectralLibrary;
-import de.unijena.bioinf.spectraldb.SpectralLibrarySearchSettings;
-import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.*;
 import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
@@ -58,14 +57,19 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         this.cache = cache;
     }
 
-    public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
-        return getQueryName(
-                query.getMsLevel(),
-                query.getScanNumber(),
-                query.getCollisionEnergy() != null ? Math.round(query.getCollisionEnergy().getMinEnergy()) + "eV" : null,
-                query.getIonization() != null ? query.getIonization().toString() : null,
-                queryIndex
-        );
+    public static String getQueryName(Spectrum<? extends Peak> query, int queryIndex) {
+        if (query instanceof MutableMs2Spectrum) {
+            MutableMs2Spectrum qquery = (MutableMs2Spectrum) query;
+            return getQueryName(
+                    qquery.getMsLevel(),
+                    qquery.getScanNumber(),
+                    qquery.getCollisionEnergy() != null ? Math.round(qquery.getCollisionEnergy().getMinEnergy()) + "eV" : null,
+                    qquery.getIonization() != null ? qquery.getIonization().toString() : null,
+                    queryIndex
+            );
+        } else {
+            return "Merged MS2";
+        }
     }
 
     public static String getQueryName(int mslevel, int scanNumber, @Nullable String collisionEnergy,
@@ -173,7 +177,10 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             List<MutableMs2Spectrum> ms2Queries = exp.getMs2Spectra();
             Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = result.stream().collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
             for (Integer queryIndex : resultMap.keySet()) {
-                MutableMs2Spectrum query = queryIndex < 0 ? exp.getMergedMs2Spectrum() : ms2Queries.get(queryIndex);
+
+
+
+                Spectrum<? extends Peak> query = queryIndex < 0 ? exp.getMergedMs2Spectrum() : ms2Queries.get(queryIndex);
                 builder.append("\n").append(getQueryName(query, queryIndex));
                 builder.append("\nSimilarity | Peaks | Precursor | Prec. m/z | MS | Coll. | Instrument | InChIKey | Smiles | Name | DB name | DB link | Splash");
                 List<SpectralSearchResult.SearchResult> resultList = resultMap.get(queryIndex);
@@ -181,21 +188,36 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
                     SpectralSimilarity similarity = r.getSimilarity();
 
                     try {
-                        Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
-                        builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
-                                similarity.similarity,
-                                similarity.sharedPeaks,
-                                reference.getPrecursorIonType(),
-                                reference.getPrecursorMz(),
-                                reference.getMsLevel(),
-                                reference.getCollisionEnergy(),
-                                reference.getInstrumentation(),
-                                reference.getCandidateInChiKey(),
-                                reference.getSmiles(),
-                                reference.getName(),
-                                r.getDbName(),
-                                reference.getSpectralDbLink(),
-                                reference.getSplash()));
+                        if (r.getSpectrumType()== SpectrumType.MERGED_SPECTRUM) {
+                            MergedReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMergedReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getCandidateInChiKey(), r.getAdduct(), false);
+                            builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f |%8s | %s | %s | %s  | %s",
+                                    similarity.similarity,
+                                    similarity.sharedPeaks,
+                                    reference.getPrecursorIonType(),
+                                    reference.getPrecursorMz(),
+                                    "merged",
+                                    reference.getCandidateInChiKey(),
+                                    reference.getSmiles(),
+                                    reference.getName(),
+                                    r.getDbName()
+                            ));
+                        } else {
+                            Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getMs2ReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
+                            builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
+                                    similarity.similarity,
+                                    similarity.sharedPeaks,
+                                    reference.getPrecursorIonType(),
+                                    reference.getPrecursorMz(),
+                                    reference.getMsLevel(),
+                                    reference.getCollisionEnergy(),
+                                    reference.getInstrumentation(),
+                                    reference.getCandidateInChiKey(),
+                                    reference.getSmiles(),
+                                    reference.getName(),
+                                    r.getDbName(),
+                                    reference.getSpectralDbLink(),
+                                    reference.getSplash()));
+                        }
                     } catch (ChemicalDatabaseException e) {
                         logger.error("Error fetching reference spectrum.", e);
                     }
