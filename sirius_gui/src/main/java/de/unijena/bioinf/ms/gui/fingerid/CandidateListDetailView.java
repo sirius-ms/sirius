@@ -41,7 +41,6 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEdi
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
 import de.unijena.bioinf.ms.gui.table.ActionList;
-import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
@@ -68,8 +67,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -78,7 +77,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -153,6 +152,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         ///// add popup menu
         popupMenu = new JPopupMenu();
+        CopySmiles = new JMenuItem("Copy 2D SMILES");
         CopyInchiKey = new JMenuItem("Copy 2D InChIKey");
         CopyInchi = new JMenuItem("Copy 2D InChI");
         OpenInBrowser1 = new JMenuItem("Open in PubChem");
@@ -165,31 +165,31 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
         annotateSpectrum.addActionListener(this);
-        popupMenu.add(CopyInchiKey);
-        popupMenu.add(CopyInchi);
-        popupMenu.add(OpenInBrowser1);
-        popupMenu.add(OpenInBrowser2);
+        CopySmiles.addActionListener(this);
         popupMenu.add(highlight);
         popupMenu.add(annotateSpectrum);
+        popupMenu.addSeparator();
+        popupMenu.add(OpenInBrowser1);
+        popupMenu.add(OpenInBrowser2);
+        popupMenu.addSeparator();
+        popupMenu.add(CopySmiles);
+        popupMenu.add(CopyInchiKey);
+        popupMenu.add(CopyInchi);
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
 
     private ToolbarToggleButton filterByFmet;
     private boolean filterByFmetEnabled;
-    private FMetFilter fmetFilter;
     protected void initializeFunctionalMetabolomicsFunctionality() {
         // add a special button to the toolbar
-        getSource().addActiveResultChangedListener(new ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>() {
-            @Override
-            public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
-                boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(":FMet:")));
-                if (enableFmet != filterByFmetEnabled) {
-                    filterByFmetEnabled = enableFmet;
-                    filterByFmet.setVisible(filterByFmetEnabled);
-                    CandidateListDetailView.this.revalidate();
-                    CandidateListDetailView.this.repaint();
-                }
+        getSource().addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> {
+            boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(":FMet:")));
+            if (enableFmet != filterByFmetEnabled) {
+                filterByFmetEnabled = enableFmet;
+                filterByFmet.setVisible(filterByFmetEnabled);
+                CandidateListDetailView.this.revalidate();
+                CandidateListDetailView.this.repaint();
             }
         });
     }
@@ -232,8 +232,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
         list.add(molecularPropertyMatcherEditor);
 
-        fmetFilter = new FMetFilter(filterByFmet);
-        list.add(fmetFilter);
+        list.add(new FMetFilter(filterByFmet));
 
         return list;
     }
@@ -243,7 +242,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         if (selectedCompoundId < 0) return;
         final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        if (e.getSource() == CopyInchiKey) {
+        if (e.getSource() == CopySmiles) {
+            clipboard.setContents(new StringSelection(c.getSmiles()), null);
+        } else if (e.getSource() == CopyInchiKey) {
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
