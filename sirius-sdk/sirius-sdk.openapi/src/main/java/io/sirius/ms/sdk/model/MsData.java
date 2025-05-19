@@ -38,9 +38,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.  However, at least one Spectrum field needs to be set to create a valid MsData Object.  The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.  &lt;p&gt;  Each Feature can have:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra (optional)  - many MS spectra (optional)  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
+ * The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.  However, at least one Spectrum field needs to be set to create a valid MsData Object.  The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.  &lt;p&gt;  Each Feature can have:  - One extracted isotope pattern (optional)  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra (optional)  - many MS spectra (optional)  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
  */
 @JsonPropertyOrder({
+  MsData.JSON_PROPERTY_ISOTOPE_PATTERN,
   MsData.JSON_PROPERTY_MERGED_MS1,
   MsData.JSON_PROPERTY_MERGED_MS2,
   MsData.JSON_PROPERTY_MS1_SPECTRA,
@@ -48,6 +49,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class MsData {
+  public static final String JSON_PROPERTY_ISOTOPE_PATTERN = "isotopePattern";
+  private BasicSpectrum isotopePattern;
+
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
   private BasicSpectrum mergedMs1;
 
@@ -61,6 +65,31 @@ public class MsData {
   private List<BasicSpectrum> ms2Spectra = new ArrayList<>();
 
   public MsData() {
+  }
+
+  public MsData isotopePattern(BasicSpectrum isotopePattern) {
+    
+    this.isotopePattern = isotopePattern;
+    return this;
+  }
+
+   /**
+   * Get isotopePattern
+   * @return isotopePattern
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public BasicSpectrum getIsotopePattern() {
+    return isotopePattern;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ISOTOPE_PATTERN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setIsotopePattern(BasicSpectrum isotopePattern) {
+    this.isotopePattern = isotopePattern;
   }
 
   public MsData mergedMs1(BasicSpectrum mergedMs1) {
@@ -188,7 +217,8 @@ public class MsData {
       return false;
     }
     MsData msData = (MsData) o;
-    return Objects.equals(this.mergedMs1, msData.mergedMs1) &&
+    return Objects.equals(this.isotopePattern, msData.isotopePattern) &&
+        Objects.equals(this.mergedMs1, msData.mergedMs1) &&
         Objects.equals(this.mergedMs2, msData.mergedMs2) &&
         Objects.equals(this.ms1Spectra, msData.ms1Spectra) &&
         Objects.equals(this.ms2Spectra, msData.ms2Spectra);
@@ -196,13 +226,14 @@ public class MsData {
 
   @Override
   public int hashCode() {
-    return Objects.hash(mergedMs1, mergedMs2, ms1Spectra, ms2Spectra);
+    return Objects.hash(isotopePattern, mergedMs1, mergedMs2, ms1Spectra, ms2Spectra);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class MsData {\n");
+    sb.append("    isotopePattern: ").append(toIndentedString(isotopePattern)).append("\n");
     sb.append("    mergedMs1: ").append(toIndentedString(mergedMs1)).append("\n");
     sb.append("    mergedMs2: ").append(toIndentedString(mergedMs2)).append("\n");
     sb.append("    ms1Spectra: ").append(toIndentedString(ms1Spectra)).append("\n");

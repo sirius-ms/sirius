@@ -132,13 +132,17 @@ public class FeaturesApiTest {
         List<StructureCandidateOptField> structureCandidateOptField = List.of(
                 StructureCandidateOptField.FINGERPRINT,
                 StructureCandidateOptField.DBLINKS,
-                StructureCandidateOptField.LIBRARYMATCHES
+                StructureCandidateOptField.LIBRARYMATCHES,
+                StructureCandidateOptField.STRUCTURESVG
         );
 
         List<StructureCandidateFormula> response = instance.getStructureCandidates(projectId, alignedFeatureId, structureCandidateOptField);
 
         assertNotNull(response);
         assertEquals(61, response.size());
+        response.forEach(candidate -> assertNotNull(candidate.getStructureSvg()));
+        response.forEach(candidate -> assertNotNull(candidate.getDbLinks()));
+        response.forEach(candidate -> assertNotNull(candidate.getFingerprint()));
     }
 
     @Test

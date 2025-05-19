@@ -136,6 +136,9 @@ public abstract class Icons {
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
 
 
+    public static final FlatSVGIcon FMET_FILTER_ENABLED = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-fmet.svg"));
+
+
     public static final Icon NO_MATCH_128 = new ImageIcon(MainFrame.class.getResource("/icons/nothing-found.png"));
     public static BufferedImage NO_RESULT_IMAGE_160() {
         try {
