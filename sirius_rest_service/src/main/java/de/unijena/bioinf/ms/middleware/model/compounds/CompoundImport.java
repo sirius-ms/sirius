@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class CompoundImport {
      * Some (optional) human-readable name
      */
     @Schema(nullable = true)
+    @Setter
     protected String name;
 
 
