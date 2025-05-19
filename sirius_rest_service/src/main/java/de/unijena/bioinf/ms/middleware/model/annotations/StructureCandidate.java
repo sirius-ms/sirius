@@ -36,16 +36,19 @@ import java.util.List;
 public class StructureCandidate {
 
     protected String inchiKey;
-    protected String smiles;
 
+    protected String smiles;
 
     @Schema(nullable = true)
     protected String structureName;
 
+    /**
+     * SVG graphics of the structure candidate
+     * OPTIONAL: needs to be added by parameter
+     */
     @Schema(nullable = true)
-    protected Double xlogP;
+    protected String structureSvg;
 
-    //Extended Results
     /**
      * List of structure database links belonging to this structure candidate
      * OPTIONAL: needs to be added by parameter
@@ -58,4 +61,7 @@ public class StructureCandidate {
      */
     @Schema(nullable = true)
     List<SpectralLibraryMatch> spectralLibraryMatches;
+
+    @Schema(nullable = true)
+    protected Double xlogP;
 }
