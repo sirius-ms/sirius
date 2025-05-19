@@ -13,5 +13,7 @@
 
 * `LIBRARYMATCHES` (value: `"libraryMatches"`)
 
+* `STRUCTURESVG` (value: `"structureSvg"`)
+
 
 

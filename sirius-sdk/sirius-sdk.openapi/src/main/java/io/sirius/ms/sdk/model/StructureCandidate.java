@@ -45,9 +45,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidate.JSON_PROPERTY_INCHI_KEY,
   StructureCandidate.JSON_PROPERTY_SMILES,
   StructureCandidate.JSON_PROPERTY_STRUCTURE_NAME,
-  StructureCandidate.JSON_PROPERTY_XLOG_P,
+  StructureCandidate.JSON_PROPERTY_STRUCTURE_SVG,
   StructureCandidate.JSON_PROPERTY_DB_LINKS,
-  StructureCandidate.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES
+  StructureCandidate.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
+  StructureCandidate.JSON_PROPERTY_XLOG_P
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StructureCandidate {
@@ -60,14 +61,17 @@ public class StructureCandidate {
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
   private String structureName;
 
-  public static final String JSON_PROPERTY_XLOG_P = "xlogP";
-  private Double xlogP;
+  public static final String JSON_PROPERTY_STRUCTURE_SVG = "structureSvg";
+  private String structureSvg;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
   private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
   private List<SpectralLibraryMatch> spectralLibraryMatches;
+
+  public static final String JSON_PROPERTY_XLOG_P = "xlogP";
+  private Double xlogP;
 
   public StructureCandidate() {
   }
@@ -147,29 +151,29 @@ public class StructureCandidate {
     this.structureName = structureName;
   }
 
-  public StructureCandidate xlogP(Double xlogP) {
+  public StructureCandidate structureSvg(String structureSvg) {
     
-    this.xlogP = xlogP;
+    this.structureSvg = structureSvg;
     return this;
   }
 
    /**
-   * Get xlogP
-   * @return xlogP
+   * SVG graphics of the structure candidate  OPTIONAL: needs to be added by parameter
+   * @return structureSvg
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Double getXlogP() {
-    return xlogP;
+  public String getStructureSvg() {
+    return structureSvg;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setXlogP(Double xlogP) {
-    this.xlogP = xlogP;
+  public void setStructureSvg(String structureSvg) {
+    this.structureSvg = structureSvg;
   }
 
   public StructureCandidate dbLinks(List<DBLink> dbLinks) {
@@ -238,6 +242,31 @@ public class StructureCandidate {
     this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
+  public StructureCandidate xlogP(Double xlogP) {
+    
+    this.xlogP = xlogP;
+    return this;
+  }
+
+   /**
+   * Get xlogP
+   * @return xlogP
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getXlogP() {
+    return xlogP;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setXlogP(Double xlogP) {
+    this.xlogP = xlogP;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -250,14 +279,15 @@ public class StructureCandidate {
     return Objects.equals(this.inchiKey, structureCandidate.inchiKey) &&
         Objects.equals(this.smiles, structureCandidate.smiles) &&
         Objects.equals(this.structureName, structureCandidate.structureName) &&
-        Objects.equals(this.xlogP, structureCandidate.xlogP) &&
+        Objects.equals(this.structureSvg, structureCandidate.structureSvg) &&
         Objects.equals(this.dbLinks, structureCandidate.dbLinks) &&
-        Objects.equals(this.spectralLibraryMatches, structureCandidate.spectralLibraryMatches);
+        Objects.equals(this.spectralLibraryMatches, structureCandidate.spectralLibraryMatches) &&
+        Objects.equals(this.xlogP, structureCandidate.xlogP);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches);
+    return Objects.hash(inchiKey, smiles, structureName, structureSvg, dbLinks, spectralLibraryMatches, xlogP);
   }
 
   @Override
@@ -267,9 +297,10 @@ public class StructureCandidate {
     sb.append("    inchiKey: ").append(toIndentedString(inchiKey)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
     sb.append("    structureName: ").append(toIndentedString(structureName)).append("\n");
-    sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
+    sb.append("    structureSvg: ").append(toIndentedString(structureSvg)).append("\n");
     sb.append("    dbLinks: ").append(toIndentedString(dbLinks)).append("\n");
     sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
+    sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -10439,9 +10439,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -10459,6 +10459,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "nullable": true
@@ -10476,9 +10481,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -10496,6 +10501,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "rank": {
             "type": "integer",
@@ -11271,7 +11281,8 @@
           "none",
           "fingerprint",
           "dbLinks",
-          "libraryMatches"
+          "libraryMatches",
+          "structureSvg"
         ]
       },
       "PagedModelStructureCandidateScored": {
@@ -11315,9 +11326,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -11335,6 +11346,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "rank": {
             "type": "integer",
