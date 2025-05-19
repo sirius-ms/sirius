@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
+import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,33 +97,38 @@ public class StorageUtils {
 
         boolean isMs1Only = exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty();
 
-        ProcessedInput pinput;
-        try {
-            pinput = isMs1Only ? sirius.preprocessForMs1Analysis(exp) : sirius.preprocessForMs2Analysis(exp);
-        } catch (Exception e) {
-            // When we get data from third party tools, it sometimes happens that adduct/mass/formula are
-            // contradictory, usually due to a false formula annotation. Instead of throwing the data away, we try
-            // to import it without formula and unknown adduct.
-            log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
-                    exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
-            ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
-            ((MutableMs2Experiment) exp).setMolecularFormula(null);
-            exp.removeAnnotation(InChI.class);
-            exp.removeAnnotation(Smiles.class);
-            pinput = isMs1Only ? sirius.preprocessForMs1Analysis(exp) : sirius.preprocessForMs2Analysis(exp);
-        }
-
         // build MsData
         MSData.MSDataBuilder builder = MSData.builder();
-        pinput.getAnnotation(MergedMs1Spectrum.class).filter(MergedMs1Spectrum::notEmpty)
-                .ifPresent(mergedAno -> builder.mergedMs1Spectrum(mergedAno.mergedSpectrum));
-        pinput.getAnnotation(Ms1IsotopePattern.class).filter(Ms1IsotopePattern::notEmpty)
-                .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
+
+        //processed MS1 information
+        {
+            ProcessedInput pinput;
+            try {
+                pinput = sirius.preprocessForMs1Analysis(exp);
+            } catch (Exception e) {
+                // When we get data from third party tools, it sometimes happens that adduct/mass/formula are
+                // contradictory, usually due to a false formula annotation. Instead of throwing the data away, we try
+                // to import it without formula and unknown adduct.
+                log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
+                        exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
+                ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+                ((MutableMs2Experiment) exp).setMolecularFormula(null);
+                exp.removeAnnotation(InChI.class);
+                exp.removeAnnotation(Smiles.class);
+                pinput = sirius.preprocessForMs1Analysis(exp);
+            }
+
+            pinput.getAnnotation(MergedMs1Spectrum.class).filter(MergedMs1Spectrum::notEmpty)
+                    .ifPresent(mergedAno -> builder.mergedMs1Spectrum(mergedAno.mergedSpectrum));
+            pinput.getAnnotation(Ms1IsotopePattern.class).filter(Ms1IsotopePattern::notEmpty)
+                    .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
+        }
 
         if (!isMs1Only){
+            Deviation ms2AllowedMassDeviation = exp.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
             builder.mergedMSnSpectrum(Spectrums.getNormalizedSpectrum(
-                    Spectrums.from(pinput.getMergedPeaks().stream().filter(p -> !p.isSynthetic())
-                    .map(p -> new SimplePeak(p.getMass(), p.getSumIntensity())).toList()), Normalization.Sum));
+                    HighIntensityMsMsMerger.mergePeaks(exp.getMs2Spectra(), exp.getIonMass(), ms2AllowedMassDeviation, false),
+                            Normalization.Sum));
             //we use the unprocessed spectra here to store the real intensities.
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
