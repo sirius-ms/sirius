@@ -42,7 +42,9 @@ public enum StructureCandidateOptField {
   
   DBLINKS("dbLinks"),
   
-  LIBRARYMATCHES("libraryMatches");
+  LIBRARYMATCHES("libraryMatches"),
+  
+  STRUCTURESVG("structureSvg");
 
   private String value;
 
