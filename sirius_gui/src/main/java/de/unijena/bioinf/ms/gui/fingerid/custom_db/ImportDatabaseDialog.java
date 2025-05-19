@@ -101,6 +101,10 @@ class ImportDatabaseDialog extends JDialog {
                 throw new CancellationException();
             }
 
+            Jobs.runInBackground(() ->
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_CUSTOM_DB_PATH, configPanel.getDbSaveDir())
+            );
+
             LoadingBackroundTask<Boolean> job = Jobs.runInBackgroundAndLoad(
                     databaseDialog.gui.getMainFrame(), "Checking Server Connection...", () -> {
                         ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
