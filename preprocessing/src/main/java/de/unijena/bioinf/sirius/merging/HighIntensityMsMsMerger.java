@@ -48,16 +48,16 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
 
     }
 
-    public static <S extends Ms2Spectrum<Peak>> SimpleSpectrum mergePeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent) {
-        return new SimpleSpectrum(Spectrums.wrap(mergeToProcessedPeaks(ms2Spectra, ionMass, ms2AllowedMassDeviation, addArtificialParentPeakIfNotPresent)));
+    public static <S extends Ms2Spectrum<Peak>> SimpleSpectrum mergePeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent, boolean keepPeaksHeavierThanParent) {
+        return new SimpleSpectrum(Spectrums.wrap(mergeToProcessedPeaks(ms2Spectra, ionMass, ms2AllowedMassDeviation, addArtificialParentPeakIfNotPresent, keepPeaksHeavierThanParent)));
     }
 
     protected static List<ProcessedPeak> mergePeaks(ProcessedInput processedInput) {
         final Ms2Experiment exp = processedInput.getExperimentInformation();
-        return mergeToProcessedPeaks(exp.getMs2Spectra(), exp.getIonMass(), processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation, true);
+        return mergeToProcessedPeaks(exp.getMs2Spectra(), exp.getIonMass(), processedInput.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation, true, false);
     }
 
-    protected static <S extends Ms2Spectrum<Peak>> List<ProcessedPeak> mergeToProcessedPeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent) {
+    protected static <S extends Ms2Spectrum<Peak>> List<ProcessedPeak> mergeToProcessedPeaks(List<S> ms2Spectra, double ionMass, Deviation ms2AllowedMassDeviation, boolean addArtificialParentPeakIfNotPresent, boolean keepPeaksHeavierThanParent) {
         final Deviation mergeWindow = ms2AllowedMassDeviation.multiply(2);
 
         // step 1: delete close peaks within a spectrum
@@ -95,14 +95,30 @@ public class HighIntensityMsMsMerger implements Ms2Merger {
         final MS2Peak[] mzArray = peaks.toArray(new MS2Peak[peaks.size()]);
         final Comparator<MS2Peak> massComparator = Spectrums.getPeakMassComparator();
         Arrays.sort(mzArray, massComparator);
-        int n = mzArray.length;
         // first: Merge parent peak!!!!
         final int parentIndex = mergeParentPeak(mzArray, mergeWindow, ionMass,mergedPeaks);
         // after this you can merge the other peaks. Ignore all peaks near the parent peak
-        int subIndex = parentIndex<0 ? mzArray.length : parentIndex;
-        for (; subIndex > 0 && mzArray[subIndex - 1].getMz() + 0.1d >= ionMass; --subIndex) ;
-        n = subIndex;
-        final MS2Peak[] parray = Arrays.copyOf(mzArray, subIndex);
+        int subIndexL = parentIndex<0 ? mzArray.length : parentIndex;
+        for (; subIndexL > 0 && mzArray[subIndexL - 1].getMz() + 0.1d >= ionMass; --subIndexL) ;
+        int n;
+        final MS2Peak[] parray;
+        if (!keepPeaksHeavierThanParent) {
+            //default for FT computation
+            parray = Arrays.copyOf(mzArray, subIndexL);
+            n = subIndexL;
+        } else {
+            //keep peaks larger parent, e.g. for visualization
+            int subIndexR = mzArray.length;
+            for (; subIndexR > 0 && mzArray[subIndexR - 1].getMz() - 0.1d >= ionMass; --subIndexR);
+            int length = mzArray.length - (subIndexR-subIndexL); //subIndexL is exclusive, subIndexR is inclusive
+            parray = new MS2Peak[length];
+            System.arraycopy(mzArray, 0, parray, 0, subIndexL);
+            if (subIndexR < mzArray.length) {
+                System.arraycopy(mzArray, subIndexR, parray, subIndexL, mzArray.length-subIndexR);
+            }
+            n = mzArray.length;
+        }
+
         Arrays.sort(parray, Spectrums.getPeakIntensityComparatorReversed());
         for (int i = 0; i < parray.length; ++i) {
             final MS2Peak p = parray[i];
