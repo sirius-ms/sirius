@@ -381,7 +381,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }
 
         List<MergedMSnSpectrum> ms2 = tomerge.stream().filter(x -> x.getMsnSpectra() != null).flatMap(x -> x.getMsnSpectra().stream()).toList();
-        SimpleSpectrum mergedMs2 = ms2.isEmpty() ? null : mergeAndNormalizeMsnSpectra(ionMass, tomerge.stream().map(MSData::getMergedMSnSpectrum).filter(Objects::nonNull).map(MutableMs2Spectrum::new).toList()); //todo in order to make it super consistent, we would do the normal merge routine on the ms2 as we do for all features in the beginning and don't use the already merged from "getMergedMSnSpectrum"
+        SimpleSpectrum mergedMs2 = ms2.isEmpty() ? null : mergeAndNormalizeMsnSpectra(ionMass, ms2.stream().toArray(MergedMSnSpectrum[]::new));
         MSData data = new MSData(
                 tomerge.get(0).getAlignedFeatureId(),
                 ms2,
