@@ -648,7 +648,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 MSData data = featuresParent[i].getMSData().orElseGet(MSData::new);
                 SimpleSpectrum isotopePattern = Spectrums.getNormalizedSpectrum(isotopePatterns[i], Normalization.Sum);
                 data.setIsotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.AVERAGE));
-                data.setMergedMs1Spectrum(StorageUtils.cleanMergedMs1DataForImport(isotopePatterns[i]));
+                data.setMergedMs1Spectrum(StorageUtils.cleanMergedMs1DataForImport(isotopePatterns[i])); //rather for consistency and that we don't ever forget to check this. But just the isotope pattern should not contain so many peaks that we need cleaning
                 featuresParent[i].setMsData(data);
             }
         }
