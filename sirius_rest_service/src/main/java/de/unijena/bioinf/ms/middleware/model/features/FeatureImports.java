@@ -80,6 +80,7 @@ public class FeatureImports {
 
         if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
             List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+            final Charge c = new Charge(featureImport.getCharge());
             DoubleList pmz = new DoubleArrayList();
             for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
                 BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
@@ -95,14 +96,14 @@ public class FeatureImports {
                     mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
                     pmz.add(spectrum.getPrecursorMz());
                 }
+                mutableMs2.setIonization(c);
+
                 msnSpectra.add(mutableMs2);
-                {
-                    final Charge c = new Charge(featureImport.getCharge());
-                    msDataBuilder.msnSpectra(msnSpectra.stream()
-                            .peek(spec -> spec.setIonization(c))
-                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
-                }
             }
+
+            msDataBuilder.msnSpectra(msnSpectra.stream()
+                    .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
+
 
             Deviation ms2MergeDeviation;
             if (profile == InstrumentProfile.ORBITRAP) {
