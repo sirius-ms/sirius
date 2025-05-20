@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
@@ -647,7 +648,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 MSData data = featuresParent[i].getMSData().orElseGet(MSData::new);
                 SimpleSpectrum isotopePattern = Spectrums.getNormalizedSpectrum(isotopePatterns[i], Normalization.Sum);
                 data.setIsotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.AVERAGE));
-                data.setMergedMs1Spectrum(new SimpleSpectrum(isotopePatterns[i]));
+                data.setMergedMs1Spectrum(StorageUtils.cleanMergedMs1DataForImport(isotopePatterns[i]));
                 featuresParent[i].setMsData(data);
             }
         }
@@ -798,7 +799,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).projectedScans().toIntArray()).toArray(int[][]::new),
                         Arrays.stream(m.getHeaders()).mapToDouble(Ms2SpectrumHeader::getPrecursorMz).toArray(),
                         m.getChimericPollutionRatio(),
-                        new SimpleSpectrum(m)
+                        StorageUtils.cleanMsnDataInLCMSProcessingForImport(m)
                 );
 
                 ////////////////////
@@ -851,11 +852,10 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
     private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
         Deviation ms2AllowedMassDeviation = new Deviation(10); //todo in Peak-List import and  API import, we use 5ppm for Orbitrap data.
-        Spectrum<Peak> merged;
-        if (msn.size()>1) {
-            merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false);
-        } else merged = msn.get(0);
-        return Spectrums.getNormalizedSpectrum(merged, Normalization.Sum);
+        SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false);
+        return Spectrums.getNormalizedSpectrum(
+                StorageUtils.cleanMergedMsnDataForImport(merged),
+                Normalization.Sum);
     }
 
     record Ms2Pointer(long sampleId, IntArrayList ms2scans, IntArrayList rawscans, IntArrayList projectedScans) {
