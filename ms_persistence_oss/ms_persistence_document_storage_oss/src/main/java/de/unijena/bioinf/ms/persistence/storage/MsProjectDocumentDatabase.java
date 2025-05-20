@@ -229,9 +229,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     default void importMSData(MSData msData, long parentId) throws IOException {
         msData.setAlignedFeatureId(parentId);
         // check that we do not store arbitrary large spectra (number if peaks) in our database.
-        if (msData.getMergedMs1Spectrum().size()>1000)
+        if (msData.getMergedMs1Spectrum() != null && msData.getMergedMs1Spectrum().size()>1000)
             LoggerFactory.getLogger(this.getClass()).warn("Merged MS1 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
-        if (msData.getMergedMSnSpectrum().size()>1000)
+        if (msData.getMergedMSnSpectrum() != null && msData.getMergedMSnSpectrum().size()>1000)
             LoggerFactory.getLogger(this.getClass()).warn("Merged MS2 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
         if (msData.getMsnSpectra() != null)
             msData.getMsnSpectra().forEach(mspec -> {
