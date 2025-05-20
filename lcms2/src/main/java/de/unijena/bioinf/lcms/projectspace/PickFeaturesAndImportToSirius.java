@@ -852,7 +852,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
     private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
         Deviation ms2AllowedMassDeviation = new Deviation(10); //todo in Peak-List import and  API import, we use 5ppm for Orbitrap data.
-        SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false);
+        SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false, true);
         return Spectrums.getNormalizedSpectrum(
                 StorageUtils.cleanMergedMsnDataForImport(merged),
                 Normalization.Sum);
