@@ -232,7 +232,7 @@ public class StorageUtils {
         cleanedMs2Spectrum.setIonization(msnSpectrum.getIonization());
         cleanedMs2Spectrum.setCollisionEnergy(msnSpectrum.getCollisionEnergy());
         cleanedMs2Spectrum.setMsLevel( msnSpectrum.getMsLevel());
-        cleanedMs2Spectrum.setScanNumber(msnSpectrum.getMsLevel());
+        if (msnSpectrum instanceof MutableMs2Spectrum) cleanedMs2Spectrum.setScanNumber(((MutableMs2Spectrum)msnSpectrum).getScanNumber());
         cleanedMs2Spectrum.setTotalIonCount(msnSpectrum.getTotalIonCount()); //it is probably best to keep the original count.
 
         return cleanedMs2Spectrum;
