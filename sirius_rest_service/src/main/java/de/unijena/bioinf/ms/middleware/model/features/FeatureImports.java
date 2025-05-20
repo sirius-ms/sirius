@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
@@ -70,7 +71,9 @@ public class FeatureImports {
             SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
                     ? new SimpleSpectrum(featureImport.getMergedMs1())
                     : Ms1Merging.mergeIfMoreThanOneSpectrum(featureImport.getMs1Spectra(), ms1dev.allowedMassDeviation).mergedSpectrum;
-            msDataBuilder.mergedMs1Spectrum(mergeMs1);
+            msDataBuilder.mergedMs1Spectrum(
+                    StorageUtils.cleanMergedMs1DataForImport(mergeMs1)
+            );
 
             SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(mergeMs1, ms1dev, featureImport.getIonMass(), featureImport.getCharge(), true);
             if (isotopePattern != null)
@@ -102,6 +105,7 @@ public class FeatureImports {
             }
 
             msDataBuilder.msnSpectra(msnSpectra.stream()
+                    .map(StorageUtils::cleanMsnDataForImport)
                     .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
 
 
@@ -113,7 +117,10 @@ public class FeatureImports {
                 ms2MergeDeviation = ms2dev.allowedMassDeviation;
             }
 
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation, false), Normalization.Sum);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(
+                    StorageUtils.cleanMergedMsnDataForImport(
+                            HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation, false)
+                    ), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
 

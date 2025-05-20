@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
@@ -229,14 +228,16 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     default void importMSData(MSData msData, long parentId) throws IOException {
         msData.setAlignedFeatureId(parentId);
-        // ensure that we do not store arbitrary large spectra (number if peaks) in out database.
-        msData.setMergedMs1Spectrum(Spectrums.extractMostIntensivePeaks(
-                msData.getMergedMs1Spectrum(), 100, 250));
-        msData.setMergedMSnSpectrum(Spectrums.extractMostIntensivePeaks(
-                msData.getMergedMSnSpectrum(), 100, 250));
+        // check that we do not store arbitrary large spectra (number if peaks) in our database.
+        if (msData.getMergedMs1Spectrum().size()>1000)
+            LoggerFactory.getLogger(this.getClass()).warn("Merged MS1 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
+        if (msData.getMergedMSnSpectrum().size()>1000)
+            LoggerFactory.getLogger(this.getClass()).warn("Merged MS2 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
         if (msData.getMsnSpectra() != null)
-            msData.getMsnSpectra().forEach(mspec -> mspec.setPeaks(Spectrums.extractMostIntensivePeaks(
-                    mspec.getPeaks(), 100, 250)));
+            msData.getMsnSpectra().forEach(mspec -> {
+                if (mspec.getPeaks().size()>1000)
+                    LoggerFactory.getLogger(this.getClass()).warn("An MS2 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
+            });
 
         getStorage().insert(msData);
     }

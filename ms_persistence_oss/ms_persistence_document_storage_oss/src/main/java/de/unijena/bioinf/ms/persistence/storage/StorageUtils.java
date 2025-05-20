@@ -119,18 +119,22 @@ public class StorageUtils {
             }
 
             pinput.getAnnotation(MergedMs1Spectrum.class).filter(MergedMs1Spectrum::notEmpty)
-                    .ifPresent(mergedAno -> builder.mergedMs1Spectrum(mergedAno.mergedSpectrum));
+                    .ifPresent(mergedAno -> builder.mergedMs1Spectrum(cleanMergedMs1DataForImport(mergedAno.mergedSpectrum)));
             pinput.getAnnotation(Ms1IsotopePattern.class).filter(Ms1IsotopePattern::notEmpty)
                     .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
         }
 
         if (!isMs1Only){
+            List<MutableMs2Spectrum> cleanedMs2 = exp.getMs2Spectra().stream().map(StorageUtils::cleanMsnDataForImport).toList();
             Deviation ms2AllowedMassDeviation = exp.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
-            builder.mergedMSnSpectrum(Spectrums.getNormalizedSpectrum(
-                    HighIntensityMsMsMerger.mergePeaks(exp.getMs2Spectra(), exp.getIonMass(), ms2AllowedMassDeviation, false),
-                            Normalization.Sum));
-            //we use the unprocessed spectra here to store the real intensities.
-            builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
+            final SimpleSpectrum mergedMsn =
+                    Spectrums.getNormalizedSpectrum(
+                            cleanMergedMsnDataForImport(
+                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), ms2AllowedMassDeviation, false)
+                            ), Normalization.Sum);
+            builder.mergedMSnSpectrum(mergedMsn);
+            //we use the "unprocessed" spectra here to store the real intensities without normalization
+            builder.msnSpectra(cleanedMs2.stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
         MSData msData = builder.build();
 
@@ -213,4 +217,46 @@ public class StorageUtils {
         adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
     }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMs1DataForImport(S mergedMs1Spectrum) {
+        return cleanSpectrum(mergedMs1Spectrum);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMsnDataForImport(S mergedMsnSpectrum) {
+        return cleanSpectrum(mergedMsnSpectrum);
+    }
+
+    public static <P extends Peak, S extends Ms2Spectrum<P>> MutableMs2Spectrum cleanMsnDataForImport(S msnSpectrum) {
+        SimpleSpectrum cleaned = cleanSpectrum(msnSpectrum);
+        MutableMs2Spectrum cleanedMs2Spectrum = new MutableMs2Spectrum(cleaned);
+        cleanedMs2Spectrum.setIonization(msnSpectrum.getIonization());
+        cleanedMs2Spectrum.setCollisionEnergy(msnSpectrum.getCollisionEnergy());
+        cleanedMs2Spectrum.setMsLevel( msnSpectrum.getMsLevel());
+        cleanedMs2Spectrum.setScanNumber(msnSpectrum.getMsLevel());
+        cleanedMs2Spectrum.setTotalIonCount(msnSpectrum.getTotalIonCount()); //it is probably best to keep the original count.
+
+        return cleanedMs2Spectrum;
+    }
+
+    /**
+     * This can be used for MSn spectra that are not derived from Ms2Spectrum class
+     * @param msnSpectrum
+     * @return
+     * @param <P>
+     * @param <S>
+     */
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMsnDataInLCMSProcessingForImport(S msnSpectrum) {
+        return cleanSpectrum(msnSpectrum);
+    }
+
+    /**
+     * ensure that we do not store arbitrary large spectra (number if peaks) in our database.
+     * we perform this before msn spectra are merged to make the stored merged Msn spectrum consistent with the one in FT computation ({@link de.unijena.bioinf.sirius.Ms2Preprocessor})
+     * @param mergedMs1Spectrum
+     * @return
+     */
+    private static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanSpectrum(S mergedMs1Spectrum) {
+        return Spectrums.extractMostIntensivePeaks(mergedMs1Spectrum, 100, 250);
+    }
+
 }
