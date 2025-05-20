@@ -130,7 +130,7 @@ public class StorageUtils {
             final SimpleSpectrum mergedMsn =
                     Spectrums.getNormalizedSpectrum(
                             cleanMergedMsnDataForImport(
-                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), ms2AllowedMassDeviation, false)
+                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), ms2AllowedMassDeviation, false, true)
                             ), Normalization.Sum);
             builder.mergedMSnSpectrum(mergedMsn);
             //we use the "unprocessed" spectra here to store the real intensities without normalization
