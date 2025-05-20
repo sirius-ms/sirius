@@ -108,18 +108,9 @@ public class FeatureImports {
                     .map(StorageUtils::cleanMsnDataForImport)
                     .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
 
-
-            Deviation ms2MergeDeviation;
-            if (profile == InstrumentProfile.ORBITRAP) {
-                ms2MergeDeviation = new Deviation(5);
-            } else {
-                MS2MassDeviation ms2dev =  PropertyManager.DEFAULTS.createInstanceWithDefaults((MS2MassDeviation.class));
-                ms2MergeDeviation = ms2dev.allowedMassDeviation;
-            }
-
             SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(
                     StorageUtils.cleanMergedMsnDataForImport(
-                            HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), ms2MergeDeviation, false, true)
+                            HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), new Deviation(10), false, true)
                     ), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
