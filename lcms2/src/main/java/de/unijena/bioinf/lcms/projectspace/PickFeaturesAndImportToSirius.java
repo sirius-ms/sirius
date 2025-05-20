@@ -352,7 +352,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }
         // merge ms data
         List<AbstractAlignedFeatures> featureWithData = Arrays.stream(fs).filter(x->x.getMSData().isPresent()).toList();
-        MSData mergedMsData = mergeMsData(featureWithData, featureWithData.stream().map(x->x.getMSData().get()).toList(), merged.getAverageMass()); //todo can I just assume that 'getAverageMass' is the ionMass for all features?
+        MSData mergedMsData = mergeMsData(featureWithData, featureWithData.stream().map(x->x.getMSData().get()).toList(), merged.getAverageMass());
         if (mergedMsData!=null) {
             merged.setMsData(mergedMsData);
             merged.setHasMs1(mergedMsData.getMergedMs1Spectrum()!=null);
@@ -851,7 +851,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
-        Deviation ms2AllowedMassDeviation = new Deviation(10); //todo in Peak-List import and  API import, we use 5ppm for Orbitrap data.
+        Deviation ms2AllowedMassDeviation = new Deviation(10);
         SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false, true);
         return Spectrums.getNormalizedSpectrum(
                 StorageUtils.cleanMergedMsnDataForImport(merged),

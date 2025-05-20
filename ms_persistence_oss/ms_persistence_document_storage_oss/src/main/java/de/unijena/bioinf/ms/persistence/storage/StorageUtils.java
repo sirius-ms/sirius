@@ -126,11 +126,10 @@ public class StorageUtils {
 
         if (!isMs1Only){
             List<MutableMs2Spectrum> cleanedMs2 = exp.getMs2Spectra().stream().map(StorageUtils::cleanMsnDataForImport).toList();
-            Deviation ms2AllowedMassDeviation = exp.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
             final SimpleSpectrum mergedMsn =
                     Spectrums.getNormalizedSpectrum(
                             cleanMergedMsnDataForImport(
-                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), ms2AllowedMassDeviation, false, true)
+                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), new Deviation(10), false, true)
                             ), Normalization.Sum);
             builder.mergedMSnSpectrum(mergedMsn);
             //we use the "unprocessed" spectra here to store the real intensities without normalization
