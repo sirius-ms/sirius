@@ -137,10 +137,22 @@ public class GuiServiceImpl implements GuiService {
         SiriusGui gui = siriusGuiInstances.get(projectId);
         if (gui != null) {
             //todo change gui instance.
-            System.out.println("Modifying gui instance not supported");
             if (guiParameters.getFid() != null) {
                 gui.getMainFrame().getCompoundList().selectInstanceByFeatureId(guiParameters.getFid());
+            } else if (guiParameters.getCid() != null) {
+                System.out.println("Selecting compound by ID is not supported");
             }
+            if (guiParameters.getSelectedTab() != null) {
+                System.out.println("Selecting specific tab is not supported");
+            }
+            if (guiParameters.getStructureCandidateInChIKey() != null) {
+                System.out.println("Selecting specific structure hit is not supported");
+            }
+            if (guiParameters.isBringToFront()) {
+                System.out.println("Bringing GUI to foreground is not supported");
+            }
+
+
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }
