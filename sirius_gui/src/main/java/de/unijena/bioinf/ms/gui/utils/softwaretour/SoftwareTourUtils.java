@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SoftwareTourUtils {
@@ -23,25 +21,35 @@ public class SoftwareTourUtils {
      * enable all software tours that have been disabled via "don't ask again"
      * @param guiProperties
      */
-    public static void enableAllTours(GuiProperties guiProperties) {
-        setAllTourProperties(true);
+    public static void enableAllTours(GuiProperties guiProperties, Properties properties) {
+        setAllTourProperties(true, properties);
         guiProperties.resetAllTutorialsKnownForThisSession();
 
+    }
+
+    public static void enableAllTours(GuiProperties guiProperties) {
+        enableAllTours(guiProperties, null);
     }
 
     /**
      * disable all software tours. No further tours will be started.
      */
     public static void disableAllTours() {
-        setAllTourProperties(false);
+        setAllTourProperties(false, null);
     }
 
-    private static void setAllTourProperties(boolean enabled) {
+    private static void setAllTourProperties(boolean enabled, Properties properties) {
         for (String tourKey : SoftwareTourInfoStore.AllTourKeys) {
-            SiriusProperties.setAndStoreInBackground(tourKey, enabled ? null : ReturnValue.Cancel.name());
+            if (properties == null) {
+                SiriusProperties.setAndStoreInBackground(tourKey, enabled ? null : ReturnValue.Cancel.name());
+            } else {
+                if (enabled) properties.remove(tourKey); //this does not allow to remove the property from the file. But it makes sure not to override it again
+                else properties.setProperty(tourKey, ReturnValue.Cancel.name());
+            }
         }
-
     }
+
+
     public static void checkAndInitTour(Container owner, String tutorialName, String propertyKey, GuiProperties guiProperties) {
         if (!owner.isShowing()) return; //not starting. Panel was probably decorated with data in the background
         if (guiProperties.isAskedTutorialThisSession(propertyKey)) return;
