@@ -213,7 +213,6 @@ public class JCefBrowserPanel extends JPanel {
             }
         };
 
-//        url = "https://youtube.com";
         client.addLifeSpanHandler(lifeSpanHandler);
         setupLinkInterception();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
