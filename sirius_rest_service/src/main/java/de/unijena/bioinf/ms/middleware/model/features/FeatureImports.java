@@ -31,7 +31,9 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
@@ -41,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ChemistryBase.ms.Deviation.NULL_DEVIATION;
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
 public class FeatureImports {
@@ -70,7 +71,9 @@ public class FeatureImports {
             SimpleSpectrum mergeMs1 = featureImport.getMergedMs1() != null
                     ? new SimpleSpectrum(featureImport.getMergedMs1())
                     : Ms1Merging.mergeIfMoreThanOneSpectrum(featureImport.getMs1Spectra(), ms1dev.allowedMassDeviation).mergedSpectrum;
-            msDataBuilder.mergedMs1Spectrum(mergeMs1);
+            msDataBuilder.mergedMs1Spectrum(
+                    StorageUtils.cleanMergedMs1DataForImport(mergeMs1)
+            );
 
             SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(mergeMs1, ms1dev, featureImport.getIonMass(), featureImport.getCharge(), true);
             if (isotopePattern != null)
@@ -80,6 +83,7 @@ public class FeatureImports {
 
         if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
             List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+            final Charge c = new Charge(featureImport.getCharge());
             DoubleList pmz = new DoubleArrayList();
             for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
                 BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
@@ -95,24 +99,19 @@ public class FeatureImports {
                     mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
                     pmz.add(spectrum.getPrecursorMz());
                 }
+                mutableMs2.setIonization(c);
+
                 msnSpectra.add(mutableMs2);
-                {
-                    final Charge c = new Charge(featureImport.getCharge());
-                    msDataBuilder.msnSpectra(msnSpectra.stream()
-                            .peek(spec -> spec.setIonization(c))
-                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
-                }
             }
 
-            Deviation ms2MergeDeviation;
-            if (profile == InstrumentProfile.ORBITRAP) {
-                ms2MergeDeviation = new Deviation(5);
-            } else {
-                MS2MassDeviation ms2dev =  PropertyManager.DEFAULTS.createInstanceWithDefaults((MS2MassDeviation.class));
-                ms2MergeDeviation = ms2dev.allowedMassDeviation;
-            }
+            msDataBuilder.msnSpectra(msnSpectra.stream()
+                    .map(StorageUtils::cleanMsnDataForImport)
+                    .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
 
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(ms2MergeDeviation, true, false, msnSpectra), Normalization.Sum);
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(
+                    StorageUtils.cleanMergedMsnDataForImport(
+                            HighIntensityMsMsMerger.mergePeaks(msnSpectra, featureImport.getIonMass(), new Deviation(10), false, true)
+                    ), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
 

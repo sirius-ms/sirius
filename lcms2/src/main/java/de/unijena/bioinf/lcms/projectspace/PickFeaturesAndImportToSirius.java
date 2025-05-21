@@ -1,8 +1,7 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -23,12 +22,15 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
+import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -350,7 +352,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }
         // merge ms data
         List<AbstractAlignedFeatures> featureWithData = Arrays.stream(fs).filter(x->x.getMSData().isPresent()).toList();
-        MSData mergedMsData = mergeMsData(featureWithData, featureWithData.stream().map(x->x.getMSData().get()).toList());
+        MSData mergedMsData = mergeMsData(featureWithData, featureWithData.stream().map(x->x.getMSData().get()).toList(), merged.getAverageMass());
         if (mergedMsData!=null) {
             merged.setMsData(mergedMsData);
             merged.setHasMs1(mergedMsData.getMergedMs1Spectrum()!=null);
@@ -364,7 +366,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         return merged;
     }
 
-    private MSData mergeMsData(List<AbstractAlignedFeatures> features, List<MSData> tomerge) {
+    private MSData mergeMsData(List<AbstractAlignedFeatures> features, List<MSData> tomerge, double ionMass) {
         if (tomerge.isEmpty()) return null;
         int bestPatternLen = 0;
         for (MSData d : tomerge) {
@@ -379,9 +381,12 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }
 
         List<MergedMSnSpectrum> ms2 = tomerge.stream().filter(x -> x.getMsnSpectra() != null).flatMap(x -> x.getMsnSpectra().stream()).toList();
-        MSData data = new MSData(tomerge.get(0).getAlignedFeatureId(), ms2,
-            tomerge.get(best).getIsotopePattern(),tomerge.get(best).getMergedMs1Spectrum(),ms2.isEmpty() ? null : Spectrums.getNormalizedSpectrum(Spectrums.mergeSpectra(new Deviation(10), true, false,
-                tomerge.stream().map(MSData::getMergedMSnSpectrum).filter(Objects::nonNull).toArray(SimpleSpectrum[]::new)), Normalization.Sum(1d))
+        SimpleSpectrum mergedMs2 = ms2.isEmpty() ? null : mergeAndNormalizeMsnSpectra(ionMass, ms2.stream().toArray(MergedMSnSpectrum[]::new));
+        MSData data = new MSData(
+                tomerge.get(0).getAlignedFeatureId(),
+                ms2,
+                tomerge.get(best).getIsotopePattern(),tomerge.get(best).getMergedMs1Spectrum(),
+                mergedMs2
                 );
         if (data.getMergedMSnSpectrum()!=null && data.getMsnSpectra().isEmpty()) {
             throw new RuntimeException("Empty MSMS spectrum after merging");
@@ -643,7 +648,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 MSData data = featuresParent[i].getMSData().orElseGet(MSData::new);
                 SimpleSpectrum isotopePattern = Spectrums.getNormalizedSpectrum(isotopePatterns[i], Normalization.Sum);
                 data.setIsotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.AVERAGE));
-                data.setMergedMs1Spectrum(new SimpleSpectrum(isotopePatterns[i]));
+                data.setMergedMs1Spectrum(StorageUtils.cleanMergedMs1DataForImport(isotopePatterns[i])); //rather for consistency and that we don't ever forget to check this. But just the isotope pattern should not contain so many peaks that we need cleaning
                 featuresParent[i].setMsData(data);
             }
         }
@@ -794,7 +799,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).projectedScans().toIntArray()).toArray(int[][]::new),
                         Arrays.stream(m.getHeaders()).mapToDouble(Ms2SpectrumHeader::getPrecursorMz).toArray(),
                         m.getChimericPollutionRatio(),
-                        new SimpleSpectrum(m)
+                        StorageUtils.cleanMsnDataInLCMSProcessingForImport(m)
                 );
 
                 ////////////////////
@@ -832,16 +837,25 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             }
             feature.getMSData().get().setMsnSpectra(Arrays.asList(msn));
             if (msn.length==0) return;
-            SimpleSpectrum merged;
-            if (msn.length>1) {
-                merged = Spectrums.mergeSpectra(new Deviation(10), true, false, Arrays.stream(msn).map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new));
-            } else merged = msn[0].getPeaks();
-            feature.getMSData().get().setMergedMSnSpectrum(Spectrums.getNormalizedSpectrum(merged, Normalization.Sum));
+            SimpleSpectrum merged = mergeAndNormalizeMsnSpectra(feature.getAverageMass(), msn);
+            feature.getMSData().get().setMergedMSnSpectrum(merged);
             feature.setHasMsMs(true);
             if (feature.getMSData().get().getMergedMSnSpectrum()!=null && feature.getMSData().get().getMsnSpectra().isEmpty()) {
                 throw new RuntimeException("WTF?");
             }
         }
+    }
+
+    private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, MergedMSnSpectrum[] msn) {
+        return mergeAndNormalizeMsnSpectra(ionMass, Arrays.stream(msn).map(MergedMSnSpectrum::toMs2Spectrum).toList());
+    }
+
+    private SimpleSpectrum mergeAndNormalizeMsnSpectra(double ionMass, List<MutableMs2Spectrum> msn) {
+        Deviation ms2AllowedMassDeviation = new Deviation(10);
+        SimpleSpectrum merged = HighIntensityMsMsMerger.mergePeaks(msn, ionMass, ms2AllowedMassDeviation, false, true);
+        return Spectrums.getNormalizedSpectrum(
+                StorageUtils.cleanMergedMsnDataForImport(merged),
+                Normalization.Sum);
     }
 
     record Ms2Pointer(long sampleId, IntArrayList ms2scans, IntArrayList rawscans, IntArrayList projectedScans) {
