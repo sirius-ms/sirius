@@ -228,6 +228,7 @@ public class StorageUtils {
     public static <P extends Peak, S extends Ms2Spectrum<P>> MutableMs2Spectrum cleanMsnDataForImport(S msnSpectrum) {
         SimpleSpectrum cleaned = cleanSpectrum(msnSpectrum);
         MutableMs2Spectrum cleanedMs2Spectrum = new MutableMs2Spectrum(cleaned);
+        cleanedMs2Spectrum.setPrecursorMz(msnSpectrum.getPrecursorMz());
         cleanedMs2Spectrum.setIonization(msnSpectrum.getIonization());
         cleanedMs2Spectrum.setCollisionEnergy(msnSpectrum.getCollisionEnergy());
         cleanedMs2Spectrum.setMsLevel( msnSpectrum.getMsLevel());
