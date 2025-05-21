@@ -138,7 +138,9 @@ public class GuiServiceImpl implements GuiService {
         if (gui != null) {
             //todo change gui instance.
             if (guiParameters.getFid() != null) {
-                gui.getMainFrame().getCompoundList().selectInstanceByFeatureId(guiParameters.getFid());
+                if (!gui.getMainFrame().getCompoundList().selectInstanceByFeatureId(guiParameters.getFid())) {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Feature with featureId '" + guiParameters.getFid() + "' not found in the list of GUI instance for project id '" + projectId + "'.");
+                }
             } else if (guiParameters.getCid() != null) {
                 System.out.println("Selecting compound by ID is not supported");
             }
