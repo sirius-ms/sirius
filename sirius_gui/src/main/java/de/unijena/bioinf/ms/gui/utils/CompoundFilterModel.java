@@ -102,6 +102,7 @@ public class CompoundFilterModel implements SiriusPCS {
     If a more comprehensive solution is required (e.g. allow multiple such features), just update it.
      */
     private String focussedFeatureId;
+    private boolean focussedFeatureIdIsNew = false;
 
     /*
     min/max possible values
@@ -158,6 +159,8 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void fireUpdateCompleted() {
+        if (!focussedFeatureIdIsNew) resetFocussedFeatureId(); //this guarantees that the focussed feature is remove when applying another filter.
+        else focussedFeatureIdIsNew = false;
         //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
@@ -266,7 +269,12 @@ public class CompoundFilterModel implements SiriusPCS {
     public void setFocussedFeatureId(String focussedFeatureId) {
         String oldValue = this.focussedFeatureId;
         this.focussedFeatureId = focussedFeatureId;
-        pcs.firePropertyChange("setFocussedFeatureId", oldValue, focussedFeatureId); //todo do we still need this?
+        this.focussedFeatureIdIsNew = (focussedFeatureId != null) ? true : false;
+        pcs.firePropertyChange("setFocussedFeatureId", oldValue, focussedFeatureId); //todo do we need this?
+    }
+
+    public void resetFocussedFeatureId() {
+        setFocussedFeatureId(null);
     }
 
     /**
