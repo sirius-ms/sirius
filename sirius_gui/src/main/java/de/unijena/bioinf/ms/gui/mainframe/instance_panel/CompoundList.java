@@ -42,6 +42,7 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.DataQuality;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -315,36 +316,29 @@ public class CompoundList {
         return sortedSource.size();
     }
 
-// *** MODIFIED METHOD START ***
     /**
      * Selects an InstanceBean in the list based on its featureId.
      * If the instance is currently filtered out (i.e., not in {@link #compoundList} but present in {@link #sortedSource}),
-     * all active filters will be reset to ensure the instance becomes visible.
+     * the featureId will be added to the filter model to ensure the feature is shown.
      * Then, the instance will be selected in the UI.
      *
      * @param featureId The non-null featureId of the InstanceBean to find and select.
      */
-    public void selectInstanceByFeatureId(@NotNull String featureId) {
+    public boolean selectInstanceByFeatureId(@NotNull String featureId) {
         InstanceBean targetInstance = null;
 
         // 1. Search for the InstanceBean in the complete list (sortedSource).
-        // It's good practice to acquire a read lock if there's any chance of concurrent modification,
-        // though simple iteration is often safe with GlazedLists.
-        // sortedSource.getReadWriteLock().readLock().lock();
-        try {
-            for (InstanceBean bean : sortedSource) {
-                if (bean.getFeatureId().equals(featureId)) {
-                    targetInstance = bean;
-                    break;
-                }
+        for (InstanceBean bean : sortedSource) {
+            if (bean.getFeatureId().equals(featureId)) {
+                targetInstance = bean;
+                break;
             }
-        } finally {
-            // sortedSource.getReadWriteLock().readLock().unlock();
         }
 
+
         if (targetInstance == null) {
-            System.err.println("InstanceBean with featureId '" + featureId + "' not found in the complete list (sortedSource).");
-            return;
+            LoggerFactory.getLogger(this.getClass()).warn("Feature with featureId '" + featureId + "' not found in the GUI feature list.");
+            return false;
         }
 
         final InstanceBean finalTargetInstance = targetInstance;
@@ -358,16 +352,15 @@ public class CompoundList {
                 int indexInView = compoundList.indexOf(finalTargetInstance);
                 if (indexInView != -1) {
                     compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
-                    // You might need to ensure the JList scrolls to the selected item.
-                    // This usually happens automatically if the JList uses this selection model,
-                    // but sometimes explicit scrolling is needed via a JList reference.
+                    gui.getMainFrame().ensureCompoundIsVisible(indexInView);
                 } else {
-                    System.err.println("selectInstanceByFeatureId (already visible): InstanceBean with featureId '" + finalTargetInstance.getFeatureId() + "' was reported in compoundList but indexOf failed.");
+                    // Should not happen if contains is true.
+                    LoggerFactory.getLogger(this.getClass()).warn("Feature with featureId '" + finalTargetInstance.getFeatureId() + "' exists in the full list but index retrieval failed.");
                 }
             });
         } else {
             // Instance is in the complete list but not in the filtered list.
-            // We need to reset filters and then select it *after* the list updates.
+            // We need to add the featureId to the filter model and then select it *after* the list updates.
 
             // Create a one-time listener that will select the item when the list changes.
             ListEventListener<InstanceBean> oneTimeListener = new ListEventListener<>() {
@@ -383,25 +376,19 @@ public class CompoundList {
                         int indexInView = compoundList.indexOf(finalTargetInstance);
                         if (indexInView != -1) {
                             compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
-                            // Optional: ensure visible in JList
+                            gui.getMainFrame().ensureCompoundIsVisible(indexInView);
                         } else {
-                            // Should not happen if contains is true, but defensive.
-                            System.err.println("selectInstanceByFeatureId (after filter reset listener): InstanceBean '" + finalTargetInstance.getFeatureId() + "' found by contains() but not indexOf().");
+                            // Should not happen if contains is true.
+                            LoggerFactory.getLogger(this.getClass()).warn("Feature with featureId '" + finalTargetInstance.getFeatureId() + "' exists in the full list but index retrieval failed after filter update.");
                         }
                         // IMPORTANT: Remove the listener to avoid it acting on future unrelated list changes.
-                        compoundList.removeListEventListener(this);
+                        try {
+                            compoundList.removeListEventListener(this);
+                        } catch (Exception e) {
+                            LoggerFactory.getLogger(this.getClass()).warn("Cannot remove feature selection listener.");
+                        }
                     } else {
-                        // If the item is still not there after a list change event where we expected it,
-                        // it might mean resetFilter didn't make it visible for some reason, or
-                        // this event was for an intermediate state.
-                        // For simplicity, we only act when it's present.
-                        // If it never appears, the listener will eventually be GC'd if CompoundList is disposed,
-                        // but it's good practice to remove it. If it *should* appear and doesn't, that's a deeper bug.
-                        // Consider adding a timeout or a counter if this listener persists too long.
-                        // For now, if it's not the target, we wait for the *next* listChanged event,
-                        // but it's crucial that the listener is removed once the job is done.
-                        // A robust solution might also check listChanges.isReordering() or other event types
-                        // to be more precise, but contains() is a good general check.
+                        // features still not visible after filter update
                     }
                 }
             };
@@ -409,15 +396,14 @@ public class CompoundList {
             // Add the listener BEFORE triggering the filter reset.
             compoundList.addListEventListener(oneTimeListener);
 
-            // Now, reset filters. This will eventually trigger listChanged on compoundList.
-//            resetFilter();
+            // Now, update the filter. This will eventually trigger listChanged on compoundList.
             addFocusFeature(featureId);
 
             // Fallback: If for some reason the list updates very quickly and the listener
-            // misses the event, or if resetFilter results in no actual change event
+            // misses the event, or if addFocusFeature results in no actual change event
             // that makes the item appear (e.g., if it was already unfiltered but just not selected),
-            // an immediate invokeLater can try one more time. This is a bit of a "belt and suspenders"
-            // approach and might be redundant if the listener works as expected.
+            // an immediate invokeLater can try one more time.
+            // This approach and might be redundant if the listener works as expected.
             SwingUtilities.invokeLater(() -> {
                 if (compoundList.contains(finalTargetInstance) &&
                         (compountListSelectionModel.isSelectionEmpty() ||
@@ -426,21 +412,17 @@ public class CompoundList {
                     int indexInView = compoundList.indexOf(finalTargetInstance);
                     if (indexInView != -1) {
                         compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
+                        gui.getMainFrame().ensureCompoundIsVisible(indexInView);
+                        try {
+                            compoundList.removeListEventListener(oneTimeListener);
+                        } catch (Exception e) {
+                            LoggerFactory.getLogger(this.getClass()).warn("Cannot remove feature selection listener.");
+                        }
                     }
-                    // Attempt to remove listener here too, in case it was added but the conditions for its
-                    // own removal weren't met (e.g. item appeared too fast).
-                    // This can be tricky, ensure it doesn't interfere with the listener's own removal.
-                    // A safer way is to rely solely on the listener to remove itself.
-                    // For now, let's rely on the listener.
                 }
-//                else if (!compoundList.contains(finalTargetInstance) && compoundList.getListEventListeners().contains(oneTimeListener)) {
-//                    // If after this invokeLater the item is STILL not there, but the listener is active,
-//                    // it means the background job is likely still pending or finished without the item.
-//                    // The listener will handle it or eventually get removed.
-//                    // If the item *should* be there, it indicates resetFilter() isn't behaving as expected.
-//                }
             });
         }
+
+        return true;
     }
-// *** MODIFIED METHOD END ***
 }
