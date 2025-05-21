@@ -118,7 +118,6 @@ public class CompoundList {
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
 
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
-        //todo adding matching of focussed feature
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters2 = new BasicEventList<>();
         listOfFilters2.add(compositeMatcherEditor);
         listOfFilters2.add(new AbstractMatcherEditorListenerSupport<InstanceBean>() {
