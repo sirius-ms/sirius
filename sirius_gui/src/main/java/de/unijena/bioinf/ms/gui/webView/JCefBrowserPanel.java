@@ -213,6 +213,7 @@ public class JCefBrowserPanel extends JPanel {
             }
         };
 
+//        url = "https://youtube.com";
         client.addLifeSpanHandler(lifeSpanHandler);
         setupLinkInterception();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
@@ -367,5 +368,16 @@ public class JCefBrowserPanel extends JPanel {
         cleanupResources();
         // Call the superclass implementation to complete normal component removal
         super.removeNotify();
+    }
+
+    // Some arbitrary size numbers to fix JSplitPane divider not moving
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(500,300);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(50,20);
     }
 }
