@@ -262,4 +262,15 @@ public class JCefBrowserPanel extends JPanel {
         // Call the superclass implementation to complete normal component removal
         super.removeNotify();
     }
+
+    // Some arbitrary size numbers to fix JSplitPane divider not moving
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(500,300);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(50,20);
+    }
 }
