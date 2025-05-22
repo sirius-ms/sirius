@@ -39,11 +39,11 @@ ext {
     }
 
     // configure infos for bundled JRE
-    jre_version = '21.0.6'
+    jre_version = '21.0.7'
     jre_major = jre_version.split("[.]")[0]
 
     // liberica config
-    jre_distributor_version = 'b631.42'
+    jre_distributor_version = 'b895.130'
     jre_mac_prefix = null
     jre_fname = "jbr_jcef-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
     jre_download_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
