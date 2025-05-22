@@ -95,13 +95,14 @@ public class StorageUtils {
                 .orElse(MsInstrumentation.Unknown)
                 .getRecommendedProfile());
 
-        boolean isMs1Only = exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty();
+        boolean hasMs2 = !(exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty());
+        boolean hasMS1 = !(exp.getMs1Spectra().isEmpty() && exp.getMergedMs1Spectrum()==null);
 
         // build MsData
         MSData.MSDataBuilder builder = MSData.builder();
 
         //processed MS1 information
-        {
+        if (hasMS1) {
             ProcessedInput pinput;
             try {
                 pinput = sirius.preprocessForMs1Analysis(exp);
@@ -124,7 +125,7 @@ public class StorageUtils {
                     .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
         }
 
-        if (!isMs1Only){
+        if (hasMs2){
             List<MutableMs2Spectrum> cleanedMs2 = exp.getMs2Spectra().stream().map(StorageUtils::cleanMsnDataForImport).toList();
             final SimpleSpectrum mergedMsn =
                     Spectrums.getNormalizedSpectrum(
