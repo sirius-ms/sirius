@@ -30,6 +30,9 @@ public class SampleStats {
     private float ms2NoiseLevel;
 
     @With
+    private float minimumIntensity;
+
+    @With
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     private Deviation ms1MassDeviationWithinTraces;
