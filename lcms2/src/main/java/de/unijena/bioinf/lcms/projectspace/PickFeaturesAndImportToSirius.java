@@ -690,13 +690,9 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         int i = apex-1;
         int leftEdge = -1;
         while (trace.inRange(i)) {
-            if (trace.intensity(i) < trace.intensity(i+1)) {
-                if (leftEdge < 0 && trace.intensity(i)<= threshold) {
-                    leftEdge=i;
-                    if (i <= segment.leftEdge) break; // we are done
-                }
-            } else {
-                leftEdge = -1; // erase information
+            if (trace.intensity(i) < threshold) {
+               leftEdge = i;
+               break;
             }
             --i;
         }
@@ -704,13 +700,9 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         i = apex+1;
         int rightEdge = -1;
         while (trace.inRange(i)) {
-            if (trace.intensity(i) < trace.intensity(i-1)) {
-                if (rightEdge < 0 && trace.intensity(i)<= threshold) {
-                    rightEdge=i;
-                    if (i >= segment.rightEdge) break; // we are done
-                }
-            } else {
-                rightEdge = -1; // erase information
+            if (trace.intensity(i) < threshold) {
+                rightEdge=i;
+                break;
             }
             ++i;
         }
