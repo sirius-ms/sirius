@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
+import com.jogamp.opengl.awt.GLCanvas;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourInitialDialog;
@@ -19,7 +20,6 @@ public class SoftwareTourUtils {
 
     /**
      * enable all software tours that have been disabled via "don't ask again"
-     * @param guiProperties
      */
     public static void enableAllTours(GuiProperties guiProperties, Properties properties) {
         setAllTourProperties(true, properties);
@@ -64,7 +64,9 @@ public class SoftwareTourUtils {
         SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
         if (askToStart.isSuccess()) {
-            List<Component> allComponents = collectNestedComponents(windowOwner);
+            List<Component> allComponents = collectNestedComponents(windowOwner).stream()
+                    .filter(c -> !(c instanceof GLCanvas))  // Filtering out CEF OSR browser canvas because it gets unresponsive after enabling and disabling
+                    .toList();
             Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, Component::isEnabled));
 
             List<JComponent> componentsWithTutorial = collectNestedComponents(tutorialRoot).stream()
@@ -157,7 +159,7 @@ public class SoftwareTourUtils {
     }
 
     private static void enableFocusedComponent(JComponent component, Map<Component, Boolean> componentToEnabledState) {
-        collectNestedComponents(component).forEach(c -> c.setEnabled(componentToEnabledState.get(c)));
+        collectNestedComponents(component).forEach(c -> { if(componentToEnabledState.containsKey(c)) c.setEnabled(componentToEnabledState.get(c)); });
     }
 
     @Nullable
