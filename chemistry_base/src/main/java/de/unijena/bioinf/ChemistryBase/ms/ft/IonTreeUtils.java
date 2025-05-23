@@ -31,9 +31,8 @@ import de.unijena.bioinf.ms.annotations.TreeAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.StreamSupport;
 
 /**
  *     //todo this whole class must be adjusted to adduct switches
@@ -188,6 +187,17 @@ public class IonTreeUtils {
 
         PrecursorIonType ionType = tree.getAnnotationOrNull(PrecursorIonType.class);
         return ionType != null ? ionType.measuredNeutralMoleculeToNeutralMolecule(tree.getRoot().getFormula()) : tree.getRoot().getFormula();
+    }
+
+    /**
+     *
+     * @param tree
+     * @return number of true fragments. This excludes the precursor and compound node (for adducts with in-source loss)
+     */
+    public static int getNumberOfTrueFragments(FTree tree) {
+        Fragment precursorRoot = getMeasuredIonRoot(tree);
+        final int numFragmentsWithRoot = (int) StreamSupport.stream(tree.inPreOrder(precursorRoot).spliterator(), false).count();
+        return numFragmentsWithRoot - 1;
     }
 
     public static MolecularFormula getPrecursorFormula(FTree tree) {
