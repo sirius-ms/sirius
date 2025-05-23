@@ -90,9 +90,10 @@ public class SoftwareTourInfoStore {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Formula tab tour /////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    protected static final String SpectrumNaviationDescription = "Spectrum navigation: Right-click and drag to select a specific m/z window or use mouse-wheel to zoom. Double-click to reset zoom. Select peaks by left-click or use arrow keys for navigation.";
     public static final SoftwareTourInfo Formulas_List = new SoftwareTourInfo("These are the (top) formula candidates for the current feature.<br>They are ranked by SIRIUS score (fragmentation tree score + isotope score), or by ZODIAC score if available.<br>Candidates with the same precursor formula but different adducts have identical SIRIUS score.<br>Additional scores allow to assess quality of MS/MS data and annotation.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
     //combine tree and spectrum explanation in one since new JS viewer will combine it as well.
-    public static final SoftwareTourInfo Formulas_SpectraAndTree = new SoftwareTourInfo("MS1, MS/MS spectra and fragmentation tree for the selected molecular formula candidate.<br>Use the dropdown list to switch between MS1 and MS/MS spectra if available.<br>Peaks in MS/MS spectra are annotated with molecular formulas from the fragmentation tree.<br>You can zoom spectra by right-click, select peaks by left-click, and use arrow keys for navigation.", 1, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
+    public static final SoftwareTourInfo Formulas_SpectraAndTree = new SoftwareTourInfo("MS1, MS/MS spectra and fragmentation tree for the selected molecular formula candidate.<br>Use the dropdown list to switch between MS1 and MS/MS spectra if available.<br>Peaks in MS/MS spectra are annotated with molecular formulas from the fragmentation tree.<br>"+SpectrumNaviationDescription, 1, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
 
 
 
@@ -139,6 +140,6 @@ public class SoftwareTourInfoStore {
     //// Epimetheus tour /////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public static final SoftwareTourInfo Epimetheus_List = new SoftwareTourInfo("Here you find all molecular structure candidates from both, database search and de novo generation.", 1, LocationHorizontal.CENTER, LocationVertical.BELOW_BOTTOM);
-    public static final SoftwareTourInfo Epimetheus_SpectralVisualization = new SoftwareTourInfo("This panel allows you to manually validate molecular structure candidates by assessing potential fragment explanations.<br>This does not consider rearrangements.", 2, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
+    public static final SoftwareTourInfo Epimetheus_SpectralVisualization = new SoftwareTourInfo("This panel allows you to manually validate molecular structure candidates by assessing potential fragment explanations.<br>This does not consider rearrangements.<br>"+SpectrumNaviationDescription, 2, LocationHorizontal.CENTER, LocationVertical.ON_TOP);
     public static final SoftwareTourInfo Epimetheus_DeNovoFilter = new SoftwareTourInfo("Toggle to (un-)hide molecular structure candidates that were generated de novo and are not contained in a database.", 3, LocationHorizontal.RIGHT_ALIGN, LocationVertical.BELOW_BOTTOM);
 }
