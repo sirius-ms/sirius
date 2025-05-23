@@ -96,6 +96,14 @@ public class CompoundFilterModel implements SiriusPCS {
     @Getter
     private BlankSubtraction blankSubtraction;
 
+    @Getter
+    /*
+    This is used to add a feature to the filtered list that may not pass the filter, e.g. when selecting the feature externally.
+    If a more comprehensive solution is required (e.g. allow multiple such features), just update it.
+     */
+    private String focussedFeatureId;
+    private boolean focussedFeatureIdIsNew = false;
+
     /*
     min/max possible values
      */
@@ -151,6 +159,8 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void fireUpdateCompleted() {
+        if (!focussedFeatureIdIsNew) resetFocussedFeatureId(); //this guarantees that the focussed feature is remove when applying another filter.
+        else focussedFeatureIdIsNew = false;
         //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
@@ -254,6 +264,17 @@ public class CompoundFilterModel implements SiriusPCS {
         this.currentMinConfidence = currentMinConfidence;
         pcs.firePropertyChange("setMinConfidence", oldValue, currentMinConfidence);
 
+    }
+
+    public void setFocussedFeatureId(String focussedFeatureId) {
+        String oldValue = this.focussedFeatureId;
+        this.focussedFeatureId = focussedFeatureId;
+        this.focussedFeatureIdIsNew = (focussedFeatureId != null) ? true : false;
+        pcs.firePropertyChange("setFocussedFeatureId", oldValue, focussedFeatureId); //todo do we need this?
+    }
+
+    public void resetFocussedFeatureId() {
+        setFocussedFeatureId(null);
     }
 
     /**
@@ -366,6 +387,7 @@ public class CompoundFilterModel implements SiriusPCS {
         blankSubtraction.setCtrlSubtractionEnabled(false);
         blankSubtraction.setBlankSubtractionFoldChange(2.0);
         blankSubtraction.setCtrlSubtractionFoldChange(2.0);
+        setFocussedFeatureId(null);
     }
 
     public enum LipidFilter {
