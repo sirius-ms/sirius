@@ -1,9 +1,24 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+
 import java.util.Arrays;
 import java.util.Locale;
 
 public class AdductEdge {
+
+    public boolean isValid() {
+
+        if (Double.isFinite(extraSampleCorrelation)) return true;
+        // otherwise, check if both nodes have exact same set of samples
+        if (left.getFeatures().getFeatures().isPresent() && right.getFeatures().getFeatures().isPresent()) {
+            LongOpenHashSet longSet = new LongOpenHashSet(left.getFeatures().getFeatures().get().stream().mapToLong(AbstractFeature::getRunId).toArray());
+            return longSet.equals(new LongOpenHashSet(right.getFeatures().getFeatures().get().stream().mapToLong(AbstractFeature::getRunId).toArray()));
+        }
+        return true;
+
+    }
 
     private static enum EdgeType {ION(-1f), ADDUCT(-3f), MULTIMERE(-2), OTHER(-4f);
         private float scoreBonus;
