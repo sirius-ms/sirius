@@ -104,30 +104,32 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
                 ));
             }
 
-            if (stability < 0) {
-                report.getItems().add(new QualityReport.Item(
-                        String.format(Locale.US,
-                                "for the %d-th isotope peak the intensity ratios across samples differ a lot",
-                                k+1),
-                        DataQuality.BAD,
-                        weight
-                ));
-            } else if (stability < 10) {
-                report.getItems().add(new QualityReport.Item(
-                        String.format(Locale.US,
-                                "for the %d-th isotope peak the intensity ratios across samples differ slightly",
-                                k+1),
-                        DataQuality.DECENT,
-                        weight
-                ));
-            } else {
-                report.getItems().add(new QualityReport.Item(
-                        String.format(Locale.US,
-                                "for the %d-th isotope peak the intensity ratios across samples are very stable.",
-                                k+1),
-                        DataQuality.GOOD,
-                        weight
-                ));
+            if (intensitiesLeft.size()>3 && intensitiesRight.size()>3) {
+                if (stability < 0.5) {
+                    report.getItems().add(new QualityReport.Item(
+                            String.format(Locale.US,
+                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    k + 1, stability),
+                            DataQuality.BAD,
+                            weight
+                    ));
+                } else if (stability < 0.75) {
+                    report.getItems().add(new QualityReport.Item(
+                            String.format(Locale.US,
+                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    k + 1, stability),
+                            DataQuality.DECENT,
+                            weight
+                    ));
+                } else {
+                    report.getItems().add(new QualityReport.Item(
+                            String.format(Locale.US,
+                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    k + 1, stability),
+                            DataQuality.GOOD,
+                            weight
+                    ));
+                }
             }
 
 

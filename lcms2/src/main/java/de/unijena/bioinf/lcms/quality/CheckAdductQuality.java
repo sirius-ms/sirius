@@ -20,7 +20,12 @@ public class CheckAdductQuality implements FeatureQualityChecker{
         QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ADDUCT_QUALITY);
         List<PrecursorIonType> allAdducts = feature.getDetectedAdducts().getAllAdducts();
         int size = allAdducts.size();
-
+        if (allAdducts.isEmpty()) {
+            peakQuality.getItems().add(new QualityReport.Item("There is no adduct assignment for this feature.",
+                    DataQuality.NOT_APPLICABLE, QualityReport.Weight.MAJOR));
+            report.addCategory(peakQuality);
+            return;
+        }
         boolean unsure = allAdducts.stream().anyMatch(PrecursorIonType::isIonizationUnknown);
         if (size == 1 && !unsure) {
             peakQuality.getItems().add(new QualityReport.Item("There is an unambigious adduct assignment of "
