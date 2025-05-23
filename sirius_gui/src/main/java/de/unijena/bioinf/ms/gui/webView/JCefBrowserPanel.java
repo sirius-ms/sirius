@@ -172,6 +172,17 @@ public class JCefBrowserPanel extends JPanel {
         // This should be done before adding the component to the panel
         if (System.getProperty("os.name").toLowerCase().contains("linux")) {
             MouseWheelFix.apply(browserUI);
+            client.addDialogHandler((dialogBrowser, mode, title, defaultPath, acceptFilters, callback) -> {
+                // Native file dialogs don't work on linux, see
+                // https://github.com/chromiumembedded/cef/blob/master/libcef/browser/file_dialog_manager.cc#L405
+                // https://github.com/JetBrains/jcef/blob/dev/native/context.cpp#L211
+                //
+                // Implementing a java dialog also doesn't work, results in error "The request is not allowed by the user agent or the platform in the current context"
+                // Maybe can be fixed with some chromium flags to allow local system writing
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(JCefBrowserPanel.this, "Native file dialogs from this view are not available on Linux.", null, JOptionPane.ERROR_MESSAGE));
+                callback.Cancel();
+                return true;
+            });
         }
 
         add(browserUI, BorderLayout.CENTER);
