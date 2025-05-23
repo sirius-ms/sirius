@@ -26,8 +26,7 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
     protected static class CalculateMedians implements Calculation {
         private FloatArrayList noise = new FloatArrayList(), noise2 = new FloatArrayList();
         private FloatArrayList ms2Noise = new FloatArrayList();
-
-        private FloatArrayList noiseXXX = new FloatArrayList();
+        private FloatArrayList mint = new FloatArrayList();
 
         @Override
         public void processMs1(Ms1SpectrumHeader header, SimpleSpectrum ms1Spectrum) {
@@ -39,7 +38,9 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
             }
             int perc = (int)(0.9*xs.length);
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
-            double noiseLevel2 = Quickselect.quickselectInplace(xs, 0, xs.length, (int)Math.floor(xs.length*0.1)) * 20;
+            double noiseLevel2 = Quickselect.quickselectInplace(xs, 0, xs.length, (int)Math.floor(xs.length*0.05));
+            mint.add((float)noiseLevel2);
+            noiseLevel2 *= 20;
             noise.add((float)noiseLevel);
             noise2.add((float)noiseLevel2);
 
@@ -110,8 +111,10 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 }
             }
 
+            mint.sort(null);
 
-            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).ms1MassDeviationWithinTraces(new Deviation(6,3e-4)).minimumMs1MassDeviationBetweenTraces(new Deviation(6,3e-4)).build();
+
+            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).minimumIntensity(mint.getFloat(mint.size()/2)).ms1MassDeviationWithinTraces(new Deviation(6,3e-4)).minimumMs1MassDeviationBetweenTraces(new Deviation(6,3e-4)).build();
         }
     }
 
