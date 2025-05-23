@@ -189,14 +189,15 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
             updateProgress(totalProgress, progress, "Aligning runs");
             AlignmentBackbone bac = processing.align();
-            HashMap<DataQuality, Integer> countMap;
+            HashMap<DataQuality, Integer> countMap, countMapMs2;
 
             updateProgress(totalProgress, ++progress, "Merging runs");
             ProcessedSample merged = processing.merge(bac);
+            /*
             DoubleArrayList avgAl = new DoubleArrayList();
             System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
             System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
-
+            */
             updateProgress(totalProgress, ++progress, "Importing features");
             if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
                 System.err.println("No features found.");
@@ -263,17 +264,22 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             updateProgress(totalProgress, ++progress, "Assessing data quality");
             // quality assessment
             countMap = new HashMap<>();
+            countMapMs2 = new HashMap<>();
             for (DataQuality q : DataQuality.values()) {
                 countMap.put(q, 0);
+                countMapMs2.put(q,0);
             }
             final QualityAssessment qa = alignRuns ? new QualityAssessment() : new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
-            ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
+
+            record DataQualityItem (DataQuality quality, boolean ms2) {}
+
+            ArrayList<BasicJJob<DataQualityItem>> jobs = new ArrayList<>();
             ps.getStorage().fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
             ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
             ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality() == DataQuality.NOT_APPLICABLE).forEach(feature -> {
-                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
+                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQualityItem>() {
                     @Override
-                    protected DataQuality compute() {
+                    protected DataQualityItem compute() {
                         QualityReport report = QualityReport.withDefaultCategories(alignRuns);
                         ps.fetchFeatures(feature);
                         ps.fetchIsotopicFeatures(feature);
@@ -287,33 +293,35 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
-                        return report.getOverallQuality();
+                        return new DataQualityItem(report.getOverallQuality(), feature.isHasMsMs());
                     }
                 }));
             });
             jobs.forEach(x -> {
-                DataQuality q = x.takeResult();
-                countMap.put(q, countMap.get(q) + 1);
+                DataQualityItem q = x.takeResult();
+                countMap.put(q.quality, countMap.get(q.quality) + 1);
+                if (q.ms2) countMapMs2.put(q.quality, countMapMs2.get(q.quality)+1);
             });
 
             System.out.printf(
                     """
                              -------- Preprocessing Summary ---------
                              Preprocessed data in:      %s
-                             # Good Al. Features:           %d
-                             # Decent Al. Features:         %d
-                             # Bad Al. Features:            %d
-                             # Lowest Quality Al. Features: %d
+                             # Good Al. Features:           \t%d \t(with MS/MS: %d)
+                             # Decent Al. Features:         \t%d \t(with MS/MS: %d)
+                             # Bad Al. Features:            \t%d \t(with MS/MS: %d)
+                             # Lowest Quality Al. Features: \t%d \t(with MS/MS: %d)
                             
-                             # Total Al. Features: %d
+                             # Total Al. Features: \t%d \t(with MS/MS: %d)
                             \s""",
                     stopWatch,
 
-                    countMap.get(DataQuality.GOOD),
-                    countMap.get(DataQuality.DECENT),
-                    countMap.get(DataQuality.BAD),
-                    countMap.get(DataQuality.LOWEST),
-                    countMap.values().stream().mapToInt(Integer::intValue).sum()
+                    countMap.get(DataQuality.GOOD), countMapMs2.get(DataQuality.GOOD),
+                    countMap.get(DataQuality.DECENT), countMapMs2.get(DataQuality.DECENT),
+                    countMap.get(DataQuality.BAD), countMapMs2.get(DataQuality.BAD),
+                    countMap.get(DataQuality.LOWEST), countMapMs2.get(DataQuality.LOWEST),
+                    countMap.values().stream().mapToInt(Integer::intValue).sum(),
+                    countMapMs2.values().stream().mapToInt(Integer::intValue).sum()
             );
         } finally {
             processing.closeStorages();
