@@ -68,7 +68,10 @@ public class ResultPanel extends JTabbedPane {
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
     private SpectralMatchingPanel spectralMatchingTab;
-    private final KendrickMassDefectPanel massDefectTab;
+    private KendrickMassDefectPanel massDefectTab;
+
+    private final String spectralMatchingTabName = "Library Matches";
+    private final String massDefectTabName = "Homologue Series";
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
@@ -150,14 +153,11 @@ public class ResultPanel extends JTabbedPane {
         deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
         addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
 
-
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
-        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
 
         //software tour listener
         addChangeListener(e -> {
@@ -189,6 +189,11 @@ public class ResultPanel extends JTabbedPane {
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
                 showSpectralMatchingTab((Boolean) evt.getNewValue()));
         showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
+
+        // KMD plot
+        gui.getProperties().addPropertyChangeListener("showHomologueSeriesPanel", evt ->
+                showHomologueSeriesTab((Boolean) evt.getNewValue()));
+        showHomologueSeriesTab(gui.getProperties().isShowHomologueSeriesPanel());
     }
 
     private void checkAndInitCanopusSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
@@ -210,15 +215,32 @@ public class ResultPanel extends JTabbedPane {
     }
 
     private void showSpectralMatchingTab(boolean show) {
-        String name = "Library Matches";
-        int idx = indexOfTab(name);
+        int idx = indexOfTab(spectralMatchingTabName);
         if (show && idx < 0) {
             if (spectralMatchList == null) {
                 spectralMatchList = new SpectralMatchList(compoundList);
                 spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
             }
+            // add to second last position
+            int homologueSeriesTabIndex = indexOfTab(massDefectTabName);
+            insertTab(spectralMatchingTabName, null, spectralMatchingTab, spectralMatchingTab.getDescription(), homologueSeriesTabIndex < 0 ? getTabCount() : homologueSeriesTabIndex);
+            return;
+        }
+
+        if (!show && idx >= 0) {
+            removeTabAt(idx);
+        }
+    }
+
+    private void showHomologueSeriesTab(boolean show) {
+        int idx = indexOfTab(massDefectTabName);
+        if (show && idx < 0) {
+            if (massDefectTab == null) {
+                massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
+            }
             // add to last position
-            addTab(name, null, spectralMatchingTab, spectralMatchingTab.getDescription());
+            int spectralMatchingTabIndex = indexOfTab(spectralMatchingTabName);
+            insertTab(massDefectTabName, null, massDefectTab, massDefectTab.getDescription(), spectralMatchingTabIndex < 0 ? getTabCount() : spectralMatchingTabIndex + 1);
             return;
         }
 

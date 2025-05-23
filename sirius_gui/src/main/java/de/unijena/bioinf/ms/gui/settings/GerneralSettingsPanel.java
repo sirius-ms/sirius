@@ -64,6 +64,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
     final FileChooserPanel db;
     final JCheckBox showSpectraMatchPanel;
+    final JCheckBox showHomologueSeriesPanel;
     final JComboBox<String> solver;
     final JComboBox<ConfidenceDisplayMode> confidenceDisplayMode;
     final JComboBox<MolecularStructuresDisplayColors> molecularStructuresDisplayColors;
@@ -127,6 +128,12 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
                         DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB);
             }
         });
+
+        showHomologueSeriesPanel = new JCheckBox();
+        showHomologueSeriesPanel.setToolTipText("Show a result tab displaying a KMD plot for analyzing homologue series.");
+        showHomologueSeriesPanel.setSelected(gui.getProperties().isShowHomologueSeriesPanel());
+        addNamed("Show \"Homologue Series\" tab", showHomologueSeriesPanel);
+
 
         //software tour
         JButton enableTour = new JButton("Enable all tours");
@@ -203,6 +210,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
         props.setProperty(SHOW_SPECTRA_MATCH_PANEL_KEY, String.valueOf(showSpectraMatchPanel.isSelected()));
         gui.getProperties().setShowSpectraMatchPanel(showSpectraMatchPanel.isSelected());
+
+        props.setProperty(SHOW_HOMOLOGUE_SERIES_PANEL_KEY, String.valueOf(showHomologueSeriesPanel.isSelected()));
+        gui.getProperties().setShowHomologueSeriesPanel(showHomologueSeriesPanel.isSelected());
 
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
 
