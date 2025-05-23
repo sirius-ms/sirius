@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import org.jetbrains.annotations.Nullable;
@@ -142,8 +143,8 @@ public class FingerprintPreprocessingJJob extends BasicJJob<List<SScored<FTree, 
             final Iterator< SScored<FTree, FormulaScore>> iter = filteredResults.iterator();
             while (iter.hasNext()) {
                 final  SScored<FTree, FormulaScore> ir = iter.next();
-                if (ir.getCandidate().numberOfVertices() < 3) {
-                    logWarn("Ignore fragmentation tree for " + ir.getCandidate().getRoot().getFormula() + " because it contains less than 3 vertices.");
+                if (IonTreeUtils.getNumberOfTrueFragments(ir.getCandidate()) < 2) {
+                    logWarn("Ignore fragmentation tree for " + ir.getCandidate().getRoot().getFormula() + " because it contains less than 2 fragments.");
                     iter.remove();
                 }
             }

@@ -56,6 +56,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     private Properties props;
     final JSpinner scalingSpinner;
     final int scaling;
+    private boolean enableAllSoftwareTours = false;
 
     final String theme;
 
@@ -129,8 +130,10 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
         //software tour
         JButton enableTour = new JButton("Enable all tours");
-        addNamed("Software tour", enableTour);
+        addNamed("Software tours", enableTour);
         enableTour.addActionListener(evt -> {
+            enableAllSoftwareTours = true;
+            //make it persistent even when cancel is clicked
             SoftwareTourUtils.enableAllTours(gui.getProperties());
         });
 
@@ -218,6 +221,11 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         if (scaling != (int) scalingSpinner.getValue()) {
             props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
             restartRequired = true;
+        }
+
+        if (enableAllSoftwareTours) {
+            //still required to make sure that properties are not overwritten again
+            SoftwareTourUtils.enableAllTours(gui.getProperties(), props);
         }
     }
 
