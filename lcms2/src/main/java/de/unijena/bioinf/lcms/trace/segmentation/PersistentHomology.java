@@ -104,6 +104,13 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         this(null, 3, 0d, 0.8);
     }
 
+    public PersistentHomology(Filter filter) {
+        this.filter = filter;
+        this.noiseCoefficient = 3;
+        this.persistenceCoefficient = 0.01;
+        this.mergeCoefficient = 0.8;
+    }
+
     public PersistentHomology(Filter filter, double noiseCoefficient, double persistenceCoefficient, double mergeCoefficient) {
         this.filter = filter;
 

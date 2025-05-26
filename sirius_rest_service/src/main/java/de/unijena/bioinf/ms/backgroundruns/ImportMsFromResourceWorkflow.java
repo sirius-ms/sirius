@@ -28,6 +28,7 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
+import de.unijena.bioinf.lcms.align.AlignmentThresholds;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
@@ -102,6 +103,9 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
         importedFeatureIds = new LongLinkedOpenHashSet();
         importedCompoundIds = new LongLinkedOpenHashSet();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
+        final AlignmentThresholds thresholds = new AlignmentThresholds();
+        thresholds.setMaximalAllowedMassError(submission.getAlignMassDeviation());
+        if (submission.getAlignRetentionTimeError()>=0) thresholds.setMaximalAllowedRetentionTimeError(submission.getAlignRetentionTimeError());
         if (inputResources != null && !inputResources.isEmpty()) {
             try {
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
@@ -111,9 +115,9 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getFilter(),
                         submission.getGaussianSigma(),
                         submission.getWaveletScale(),
-                        submission.getNoise(),
-                        submission.getPersistence(),
-                        submission.getMerge(),
+                        submission.getNoiseIntensity(),
+                        thresholds,
+                        submission.getMs1MassDeviation(),
                         saveImportedCompounds
                 );
                 importerJJob.addJobProgressListener(progressSupport);
