@@ -69,7 +69,6 @@ public class AdductNetwork {
         double voidVolumeStart = rtOrderedNodes[0].getRetentionTime();
         double voidVolumeEnd = voidVolumeStart + 4*retentionTimeTolerance;
         double endOfLc = rtOrderedNodes[rtOrderedNodes.length-1].getRetentionTime() - 4*retentionTimeTolerance;
-
         List<BasicJJob<NetworkResult>> jobs = new ArrayList<>();
         for (int rr=0; rr < rtOrderedNodes.length; ++rr) {
             final int r = rr;
@@ -79,8 +78,12 @@ public class AdductNetwork {
                     List<AdductEdge> realEdges = new ArrayList<>();
                     List<AdductEdge> decoyEdges = new ArrayList<>();
                     final AdductNode rightNode = rtOrderedNodes[r];
-                    final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
-                    final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
+                    final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance,
+                            //rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
+                            Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime(), rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - 2*retentionTimeTolerance));
+                    final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance,
+                            //rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
+                            Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime(), rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + 2*retentionTimeTolerance));
                     final Range<Double> threshold = Range.of(thresholdStart, thresholdEnd);
 
                     // obtain potential fragment peaks
@@ -130,7 +133,7 @@ public class AdductNetwork {
                                 if (!knownMassDeltas.isEmpty()) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
                                     scorer.computeScore(provider, adductEdge);
-                                    if (Double.isFinite(adductEdge.extraSampleCorrelation)) {
+                                    if (adductEdge.isValid()) {
 
                                         // add MS/MS score
                                         if (!ms2Right.isEmpty()) {
@@ -154,7 +157,7 @@ public class AdductNetwork {
                                 } else if (rt.getStartTime() > voidVolumeEnd && rt.getEndTime() < endOfLc && decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
                                     scorer.computeScore(provider, adductEdge);
-                                    if (Double.isFinite(adductEdge.extraSampleCorrelation)) {
+                                    if (adductEdge.isValid()) {
                                         decoyEdges.add(adductEdge);
                                     }
                                 }
@@ -194,7 +197,6 @@ public class AdductNetwork {
                 }
             }
         }
-
     }
 
     private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
@@ -807,11 +809,11 @@ public class AdductNetwork {
         }
 
         public void add(AdductEdge edge) {
-            merged.get(edge.interSampleCorrelationCount).add(edge.interSampleCorrelation);
-            representative.get(edge.interSampleCorrelationRepresentativeCount).add(edge.interSampleCorrelationRepresentative);
-            extra.get(edge.extraSampleCorrelationCount).add(edge.extraSampleCorrelation);
-            rt.add(edge.rtScore);
-            ms2.add(edge.ms2score);
+            if (Double.isFinite(edge.interSampleCorrelation)) merged.get(edge.interSampleCorrelationCount).add(edge.interSampleCorrelation);
+            if (Double.isFinite(edge.interSampleCorrelationRepresentative)) representative.get(edge.interSampleCorrelationRepresentativeCount).add(edge.interSampleCorrelationRepresentative);
+            if (Double.isFinite(edge.extraSampleCorrelation)) extra.get(edge.extraSampleCorrelationCount).add(edge.extraSampleCorrelation);
+            if (Double.isFinite(edge.rtScore)) rt.add(edge.rtScore);
+            if (Double.isFinite(edge.ms2score)) ms2.add(edge.ms2score);
         }
 
     }

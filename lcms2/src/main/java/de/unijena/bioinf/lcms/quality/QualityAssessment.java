@@ -43,6 +43,9 @@ public class QualityAssessment implements FeatureQualityChecker {
                 ++count;
             }
         }
+        if (report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE &&
+                report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE)
+            ++count; // special rule to downweight features that have no purpose (no ms2 nor adduct)
         float c = report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality().getScore();
         if (count==0) {
             report.setOverallQuality(DataQuality.NOT_APPLICABLE);
@@ -56,6 +59,7 @@ public class QualityAssessment implements FeatureQualityChecker {
                 report.setOverallQuality(DataQuality.BAD);
             } else report.setOverallQuality(DataQuality.LOWEST);
         }
+
         // we add some additional rules:
         // - whenever we have a good MS2 we KEEP the data. ALWAYS.
         // - if almost everything is bad (including the spectra) we downgrade the quality level to lowest
@@ -63,7 +67,7 @@ public class QualityAssessment implements FeatureQualityChecker {
         float c2 = report.getCategories().get(QualityReport.PEAK_QUALITY).getOverallQuality().getScore();
         float c3 = report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality().getScore();
         float c4 = report.getCategories().get(QualityReport.ISOTOPE_QUALITY).getOverallQuality().getScore();
-        if (report.getOverallQuality().getScore() > 1 || c >= 2 || Math.max(c2,Math.max(c3,c4))>=3 || (c2+c3+c4) >= 5 ) {
+        if (report.getOverallQuality().getScore() > 1 || score > 1 || c >= 2 || Math.max(c2,Math.max(c3,c4))>=3 || (c2+c3+c4) >= 5 ) {
             if (report.getOverallQuality().getScore()<0) report.setOverallQuality(DataQuality.BAD);
         } else {
             report.setOverallQuality(DataQuality.LOWEST);
@@ -76,7 +80,7 @@ public class QualityAssessment implements FeatureQualityChecker {
      * Take the average between best and worst score of majors and use minors as tie breaker
      */
     public static DataQuality scoreCategory(QualityReport.Category category) {
-        if (category.getItems().isEmpty()) return DataQuality.NOT_APPLICABLE;
+        if (category.getItems().isEmpty() || category.getItems().stream().allMatch(x->x.getQuality()==DataQuality.NOT_APPLICABLE)) return DataQuality.NOT_APPLICABLE;
         float minScore= DataQuality.GOOD.getScore(), maxScore = DataQuality.LOWEST.getScore();
         float flexibleScore = 0, count = 0;
         for (QualityReport.Item item : category.getItems()) {
@@ -90,7 +94,7 @@ public class QualityAssessment implements FeatureQualityChecker {
                 count += 0.2f;
             }
         }
-        float score = Math.min(minScore+1, flexibleScore/count);
+        float score = Math.min(minScore+1.2f, flexibleScore/count);
         if (count==0) {
             return DataQuality.NOT_APPLICABLE;
         } else {
