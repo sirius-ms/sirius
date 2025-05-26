@@ -78,8 +78,12 @@ public class AdductNetwork {
                     List<AdductEdge> realEdges = new ArrayList<>();
                     List<AdductEdge> decoyEdges = new ArrayList<>();
                     final AdductNode rightNode = rtOrderedNodes[r];
-                    final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
-                    final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
+                    final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance,
+                            //rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
+                            Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime(), rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - 2*retentionTimeTolerance));
+                    final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance,
+                            //rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
+                            Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime(), rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + 2*retentionTimeTolerance));
                     final Range<Double> threshold = Range.of(thresholdStart, thresholdEnd);
 
                     // obtain potential fragment peaks
