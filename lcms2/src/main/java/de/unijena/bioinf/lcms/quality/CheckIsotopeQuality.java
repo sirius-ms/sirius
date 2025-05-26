@@ -108,7 +108,7 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
                 if (stability < 0.5) {
                     report.getItems().add(new QualityReport.Item(
                             String.format(Locale.US,
-                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    "for the %d-th isotope peak, the intensity ratios across samples have a correlation of %.2f",
                                     k + 1, stability),
                             DataQuality.BAD,
                             weight
@@ -116,7 +116,7 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
                 } else if (stability < 0.75) {
                     report.getItems().add(new QualityReport.Item(
                             String.format(Locale.US,
-                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    "for the %d-th isotope peak, the intensity ratios across samples have a correlation of %.2f",
                                     k + 1, stability),
                             DataQuality.DECENT,
                             weight
@@ -124,7 +124,7 @@ public class CheckIsotopeQuality implements FeatureQualityChecker{
                 } else {
                     report.getItems().add(new QualityReport.Item(
                             String.format(Locale.US,
-                                    "for the %d-th isotope peak, the intensity ratios across samples has a correlation of %.2f",
+                                    "for the %d-th isotope peak, the intensity ratios across samples have a correlation of %.2f",
                                     k + 1, stability),
                             DataQuality.GOOD,
                             weight
