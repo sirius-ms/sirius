@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
@@ -37,23 +38,77 @@ import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrEmpty;
 
+@Slf4j
 public class FeatureImports {
 
+    private static String preprocessAdductString(@Nullable String s) {
+        if (s == null)
+            return null;
+        if (!s.contains("[") && !s.contains("]"))
+            log.warn("Adduct notation '{}' does not contain any square bracket '[,]'. This might cause inaccurate parsing of the adduct (e.g. dimeres and multiple charges).", s);
+
+        if (s.contains("(") || s.contains(")")) {
+            log.warn("Adduct notation '{}' contains unsupported parenthesis '(,)'. Try to remove them before parsing.", s);
+            s = s.replaceAll("[()]", "");
+        }
+        return s;
+    }
+
+    public static boolean endsWithDigit(@NotNull String str) {
+        if (str.isBlank())
+            return false;
+
+        return Character.isDigit(str.charAt(str.length() - 1));
+    }
+
     @NotNull
-    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts extractDetectedAdducts(FeatureImport featureImport) {
-        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
-            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
-            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
-                    da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
-            return da;
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts extractDetectedAdducts(FeatureImport featureImport) throws IllegalArgumentException {
+        Set<String> detAdducts = featureImport.getDetectedAdducts();
+        if (detAdducts != null && !detAdducts.isEmpty()) {
+            if (detAdducts.size() == 1) {
+                String adductString = preprocessAdductString(detAdducts.iterator().next());
+                if (Utils.notNullOrBlank((adductString))) {
+                    try {
+                        if (endsWithDigit(adductString))
+                            throw new IllegalArgumentException("The provided adduct ends with a digit indicating an Isotope peak which is not yet supported. Feature will not be imported!");
+
+                        PrecursorIonType adduct = PrecursorIonType.fromString(adductString);
+                        if (adduct.getCharge() != featureImport.getCharge())
+                            throw new IllegalArgumentException("The provided adduct has a different charge than the charge provided for the FeatureImport. Feature will not be imported!");
+
+                        return de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts
+                                .singleton(DetectedAdducts.Source.INPUT_FILE, adduct);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("The provided adduct in FeatureImport is not supported. Feature will not be imported!", e);
+                    }
+                }
+            } else {
+                List<PrecursorIonType> adducts = featureImport.getDetectedAdducts()
+                        .stream()
+                        .filter(Utils::notNullOrBlank)
+                        .map(FeatureImports::preprocessAdductString)
+                        .filter(s -> !endsWithDigit(s))
+                        .map(PrecursorIonType::parsePrecursorIonType)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .filter(adduct -> adduct.getCharge() == featureImport.getCharge())
+                        .distinct()
+                        .toList();
+
+                if (!adducts.isEmpty()) {
+                    de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
+                    adducts.forEach(ionType -> da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
+                    return da;
+                }
+            }
         }
         return new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
     }

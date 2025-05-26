@@ -19,11 +19,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runners.MethodSorters;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -156,5 +161,86 @@ public class FeaturesApiTest {
         assertNotNull(response);
         assertEquals(61, response.size());
     }
+
+    private static Stream<Arguments> validAdductProvider() {
+        return Stream.of(
+                // Standard valid adducts
+                Arguments.of("[M+H]+", "[M+H]+", true),
+                Arguments.of("[M+Na]+", "[M+Na]+", true),
+                Arguments.of("[M+K]+", "[M+K]+", true),
+                Arguments.of("[M+NH4]+", "[M+H3N+H]+", true),
+                Arguments.of("[M+NH3+H]+", "[M+H3N+H]+", true),
+                Arguments.of("[M+H3N+H]+", "[M+H3N+H]+", true),
+                Arguments.of("[2M+H]+", "[2M+H]+", true),
+                Arguments.of("[M+2H2O+H]+", "[M+H4O2+H]+", true),  // multiplier before adduct
+
+                // Invalid correctable syntax
+                Arguments.of("M+H+", "[M+H]+", true),  // Missing brackets
+                Arguments.of("[M+H]", "[M+H]+", true) , // Missing charge
+                Arguments.of("(M+H)+", "[M+H]+", true) , // Invalid parentheses charge
+                Arguments.of("[M++H]+", "[M+H]+", true), // Invalid double plus
+                Arguments.of("[M+2(H2O)+H]+","[M+H4O2+H]+", true),  // multiplier before adduct with wrong backets
+                Arguments.of("[M+H]++", "[M+H]+", true), // Invalid charge format
+                Arguments.of("          ", null, true), // Empty string
+                Arguments.of("", null, true), // Empty string
+                //todo they should fail in future but are currently not failing
+                Arguments.of("[M+X+H]+", "[M+H]+", true), // Invalid element
+
+                // Invalid syntax adducts
+                Arguments.of("[M+H]+2", null, false), // Invalid isotope peak
+                Arguments.of("[M-H]-", null, false), //charge missmatch -> feature is pos
+                Arguments.of("[M+H]2+", null, false) // Invalid double charged
+
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("validAdductProvider")
+    public void testFeatureWithDifferentAdducts(String adduct, String expectedResult, boolean shouldSucceed) {
+        // Get base feature from TestSetup
+        FeatureImport feature = TestSetup.makeProtonatedValium();
+
+        // Modify the adduct
+        feature.setDetectedAdducts(Set.of(adduct));
+
+        // Test successful import
+        List<AlignedFeature> importedFeatures = instance.addAlignedFeatures(project.getProjectId(), List.of(feature), null, null);
+        assertNotNull(importedFeatures);
+        if (shouldSucceed) {
+            assertEquals(1, importedFeatures.size());
+            // Verify the imported feature
+            if (expectedResult != null)
+                assertEquals(expectedResult, importedFeatures.getFirst().getDetectedAdducts().iterator().next().replaceAll("\\s+",""));
+            else
+                assertTrue(importedFeatures.getFirst().getDetectedAdducts().isEmpty());
+        } else {
+            // Test failure cases
+            assertEquals(0, importedFeatures.size());
+        }
+    }
+
+//    @Test
+//    public void testMultipleAdductsOnSameFeature() throws IOException {
+//        FeatureImport feature = TestSetup.makeProtonatedValium();
+//        feature.setDetectedAdducts(Set.of("[M+H]+", "[M+Na]+"));
+//
+//        // This should fail as a feature can only have one adduct
+//        WebClientResponseException exception = assertThrows(
+//                WebClientResponseException.class,
+//                () -> instance.addAlignedFeatures(project.getProjectId(), List.of(feature))
+//        );
+//        assertEquals(400, exception.getStatusCode().value());
+//    }
+//
+//    @Test
+//    public void testFeatureWithNoAdducts() throws IOException {
+//        FeatureImport feature = TestSetup.makeProtonatedValium();
+//        feature.setDetectedAdducts(null);
+//
+//        // Should succeed as adducts are optional
+//        List<String> importedFeatureIds = instance.addAlignedFeatures(project.getProjectId(), List.of(feature));
+//        assertNotNull(importedFeatureIds);
+//        assertEquals(1, importedFeatureIds.size());
+//    }
 
 }
