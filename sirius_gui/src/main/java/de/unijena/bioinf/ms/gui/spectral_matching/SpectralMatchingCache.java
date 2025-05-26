@@ -61,13 +61,6 @@ public class SpectralMatchingCache {
 
     public static final int PAGE_SIZE = 100;
 
-    private static final Comparator<SpectralLibraryMatch> SCORE_COMPARATOR = (o1, o2) -> {
-        if (o1.getSharedPeaks() == null || o2.getSharedPeaks() == null || Math.abs(o1.getSimilarity() - o2.getSimilarity()) >= 1E-3) {
-            return Double.compare(o2.getSimilarity(), o1.getSimilarity());
-        }
-        return Integer.compare(o2.getSharedPeaks(), o1.getSharedPeaks());
-    };
-
     private static final Collector<SpectralMatchBean, ?, Map<Long, List<SpectralMatchBean>>> REF_SPEC_GROUPER = Collectors.groupingBy(bean -> bean.getMatch().getUuid());
 
     public SpectralMatchingCache(InstanceBean instanceBean) {
