@@ -153,13 +153,14 @@ public class ImportAction extends AbstractGuiAction {
                 });
                 task.awaitResult();
             }
-
+ /* Temporarily disabled
             if (hasLCMS) {
                 List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
                 if (runs != null && runs.size() > 1) {
                     new LCMSRunDialog(mainFrame, gui, runs, false);
                 }
             }
+  */
 
         } catch (Exception e) {
             String m = Objects.requireNonNullElse(e.getMessage(), "");
