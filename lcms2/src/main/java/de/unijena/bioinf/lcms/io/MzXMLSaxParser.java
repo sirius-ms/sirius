@@ -90,6 +90,8 @@ class MzXMLSaxParser extends DefaultHandler {
 
     private final Int2LongMap ms1Ids = new Int2LongArrayMap();
 
+    private final IntArrayList surpressEmptySpectraScanNumbers = new IntArrayList();
+
     private int samplePolarity = 0;
 
     public MzXMLSaxParser(
@@ -148,6 +150,12 @@ class MzXMLSaxParser extends DefaultHandler {
         if (scanids.isEmpty()) {
             throw new RuntimeException("No spectra imported from " + sourcePath);
         }
+        if (surpressEmptySpectraScanNumbers.size()>100) {
+            log.error("There were " + surpressEmptySpectraScanNumbers.size() + " spectra without any spectral data.");
+        } else {
+            log.error("The following spectra did not contain any spectral data: " + surpressEmptySpectraScanNumbers.toString());
+        }
+        surpressEmptySpectraScanNumbers.clear();
 
         final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), null, idmap);
         storage.setMapping(mapping);
@@ -345,13 +353,20 @@ class MzXMLSaxParser extends DefaultHandler {
                 }
                 case "scan" -> {
                     if (mzArray == null || intensityArray == null || mzArray.length != intensityArray.length || mzArray.length == 0) {
-                        log.info("No spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                        if (surpressEmptySpectraScanNumbers.isEmpty()) {
+                            log.info("No spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                        }
+                        surpressEmptySpectraScanNumbers.add(scanNumber);
                     } else {
 
                         final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intensityArray), 0);
 
                         if (peaks.isEmpty()) {
-                            log.info("No valid spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                            if (surpressEmptySpectraScanNumbers.isEmpty()) {
+                                log.info("No valid spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                            }
+                            surpressEmptySpectraScanNumbers.add(scanNumber);
+
                         } else {
                             if (msLevel == 1) {
                                 if (scanConsumer != null) {
