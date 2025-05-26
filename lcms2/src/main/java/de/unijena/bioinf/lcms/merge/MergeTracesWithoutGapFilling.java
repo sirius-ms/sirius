@@ -38,7 +38,7 @@ public class MergeTracesWithoutGapFilling {
 
         // TODO: that's not a good place for calculating that...
         float[] mergedNoiseLevelPerScan = new float[merged.getMapping().length()];
-
+        long TIME1 = System.currentTimeMillis();
         List<BasicJJob<?>> jobs = new ArrayList<>();
         for (int k=0; k < alignment.getSamples().length; ++k) {
             final ProcessedSample sample = alignment.getSamples()[k];
@@ -64,6 +64,8 @@ public class MergeTracesWithoutGapFilling {
             jobs.clear();
             sample.inactive();
         }
+        long TIME2 = System.currentTimeMillis();
+        System.out.printf("Time for merging: %f seconds\n", (TIME2-TIME1)/1000d);
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
         if (alignment.getStatistics().getAverageNumberOfAlignments() > 0) {
@@ -77,6 +79,7 @@ public class MergeTracesWithoutGapFilling {
 
 
     private void prepareRects(ProcessedSample merged, AlignmentBackbone alignment, Tracker tracker) {
+        long TIME1 = System.currentTimeMillis();
         final Int2ObjectOpenHashMap<RecalibrationFunction> mzRecalibration = new Int2ObjectOpenHashMap<>();
         final Int2ObjectOpenHashMap<RecalibrationFunction> rtRecalibration = new Int2ObjectOpenHashMap<>();
         for (int k=0; k < alignment.getSamples().length; ++k) {
@@ -113,6 +116,8 @@ public class MergeTracesWithoutGapFilling {
             rectangleMap.addRect(r);
             tracker.createRect(merged, r);
         }
+        long TIME2 = System.currentTimeMillis();
+        System.out.printf("Time for preparing rects: %f seconds\n", (TIME2-TIME1)/1000d);
     }
 
 
