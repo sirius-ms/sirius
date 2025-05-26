@@ -118,7 +118,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
     public static PrecursorIonType getPrecursorIonType(String name) {
         try {
             return PeriodicTable.getInstance().ionByName(name);
-        } catch (UnknownElementException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Illegal IonType: " + name, e);
         }
     }
@@ -126,7 +126,7 @@ public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIon
     public static Optional<PrecursorIonType> parsePrecursorIonType(String name) {
         try {
             return Optional.of(PeriodicTable.getInstance().ionByName(name));
-        } catch (UnknownElementException e) {
+        } catch (Exception e) {
             LoggerFactory.getLogger(PrecursorIonType.class).error("Could not parse IonType from String", e);
             return Optional.empty();
         }

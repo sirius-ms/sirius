@@ -162,7 +162,7 @@ public class FeaturesApiTest {
         assertEquals(61, response.size());
     }
 
-    private static Stream<Arguments> validAdductProvider() {
+    private static Stream<Arguments> adductProvider() {
         return Stream.of(
                 // Standard valid adducts
                 Arguments.of("[M+H]+", "[M+H]+", true),
@@ -195,7 +195,7 @@ public class FeaturesApiTest {
     }
 
     @ParameterizedTest
-    @MethodSource("validAdductProvider")
+    @MethodSource("adductProvider")
     public void testFeatureWithDifferentAdducts(String adduct, String expectedResult, boolean shouldSucceed) {
         // Get base feature from TestSetup
         FeatureImport feature = TestSetup.makeProtonatedValium();
@@ -219,28 +219,31 @@ public class FeaturesApiTest {
         }
     }
 
-//    @Test
-//    public void testMultipleAdductsOnSameFeature() throws IOException {
-//        FeatureImport feature = TestSetup.makeProtonatedValium();
-//        feature.setDetectedAdducts(Set.of("[M+H]+", "[M+Na]+"));
-//
-//        // This should fail as a feature can only have one adduct
-//        WebClientResponseException exception = assertThrows(
-//                WebClientResponseException.class,
-//                () -> instance.addAlignedFeatures(project.getProjectId(), List.of(feature))
-//        );
-//        assertEquals(400, exception.getStatusCode().value());
-//    }
-//
-//    @Test
-//    public void testFeatureWithNoAdducts() throws IOException {
-//        FeatureImport feature = TestSetup.makeProtonatedValium();
-//        feature.setDetectedAdducts(null);
-//
-//        // Should succeed as adducts are optional
-//        List<String> importedFeatureIds = instance.addAlignedFeatures(project.getProjectId(), List.of(feature));
-//        assertNotNull(importedFeatureIds);
-//        assertEquals(1, importedFeatureIds.size());
-//    }
 
+    private static Stream<Arguments> adductSetProvider() {
+        return Stream.of(
+                // Standard valid adducts
+                Arguments.of(Set.of(), 0),
+                Arguments.of(Set.of("[M+H]+"), 1),
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+"), 2),
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+H)+"), 2),
+                Arguments.of(Set.of("[M+H]+", "[M+Na]+", "(M+K)+"), 3),
+                Arguments.of(Set.of("[M+H]+2", "[M+Na]+", "(M+H)+"), 2),
+                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "(M+H)+"), 1),
+                Arguments.of(Set.of("[M+H]+2", "[M-H]-", "[M+H]2+"), 0)
+        );
+    }
+
+
+    @ParameterizedTest
+    @MethodSource("adductSetProvider")
+    public void testMultipleAdducts(Set<String> adducts, int expectedValidAdducts){
+        FeatureImport feature = TestSetup.makeProtonatedValium();
+        feature.setDetectedAdducts(adducts);
+        List<AlignedFeature> importedFeatures = instance.addAlignedFeatures(project.getProjectId(), List.of(feature), null, null);
+        assertNotNull(importedFeatures);
+        assertEquals(1, importedFeatures.size());
+        AlignedFeature featureCreated = importedFeatures.getFirst();
+        assertEquals(expectedValidAdducts, featureCreated.getDetectedAdducts().size());
+    }
 }
