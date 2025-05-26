@@ -8,6 +8,10 @@ public interface LCMSStorageFactory extends AutoCloseable {
 
     LCMSStorage createNewStorage() throws IOException;
 
+    default LCMSStorage createNewMergedStorage() throws IOException {
+        return createNewStorage();
+    }
+
     @Override
     default void close(){}
 }
