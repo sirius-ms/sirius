@@ -72,6 +72,7 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     )
     public double alignRtMax;
+
     @CommandLine.Option(names={"--align-ppm-max"},
             description="Maximal allowed mass deviation for aligning features in ppm. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
             defaultValue = "-1"
@@ -86,6 +87,9 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     )
     public Double ppmMax;
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //hidden options   ///////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
     @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.", hidden = true)
     public DataSmoothing smoothing;
 
@@ -108,6 +112,9 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
 
     @CommandLine.Option(names = {"--workflow","-w"})
     public void setWorkflow(File filename) {

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import lombok.*;
 
 import java.util.Arrays;
