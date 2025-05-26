@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Tag(name = "Gui Advanced", description = "Advanced GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
-@ConditionalOnExpression("${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
+@ConditionalOnExpression("!${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
 public class GuiControllerAdvanced extends GuiController{
     protected GuiControllerAdvanced(ProjectsProvider<?> projectsProvider, GuiService guiService) {
         super(projectsProvider, guiService);

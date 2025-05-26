@@ -29,12 +29,14 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.Instance;
-import picocli.CommandLine;
 
 import java.util.List;
 import java.util.function.Consumer;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(name = "spectra-search", aliases = {"library-search"}, description = "@|bold <COMPOUND TOOL>|@ Computes the similarity between all compounds/features in the project-space (queries) one vs all spectra in the selected databases. %n %n",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+
+@Command(name = "spectra-search", aliases = {"library-search"}, description = "@|bold <COMPOUND TOOL>|@ Computes the similarity between all compounds/features in the project-space (queries) one vs all spectra in the selected databases. %n %n",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubtoolJob, InstanceJob.Factory<SpectraSearchSubtoolJob>> {
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -43,55 +45,55 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         this.defaultConfigOptions = defaultConfigOptions;
     }
 
-    @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
+    @Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectralSearchDB" , paramLabel = DataSourceCandidates.PARAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search spectra in the union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
 
 
-    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "IdentitySearchSettings.precursorDeviation")
+    @Option(names = "--ppm-max-precursor", descriptionKey = "IdentitySearchSettings.precursorDeviation")
     public void setPpmMaxIdentity(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("IdentitySearchSettings.precursorDeviation", value);
     }
 
-    @CommandLine.Option(names = "--min-similarity", descriptionKey = "IdentitySearchSettings.minSimilarity")
+    @Option(names = "--min-similarity", descriptionKey = "IdentitySearchSettings.minSimilarity")
     public void setMinSimilarityIdentity(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("IdentitySearchSettings.minSimilarity", value);
     }
 
-    @CommandLine.Option(names = "--min-peaks", descriptionKey = "IdentitySearchSettings.minNumOfPeaks")
+    @Option(names = "--min-peaks", descriptionKey = "IdentitySearchSettings.minNumOfPeaks")
     public void setMinNumPeaksIdentity(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("IdentitySearchSettings.minNumOfPeaks", value);
     }
 
-    @CommandLine.Option(names = "--max-hits", descriptionKey = "IdentitySearchSettings.maxNumOfHits")
+    @Option(names = "--max-hits", descriptionKey = "IdentitySearchSettings.maxNumOfHits")
     public void setMaxNumHitsIdentity(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("IdentitySearchSettings.maxNumOfHits", value);
     }
 
 
-    @CommandLine.Option(names = "--analogue-search", descriptionKey = "AnalogueSearchSettings.enabled")
+    @Option(names = "--analogue-search", descriptionKey = "AnalogueSearchSettings.enabled")
     public void setEnableAnalogueSearch(boolean value) throws Exception {
         defaultConfigOptions.changeOption("AnalogueSearchSettings.enabled", String.valueOf(value));
     }
 
-    @CommandLine.Option(names = "--min-similarity-analogue", descriptionKey = "AnalogueSearchSettings.minSimilarity")
+    @Option(names = "--min-similarity-analogue", descriptionKey = "AnalogueSearchSettings.minSimilarity")
     public void setMinSimilarityAnalogue(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AnalogueSearchSettings.minSimilarity", value);
     }
 
-    @CommandLine.Option(names = "--min-peaks-analogue", descriptionKey = "AnalogueSearchSettings.minNumOfPeaks")
+    @Option(names = "--min-peaks-analogue", descriptionKey = "AnalogueSearchSettings.minNumOfPeaks")
     public void setMinNumPeaksAnalogue(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AnalogueSearchSettings.minNumOfPeaks", value);
     }
 
-    @CommandLine.Option(names = "--max-hits-analogue", descriptionKey = "AnalogueSearchSettings.maxNumOfHits")
+    @Option(names = "--max-hits-analogue", descriptionKey = "AnalogueSearchSettings.maxNumOfHits")
     public void setMaxNumHitsAnalogue(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("AnalogueSearchSettings.maxNumOfHits", value);
     }
 
-    @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
+    @Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
     public void setLogNum(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }

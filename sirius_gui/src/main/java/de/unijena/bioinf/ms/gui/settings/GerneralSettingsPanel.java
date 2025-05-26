@@ -56,6 +56,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     private Properties props;
     final JSpinner scalingSpinner;
     final int scaling;
+    private boolean enableAllSoftwareTours = false;
 
     final String theme;
 
@@ -63,6 +64,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
     final FileChooserPanel db;
     final JCheckBox showSpectraMatchPanel;
+    final JCheckBox showHomologueSeriesPanel;
     final JComboBox<String> solver;
     final JComboBox<ConfidenceDisplayMode> confidenceDisplayMode;
     final JComboBox<MolecularStructuresDisplayColors> molecularStructuresDisplayColors;
@@ -127,10 +129,18 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
             }
         });
 
+        showHomologueSeriesPanel = new JCheckBox();
+        showHomologueSeriesPanel.setToolTipText("Show a result tab displaying a KMD plot for analyzing homologue series.");
+        showHomologueSeriesPanel.setSelected(gui.getProperties().isShowHomologueSeriesPanel());
+        addNamed("Show \"Homologue Series\" tab", showHomologueSeriesPanel);
+
+
         //software tour
         JButton enableTour = new JButton("Enable all tours");
-        addNamed("Software tour", enableTour);
+        addNamed("Software tours", enableTour);
         enableTour.addActionListener(evt -> {
+            enableAllSoftwareTours = true;
+            //make it persistent even when cancel is clicked
             SoftwareTourUtils.enableAllTours(gui.getProperties());
         });
 
@@ -201,6 +211,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         props.setProperty(SHOW_SPECTRA_MATCH_PANEL_KEY, String.valueOf(showSpectraMatchPanel.isSelected()));
         gui.getProperties().setShowSpectraMatchPanel(showSpectraMatchPanel.isSelected());
 
+        props.setProperty(SHOW_HOMOLOGUE_SERIES_PANEL_KEY, String.valueOf(showHomologueSeriesPanel.isSelected()));
+        gui.getProperties().setShowHomologueSeriesPanel(showHomologueSeriesPanel.isSelected());
+
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
 
         props.setProperty(CONFIDENCE_DISPLAY_MODE_KEY, ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
@@ -218,6 +231,11 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         if (scaling != (int) scalingSpinner.getValue()) {
             props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
             restartRequired = true;
+        }
+
+        if (enableAllSoftwareTours) {
+            //still required to make sure that properties are not overwritten again
+            SoftwareTourUtils.enableAllTours(gui.getProperties(), props);
         }
     }
 

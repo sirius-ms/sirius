@@ -87,6 +87,11 @@ public final class SiriusGuiFactory {
         final JCefAppConfig jCefAppConfig = JCefAppConfig.getInstance();
         final CefSettings cefSettings = jCefAppConfig.getCefSettings();
 
+        // For remote devtools, open localhost:port in chrome
+//        cefSettings.remote_debugging_port = 9222;
+//        jCefAppConfig.getAppArgsAsList().add("--remote-allow-origins=*");
+//        cefSettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+
         CefApp.startup(jCefAppConfig.getAppArgs());
         return CefApp.getInstance(jCefAppConfig.getAppArgs(), cefSettings);
     }

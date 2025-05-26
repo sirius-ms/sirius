@@ -26,6 +26,7 @@ import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.fingerid.fingerprints.cache.NonBlockingIFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -270,6 +271,8 @@ public abstract class ApplicationCore {
             }
             WEB_API = new RestAPI(service, sub);
             DEFAULT_LOGGER.info("Web API initialized.");
+            CustomDBPropertyUtils.loadAllCustomDBs(WEB_API.getCDKChemDBFingerprintVersion());
+            DEFAULT_LOGGER.info("Custom databases loaded.");
             measureTime("DONE init WebAPI");
 
         } catch (Throwable e) {
