@@ -14,7 +14,7 @@ public enum DataQuality {
     /**
      * Features with the lowest quality are probably not real signals. We would rather delete them.
      */
-    LOWEST(0f),
+    LOWEST(-0.5f),
 
     /**
      * Features with bad quality are maybe real features. Still, we don't want to list them

@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
 
-    private AlignmentBackbone makeSingleApexPreAlignment(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, AlignmentStatistics stats) {
+    private AlignmentBackbone makeSingleApexPreAlignment(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, AlignmentThresholds thresholds, AlignmentStatistics stats) {
         List<BasicJJob<Object>> todo = new ArrayList<>();
         ProcessedSample first = samples.get(0);
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
@@ -63,7 +63,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT && x.isSingleApex()).toArray(MoI[]::new);
                         if (rightSet.length==0) return false;
-                        algorithm.align(stats, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
+                        algorithm.align(stats, thresholds, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
                                 (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
                                 (al,right,rightIndex)->storage.addMoI(AlignedMoI.merge(al, right[rightIndex]))
                         );
@@ -120,13 +120,13 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         return AlignmentBackbone.builder().scanPointMapping(backboneMapping).samples(samples.toArray(ProcessedSample[]::new)).statistics(stats).build();
     }
 
-    public AlignmentBackbone makeAlignmentBackbone(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer) {
+    public AlignmentBackbone makeAlignmentBackbone(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentThresholds thresholds, AlignmentScorer scorer) {
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
         final AlignmentStatistics stats = collectStatistics(samples);
         samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces()).reversed());
 
-        makeSingleApexPreAlignment(storage, samples, algorithm, scorer, stats);
+        makeSingleApexPreAlignment(storage, samples, algorithm, scorer, thresholds, stats);
         storage.clearMoIs();
         ProcessedSample first = samples.get(0);
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
@@ -153,7 +153,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT).toArray(MoI[]::new);
                         if (rightSet.length==0) return false;
-                        algorithm.align(stats, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
+                        algorithm.align(stats,thresholds, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
                                 (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
                                 (al,right,rightIndex)->storage.addMoI(AlignedMoI.merge(al, right[rightIndex]))
                         );
@@ -334,7 +334,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
     }
 
     @Override
-    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, Tracker tracker) {
+    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentThresholds thresholds, AlignmentScorer scorer, Tracker tracker) {
         AlignmentStorage storage = merge.getStorage().getAlignmentStorage();
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
@@ -365,7 +365,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 toArray(MoI[]::new);
                         if (leftSet.length>0 && rightSet.length > 0) {
-                            algorithm.align(stats, scorer, backbone, leftSet, rightSet,
+                            algorithm.align(stats, thresholds,scorer, backbone, leftSet, rightSet,
                                     (al, left, right, leftIndex, rightIndex) -> {
                                         storage.mergeMoIs(al, left[leftIndex], right[rightIndex]);
                                         tracker.alignMois(S, left[leftIndex], right[rightIndex]);
