@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
+import com.jogamp.opengl.awt.GLCanvas;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourInitialDialog;
@@ -11,37 +12,44 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SoftwareTourUtils {
 
     /**
      * enable all software tours that have been disabled via "don't ask again"
-     * @param guiProperties
      */
-    public static void enableAllTours(GuiProperties guiProperties) {
-        setAllTourProperties(true);
+    public static void enableAllTours(GuiProperties guiProperties, Properties properties) {
+        setAllTourProperties(true, properties);
         guiProperties.resetAllTutorialsKnownForThisSession();
 
+    }
+
+    public static void enableAllTours(GuiProperties guiProperties) {
+        enableAllTours(guiProperties, null);
     }
 
     /**
      * disable all software tours. No further tours will be started.
      */
     public static void disableAllTours() {
-        setAllTourProperties(false);
+        setAllTourProperties(false, null);
     }
 
-    private static void setAllTourProperties(boolean enabled) {
+    private static void setAllTourProperties(boolean enabled, Properties properties) {
         for (String tourKey : SoftwareTourInfoStore.AllTourKeys) {
-            SiriusProperties.setAndStoreInBackground(tourKey, enabled ? null : ReturnValue.Cancel.name());
+            if (properties == null) {
+                SiriusProperties.setAndStoreInBackground(tourKey, enabled ? null : ReturnValue.Cancel.name());
+            } else {
+                if (enabled) properties.remove(tourKey); //this does not allow to remove the property from the file. But it makes sure not to override it again
+                else properties.setProperty(tourKey, ReturnValue.Cancel.name());
+            }
         }
-
     }
+
+
     public static void checkAndInitTour(Container owner, String tutorialName, String propertyKey, GuiProperties guiProperties) {
         if (!owner.isShowing()) return; //not starting. Panel was probably decorated with data in the background
         if (guiProperties.isAskedTutorialThisSession(propertyKey)) return;
@@ -56,7 +64,9 @@ public class SoftwareTourUtils {
         SoftwareTourInitialDialog askToStart = new SoftwareTourInitialDialog(windowOwner, tutorialName, propertyKey);
 
         if (askToStart.isSuccess()) {
-            List<Component> allComponents = collectNestedComponents(windowOwner);
+            List<Component> allComponents = collectNestedComponents(windowOwner).stream()
+                    .filter(c -> !(c instanceof GLCanvas))  // Filtering out CEF OSR browser canvas because it gets unresponsive after enabling and disabling
+                    .toList();
             Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, Component::isEnabled));
 
             List<JComponent> componentsWithTutorial = collectNestedComponents(tutorialRoot).stream()
@@ -149,7 +159,7 @@ public class SoftwareTourUtils {
     }
 
     private static void enableFocusedComponent(JComponent component, Map<Component, Boolean> componentToEnabledState) {
-        collectNestedComponents(component).forEach(c -> c.setEnabled(componentToEnabledState.get(c)));
+        collectNestedComponents(component).forEach(c -> { if(componentToEnabledState.containsKey(c)) c.setEnabled(componentToEnabledState.get(c)); });
     }
 
     @Nullable
