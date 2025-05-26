@@ -147,6 +147,8 @@ public class MzMLParser implements LCMSParser {
             }
             run.setSourceReference(reference);
 
+            ArrayList<String> surpressEmptySpectrumLog = new ArrayList<>();
+
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
             final ArrayList<String> scanIdentifiers = new ArrayList<>();
@@ -301,7 +303,10 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
-                    log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
 
@@ -313,7 +318,10 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (peaks.isEmpty()) {
-                    log.error("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
                 if (msLevel == 1) {
@@ -412,6 +420,13 @@ public class MzMLParser implements LCMSParser {
 
             if (scanids.isEmpty()) {
                 throw new RuntimeException("No spectra imported from " + fileName);
+            }
+            if (surpressEmptySpectrumLog.size()>1) {
+                if (surpressEmptySpectrumLog.size()>100) {
+                    log.error("There were " + surpressEmptySpectrumLog.size() + " spectra without any spectral data.");
+                } else {
+                    log.error("The following spectra did not contain any spectral data: " + String.join(", ", surpressEmptySpectrumLog));
+                }
             }
 
             if (fragmentation != null) {
