@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
@@ -30,9 +31,11 @@ import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
+import de.unijena.bioinf.lcms.align.AlignmentThresholds;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.quality.*;
+import de.unijena.bioinf.lcms.statistics.UserSpecifiedThresholds;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
@@ -58,7 +61,6 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.longs.*;
 import lombok.Getter;
@@ -87,6 +89,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final boolean alignRuns;
 
+    private boolean inMemoryOnMerged = false;
+
     @Getter
     @Nullable
     private LongLinkedOpenHashSet importedFeatureIds = null;
@@ -100,8 +104,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private long progress;
 
+    private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
+
     private long totalProgress;
 
+    private AlignmentThresholds alignmentThresholds;
 
     public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         this(input.msInput.lcmsFiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options);
@@ -112,14 +119,26 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.alignRuns = !options.noAlign;
+        if (options.noiseIntensity>=0) this.userSpecifiedThresholds.setMs1NoiseLevel(options.noiseIntensity);
+        if (options.ppmMax!=null) this.userSpecifiedThresholds.setAllowedMassDeviationInMs1(new Deviation(options.ppmMax));
+
+        this.inMemoryOnMerged = options.inMemory;
+
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
-        }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
+        }, 3, 0.01, 0.8);
         this.saveImportedCompounds = false;
+        this.alignmentThresholds = new AlignmentThresholds();
+        if (options.alignRtMax>=0) {
+            this.alignmentThresholds.setMaximalAllowedRetentionTimeError(options.alignRtMax);
+        }
+        if (options.alignPpmMax>=0) {
+            this.alignmentThresholds.setMaximalAllowedMassError(new Deviation(options.alignPpmMax));
+        }
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -129,23 +148,28 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             DataSmoothing filter,
             double sigma,
             int scale,
-            double noise,
-            double persistence,
-            double merge,
+            double noiseIntensity,
+            @Nullable AlignmentThresholds alignmentThresholds,
+            @Nullable Deviation ms1Massdev,
             boolean saveImportedCompounds
     ) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.alignRuns = alignRuns;
+        this.userSpecifiedThresholds = new UserSpecifiedThresholds();
+        if (ms1Massdev!=null) userSpecifiedThresholds.setAllowedMassDeviationInMs1(ms1Massdev);
+        if (noiseIntensity>=0) userSpecifiedThresholds.setMs1NoiseLevel(noiseIntensity);
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
-        }, noise, persistence, merge);
+        });
         this.saveImportedCompounds = saveImportedCompounds;
+        if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
+        else this.alignmentThresholds = new AlignmentThresholds();
     }
 
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
@@ -154,8 +178,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         setProjectTypeOrThrow(ps);
 
-        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent());
+        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
+        processing.setAlignmentThresholds(this.alignmentThresholds);
+        if (userSpecifiedThresholds.hasUserInput()) processing.setStatisticsCollector(userSpecifiedThresholds);
 
         try {
             {
@@ -244,11 +270,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         .filter(AbstractFeature::isRTInterval)
                         .toArray(AlignedFeatures[]::new);
                 AdductNetwork network = new AdductNetwork(provider, alignedFeatures, adductManager, allowedAdductRtDeviation, bac.getStatistics().getExpectedRetentionTimeDeviation());
+
+
+                long TIME1 = System.currentTimeMillis();
                 network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
                 //network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
                 //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
-
-
+                long TIME2 = System.currentTimeMillis();
+                System.out.printf("Building adduct network took %f seconds\n", (TIME2-TIME1)/1000d);
                 network.assignNetworksAndAdductsToFeatures(
                         SiriusJobs.getGlobalJobManager(),
                         new OptimalAssignmentViaBeamSearch(),
@@ -258,6 +287,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
                 );
 
+                long TIME3 = System.currentTimeMillis();
+                System.out.printf("Assigning adducts took %f seconds\n", (TIME3-TIME2)/1000d);
                 importedCompoundIds.addAll(importedCids);
             }
 
@@ -276,6 +307,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             ArrayList<BasicJJob<DataQualityItem>> jobs = new ArrayList<>();
             ps.getStorage().fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
             ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
+            long TIME1 = System.currentTimeMillis();
             ps.getStorage().findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x -> x.getDataQuality() == DataQuality.NOT_APPLICABLE).forEach(feature -> {
                 jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQualityItem>() {
                     @Override
@@ -302,7 +334,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 countMap.put(q.quality, countMap.get(q.quality) + 1);
                 if (q.ms2) countMapMs2.put(q.quality, countMapMs2.get(q.quality)+1);
             });
-
+            long TIME2 = System.currentTimeMillis();
+            System.out.printf("Quality Assesment took %f seconds\n", (TIME2-TIME1)/1000d);
             System.out.printf(
                     """
                              -------- Preprocessing Summary ---------

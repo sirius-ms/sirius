@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
@@ -42,6 +43,9 @@ import java.util.Optional;
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "@|bold <PREPROCESSING>|@ Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? extends ProjectSpaceManager>> {
 
+    @CommandLine.Option(names={"--in-memory"}, description = "Keep the merged traces and alignments in memory. This might speed up the preprocessing, but increases the RAM requirement by a significant amount..", hidden = true)
+    public boolean inMemory;
+
     @Override
     public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@NotNull RootOptions<?> rootOptions, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
        if (projectFactory instanceof NitriteProjectSpaceManagerFactory psmf)
@@ -55,6 +59,33 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
     public boolean noAlign;
 
+    @CommandLine.Option(names={"--noise-intensity"},
+            description="Intensity under which every peak is considered to be likely noise. If not specified, the noise level is detected automatically. We recommend to not set this parameter except when the automated detected value is way off the real noise level.",
+            defaultValue = "-1"
+
+    )
+    public double noiseIntensity;
+
+    @CommandLine.Option(names={"--align-rt-max"},
+            description="Maximal allowed retention time deviation for aligning features in seconds. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
+            defaultValue = "-1"
+
+    )
+    public double alignRtMax;
+    @CommandLine.Option(names={"--align-ppm-max"},
+            description="Maximal allowed mass deviation for aligning features in ppm. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
+            defaultValue = "-1"
+
+    )
+    public double alignPpmMax;
+
+
+    @CommandLine.Option(names={"--ppm-max"},
+            description="Specify the maximal allowed mass error for considering peaks in MS1 to belong to the same mass trace.",
+            required = false
+    )
+    public Double ppmMax;
+
     @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.", hidden = true)
     public DataSmoothing smoothing;
 
@@ -64,7 +95,8 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     @CommandLine.Option(names={"--scale"}, defaultValue = "8", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
-    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
+    /*
+    @CommandLine.Option(names={"--noise-level-multiplier"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
     public double noiseCoefficient;
 
     @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.", hidden = true)
@@ -72,6 +104,7 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.", hidden = true)
     public double mergeCoefficient;
+     */
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
