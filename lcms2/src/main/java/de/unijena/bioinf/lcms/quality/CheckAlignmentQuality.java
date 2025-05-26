@@ -82,6 +82,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
                 ));
             }
 
+            /*
             // check if alignment is uniformly distributed
             if (feature.getFeatures().isPresent()) {
 
@@ -167,6 +168,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
 
                 }
             }
+             */
 
             // cosine similarity to consensus trace
             final Optional<MergedTrace> maybeMergedTrace = provider.getMergeTrace(feature);
