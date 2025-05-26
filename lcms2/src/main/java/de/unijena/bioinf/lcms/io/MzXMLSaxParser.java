@@ -354,7 +354,7 @@ class MzXMLSaxParser extends DefaultHandler {
                 case "scan" -> {
                     if (mzArray == null || intensityArray == null || mzArray.length != intensityArray.length || mzArray.length == 0) {
                         if (surpressEmptySpectraScanNumbers.isEmpty()) {
-                            log.info("No spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                            log.info("No spectrum data found in spectrum with number: " + scanNumber + ". Skipping!");
                         }
                         surpressEmptySpectraScanNumbers.add(scanNumber);
                     } else {
@@ -363,7 +363,7 @@ class MzXMLSaxParser extends DefaultHandler {
 
                         if (peaks.isEmpty()) {
                             if (surpressEmptySpectraScanNumbers.isEmpty()) {
-                                log.info("No valid spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
+                                log.info("No valid spectrum data found in spectrum with number: " + scanNumber + ". Skipping!");
                             }
                             surpressEmptySpectraScanNumbers.add(scanNumber);
 

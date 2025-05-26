@@ -60,7 +60,7 @@ public class QualityAssessment implements FeatureQualityChecker {
             } else report.setOverallQuality(DataQuality.LOWEST);
         }
 
-        // we add some additional rules:66
+        // we add some additional rules:
         // - whenever we have a good MS2 we KEEP the data. ALWAYS.
         // - if almost everything is bad (including the spectra) we downgrade the quality level to lowest
         //   this essentially marks a compound for "deletion".
