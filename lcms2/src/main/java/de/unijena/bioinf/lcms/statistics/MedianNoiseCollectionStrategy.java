@@ -103,8 +103,6 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                     float[] noise2 = this.noise2.toFloatArray();
                     Arrays.sort(noise2);
                     double noiseLevel2 = Statistics.robustAverage(noise2);
-                    System.out.println(averageNoiseOnAll + " and " + noiseLevel2 + " ==> " + Math.sqrt(averageNoiseOnAll * noiseLevel2));
-
                     averageNoiseOnAll = Math.sqrt(averageNoiseOnAll * noiseLevel2);
 
                     Arrays.fill(ms1Noises, (float)averageNoiseOnAll);
@@ -114,7 +112,7 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
             mint.sort(null);
 
 
-            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).minimumIntensity(mint.getFloat(mint.size()/2)).ms1MassDeviationWithinTraces(new Deviation(6,3e-4)).minimumMs1MassDeviationBetweenTraces(new Deviation(6,3e-4)).build();
+            return SampleStats.builder().noiseLevelPerScan(ms1Noises).ms2NoiseLevel(ms2NoiseAvg).minimumIntensity(mint.getFloat(mint.size()/2)).ms1MassDeviationWithinTraces(new Deviation(8,3e-4)).minimumMs1MassDeviationBetweenTraces(new Deviation(10,3e-4)).build();
         }
     }
 
