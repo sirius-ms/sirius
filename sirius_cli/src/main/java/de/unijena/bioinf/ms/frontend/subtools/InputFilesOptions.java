@@ -50,7 +50,7 @@ public class InputFilesOptions {
         return getAllFilesStream().map(Path::toFile).toArray(File[]::new);
     }
 
-    @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify multi-compound inputs (.ms, .mgf, .mzML/.mzXml, .sirius):%n|@", order = 320)
+    @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify multi-compound inputs (.ms, .mgf, .mzML/.mzXml):%n|@", order = 320)
     public MsInput msInput;
 
 
@@ -88,7 +88,8 @@ public class InputFilesOptions {
         @Getter
         private boolean ignoreFormula;
 
-        @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323)
+        @Deprecated(forRemoval = true)
+        @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323, hidden = true)
         public void setAllowMS1Only(boolean allowMS1Only) {
             this.allowMS1Only = allowMS1Only;
         }
