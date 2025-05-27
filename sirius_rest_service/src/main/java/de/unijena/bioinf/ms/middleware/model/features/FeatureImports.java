@@ -78,7 +78,7 @@ public class FeatureImports {
                 if (Utils.notNullOrBlank((adductString))) {
                     try {
                         if (endsWithDigit(adductString))
-                            throw new IllegalArgumentException("The provided adduct ends with a digit indicating an Isotope peak which is not yet supported. Feature will not be imported!");
+                            throw new IllegalArgumentException("The provided adduct ends with a digit indicating an isotope species which is not yet supported or missing polarity information. Feature will not be imported!");
 
                         PrecursorIonType adduct = PrecursorIonType.fromString(adductString);
                         if (adduct.getCharge() != featureImport.getCharge())
