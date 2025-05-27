@@ -164,7 +164,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     @CommandLine.ArgGroup(exclusive = false, order = 300)
     private InputFilesOptions inputFiles;
 
-    @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Filter the features to process: %n|@", order = 400)
+    @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Filter the features to process (does not apply to import): %n|@", order = 400)
     private AlignedFeaturesFilterOptions alignedFeaturesFilterOptions;
 
     @Override
