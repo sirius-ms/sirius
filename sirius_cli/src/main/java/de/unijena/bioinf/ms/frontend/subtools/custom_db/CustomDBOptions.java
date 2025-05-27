@@ -188,6 +188,11 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 location = Path.of(location).toAbsolutePath().toString();
             }
 
+            if (!location.toLowerCase().endsWith(".siriusdb")) {
+                logWarn("\n==> Adding file extension '.siriusdb' to location.\n");
+                location = location + ".siriusdb";
+            }
+
             checkForInterruption();
 
             boolean isNewDb = false;
