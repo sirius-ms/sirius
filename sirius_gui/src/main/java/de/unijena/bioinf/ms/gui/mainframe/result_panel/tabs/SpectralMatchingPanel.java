@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.net.URI;
 
 public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
 
+    @Getter
     private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
     @NotNull
@@ -47,19 +49,8 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
 
-        this.spectraVisualizationPanel = new SpectraVisualizationPanel(matchList.getGui(), matchList.getSelectedElement());
         this.tableView = new SpectralMatchingTableView(matchList);
-
-        this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> (
-                (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
-                .ifPresentOrElse(matchBean ->
-                                matchList.readDataByConsumer(instanceBean ->
-                                        spectraVisualizationPanel.updateSelectedSpectralMatch(
-                                                instanceBean != null ? instanceBean.getFeatureId() : null,
-                                                matchBean.getMatch().getSpecMatchId())),
-                        () -> matchList.readDataByConsumer(instanceBean ->
-                                spectraVisualizationPanel.updateSelectedSpectralMatch(
-                                        instanceBean != null ? instanceBean.getFeatureId() : null, null))));
+        this.spectraVisualizationPanel = new SpectraVisualizationPanel(matchList.getGui(), this.tableView.getFilteredSelectionModel());
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
         major.setDividerLocation(250);
@@ -68,10 +59,23 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
         matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }
 
-    private static class SpectraVisualizationPanel extends JCefBrowserPanel {
+    public static class SpectraVisualizationPanel extends JCefBrowserPanel {
+        private SpectraVisualizationPanel(SiriusGui siriusGui, @NotNull DefaultEventSelectionModel<SpectralMatchBean> selectionModel) {
+          this(siriusGui, selectionModel, null);
+        }
 
-        public SpectraVisualizationPanel(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean) {
-            super(makeUrl(siriusGui, matchBean), siriusGui);
+        private SpectraVisualizationPanel(SiriusGui siriusGui,
+                                          @NotNull DefaultEventSelectionModel<SpectralMatchBean> selectionModel,
+                                          @Nullable SpectralMatchBean initialSelection
+        ) {
+            super(makeUrl(siriusGui, initialSelection), siriusGui);
+            selectionModel.addListSelectionListener(e -> (
+                    (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
+                    .ifPresentOrElse(matchBean ->
+                                    updateSelectedSpectralMatch(
+                                            matchBean.getInstance().getFeatureId(),
+                                            matchBean.getMatch().getSpecMatchId()),
+                            () -> updateSelectedSpectralMatch(null, null)));
         }
 
         private static String makeUrl(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean){
