@@ -99,7 +99,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
      */
     private final double trim = 3d;
 
-    public static final int DEFAULT_NOISE_COEFFICIENT_BALANCED = 5;
+    public static final int DEFAULT_NOISE_COEFFICIENT_BALANCED = 3;
     public static final double PERSISTENCE_COEFFICIENT = 0.01;
     public static final double MERGE_COEFFICIENT = 0.8;
 
