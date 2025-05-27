@@ -130,7 +130,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
-        }, 3, 0.01, 0.8);
+        });
         this.saveImportedCompounds = false;
         this.alignmentThresholds = new AlignmentThresholds();
         if (options.alignRtMax>=0) {

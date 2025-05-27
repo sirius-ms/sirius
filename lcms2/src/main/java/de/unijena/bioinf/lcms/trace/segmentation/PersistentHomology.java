@@ -99,16 +99,20 @@ public class PersistentHomology implements TraceSegmentationStrategy {
      */
     private final double trim = 3d;
 
+    public static final int DEFAULT_NOISE_COEFFICIENT_BALANCED = 5;
+    public static final double PERSISTENCE_COEFFICIENT = 0.01;
+    public static final double MERGE_COEFFICIENT = 0.8;
+
     public PersistentHomology() {
         //this(new NoFilter(), 2.0, 0.1, 0.8);
-        this(null, 3, 0d, 0.8);
+        this(null, DEFAULT_NOISE_COEFFICIENT_BALANCED, PERSISTENCE_COEFFICIENT, MERGE_COEFFICIENT);
     }
 
     public PersistentHomology(Filter filter) {
         this.filter = filter;
-        this.noiseCoefficient = 3;
-        this.persistenceCoefficient = 0.01;
-        this.mergeCoefficient = 0.8;
+        this.noiseCoefficient = DEFAULT_NOISE_COEFFICIENT_BALANCED;
+        this.persistenceCoefficient = PERSISTENCE_COEFFICIENT;
+        this.mergeCoefficient = MERGE_COEFFICIENT;
     }
 
     public PersistentHomology(Filter filter, double noiseCoefficient, double persistenceCoefficient, double mergeCoefficient) {

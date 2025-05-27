@@ -36,11 +36,13 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 noise.add((float)noise.doubleStream().average().orElse(0d));
                 return;
             }
-            int perc = (int)(0.9*xs.length);
+            //int perc = (int)(0.9*xs.length);
+            int perc = (int)(0.85*xs.length);
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
             double noiseLevel2 = Quickselect.quickselectInplace(xs, 0, xs.length, (int)Math.floor(xs.length*0.05));
             mint.add((float)noiseLevel2);
-            noiseLevel2 *= 20;
+            //noiseLevel2 *= 20;
+            noiseLevel2 *= 10;
             noise.add((float)noiseLevel);
             noise2.add((float)noiseLevel2);
 
@@ -96,8 +98,9 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 {
                     double averageNoiseOnAll = 0d;
                     Arrays.sort(ms1Noises);
-                    int start = (int)Math.floor(ms1Noises.length*0.5);
-                    int end = (int)Math.ceil(ms1Noises.length*0.9);
+                    //int start = (int)Math.floor(ms1Noises.length*0.5);
+                    int start = (int)Math.floor(ms1Noises.length*0.25);
+                    int end = (int)Math.ceil(ms1Noises.length*0.75);
                     for (int k=start; k < end; ++k) averageNoiseOnAll += ms1Noises[k];
                     averageNoiseOnAll /= (end-start);
                     float[] noise2 = this.noise2.toFloatArray();
@@ -106,6 +109,7 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                     averageNoiseOnAll = Math.sqrt(averageNoiseOnAll * noiseLevel2);
 
                     Arrays.fill(ms1Noises, (float)averageNoiseOnAll);
+                    System.out.println(averageNoiseOnAll);
                 }
             }
 
