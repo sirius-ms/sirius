@@ -115,8 +115,10 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
-
         this.gui = gui;
+        // workaround to ensure gui (especially JCEF components) are still correctly positioned after screen change.
+        if (System.getProperty("os.name").toLowerCase().contains("linux"))
+            new LinuxScreenChangeDetector(this);
     }
 
     @Override
