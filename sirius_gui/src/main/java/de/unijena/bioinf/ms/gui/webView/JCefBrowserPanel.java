@@ -161,13 +161,14 @@ public class JCefBrowserPanel extends JPanel {
     }
 
     protected void initialize(String url) {
+        boolean isLinux = System.getProperty("os.name").toLowerCase().contains("linux");
         ProxyManager.enforceGlobalProxySetting();
         setLayout(new BorderLayout());
 
         setupLinkInterception();
         setupLoadingHandling();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
-        browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
+        browser = client.createBrowser(url, isLinux ? CefRendering.DEFAULT : CefRendering.OFFSCREEN, false);
         // very important to ensure that the JCEF process can be closed correctly without creating a memory leak
         browser.setCloseAllowed();
         // we create the browser instance synchronously because this is the only way to ensure the browser is fully
@@ -177,7 +178,7 @@ public class JCefBrowserPanel extends JPanel {
 
         // Apply the Linux scroll fix
         // This should be done before adding the component to the panel
-        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+        if (isLinux) {
             MouseWheelFix.apply(browserUI);
             client.addDialogHandler((dialogBrowser, mode, title, defaultPath, acceptFilters, callback) -> {
                 // Native file dialogs don't work on linux, see
