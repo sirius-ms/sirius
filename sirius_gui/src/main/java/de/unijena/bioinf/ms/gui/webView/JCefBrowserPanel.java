@@ -32,6 +32,7 @@ import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefRendering;
+import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -64,12 +65,13 @@ public class JCefBrowserPanel extends JPanel {
 
     protected static String THEME_REST_PARA = "?theme=" + (Colors.isDarkTheme() ? "dark" : "light");
 
-    protected static String makeParameters(@NotNull String projectId){
+    protected static String makeParameters(@NotNull String projectId) {
         return THEME_REST_PARA + "&pid=" + projectId;
     }
+
     protected static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
                                            @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId
-    ){
+    ) {
         StringBuilder params = new StringBuilder(makeParameters(projectId));
         if (Utils.notNullOrBlank(alignedFeatureId))
             params.append("&fid=").append(alignedFeatureId);
@@ -163,9 +165,14 @@ public class JCefBrowserPanel extends JPanel {
         setLayout(new BorderLayout());
 
         setupLinkInterception();
+        setupLoadingHandling();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
         browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
+        // very important to ensure that the JCEF process can be closed correctly without creating a memory leak
         browser.setCloseAllowed();
+        // we create the browser instance synchronously because this is the only way to ensure the browser is fully
+        // loaded before we do JS call to update the data ids to be shown
+        browser.createImmediately();
         Component browserUI = browser.getUIComponent();
 
         // Apply the Linux scroll fix
@@ -186,6 +193,19 @@ public class JCefBrowserPanel extends JPanel {
         }
 
         add(browserUI, BorderLayout.CENTER);
+    }
+
+    private void setupLoadingHandling() {
+        // Add a load handler to detect when a page is fully loaded
+        client.addLoadHandler(new CefLoadHandlerAdapter() {
+            @Override
+            public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+                if (!isLoading) {
+                    if (browser.getFocusedFrame().isMain())
+                        executeReplaceableDataUpdate();
+                }
+            }
+        });
     }
 
     // Add this to your JCefBrowserPanel class
@@ -231,24 +251,47 @@ public class JCefBrowserPanel extends JPanel {
         }
     }
 
+    //we use replaceable calls to ensure that during fast selection changes we do not stack data loading tasks
+    //browser process.
+    private final Object dataUpdateLock = new Object();
+    private Runnable replaceableDataUpdate = null;
+
+
+    public void executeReplaceableDataUpdate() {
+        synchronized (dataUpdateLock) {
+            if (replaceableDataUpdate != null) {
+                replaceableDataUpdate.run();
+                replaceableDataUpdate = null;
+            }
+        }
+    }
+
+    public void submitReplaceableDataUpdate(String javascript) {
+        synchronized (dataUpdateLock) {
+            replaceableDataUpdate = () -> executeJavaScript(javascript);
+            if (!browser.isLoading())
+                executeReplaceableDataUpdate();
+        }
+    }
+
     public void updateSelectedFeature(@Nullable String alignedFeatureId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
     }
 
     public void updateSelectedFormulaCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId)));
     }
 
     public void updateSelectedStructureCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId, @Nullable String inchiKey) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
     }
 
     public void updateSelectedSpectralMatch(@Nullable String alignedFeatureId, @Nullable String matchId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, undefined, undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
     }
 
     private static String parseNullable(@Nullable String s) {
-       return s == null || s.isBlank() ? "null" : ("'" + s + "'");
+        return s == null || s.isBlank() ? "null" : ("'" + s + "'");
     }
 
     /**
