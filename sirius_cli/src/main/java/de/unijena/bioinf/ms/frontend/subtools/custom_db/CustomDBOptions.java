@@ -113,7 +113,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         }, order = 220)
         private List<Path> input;
 
-        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Bio Transformations: %n|@", order = 150)
+        @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Biotransformations: %n|@", order = 150)
         private BioTransformerOptions bioTransformerOptions;
     }
 
