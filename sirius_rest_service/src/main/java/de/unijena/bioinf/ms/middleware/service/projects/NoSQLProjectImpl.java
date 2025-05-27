@@ -955,10 +955,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    @Nullable
     private de.unijena.bioinf.ms.persistence.model.core.Compound convertToProjectCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
         List<AlignedFeatures> features = compoundImport.getFeatures().stream()
                 .map(f -> convertToProjectFeature(f, profile))
-                .toList();
+                .filter(Objects::nonNull).toList();
+
+        if (features.isEmpty()){
+            log.warn("Compound named '{}' does not contains a single supported feature. Skipping!", compoundImport.getName());
+            return null;
+        }
 
         de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
                 .name(compoundImport.getName())
@@ -985,26 +991,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
-        AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
-                .name(featureImport.getName())
-                .externalFeatureId(featureImport.getExternalFeatureId())
-                .averageMass(featureImport.getIonMass());
+    @Nullable
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile){
+        try {
+            AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
+                    .name(featureImport.getName())
+                    .externalFeatureId(featureImport.getExternalFeatureId())
+                    .averageMass(featureImport.getIonMass())
+                    .detectedAdducts(FeatureImports.extractDetectedAdducts(featureImport));
 
-        if (featureImport.getDataQuality() != null)
-            builder.dataQuality(featureImport.getDataQuality());
+            if (featureImport.getDataQuality() != null)
+                builder.dataQuality(featureImport.getDataQuality());
 
-        builder.charge((byte) featureImport.getCharge());
+            builder.charge((byte) featureImport.getCharge());
 
-        MSData msData = FeatureImports.extractMsData(featureImport, profile);
-        builder.msData(msData);
-        builder.hasMs1(msData.getMergedMs1Spectrum() != null);
-        builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
+            MSData msData = FeatureImports.extractMsData(featureImport, profile);
+            builder.msData(msData);
+            builder.hasMs1(msData.getMergedMs1Spectrum() != null);
+            builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
-        builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
-        builder.detectedAdducts(FeatureImports.extractDetectedAdducts(featureImport));
+            builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
 
-        return builder.build();
+            return builder.build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Error when parsing FeatureImport with id '{}'. Cause: {}", featureImport.getExternalFeatureId(), e.getMessage(), e);
+            return null;
+        }
     }
 
     private AlignedFeature convertToApiFeature(AlignedFeatures features, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
@@ -1347,7 +1359,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                                 .filter(Predicate.not(String::isBlank))
                                 .ifPresent(ci::setName);
                     }
-                }).map(ci -> convertToProjectCompound(ci, profile)).toList();
+                }).map(ci -> convertToProjectCompound(ci, profile))
+                .filter(Objects::nonNull)
+                .toList();
+        if (dbc.isEmpty())
+            return Collections.emptyList();
+
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertToApiCompound(c, false, optFields, optFieldsFeatures)).toList();
     }
