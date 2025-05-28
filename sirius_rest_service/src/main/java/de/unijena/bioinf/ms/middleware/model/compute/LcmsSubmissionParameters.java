@@ -43,7 +43,7 @@ public class LcmsSubmissionParameters {
      * Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level
      * to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.
      * If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify
-     * this parameter, as the autmated detection is usually sufficient.
+     * this parameter, as the automated detection is usually sufficient.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
     protected double noiseIntensity = -1;
@@ -52,19 +52,19 @@ public class LcmsSubmissionParameters {
      * Maximal allowed mass deviation for peaks in ms1 to be considered as belonging to the same trace.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
-    protected Deviation ms1MassDeviation = null;
+    protected Deviation traceMaxMassDeviation = null;
 
     /**
      * Maximal allowed mass deviation for aligning features. If not specified, this parameter is estimated from data.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
-    protected Deviation alignMassDeviation = null;
+    protected Deviation alignMaxMassDeviation = null;
 
     /**
      * Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
-    protected double alignRetentionTimeError = -1;
+    protected double alignMaxRetentionTimeDeviation = -1;
 
     /**
      * Specifies filter algorithm to suppress noise.
