@@ -943,10 +943,9 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ms1MassDeviation", parameters.getMs1MassDeviation()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMassDeviation", parameters.getAlignMassDeviation()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRetentionTimeError", parameters.getAlignRetentionTimeError()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSNR", parameters.getMinSNR()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "traceMaxMassDeviation", parameters.getTraceMaxMassDeviation()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMaxMassDeviation", parameters.getAlignMaxMassDeviation()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMaxRetentionTimeDeviation", parameters.getAlignMaxRetentionTimeDeviation()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -1048,10 +1047,9 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignLCMSRuns", parameters.isAlignLCMSRuns()));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noiseIntensity", parameters.getNoiseIntensity()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ms1MassDeviation", parameters.getMs1MassDeviation()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMassDeviation", parameters.getAlignMassDeviation()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRetentionTimeError", parameters.getAlignRetentionTimeError()));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSNR", parameters.getMinSNR()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "traceMaxMassDeviation", parameters.getTraceMaxMassDeviation()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMaxMassDeviation", parameters.getAlignMaxMassDeviation()));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignMaxRetentionTimeDeviation", parameters.getAlignMaxRetentionTimeDeviation()));
         
         final String[] localVarAccepts = { 
             "application/json"
