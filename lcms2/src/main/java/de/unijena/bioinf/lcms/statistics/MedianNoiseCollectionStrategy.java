@@ -18,6 +18,8 @@ import java.util.Arrays;
  */
 public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrategy {
 
+    public static boolean EXTREMELY_SENSITIVE_SETTINGS = false;
+
     @Override
     public Calculation collectStatistics() {
         return new CalculateMedians();
@@ -36,14 +38,16 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 noise.add((float)noise.doubleStream().average().orElse(0d));
                 return;
             }
-            int perc = (int)(0.9*xs.length);
+            //int perc = (int)(0.9*xs.length);
+            //int perc = (int)(0.85*xs.length);
+            int perc = EXTREMELY_SENSITIVE_SETTINGS ? (int)(0.75*xs.length) : (int)(0.85*xs.length);
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
             double noiseLevel2 = Quickselect.quickselectInplace(xs, 0, xs.length, (int)Math.floor(xs.length*0.05));
             mint.add((float)noiseLevel2);
-            noiseLevel2 *= 20;
+            //noiseLevel2 *= 20;
+            noiseLevel2 *= (EXTREMELY_SENSITIVE_SETTINGS ? 5 : 10);
             noise.add((float)noiseLevel);
             noise2.add((float)noiseLevel2);
-
         }
 
         @Override
@@ -96,13 +100,17 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 {
                     double averageNoiseOnAll = 0d;
                     Arrays.sort(ms1Noises);
-                    int start = (int)Math.floor(ms1Noises.length*0.5);
-                    int end = (int)Math.ceil(ms1Noises.length*0.9);
+                    //int start = (int)Math.floor(ms1Noises.length*0.5);
+                    int start = (int)Math.floor(ms1Noises.length*0.25);
+                    int end = (int)Math.ceil(ms1Noises.length*0.75);
                     for (int k=start; k < end; ++k) averageNoiseOnAll += ms1Noises[k];
                     averageNoiseOnAll /= (end-start);
                     float[] noise2 = this.noise2.toFloatArray();
                     Arrays.sort(noise2);
                     double noiseLevel2 = Statistics.robustAverage(noise2);
+
+                    System.out.println(averageNoiseOnAll + "\tVS\t" + noiseLevel2);
+
                     averageNoiseOnAll = Math.sqrt(averageNoiseOnAll * noiseLevel2);
 
                     Arrays.fill(ms1Noises, (float)averageNoiseOnAll);

@@ -40,6 +40,7 @@ public class MergeTracesWithoutGapFilling {
         float[] mergedNoiseLevelPerScan = new float[merged.getMapping().length()];
         long TIME1 = System.currentTimeMillis();
         List<BasicJJob<?>> jobs = new ArrayList<>();
+        double summedUpNoiseLevel = 0f;
         for (int k=0; k < alignment.getSamples().length; ++k) {
             final ProcessedSample sample = alignment.getSamples()[k];
             final ScanPointInterpolator mapper = sample.getScanPointInterpolator();
@@ -47,9 +48,13 @@ public class MergeTracesWithoutGapFilling {
 
             final SampleStats sampleStats = sample.getStorage().getStatistics();
             {
+                // TODO: Warning: this is only possible because we have global noise. We should enforce global noise in the internal interface later
+                /*
                 for (int i=0; i < mergedNoiseLevelPerScan.length; ++i) {
                     mergedNoiseLevelPerScan[i] += (float)sample.getNormalizer().normalize(mapper.interpolate(sampleStats.getNoiseLevelPerScan(), i));
                 }
+                 */
+                summedUpNoiseLevel += sample.getNormalizer().normalize(sampleStats.getNoiseLevelPerScan()[sampleStats.getNoiseLevelPerScan().length/2]);
             }
             for (Rect r : mergeStorage.getRectangleMap()) {
                 jobs.add(globalJobManager.submitJob(new BasicJJob<Object>() {
@@ -69,9 +74,15 @@ public class MergeTracesWithoutGapFilling {
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
         if (alignment.getStatistics().getAverageNumberOfAlignments() > 0) {
-            for (int k = 0; k < mergedNoiseLevelPerScan.length; ++k) {
-                mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
+            {
+                final float newNoiseLevel = (float)(summedUpNoiseLevel * Math.max(1,(alignment.getStatistics().getNumberOfAlignments25Quantile())) / ((double)alignment.getSamples().length));
+                final float oldNoiseLevel = (float)(summedUpNoiseLevel / alignment.getStatistics().getAverageNumberOfAlignments());
+                System.out.printf("old noise level = %f,\nnew noise level = %f,\nnow noise level = %f\n25%% number of alignments = %f,\nsum of noise levels = %f\n", oldNoiseLevel, newNoiseLevel, summedUpNoiseLevel/alignment.getSamples().length, alignment.getStatistics().getNumberOfAlignments25Quantile(),
+                        summedUpNoiseLevel);
+                Arrays.fill(mergedNoiseLevelPerScan,newNoiseLevel);
             }
+        } else {
+            Arrays.fill(mergedNoiseLevelPerScan, (float)summedUpNoiseLevel);
         }
         merged.getStorage().setStatistics(merged.getStorage().getStatistics().withNoiseLevelPerScan(mergedNoiseLevelPerScan));
 

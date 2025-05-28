@@ -73,6 +73,12 @@ public class LcmsSubmissionParameters {
     protected DataSmoothing filter = DataSmoothing.AUTO;
 
     /**
+     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3", hidden = false)
+    protected double minSNR = 3;
+
+    /**
      * Sigma (kernel width) for gaussian filter algorithm.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.5", hidden = true)

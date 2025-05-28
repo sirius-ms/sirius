@@ -27,6 +27,20 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
         // majors
         QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ALIGNMENT_QUALITY);
 
+        if (run.getRuns().isPresent()) {
+            int maximalNumberOfSamples = run.getRuns().get().size();
+            if (maximalNumberOfSamples <= 1) {
+                peakQuality.getItems().add(new QualityReport.Item("There is nothing to align.", DataQuality.NOT_APPLICABLE, QualityReport.Weight.MAJOR));
+                return;
+            } else if (maximalNumberOfSamples <= 2) {
+                peakQuality.getItems().add(new QualityReport.Item("There are only two samples to align.", DataQuality.NOT_APPLICABLE, QualityReport.Weight.MAJOR));
+                return;
+            } else if (maximalNumberOfSamples <= 3) {
+                peakQuality.getItems().add(new QualityReport.Item("There are only three samples to align - not enough to assess alignment quality.", DataQuality.NOT_APPLICABLE, QualityReport.Weight.MAJOR));
+                return;
+            }
+        }
+
         if (feature.getFeatures().isEmpty()) {
             peakQuality.getItems().add(new QualityReport.Item("There are no aligned features.", DataQuality.LOWEST, QualityReport.Weight.CRITICAL));
             return;
