@@ -116,17 +116,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     @CommandLine.Option(names={"--scale"}, defaultValue = "8", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
-    /*
-    @CommandLine.Option(names={"--noise-level-multiplier"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
-    public double noiseCoefficient;
-
-    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.", hidden = true)
-    public double persistenceCoefficient;
-
-    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.", hidden = true)
-    public double mergeCoefficient;
-     */
-
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
 

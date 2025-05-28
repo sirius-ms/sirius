@@ -29,8 +29,8 @@
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
     },
     {
-      "name": "Gui Advanced",
-      "description": "Advanced GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
+      "name": "Gui",
+      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Projects",
@@ -1905,7 +1905,7 @@
     "/api/projects/{projectId}/gui": {
       "post": {
         "tags": [
-          "Gui Advanced"
+          "Gui"
         ],
         "summary": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
         "description": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
@@ -1919,27 +1919,8 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "readOnly",
-            "in": "query",
-            "description": "open in read-only mode.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuiParameters"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Created"
@@ -1948,7 +1929,7 @@
       },
       "delete": {
         "tags": [
-          "Gui Advanced"
+          "Gui"
         ],
         "summary": "Close GUI instance of given project-space if available.",
         "description": "Close GUI instance of given project-space if available.",
@@ -1982,41 +1963,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Gui Advanced"
-        ],
-        "summary": "Apply given changes to the running GUI instance.",
-        "description": "Apply given changes to the running GUI instance.",
-        "operationId": "applyToGui",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "of project-space the GUI instance is connected to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "parameters that should be applied.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuiParameters"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -7296,7 +7242,7 @@
     "/api/guis": {
       "get": {
         "tags": [
-          "Gui Advanced"
+          "Gui"
         ],
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
@@ -9103,71 +9049,23 @@
           },
           "noiseIntensity": {
             "type": "number",
-            "description": "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level\n to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.\n If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify\n this parameter, as the autmated detection is usually sufficient.",
+            "description": "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level\n to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.\n If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify\n this parameter, as the automated detection is usually sufficient.",
             "format": "double",
             "default": -1
           },
-          "ms1MassDeviation": {
+          "traceMaxMassDeviation": {
             "$ref": "#/components/schemas/Deviation"
           },
-          "alignMassDeviation": {
+          "alignMaxMassDeviation": {
             "$ref": "#/components/schemas/Deviation"
           },
-          "alignRetentionTimeError": {
+          "alignMaxRetentionTimeDeviation": {
             "type": "number",
             "description": "Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.",
             "format": "double",
             "default": -1
-          },
-          "minSNR": {
-            "type": "number",
-            "description": "Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory",
-            "format": "double",
-            "default": 3
           }
         }
-      },
-      "GuiParameters": {
-        "type": "object",
-        "properties": {
-          "selectedTab": {
-            "$ref": "#/components/schemas/GuiResultTab"
-          },
-          "cid": {
-            "type": "string",
-            "description": "ID of Selected compound.",
-            "nullable": true
-          },
-          "fid": {
-            "type": "string",
-            "description": "ID of Selected Formula candidate of the selected compound.",
-            "nullable": true
-          },
-          "structureCandidateInChIKey": {
-            "type": "string",
-            "description": "InChIKey of selected structure candidate of selected formula candidate.",
-            "nullable": true
-          },
-          "bringToFront": {
-            "type": "boolean",
-            "description": "If true bring SIRIUS GUI window to foreground.",
-            "nullable": true
-          }
-        },
-        "description": "Parameters to \"remote control\" the SIRIUS GUI."
-      },
-      "GuiResultTab": {
-        "type": "string",
-        "description": "Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.",
-        "nullable": true,
-        "enum": [
-          "FORMULAS",
-          "PREDICTED_FINGERPRINT",
-          "COMPOUND_CLASSES",
-          "STRUCTURES",
-          "STRUCTURE_ANNOTATION",
-          "DE_NOVO_STRUCTURES"
-        ]
       },
       "TagGroup": {
         "type": "object",
