@@ -113,7 +113,9 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         todo.clear();
         stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors));
         stats.averageNumberOfAlignments = (float)sizes.intStream().average().orElse(0d);
-        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float)sizes.intStream().sorted().toArray()[sizes.size()/2];
+        int[] nums = sizes.intStream().sorted().toArray();
+        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float) nums[sizes.size()/2];
+        stats.numberOfAlignments25Quantile = nums.length==0 ? 0 : nums[(int)(nums.length*0.25)];
 
         System.out.println("Stage 0: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
 
@@ -203,7 +205,9 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         todo.clear();
         stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors));
         stats.averageNumberOfAlignments = (float)sizes.intStream().average().orElse(0d);
-        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float)sizes.intStream().sorted().toArray()[sizes.size()/2];
+        int[] nums = sizes.intStream().sorted().toArray();
+        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float) nums[sizes.size()/2];
+        stats.numberOfAlignments25Quantile = nums.length==0 ? 0 : nums[(int)(nums.length*0.25)];
 
         System.out.println("Stage 1: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
 
@@ -421,7 +425,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             backboneMois = backboneMoisList.toLongArray();
             deleteList.forEach(storage::removeMoI);
         }
-        System.out.println("Number of isotopes in alignment: " + ISO);
+        System.out.println("Number of aligned features with isotopes: " + ISO);
         final ScanPointMapping backboneMapping = merge.getMapping();
         // compute recalibration functions from backbone mois
         final RecalibrationFunction[] rtRecalibrations = new RecalibrationFunction[samples.size()];

@@ -89,6 +89,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final boolean alignRuns;
 
+    private de.unijena.bioinf.lcms.trace.filter.Filter filter = null;
+
     private boolean inMemoryOnMerged = false;
 
     @Getter
@@ -103,6 +105,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private final boolean saveImportedCompounds;
 
     private long progress;
+
+    private double minSNR;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -124,13 +128,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         this.inMemoryOnMerged = options.inMemory;
 
-        this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
+        this.filter = switch (options.smoothing) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
-        }, 3, 0.01, 0.8);
+        };
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = false;
         this.alignmentThresholds = new AlignmentThresholds();
         if (options.alignRtMax>=0) {
@@ -139,6 +144,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (options.alignPpmMax>=0) {
             this.alignmentThresholds.setMaximalAllowedMassError(new Deviation(options.alignPpmMax));
         }
+        this.minSNR = options.minSNR;
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -149,6 +155,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             double sigma,
             int scale,
             double noiseIntensity,
+            double minSNR,
             @Nullable AlignmentThresholds alignmentThresholds,
             @Nullable Deviation ms1Massdev,
             boolean saveImportedCompounds
@@ -160,13 +167,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.userSpecifiedThresholds = new UserSpecifiedThresholds();
         if (ms1Massdev!=null) userSpecifiedThresholds.setAllowedMassDeviationInMs1(ms1Massdev);
         if (noiseIntensity>=0) userSpecifiedThresholds.setMs1NoiseLevel(noiseIntensity);
-        this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
+        this.filter = switch (filter) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
-        });
+        };
+        this.mergedTraceSegmenter =  new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
@@ -180,8 +188,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
+        processing.setSegmentationStrategy(new PersistentHomology(this.filter, true));
         processing.setAlignmentThresholds(this.alignmentThresholds);
-        if (userSpecifiedThresholds.hasUserInput()) processing.setStatisticsCollector(userSpecifiedThresholds);
+        if (userSpecifiedThresholds.hasUserInput()) {
+            processing.setStatisticsCollector(userSpecifiedThresholds);
+        }
 
         try {
             {
