@@ -66,6 +66,13 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     )
     public double noiseIntensity;
 
+    @CommandLine.Option(names={"--min-snr"},
+            description="Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory.",
+            defaultValue = "3"
+
+    )
+    public double minSNR;
+
     @CommandLine.Option(names={"--align-rt-max"},
             description="Maximal allowed retention time deviation for aligning features in seconds. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
             defaultValue = "-1"
@@ -86,6 +93,12 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
             required = false
     )
     public Double ppmMax;
+
+    @CommandLine.Option(names={"--sensitive-mode"},
+            description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This will increase running time and storage memory.",
+            required = false
+    )
+    public boolean sensitiveMode;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //hidden options   ///////////////////////////////////////////////////////////////////////
