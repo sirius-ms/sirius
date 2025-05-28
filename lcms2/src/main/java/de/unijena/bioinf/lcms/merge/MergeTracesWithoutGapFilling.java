@@ -81,6 +81,8 @@ public class MergeTracesWithoutGapFilling {
                         summedUpNoiseLevel);
                 Arrays.fill(mergedNoiseLevelPerScan,newNoiseLevel);
             }
+        } else {
+            Arrays.fill(mergedNoiseLevelPerScan, (float)summedUpNoiseLevel);
         }
         merged.getStorage().setStatistics(merged.getStorage().getStatistics().withNoiseLevelPerScan(mergedNoiseLevelPerScan));
 
