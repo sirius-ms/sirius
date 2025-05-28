@@ -104,8 +104,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
         importedCompoundIds = new LongLinkedOpenHashSet();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
         final AlignmentThresholds thresholds = new AlignmentThresholds();
-        thresholds.setMaximalAllowedMassError(submission.getAlignMassDeviation());
-        if (submission.getAlignRetentionTimeError()>=0) thresholds.setMaximalAllowedRetentionTimeError(submission.getAlignRetentionTimeError());
+        thresholds.setMaximalAllowedMassError(submission.getAlignMaxMassDeviation());
+        if (submission.getAlignMaxRetentionTimeDeviation()>=0) thresholds.setMaximalAllowedRetentionTimeError(submission.getAlignMaxRetentionTimeDeviation());
         if (inputResources != null && !inputResources.isEmpty()) {
             try {
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
@@ -118,7 +118,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getNoiseIntensity(),
                         submission.getMinSNR(),
                         thresholds,
-                        submission.getMs1MassDeviation(),
+                        submission.getTraceMaxMassDeviation(),
                         saveImportedCompounds
                 );
                 importerJJob.addJobProgressListener(progressSupport);

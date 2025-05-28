@@ -88,9 +88,13 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     public double alignPpmMax;
 
 
-    @CommandLine.Option(names={"--ppm-max"},
-            description="Specify the maximal allowed mass error for considering peaks in MS1 to belong to the same mass trace.",
-            required = false
+    @CommandLine.Option(names={"--trace-ppm-max"},
+            description={
+            "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level.",
+                    "to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.",
+                    "If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify",
+                    "this parameter, as the automated detection is usually sufficient."
+            }, required = false
     )
     public Double ppmMax;
 
@@ -111,17 +115,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--scale"}, defaultValue = "8", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
-
-    /*
-    @CommandLine.Option(names={"--noise-level-multiplier"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
-    public double noiseCoefficient;
-
-    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.", hidden = true)
-    public double persistenceCoefficient;
-
-    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.", hidden = true)
-    public double mergeCoefficient;
-     */
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
