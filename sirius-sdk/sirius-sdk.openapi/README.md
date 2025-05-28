@@ -190,8 +190,8 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getTracesExperimental**](docs/FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
 *FeaturesApi* | [**removeTagFromAlignedFeatureExperimental**](docs/FeaturesApi.md#removeTagFromAlignedFeatureExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
-*GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
+*GuiAdvancedApi* | [**getGuis**](docs/GuiAdvancedApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *InfoApi* | [**getConnectionCheck**](docs/InfoApi.md#getConnectionCheck) | **GET** /api/connection-status | 
 *InfoApi* | [**getInfo**](docs/InfoApi.md#getInfo) | **GET** /api/info | 
 *JobsApi* | [**deleteJob**](docs/JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job.
