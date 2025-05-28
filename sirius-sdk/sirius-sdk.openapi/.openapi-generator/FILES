@@ -56,9 +56,8 @@ docs/FormulaCandidateOptField.md
 docs/FragmentNode.md
 docs/FragmentationTree.md
 docs/GuiAdvancedApi.md
+docs/GuiApi.md
 docs/GuiInfo.md
-docs/GuiParameters.md
-docs/GuiResultTab.md
 docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
@@ -155,6 +154,7 @@ src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiAdvancedApi.java
+src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
 src/main/java/io/sirius/ms/sdk/api/LoginAndAccountApi.java
@@ -223,8 +223,6 @@ src/main/java/io/sirius/ms/sdk/model/FormulaCandidateOptField.java
 src/main/java/io/sirius/ms/sdk/model/FragmentNode.java
 src/main/java/io/sirius/ms/sdk/model/FragmentationTree.java
 src/main/java/io/sirius/ms/sdk/model/GuiInfo.java
-src/main/java/io/sirius/ms/sdk/model/GuiParameters.java
-src/main/java/io/sirius/ms/sdk/model/GuiResultTab.java
 src/main/java/io/sirius/ms/sdk/model/ImportResult.java
 src/main/java/io/sirius/ms/sdk/model/Info.java
 src/main/java/io/sirius/ms/sdk/model/InstrumentProfile.java

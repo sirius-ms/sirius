@@ -42,7 +42,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LcmsSubmissionParameters.JSON_PROPERTY_NOISE_INTENSITY,
   LcmsSubmissionParameters.JSON_PROPERTY_TRACE_MAX_MASS_DEVIATION,
   LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_MAX_MASS_DEVIATION,
-  LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION
+  LcmsSubmissionParameters.JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION,
+  LcmsSubmissionParameters.JSON_PROPERTY_MIN_S_N_R
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class LcmsSubmissionParameters {
@@ -60,6 +61,9 @@ public class LcmsSubmissionParameters {
 
   public static final String JSON_PROPERTY_ALIGN_MAX_RETENTION_TIME_DEVIATION = "alignMaxRetentionTimeDeviation";
   private Double alignMaxRetentionTimeDeviation = -1d;
+
+  public static final String JSON_PROPERTY_MIN_S_N_R = "minSNR";
+  private Double minSNR = 3d;
 
   public LcmsSubmissionParameters() {
   }
@@ -189,6 +193,31 @@ public class LcmsSubmissionParameters {
     this.alignMaxRetentionTimeDeviation = alignMaxRetentionTimeDeviation;
   }
 
+  public LcmsSubmissionParameters minSNR(Double minSNR) {
+    
+    this.minSNR = minSNR;
+    return this;
+  }
+
+   /**
+   * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
+   * @return minSNR
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getMinSNR() {
+    return minSNR;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_S_N_R)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinSNR(Double minSNR) {
+    this.minSNR = minSNR;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -202,12 +231,13 @@ public class LcmsSubmissionParameters {
         Objects.equals(this.noiseIntensity, lcmsSubmissionParameters.noiseIntensity) &&
         Objects.equals(this.traceMaxMassDeviation, lcmsSubmissionParameters.traceMaxMassDeviation) &&
         Objects.equals(this.alignMaxMassDeviation, lcmsSubmissionParameters.alignMaxMassDeviation) &&
-        Objects.equals(this.alignMaxRetentionTimeDeviation, lcmsSubmissionParameters.alignMaxRetentionTimeDeviation);
+        Objects.equals(this.alignMaxRetentionTimeDeviation, lcmsSubmissionParameters.alignMaxRetentionTimeDeviation) &&
+        Objects.equals(this.minSNR, lcmsSubmissionParameters.minSNR);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignLCMSRuns, noiseIntensity, traceMaxMassDeviation, alignMaxMassDeviation, alignMaxRetentionTimeDeviation);
+    return Objects.hash(alignLCMSRuns, noiseIntensity, traceMaxMassDeviation, alignMaxMassDeviation, alignMaxRetentionTimeDeviation, minSNR);
   }
 
   @Override
@@ -219,6 +249,7 @@ public class LcmsSubmissionParameters {
     sb.append("    traceMaxMassDeviation: ").append(toIndentedString(traceMaxMassDeviation)).append("\n");
     sb.append("    alignMaxMassDeviation: ").append(toIndentedString(alignMaxMassDeviation)).append("\n");
     sb.append("    alignMaxRetentionTimeDeviation: ").append(toIndentedString(alignMaxRetentionTimeDeviation)).append("\n");
+    sb.append("    minSNR: ").append(toIndentedString(minSNR)).append("\n");
     sb.append("}");
     return sb.toString();
   }

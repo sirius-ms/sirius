@@ -12,6 +12,7 @@
 |**traceMaxMassDeviation** | [**Deviation**](Deviation.md) |  |  [optional] |
 |**alignMaxMassDeviation** | [**Deviation**](Deviation.md) |  |  [optional] |
 |**alignMaxRetentionTimeDeviation** | **Double** | Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data. |  [optional] |
+|**minSNR** | **Double** | Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory |  [optional] |
 
 
 
