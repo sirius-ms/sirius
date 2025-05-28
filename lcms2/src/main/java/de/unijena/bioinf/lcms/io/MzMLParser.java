@@ -65,6 +65,8 @@ public class MzMLParser implements LCMSParser {
 
     private static final Pattern SUFFIX = Pattern.compile("\\.mzml$", Pattern.CASE_INSENSITIVE);
 
+    private int noScanIDCount = 0;
+
     private File createTempFile(@NotNull Path input) throws IOException {
         if (input.getFileSystem().equals(FileSystems.getDefault())) {
             return input.toFile();
@@ -440,6 +442,11 @@ public class MzMLParser implements LCMSParser {
             storage.setMapping(mapping);
             ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
             sample.setRun(run);
+
+            if (noScanIDCount>0) {
+                LoggerFactory.getLogger(MzMLParser.class).warn("In total {} spectra have no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.", noScanIDCount);
+            }
+
             return sample;
 
         } catch (Exception e) {
@@ -469,7 +476,10 @@ public class MzMLParser implements LCMSParser {
             //if (m.find()) {
                 //return Integer.parseInt(m.group(1));
             //} else {
-                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                if (noScanIDCount==0) {
+                    LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                }
+                ++noScanIDCount;
                 return index;
             //}
         }
