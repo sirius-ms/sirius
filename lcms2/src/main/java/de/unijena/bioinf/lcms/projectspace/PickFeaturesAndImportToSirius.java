@@ -542,7 +542,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                     }
                 }
 
-                if (sum >= stats.noiseLevel(mergedSegment.apex)) {
+                if (sum > 0 && sum >= stats.noiseLevel(mergedSegment.apex)) {
                     // generate isotope segment
                     AlignedIsotopicFeatures iso = new AlignedIsotopicFeatures();
                     iso.setFeatures(new ArrayList<>());
