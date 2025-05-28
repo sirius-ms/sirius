@@ -174,6 +174,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case WAVELET -> new WaveletFilter(scale);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
+        this.minSNR = minSNR;
         this.mergedTraceSegmenter =  new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
@@ -188,7 +189,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
-        processing.setSegmentationStrategy(new PersistentHomology(this.filter, true));
+        processing.setSegmentationStrategy(new PersistentHomology(this.filter, Math.min(2, this.minSNR), PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT));
         processing.setAlignmentThresholds(this.alignmentThresholds);
         if (userSpecifiedThresholds.hasUserInput()) {
             processing.setStatisticsCollector(userSpecifiedThresholds);

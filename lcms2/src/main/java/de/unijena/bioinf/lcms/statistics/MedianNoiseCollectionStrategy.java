@@ -109,8 +109,6 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                     Arrays.sort(noise2);
                     double noiseLevel2 = Statistics.robustAverage(noise2);
 
-                    System.out.println(averageNoiseOnAll + "\tVS\t" + noiseLevel2);
-
                     averageNoiseOnAll = Math.sqrt(averageNoiseOnAll * noiseLevel2);
 
                     Arrays.fill(ms1Noises, (float)averageNoiseOnAll);
