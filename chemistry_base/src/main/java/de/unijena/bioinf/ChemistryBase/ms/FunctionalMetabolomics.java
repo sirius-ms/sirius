@@ -17,7 +17,8 @@ import java.util.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FunctionalMetabolomics implements Ms2ExperimentAnnotation {
 
-    public static final String ACCEPT = ":FMet:accept", REJECT = ":FMet:reject";
+    public static final String ACCEPT = ":MCheM:accept", REJECT = ":MCheM:reject";
+    public static final String PREFIX = ":MCheM:";
 
     public record ReactionClass(String name, List<Reaction> reactions, double massDelta) {}
 
