@@ -87,6 +87,12 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     )
     public Double ppmMax;
 
+    @CommandLine.Option(names={"--sensitive-mode"},
+            description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This will increase running time and storage memory.",
+            required = false
+    )
+    public boolean sensitiveMode;
+
     //////////////////////////////////////////////////////////////////////////////////////////
     //hidden options   ///////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////
