@@ -297,7 +297,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param smiles        smiles
      * @return StructureCandidate of this feature candidate with specified optional fields.
      */
-    @Operation(operationId = "addDeNovoStructureCandiate")
+    @Operation(operationId = "addDeNovoStructureCandidate")
     @PutMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<StructureCandidateFormula> addDeNovoStructureCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
