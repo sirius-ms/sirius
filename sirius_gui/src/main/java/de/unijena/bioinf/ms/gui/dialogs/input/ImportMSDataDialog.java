@@ -45,6 +45,8 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         private final JCheckBox alignCheckBox;
 
+        private final JCheckBox sensitiveMode;
+
         private final JCheckBox ignoreFormulas;
 
         public LCMSConfigPanel(TwoColumnPanel paras) {
@@ -62,6 +64,11 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
             alignCheckBox.setToolTipText(GuiUtils.formatToolTip("If checked, all LC/MS runs will be aligned and combined to one merged LC/MS run."));
             paras.add(alignCheckBox);
 
+            sensitiveMode = makeGenericOptionCheckBox("Sensitive mode", "sensitiveMode");
+            sensitiveMode.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.sensitiveMode", null, "false")));
+            sensitiveMode.setToolTipText(GuiUtils.formatToolTip("If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."));
+            paras.add(sensitiveMode);
+
             paras.addVerticalGlue();
         }
 
@@ -72,9 +79,11 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         if (showLCMSOptions && alignAllowed) {
             panel.alignCheckBox.setSelected(true);
+            panel.sensitiveMode.setVisible(true);
         } else {
             panel.alignCheckBox.setSelected(false);
             panel.alignCheckBox.setVisible(false);
+            panel.sensitiveMode.setVisible(false);
         }
 
         panel.ignoreFormulas.setVisible(showPeakListOptions);
