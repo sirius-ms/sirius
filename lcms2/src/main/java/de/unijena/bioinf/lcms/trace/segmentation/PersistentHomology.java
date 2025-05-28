@@ -99,7 +99,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
      */
     private final double trim = 3d;
 
-    public static final int DEFAULT_NOISE_COEFFICIENT_BALANCED = 3;
+    public static final double DEFAULT_NOISE_COEFFICIENT_BALANCED = 3;
+    public static final double DEFAULT_NOISE_COEFFICIENT_SENSITIVE = 2;
     public static final double PERSISTENCE_COEFFICIENT = 0.01;
     public static final double MERGE_COEFFICIENT = 0.8;
 
@@ -109,8 +110,12 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     public PersistentHomology(Filter filter) {
+        this(filter, false);
+    }
+
+    public PersistentHomology(Filter filter, boolean sensitiveMode) {
         this.filter = filter;
-        this.noiseCoefficient = DEFAULT_NOISE_COEFFICIENT_BALANCED;
+        this.noiseCoefficient = sensitiveMode ? DEFAULT_NOISE_COEFFICIENT_SENSITIVE : DEFAULT_NOISE_COEFFICIENT_BALANCED;
         this.persistenceCoefficient = PERSISTENCE_COEFFICIENT;
         this.mergeCoefficient = MERGE_COEFFICIENT;
     }
