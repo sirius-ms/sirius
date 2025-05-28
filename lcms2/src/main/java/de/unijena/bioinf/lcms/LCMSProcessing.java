@@ -315,7 +315,8 @@ public class LCMSProcessing {
         DoubleArrayList fwhms = new DoubleArrayList();
         DoubleArrayList heightDividedByfwhms = new DoubleArrayList();
         siriusDatabaseAdapter.getImportedFeatureStream(merged.getRun().getRunId())
-                .filter(x -> x.getMSData().orElseThrow().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
+                .filter(x -> x.getMSData().orElseThrow().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2
+                && x.getSnr()>=5)
                 .forEach(x->{
                     fwhms.add(x.getFwhm().doubleValue());
                     heightDividedByfwhms.add(x.getApexIntensity()/x.getFwhm());
