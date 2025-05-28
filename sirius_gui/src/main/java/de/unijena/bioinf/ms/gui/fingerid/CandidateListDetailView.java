@@ -78,7 +78,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles, sketchStructure;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -160,8 +160,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser2 = new JMenuItem("Open in all databases");
         highlight = new JMenuItem("Highlight matching substructures");
         annotateSpectrum = new JMenuItem("Show annotated spectrum");
+        sketchStructure = new JMenuItem("Modify structure");
         CopyInchi.addActionListener(this);
         CopyInchiKey.addActionListener(this);
+        sketchStructure.addActionListener(this);
         OpenInBrowser1.addActionListener(this);
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
@@ -176,6 +178,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(CopySmiles);
         popupMenu.add(CopyInchiKey);
         popupMenu.add(CopyInchi);
+        popupMenu.addSeparator();
+        popupMenu.add(sketchStructure);
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
@@ -249,6 +253,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
+        } else if (e.getSource() == sketchStructure) {
+            System.out.println("Now a window magically opens to sketch the new structure"); //todo implement
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
