@@ -19,8 +19,16 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.fingerid.AddExternalStructureJJob;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.controller.mixins.TaggableController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -28,16 +36,20 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.projectspace.FCandidate;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.SpectrumType;
-import de.unijena.bioinf.spectraldb.entities.*;
-import io.swagger.v3.oas.annotations.Hidden;
+import de.unijena.bioinf.spectraldb.entities.MergedReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
+import de.unijena.bioinf.webapi.WebAPI;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.Getter;
@@ -72,13 +84,15 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
     private final EventService<?> eventService;
+    private final WebAPI<?> webAPI;
 
     @Autowired
-    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig, EventService<?> eventService) {
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig, EventService<?> eventService, WebAPI<?> webAPI) {
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
         this.globalConfig = globalConfig;
         this.eventService = eventService;
+        this.webAPI = webAPI;
     }
 
     /**
@@ -273,6 +287,37 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @RequestParam(defaultValue = "none") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
         return getDeNovoStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+    }
+
+    /**
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param smiles        smiles
+     * @return StructureCandidate of this feature candidate with specified optional fields.
+     */
+    @Operation(operationId = "addDeNovoStructureCandiate")
+    @PutMapping(value = "/{alignedFeatureId}/denovo-structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<StructureCandidateFormula> addDeNovoStructureCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "none") String smiles
+    ) {
+        Instance instance = projectsProvider.getProjectOrThrow(projectId).getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + projectId + "."));
+
+        List<FCandidate<?>> inputData = instance.getMsNovelistInput().stream()
+                 .filter(c -> c.hasAnnotation(FingerprintResult.class))
+                .filter(c -> c.hasAnnotation(FTree.class))
+                .peek(c -> {c.annotate(c.asFingerIdResult());})
+                .toList();
+        List<FingerIdResult> idResults = inputData.stream().map(d -> d.getAnnotationOrThrow(FingerIdResult.class)).toList();
+
+        Scored<FingerprintCandidate> candidates = SiriusJobs.runInBackground(new AddExternalStructureJJob(smiles, idResults, instance.getCharge(), webAPI).asType(JJob.JobType.TINY_BACKGROUND)).takeResult();
+        if (candidates == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fingerprint candidate count not be computed");
+
+        instance.addMsNovelistResult(inputData); //only one FCandidate with a result
+        return null; //todo what to return
     }
 
     /**

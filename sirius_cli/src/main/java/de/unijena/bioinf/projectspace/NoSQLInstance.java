@@ -781,6 +781,55 @@ public class NoSQLInstance implements Instance {
         }
     }
 
+    public void addMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
+        try {
+            //get all existing DenovoStructureMatch
+            List<DenovoStructureMatch> existingMatches = project().findDeNovoStructureSearchResult(id).toList();
+            Set<String> inchiKeys = existingMatches.stream().map(DenovoStructureMatch::getCandidateInChiKey).collect(Collectors.toSet());
+
+            List<DenovoStructureMatch> newMatches = msNovelistResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                    .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(MsNovelistFingerblastResult.class)
+                            .map(msnRes -> {
+                                        int i = 0;
+                                        List<DenovoStructureMatch> m = new ArrayList<>(msnRes.getResults().size());
+                                        for (Scored<FingerprintCandidate> c : msnRes.getResults()) {
+                                            if (inchiKeys.contains(c.getCandidate().getInchiKey2D())) continue; //todo do we need to check for duplicates of just add everything?
+                                            m.add(DenovoStructureMatch.builder()
+                                                    .alignedFeatureId(id)
+                                                    .formulaId((long) fc.getId())
+                                                    .csiScore(c.getScore())
+                                                    .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                                    .modelScore(msnRes.getRnnScore(i++))
+                                                    .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                                    .candidate(c.getCandidate())
+                                                    .build());
+                                        }
+                                        return m.stream();
+                                    }
+                            ).orElseGet(Stream::empty))
+                    .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                    .collect(Collectors.toList());
+
+            //adding ranks
+            List<DenovoStructureMatch> allMatches = Stream.concat(existingMatches.stream(), newMatches.stream()).sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed()).toList();
+            final AtomicInteger rank = new AtomicInteger(1);
+            allMatches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+            //insert matches
+            project().getStorage().insertAll(newMatches);
+            //update rank of existing matches
+            project().getStorage().upsertAll(existingMatches);
+
+            //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
+            int inserted = project().getStorage().upsertAll(newMatches.stream().map(DenovoStructureMatch::getCandidate).toList());
+            upsertComputedSubtools(cs -> cs.setDeNovoSearch(true));
+            log.debug("Inserted: {} of {} DeNovo candidates.", inserted, newMatches.size());
+        } catch (Exception e) {
+//            deleteMsNovelistResult(); //don't delete
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public boolean hasMsNovelistResult() {
         return getComputedSubtools().isDeNovoSearch();
