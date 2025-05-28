@@ -27,6 +27,7 @@ import ca.odell.glazedlists.swing.DefaultEventListModel;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.ms.FunctionalMetabolomics;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
@@ -184,7 +185,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected void initializeFunctionalMetabolomicsFunctionality() {
         // add a special button to the toolbar
         getSource().addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> {
-            boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(":FMet:")));
+            boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(FunctionalMetabolomics.PREFIX)));
             if (enableFmet != filterByFmetEnabled) {
                 filterByFmetEnabled = enableFmet;
                 filterByFmet.setVisible(filterByFmetEnabled);
