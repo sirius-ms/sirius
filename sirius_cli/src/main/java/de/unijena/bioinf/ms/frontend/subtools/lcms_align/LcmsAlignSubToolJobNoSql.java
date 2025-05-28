@@ -89,8 +89,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final boolean alignRuns;
 
-    private boolean sensitiveMode = false;
-
     private de.unijena.bioinf.lcms.trace.filter.Filter filter = null;
 
     private boolean inMemoryOnMerged = false;
@@ -107,6 +105,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private final boolean saveImportedCompounds;
 
     private long progress;
+
+    private double minSNR;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -135,7 +135,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
-        this.mergedTraceSegmenter = new PersistentHomology(this.filter);
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = false;
         this.alignmentThresholds = new AlignmentThresholds();
         if (options.alignRtMax>=0) {
@@ -144,7 +144,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (options.alignPpmMax>=0) {
             this.alignmentThresholds.setMaximalAllowedMassError(new Deviation(options.alignPpmMax));
         }
-        if (options.sensitiveMode) this.sensitiveMode = true;
+        this.minSNR = options.minSNR;
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -155,6 +155,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             double sigma,
             int scale,
             double noiseIntensity,
+            double minSNR,
             @Nullable AlignmentThresholds alignmentThresholds,
             @Nullable Deviation ms1Massdev,
             boolean saveImportedCompounds
@@ -173,7 +174,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case WAVELET -> new WaveletFilter(scale);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
-        this.mergedTraceSegmenter = new PersistentHomology(this.filter, this.sensitiveMode);
+        this.mergedTraceSegmenter =  new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
