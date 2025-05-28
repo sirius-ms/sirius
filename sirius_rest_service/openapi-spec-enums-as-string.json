@@ -29,8 +29,8 @@
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
     },
     {
-      "name": "Gui",
-      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+      "name": "Gui Advanced",
+      "description": "Advanced GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Projects",
@@ -804,7 +804,7 @@
         ],
         "summary": "[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.",
         "description": "[EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.",
-        "operationId": "addDeNovoStructureCandiate",
+        "operationId": "addDeNovoStructureCandidate",
         "parameters": [
           {
             "name": "projectId",
@@ -2149,7 +2149,7 @@
     "/api/projects/{projectId}/gui": {
       "post": {
         "tags": [
-          "Gui"
+          "Gui Advanced"
         ],
         "summary": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
         "description": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
@@ -2163,8 +2163,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "readOnly",
+            "in": "query",
+            "description": "open in read-only mode.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiParameters"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Created"
@@ -2173,7 +2192,7 @@
       },
       "delete": {
         "tags": [
-          "Gui"
+          "Gui Advanced"
         ],
         "summary": "Close GUI instance of given project-space if available.",
         "description": "Close GUI instance of given project-space if available.",
@@ -2207,6 +2226,41 @@
                 }
               }
             }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Gui Advanced"
+        ],
+        "summary": "Apply given changes to the running GUI instance.",
+        "description": "Apply given changes to the running GUI instance.",
+        "operationId": "applyToGui",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "of project-space the GUI instance is connected to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "parameters that should be applied.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiParameters"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -7737,7 +7791,7 @@
     "/api/guis": {
       "get": {
         "tags": [
-          "Gui"
+          "Gui Advanced"
         ],
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
