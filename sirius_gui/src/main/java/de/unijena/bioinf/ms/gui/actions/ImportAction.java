@@ -123,6 +123,7 @@ public class ImportAction extends AbstractGuiAction {
                 if (hasLCMS) {
                     ParameterBinding binding = dialog.getParamterBinding();
                     binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
+                    binding.getOptBoolean("sensitiveMode").ifPresent(x->parameters.setMinSNR(2d));
                 }
             }
 
