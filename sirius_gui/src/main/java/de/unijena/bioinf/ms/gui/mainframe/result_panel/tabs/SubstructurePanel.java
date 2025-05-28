@@ -33,7 +33,7 @@ public class SubstructurePanel extends JCefBrowserPanel implements ListSelection
             inchi = structureCandidate.getInChiKey();
         }
         return URI.create(gui.getSiriusClient().getApiClient().getBasePath()).resolve("/epi")
-                + makeParameters(gui.getProjectManager().getProjectId(), fid, formulaId, inchi, null);
+                + makeParameters(gui.getProjectManager().getProjectId(), fid, formulaId, inchi, null,null);
     }
 
 

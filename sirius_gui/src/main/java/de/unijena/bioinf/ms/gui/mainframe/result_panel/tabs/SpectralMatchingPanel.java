@@ -82,7 +82,7 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
             String fid = matchBean != null ? matchBean.getInstance().getFeatureId() : null;
             String mid = matchBean != null ? matchBean.getMatch().getSpecMatchId() : null;
             return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/libmatch")
-                    + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, mid);
+                    + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, mid,null);
         }
     }
 

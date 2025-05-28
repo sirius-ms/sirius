@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.validation.constraints.Null;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -70,7 +71,7 @@ public class JCefBrowserPanel extends JPanel {
     }
 
     protected static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
-                                           @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId
+                                           @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId,@Nullable String smiles
     ) {
         StringBuilder params = new StringBuilder(makeParameters(projectId));
         if (Utils.notNullOrBlank(alignedFeatureId))
@@ -81,6 +82,8 @@ public class JCefBrowserPanel extends JPanel {
             params.append("&inchikey=").append(inchiKey);
         if (Utils.notNullOrBlank(matchId))
             params.append("&matchid=").append(matchId);
+        if (Utils.notNullOrBlank(matchId))
+            params.append("&smiles=").append(matchId);
 
         return params.toString();
     }
@@ -276,6 +279,10 @@ public class JCefBrowserPanel extends JPanel {
 
     public void updateSelectedFeature(@Nullable String alignedFeatureId) {
         submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
+    }
+
+    public void updateSelectedFeatureSketcher(@Nullable String alignedFeatureId, @Nullable String smiles){
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined,undefined, smiles=%s)", parseNullable(alignedFeatureId), parseNullable(smiles)));
     }
 
     public void updateSelectedFormulaCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId) {

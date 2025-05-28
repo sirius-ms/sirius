@@ -67,6 +67,7 @@ public class ResultPanel extends JTabbedPane {
     private final EpimetheusPanel structureAnnoTab;
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
+    private final StructEditPanel structEditPanel;
     private SpectralMatchingPanel spectralMatchingTab;
     private KendrickMassDefectPanel massDefectTab;
 
@@ -76,6 +77,7 @@ public class ResultPanel extends JTabbedPane {
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
     private StructureList combinedStructureListDeNovoView;
+    private StructureList combinedStructureListSketcherView;
     private FormulaList siriusResultElements;
     private SpectralMatchList spectralMatchList;
     private CompoundClassList compoundClassList;
@@ -157,6 +159,10 @@ public class ResultPanel extends JTabbedPane {
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
+
+        combinedStructureListSketcherView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        structEditPanel = new StructEditPanel(combinedStructureListSketcherView);
+        addTab("Structure Sketcher",null,structEditPanel,structEditPanel.getDescription());
 
 
         //software tour listener
