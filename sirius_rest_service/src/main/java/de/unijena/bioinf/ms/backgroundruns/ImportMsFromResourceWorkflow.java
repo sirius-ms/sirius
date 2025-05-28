@@ -116,6 +116,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getGaussianSigma(),
                         submission.getWaveletScale(),
                         submission.getNoiseIntensity(),
+                        submission.getMinSNR(),
                         thresholds,
                         submission.getMs1MassDeviation(),
                         saveImportedCompounds
