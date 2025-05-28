@@ -62,7 +62,7 @@ public class StructEditPanel extends JPanel implements Loadable, PanelDescriptio
         loadablePanel = new LoadablePanel(content);
         add(loadablePanel, BorderLayout.CENTER);
         structureList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
-
+        structureList.getElementListSelectionModel().addListSelectionListener(substructurePanel);
     }
 
     @Override
