@@ -30,7 +30,7 @@
     },
     {
       "name": "Gui",
-      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+      "description": "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Projects",
