@@ -138,10 +138,10 @@ jobs:
         run: /usr/bin/security find-identity
 
       - name: Gradle Build
-#        working-directory: sirius_dist/sirius_gui_dist
+        shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
+          ./gradlew --no-daemon --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
             -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
