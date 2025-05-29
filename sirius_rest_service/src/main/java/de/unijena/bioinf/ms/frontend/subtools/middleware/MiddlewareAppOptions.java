@@ -41,7 +41,10 @@ import picocli.CommandLine;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
@@ -75,17 +78,20 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     public enum ApiDocMode {STABLE, BASIC, STABLE_ADVANCED, ADVANCED}
 
-    private final static String STABLE_EXCLUSIONS =
-            "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree," +
-                    "/api/projects/*/jobs/run-command," +
-                    "/api/projects/*/import/ms-data-local-files-job," +
-                    "/api/projects/*/import/ms-local-data-files," +
-                    "/api/projects/*/import/preprocessed-local-data-files-job," +
-                    "/api/projects/*/import/preprocessed-local-data-files," +
-                    "/api/projects/*/copy,";
-
-//                    "/api/databases/*/import/from-files-job," +
+    private final static List<String> STABLE_EXCLUSIONS = List.of(
+            "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree",
+                    "/api/projects/*/jobs/run-command",
+                    "/api/projects/*/import/ms-data-local-files-job",
+                    "/api/projects/*/import/ms-local-data-files",
+                    "/api/projects/*/import/preprocessed-local-data-files-job",
+                    "/api/projects/*/import/preprocessed-local-data-files",
+                    "/api/projects/*/copy"
+//                    "/api/databases/*/import/from-files-job",
 //                    "/api/databases/*/import/from-files";
+    );
+
+    private static final List<String> BASIC_EXCLUSIONS = List.of("/api/projects/*/gui/advanced");
+
 
     @CommandLine.Option(names = {"--api-doc-mode", "--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
@@ -93,25 +99,19 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             setApiDocMode(ApiDocMode.STABLE);
     }
 
-    @CommandLine.Option(names = {"--api-mode"}, description = "Specify api endpoints shown in swagger gui and openapi spec.", hidden = true)
+    @CommandLine.Option(names = {"--api-mode"}, description = "Specify api endpoints shown in swagger gui and openapi spec.", defaultValue = "BASIC", hidden = true)
     private void setApiDocMode(ApiDocMode apiDocMode) {
         switch (apiDocMode) {
-            case STABLE -> {
-                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
-                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
-            }
-            case BASIC -> {
-                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
-                System.getProperties().remove("springdoc.pathsToExclude");
-            }
-            case STABLE_ADVANCED -> {
-                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
-                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
-            }
-            case ADVANCED -> {
-                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
-                System.getProperties().remove("springdoc.pathsToExclude");
-            }
+            case STABLE ->
+                    System.setProperty("springdoc.pathsToExclude",
+                            Stream.concat(STABLE_EXCLUSIONS.stream(), BASIC_EXCLUSIONS.stream())
+                                    .collect(Collectors.joining(",")));
+            case BASIC ->
+                    System.setProperty("springdoc.pathsToExclude", String.join(",", BASIC_EXCLUSIONS));
+            case STABLE_ADVANCED ->
+                    System.setProperty("springdoc.pathsToExclude", String.join(",", STABLE_EXCLUSIONS));
+            case ADVANCED ->
+                    System.getProperties().remove("springdoc.pathsToExclude");
         }
     }
 

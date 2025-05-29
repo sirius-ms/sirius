@@ -169,13 +169,13 @@ public class ResultPanel extends JTabbedPane {
         addChangeListener(e -> {
             Component selectedComponent = getSelectedComponent();
 
-            if (selectedComponent == formulasTab &&  siriusResultElements.getSelectedElement() != null) {
+            if (selectedComponent == formulasTab && siriusResultElements.getSelectedElement() != null) {
                 //formulas tab
                 formulasTab.initSoftwareTour(gui.getProperties());
-            } else if (selectedComponent == formulaHeaderFingerprint &&  siriusResultElements.getSelectedElement() != null) {
+            } else if (selectedComponent == formulaHeaderFingerprint && siriusResultElements.getSelectedElement() != null) {
                 //fingerprint tab
                 checkAndInitFingerprintSoftwareTour(formulaHeaderFingerprint, siriusResultElements.getSelectedElement(), gui);
-            } else if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
+            } else if (selectedComponent == formulaHeaderCanopus && siriusResultElements.getSelectedElement() != null) {
                 //canopus tab
                 checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
             } else if (selectedComponent == structureAnnoTab && combinedStructureListSubstructureView.getSelectedElement() != null) {
@@ -225,8 +225,8 @@ public class ResultPanel extends JTabbedPane {
         if (show && idx < 0) {
             if (spectralMatchList == null) {
                 spectralMatchList = new SpectralMatchList(compoundList);
-                spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
             }
+            SpectralMatchingPanel spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
             // add to second last position
             int homologueSeriesTabIndex = indexOfTab(massDefectTabName);
             insertTab(spectralMatchingTabName, null, spectralMatchingTab, spectralMatchingTab.getDescription(), homologueSeriesTabIndex < 0 ? getTabCount() : homologueSeriesTabIndex);
@@ -241,9 +241,7 @@ public class ResultPanel extends JTabbedPane {
     private void showHomologueSeriesTab(boolean show) {
         int idx = indexOfTab(massDefectTabName);
         if (show && idx < 0) {
-            if (massDefectTab == null) {
-                massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
-            }
+            KendrickMassDefectPanel massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
             // add to last position
             int spectralMatchingTabIndex = indexOfTab(spectralMatchingTabName);
             insertTab(massDefectTabName, null, massDefectTab, massDefectTab.getDescription(), spectralMatchingTabIndex < 0 ? getTabCount() : spectralMatchingTabIndex + 1);
