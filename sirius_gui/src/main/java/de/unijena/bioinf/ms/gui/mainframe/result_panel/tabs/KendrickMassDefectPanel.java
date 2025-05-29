@@ -25,7 +25,7 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
     private static String makeUrl(SiriusGui siriusGui, @NotNull CompoundList compoundList){
         String fid = compoundList.getCompoundListSelectionModel().getSelected().stream().findFirst().map(InstanceBean::getFeatureId).orElse(null);
         return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
+                + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null,null);
     }
 
     @Override
