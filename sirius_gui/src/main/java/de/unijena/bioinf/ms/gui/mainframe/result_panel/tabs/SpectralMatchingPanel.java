@@ -26,29 +26,34 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
+import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.net.URI;
+import java.util.List;
 
 
-public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription {
+public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDescription, ActiveElementChangedListener<SpectralMatchBean, InstanceBean> {
 
     @Getter
     private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
     @NotNull
     private final LoadablePanel loadablePanel;
-
+    @NotNull private final SpectralMatchList matchList;
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
-
+        this.matchList = matchList;
         this.tableView = new SpectralMatchingTableView(matchList);
         this.spectraVisualizationPanel = new SpectraVisualizationPanel(matchList.getGui(), this.tableView.getFilteredSelectionModel());
 
@@ -59,9 +64,15 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
         matchList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
     }
 
-    public static class SpectraVisualizationPanel extends JCefBrowserPanel {
+    @Override
+    public void resultsChanged(InstanceBean elementsParent, SpectralMatchBean selectedElement, List<SpectralMatchBean> resultElements, ListSelectionModel selections) {
+        disableLoading();
+    }
+
+    public static class SpectraVisualizationPanel extends JCefBrowserPanel implements ListSelectionListener {
+        @NotNull private final DefaultEventSelectionModel<SpectralMatchBean> selectionModel;
         private SpectraVisualizationPanel(SiriusGui siriusGui, @NotNull DefaultEventSelectionModel<SpectralMatchBean> selectionModel) {
-          this(siriusGui, selectionModel, null);
+          this(siriusGui, selectionModel, selectionModel.getSelected().stream().findFirst().orElse(null));
         }
 
         private SpectraVisualizationPanel(SiriusGui siriusGui,
@@ -69,13 +80,8 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
                                           @Nullable SpectralMatchBean initialSelection
         ) {
             super(makeUrl(siriusGui, initialSelection), siriusGui);
-            selectionModel.addListSelectionListener(e -> (
-                    (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream().findFirst()
-                    .ifPresentOrElse(matchBean ->
-                                    updateSelectedSpectralMatch(
-                                            matchBean.getInstance().getFeatureId(),
-                                            matchBean.getMatch().getSpecMatchId()),
-                            () -> updateSelectedSpectralMatch(null, null)));
+            this.selectionModel = selectionModel;
+            selectionModel.addListSelectionListener(this);
         }
 
         private static String makeUrl(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean){
@@ -84,6 +90,38 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
             return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/libmatch")
                     + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, mid);
         }
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            valueChanged(((DefaultEventSelectionModel<SpectralMatchBean>) e.getSource()).getSelected().stream()
+                    .findFirst().orElse(null));
+        }
+
+        public void valueChanged(@Nullable SpectralMatchBean matchBean) {
+            if (matchBean == null) {
+                updateSelectedSpectralMatch(null, null);
+            } else {
+                updateSelectedSpectralMatch(matchBean.getInstance().getFeatureId(), matchBean.getMatch().getSpecMatchId());
+            }
+        }
+
+        @Override
+        public void removeNotify() {
+            // Call the superclass implementation to complete normal component removal
+            super.removeNotify();
+            selectionModel.removeListSelectionListener(this);
+        }
+    }
+
+    /**
+     * Called automatically when the component is being removed from the parent container.
+     * This is the proper Swing way to clean up resources when a component is no longer displayed.
+     */
+    @Override
+    public void removeNotify() {
+        // Call the superclass implementation to complete normal component removal
+        super.removeNotify();
+        matchList.removeActiveResultChangedListener(this);
     }
 
     @Override
