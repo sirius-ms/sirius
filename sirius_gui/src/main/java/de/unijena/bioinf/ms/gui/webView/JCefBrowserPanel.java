@@ -161,13 +161,14 @@ public class JCefBrowserPanel extends JPanel {
     }
 
     protected void initialize(String url) {
+        boolean isLinux = System.getProperty("os.name").toLowerCase().contains("linux");
         ProxyManager.enforceGlobalProxySetting();
         setLayout(new BorderLayout());
 
         setupLinkInterception();
         setupLoadingHandling();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
-        browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
+        browser = client.createBrowser(url, isLinux ? CefRendering.DEFAULT : CefRendering.OFFSCREEN, false);
         // very important to ensure that the JCEF process can be closed correctly without creating a memory leak
         browser.setCloseAllowed();
         // we create the browser instance synchronously because this is the only way to ensure the browser is fully
@@ -177,19 +178,9 @@ public class JCefBrowserPanel extends JPanel {
 
         // Apply the Linux scroll fix
         // This should be done before adding the component to the panel
-        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
-            MouseWheelFix.apply(browserUI);
-            client.addDialogHandler((dialogBrowser, mode, title, defaultPath, acceptFilters, callback) -> {
-                // Native file dialogs don't work on linux, see
-                // https://github.com/chromiumembedded/cef/blob/master/libcef/browser/file_dialog_manager.cc#L405
-                // https://github.com/JetBrains/jcef/blob/dev/native/context.cpp#L211
-                //
-                // Implementing a java dialog also doesn't work, results in error "The request is not allowed by the user agent or the platform in the current context"
-                // Maybe can be fixed with some chromium flags to allow local system writing
-                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(JCefBrowserPanel.this, "Native file dialogs from this view are not available on Linux.", null, JOptionPane.ERROR_MESSAGE));
-                callback.Cancel();
-                return true;
-            });
+        if (isLinux) {
+            JCEFLinuxFixer.fixMousewheelScrolling(browserUI);
+            JCEFLinuxFixer.setupPopupErrorListener(client, JCefBrowserPanel.this);
         }
 
         add(browserUI, BorderLayout.CENTER);
