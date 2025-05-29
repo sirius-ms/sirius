@@ -175,6 +175,8 @@ public class JCefBrowserPanel extends JPanel {
         // loaded before we do JS call to update the data ids to be shown
         browser.createImmediately();
         Component browserUI = browser.getUIComponent();
+        // prevent drop handling for this panel since it is unnecessary and seems to crash the browser sometimes.
+        browserUI.setDropTarget(null);
 
         // Apply the Linux scroll fix
         // This should be done before adding the component to the panel
@@ -184,6 +186,7 @@ public class JCefBrowserPanel extends JPanel {
         }
 
         add(browserUI, BorderLayout.CENTER);
+        setDropTarget(null);
     }
 
     private void setupLoadingHandling() {
