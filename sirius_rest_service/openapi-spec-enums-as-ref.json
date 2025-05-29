@@ -30,7 +30,7 @@
     },
     {
       "name": "Gui",
-      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+      "description": "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Projects",
@@ -7242,7 +7242,7 @@
     "/api/guis": {
       "get": {
         "tags": [
-          "Gui Advanced"
+          "Gui"
         ],
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
