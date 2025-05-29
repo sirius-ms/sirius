@@ -55,15 +55,16 @@ jobs:
             echo "Unsupported OS: ${{ matrix.os }}"
             exit 1
           fi
-
-          if [[ "${{ matrix.targetArchitecture }}" == "amd64" ]]; then
-            ARCH_TYPE="x64"
-          elif [[ "${{ matrix.targetArchitecture }}" == "arm64" ]]; then
-            ARCH_TYPE="aarch64"
-          else
-            echo "Unsupported architecture: ${{ matrix.targetArchitecture }}"
-            exit 1
-          fi
+          # we always build on x64
+          ARCH_TYPE="x64"
+          # if [[ "${{ matrix.targetArchitecture }}" == "amd64" ]]; then
+          #   ARCH_TYPE="x64"
+          # elif [[ "${{ matrix.targetArchitecture }}" == "arm64" ]]; then
+          #   ARCH_TYPE="aarch64"
+          # else
+          #   echo "Unsupported architecture: ${{ matrix.targetArchitecture }}"
+          #   exit 1
+          # fi
           
           JBR_FILE_NAME="jbrsdk_jcef-${JDK_VERION}-${OS_TYPE}-${ARCH_TYPE}-${JBR_VERSION_TAG}.tar.gz"
           JBR_DOWNLOAD_URL_BASE="https://cache-redirector.jetbrains.com/intellij-jbr"
