@@ -88,14 +88,25 @@ jobs:
                JAVA_HOME_PATH="${JAVA_HOME_PATH}/Contents/Home"
           fi
 
-          echo "Setting JAVA_HOME to ${JAVA_HOME_PATH}"
+          echo "Effective JAVA_HOME will be: ${JAVA_HOME_PATH}"
+          
+          # Export for current script execution AND set for subsequent steps
+          export JAVA_HOME="${JAVA_HOME_PATH}"
+          export PATH="${JAVA_HOME_PATH}/bin:${PATH}"
+          
           echo "JAVA_HOME=${JAVA_HOME_PATH}" >> $GITHUB_ENV
           echo "${JAVA_HOME_PATH}/bin" >> $GITHUB_PATH
-
-          echo "Java version:"
+          
+          echo "--- Verifying Java version from new JBR ---"
+          echo "JAVA_HOME is: $JAVA_HOME"
+          echo "PATH is: $PATH"
+          which java
           java -version
-          echo "JAVAC version:"
-          javac -version || echo "javac not found or not in JCEF JBR variant"
+          echo "--- Verifying Javac version from new JBR ---"
+          which javac
+          javac -version || echo "javac not found or not in JCEF JBR variant (this might be okay for some JRE-like JBRs)"
+          echo "--- Verification complete ---"
+
 
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
@@ -126,10 +137,10 @@ jobs:
         run: /usr/bin/security find-identity
 
       - name: Gradle Build
-        working-directory: sirius_dist/sirius_gui_dist
+#        working-directory: sirius_dist/sirius_gui_dist
         run: |
           chmod +x ./gradlew
-          ./gradlew --stacktrace clean buildJpDists \
+          ./gradlew --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
             -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
