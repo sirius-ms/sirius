@@ -14,12 +14,18 @@ import java.net.URI;
 import java.util.List;
 
 public class KendrickMassDefectPanel extends JCefBrowserPanel implements ExperimentListChangeListener, PanelDescription {
-
+    @NotNull private final CompoundList compoundList;
 
     public KendrickMassDefectPanel(@NotNull CompoundList compoundList, SiriusGui siriusGui) {
-        super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
+        super(makeUrl(siriusGui, compoundList), siriusGui);
+        this.compoundList = compoundList;
         compoundList.addChangeListener(this);
+    }
+
+    private static String makeUrl(SiriusGui siriusGui, @NotNull CompoundList compoundList){
+        String fid = compoundList.getCompoundListSelectionModel().getSelected().stream().findFirst().map(InstanceBean::getFeatureId).orElse(null);
+        return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
+                + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
     }
 
     @Override
@@ -34,12 +40,18 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
     }
 
     @Override
+    public void removeNotify() {
+        // Call the superclass implementation to complete normal component removal
+        super.removeNotify();
+        compoundList.removeChangeListener(this);
+    }
+
+    @Override
     public String getDescription() {
         return getDescriptionString();
     }
 
     public static String getDescriptionString() {
-        //todo write useful description
         return "Kendrick mass defect plot for homologue series.";
     }
 }
