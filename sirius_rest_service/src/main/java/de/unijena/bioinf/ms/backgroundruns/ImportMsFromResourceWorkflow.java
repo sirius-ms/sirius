@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.LongSets;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -147,8 +148,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                     importedRunIds = importerJJob.getImportedRunIds();
 
 
-                LongSet sampleRuns = importedRunIds.get(TagDefinitions.SAMPLE_TYPE_SAMPLE);
-                LongSet blankRuns = importedRunIds.get(TagDefinitions.SAMPLE_TYPE_BLANK);
+                LongSet sampleRuns = importedRunIds.getOrDefault(TagDefinitions.SAMPLE_TYPE_SAMPLE, LongSets.emptySet());
+                LongSet blankRuns = importedRunIds.getOrDefault(TagDefinitions.SAMPLE_TYPE_BLANK, LongSets.emptySet());
                 if (!sampleRuns.isEmpty() && !blankRuns.isEmpty()) { // compute fold changes if there are mor
                     SiriusJobs.getGlobalJobManager().submitJob(
                             new AlignedFeaturesFoldChangeJob(project.project(),
