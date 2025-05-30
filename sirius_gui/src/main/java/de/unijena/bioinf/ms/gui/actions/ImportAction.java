@@ -117,7 +117,7 @@ public class ImportAction extends AbstractGuiAction {
                 parameters.setAlignLCMSRuns(dialog.isAlign());
                 // Get sample type assignments
                 parameters.setSampleTypes(dialog.getLCMSFilesSampleTypes());
-                //todo fix sensitive mode
+
                 if(dialog.isSensitiveMode())
                     parameters.setMinSNR(2d);
 

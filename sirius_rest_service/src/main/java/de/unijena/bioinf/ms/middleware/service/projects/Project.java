@@ -142,10 +142,6 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
-    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
-        return findAlignedFeatures(pageable, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
-    }
-
 
     default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
         return findAlignedFeaturesById(alignedFeatureId, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
