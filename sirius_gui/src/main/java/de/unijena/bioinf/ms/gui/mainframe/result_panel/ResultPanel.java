@@ -67,8 +67,9 @@ public class ResultPanel extends JTabbedPane {
     private final EpimetheusPanel structureAnnoTab;
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
-    private SpectralMatchingPanel spectralMatchingTab;
-    private final KendrickMassDefectPanel massDefectTab;
+
+    private final String spectralMatchingTabName = "Library Matches";
+    private final String massDefectTabName = "Homologue Series";
 
     private StructureList databaseStructureList;
     private StructureList combinedStructureListSubstructureView;
@@ -150,26 +151,23 @@ public class ResultPanel extends JTabbedPane {
         deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
         addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
 
-
         // substructure annotation tab
         combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
-        addTab("Homologue Series", null, massDefectTab, massDefectTab.getDescription());
 
         //software tour listener
         addChangeListener(e -> {
             Component selectedComponent = getSelectedComponent();
 
-            if (selectedComponent == formulasTab &&  siriusResultElements.getSelectedElement() != null) {
+            if (selectedComponent == formulasTab && siriusResultElements.getSelectedElement() != null) {
                 //formulas tab
                 formulasTab.initSoftwareTour(gui.getProperties());
-            } else if (selectedComponent == formulaHeaderFingerprint &&  siriusResultElements.getSelectedElement() != null) {
+            } else if (selectedComponent == formulaHeaderFingerprint && siriusResultElements.getSelectedElement() != null) {
                 //fingerprint tab
                 checkAndInitFingerprintSoftwareTour(formulaHeaderFingerprint, siriusResultElements.getSelectedElement(), gui);
-            } else if (selectedComponent == formulaHeaderCanopus &&  siriusResultElements.getSelectedElement() != null) {
+            } else if (selectedComponent == formulaHeaderCanopus && siriusResultElements.getSelectedElement() != null) {
                 //canopus tab
                 checkAndInitCanopusSoftwareTour(formulaHeaderCanopus, siriusResultElements.getSelectedElement(), gui);
             } else if (selectedComponent == structureAnnoTab && combinedStructureListSubstructureView.getSelectedElement() != null) {
@@ -178,7 +176,7 @@ public class ResultPanel extends JTabbedPane {
             } else if (selectedComponent == structuresTab && !databaseStructureList.getElementList().isEmpty()) {
                 //database search tab
                 structuresTab.initSoftwareTour(gui.getProperties());
-            } else if (selectedComponent == deNovoStructuresTab && !combinedStructureListDeNovoView.getElementList().isEmpty()) {
+            } else if (selectedComponent == deNovoStructuresTab && combinedStructureListDeNovoView.getElementList().stream().anyMatch(c -> c.isDeNovo())) {
                 //de novo structures tab
                 deNovoStructuresTab.initSoftwareTour(gui.getProperties());
             }
@@ -189,36 +187,56 @@ public class ResultPanel extends JTabbedPane {
         gui.getProperties().addPropertyChangeListener("showSpectraMatchPanel", evt ->
                 showSpectralMatchingTab((Boolean) evt.getNewValue()));
         showSpectralMatchingTab(gui.getProperties().isShowSpectraMatchPanel());
+
+        // KMD plot
+        gui.getProperties().addPropertyChangeListener("showHomologueSeriesPanel", evt ->
+                showHomologueSeriesTab((Boolean) evt.getNewValue()));
+        showHomologueSeriesTab(gui.getProperties().isShowHomologueSeriesPanel());
     }
 
     private void checkAndInitCanopusSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
         if (instanceBean != null) {
-            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getCanopusPrediction(), SoftwareTourInfoStore.CanopusTabTourKey, gui);
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getCanopusPrediction(), SoftwareTourInfoStore.CanopusTabTourName, SoftwareTourInfoStore.CanopusTabTourKey, gui);
         }
     }
 
     private void checkAndInitFingerprintSoftwareTour(FormulaListHeaderPanel formulaHeaderCanopus, FormulaResultBean instanceBean, @NotNull SiriusGui gui) {
         if (instanceBean != null) {
-            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getPredictedFingerprint(), SoftwareTourInfoStore.FingerprintTabTourKey, gui);
+            checkAndInitSoftwareTour(formulaHeaderCanopus, instanceBean.getPredictedFingerprint(), SoftwareTourInfoStore.FingerprintTabTourName, SoftwareTourInfoStore.FingerprintTabTourKey, gui);
         }
     }
 
-    private void checkAndInitSoftwareTour(FormulaListHeaderPanel formulaHeader, Optional data, String tourKey, @NotNull SiriusGui gui) {
+    private void checkAndInitSoftwareTour(FormulaListHeaderPanel formulaHeader, Optional data, String tourName, String tourKey, @NotNull SiriusGui gui) {
         if (data.isPresent() && Objects.nonNull(data.get())) {
-            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeader, tourKey, gui.getProperties()));
+            Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(formulaHeader, tourName, tourKey, gui.getProperties()));
         }
     }
 
     private void showSpectralMatchingTab(boolean show) {
-        String name = "Library Matches";
-        int idx = indexOfTab(name);
+        int idx = indexOfTab(spectralMatchingTabName);
         if (show && idx < 0) {
             if (spectralMatchList == null) {
                 spectralMatchList = new SpectralMatchList(compoundList);
-                spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
             }
+            SpectralMatchingPanel spectralMatchingTab = new SpectralMatchingPanel(spectralMatchList);
+            // add to second last position
+            int homologueSeriesTabIndex = indexOfTab(massDefectTabName);
+            insertTab(spectralMatchingTabName, null, spectralMatchingTab, spectralMatchingTab.getDescription(), homologueSeriesTabIndex < 0 ? getTabCount() : homologueSeriesTabIndex);
+            return;
+        }
+
+        if (!show && idx >= 0) {
+            removeTabAt(idx);
+        }
+    }
+
+    private void showHomologueSeriesTab(boolean show) {
+        int idx = indexOfTab(massDefectTabName);
+        if (show && idx < 0) {
+            KendrickMassDefectPanel massDefectTab = new KendrickMassDefectPanel(compoundList, gui);
             // add to last position
-            addTab(name, null, spectralMatchingTab, spectralMatchingTab.getDescription());
+            int spectralMatchingTabIndex = indexOfTab(spectralMatchingTabName);
+            insertTab(massDefectTabName, null, massDefectTab, massDefectTab.getDescription(), spectralMatchingTabIndex < 0 ? getTabCount() : spectralMatchingTabIndex + 1);
             return;
         }
 

@@ -80,6 +80,6 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription, Lo
     }
 
     public void initSoftwareTour(GuiProperties guiProperties) {
-        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.FormulaTabTourKey, guiProperties);
+        SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.FormulaTabTourName, SoftwareTourInfoStore.FormulaTabTourKey, guiProperties);
     }
 }

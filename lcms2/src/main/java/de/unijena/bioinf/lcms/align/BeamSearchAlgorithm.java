@@ -11,10 +11,10 @@ import java.util.List;
 
 public class BeamSearchAlgorithm implements AlignmentAlgorithm{
     @Override
-    public void align(AlignmentStatistics stats, AlignmentScorer scorer, AlignWithRecalibration rec, MoI[] left, MoI[] right, CallbackForAlign align,CallbackForLeftOver leftOver) {
-        final double maxAllowedRtDiff = 4*stats.getExpectedRetentionTimeDeviation();
+    public void align(AlignmentStatistics stats, AlignmentThresholds thresholds, AlignmentScorer scorer, AlignWithRecalibration rec, MoI[] left, MoI[] right, CallbackForAlign align,CallbackForLeftOver leftOver) {
+        final double maxAllowedRtDiff = thresholds.hasRetentionTimeThreshold() ? thresholds.getMaximalAllowedRetentionTimeError() : 4*stats.getExpectedRetentionTimeDeviation();
         final double maxmz = Math.max(left[left.length-1].getMz(),right[right.length-1].getMz());
-        final double maxAllowedMzDiff = Math.max(new Deviation(12).absoluteFor(maxmz), 4*stats.expectedMassDeviationBetweenSamples.absoluteFor(maxmz));
+        final double maxAllowedMzDiff = thresholds.hasMassThreshold() ? thresholds.getMaximalAllowedMassError().absoluteFor(maxmz) : Math.max(new Deviation(12).absoluteFor(maxmz), 4*stats.expectedMassDeviationBetweenSamples.absoluteFor(maxmz));
         final List<PossibleAlignment> possibleAlignments = new ArrayList<>();
         int rinit = 0;
         eachLeft:

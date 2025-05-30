@@ -7,12 +7,12 @@ import java.util.List;
 
 public interface AlignmentStrategy {
 
-    public AlignmentBackbone makeAlignmentBackbone(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer);
+    public AlignmentBackbone makeAlignmentBackbone(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentThresholds thresholds, AlignmentScorer scorer);
 
     /**
      * Align all MoIs from all samples into merge. The method has no return value. Instead, all aligned MoIs are stored
      * into the merge storage
      */
-    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, Tracker tracker);
+    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentThresholds thresholds, AlignmentScorer scorer, Tracker tracker);
 
 }

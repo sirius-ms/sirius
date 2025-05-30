@@ -15,6 +15,6 @@ public class AlignmentStatistics implements Serializable {
     protected double minRt, maxRt, minMz, maxMz;
     protected IntArrayList mappingLengths;
     protected FloatArrayList stepSizes;
-    protected float averageNumberOfAlignments, medianNumberOfAlignments;
+    protected float averageNumberOfAlignments, medianNumberOfAlignments, numberOfAlignments25Quantile;
 
 }

@@ -76,10 +76,10 @@ public class SiriusToolbar extends JToolBar {
         db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
         addSeparator(new Dimension(20, 20));
-
+/* Temporarily disabled
         sample = new ToolbarButton(SiriusActions.SHOW_SAMPLE.getInstance(gui, true));
         add(sample);
-        addSeparator(new Dimension(20, 20));
+        addSeparator(new Dimension(20, 20));*/
 
         jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
         add(jobs);

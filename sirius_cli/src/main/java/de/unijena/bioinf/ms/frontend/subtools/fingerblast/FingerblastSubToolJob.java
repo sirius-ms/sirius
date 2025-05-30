@@ -23,8 +23,10 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.FunctionalMetabolomics;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -43,9 +45,14 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.rest.NetUtils;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smarts.SmartsPattern;
+import org.openscience.cdk.smiles.SmilesParser;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +70,8 @@ public class FingerblastSubToolJob extends InstanceJob {
     public boolean isAlreadyComputed(@NotNull Instance inst) {
         return inst.hasStructureSearchResult();
     }
+
+    private record RCPatterns (String name, List<SmartsPattern> implicitH, List<SmartsPattern> explicitH) {}
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
@@ -127,6 +136,40 @@ public class FingerblastSubToolJob extends InstanceJob {
             updateProgress(60);
             checkForInterruption();
 
+            // check for functional metabolomics annotation
+            FunctionalMetabolomics fmet = inst.getExperiment().getAnnotation(FunctionalMetabolomics.class, FunctionalMetabolomics::none);
+            if (fmet.isPresent()) {
+                // obtain smarts strings
+                List<RCPatterns> patterns  = getPatterns(fmet);
+                final SmilesParser smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
+                List<BasicJJob<Boolean>> jobs = Partition.ofNumber(tanimotoJobs, 2 * SiriusJobs.getCPUThreads())
+                        .stream().map(l -> new BasicJJob<Boolean>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() {
+                                l.forEach(p -> {
+                                    boolean[] matches = searchFmetPatterns(smilesParser, p.getSecond(), patterns);
+                                    int allMatched = 0;
+                                    for (boolean v : matches) if (v) ++allMatched;
+                                    if (allMatched==matches.length) {
+                                        // add agreement tag
+                                        p.getSecond().getMutableLinks().add(new DBLink(FunctionalMetabolomics.ACCEPT, patterns.stream().map(x->x.name).collect(Collectors.joining(", "))));
+                                    } else {
+                                        // add violation tag
+                                        List<String> violated = new ArrayList<>();
+                                        for (int k=0; k < matches.length; ++k) {
+                                            if (!matches[k]) violated.add(patterns.get(k).name);
+                                        }
+                                        p.getSecond().getMutableLinks().add(new DBLink(FunctionalMetabolomics.REJECT, String.join(", ", violated)));
+                                    }
+                                });
+                                return Boolean.TRUE;
+                            }
+                        }).collect(Collectors.toList());
+                jobs.forEach(this::submitJob);
+                jobs.forEach(JJob::getResult);
+                checkForInterruption();
+            }
+
             List<BasicJJob<Boolean>> jobs = Partition.ofNumber(tanimotoJobs, 2 * SiriusJobs.getCPUThreads())
                     .stream().map(l -> new BasicJJob<Boolean>(JobType.CPU) {
                         @Override
@@ -152,6 +195,54 @@ public class FingerblastSubToolJob extends InstanceJob {
         inst.saveStructureSearchResult(inputData);
         updateProgress(97);
 
+    }
+
+    private static List<RCPatterns> getPatterns(FunctionalMetabolomics fmet) {
+        List<RCPatterns> patterns = new ArrayList<>();
+        for (FunctionalMetabolomics.ReactionClass rclass : fmet.getReactionClasses()) {
+            final List<SmartsPattern> explicitHPatterns = new ArrayList<>(), implicitHPatterns = new ArrayList<>();
+            rclass.reactions().stream().filter(FunctionalMetabolomics.Reaction::explicitHydrogens).map(FunctionalMetabolomics.Reaction::eductSmarts)
+                    .distinct().map(x->SmartsPattern.create(x, SilentChemObjectBuilder.getInstance())).forEach(explicitHPatterns::add);
+            rclass.reactions().stream().filter(x->!x.explicitHydrogens()).map(FunctionalMetabolomics.Reaction::eductSmarts)
+                    .distinct().map(x->SmartsPattern.create(x, SilentChemObjectBuilder.getInstance())).forEach(implicitHPatterns::add);
+            patterns.add(new RCPatterns(rclass.name(), implicitHPatterns, explicitHPatterns));
+        }
+        return patterns;
+    }
+
+    private static boolean[] searchFmetPatterns(SmilesParser smilesParser, FingerprintCandidate candidate, List<RCPatterns> patterns) {
+        try {
+            IAtomContainer mol = smilesParser.parseSmiles(candidate.getSmiles());
+            SmartsPattern.prepare(mol);
+            boolean[] matches = new boolean[patterns.size()];
+            // implicit check
+            for (int k=0; k < patterns.size(); ++k) {
+                RCPatterns pats = patterns.get(k);
+                for (SmartsPattern pat : pats.implicitH) {
+                    if (pat.matches(mol)) {
+                        matches[k]=true;
+                        break;
+                    }
+                }
+            }
+            if (patterns.stream().anyMatch(x->!x.explicitH.isEmpty())) {
+                // explicit check
+                AtomContainerManipulator.convertImplicitToExplicitHydrogens(mol);
+                for (int k=0; k < patterns.size(); ++k) {
+                    if (matches[k]) continue;
+                    RCPatterns pats = patterns.get(k);
+                    for (SmartsPattern pat : pats.explicitH) {
+                        if (pat.matches(mol)) {
+                            matches[k]=true;
+                            break;
+                        }
+                    }
+                }
+            }
+            return matches;
+        } catch (InvalidSmilesException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

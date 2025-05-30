@@ -75,7 +75,7 @@ public class SpectralUtils {
                 try {
                     List<Ms2ReferenceSpectrum> data = SpectralUtils.validateSpectra(chunk);
                     // add query spectrum
-                    chunk.forEach(x->x.setQuerySpectrum(fastCosine.prepareQuery(x.getPrecursorMz(), x.getSpectrum())));
+                    chunk.forEach(x->x.setSearchPreparedSpectrum(fastCosine.prepareQuery(x.getPrecursorMz(), x.getSpectrum())));
                     return library.addSpectra(data);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

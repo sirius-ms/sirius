@@ -30,14 +30,14 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import java.util.Set;
 
 @Requires(Ms1IsotopePattern.class)
-@Provides(FormulaConstraints.class)
+@Provides(DetectedFormulaConstraints.class)
 public interface ElementDetection {
 
     /**
      * detect chemical elements from isotope pattern.
      * @return null, if no isotope pattern available, otherwise the formula constraints for the detected elements
      */
-    public FormulaConstraints detect(ProcessedInput processedInput);
+    public DetectedFormulaConstraints detect(ProcessedInput processedInput);
 
     public Set<Element> getPredictableElements();
 

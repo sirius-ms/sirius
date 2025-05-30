@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.babelms.utils.SmilesUCdk;
 import io.github.dan2097.jnainchi.InchiFlag;
 import io.github.dan2097.jnainchi.InchiStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -46,13 +47,13 @@ import org.openscience.cdk.smarts.Smarts;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -60,6 +61,7 @@ import static de.unijena.bioinf.ChemistryBase.chem.InChIs.*;
 import static de.unijena.bioinf.ChemistryBase.chem.SmilesU.*;
 
 
+@Slf4j
 public class InChISMILESUtils {
 
     public static <X extends Throwable> InChIGeneratorFactory getInChIGeneratorFactoryOrThrow() throws RuntimeException {
@@ -103,6 +105,28 @@ public class InChISMILESUtils {
         return getInchi(getAtomContainerFromInchi(inchi), keepStereoInformation);
     }
 
+    public static InChI getInchiOrThrow(IAtomContainer atomContainer, boolean keepStereoInformation) {
+        try {
+            return getInchi(atomContainer, keepStereoInformation);
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static InChI getInchiOrNull(IAtomContainer atomContainer, boolean keepStereoInformation) {
+        try {
+            return getInchi(atomContainer, keepStereoInformation);
+        } catch (CDKException e) {
+            log.warn("Could not load InChI from IAtomContainer: Cause: {}", e.getMessage());
+            log.debug("Could not load InChI from IAtomContainer", e);
+            return null;
+        }
+    }
+
+    public static Optional<InChI> getInchiOpt(IAtomContainer atomContainer, boolean keepStereoInformation) {
+        return Optional.ofNullable(getInchiOrNull(atomContainer, keepStereoInformation));
+    }
+
     //    NEWPSOFF/DoNotAddH/SNon
     public static InChI getInchi(IAtomContainer atomContainer, boolean keepStereoInformation) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
@@ -110,7 +134,7 @@ public class InChISMILESUtils {
         InchiStatus state = inChIGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while reading AtomContainer with title '" + atomContainer.getTitle() + "' -> " + inChIGenerator.getMessage());
+                log.debug("Warning while reading AtomContainer with title '" + atomContainer.getTitle() + "' -> " + inChIGenerator.getMessage());
             String inchi = inChIGenerator.getInchi();
             if (inchi == null) return null;
             if (!isStandardInchi(inchi))
@@ -126,6 +150,13 @@ public class InChISMILESUtils {
         return SmilesGenerator.unique().create(atomContainer); //Unique - canonical SMILES string, different atom ordering produces the same* SMILES. No isotope or stereochemistry encoded.
     }
 
+    public static String getSmilesOrThrow(IAtomContainer atomContainer) {
+        try {
+            return getSmiles(atomContainer);
+        } catch (CDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public static String getSmiles(IAtomContainer atomContainer) throws CDKException {
         return SmilesGenerator.unique().create(atomContainer); //Absolute - canonical SMILES string, different atom ordering produces the same SMILES. Isotope and stereochemistry is encoded.
     }
@@ -142,11 +173,11 @@ public class InChISMILESUtils {
         InchiStatus state = structureGenerator.getStatus();
         if (state != InchiStatus.ERROR) {
             if (state == InchiStatus.WARNING)
-                LoggerFactory.getLogger(InChISMILESUtils.class).debug("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                log.debug("Warning while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
             return structureGenerator.getAtomContainer();
         } else {
             if (lazyErrorHandling) {
-                LoggerFactory.getLogger(InChISMILESUtils.class).error("Error while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
+                log.error("Error while parsing InChI:\n'" + inchi + "'\n-> " + structureGenerator.getMessage());
                 final IAtomContainer a = structureGenerator.getAtomContainer();
                 if (a != null) return a;
             }
@@ -297,7 +328,7 @@ public class InChISMILESUtils {
              IAtomContainer f = fragments.getAtomContainer(i);
             if (!pattern.matches(f)) {
                 if (mainComponentIdx>=0) {
-                    LoggerFactory.getLogger(InChISMILESUtils.class).warn("Molecule has more than one main connected component.");
+                    log.warn("Molecule has more than one main connected component.");
                     return null; //more than one component after removal of salts
                 }
                 mainComponentIdx = i;
@@ -308,9 +339,9 @@ public class InChISMILESUtils {
 
         if (mainComponentIdx == -1 ) {
             try {
-                LoggerFactory.getLogger(InChISMILESUtils.class).warn("No main component for: "+InChISMILESUtils.getSmiles(atomContainer));
+                log.warn("No main component for: "+InChISMILESUtils.getSmiles(atomContainer));
             } catch (CDKException e) {
-                LoggerFactory.getLogger(InChISMILESUtils.class).warn("No main component atomcontainer "+atomContainer.getID()+" | "+atomContainer.getTitle());
+                log.warn("No main component atomcontainer "+atomContainer.getID()+" | "+atomContainer.getTitle());
             }
             return null;
         }
@@ -333,7 +364,7 @@ public class InChISMILESUtils {
             removeAllNegativeChargesIfPossible(main);
         } else {
             //don't know which charges to remove.
-            LoggerFactory.getLogger(InChISMILESUtils.class).warn("Cannot remove charges from main connected component");
+            log.warn("Cannot remove charges from main connected component");
             return null;
         }
 

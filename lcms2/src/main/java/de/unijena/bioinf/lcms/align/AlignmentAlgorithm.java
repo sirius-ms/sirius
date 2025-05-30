@@ -17,6 +17,6 @@ public interface AlignmentAlgorithm {
      * @param right mz ordered array of MoIs to align
      * @param align callback to define which MoIs to align
      */
-    public void align(AlignmentStatistics stats, AlignmentScorer scorer, AlignWithRecalibration rec, MoI[] left,
+    public void align(AlignmentStatistics stats, AlignmentThresholds thresholds,  AlignmentScorer scorer, AlignWithRecalibration rec, MoI[] left,
                       MoI[] right, CallbackForAlign align, CallbackForLeftOver leftOver);
 }

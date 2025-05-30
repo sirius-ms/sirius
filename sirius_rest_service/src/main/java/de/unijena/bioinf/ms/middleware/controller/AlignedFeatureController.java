@@ -120,7 +120,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId    project space to get features (aligned over runs) from.
      * @param searchQuery       optional search query in lucene syntax.
      * @param pageable     pageable.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
@@ -158,17 +158,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     public Page<AlignedFeature> getAlignedFeaturesByGroup(@PathVariable String projectId,
                                                           @RequestParam String groupName,
                                                           @ParameterObject Pageable pageable,
-                                                          @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+                                                          @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
                                                           @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, msDataAsCosineQuery, optFields);
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesByGroup(groupName, pageable, msDataSearchPrepared, optFields);
     }
 
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
@@ -177,10 +177,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> getAlignedFeatures(
             @PathVariable String projectId,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), msDataAsCosineQuery, removeNone(optFields))
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), msDataSearchPrepared, removeNone(optFields))
                 .getContent();
     }
 
@@ -226,7 +226,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @return AlignedFeature with additional annotations and MS/MS data (if specified).
@@ -234,10 +234,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public AlignedFeature getAlignedFeature(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, msDataAsCosineQuery, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesById(alignedFeatureId, msDataSearchPrepared, removeNone(optFields));
     }
 
     /**
@@ -482,17 +482,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
-     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared    Returns all fragment spectra in a preprocessed form as used for fast
      *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                         peak assignments and reference spectra.
      * @return Mass Spec data of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/ms-data", produces = MediaType.APPLICATION_JSON_VALUE)
     public MsData getMsData(@PathVariable String projectId, @PathVariable String alignedFeatureId,
-                            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+                            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared
     ) {
         MsData msData = projectsProvider.getProjectOrThrow(projectId)
-                .findAlignedFeaturesById(alignedFeatureId, asCosineQuery, AlignedFeature.OptField.msData).getMsData();
+                .findAlignedFeaturesById(alignedFeatureId, msDataSearchPrepared, AlignedFeature.OptField.msData).getMsData();
         if (msData == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "MsData for '" + idString(projectId, alignedFeatureId) + "' not found!");
         return msData;
@@ -504,7 +504,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
@@ -513,11 +513,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<FormulaCandidate> getFormulaCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, msDataAsCosineQuery, removeNone(optFields));
+                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, msDataSearchPrepared, removeNone(optFields));
     }
 
     /**
@@ -526,7 +526,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      *
      * @param projectId           project-space to read from.
      * @param alignedFeatureId    feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
@@ -535,10 +535,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<FormulaCandidate> getFormulaCandidates(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
     ) {
-        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), msDataAsCosineQuery, optFields).stream().toList();
+        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), msDataSearchPrepared, optFields).stream().toList();
     }
 
     /**
@@ -548,7 +548,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
@@ -557,12 +557,12 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public FormulaCandidate getFormulaCandidate(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "none") EnumSet<FormulaCandidate.OptField> optFields
 
     ) {
         return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, msDataAsCosineQuery, removeNone(optFields));
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, msDataSearchPrepared, removeNone(optFields));
     }
 
     /**
@@ -665,10 +665,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                                                            @PathVariable String formulaId,
                                                            @PathVariable String inchiKey,
                                                            @RequestParam(defaultValue = "-1") int spectrumIndex,
-                                                           @RequestParam(defaultValue = "false") boolean asCosineQuery
+                                                           @RequestParam(defaultValue = "false") boolean searchPrepared
     ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, formulaId, alignedFeatureId, asCosineQuery);
+                .findAnnotatedSpectrumByStructureId(spectrumIndex, inchiKey, formulaId, alignedFeatureId, searchPrepared);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -690,7 +690,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @param inchiKey         2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared    Returns all fragment spectra in a preprocessed form as used for fast
      *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                         peak assignments and reference spectra.
      * @return Fragmentation spectrum annotated with fragments and sub-structures.
@@ -702,10 +702,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String alignedFeatureId,
             @PathVariable String formulaId,
             @PathVariable String inchiKey,
-            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByStructureId(inchiKey, formulaId, alignedFeatureId, asCosineQuery);
+                .findAnnotatedMsMsDataByStructureId(inchiKey, formulaId, alignedFeatureId, msDataSearchPrepared);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -763,6 +763,9 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @param spectrumIndex    index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
+     * @param searchPrepared    Returns all fragment spectra in a preprocessed form as used for fast
+     *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
+     *                         peak assignments and reference spectra.
      * @return Fragmentation spectrum annotated with fragment formulas and losses.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/annotated-spectrum", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -771,10 +774,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String alignedFeatureId,
             @PathVariable String formulaId,
             @RequestParam(defaultValue = "-1") int spectrumIndex,
-            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+            @RequestParam(defaultValue = "false", required = false) boolean searchPrepared
     ) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId, asCosineQuery);
+                .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId, searchPrepared);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Spectrum for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -793,7 +796,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
-     * @param asCosineQuery    Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared    Returns all fragment spectra in a preprocessed form as used for fast
      *                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                         peak assignments and reference spectra.
      * @return Fragmentation spectra annotated with fragment formulas and losses.
@@ -803,11 +806,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String projectId,
             @PathVariable String alignedFeatureId,
             @PathVariable String formulaId,
-            @RequestParam(defaultValue = "false", required = false) boolean asCosineQuery
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared
 
     ) {
         AnnotatedMsMsData res = projectsProvider.getProjectOrThrow(projectId)
-                .findAnnotatedMsMsDataByFormulaId(formulaId, alignedFeatureId, asCosineQuery);
+                .findAnnotatedMsMsDataByFormulaId(formulaId, alignedFeatureId, msDataSearchPrepared);
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Annotated MS/MS Data for '"
                     + idString(projectId, alignedFeatureId, formulaId)
@@ -1108,7 +1111,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
                 ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), match.getReferenceSpectrumType());
-                if (spec.getQuerySpectrum() != null)
+                if (spec.getSearchPreparedSpectrum() != null)
                     match.setReferenceSpectrum(Spectrums.createReferenceMsMs(spec));
                 return spec;
             } catch (ChemicalDatabaseException e) {

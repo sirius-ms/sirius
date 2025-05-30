@@ -13,8 +13,6 @@
 
 * `HUMAN_GUT` (value: `"HUMAN_GUT"`)
 
-* `ENV_MICROBIAL` (value: `"ENV_MICROBIAL"`)
-
 * `ALL_HUMAN` (value: `"ALL_HUMAN"`)
 
 * `ABIOTIC` (value: `"ABIOTIC"`)

@@ -20,8 +20,8 @@ public interface MergeStorage {
         return trcs.toArray(ProjectedTrace[]::new);
     }
     public ProjectedTrace getProjectedTrace(int mergedTraceUiD, int sampleId);
-    public void addIsotopeProjectedTrace(int parentTraceUiD, int isotopeId, int sampleId, ProjectedTrace trace);
-    public ProjectedTrace getIsotopeProjectedTrace(int parentTraceUiD, int isotopeId, int sampleId);
+    public void addIsotopeProjectedTrace(int parentTraceUiD, int charge, int isotopeId, int sampleId, ProjectedTrace trace);
+    public ProjectedTrace getIsotopeProjectedTrace(int parentTraceUiD, int charge, int isotopeId, int sampleId);
     public ProjectedTrace[][] getIsotopePatternFor(int parentTraceUiD);
 
 

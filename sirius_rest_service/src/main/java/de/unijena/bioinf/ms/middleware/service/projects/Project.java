@@ -84,7 +84,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompounds(Pageable pageable,
-                                 boolean msDataAsCosineQuery,
+                                 boolean msDataSearchPrepared,
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
@@ -105,7 +105,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     }
 
     @SneakyThrows
-    Compound findCompoundById(String compoundId, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+    Compound findCompoundById(String compoundId, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     void deleteCompoundById(String compoundId);
 
@@ -119,7 +119,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findAlignedFeatures(searchQuery, pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
 
-    Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+    Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataAsCosineQuery, AlignedFeature.OptField... optFields) {
         return findAlignedFeatures(pageable, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
@@ -130,15 +130,28 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Page<AlignedFeature> findAlignedFeaturesByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
 
+    /**
+     * Imports features without compound grouping. Since grouping is unknows each feature needs to belong to its own compound.
+     * To group features as compounds together, please use add compounds instead.
+     * @param features the features to be imported into the project
+     * @param profile the instrument the features have been measured on.
+     * @param optFields opt fields to be returned as part of the imported features/
+     * @return imported features with selected opt fields and UUIDs for features and compounds.
+     */
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
                                             @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
-    default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataAsCosineQuery, AlignedFeature.OptField... optFields) {
-        return findAlignedFeaturesById(alignedFeatureId, msDataAsCosineQuery, toEnumSet(AlignedFeature.OptField.class, optFields));
+    default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
+        return findAlignedFeatures(pageable, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
 
-    AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
+    default AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, AlignedFeature.OptField... optFields) {
+        return findAlignedFeaturesById(alignedFeatureId, msDataSearchPrepared, toEnumSet(AlignedFeature.OptField.class, optFields));
+    }
+
+    AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
@@ -218,16 +231,16 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId);
 
-    Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
+    Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
 
-    default Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataAsCosineQuery, FormulaCandidate.OptField... optFields) {
-        return findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, msDataAsCosineQuery, toEnumSet(FormulaCandidate.OptField.class, optFields));
+    default Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataSearchPrepared, FormulaCandidate.OptField... optFields) {
+        return findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, msDataSearchPrepared, toEnumSet(FormulaCandidate.OptField.class, optFields));
     }
 
-    FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
+    FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataSearchPrepared, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
 
-    default FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataAsCosineQuery, FormulaCandidate.OptField... optFields) {
-        return findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, msDataAsCosineQuery, toEnumSet(FormulaCandidate.OptField.class, optFields));
+    default FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataSearchPrepared, FormulaCandidate.OptField... optFields) {
+        return findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, msDataSearchPrepared, toEnumSet(FormulaCandidate.OptField.class, optFields));
     }
 
     Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
@@ -275,17 +288,17 @@ public interface Project<PSM extends ProjectSpaceManager> {
      * @param alignedFeatureId the feature the spectrum belongs to
      * @return Annotated MsMs Spectrum (Fragments and Structure)
      */
-    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery);
+    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared);
 
-    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
-        return findAnnotatedSpectrumByStructureId(specIndex, null, formulaId, alignedFeatureId, asCosineQuery);
+    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared) {
+        return findAnnotatedSpectrumByStructureId(specIndex, null, formulaId, alignedFeatureId, searchPrepared);
     }
 
-    AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery);
+    AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared);
 
 
-    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
-        return findAnnotatedMsMsDataByStructureId(null, formulaId, alignedFeatureId, asCosineQuery);
+    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared) {
+        return findAnnotatedMsMsDataByStructureId(null, formulaId, alignedFeatureId, searchPrepared);
     }
 
     String getFingerIdDataCSV(int charge);

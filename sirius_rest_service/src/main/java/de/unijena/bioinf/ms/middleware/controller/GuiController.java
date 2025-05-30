@@ -23,7 +23,9 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +33,10 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class GuiController {
+@RestController
+@Tag(name = "Gui", description = "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
+@ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false}")
+public class GuiController {
 
     protected final ProjectsProvider projectsProvider;
 
@@ -52,6 +57,16 @@ public abstract class GuiController {
     @ResponseStatus(HttpStatus.OK)
     public List<GuiInfo> getGuis() {
         return guiService.findGui();
+    }
+
+    /**
+     * Open GUI instance on specified project-space and bring the GUI window to foreground.
+     * @param projectId of project-space the GUI instance will connect to.
+     */
+    @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public void openGui(@PathVariable String projectId) {
+        guiService.createGuiInstance(projectId, null);
     }
 
     /**

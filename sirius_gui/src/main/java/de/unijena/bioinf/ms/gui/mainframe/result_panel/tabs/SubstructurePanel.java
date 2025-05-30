@@ -41,7 +41,6 @@ public class SubstructurePanel extends JCefBrowserPanel implements ListSelection
         String alignedFeatureId = fingerprintCandidateBean != null ? fingerprintCandidateBean.getParentFeatureId() : null;
         String formulaId = fingerprintCandidateBean != null ? fingerprintCandidateBean.getCandidate().getFormulaId() : null;
         String inchiKey = fingerprintCandidateBean != null ? fingerprintCandidateBean.getCandidate().getInchiKey() : null;
-        System.out.println("Loading afid: " + alignedFeatureId + ", fid: " + formulaId + ", inchikey: " + inchiKey);
         updateSelectedStructureCandidate(alignedFeatureId, formulaId, inchiKey);
     }
 

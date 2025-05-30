@@ -1804,8 +1804,8 @@ var TreeViewer = (function () {
     var container_height = containerElement.clientHeight;
 
     // Use container dimensions with some padding
-    width = container_width - 10;
-    height = container_height - 20;
+    width = container_width >=10 ?  container_width- 10 : 400;
+    height = container_height >=20 ? container_height - 20: 400;
     margin_left = 0;
     margin_top = boxheight + 3;
   }

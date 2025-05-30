@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -30,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -45,7 +45,6 @@ import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
-import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.statistics.FoldChange;
 import de.unijena.bioinf.ms.middleware.model.statistics.Statistics;
@@ -72,19 +71,14 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.*;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
-import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.persistence.storage.exceptions.ProjectTypeException;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
-import de.unijena.bioinf.sirius.ProcessedPeak;
-import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -122,6 +116,8 @@ import static org.springframework.http.HttpStatus.*;
 
 @Slf4j
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
+    private static final LongestCommonSubsequence lcs = new LongestCommonSubsequence();
+
     @NotNull
     private final String projectId;
 
@@ -1044,7 +1040,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
     private Compound convertToApiCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
-                                          boolean msDataAsCosineQuery,
+                                          boolean msDataSearchPrepared,
                                           @NotNull EnumSet<Compound.OptField> optFields,
                                           @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Compound.CompoundBuilder builder = Compound.builder()
@@ -1072,7 +1068,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         // features
         List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList -> featuresList.stream()
-                .map(f -> convertToApiFeature(f, msDataAsCosineQuery, mergedFeatureFields))).toList();
+                .map(f -> convertToApiFeature(f, msDataSearchPrepared, mergedFeatureFields))).toList();
         builder.features(features);
 
         if (optFields.contains(Compound.OptField.consensusAnnotations))
@@ -1096,10 +1092,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    @Nullable
     private de.unijena.bioinf.ms.persistence.model.core.Compound convertToProjectCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
         List<AlignedFeatures> features = compoundImport.getFeatures().stream()
                 .map(f -> convertToProjectFeature(f, profile))
-                .toList();
+                .filter(Objects::nonNull).toList();
+
+        if (features.isEmpty()){
+            log.warn("Compound named '{}' does not contains a single supported feature. Skipping!", compoundImport.getName());
+            return null;
+        }
 
         de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
                 .name(compoundImport.getName())
@@ -1126,75 +1128,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
+    @Nullable
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile){
+        try {
+            AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
+                    .name(featureImport.getName())
+                    .externalFeatureId(featureImport.getExternalFeatureId())
+                    .averageMass(featureImport.getIonMass())
+                    .detectedAdducts(FeatureImports.extractDetectedAdducts(featureImport));
 
-        AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
-                .name(featureImport.getName())
-                .externalFeatureId(featureImport.getExternalFeatureId())
-                .averageMass(featureImport.getIonMass());
+            if (featureImport.getDataQuality() != null)
+                builder.dataQuality(featureImport.getDataQuality());
 
-        if (featureImport.getDataQuality() != null)
-            builder.dataQuality(featureImport.getDataQuality());
+            builder.charge((byte) featureImport.getCharge());
 
-        MSData.MSDataBuilder msDataBuilder = MSData.builder();
-        builder.charge((byte) featureImport.getCharge());
-
-        if (featureImport.getMergedMs1() != null) {
-            SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
-            msDataBuilder.mergedMs1Spectrum(mergedMs1);
-        } else if (featureImport.getMs1Spectra() != null && !featureImport.getMs1Spectra().isEmpty()) {
-            Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
-            List<ProcessedPeak> mergeMSPeaks = sirius.getMs2Preprocessor().preprocess(FeatureImports.toExperiment(featureImport)).getMergedPeaks();
-            msDataBuilder.mergedMs1Spectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.from(mergeMSPeaks));
-        }
-
-        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
-            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-            DoubleList pmz = new DoubleArrayList();
-            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
-                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
-                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
-                mutableMs2.setMsLevel(spectrum.getMsLevel());
-                if (spectrum.getScanNumber() != null) {
-                    mutableMs2.setScanNumber(spectrum.getScanNumber());
-                }
-                if (spectrum.getCollisionEnergy() != null) {
-                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                }
-                if (spectrum.getPrecursorMz() != null) {
-                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
-                    pmz.add(spectrum.getPrecursorMz());
-                }
-                msnSpectra.add(mutableMs2);
-                {
-                    final Charge c = new Charge(featureImport.getCharge());
-                    msDataBuilder.msnSpectra(msnSpectra.stream()
-                            .peek(spec -> spec.setIonization(c))
-                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
-                }
-            }
-            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
-            msDataBuilder.mergedMSnSpectrum(merged);
-        }
-        MSData msData = msDataBuilder.build();
-        builder.msData(msData);
-
-        if (msData != null) {
+            MSData msData = FeatureImports.extractMsData(featureImport, profile);
+            builder.msData(msData);
             builder.hasMs1(msData.getMergedMs1Spectrum() != null);
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
-        }
 
-        builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
+            builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds(), featureImport.getRtApexSeconds()));
 
-        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
-            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
-            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
-                    da.addAll(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
-            builder.detectedAdducts(da);
-        } else {
-            builder.detectedAdducts(new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts());
+            return builder.build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Error when parsing FeatureImport with id '{}'. Cause: {}", featureImport.getExternalFeatureId(), e.getMessage(), e);
+            return null;
         }
-        return builder.build();
     }
 
 
@@ -1202,7 +1161,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return convertToApiFeature(feature, msDataAsCosineQuery, EnumSet.noneOf(AlignedFeature.OptField.class));
     }
 
-    public AlignedFeature convertToApiFeature(AlignedFeatures feature, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public AlignedFeature convertToApiFeature(AlignedFeatures feature, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(feature.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
@@ -1250,7 +1209,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(AlignedFeature.OptField.msData)) {
             if (feature.getMsData() == null)
                 project().findByFeatureIdStr(alignedFeatureId, MSData.class).findAny()
-                        .map(msd -> MsData.of(msd, msDataAsCosineQuery))
+                        .map(msd -> MsData.of(msd, msDataSearchPrepared))
                         .ifPresent(feature::setMsData);
         } else {
             feature.setMsData(null);
@@ -1513,7 +1472,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @SneakyThrows
-    private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, boolean msDataAsCosineQuery, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
+    private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, boolean msDataSearchPrepared, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
                 .formulaId(String.valueOf(fid))
@@ -1544,7 +1503,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
             if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
                 //todo this is not efficient an loads spectra a second time as well as the whole experiment. we need no change spectra annotation code to improve this.
-                builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId(), msDataAsCosineQuery));
+                builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId(), msDataSearchPrepared));
             if (msData != null && optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
                 SimpleSpectrum isotopePattern = msData.getIsotopePattern();
                 if (isotopePattern != null) {
@@ -1604,7 +1563,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable,
-                                        boolean msDataAsCosineQuery,
+                                        boolean msDataSearchPrepared,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields
     ) {
@@ -1615,7 +1574,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFeatureFields.contains(AlignedFeature.OptField.msData))
             stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
 
-        List<Compound> compounds = stream.map(c -> convertToApiCompound(c, msDataAsCosineQuery, optFields, optFeatureFields)).toList();
+        List<Compound> compounds = stream.map(c -> convertToApiCompound(c, msDataSearchPrepared, optFields, optFeatureFields)).toList();
 
         long total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
@@ -1655,7 +1614,23 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         setProjectTypeOrThrow(project());
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertToProjectCompound(ci, profile)).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream()
+                .peek(ci -> {
+                    //create a name from the longest common subsequence of all feature names if the compound name is null/blank.
+                    if (Utils.isNullOrBlank(ci.getName())) {
+                        ci.getFeatures().stream().map(FeatureImport::getName)
+                                .filter(Objects::nonNull)
+                                .filter(Predicate.not(String::isBlank))
+                                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
+                                .filter(Predicate.not(String::isBlank))
+                                .ifPresent(ci::setName);
+                    }
+                }).map(ci -> convertToProjectCompound(ci, profile))
+                .filter(Objects::nonNull)
+                .toList();
+        if (dbc.isEmpty())
+            return Collections.emptyList();
+
         project().importCompounds(dbc);
         //todo fire import api event
         //todo handle index update
@@ -1664,7 +1639,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Compound findCompoundById(String compoundId, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    public Compound findCompoundById(String compoundId, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         long id = Long.parseLong(compoundId);
         return storage().getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                 .map(c -> {
@@ -1672,7 +1647,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
                         c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
                     }
-                    return convertToApiCompound(c, msDataAsCosineQuery, optFields, optFeatureFields);
+                    return convertToApiCompound(c, msDataSearchPrepared, optFields, optFeatureFields);
                 })
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
@@ -1704,7 +1679,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public Page<AlignedFeature> findAlignedFeatures(@Nullable String searchQuery, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         if (searchService == null)
             throw new ResponseStatusException(SERVICE_UNAVAILABLE, "Cannot perform search query. Search service not available!");
 
@@ -1722,7 +1697,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             System.out.println("====> CORRECTING OPT FIELDS: " + AlignedFeature.INDEXED_OPT_FIELDS + "   VS   " + optFields);
 
             features.stream().parallel().forEach(f ->
-                    annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataAsCosineQuery, optFields));
+                    annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
         }
 
         return features;
@@ -1880,21 +1855,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return features;
     }
 
+    /**
+     * Imports features without compound grouping. Since grouping is unknown, each feature needs to belong to its own compound.
+     * To group features as compounds together, please use add compounds instead.
+     * @param features the features to be imported into the project
+     * @param profile the instrument the features have been measured on.
+     * @param optFields opt fields to be returned as part of the imported features/
+     * @return imported features with selected opt fields and UUIDs for features and compounds.
+     */
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        LongestCommonSubsequence lcs = new LongestCommonSubsequence();
-        String name = features.stream().map(FeatureImport::getName)
-                .filter(Objects::nonNull)
-                .filter(Predicate.not(String::isBlank))
-                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
-                .filter(Predicate.not(String::isBlank))
-                .orElse(null);
-
-        CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
-        Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
-                () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
-        );
-        List<AlignedFeature> importedFeatures = compound.getFeatures();
+        List<CompoundImport> cis = features.stream().map(f -> CompoundImport.builder().name(f.getName()).features(List.of(f)).build()).toList();
+        List<AlignedFeature> importedFeatures = addCompounds(cis, profile, EnumSet.of(Compound.OptField.none), optFields).stream()
+                .flatMap(c -> c.getFeatures().stream()).toList();
         searchService.addDocuments(projectId, importedFeatures);
         //todo fire import event?
         return importedFeatures;
@@ -1911,10 +1884,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         long id = Long.parseLong(alignedFeatureId);
         return storage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(a -> convertToApiFeature(a, msDataAsCosineQuery, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+                .map(a -> convertToApiFeature(a, msDataSearchPrepared, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
@@ -2389,7 +2362,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
+    public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
 
         //load ms data only once per formula candidate
@@ -2412,7 +2385,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = storage().findStr(defaultSortFilter, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
-        List<FormulaCandidate> candidates = stream.map(fc -> convertFormulaCandidate(msData, msDataAsCosineQuery, fc, optFields)).toList();
+        List<FormulaCandidate> candidates = stream.map(fc -> convertFormulaCandidate(msData, msDataSearchPrepared, fc, optFields)).toList();
 
         long total = project().countByFeatureId(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
 
@@ -2421,7 +2394,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataAsCosineQuery, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
+    public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, boolean msDataSearchPrepared, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
 
@@ -2432,7 +2405,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .peek(fc -> {
                     if (fc.getAlignedFeatureId() != longAFId)
                         throw new ResponseStatusException(BAD_REQUEST, "Formula candidate exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
-                }).map(fc -> convertFormulaCandidate(msData, msDataAsCosineQuery, fc, optFields)).findFirst().orElse(null);
+                }).map(fc -> convertFormulaCandidate(msData, msDataSearchPrepared, fc, optFields)).findFirst().orElse(null);
     }
 
     @Override
@@ -2537,6 +2510,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (optFields.contains(StructureCandidateScored.OptField.fingerprint))
             sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
 
+        if (optFields.contains(StructureCandidateScored.OptField.structureSvg))
+                sSum.setStructureSvg(Spectrums.smilesToSVGSilent(match.getCandidate().getSmiles()));
+
         sSum.setFormulaId(String.valueOf(match.getFormulaId()));
         sSum.setRank(match.getStructureRank());
         // scores
@@ -2580,14 +2556,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
+    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
-        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId, longAFId, asCosineQuery);
+        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId, longAFId, searchPrepared);
     }
 
     @SneakyThrows
-    private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId, boolean asCosineQuery) {
+    private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId, boolean searchPrepared) {
         MSData msdata = storage().getByPrimaryKey(alignedFeatureId, MSData.class)
                 .orElseThrow(() -> new ResponseStatusException(BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
 
@@ -2607,15 +2583,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             double precursorMz = msdata.getMsnSpectra().stream().mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz)
                     .average().orElseThrow();
 
-            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, mergedSpec, ftree, smiles, name, asCosineQuery);
+            return Spectrums.createMergedMsMsWithAnnotations(precursorMz, mergedSpec, ftree, smiles, name, searchPrepared);
         } else {
-            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles, name, asCosineQuery);
+            return Spectrums.createMsMsWithAnnotations(msdata.getMsnSpectra().get(specIndex), ftree, smiles, name, searchPrepared);
         }
     }
 
     @SneakyThrows
     @Override
-    public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean asCosineQuery) {
+    public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, boolean searchPrepared) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
 
@@ -2633,7 +2609,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         String smiles = candidate == null ? null : candidate.getSmiles();
         String name = candidate == null ? null : candidate.getName();
 
-        return AnnotatedMsMsData.of(msdata, ftree, smiles, name, asCosineQuery);
+        return AnnotatedMsMsData.of(msdata, ftree, smiles, name, searchPrepared);
     }
 
     @SneakyThrows

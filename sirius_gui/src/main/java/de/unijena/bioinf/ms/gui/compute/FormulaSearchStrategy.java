@@ -118,9 +118,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
     private final JComboBox<Strategy> strategyBox;
 
     /**
-     * We define a preferred width sind to prevent resizing during change of  values.
+     * We define a preferred width since to prevent resizing during change of  values.
      */
-    private static final int PANEL_WIDTH = 400;
+    private static final int PANEL_WIDTH_BATCH_MODE = 470;
+    private static final int PANEL_WIDTH_SINGLE_MODE = 570;
 
     public FormulaSearchStrategy(SiriusGui gui, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, GlobalConfigPanel globalConfigPanel) {
         super(parameterBindings);
@@ -151,18 +152,20 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyBox.setSelectedItem(Strategy.DE_NOVO);
         strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
 
-        setPreferredSize(new Dimension(PANEL_WIDTH, getPreferredSize().height));
-        setMaximumSize(new Dimension(PANEL_WIDTH, getMaximumSize().height));
+        setPreferredSize(new Dimension(getPanelWidth(), getPreferredSize().height));
+        setMaximumSize(new Dimension(getPanelWidth(), getMaximumSize().height));
     }
 
-
+    private int getPanelWidth() {
+        return isBatchDialog ? PANEL_WIDTH_BATCH_MODE : PANEL_WIDTH_SINGLE_MODE;
+    }
 
     private LoadablePanel createLoadablePanel() {
         JPanel content =  new JPanel(new MigLayout("hidemode 3, align left top, alignx left, aligny top, gapy 10", "", ""));
 
         content.add(new JXTitledSeparator("Strategy"),"alignx left, aligny top, growx, wrap");
 
-        strategyBox.setPreferredSize(new Dimension(PANEL_WIDTH, strategyBox.getPreferredSize().height));
+        strategyBox.setPreferredSize(new Dimension(getPanelWidth(), strategyBox.getPreferredSize().height));
         content.add(strategyBox,"alignx left, aligny top, wrap");
         strategy = (Strategy) strategyBox.getSelectedItem();
 
@@ -309,6 +312,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JLabel autodetectLabel = new JLabel("Autodetect");
         elementFilterDetectableElementsTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
         if (elementFilterDetectableElementsTextBox != null) {
+            elementFilterDetectableElementsTextBox.setToolTipText(
+                    "The 'autodetect' elements are always considered for both strategies - de novo and bottom up. Their presence is predicted from the MS1 isotope pattern if available.\n\n" +
+                            "For 'de novo' these elements are used in addition to the 'allowed elements' when generating molecular formulas.\n\n" +
+                            "For 'bottom up' they act as filter:\n" +
+                            "If element detection is performed (an MS1 isotope pattern is present) and an element was predicted not to be present, this element will be forbidden.\nIf no element detection can be performed, no element will be forbidden.");
             elementFilterDetectableElementsTextBox.setEditable(false);
             elementFilterDetectableElementsTextBox.setText(join(allAutoDetectableElements.stream().filter(e -> formulaSettings.getAutoDetectionElements().contains(e)).collect(Collectors.toList()))); //intersection of detectable elements of the used predictor and the specified detectable alphabet
         }
@@ -328,10 +336,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
-        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, elementFilterEnforcedTextBox, buttonPanel));
-        if (elementFilterDetectableElementsTextBox != null) {
-            filterComponents.addAll(List.of(autodetectLabel, elementFilterDetectableElementsTextBox));
-        }
+        List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, elementFilterEnforcedTextBox));
+        if (!isBatchDialog) filterComponents.add(buttonPanel);
         int columnWidth = elementFilterEnforcedTextBox.getPreferredSize().width;
         int sidePanelWidth = buttonPanel.getPreferredSize().width;
         elementFilterForBottomUp = addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
@@ -345,7 +351,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, elementFilterEnforcedTextBox);
         if (elementFilterDetectableElementsTextBox != null) {
-            filterFields.add(autodetectLabel, elementFilterDetectableElementsTextBox);
+            filterFields.add(autodetectLabel, elementFilterDetectableElementsTextBox, 10, false);
         }
 
 
@@ -353,6 +359,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         c.gridx = 2;
         c.gridy = constraintsGridY;
         c.gridheight = isBatchDialog ? 2 : 1;
+        if (isBatchDialog) c.insets.top = 5;
         filterFields.add(buttonPanel, c);
 
         //open element selection panel
@@ -360,9 +367,23 @@ public class FormulaSearchStrategy extends ConfigPanel {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(elementFilterEnforcedTextBox.getText());
             Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(elementFilterDetectableElementsTextBox, allAutoDetectableElements) : null;
             Window owner = SwingUtilities.getWindowAncestor(this);
-            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
+            boolean setDetectablesOnly = (!elementFilterForBottomUp.isSelected() && strategy == Strategy.BOTTOM_UP) || (!elementFilterForDatabase.isSelected() && strategy == Strategy.DATABASE);
+            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints, setDetectablesOnly);
             if (dialog.isSuccess()) {
-                elementFilterEnforcedTextBox.setText(dialog.getConstraints().toString(","));
+                FormulaConstraints newConstraints;
+                if (setDetectablesOnly) {
+                    //only remove autodetectable elements
+                    elementFilterEnforcedTextBox.getText();
+                    newConstraints = currentConstraints;
+                    dialog.getAutoDetect().stream().forEach(ele -> {
+                        if (newConstraints.hasElement(ele)) newConstraints.setBound(ele, 0, 0);
+                    });
+                } else {
+                    newConstraints = dialog.getConstraints();
+                }
+                String constraintText = newConstraints.toString(",");
+                elementFilterEnforcedTextBox.setText(constraintText.equals(",") ? null : constraintText);
+
                 if (elementFilterDetectableElementsTextBox != null) {
                     elementFilterDetectableElementsTextBox.setText(join(dialog.getAutoDetect()));
                 }
@@ -419,7 +440,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
         defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
-        JLabel label = new JLabel("Apply element filter to");
+        defaultStrategyElementFilterSelector.setToolTipText("The 'allowed elements' filter specifies the elements used for de novo molecular formula generation.\n" +
+                "If this selection here is set to '"+ElementAlphabetStrategy.BOTH+"', it is additionally used to filter the bottom up formulas.");
+        JLabel label = new JLabel("Apply 'allowed elements' filter to");
+
         filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);

@@ -55,7 +55,7 @@ public class MergedMSnSpectrum {
      * This method can be used to transform ms2spectra within an MsExperiment object into a MergedMsnSpectrum
      * and vice versa
      */
-    public static MergedMSnSpectrum fromMs2Spectrum(Ms2Spectrum<?> spec) {
+    public static MergedMSnSpectrum fromMs2Spectrum(MutableMs2Spectrum spec) {
         return new MergedMSnSpectrum(
                 spec.getMsLevel(),
                 spec.getIonization().getCharge(),
@@ -63,7 +63,7 @@ public class MergedMSnSpectrum {
                 spec.getPrecursorMz(),
                 null,
                 new long[0],
-                new int[0][],
+                new int[][]{new int[]{spec.getScanNumber()}},
                 new int[0][],
                 new int[0][],
                 new double[0],

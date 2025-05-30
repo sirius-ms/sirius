@@ -99,9 +99,6 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             LoggerFactory.getLogger(getClass()).info("Creating Toolchain InstanceBuffer of size {}", bufferSize);
 
             if (!toolchain.isEmpty()) {
-                //load custom databases
-                CustomDBPropertyUtils.loadAllCustomDBs(CdkFingerprintVersion.getDefault());
-
                 int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
 
                 progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())

@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.gui;
 
 import com.jetbrains.cef.JCefAppConfig;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.webView.JCEFLinuxFixer;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sse.DataEventType;
 import lombok.SneakyThrows;
@@ -87,8 +88,18 @@ public final class SiriusGuiFactory {
         final JCefAppConfig jCefAppConfig = JCefAppConfig.getInstance();
         final CefSettings cefSettings = jCefAppConfig.getCefSettings();
 
+        // For remote devtools, open localhost:port in chrome
+//        cefSettings.remote_debugging_port = 9222;
+//        jCefAppConfig.getAppArgsAsList().add("--remote-allow-origins=*");
+//        cefSettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+
         CefApp.startup(jCefAppConfig.getAppArgs());
-        return CefApp.getInstance(jCefAppConfig.getAppArgs(), cefSettings);
+        CefApp instance = CefApp.getInstance(jCefAppConfig.getAppArgs(), cefSettings);
+
+        if (System.getProperty("os.name").toLowerCase().contains("linux"))
+            JCEFLinuxFixer.preloadJCef(instance);
+
+        return instance;
     }
 
     public void shutdowm() {

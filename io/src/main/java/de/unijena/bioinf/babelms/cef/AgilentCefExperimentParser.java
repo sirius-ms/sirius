@@ -154,7 +154,6 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         return exps;
     }
 
-    private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
     private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
     private List<Ms2Experiment> experimentFromMFECompound(Compound compound) {
@@ -166,11 +165,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         List<Ms2Experiment> siriusCompounds = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
-            if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
-                log.warn("Skipping potential precursor at '{}Da' (and corresponding MS/MS) due to an unsupported ion type '{}'.", p.getX(), p.getS());
-                return false;
-            } else if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
-                log.debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS()); //todo to debug
+            if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
+                log.debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS());
                 return false;
             } else {
                 return true;

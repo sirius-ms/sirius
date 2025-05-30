@@ -39,6 +39,7 @@ import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.biotransformer.BioTransformation;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerJJob;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerResult;
 import de.unijena.bioinf.ms.biotransformer.BioTransformerSettings;
@@ -69,7 +70,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
+import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
 
 @Slf4j
 public class CustomDatabaseImporter {
@@ -93,9 +98,6 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
     protected final IFingerprinterCache ifpCache;
-    // a magic number of bytes that represent the number of bytes in the input that correspond to on compound.
-    //todo we should estimate this based on the file format instead.
-    private static final int BYTE_EQUIVALENTS = 52428;
 
     private final BioTransformerSettings bioTransformerSettings;
 
@@ -207,14 +209,21 @@ public class CustomDatabaseImporter {
     public void importSpectraFromResources(List<InputResource<?>> spectrumFiles) throws IOException {
         throwIfShutdown();
         InputResourceParsingIterator iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
-        iterator.addBytesRaiseListener((read, readTotal) -> {
-            synchronized (listeners) {
-                listeners.forEach(l -> l.bytesRead(read));
+
+        iterator.addImportListener(new InputResourceParsingIterator.ImportListener() {
+            @Override
+            public void bytesRead(String filename, long totalBytesRead) {
+                notifyListeners(l -> l.bytesRead(filename, totalBytesRead));
+            }
+
+            @Override
+            public void readExperiments(String filename, int count) {
+                notifyListeners(l -> l.compoundsImported(filename, count));
             }
         });
+
         while (iterator.hasNext()) {
             Ms2Experiment experiment = iterator.next();
-            List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
             Optional<String> maybeSmiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString);
 
             if (maybeSmiles.isEmpty()) {
@@ -235,6 +244,7 @@ public class CustomDatabaseImporter {
                 log.warn("Record {} from {} could not be mapped to a known structure. Skipping.", experiment.getName(), experiment.getSource());
                 continue;
             }
+            List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
             specs.forEach(s -> s.setCandidateInChiKey(molecule.get().getInchi().key2D()));
 
             addToSpectraBuffer(specs);
@@ -326,11 +336,7 @@ public class CustomDatabaseImporter {
         throwIfShutdown();
         for (InputResource<?> f : structureFiles) {
             try (ReportingInputStream s = f.getReportingInputStream()) {
-                s.addBytesRaiseListener((rb, rbTotal) -> {
-                    synchronized (listeners) {
-                        listeners.forEach(l -> l.bytesRead(rb));
-                    }
-                });
+                s.addBytesRaiseListener((read, readTotal) -> notifyListeners(l -> l.bytesRead(f.getFilename(), read)));
                 importStructuresFromSmileAndInChis(s);
             }
         }
@@ -367,7 +373,6 @@ public class CustomDatabaseImporter {
     protected void addMolecule(Molecule mol) {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
-//            for (Listener l : listeners) l.newMolecules(moleculeBuffer.size());
         }
         if (moleculeBuffer.size() > molBufferSize)
             flushMoleculeBuffer();
@@ -402,24 +407,15 @@ public class CustomDatabaseImporter {
                     }
                     checkCancellation();
 
-                    if (bioTransformerSettings != null) {
-                        try {
-                            log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
-                            timer.startTask("BioTransformer");
-                            applyBiotransformations(key2DToComp);
-                            log.info("After transformation, molecule buffer contains {} unique molecules. BioTransformer took: {}", key2DToComp.size(), timer.endTask());
-
-                        } catch (ExecutionException e) {
-                            timer.endTask();
-                            log.warn("BioTransformer completed with Error: {}", e.getMessage());
-                        }
+                    if (bioTransformerSettings == null) {
+                        notifyStartFingerprints(key2DToComp.size());
                     }
-                    checkCancellation();
 
+                    // run once before biotransformations to resolve names for substrates of potential transformation products
                     try {
                         log.info("Looking up compounds to merge with existing fps...");
                         timer.startTask("Compound Lookup");
-                        lookupAndAnnotateMissingCandidates(key2DToComp);
+                        lookupAndAnnotateMissingCandidates(key2DToComp.values(), NamingPreference.SHORTEST);
                         log.info("Compound look up and merging done in {}.", timer.endTask());
                     } catch (Exception e) {
                         // if lookup fails, we can still download or compute locally and override
@@ -428,19 +424,32 @@ public class CustomDatabaseImporter {
                     }
                     checkCancellation();
 
-
+                    // run once before biotransformations to resolve names for substrates of potential transformation products
                     try { //try to download fps for compound
                         log.info("Try downloading missing fps...");
                         timer.startTask("Download FPs");
-                        downloadAndAnnotateMissingCandidates(key2DToComp);
+                        downloadAndAnnotateMissingCandidates(key2DToComp, NamingPreference.CUSTOM);
                         log.info("Downloaded missing fps in {}.", timer.endTask());
                     } catch (Exception e) {
                         // if download fails, we can still compute locally
                         timer.endTask();
                         log.error(e.getMessage(), e);
                     }
-
                     checkCancellation();
+
+                    if (bioTransformerSettings != null) {
+                        try {
+                            log.info("Applying to BioTransformer on '{}' molecules", key2DToComp.size());
+                            timer.startTask("BioTransformer");
+                            applyBiotransformations(key2DToComp);
+                            log.info("After transformation, molecule buffer contains {} unique molecules. BioTransformer took: {}", key2DToComp.size(), timer.endTask());
+                        } catch (ExecutionException e) {
+                            timer.endTask();
+                            log.warn("BioTransformer completed with Error: {}", e.getMessage());
+                        }
+                    }
+                    checkCancellation();
+
 
                     log.info("Computing fps that are still missing...");
                     timer.startTask("Compute FPs");
@@ -476,50 +485,72 @@ public class CustomDatabaseImporter {
                     .map(comp -> comp.molecule.container) // Aus Molecule -> IAtomContainer
                     .toList()
             );
+            job.addJobProgressListener(evt -> {if (evt.isDetermined() && !evt.isDone()) notifyBioTransformation();});
 
-
+            notifyStartBioTransformations(key2DToComp.size());
             log.debug("Submitting BioTransformerJJob to job manager");
             List<BioTransformerResult> transformationResults = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
 
             // 2. Transformations in Molecule konvertieren
             List<Molecule> transformedMolecules = transformationResults.stream()
                     // Iteriere über alle Ergebnisse und hole direkt alle Produkt-Container pro Ergebnis
-                    .flatMap(result -> result.biotranformations().stream()) // Verwende die neue Methode
-                    // Konvertiere jeden IAtomContainer in ein Molecule
-                    .flatMap(bioTransformation -> {
-                        IAtomContainer parent = bioTransformation.getSubstrates().iterator().next();
-                        Comp parentCompound = null;
+                    .flatMap(result -> {
+                        IAtomContainer origin = result.originSubstrate();
+
+                        Comp originCompound = null;
                         try {
                             //todo would be nicer to store the mapping instead of loading inchi again
-                            InChI inchi = InChISMILESUtils.getInchi(parent, false);
-                            parentCompound = key2DToComp.get(inchi.key2D());
+                            InChI inchi = InChISMILESUtils.getInchi(origin, false);
+                            originCompound = key2DToComp.get(inchi.key2D());
                         } catch (CDKException e) {
                             log.error("Error when building inchi from BiotTanformer substrate.", e);
                         }
 
-                        final String parentName = parentCompound != null && parentCompound.molecule.getName() != null ? parentCompound.molecule.getName() : "Unknown";
-
-                        return bioTransformation.getProducts().stream().map(container -> {
-                            try {
-                                // Die Logik zur Erstellung von Molecule bleibt gleich
-                                InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
-                                String inchiValue = inchiGenerator.getInchi();
-                                String inchiKey = inchiGenerator.getInchiKey();
-                                String smilesValue = smilesGen.create(container);
-
-                                Molecule molecule = new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
-                                molecule.name = String.format("BT-%s: %s [%s]", bioTransformation.getBioSystemName(), parentName, bioTransformation.getReactionType());
-
-                                return molecule;
-                            } catch (CDKException e) {
-                                // Passende Fehlerbehandlung, hier RuntimeException wie im Original
-                                throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                        final String originReference;
+                        {
+                            String tmpName = null;
+                            if (originCompound != null) {
+                                //if null, there is no name from the custom db candidate, so we use the given one
+                                if(originCompound.candidate != null)
+                                    tmpName = originCompound.candidate.getCandidate(null, null).getName();
+                                if (isNullOrBlank(tmpName))
+                                    tmpName = originCompound.molecule.getName();
+                                if (isNullOrBlank(tmpName))
+                                    tmpName = originCompound.key2D();
                             }
-                        });
+                            originReference = tmpName;
+                        }
+
+                        return result.biotranformations().stream()
+                                .flatMap(bT -> {
+                                    List<BioTransformation> transformationPath = bT.getShortestTransformationPath();
+                                    // Konvertiere jeden produkt IAtomContainer in ein Molecule
+                                    return bT.getProducts().stream().map(container -> {
+                                        try {
+                                            // Die Logik zur Erstellung von Molecule bleibt gleich
+                                            InChIGenerator inchiGenerator = generateInChI(container); // Annahme: generateInChI gibt InChIGenerator zurück
+                                            String inchiValue = inchiGenerator.getInchi();
+                                            String inchiKey = inchiGenerator.getInchiKey();
+                                            String smilesValue = smilesGen.create(container);
+
+                                            Molecule molecule = new Molecule(container, new Smiles(smilesValue), new InChI(inchiKey, inchiValue));
+                                            molecule.name = String.format("BT-%s-Step%s: %s [%s]", bT.getBioSystemName(), transformationPath.size(), originReference, bT.getReactionType());
+
+                                            System.out.println("NAME: " + molecule.getName());
+                                            return molecule;
+                                        } catch (CDKException e) {
+                                            // Passende Fehlerbehandlung, hier RuntimeException wie im Original
+                                            throw new RuntimeException("Fehler bei der Konvertierung von IAtomContainer zu Molecule", e);
+                                        }
+                                    });
+                                });
+
                     }).toList();
 
 
             // 3. Deduplikation basierend auf InChIKey-2D
+            final ConcurrentHashMap<String, Comp> nuKey2DToComp = new ConcurrentHashMap<>();
+
             for (Molecule newMolecule : transformedMolecules) {
                 try {
                     final InChI inchi = newMolecule.inchi;
@@ -537,41 +568,66 @@ public class CustomDatabaseImporter {
                         // Neues Molekül hinzufügen
                         Comp newComp = new Comp(newMolecule);
                         key2DToComp.put(key2d, newComp);
+                        nuKey2DToComp.put(key2d, newComp);
                     }
                 } catch (IllegalArgumentException e) {
                     // Fehlerhafte Moleküle ignorieren, aber loggen
                     log.error("Error deduplicating molecule. Skipping: {} - {}", newMolecule.ids, newMolecule.name, e);
                 }
             }
+
+            notifyStartFingerprints(key2DToComp.size());
+
+            try {
+                log.info("Looking up transformation fps merge with transformation products...");
+                lookupAndAnnotateMissingCandidates(nuKey2DToComp.values(), NamingPreference.SHORTEST);
+                log.info("Compound look up and merging done.");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                log.info("Try downloading missing fps for transformation products...");
+                downloadAndAnnotateMissingCandidates(nuKey2DToComp, NamingPreference.SHORTEST);
+                log.info("Downloaded missing fps for transformation products.");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
-    private void lookupAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
+    private void lookupAndAnnotateMissingCandidates(final Iterable<Comp> compounds, @NotNull NamingPreference namingPreference) throws IOException {
         synchronized (database) {
-            for (Comp comp : key2DToComp.values()) {
+            for (Comp comp : compounds) {
                 checkCancellation();
                 if (comp.candidate == null) {
-                    comp.candidate = database.database.getStorage() //todo do we need the fp here?
+                    comp.candidate = database.database.getStorage()
                             .findStr(Filter.where("inchiKey").eq(comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
                             .findFirst()
                             .orElse(null);
-                    mergeLinksAndNames(comp);
-                    notifyFingerprintCreation(comp);
+
+                    if (comp.candidate != null) {
+                        mergeLinksAndNames(comp, namingPreference);
+                        notifyFingerprintCreation(comp);
+                    }
                 }
             }
         }
     }
 
-    private void downloadAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
-        Set<MolecularFormula> formulasToSearch = new HashSet<>();
-        checkCancellation();
-        try {
-            for (Comp comp : key2DToComp.values())
-                if (comp.candidate == null) //group by formula to reduce unnecessary downloads
-                    formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(comp.inChI2D()));
-        } catch (UnknownElementException e) {
-            throw new IOException(e);
-        }
+    private void downloadAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp, @NotNull NamingPreference namingPreference) {
+        Set<MolecularFormula> formulasToSearch = key2DToComp.values().stream()
+                .filter(c -> c.candidate == null)
+                .map(comp -> {
+                    try {
+                        //group by formula to reduce unnecessary downloads
+                        return InChIs.extractNeutralFormulaByAdjustingHsOrThrow(comp.inChI2D());
+                    } catch (UnknownElementException e) {
+                        log.error("Error when extracting neutral formula from InChI: {}. Skipping from download!", comp.inChI2D(), e);
+                        return null;
+                    }
+                }).filter(Objects::nonNull).collect(Collectors.toSet());
+
 
         checkCancellation();
         List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new TinyBackgroundJJob<Boolean>() {
@@ -579,13 +635,14 @@ public class CustomDatabaseImporter {
             protected Boolean compute() throws Exception {
                 checkCancellation();
                 api.consumeStructureDB(0, db -> {
-                    List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula).stream().filter(s -> DataSource.isInAll(s.getBitset())).toList();
+                    List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula).stream()
+                            .filter(s -> DataSource.isInAll(s.getBitset())).toList();
                     for (FingerprintCandidate can : cans) {
                         checkCancellation();
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
                         if (toAdd != null) {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
-                            clearAndCreateLinksAndName(toAdd);
+                            clearAndCreateLinksAndName(toAdd, namingPreference);
                             notifyFingerprintCreation(toAdd);
                         }
                     }
@@ -658,17 +715,15 @@ public class CustomDatabaseImporter {
     }
 
     //used to merge information from existing entries in this custom db.
-    private void mergeLinksAndNames(@NotNull Comp comp) {
+    private static void mergeLinksAndNames(@NotNull Comp comp, @NotNull NamingPreference namingPreference) {
         if (comp.molecule == null || comp.candidate == null)
             return;
 
         Molecule molecule = comp.molecule;
         CompoundCandidate fc = comp.candidate.getCandidate(null, null);
-
         fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
 
-        if ((molecule.name != null && !molecule.name.isBlank()) && (fc.getName() == null || fc.getName().isBlank() || fc.getName().length() > molecule.name.length()))
-            fc.setName(molecule.name);
+        determineName(comp, namingPreference);
 
         final HashSet<DBLink> links = new HashSet<>(fc.getMutableLinks());
 
@@ -677,30 +732,54 @@ public class CustomDatabaseImporter {
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
         }
-
         fc.setLinks(new ArrayList<>(links));
     }
 
     //used to clear link data from remote db and add links of this custom db
-    private void clearAndCreateLinksAndName(@NotNull Comp comp) {
+    private static void clearAndCreateLinksAndName(@NotNull Comp comp, @NotNull NamingPreference namingPreference) {
         if (comp.molecule == null || comp.candidate == null)
             return;
 
         Molecule molecule = comp.molecule;
         CompoundCandidate fc = comp.candidate.getCandidate(null, null);
-
         fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
-        fc.setLinks(List.of());
 
-        //set custom db name or id if name is null. otherwise keep the downloaded name from remote db.
-        if (molecule.name != null)
-            fc.setName(molecule.name);
+        determineName(comp, namingPreference);
+
+        fc.setLinks(List.of());
 
         //override remote db links.
         if (!molecule.ids.isEmpty()) {
             fc.setLinks(molecule.ids.stream().filter(Objects::nonNull).map(id -> new DBLink(null, id)).toList()); //we add just id so that names can be added during db retrieval
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
+        }
+    }
+
+
+
+    enum NamingPreference {CUSTOM, SHORTEST, REMOTE}
+    /**
+     * @param compound Compound to be imported and updaten
+     * @param namingPreference Specify how name determination should work.
+     */
+    private static void determineName(@NotNull Comp compound, @NotNull NamingPreference namingPreference) {
+        Molecule molecule = compound.molecule;
+        CompoundCandidate fc = compound.candidate.getCandidate(null, null);
+
+        switch (namingPreference) {
+            case CUSTOM -> {
+                if (notNullOrBlank(molecule.name) && (!molecule.name.startsWith("BT-") || isNullOrBlank(fc.getName())))
+                    fc.setName(molecule.name);
+            }
+            case SHORTEST -> {
+                if (notNullOrBlank(molecule.name) && (isNullOrBlank(fc.getName()) || (!molecule.name.startsWith("BT-") && fc.getName().length() >= molecule.name.length())))
+                    fc.setName(molecule.name);
+            }
+            case REMOTE -> {
+                if (notNullOrBlank(molecule.name) && isNullOrBlank(fc.getName()))
+                    fc.setName(molecule.name);
+            }
         }
     }
 
@@ -777,26 +856,40 @@ public class CustomDatabaseImporter {
         }
     }
 
+    private void notifyStartFingerprints(int total) {
+        notifyListeners(l -> l.startFingerprints(total));
+    }
 
     private void notifyFingerprintCreation(Comp comp) {
+        notifyListeners(l -> l.newFingerprint(comp.molecule.getInchi()));
+    }
+
+    private void notifyStartBioTransformations(int total) {
+        notifyListeners(l -> l.startBioTransformations(total));
+    }
+
+    private void notifyBioTransformation() {
+        notifyListeners(Listener::bioTransformation);
+    }
+
+    private void notifyListeners(Consumer<Listener> notification) {
         if (listeners.isEmpty()) return;
         synchronized (listeners) {
-            listeners.forEach(l -> l.newFingerprint(comp.molecule.getInchi(), BYTE_EQUIVALENTS));
+            listeners.forEach(notification);
         }
     }
 
-
     @FunctionalInterface
     public interface Listener {
-        default void newFingerprint(InChI inChI, int byteEquivalent) {
-        }
+        default void bytesRead(String filename, long bytesRead) {}
+        default void compoundsImported(String filename, int count) {}
+        default void startFingerprints(int total) {}
+        default void newFingerprint(InChI inChI) {}
+        default void startBioTransformations(int total) {}
+        default void bioTransformation() {}
 
         // informs about imported molecule
         void newInChI(List<InChI> inchis);
-
-        default void bytesRead(int numOfBytes) {
-
-        }
     }
 
 

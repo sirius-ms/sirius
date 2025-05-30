@@ -165,7 +165,6 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
     }
 
-    private static final Pattern UNSUPPORTED_IONTYPE_MATCHER = Pattern.compile("^\\d+M.*");
     private static final Pattern ISOTOPE_PEAK_MATCHER = Pattern.compile("\\+\\d+$");
 
     private List<AlignedFeatures> fromMFECompound(Compound compound) {
@@ -178,11 +177,8 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         List<AlignedFeatures> siriusFeatures = new ArrayList<>();
 
         mfe.msPeaks.getP().stream().filter(p -> {
-            if (UNSUPPORTED_IONTYPE_MATCHER.matcher(p.getS()).find()) {
-                LoggerFactory.getLogger(getClass()).warn("Skipping potential precursor at '" + p.getX() + "Da' (and corresponding MS/MS) due to an unsupported ion type '" + p.getS() + "'.");
-                return false;
-            } else if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
-                LoggerFactory.getLogger(getClass()).debug("Skipping isotope peak during precursor search '" + p.getX() + "Da' ('" + p.getS() + "')."); //todo to debug
+            if (ISOTOPE_PEAK_MATCHER.matcher(p.getS()).find()) {
+                LoggerFactory.getLogger(getClass()).debug("Skipping isotope peak during precursor search '{}Da' ('{}').", p.getX(), p.getS());
                 return false;
             } else {
                 return true;

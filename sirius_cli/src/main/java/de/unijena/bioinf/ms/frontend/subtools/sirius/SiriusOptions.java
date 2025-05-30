@@ -110,12 +110,12 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
-    @Option(names = {"--elements-extended-organic"}, description = {"Use extended set of elements for molecular formula generation. DO NOT USE IN COMBINATION WITH DE NOVO FORMULA GENERATION!", " Enforced elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING, " Detectable elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING})
+    @Option(names = {"--elements-extended-organic"}, description = {"Use extended set of elements for molecular formula generation. DO NOT USE IN COMBINATION WITH DE NOVO FORMULA GENERATION!", " Enforced elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING, " Detectable elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING, " Fallback elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_FALLBACK_STRING})
     public void setEnforcedOrganicElements(boolean enabled) throws Exception {
         if (enabled) {
             defaultConfigOptions.changeOption("FormulaSettings.enforced", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING);
-            defaultConfigOptions.changeOption("FormulaSettings.detectable", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
-            defaultConfigOptions.changeOption("FormulaSettings.fallback", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.detectable", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.fallback", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_FALLBACK_STRING);
         }
     }
 

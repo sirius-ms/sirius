@@ -38,7 +38,7 @@ import java.util.Arrays;
 import java.util.Set;
 
 @Requires(Ms1IsotopePattern.class)
-@Provides(FormulaConstraints.class)
+@Provides(DetectedFormulaConstraints.class)
 public class DeepNeuralNetworkElementDetector implements ElementDetection {
 
     protected DNNRegressionPredictor dnnRegressionPredictor;
@@ -49,15 +49,15 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
 
     @Override
     @Nullable
-    public FormulaConstraints detect(ProcessedInput processedInput) {
+    public DetectedFormulaConstraints detect(ProcessedInput processedInput) {
         final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
         checkDetectableElements(settings);
         final PossibleAdducts possibleAdducts = processedInput.getAnnotationOrDefault(PossibleAdducts.class);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
-        if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
+        if (ms1.size()<=2) return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
         final FormulaConstraints constraints = adjustPredictedConstraintsWithAdducts(dnnRegressionPredictor.predictConstraints(ms1), possibleAdducts);
         //limit detection to detectable elements and add enforced alphabet
-        return constraints.intersection(settings.getAutoDetectionElements().toArray(new Element[0])).getExtendedConstraints(settings.getEnforcedAlphabet());
+        return new DetectedFormulaConstraints(constraints.intersection(settings.getAutoDetectionElements().toArray(new Element[0])).getExtendedConstraints(settings.getEnforcedAlphabet()), true);
     }
 
     /**

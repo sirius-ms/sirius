@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -407,6 +408,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equalsIgnoreCase("feature_id") || optionName.equalsIgnoreCase("feature-id") || optionName.equalsIgnoreCase("featureid")) {
                 if (featureId != null) warn("feature-id has bean set set twice");
                 featureId = value;
+            } else if (optionName.equalsIgnoreCase("online-reactivity")) {
+                parseOnlineReactivity(value);
             } else {
                 warn("Unknown option " + "'>" + optionName + "'" + " in .ms file. Option will be ignored, but stored as additional field.");
                 if (fields == null) fields = new AdditionalFields();
@@ -549,7 +552,21 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 else
                     warn("Cannot parse spectrum level (##) comment (" + line + ") because there is no Spectrum it belongs to.");
             }
+
+            // legacy support
+            if (optionName.equals("online-reactivity")) {
+                try {
+                    parseOnlineReactivity(value);
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(JenaMsParser.class).warn("Cannot parse #online-reactivity parameter due to JSON format exception:\n" + e.getMessage() + "\nIgnore option.");
+                }
+            }
         }
+
+        private void parseOnlineReactivity(String value) throws IOException {
+            changeConfig("FunctionalMetabolomics", FunctionalMetabolomics.parseOnlineReactivityFromMZMineFormat(value).toString());
+        }
+
 
         private double parseRetentionTimeMiddle(String value) {
             if (!currentSpectrum.isEmpty()) newSpectrum();
