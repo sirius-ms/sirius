@@ -219,6 +219,26 @@ public class GuiProjectManager implements Closeable {
         totalInstances.set(siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION)).getNumOfFeatures());
     }
 
+    private InstanceBean jumpToInstanceBean = null;
+    public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId){
+        AlignedFeature feature = siriusClient.features()
+                .getAlignedFeature(projectId, alignedFeatureId, false, null);
+        if (feature == null)
+            return null;
+
+        jumpToInstanceBean = new InstanceBean(feature, InstanceBean.DEFAULT_OPT_FEATURE_FIELDS, GuiProjectManager.this);
+        INSTANCE_LIST.add(jumpToInstanceBean);
+        return jumpToInstanceBean;
+    }
+
+    public synchronized boolean removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid){
+        if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
+            INSTANCE_LIST.remove(jumpToInstanceBean);
+            jumpToInstanceBean = null;
+            return true;
+        }
+        return false;
+    }
 
     public synchronized void reloadFeatures() {
         //todo LUCENE: handle loading mechanism for compound list.
