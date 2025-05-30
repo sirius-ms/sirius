@@ -70,7 +70,7 @@ public class BioTransformerOptions {
     }
 
     public static class Single {
-        @CommandLine.Option(names = {"--transformation"}, completionCandidates = MetabolicTransformationSingleCandidates.class, required = true, order = 311)
+        @CommandLine.Option(names = {"--transformation"}, description = "Select metabolic transformation type.\nValid values: ${COMPLETION-CANDIDATES}", completionCandidates = MetabolicTransformationSingleCandidates.class, required = true, order = 311)
         private MetabolicTransformation metabolicTransformation;
 
 
@@ -88,7 +88,7 @@ public class BioTransformerOptions {
 
 
     public static class Sequence {
-        @CommandLine.Option(names = "--seq-step", completionCandidates = MetabolicTransformationSequenceCandidates.class, required = true, order = 321)
+        @CommandLine.Option(names = "--seq-step", description = "Apply multiple transformation steps.\nFor each step, specify the type and optional its iterations. Valid values: ${COMPLETION-CANDIDATES}\n", completionCandidates = MetabolicTransformationSequenceCandidates.class, required = true, order = 321)
         public void setMetabolicTransformation(@NotNull MetabolicTransformation metabolicTransformation) {
             if (!MetabolicTransformation.valueSequenceOnly().contains(metabolicTransformation))
                 throw new CommandLine.PicocliException("Metabolic transformation: '" + metabolicTransformation + "' is not allowed in transformation sequence.");

@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -116,6 +117,9 @@ public class ImportAction extends AbstractGuiAction {
                 parameters.setAlignLCMSRuns(dialog.isAlign());
                 // Get sample type assignments
                 parameters.setSampleTypes(dialog.getLCMSFilesSampleTypes());
+                //todo fix sensitive mode
+                if(dialog.isSensitiveMode())
+                    parameters.setMinSNR(2d);
 
                 // Import LC/MS files with sample type information
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {

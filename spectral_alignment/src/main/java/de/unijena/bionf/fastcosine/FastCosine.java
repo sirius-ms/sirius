@@ -37,7 +37,7 @@ public class FastCosine {
 
     }
 
-    public ReferenceLibrarySpectrum prepareQuery(Ms2Experiment ms2data) {
+    public SearchPreparedSpectrum prepareQuery(Ms2Experiment ms2data) {
         Optional<MS2MassDeviation> annotation = ms2data.getAnnotation(MS2MassDeviation.class);
         Optional<NoiseThresholdSettings> annotation2 = ms2data.getAnnotation(NoiseThresholdSettings.class);
         ms2data.setAnnotation(MS2MassDeviation.class, new MS2MassDeviation(maxDeviation, maxDeviation, maxDeviation));
@@ -50,7 +50,7 @@ public class FastCosine {
         return prepareQuery(pinput);
     }
 
-    public ReferenceLibrarySpectrum prepareQuery(double parentmass, Spectrum<? extends Peak> spectrum)  {
+    public SearchPreparedSpectrum prepareQuery(double parentmass, Spectrum<? extends Peak> spectrum)  {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setIonMass(parentmass);
         exp.setAnnotation(MS2MassDeviation.class, new MS2MassDeviation(maxDeviation, maxDeviation, maxDeviation));
@@ -62,11 +62,7 @@ public class FastCosine {
         return prepareQuery(processedInput);
     }
 
-    public List<ReferenceLibrarySpectrum> prepareQueriesFromAllMsMs(Ms2Experiment ms2data) {
-        return ms2data.getMs2Spectra().stream().map(x->prepareQuery(ms2data.getIonMass(), x)).toList();
-    }
-
-    private ReferenceLibrarySpectrum prepareQuery(ProcessedInput input) {
+    private SearchPreparedSpectrum prepareQuery(ProcessedInput input) {
         // 1. sort peaks by mass
         List<ProcessedPeak> mergedPeaks = input.getMergedPeaks();
         mergedPeaks.sort(Comparator.comparingDouble(ProcessedPeak::getMass));
@@ -88,10 +84,10 @@ public class FastCosine {
         for (int k=0; k < mergedPeaks.size(); ++k) {
             intensity[k] /= norm;
         }
-        return new ReferenceLibrarySpectrum(input.getParentPeak().getMass(), (float)(Math.sqrt(input.getParentPeak().getRelativeIntensity())/norm), mz, intensity);
+        return new SearchPreparedSpectrum(input.getParentPeak().getMass(), (float)(Math.sqrt(input.getParentPeak().getRelativeIntensity())/norm), mz, intensity);
     }
 
-    public ReferenceLibraryMergedSpectrum prepareMergedQuery(List<ReferenceLibrarySpectrum> spectra) {
+    public SearchPreparedMergedSpectrum prepareMergedQuery(List<SearchPreparedSpectrum> spectra) {
         return performPeakMerging(spectra);
     }
 
@@ -100,7 +96,7 @@ public class FastCosine {
      * as it is guaranteed that there are never two peaks so close to each other such that the assignment is unambiguous.
      * Runs in linear time.
      */
-    public SpectralSimilarity fastCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
+    public SpectralSimilarity fastCosine(SearchPreparedSpectrum left, SearchPreparedSpectrum right) {
         int i = 0, j = 0;
         double similarity = 0d;
 
@@ -132,7 +128,7 @@ public class FastCosine {
         return new SpectralSimilarity((float) similarity, matchedPeaks);
     }
 
-    public SpectralSimilarity fastReverseCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
+    public SpectralSimilarity fastReverseCosine(SearchPreparedSpectrum left, SearchPreparedSpectrum right) {
         int i = 0, j = 0;
         double similarity = 0d;
         IntList matchedPeaks = new IntArrayList(Math.min(left.size(), right.size()));
@@ -161,18 +157,18 @@ public class FastCosine {
         return new SpectralSimilarity((float) similarity, matchedPeaks);
     }
 
-    public SpectralSimilarity fastModifiedCosine(ReferenceLibrarySpectrum left, ReferenceLibrarySpectrum right) {
+    public SpectralSimilarity fastModifiedCosine(SearchPreparedSpectrum left, SearchPreparedSpectrum right) {
         if (maxDeviation.inErrorWindow(left.getParentMass(),right.getParentMass())) return fastCosine(left,right); // use faster cosine if both have same mass
         return new ModifiedCosine(maxDeviation).score(left, right, left.getParentMass(), right.getParentMass(), 1d);
     }
 
-    private ReferenceLibraryMergedSpectrum performPeakMerging(List<ReferenceLibrarySpectrum> spectra) {
-        final double parentMass = spectra.stream().mapToDouble(ReferenceLibrarySpectrum::getParentMass).average().orElse(0d);
-        final double parentIntensity = spectra.stream().mapToDouble(ReferenceLibrarySpectrum::getParentIntensity).average().orElse(0d);
+    private SearchPreparedMergedSpectrum performPeakMerging(List<SearchPreparedSpectrum> spectra) {
+        final double parentMass = spectra.stream().mapToDouble(SearchPreparedSpectrum::getParentMass).average().orElse(0d);
+        final double parentIntensity = spectra.stream().mapToDouble(SearchPreparedSpectrum::getParentIntensity).average().orElse(0d);
         final SimpleSpectrum merged = Spectrums.mergeSpectra(spectra);
         final Spectrum<Peak> intensityOrdered = Spectrums.getIntensityOrderedSpectrum(merged);
         final BitSet alreadyMerged = new BitSet(merged.size());
-        final ReferenceLibraryMergedSpectrum.Builder mergedSpectrum = new ReferenceLibraryMergedSpectrum.Builder(parentMass, parentIntensity);
+        final SearchPreparedMergedSpectrum.Builder mergedSpectrum = new SearchPreparedMergedSpectrum.Builder(parentMass, parentIntensity);
         for (int k=0; k < intensityOrdered.size(); ++k) {
             final double mz = intensityOrdered.getMzAt(k);
             final int index = Spectrums.binarySearch(merged, mz);

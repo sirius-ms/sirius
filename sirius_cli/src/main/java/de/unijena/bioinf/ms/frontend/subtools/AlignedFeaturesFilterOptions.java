@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This filter does not apply to the import. It filters for subsequent computations
+ * Note: However, if this filter removes ALL features for computation, the features from peak list import won't be imported at all.
+ *       If it only filters a subset, all features will be imported.
+ */
 public class AlignedFeaturesFilterOptions {
 
     @CommandLine.Option(names = "--mzmin", description = {"Minimal precursor mass."})

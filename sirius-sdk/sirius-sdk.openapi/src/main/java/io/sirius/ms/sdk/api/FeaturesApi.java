@@ -294,7 +294,7 @@ public class FeaturesApi {
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
+        final String[] localVarContentTypes = {
             "application/json"
         };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
@@ -589,12 +589,12 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return AlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeatureRequestCreation(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeatureRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -615,7 +615,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -637,14 +637,14 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return AlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AlignedFeature getAlignedFeature(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public AlignedFeature getAlignedFeature(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields).bodyToMono(localVarReturnType).block();
+        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -653,14 +653,14 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AlignedFeature> getAlignedFeatureWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<AlignedFeature> getAlignedFeatureWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields).toEntity(localVarReturnType).block();
+        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -669,13 +669,13 @@ public class FeaturesApi {
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeatureWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields);
+    public ResponseSpec getAlignedFeatureWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeatureRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
     }
     /**
      * [EXPERIMENTAL] Returns data quality information for given feature (alignedFeatureId)  
@@ -765,12 +765,12 @@ public class FeaturesApi {
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesRequestCreation(String projectId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesRequestCreation(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -786,7 +786,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -807,14 +807,14 @@ public class FeaturesApi {
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeature> getAlignedFeatures(String projectId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public List<AlignedFeature> getAlignedFeatures(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return getAlignedFeaturesRequestCreation(projectId, msDataAsCosineQuery, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -822,14 +822,14 @@ public class FeaturesApi {
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeature>> getAlignedFeaturesWithHttpInfo(String projectId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<AlignedFeature>> getAlignedFeaturesWithHttpInfo(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return getAlignedFeaturesRequestCreation(projectId, msDataAsCosineQuery, optFields).toEntityList(localVarReturnType).block();
+        return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -837,13 +837,13 @@ public class FeaturesApi {
      * Get all available features (aligned over runs) in the given project-space.
      * <p><b>200</b> - AlignedFeatures with additional annotations and MS/MS data (if specified).
      * @param projectId project-space to read from.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesWithResponseSpec(String projectId, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return getAlignedFeaturesRequestCreation(projectId, msDataAsCosineQuery, optFields);
+    public ResponseSpec getAlignedFeaturesWithResponseSpec(String projectId, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesRequestCreation(projectId, msDataSearchPrepared, optFields);
     }
     /**
      * [EXPERIMENTAL] Get features (aligned over runs) by tag group
@@ -1051,13 +1051,13 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param searchQuery optional search query in lucene syntax.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesPageExperimentalWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataAsCosineQuery, optFields);
+    public ResponseSpec getAlignedFeaturesPageExperimentalWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataSearchPrepared, optFields);
     }
     /**
      * Return Best matching compound classes for given formulaId
@@ -1826,11 +1826,11 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaAnnotatedMsMsDataRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean asCosineQuery) throws WebClientResponseException {
+    private ResponseSpec getFormulaAnnotatedMsMsDataRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1856,7 +1856,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "asCosineQuery", asCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -1878,13 +1878,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(String projectId, String alignedFeatureId, String formulaId, Boolean asCosineQuery) throws WebClientResponseException {
+    public AnnotatedMsMsData getFormulaAnnotatedMsMsData(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, asCosineQuery).bodyToMono(localVarReturnType).block();
+        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1894,13 +1894,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getFormulaAnnotatedMsMsDataWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean asCosineQuery) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getFormulaAnnotatedMsMsDataWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, asCosineQuery).toEntity(localVarReturnType).block();
+        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1910,12 +1910,12 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaAnnotatedMsMsDataWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean asCosineQuery) throws WebClientResponseException {
-        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, asCosineQuery);
+    public ResponseSpec getFormulaAnnotatedMsMsDataWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+        return getFormulaAnnotatedMsMsDataRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared);
     }
     /**
      * Returns a fragmentation spectrum (e
@@ -1925,11 +1925,11 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    private ResponseSpec getFormulaAnnotatedSpectrumRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1956,7 +1956,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "asCosineQuery", asCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchPrepared", searchPrepared));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -1979,13 +1979,13 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    public AnnotatedSpectrum getFormulaAnnotatedSpectrum(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, asCosineQuery).bodyToMono(localVarReturnType).block();
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1996,13 +1996,13 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getFormulaAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getFormulaAnnotatedSpectrumWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, asCosineQuery).toEntity(localVarReturnType).block();
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2013,12 +2013,12 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
-        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, asCosineQuery);
+    public ResponseSpec getFormulaAnnotatedSpectrumWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+        return getFormulaAnnotatedSpectrumRequestCreation(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared);
     }
     /**
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
@@ -2027,12 +2027,12 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return FormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidateRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidateRequestCreation(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2058,7 +2058,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -2081,14 +2081,14 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return FormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public FormulaCandidate getFormulaCandidate(String projectId, String alignedFeatureId, String formulaId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public FormulaCandidate getFormulaCandidate(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
-        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataAsCosineQuery, optFields).bodyToMono(localVarReturnType).block();
+        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2098,14 +2098,14 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<FormulaCandidate> getFormulaCandidateWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<FormulaCandidate> getFormulaCandidateWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
-        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataAsCosineQuery, optFields).toEntity(localVarReturnType).block();
+        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2115,13 +2115,13 @@ public class FeaturesApi {
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidateWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataAsCosineQuery, optFields);
+    public ResponseSpec getFormulaCandidateWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        return getFormulaCandidateRequestCreation(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields);
     }
     /**
      * List of FormulaResultContainers available for this feature with minimal information.
@@ -2129,12 +2129,12 @@ public class FeaturesApi {
      * <p><b>200</b> - All FormulaCandidate of this feature with.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidatesRequestCreation(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidatesRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2155,7 +2155,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -2177,14 +2177,14 @@ public class FeaturesApi {
      * <p><b>200</b> - All FormulaCandidate of this feature with.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return List&lt;FormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<FormulaCandidate> getFormulaCandidates(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public List<FormulaCandidate> getFormulaCandidates(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -2193,14 +2193,14 @@ public class FeaturesApi {
      * <p><b>200</b> - All FormulaCandidate of this feature with.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;List&lt;FormulaCandidate&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<FormulaCandidate>> getFormulaCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<FormulaCandidate>> getFormulaCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<FormulaCandidate> localVarReturnType = new ParameterizedTypeReference<FormulaCandidate>() {};
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields).toEntityList(localVarReturnType).block();
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -2209,13 +2209,13 @@ public class FeaturesApi {
      * <p><b>200</b> - All FormulaCandidate of this feature with.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataAsCosineQuery, optFields);
+    public ResponseSpec getFormulaCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
     }
     /**
      * Page of FormulaResultContainers available for this feature with minimal information.
@@ -2226,12 +2226,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidatesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2255,7 +2255,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -2280,14 +2280,14 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelFormulaCandidate getFormulaCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public PagedModelFormulaCandidate getFormulaCandidatesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
-        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataAsCosineQuery, optFields).bodyToMono(localVarReturnType).block();
+        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2299,14 +2299,14 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PagedModelFormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelFormulaCandidate> getFormulaCandidatesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PagedModelFormulaCandidate>() {};
-        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataAsCosineQuery, optFields).toEntity(localVarReturnType).block();
+        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2318,13 +2318,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataAsCosineQuery, optFields);
+    public ResponseSpec getFormulaCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        return getFormulaCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields);
     }
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  
@@ -2608,11 +2608,11 @@ public class FeaturesApi {
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return MsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getMsDataRequestCreation(String projectId, String alignedFeatureId, Boolean asCosineQuery) throws WebClientResponseException {
+    private ResponseSpec getMsDataRequestCreation(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2633,7 +2633,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "asCosineQuery", asCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -2654,13 +2654,13 @@ public class FeaturesApi {
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return MsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public MsData getMsData(String projectId, String alignedFeatureId, Boolean asCosineQuery) throws WebClientResponseException {
+    public MsData getMsData(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
-        return getMsDataRequestCreation(projectId, alignedFeatureId, asCosineQuery).bodyToMono(localVarReturnType).block();
+        return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2669,13 +2669,13 @@ public class FeaturesApi {
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseEntity&lt;MsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<MsData> getMsDataWithHttpInfo(String projectId, String alignedFeatureId, Boolean asCosineQuery) throws WebClientResponseException {
+    public ResponseEntity<MsData> getMsDataWithHttpInfo(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<MsData> localVarReturnType = new ParameterizedTypeReference<MsData>() {};
-        return getMsDataRequestCreation(projectId, alignedFeatureId, asCosineQuery).toEntity(localVarReturnType).block();
+        return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2684,12 +2684,12 @@ public class FeaturesApi {
      * <p><b>200</b> - Mass Spec data of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the Mass Spec data belongs to.
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getMsDataWithResponseSpec(String projectId, String alignedFeatureId, Boolean asCosineQuery) throws WebClientResponseException {
-        return getMsDataRequestCreation(projectId, alignedFeatureId, asCosineQuery);
+    public ResponseSpec getMsDataWithResponseSpec(String projectId, String alignedFeatureId, Boolean msDataSearchPrepared) throws WebClientResponseException {
+        return getMsDataRequestCreation(projectId, alignedFeatureId, msDataSearchPrepared);
     }
     /**
      * [EXPERIMENTAL] Returns a single quantification table row for the given feature (alignedFeatureId)
@@ -3300,11 +3300,11 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean asCosineQuery) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedMsDataExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3335,7 +3335,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "asCosineQuery", asCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -3358,13 +3358,13 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return AnnotatedMsMsData
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean asCosineQuery) throws WebClientResponseException {
+    public AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, asCosineQuery).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -3375,13 +3375,13 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseEntity&lt;AnnotatedMsMsData&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean asCosineQuery) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedMsMsData> getStructureAnnotatedMsDataExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedMsMsData> localVarReturnType = new ParameterizedTypeReference<AnnotatedMsMsData>() {};
-        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, asCosineQuery).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -3392,12 +3392,12 @@ public class FeaturesApi {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-     * @param asCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean asCosineQuery) throws WebClientResponseException {
-        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, asCosineQuery);
+    public ResponseSpec getStructureAnnotatedMsDataExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Boolean msDataSearchPrepared) throws WebClientResponseException {
+        return getStructureAnnotatedMsDataExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared);
     }
     /**
      * [EXPERIMENTAL] Spectral library match for the given &#39;alignedFeatureId&#39; with additional molecular formula and substructure annotations
@@ -3500,11 +3500,11 @@ public class FeaturesApi {
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared The searchPrepared parameter
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    private ResponseSpec getStructureAnnotatedSpectrumExperimentalRequestCreation(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3536,7 +3536,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "asCosineQuery", asCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchPrepared", searchPrepared));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -3560,13 +3560,13 @@ public class FeaturesApi {
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared The searchPrepared parameter
      * @return AnnotatedSpectrum
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    public AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, asCosineQuery).bodyToMono(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -3578,13 +3578,13 @@ public class FeaturesApi {
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared The searchPrepared parameter
      * @return ResponseEntity&lt;AnnotatedSpectrum&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
+    public ResponseEntity<AnnotatedSpectrum> getStructureAnnotatedSpectrumExperimentalWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
         ParameterizedTypeReference<AnnotatedSpectrum> localVarReturnType = new ParameterizedTypeReference<AnnotatedSpectrum>() {};
-        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, asCosineQuery).toEntity(localVarReturnType).block();
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -3596,12 +3596,12 @@ public class FeaturesApi {
      * @param formulaId identifier of the requested formula result
      * @param inchiKey 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
      * @param spectrumIndex index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default)
-     * @param asCosineQuery The asCosineQuery parameter
+     * @param searchPrepared The searchPrepared parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean asCosineQuery) throws WebClientResponseException {
-        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, asCosineQuery);
+    public ResponseSpec getStructureAnnotatedSpectrumExperimentalWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, String inchiKey, Integer spectrumIndex, Boolean searchPrepared) throws WebClientResponseException {
+        return getStructureAnnotatedSpectrumExperimentalRequestCreation(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared);
     }
     /**
      * List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.

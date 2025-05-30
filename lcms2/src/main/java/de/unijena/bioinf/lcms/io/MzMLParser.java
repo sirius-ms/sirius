@@ -65,6 +65,8 @@ public class MzMLParser implements LCMSParser {
 
     private static final Pattern SUFFIX = Pattern.compile("\\.mzml$", Pattern.CASE_INSENSITIVE);
 
+    private int noScanIDCount = 0;
+
     private File createTempFile(@NotNull Path input) throws IOException {
         if (input.getFileSystem().equals(FileSystems.getDefault())) {
             return input.toFile();
@@ -146,6 +148,8 @@ public class MzMLParser implements LCMSParser {
 
             }
             run.setSourceReference(reference);
+
+            ArrayList<String> surpressEmptySpectrumLog = new ArrayList<>();
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
@@ -301,7 +305,10 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
-                    log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
 
@@ -313,7 +320,10 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (peaks.isEmpty()) {
-                    log.error("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
                 if (msLevel == 1) {
@@ -413,6 +423,13 @@ public class MzMLParser implements LCMSParser {
             if (scanids.isEmpty()) {
                 throw new RuntimeException("No spectra imported from " + fileName);
             }
+            if (surpressEmptySpectrumLog.size()>1) {
+                if (surpressEmptySpectrumLog.size()>100) {
+                    log.error("There were " + surpressEmptySpectrumLog.size() + " spectra without any spectral data.");
+                } else {
+                    log.error("The following spectra did not contain any spectral data: " + String.join(", ", surpressEmptySpectrumLog));
+                }
+            }
 
             if (fragmentation != null) {
                 run.setFragmentation(fragmentation);
@@ -425,6 +442,11 @@ public class MzMLParser implements LCMSParser {
             storage.setMapping(mapping);
             ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
             sample.setRun(run);
+
+            if (noScanIDCount>0) {
+                LoggerFactory.getLogger(MzMLParser.class).warn("In total {} spectra have no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.", noScanIDCount);
+            }
+
             return sample;
 
         } catch (Exception e) {
@@ -454,7 +476,10 @@ public class MzMLParser implements LCMSParser {
             //if (m.find()) {
                 //return Integer.parseInt(m.group(1));
             //} else {
-                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                if (noScanIDCount==0) {
+                    LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                }
+                ++noScanIDCount;
                 return index;
             //}
         }

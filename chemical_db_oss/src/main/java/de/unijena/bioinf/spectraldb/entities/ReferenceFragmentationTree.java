@@ -9,7 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -63,7 +63,7 @@ public class ReferenceFragmentationTree {
         FragmentAnnotation<AnnotatedPeak> ano = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
         List<ReferenceFragment> orderedByMass = new ArrayList<>();
         Fragment root = tree.getRoot();
-        ReferenceLibraryMergedSpectrum querySpectrum = merged.getQuerySpectrum();
+        SearchPreparedMergedSpectrum querySpectrum = merged.getSearchPreparedSpectrum();
         for (Fragment f : tree.getFragments()) {
             ReferenceFragment g = new ReferenceFragment();
             g.setMz(ano!=null ? ano.get(f).getMass() : null);

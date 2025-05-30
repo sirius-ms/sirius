@@ -27,7 +27,7 @@ import java.util.*;
 @Slf4j
 public abstract class LCMSStorage implements Closeable {
 
-    public static LCMSStorageFactory temporaryStorage(@Nullable File tmpDir) {
+    public static LCMSStorageFactory temporaryStorage(@Nullable File tmpDir, boolean inMemoryForMerged) {
         return new LCMSStorageFactory() {
             final LinkedList<MVTraceStorage> storages = new LinkedList<>();
 
@@ -38,6 +38,17 @@ public abstract class LCMSStorage implements Closeable {
                 MVTraceStorage store = new MVTraceStorage(tempFile.getAbsolutePath(), true);
                 storages.add(store);
                 return store;
+            }
+
+            @Override
+            public synchronized LCMSStorage createNewMergedStorage() throws IOException {
+                if (inMemoryForMerged) {
+                    MVTraceStorage store = new MVTraceStorage(null, true);
+                    storages.add(store);
+                    return store;
+                } else {
+                    return createNewStorage();
+                }
             }
 
             @Override
@@ -113,7 +124,12 @@ class MVTraceStorage extends LCMSStorage {
         this.deleteOnClose = deleteOnClose;
         MVStore.Builder builder = new MVStore.Builder();
         this.cacheSizeInMegabytes = getDefaultCacheSize();
-        this.storage = builder.fileName(file).autoCommitDisabled().cacheSize(cacheSizeInMegabytes).open();
+        if (file==null) {
+            // use in-memory storage
+            this.storage = builder.fileStore(new OffHeapStore()).autoCommitDisabled().cacheSize(cacheSizeInMegabytes).open();
+        } else {
+            this.storage = builder.fileName(file).autoCommitDisabled().cacheSize(cacheSizeInMegabytes).open();
+        }
         this.statisticsObj = storage.openMap("statistics", new MVMap.Builder<Integer, SampleStats>().valueType(new SampleStatsDataType()));
         this.alignmentStorage = new MvBasedAlignmentStorage(storage);
     }
@@ -222,7 +238,7 @@ class MVTraceStorage extends LCMSStorage {
         if (!storage.isClosed()) {
             commit();
             storage.close();
-            if (deleteOnClose)
+            if (deleteOnClose && file!=null)
                 Files.deleteIfExists(Path.of(file));
         }
     }
