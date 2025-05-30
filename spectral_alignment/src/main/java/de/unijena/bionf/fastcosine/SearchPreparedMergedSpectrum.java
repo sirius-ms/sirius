@@ -12,7 +12,7 @@ import java.util.List;
  * a lowerbound to the maximum cosine distance of the merged spectra.
  *
  */
-public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
+public class SearchPreparedMergedSpectrum extends SearchPreparedSpectrum {
     final float[] mergedMaxIntensities;
 
     private record MergedPeak(double mz, float intensity, float queryIntensity) {
@@ -33,7 +33,7 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
             this.peaks.add(new MergedPeak(mz, avgIntens,maxIntens));
         }
 
-        ReferenceLibraryMergedSpectrum done() {
+        SearchPreparedMergedSpectrum done() {
             // renormalize intensities
             peaks.sort(Comparator.comparingDouble(x->x.mz));
 
@@ -55,21 +55,26 @@ public class ReferenceLibraryMergedSpectrum extends ReferenceLibrarySpectrum {
                 qintens[k] = p.queryIntensity;
             }
 
-            return new ReferenceLibraryMergedSpectrum(parentmass, (float)(parentIntensity/norm), mz, intens, qintens);
+            return new SearchPreparedMergedSpectrum(parentmass, (float)(parentIntensity/norm), mz, intens, qintens);
         }
     }
 
-    @JsonCreator ReferenceLibraryMergedSpectrum(@JsonProperty("parentMass") double parentMass, @JsonProperty("parentIntensity") float parentIntensity, @JsonProperty("mz") double[] mz, @JsonProperty("intensities") float[] intensities,
-                                                @JsonProperty("mergedMaxIntensities") float[] mergedMaxIntensities) {
+    @JsonCreator
+    SearchPreparedMergedSpectrum(@JsonProperty("parentMass") double parentMass,
+                                 @JsonProperty("parentIntensity") float parentIntensity,
+                                 @JsonProperty("mz") double[] mz,
+                                 @JsonProperty("intensities") float[] intensities,
+                                 @JsonProperty("mergedMaxIntensities") float[] mergedMaxIntensities
+    ) {
         super(parentMass, parentIntensity, mz, intensities);
         this.mergedMaxIntensities = mergedMaxIntensities;
     }
 
-    public ReferenceLibrarySpectrum asReferenceLibrarySpectrum() {
-        return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, intensities);
+    public SearchPreparedSpectrum asSearchPreparedSpectrum() {
+        return new SearchPreparedSpectrum(getParentMass(), getParentIntensity(), mz, intensities);
     }
 
-    public ReferenceLibrarySpectrum asUpperboundQuerySpectrum() {
-        return new ReferenceLibrarySpectrum(getParentMass(), getParentIntensity(), mz, mergedMaxIntensities);
+    public SearchPreparedSpectrum asUpperboundSearchPreparedSpectrum() {
+        return new SearchPreparedSpectrum(getParentMass(), getParentIntensity(), mz, mergedMaxIntensities);
     }
 }

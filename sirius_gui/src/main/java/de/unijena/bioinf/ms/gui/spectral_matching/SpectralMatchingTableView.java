@@ -131,7 +131,19 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         linkRenderer.registerToTable(table, 12);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
-        showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+
+        // set initial state
+        getSource().readDataByConsumer(instance -> {
+            if (instance == null || instance.getNumberOfSpectralMatches() == 0)
+                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+            else if (getSource().getElementList().isEmpty())
+                showCenterCard(ActionList.ViewState.EMPTY);
+            else {
+                showCenterCard(ActionList.ViewState.DATA);
+            }
+        });
+        if (getFilteredSelectionModel().isSelectionEmpty() && !getFilteredSource().isEmpty())
+            getFilteredSelectionModel().setSelectionInterval(0, 0);
     }
 
     @Override

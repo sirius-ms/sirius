@@ -108,6 +108,22 @@ public final class GuiProperties {
     }
     //endregion
 
+    // region showHomogueSeriesView
+    public static final @NotNull String SHOW_HOMOLOGUE_SERIES_PANEL_KEY = "de.unijena.bioinf.sirius.homologueSeriesPanel.show";
+    private boolean showHomologueSeriesPanel = SiriusProperties.getBoolean(SHOW_HOMOLOGUE_SERIES_PANEL_KEY, null, false);
+
+    public synchronized boolean isShowHomologueSeriesPanel() {
+        return showHomologueSeriesPanel;
+    }
+
+    public synchronized void setShowHomologueSeriesPanel(boolean showHomologueSeriesPanel) {
+        boolean old = this.showHomologueSeriesPanel;
+        this.showHomologueSeriesPanel = showHomologueSeriesPanel;
+        pcs.firePropertyChange("showHomologueSeriesPanel", old, this.showHomologueSeriesPanel);
+
+    }
+    //endregion
+
     //over all GUI instances
     private static Set<String> tutorialsThisSession = new HashSet<>();
 

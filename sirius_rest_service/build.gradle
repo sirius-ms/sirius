@@ -117,7 +117,7 @@ bootJar {
 openApi {
     apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("$projectDir"))
-    waitTimeInSeconds.set(20)
+    waitTimeInSeconds.set(30)
 
     outputFileName = "openapi-spec-enums-as-ref.json"
     customBootRun {
@@ -141,6 +141,19 @@ tasks.register("generateOpenApiDocsEnumsAsString") {
     finalizedBy "generateOpenApiDocs"
 }
 
+tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
+    description "Creates the api docs with enums treated as strings which seems to be mor compatible with some languages."
+    group "openApi"
+    doFirst {
+        openApi {
+            outputFileName = "openapi-spec-advanced-enums-as-string.json"
+            customBootRun {
+                args = ["rest", "-s", "-p", "8888", "--api-mode", "ADVANCED"]
+            }
+        }
+    }
+    finalizedBy "generateOpenApiDocs"
+}
 
 // Javadoc cannot recognize lombok builder
 javadoc {

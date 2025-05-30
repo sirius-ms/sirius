@@ -46,9 +46,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_INCHI_KEY,
   StructureCandidateScored.JSON_PROPERTY_SMILES,
   StructureCandidateScored.JSON_PROPERTY_STRUCTURE_NAME,
-  StructureCandidateScored.JSON_PROPERTY_XLOG_P,
+  StructureCandidateScored.JSON_PROPERTY_STRUCTURE_SVG,
   StructureCandidateScored.JSON_PROPERTY_DB_LINKS,
   StructureCandidateScored.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
+  StructureCandidateScored.JSON_PROPERTY_XLOG_P,
   StructureCandidateScored.JSON_PROPERTY_RANK,
   StructureCandidateScored.JSON_PROPERTY_CSI_SCORE,
   StructureCandidateScored.JSON_PROPERTY_TANIMOTO_SIMILARITY,
@@ -66,14 +67,17 @@ public class StructureCandidateScored {
   public static final String JSON_PROPERTY_STRUCTURE_NAME = "structureName";
   private String structureName;
 
-  public static final String JSON_PROPERTY_XLOG_P = "xlogP";
-  private Double xlogP;
+  public static final String JSON_PROPERTY_STRUCTURE_SVG = "structureSvg";
+  private String structureSvg;
 
   public static final String JSON_PROPERTY_DB_LINKS = "dbLinks";
   private List<DBLink> dbLinks;
 
   public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
   private List<SpectralLibraryMatch> spectralLibraryMatches;
+
+  public static final String JSON_PROPERTY_XLOG_P = "xlogP";
+  private Double xlogP;
 
   public static final String JSON_PROPERTY_RANK = "rank";
   private Integer rank;
@@ -168,29 +172,29 @@ public class StructureCandidateScored {
     this.structureName = structureName;
   }
 
-  public StructureCandidateScored xlogP(Double xlogP) {
+  public StructureCandidateScored structureSvg(String structureSvg) {
     
-    this.xlogP = xlogP;
+    this.structureSvg = structureSvg;
     return this;
   }
 
    /**
-   * Get xlogP
-   * @return xlogP
+   * SVG graphics of the structure candidate  OPTIONAL: needs to be added by parameter
+   * @return structureSvg
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Double getXlogP() {
-    return xlogP;
+  public String getStructureSvg() {
+    return structureSvg;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonProperty(JSON_PROPERTY_STRUCTURE_SVG)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setXlogP(Double xlogP) {
-    this.xlogP = xlogP;
+  public void setStructureSvg(String structureSvg) {
+    this.structureSvg = structureSvg;
   }
 
   public StructureCandidateScored dbLinks(List<DBLink> dbLinks) {
@@ -257,6 +261,31 @@ public class StructureCandidateScored {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSpectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     this.spectralLibraryMatches = spectralLibraryMatches;
+  }
+
+  public StructureCandidateScored xlogP(Double xlogP) {
+    
+    this.xlogP = xlogP;
+    return this;
+  }
+
+   /**
+   * Get xlogP
+   * @return xlogP
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getXlogP() {
+    return xlogP;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_XLOG_P)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setXlogP(Double xlogP) {
+    this.xlogP = xlogP;
   }
 
   public StructureCandidateScored rank(Integer rank) {
@@ -396,9 +425,10 @@ public class StructureCandidateScored {
     return Objects.equals(this.inchiKey, structureCandidateScored.inchiKey) &&
         Objects.equals(this.smiles, structureCandidateScored.smiles) &&
         Objects.equals(this.structureName, structureCandidateScored.structureName) &&
-        Objects.equals(this.xlogP, structureCandidateScored.xlogP) &&
+        Objects.equals(this.structureSvg, structureCandidateScored.structureSvg) &&
         Objects.equals(this.dbLinks, structureCandidateScored.dbLinks) &&
         Objects.equals(this.spectralLibraryMatches, structureCandidateScored.spectralLibraryMatches) &&
+        Objects.equals(this.xlogP, structureCandidateScored.xlogP) &&
         Objects.equals(this.rank, structureCandidateScored.rank) &&
         Objects.equals(this.csiScore, structureCandidateScored.csiScore) &&
         Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
@@ -408,7 +438,7 @@ public class StructureCandidateScored {
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, rank, csiScore, tanimotoSimilarity, mcesDistToTopHit, fingerprint);
+    return Objects.hash(inchiKey, smiles, structureName, structureSvg, dbLinks, spectralLibraryMatches, xlogP, rank, csiScore, tanimotoSimilarity, mcesDistToTopHit, fingerprint);
   }
 
   @Override
@@ -418,9 +448,10 @@ public class StructureCandidateScored {
     sb.append("    inchiKey: ").append(toIndentedString(inchiKey)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
     sb.append("    structureName: ").append(toIndentedString(structureName)).append("\n");
-    sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
+    sb.append("    structureSvg: ").append(toIndentedString(structureSvg)).append("\n");
     sb.append("    dbLinks: ").append(toIndentedString(dbLinks)).append("\n");
     sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
+    sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
     sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
     sb.append("    csiScore: ").append(toIndentedString(csiScore)).append("\n");
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");

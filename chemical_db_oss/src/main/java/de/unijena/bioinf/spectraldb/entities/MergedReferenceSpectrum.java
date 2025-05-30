@@ -1,5 +1,6 @@
 package de.unijena.bioinf.spectraldb.entities;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -7,7 +8,7 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
-import de.unijena.bionf.fastcosine.ReferenceLibraryMergedSpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedMergedSpectrum;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
@@ -77,5 +78,6 @@ public class MergedReferenceSpectrum implements ReferenceSpectrum {
     /**
      * the merged query spectrum
      */
-    private ReferenceLibraryMergedSpectrum querySpectrum;
+    @JsonAlias("querySpectrum") //allows us to read old databases as well (Old name was never released but already used a lot internally).
+    private SearchPreparedMergedSpectrum searchPreparedSpectrum;
 }

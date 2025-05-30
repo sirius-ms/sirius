@@ -56,6 +56,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     private Properties props;
     final JSpinner scalingSpinner;
     final int scaling;
+    private boolean enableAllSoftwareTours = false;
 
     final String theme;
 
@@ -63,6 +64,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
     final FileChooserPanel db;
     final JCheckBox showSpectraMatchPanel;
+    final JCheckBox showHomologueSeriesPanel;
     final JComboBox<String> solver;
     final JComboBox<ConfidenceDisplayMode> confidenceDisplayMode;
     final JComboBox<MolecularStructuresDisplayColors> molecularStructuresDisplayColors;
@@ -116,28 +118,27 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
                 new WarningDialog(gui.getMainFrame(),
                         "Activate spectral library results tab",
                         GuiUtils.formatToolTip(
-                                "SIRIUS automatically searches in your spectral libraries as part of the molecular formula annotation step. " +
-                                "Library hits can be viewed via the \"Structures\" tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
-                                "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"Structures\" tab.", "",
+                                "Library hits can be viewed via the \"Structures\" and  \"Substructure Annotations\"  tab after performing structure database search. This integrated view allows you to seamlessly compare structure database and spectral library hits.",
+                                "By activating the \"Library Matches\" tab, you can also view the spectral library hits independently of the molecular structure list from the \"CSI:FingerID\" structure database search results.", "",
                                 "NOTE: In SIRIUS, each spectral library is also a molecular structure database. ANY hit in this library can also be found via CSI:FingerID structure database search. " +
                                         "Since structure database results depend on the selected molecular formula, SIRIUS ensures that molecular structures with a formula corresponding to a good spectral library hit are considered - even if this molecular formula receives a low score. " +
-                                        "In this way, molecular structures of well-matching reference spectra are automatically included in the structure database search.", "",
-                                        "To ensure that the database search is performed on all your spectral libraries and CSI:FingerID does not miss a candidate, you still need to select these libraries (databases) in the database search step."),
+                                        "In this way, molecular structures of well-matching reference spectra are automatically included in the structure database search."),
                         DO_NOT_SHOW_AGAIN_ACTIVATE_LIBRARY_TAB);
             }
         });
 
+        showHomologueSeriesPanel = new JCheckBox();
+        showHomologueSeriesPanel.setToolTipText("Show a result tab displaying a KMD plot for analyzing homologue series.");
+        showHomologueSeriesPanel.setSelected(gui.getProperties().isShowHomologueSeriesPanel());
+        addNamed("Show \"Homologue Series\" tab", showHomologueSeriesPanel);
+
+
         //software tour
-        JPanel softwareTourButtonPanel = new JPanel();
-        JButton disableTour = new JButton("Disable all");
-        JButton enableTour = new JButton("Enable all");
-        softwareTourButtonPanel.add(disableTour);
-        softwareTourButtonPanel.add(enableTour);
-        addNamed("Software tour", softwareTourButtonPanel);
-        disableTour.addActionListener(evt -> {
-            SoftwareTourUtils.disableAllTours();
-        });
+        JButton enableTour = new JButton("Enable all tours");
+        addNamed("Software tours", enableTour);
         enableTour.addActionListener(evt -> {
+            enableAllSoftwareTours = true;
+            //make it persistent even when cancel is clicked
             SoftwareTourUtils.enableAllTours(gui.getProperties());
         });
 
@@ -218,6 +219,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         props.setProperty(SHOW_SPECTRA_MATCH_PANEL_KEY, String.valueOf(showSpectraMatchPanel.isSelected()));
         gui.getProperties().setShowSpectraMatchPanel(showSpectraMatchPanel.isSelected());
 
+        props.setProperty(SHOW_HOMOLOGUE_SERIES_PANEL_KEY, String.valueOf(showHomologueSeriesPanel.isSelected()));
+        gui.getProperties().setShowHomologueSeriesPanel(showHomologueSeriesPanel.isSelected());
+
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
 
         props.setProperty(CONFIDENCE_DISPLAY_MODE_KEY, ((ConfidenceDisplayMode) confidenceDisplayMode.getSelectedItem()).name());
@@ -235,6 +239,11 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         if (scaling != (int) scalingSpinner.getValue()) {
             props.setProperty("sun.java2d.uiScale", String.valueOf((int) scalingSpinner.getValue()));
             restartRequired = true;
+        }
+
+        if (enableAllSoftwareTours) {
+            //still required to make sure that properties are not overwritten again
+            SoftwareTourUtils.enableAllTours(gui.getProperties(), props);
         }
     }
 

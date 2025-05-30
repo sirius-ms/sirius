@@ -54,7 +54,7 @@ public class JCefBrowserDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         // Create the browser panel and make it own its client (will dispose the client when closed)
-        browserPanel = new JCefBrowserPanel(url, client, true);
+        browserPanel = new JCefBrowserPanel(url, client);
         add(browserPanel, BorderLayout.CENTER);
 
         // Show dialog
@@ -82,7 +82,7 @@ public class JCefBrowserDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         // Create the browser panel and make it own its client (will dispose the client when closed)
-        browserPanel = new JCefBrowserPanel(url, client, true);
+        browserPanel = new JCefBrowserPanel(url, client);
         add(browserPanel, BorderLayout.CENTER);
 
         // Show dialog

@@ -30,7 +30,7 @@
     },
     {
       "name": "Gui",
-      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+      "description": "GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Projects",
@@ -2260,7 +2260,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -2465,7 +2465,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -3866,7 +3866,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -4339,7 +4339,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -4618,7 +4618,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5291,7 +5291,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -5343,7 +5343,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5434,7 +5434,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -5542,7 +5542,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "searchPrepared",
             "in": "query",
             "required": false,
             "schema": {
@@ -5611,7 +5611,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -5944,7 +5944,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6054,7 +6055,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6127,7 +6129,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6237,7 +6240,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6410,8 +6414,9 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "searchPrepared",
             "in": "query",
+            "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
             "schema": {
               "type": "boolean",
@@ -6470,7 +6475,7 @@
             }
           },
           {
-            "name": "asCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                         Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                         peak assignments and reference spectra.",
             "required": false,
@@ -6556,7 +6561,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -6648,7 +6653,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6749,7 +6755,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6813,7 +6820,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -6914,7 +6922,8 @@
                   "none",
                   "fingerprint",
                   "dbLinks",
-                  "libraryMatches"
+                  "libraryMatches",
+                  "structureSvg"
                 ]
               },
               "default": [
@@ -7240,7 +7249,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -9290,6 +9299,19 @@
           }
         }
       },
+      "Deviation": {
+        "type": "object",
+        "properties": {
+          "ppm": {
+            "type": "number",
+            "format": "double"
+          },
+          "absolute": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "LcmsSubmissionParameters": {
         "type": "object",
         "properties": {
@@ -9306,6 +9328,30 @@
             "type": "boolean",
             "description": "Specifies whether LC/MS runs should be aligned",
             "default": true
+          },
+          "noiseIntensity": {
+            "type": "number",
+            "description": "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level\n to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.\n If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify\n this parameter, as the automated detection is usually sufficient.",
+            "format": "double",
+            "default": -1
+          },
+          "traceMaxMassDeviation": {
+            "$ref": "#/components/schemas/Deviation"
+          },
+          "alignMaxMassDeviation": {
+            "$ref": "#/components/schemas/Deviation"
+          },
+          "alignMaxRetentionTimeDeviation": {
+            "type": "number",
+            "description": "Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.",
+            "format": "double",
+            "default": -1
+          },
+          "minSNR": {
+            "type": "number",
+            "description": "Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory",
+            "format": "double",
+            "default": 3
           }
         }
       },
@@ -10075,20 +10121,6 @@
         },
         "nullable": true
       },
-      "Deviation": {
-        "type": "object",
-        "properties": {
-          "ppm": {
-            "type": "number",
-            "format": "double"
-          },
-          "absolute": {
-            "type": "number",
-            "format": "double"
-          }
-        },
-        "nullable": true
-      },
       "FeatureAnnotations": {
         "type": "object",
         "properties": {
@@ -10381,6 +10413,9 @@
       "MsData": {
         "type": "object",
         "properties": {
+          "isotopePattern": {
+            "$ref": "#/components/schemas/BasicSpectrum"
+          },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
           },
@@ -10400,7 +10435,7 @@
             }
           }
         },
-        "description": "The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.\n However, at least one Spectrum field needs to be set to create a valid MsData Object.\n The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.\n \u003cp\u003e\n Each Feature can have:\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra (optional)\n - many MS spectra (optional)\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
+        "description": "The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.\n However, at least one Spectrum field needs to be set to create a valid MsData Object.\n The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.\n \u003cp\u003e\n Each Feature can have:\n - One extracted isotope pattern (optional)\n - One merged MS/MS spectrum (optional)\n - One merged MS spectrum (optional)\n - many MS/MS spectra (optional)\n - many MS spectra (optional)\n \u003cp\u003e\n Each non-merged spectrum has an index which can be used to access the spectrum.\n \u003cp\u003e\n In the future we might add some additional information like chromatographic peak or something similar",
         "nullable": true
       },
       "ParentPeak": {
@@ -10708,9 +10743,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -10728,6 +10763,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "nullable": true
@@ -10745,9 +10785,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -10765,6 +10805,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "rank": {
             "type": "integer",
@@ -10869,7 +10914,6 @@
               "EC_BASED",
               "PHASE_2",
               "HUMAN_GUT",
-              "ENV_MICROBIAL",
               "ALL_HUMAN",
               "ABIOTIC",
               "HUMAN_CUSTOM_MULTI"
@@ -11591,9 +11635,9 @@
             "type": "string",
             "nullable": true
           },
-          "xlogP": {
-            "type": "number",
-            "format": "double",
+          "structureSvg": {
+            "type": "string",
+            "description": "SVG graphics of the structure candidate\n OPTIONAL: needs to be added by parameter",
             "nullable": true
           },
           "dbLinks": {
@@ -11611,6 +11655,11 @@
             "items": {
               "$ref": "#/components/schemas/SpectralLibraryMatch"
             }
+          },
+          "xlogP": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           },
           "rank": {
             "type": "integer",

@@ -36,7 +36,7 @@ public class ElementSelectionDialog extends JDialog {
     ElementsPanel elementsPanel;
 
     public ElementSelectionDialog(Window owner, String title, @NotNull FormulaConstraints constraints) {
-        this(owner, title, null, null, constraints);
+        this(owner, title, null, null, constraints, false);
     }
 
 
@@ -44,13 +44,13 @@ public class ElementSelectionDialog extends JDialog {
      * @param owner            see JDialog
      * @param title            Title of the dialog
      */
-    public ElementSelectionDialog(Window owner, String title, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints constraints) {
+    public ElementSelectionDialog(Window owner, String title, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints constraints, boolean setDetectablesOnly) {
         super(owner, title, ModalityType.APPLICATION_MODAL);
         setLayout(new BorderLayout());
 
         rv = ReturnValue.Cancel;
 
-        elementsPanel = new ElementsPanel(this, 4, possibleDetectable, enabledDetectable, constraints);
+        elementsPanel = new ElementsPanel(this, setDetectablesOnly ? 8 : 4, possibleDetectable, enabledDetectable, constraints, setDetectablesOnly);
         add(elementsPanel, BorderLayout.CENTER);
 
 

@@ -29,7 +29,7 @@ import java.util.Map;
 public class ActSpectraSearchConfigPanel extends ActivatableConfigPanel<SpectraSearchConfigPanel> {
 
     public ActSpectraSearchConfigPanel(SiriusGui gui, GlobalConfigPanel globalConfigPanel) {
-        super(gui, "Spectral Matching", Icons.SIRIUS.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel), SoftwareTourInfoStore.BatchCompute_SpectraSearch);
+        super(gui, "Spectral Matching", Icons.SPEC_SEARCH.derive(32, 32), () -> new SpectraSearchConfigPanel(globalConfigPanel), SoftwareTourInfoStore.BatchCompute_SpectraSearch);
 
         if (activationButton.isSelected()) {
             if (globalConfigPanel.getSearchDBList().checkBoxList.getCheckedItems().stream().noneMatch(SearchableDatabase::isCustomDb)) {

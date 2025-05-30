@@ -29,7 +29,7 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.entities.ReferenceFragmentationTree;
 import de.unijena.bioinf.spectraldb.entities.ReferenceSpectrum;
 import de.unijena.bionf.fastcosine.FastCosine;
-import de.unijena.bionf.fastcosine.ReferenceLibrarySpectrum;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,11 +74,11 @@ public interface SpectralLibrary {
 
      */
 
-    Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
-    Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<ReferenceLibrarySpectrum> query) throws IOException;
+    Stream<LibraryHit> queryAgainstLibraryWithPrecursorMass(double precursorMz, int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<SearchPreparedSpectrum> query) throws IOException;
+    Stream<LibraryHit> queryAgainstLibrary(int chargeAndPolarity, SpectralLibrarySearchSettings settings, List<SearchPreparedSpectrum> query) throws IOException;
 
-    Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException;
-    Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<ReferenceLibrarySpectrum> query, @Nullable ReferenceLibrarySpectrum mergedQuery) throws IOException;
+    Stream<LibraryHit> queryAgainstLibraryByMergedReference(List<MergedReferenceSpectrum> mergedRefQueries, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException;
+    Stream<LibraryHit> queryAgainstLibraryByMergedReference(MergedReferenceSpectrum mergedRefQuery, SpectralLibrarySearchSettings settings, @NotNull List<SearchPreparedSpectrum> query, @Nullable SearchPreparedSpectrum mergedQuery) throws IOException;
 
     /*
     Other methods

@@ -37,6 +37,7 @@ import java.util.List;
  * The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.
  * <p>
  * Each Feature can have:
+ * - One extracted isotope pattern (optional)
  * - One merged MS/MS spectrum (optional)
  * - One merged MS spectrum (optional)
  * - many MS/MS spectra (optional)
@@ -52,6 +53,8 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MsData {
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected BasicSpectrum isotopePattern;
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected BasicSpectrum mergedMs1;
     @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected BasicSpectrum mergedMs2;
@@ -60,19 +63,21 @@ public class MsData {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
 
-    public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asCosineQuery) {
+    public static MsData of(@NotNull de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData msData, boolean asSearchPreparedMsData) {
         MsData.MsDataBuilder builder = MsData.builder();
+        if (msData.getIsotopePattern() != null)
+            builder.isotopePattern(new BasicSpectrum(msData.getIsotopePattern()));
         if (msData.getMergedMs1Spectrum() != null)
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
         if (msData.getMergedMSnSpectrum() != null){
             double precursorMz = msData.getMsnSpectra().stream()
                     .mapToDouble(MergedMSnSpectrum::getMergedPrecursorMz).average().getAsDouble();
-            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), precursorMz, asCosineQuery));
+            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), precursorMz, asSearchPreparedMsData));
         }
 
         builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream()
-                .map(s -> Spectrums.createMsMs(s, asCosineQuery)).toList() : List.of());
-        //MS1Spectra are not set since they are not stored in default MSData object.
+                .map(s -> Spectrums.createMsMs(s, asSearchPreparedMsData)).toList() : List.of());
+        //MS1Spectra are not set since they are not stored in a default MSData object.
         return builder.build();
     }
 }

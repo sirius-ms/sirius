@@ -32,8 +32,7 @@ import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefRendering;
-import org.cef.handler.CefLifeSpanHandler;
-import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.handler.CefRequestHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +44,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A reusable JPanel component that embeds a JCEF browser with proper lifecycle management.
@@ -58,9 +55,6 @@ public class JCefBrowserPanel extends JPanel {
 
     @Getter
     private CefBrowser browser;
-    private boolean isDisposed = false;
-    private final CountDownLatch browserCloseLatch = new CountDownLatch(1);
-    private final boolean ownClient;
     private LinkInterception linkInterception = LinkInterception.NONE;
 
     private static final String CSS_LIGHT_RESOURCE_TEXT = "/sirius/style-light.css";
@@ -71,12 +65,13 @@ public class JCefBrowserPanel extends JPanel {
 
     protected static String THEME_REST_PARA = "?theme=" + (Colors.isDarkTheme() ? "dark" : "light");
 
-    protected static String makeParameters(@NotNull String projectId){
+    protected static String makeParameters(@NotNull String projectId) {
         return THEME_REST_PARA + "&pid=" + projectId;
     }
+
     protected static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
                                            @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId
-    ){
+    ) {
         StringBuilder params = new StringBuilder(makeParameters(projectId));
         if (Utils.notNullOrBlank(alignedFeatureId))
             params.append("&fid=").append(alignedFeatureId);
@@ -139,7 +134,6 @@ public class JCefBrowserPanel extends JPanel {
 
     public JCefBrowserPanel(String urlPath, SiriusGui siriusGui, LinkInterception linkInterception) {
         this.client = siriusGui.newClient();
-        this.ownClient = true;
         this.linkInterception = linkInterception;
         initialize(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve(urlPath).toString());
     }
@@ -150,11 +144,9 @@ public class JCefBrowserPanel extends JPanel {
      *
      * @param url       The URL to load
      * @param client    The CefClient to use
-     * @param ownClient Whether this panel should dispose the client when it's disposed
      */
-    public JCefBrowserPanel(String url, CefClient client, boolean ownClient) {
+    public JCefBrowserPanel(String url, CefClient client) {
         this.client = client;
-        this.ownClient = ownClient;
         initialize(url);
     }
 
@@ -164,68 +156,50 @@ public class JCefBrowserPanel extends JPanel {
      * @param url    The URL to load
      * @param client The CefClient to use
      */
-    public JCefBrowserPanel(URI url, CefClient client, boolean ownClient) {
-        this(url.toString(), client, ownClient);
-    }
-
-    /**
-     * Creates a new browser panel using a provided CefClient.
-     * This panel will not dispose the client when it's disposed.
-     *
-     * @param url    The URL to load
-     * @param client The CefClient to use
-     */
-    public JCefBrowserPanel(String url, CefClient client) {
-        this(url, client, false);
-    }
-
-    /**
-     * Creates a new browser panel using a provided CefClient.
-     * This panel will not dispose the client when it's disposed.
-     *
-     * @param url    The URL to load
-     * @param client The CefClient to use
-     */
     public JCefBrowserPanel(URI url, CefClient client) {
-        this(url.toString(), client, false);
+        this(url.toString(), client);
     }
 
     protected void initialize(String url) {
+        boolean isLinux = System.getProperty("os.name").toLowerCase().contains("linux");
         ProxyManager.enforceGlobalProxySetting();
         setLayout(new BorderLayout());
 
-        // Add life span handler to properly track browser closing
-        CefLifeSpanHandler lifeSpanHandler = new CefLifeSpanHandlerAdapter() {
-            @Override
-            public void onAfterCreated(CefBrowser browser) {
-                super.onAfterCreated(browser);
-            }
-
-            @Override
-            public boolean doClose(CefBrowser browser) {
-                browser.setCloseAllowed();
-                return false;
-            }
-
-            @Override
-            public void onBeforeClose(CefBrowser browser) {
-                browserCloseLatch.countDown();
-            }
-        };
-
-        client.addLifeSpanHandler(lifeSpanHandler);
         setupLinkInterception();
+        setupLoadingHandling();
         // OFFSCREEN rendering is mandatory since otherwise focussing is buggy
-        browser = client.createBrowser(url, CefRendering.OFFSCREEN, false);
+        browser = client.createBrowser(url, isLinux ? CefRendering.DEFAULT : CefRendering.OFFSCREEN, false);
+        // very important to ensure that the JCEF process can be closed correctly without creating a memory leak
+        browser.setCloseAllowed();
+        // we create the browser instance synchronously because this is the only way to ensure the browser is fully
+        // loaded before we do JS call to update the data ids to be shown
+        browser.createImmediately();
         Component browserUI = browser.getUIComponent();
+        // prevent drop handling for this panel since it is unnecessary and seems to crash the browser sometimes.
+        browserUI.setDropTarget(null);
 
         // Apply the Linux scroll fix
         // This should be done before adding the component to the panel
-        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
-            MouseWheelFix.apply(browserUI);
+        if (isLinux) {
+            JCEFLinuxFixer.fixMousewheelScrolling(browserUI);
+            JCEFLinuxFixer.setupPopupErrorListener(client, JCefBrowserPanel.this);
         }
 
         add(browserUI, BorderLayout.CENTER);
+        setDropTarget(null);
+    }
+
+    private void setupLoadingHandling() {
+        // Add a load handler to detect when a page is fully loaded
+        client.addLoadHandler(new CefLoadHandlerAdapter() {
+            @Override
+            public void onLoadingStateChange(CefBrowser browser, boolean isLoading, boolean canGoBack, boolean canGoForward) {
+                if (!isLoading) {
+                    if (browser.getFocusedFrame().isMain())
+                        executeReplaceableDataUpdate();
+                }
+            }
+        });
     }
 
     // Add this to your JCefBrowserPanel class
@@ -266,29 +240,52 @@ public class JCefBrowserPanel extends JPanel {
      * @param javascript The JavaScript to execute
      */
     public void executeJavaScript(String javascript) {
-        if (browser != null && !isDisposed) {
+        if (browser != null) {
             browser.executeJavaScript(javascript, browser.getURL(), 0);
         }
     }
 
+    //we use replaceable calls to ensure that during fast selection changes we do not stack data loading tasks
+    //browser process.
+    private final Object dataUpdateLock = new Object();
+    private Runnable replaceableDataUpdate = null;
+
+
+    public void executeReplaceableDataUpdate() {
+        synchronized (dataUpdateLock) {
+            if (replaceableDataUpdate != null) {
+                replaceableDataUpdate.run();
+                replaceableDataUpdate = null;
+            }
+        }
+    }
+
+    public void submitReplaceableDataUpdate(String javascript) {
+        synchronized (dataUpdateLock) {
+            replaceableDataUpdate = () -> executeJavaScript(javascript);
+            if (!browser.isLoading())
+                executeReplaceableDataUpdate();
+        }
+    }
+
     public void updateSelectedFeature(@Nullable String alignedFeatureId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s)", parseNullable(alignedFeatureId)));
     }
 
     public void updateSelectedFormulaCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId)));
     }
 
     public void updateSelectedStructureCandidate(@Nullable String alignedFeatureId, @Nullable String formulaId, @Nullable String inchiKey) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, formulaID=%s, inchikey=%s)", parseNullable(alignedFeatureId), parseNullable(formulaId), parseNullable(inchiKey)));
     }
 
     public void updateSelectedSpectralMatch(@Nullable String alignedFeatureId, @Nullable String matchId) {
-        executeJavaScript(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
+        submitReplaceableDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, undefined, undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
     }
 
     private static String parseNullable(@Nullable String s) {
-       return s == null || s.isBlank() ? "null" : ("'" + s + "'");
+        return s == null || s.isBlank() ? "null" : ("'" + s + "'");
     }
 
     /**
@@ -296,65 +293,10 @@ public class JCefBrowserPanel extends JPanel {
      * This should be called when the panel is no longer needed.
      */
     public void cleanupResources() {
-        if (isDisposed) return;
-
-        if (browser != null) {
-            try {
-                // Stop any media playback
-                browser.executeJavaScript(
-                        "document.querySelectorAll('video,audio').forEach(m => {m.pause(); m.remove();});",
-                        browser.getURL(), 0);
-
-                // Load an empty page
-                browser.loadURL("about:blank");
-
-                // Wait briefly for the empty page to load and resources to be released
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ignored) {
-                }
-
-                // Close the browser
-                browser.close(true);
-
-                // Wait for browser to close with timeout
-                try {
-                    browserCloseLatch.await(1000, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException ignored) {
-                }
-
-                // Remove the browser from the component hierarchy
-                Component uiComponent = browser.getUIComponent();
-                if (uiComponent != null && uiComponent.getParent() != null) {
-                    uiComponent.getParent().remove(uiComponent);
-                }
-
-                browser = null;
-            } catch (Exception e) {
-                log.error("Error when cleaning up browser resources!", e);
-            }
-        }
-
-        if (client != null && ownClient) {
-            client.dispose();
-
-            // If you're using SiriusGui's client tracking, you should remove the client
-            // If this is part of your SiriusGui application, uncomment the following line:
-            // SiriusGui.getInstance().removeClient(client);
-
-            client = null;
-        }
-
-        isDisposed = true;
-    }
-
-    /**
-     * Indicates whether this panel has been disposed.
-     *
-     * @return true if the panel has been disposed, false otherwise
-     */
-    public boolean isDisposed() {
-        return isDisposed;
+        if (client == null) return;
+        client.dispose();
+        browser = null;
+        client = null;
     }
 
     /**
@@ -367,5 +309,16 @@ public class JCefBrowserPanel extends JPanel {
         cleanupResources();
         // Call the superclass implementation to complete normal component removal
         super.removeNotify();
+    }
+
+    // Some arbitrary size numbers to fix JSplitPane divider not moving
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(500,300);
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+        return new Dimension(50,20);
     }
 }

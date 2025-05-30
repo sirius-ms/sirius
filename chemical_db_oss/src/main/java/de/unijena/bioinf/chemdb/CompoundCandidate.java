@@ -223,7 +223,9 @@ public class CompoundCandidate {
     public void mergeCompoundName(@Nullable String name) {
         if (name == null || name.isBlank())
             return;
-        if (this.name == null || this.name.isBlank() || this.name.length() > name.length())
+
+        // add replace current name only if the new name it is shorter and not an generated biotransformation name.
+        if (this.name == null || this.name.isBlank() || (this.name.length() > name.length() && !name.startsWith("BT-")))
             this.name = name;
     }
 
