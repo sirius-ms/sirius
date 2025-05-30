@@ -1199,11 +1199,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.rtEndSeconds(rt.getMiddleTime());
             }
         }
-        return annotateApiFeature(feature.getAlignedFeatureId(), builder.build(), msDataAsCosineQuery, optFields);
+        return annotateApiFeature(feature.getAlignedFeatureId(), builder.build(), msDataSearchPrepared, optFields);
     }
 
     @SneakyThrows
-    private AlignedFeature annotateApiFeature(long alignedFeatureId, AlignedFeature feature, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    private AlignedFeature annotateApiFeature(long alignedFeatureId, AlignedFeature feature, boolean msDataSearchPrepared, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         //todo: we could use computedSubtool to decide whether we have to request results at all...
 
         if (optFields.contains(AlignedFeature.OptField.msData)) {

@@ -44,8 +44,8 @@ public class QualityAssessment implements FeatureQualityChecker {
                 ++count;
             }
         }
-        if (report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE &&
-                report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality()==DataQuality.NOT_APPLICABLE)
+        if (report.getCategories().get(DefaultQualityCategory.MS2_QUALITY.name()).getOverallQuality()==DataQuality.NOT_APPLICABLE &&
+                report.getCategories().get(DefaultQualityCategory.ADDUCT_QUALITY.name()).getOverallQuality()==DataQuality.NOT_APPLICABLE)
             ++count; // special rule to downweight features that have no purpose (no ms2 nor adduct)
         float c = report.getCategories().get(DefaultQualityCategory.MS2_QUALITY.name()).getOverallQuality().getScore();
         if (count==0) {

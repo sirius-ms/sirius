@@ -61,7 +61,7 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
             .stream().map(s -> (String) s).toList();
 
     private final JButton cancel, importButton;
-    private JCheckBox ignoreFormulas, alignCheckBox;
+    private JCheckBox ignoreFormulas, alignCheckBox, sensitiveMode;
     /**
      * -- GETTER --
      * Gets the sample types for each run
@@ -276,6 +276,10 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
         return ignoreFormulas.isSelected();
     }
 
+    public boolean isSensitiveMode(){
+        return sensitiveMode.isSelected();
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == importButton) {
@@ -310,14 +314,19 @@ public class CombinedImportDialog extends JDialog implements ActionListener {
 
 
         // Only show align checkbox if LC/MS files are present and alignment is allowed
-
         alignCheckBox = new JCheckBox("Align and merge LC/MS runs");
         alignCheckBox.setToolTipText(GuiUtils.formatToolTip(
                 "If checked, all LC/MS runs will be aligned and combined to one merged LC/MS run."
         ));
+        sensitiveMode = new JCheckBox("Sensitive mode");
+        sensitiveMode.setToolTipText(GuiUtils.formatToolTip(
+                "If checked, min-snr is set to 2 instead of 3. Use this to pick very low intensity features. Features with good MS/MS are always picked, so use this option only if you are interested in low intensive MS-only features."
+        ));
         if (showLCMSOptions && alignAllowed) {
             alignCheckBox.setSelected(true);
+            sensitiveMode.setSelected(false);
             paras.add(alignCheckBox);
+            paras.add(sensitiveMode);
         }
         content.add(paras);
     }
