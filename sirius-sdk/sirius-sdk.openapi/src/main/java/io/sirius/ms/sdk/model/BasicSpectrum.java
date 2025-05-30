@@ -47,8 +47,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_INSTRUMENT,
   BasicSpectrum.JSON_PROPERTY_PRECURSOR_MZ,
   BasicSpectrum.JSON_PROPERTY_SCAN_NUMBER,
+  BasicSpectrum.JSON_PROPERTY_COSINE_QUERY,
+  BasicSpectrum.JSON_PROPERTY_PRECURSOR_PEAK,
   BasicSpectrum.JSON_PROPERTY_PEAKS,
-  BasicSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR
+  BasicSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR,
+  BasicSpectrum.JSON_PROPERTY_MAX_NORM_FACTOR,
+  BasicSpectrum.JSON_PROPERTY_SUM_NORM_FACTOR,
+  BasicSpectrum.JSON_PROPERTY_L2_NORM_FACTOR,
+  BasicSpectrum.JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class BasicSpectrum {
@@ -70,11 +76,29 @@ public class BasicSpectrum {
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
   private Integer scanNumber;
 
+  public static final String JSON_PROPERTY_COSINE_QUERY = "cosineQuery";
+  private Boolean cosineQuery = false;
+
+  public static final String JSON_PROPERTY_PRECURSOR_PEAK = "precursorPeak";
+  private SimplePeak precursorPeak;
+
   public static final String JSON_PROPERTY_PEAKS = "peaks";
   private List<SimplePeak> peaks = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ABS_INTENSITY_FACTOR = "absIntensityFactor";
   private Double absIntensityFactor;
+
+  public static final String JSON_PROPERTY_MAX_NORM_FACTOR = "maxNormFactor";
+  private Double maxNormFactor;
+
+  public static final String JSON_PROPERTY_SUM_NORM_FACTOR = "sumNormFactor";
+  private Double sumNormFactor;
+
+  public static final String JSON_PROPERTY_L2_NORM_FACTOR = "l2NormFactor";
+  private Double l2NormFactor;
+
+  public static final String JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR = "firstPeakNormFactor";
+  private Double firstPeakNormFactor;
 
   public BasicSpectrum() {
   }
@@ -229,6 +253,56 @@ public class BasicSpectrum {
     this.scanNumber = scanNumber;
   }
 
+  public BasicSpectrum cosineQuery(Boolean cosineQuery) {
+    
+    this.cosineQuery = cosineQuery;
+    return this;
+  }
+
+   /**
+   * True if spectrum is in cosine query normalized format.  Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
+   * @return cosineQuery
+  **/
+  @jakarta.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isCosineQuery() {
+    return cosineQuery;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COSINE_QUERY)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setCosineQuery(Boolean cosineQuery) {
+    this.cosineQuery = cosineQuery;
+  }
+
+  public BasicSpectrum precursorPeak(SimplePeak precursorPeak) {
+    
+    this.precursorPeak = precursorPeak;
+    return this;
+  }
+
+   /**
+   * Get precursorPeak
+   * @return precursorPeak
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SimplePeak getPrecursorPeak() {
+    return precursorPeak;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PRECURSOR_PEAK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPrecursorPeak(SimplePeak precursorPeak) {
+    this.precursorPeak = precursorPeak;
+  }
+
   public BasicSpectrum peaks(List<SimplePeak> peaks) {
     
     this.peaks = peaks;
@@ -269,9 +343,11 @@ public class BasicSpectrum {
   }
 
    /**
-   * Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+   * Factor to convert relative intensities to absolute intensities.  Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)  &lt;p&gt;  DEPRECATED: Spectra are always returned with raw intensities.  Use provided normalization factors to normalize on the fly.
    * @return absIntensityFactor
+   * @deprecated
   **/
+  @Deprecated
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ABS_INTENSITY_FACTOR)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
@@ -285,6 +361,106 @@ public class BasicSpectrum {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAbsIntensityFactor(Double absIntensityFactor) {
     this.absIntensityFactor = absIntensityFactor;
+  }
+
+  public BasicSpectrum maxNormFactor(Double maxNormFactor) {
+    
+    this.maxNormFactor = maxNormFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert absolute intensities to MAX norm.
+   * @return maxNormFactor
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getMaxNormFactor() {
+    return maxNormFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MAX_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMaxNormFactor(Double maxNormFactor) {
+    this.maxNormFactor = maxNormFactor;
+  }
+
+  public BasicSpectrum sumNormFactor(Double sumNormFactor) {
+    
+    this.sumNormFactor = sumNormFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert absolute intensities to SUM norm.
+   * @return sumNormFactor
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getSumNormFactor() {
+    return sumNormFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SUM_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSumNormFactor(Double sumNormFactor) {
+    this.sumNormFactor = sumNormFactor;
+  }
+
+  public BasicSpectrum l2NormFactor(Double l2NormFactor) {
+    
+    this.l2NormFactor = l2NormFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert absolute intensities to L2 (Euclidean) norm.
+   * @return l2NormFactor
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getL2NormFactor() {
+    return l2NormFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_L2_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setL2NormFactor(Double l2NormFactor) {
+    this.l2NormFactor = l2NormFactor;
+  }
+
+  public BasicSpectrum firstPeakNormFactor(Double firstPeakNormFactor) {
+    
+    this.firstPeakNormFactor = firstPeakNormFactor;
+    return this;
+  }
+
+   /**
+   * Factor to convert absolute intensities to normalize intensities by first peak intensity.
+   * @return firstPeakNormFactor
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getFirstPeakNormFactor() {
+    return firstPeakNormFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FIRST_PEAK_NORM_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFirstPeakNormFactor(Double firstPeakNormFactor) {
+    this.firstPeakNormFactor = firstPeakNormFactor;
   }
 
   @Override
@@ -302,13 +478,19 @@ public class BasicSpectrum {
         Objects.equals(this.instrument, basicSpectrum.instrument) &&
         Objects.equals(this.precursorMz, basicSpectrum.precursorMz) &&
         Objects.equals(this.scanNumber, basicSpectrum.scanNumber) &&
+        Objects.equals(this.cosineQuery, basicSpectrum.cosineQuery) &&
+        Objects.equals(this.precursorPeak, basicSpectrum.precursorPeak) &&
         Objects.equals(this.peaks, basicSpectrum.peaks) &&
-        Objects.equals(this.absIntensityFactor, basicSpectrum.absIntensityFactor);
+        Objects.equals(this.absIntensityFactor, basicSpectrum.absIntensityFactor) &&
+        Objects.equals(this.maxNormFactor, basicSpectrum.maxNormFactor) &&
+        Objects.equals(this.sumNormFactor, basicSpectrum.sumNormFactor) &&
+        Objects.equals(this.l2NormFactor, basicSpectrum.l2NormFactor) &&
+        Objects.equals(this.firstPeakNormFactor, basicSpectrum.firstPeakNormFactor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, peaks, absIntensityFactor);
+    return Objects.hash(name, msLevel, collisionEnergy, instrument, precursorMz, scanNumber, cosineQuery, precursorPeak, peaks, absIntensityFactor, maxNormFactor, sumNormFactor, l2NormFactor, firstPeakNormFactor);
   }
 
   @Override
@@ -321,8 +503,14 @@ public class BasicSpectrum {
     sb.append("    instrument: ").append(toIndentedString(instrument)).append("\n");
     sb.append("    precursorMz: ").append(toIndentedString(precursorMz)).append("\n");
     sb.append("    scanNumber: ").append(toIndentedString(scanNumber)).append("\n");
+    sb.append("    cosineQuery: ").append(toIndentedString(cosineQuery)).append("\n");
+    sb.append("    precursorPeak: ").append(toIndentedString(precursorPeak)).append("\n");
     sb.append("    peaks: ").append(toIndentedString(peaks)).append("\n");
     sb.append("    absIntensityFactor: ").append(toIndentedString(absIntensityFactor)).append("\n");
+    sb.append("    maxNormFactor: ").append(toIndentedString(maxNormFactor)).append("\n");
+    sb.append("    sumNormFactor: ").append(toIndentedString(sumNormFactor)).append("\n");
+    sb.append("    l2NormFactor: ").append(toIndentedString(l2NormFactor)).append("\n");
+    sb.append("    firstPeakNormFactor: ").append(toIndentedString(firstPeakNormFactor)).append("\n");
     sb.append("}");
     return sb.toString();
   }

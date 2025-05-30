@@ -63,6 +63,11 @@ public abstract class AbstractFeature {
     protected double averageMass;
 
     /**
+     * area under curve of the feature
+     */
+    protected double areaUnderCurve;
+
+    /**
      * width (in seconds) of the peak at half maximum
      */
     protected Double fwhm;

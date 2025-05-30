@@ -21,13 +21,13 @@ package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBPropertyUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstIterProvider;
@@ -99,9 +99,6 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             LoggerFactory.getLogger(getClass()).info("Creating Toolchain InstanceBuffer of size {}", bufferSize);
 
             if (!toolchain.isEmpty()) {
-                //load custom databases
-                CustomDatabases.load(CdkFingerprintVersion.getDefault());
-
                 int iteratorSourceSize = InstIterProvider.getResultSizeEstimate(iteratorSource);
 
                 progressSupport.setEstimatedGlobalMaximum(Optional.ofNullable(preprocessingJob.currentProgress())

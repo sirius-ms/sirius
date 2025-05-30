@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
@@ -37,9 +38,10 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
+import de.unijena.bioinf.sirius.merging.HighIntensityMsMsMerger;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,13 +68,14 @@ public class StorageUtils {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
         exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()).stream().map(MergedMSnSpectrum::toMs2Spectrum).toList() : List.of());
+        exp.setMergedMs2Spectrum(spectra.getMergedMSnSpectrum() != null ? spectra.getMergedMSnSpectrum() : null);
         exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
                 .filter(Objects::nonNull).collect(Collectors.toList()));
         exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
-        exp.setName(feature.getName()); //todo not stored do we want this?
-        exp.setFeatureId(feature.getExternalFeatureId());//todo not stored do we want this?
+        exp.setName(feature.getName());
+        exp.setFeatureId(feature.getExternalFeatureId());
         exp.setIonMass(feature.getAverageMass());
-        exp.setMolecularFormula(feature.getMolecularFormula()); //todo not stored do we need this?
+        exp.setMolecularFormula(feature.getMolecularFormula());
 
         exp.setPrecursorIonType(PrecursorIonType.unknown(feature.getCharge()));
 
@@ -92,53 +95,48 @@ public class StorageUtils {
                 .orElse(MsInstrumentation.Unknown)
                 .getRecommendedProfile());
 
-        SimpleSpectrum mergedMs1 = exp.getMergedMs1Spectrum() != null
-                ? (SimpleSpectrum) exp.getMergedMs1Spectrum()
-                : Spectrums.mergeSpectra(exp.getMs1Spectra());
+        boolean hasMs2 = !(exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty());
+        boolean hasMS1 = !(exp.getMs1Spectra().isEmpty() && exp.getMergedMs1Spectrum()==null);
 
-        SimpleSpectrum isotopePattern = Spectrums.extractIsotopePattern(
-                mergedMs1,
-                exp.getAnnotationOrDefault(MS1MassDeviation.class),
-                exp.getIonMass(),
-                exp.getPrecursorIonType().getCharge(),
-                true);
+        // build MsData
+        MSData.MSDataBuilder builder = MSData.builder();
 
-        MSData.MSDataBuilder builder = MSData.builder()
-                .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
-                .mergedMs1Spectrum(mergedMs1);
-
-        if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
-            List<ProcessedPeak> tmpSpec = null;
+        //processed MS1 information
+        if (hasMS1) {
+            ProcessedInput pinput;
             try {
-                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+                pinput = sirius.preprocessForMs1Analysis(exp);
             } catch (Exception e) {
-                // when we get data from third party tools it sometimes happens that adduct/mass/formula are
-                // contradictory usually due to a false formula annotation. instead of throwing the data away we try
-                // to import it without formula an unknown adduct.
+                // When we get data from third party tools, it sometimes happens that adduct/mass/formula are
+                // contradictory, usually due to a false formula annotation. Instead of throwing the data away, we try
+                // to import it without formula and unknown adduct.
                 log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
                         exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
                 ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
                 ((MutableMs2Experiment) exp).setMolecularFormula(null);
                 exp.removeAnnotation(InChI.class);
                 exp.removeAnnotation(Smiles.class);
-                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+                pinput = sirius.preprocessForMs1Analysis(exp);
             }
-            builder.mergedMSnSpectrum(Spectrums.from(tmpSpec));
-            builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
+
+            pinput.getAnnotation(MergedMs1Spectrum.class).filter(MergedMs1Spectrum::notEmpty)
+                    .ifPresent(mergedAno -> builder.mergedMs1Spectrum(cleanMergedMs1DataForImport(mergedAno.mergedSpectrum)));
+            pinput.getAnnotation(Ms1IsotopePattern.class).filter(Ms1IsotopePattern::notEmpty)
+                    .ifPresent(isotopeAno -> builder.isotopePattern(new IsotopePattern(isotopeAno.getSpectrum(), IsotopePattern.Type.AVERAGE)));
         }
 
+        if (hasMs2){
+            List<MutableMs2Spectrum> cleanedMs2 = exp.getMs2Spectra().stream().map(StorageUtils::cleanMsnDataForImport).toList();
+            final SimpleSpectrum mergedMsn =
+                    Spectrums.getNormalizedSpectrum(
+                            cleanMergedMsnDataForImport(
+                                    HighIntensityMsMsMerger.mergePeaks(cleanedMs2, exp.getIonMass(), new Deviation(10), false, true)
+                            ), Normalization.Sum);
+            builder.mergedMSnSpectrum(mergedMsn);
+            //we use the "unprocessed" spectra here to store the real intensities without normalization
+            builder.msnSpectra(cleanedMs2.stream().map(StorageUtils::msnSpectrumFrom).toList());
+        }
         MSData msData = builder.build();
-
-        //detect adducts for the first time
-        if (exp.getMs1Spectra() != null && !exp.getMs1Spectra().isEmpty())
-            sirius.getMs1Preprocessor().preprocess(exp);
-        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det = exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
-        if (!exp.getPrecursorIonType().isIonizationUnknown()) {
-            PossibleAdducts inputFileAdducts = det.get(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE);
-            PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
-            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE,
-                    inputFileAdducts == null ? ionTypeAdducts : PossibleAdducts.union(inputFileAdducts, ionTypeAdducts));
-        }
 
         int charge = exp.getPrecursorIonType().getCharge();
         if (msData.getMsnSpectra() != null) {
@@ -147,14 +145,23 @@ public class StorageUtils {
             }
         }
 
+        //handle detected adducts that have been detected during the preprocessing step above.
+        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det = exp
+                .getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class)
+                .orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
+
+        if (!exp.getPrecursorIonType().isIonizationUnknown()) {
+            PossibleAdducts inputFileAdducts = det.get(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE);
+            PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE,
+                    inputFileAdducts == null ? ionTypeAdducts : PossibleAdducts.union(inputFileAdducts, ionTypeAdducts));
+        }
+
+        // build feature
         Feature feature = Feature.builder()
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
-                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
+                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(exp.getIonMass()))
                 .charge((byte) charge)
-                //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
-//                .apexIntensity()
-//                .apexMass()
-//                .snr()
                 .build();
 
         AlignedFeatures alignedFeature = AlignedFeatures.singleton(feature, msData);
@@ -210,4 +217,47 @@ public class StorageUtils {
         adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
     }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMs1DataForImport(S mergedMs1Spectrum) {
+        return cleanSpectrum(mergedMs1Spectrum);
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMergedMsnDataForImport(S mergedMsnSpectrum) {
+        return cleanSpectrum(mergedMsnSpectrum);
+    }
+
+    public static <P extends Peak, S extends Ms2Spectrum<P>> MutableMs2Spectrum cleanMsnDataForImport(S msnSpectrum) {
+        SimpleSpectrum cleaned = cleanSpectrum(msnSpectrum);
+        MutableMs2Spectrum cleanedMs2Spectrum = new MutableMs2Spectrum(cleaned);
+        cleanedMs2Spectrum.setPrecursorMz(msnSpectrum.getPrecursorMz());
+        cleanedMs2Spectrum.setIonization(msnSpectrum.getIonization());
+        cleanedMs2Spectrum.setCollisionEnergy(msnSpectrum.getCollisionEnergy());
+        cleanedMs2Spectrum.setMsLevel( msnSpectrum.getMsLevel());
+        if (msnSpectrum instanceof MutableMs2Spectrum) cleanedMs2Spectrum.setScanNumber(((MutableMs2Spectrum)msnSpectrum).getScanNumber());
+        cleanedMs2Spectrum.setTotalIonCount(msnSpectrum.getTotalIonCount()); //it is probably best to keep the original count.
+
+        return cleanedMs2Spectrum;
+    }
+
+    /**
+     * This can be used for MSn spectra that are not derived from Ms2Spectrum class
+     * @param msnSpectrum
+     * @return
+     * @param <P>
+     * @param <S>
+     */
+    public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanMsnDataInLCMSProcessingForImport(S msnSpectrum) {
+        return cleanSpectrum(msnSpectrum);
+    }
+
+    /**
+     * ensure that we do not store arbitrary large spectra (number if peaks) in our database.
+     * we perform this before msn spectra are merged to make the stored merged Msn spectrum consistent with the one in FT computation ({@link de.unijena.bioinf.sirius.Ms2Preprocessor})
+     * @param mergedMs1Spectrum
+     * @return
+     */
+    private static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum cleanSpectrum(S mergedMs1Spectrum) {
+        return Spectrums.extractMostIntensivePeaks(mergedMs1Spectrum, 100, 250);
+    }
+
 }

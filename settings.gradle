@@ -92,4 +92,5 @@ include ':sirius_rest_service'
 include ':sirius-sdk'
     include ':sirius-sdk:sirius-sdk.openapi'
     include ':sirius-sdk:sirius-sdk.jjobs'
+include 'biotransformations'
 

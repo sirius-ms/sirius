@@ -35,11 +35,9 @@ dependencies {
 
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
-    }
-
-//    implementation 'org.springframework.boot:spring-boot-starter-tomcat'
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    //thymeleaf to serve react app
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-jetty'
 
     //spring data for pagination and sorting
@@ -69,6 +67,9 @@ dependencies {
     implementation 'com.google.jimfs:jimfs:1.3.0'
 
     implementation "org.apache.commons:commons-text:$commons_text_version"
+
+    implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
+    implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each { Configuration conf ->
@@ -105,7 +106,7 @@ bootJar {
 openApi {
     apiDocsUrl.set("http://localhost:8888/v3/api-docs")
     outputDir.set(file("$projectDir"))
-    waitTimeInSeconds.set(20)
+    waitTimeInSeconds.set(30)
 
     outputFileName = "openapi-spec-enums-as-ref.json"
     customBootRun {
@@ -129,6 +130,19 @@ tasks.register("generateOpenApiDocsEnumsAsString") {
     finalizedBy "generateOpenApiDocs"
 }
 
+tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
+    description "Creates the api docs with enums treated as strings which seems to be mor compatible with some languages."
+    group "openApi"
+    doFirst {
+        openApi {
+            outputFileName = "openapi-spec-advanced-enums-as-string.json"
+            customBootRun {
+                args = ["rest", "-s", "-p", "8888", "--api-mode", "ADVANCED"]
+            }
+        }
+    }
+    finalizedBy "generateOpenApiDocs"
+}
 
 // Javadoc cannot recognize lombok builder
 javadoc {

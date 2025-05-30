@@ -67,15 +67,16 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     }
 
 
-    private CompoundStructureImage image;
-    private DescriptionPanel descriptionPanel;
+    protected CompoundStructureImage image;
+    protected DescriptionPanel descriptionPanel;
     private JPanel allStructureInfoWithoutRank;
 
 
     private FingerprintCandidateBean currentCandidate;
 
 
-    private final JLabel nameLabel, rankLabel;
+    private final JLabel nameLabel;
+    protected final JLabel rankLabel;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
@@ -94,7 +95,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         rankLabel.setVerticalAlignment(SwingConstants.CENTER);
         rankLabel.setHorizontalAlignment(SwingConstants.CENTER);
         rankLabel.setBorder(new EmptyBorder(1, 10, 1, 10));
-
         rankLabel.setOpaque(true);
 
         allStructureInfoWithoutRank = new JPanel(new BorderLayout());
@@ -357,6 +357,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         private static Color color(DatabaseLabel label) {
             if ("De Novo".equals(label.sourceName))
                 return Colors.StructuresView.Sources.DE_NOVO;
+            if (label.agreementLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_ACCEPT;
+            if (label.rejectionLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_REJECTION;
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED;
             if (s.isCustomSource()) return Colors.StructuresView.Sources.CUSTOM_DB;
@@ -368,6 +370,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         private static Color textColor(DatabaseLabel label) {
             if ("De Novo".equals(label.sourceName))
                 return Colors.StructuresView.Sources.DE_NOVO_TEXT;
+            if (label.agreementLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_ACCEPT_TEXT;
+            if (label.rejectionLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_REJECT_TEXT;
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_TEXT;
             if (s.isCustomSource()) return Colors.StructuresView.Sources.DEFAULT_TEXT;
@@ -379,6 +383,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         private static Color borderColor(DatabaseLabel label) {
             if ("De Novo".equals(label.sourceName))
                 return Colors.StructuresView.Sources.DE_NOVO_BORDER;
+            if (label.agreementLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_ACCEPT_BORDER;
+            if (label.rejectionLabel()) return Colors.StructuresView.Sources.DATABASE_FLAG_REJECT_BORDER;
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.StructuresView.Sources.CUSTOM_DB_NOT_LOADED_BORDER;
             if (s.isCustomSource()) return Colors.StructuresView.Sources.DEFAULT_BORDER;;

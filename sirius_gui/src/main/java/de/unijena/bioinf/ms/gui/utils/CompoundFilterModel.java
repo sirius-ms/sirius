@@ -18,13 +18,10 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.blank_subtraction.BlankSubtraction;
 import io.sirius.ms.sdk.model.DataQuality;
 import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -43,9 +40,6 @@ import java.util.stream.Collectors;
  */
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
-
-//    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
-//            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
 
     /*
     currently selected values
@@ -99,6 +93,16 @@ public class CompoundFilterModel implements SiriusPCS {
     @Nullable
     private DbFilter dbFilter;
 
+    @Getter
+    private BlankSubtraction blankSubtraction;
+
+    @Getter
+    /*
+    This is used to add a feature to the filtered list that may not pass the filter, e.g. when selecting the feature externally.
+    If a more comprehensive solution is required (e.g. allow multiple such features), just update it.
+     */
+    private String focussedFeatureId;
+    private boolean focussedFeatureIdIsNew = false;
 
     /*
     min/max possible values
@@ -135,6 +139,7 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param maxConfidence
      */
     public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
+        this.blankSubtraction = new BlankSubtraction(false, 2.0, false, 2.0);
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
@@ -154,6 +159,8 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public void fireUpdateCompleted() {
+        if (!focussedFeatureIdIsNew) resetFocussedFeatureId(); //this guarantees that the focussed feature is remove when applying another filter.
+        else focussedFeatureIdIsNew = false;
         //as long as we do not treat changes differently, we only have to listen to this event after performing all updates
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
@@ -257,6 +264,17 @@ public class CompoundFilterModel implements SiriusPCS {
         this.currentMinConfidence = currentMinConfidence;
         pcs.firePropertyChange("setMinConfidence", oldValue, currentMinConfidence);
 
+    }
+
+    public void setFocussedFeatureId(String focussedFeatureId) {
+        String oldValue = this.focussedFeatureId;
+        this.focussedFeatureId = focussedFeatureId;
+        this.focussedFeatureIdIsNew = (focussedFeatureId != null) ? true : false;
+        pcs.firePropertyChange("setFocussedFeatureId", oldValue, focussedFeatureId); //todo do we need this?
+    }
+
+    public void resetFocussedFeatureId() {
+        setFocussedFeatureId(null);
     }
 
     /**
@@ -365,6 +383,11 @@ public class CompoundFilterModel implements SiriusPCS {
         adducts = Set.of();
         setHasMs1(false);
         setHasMsMs(false);
+        blankSubtraction.setBlankSubtractionEnabled(false);
+        blankSubtraction.setCtrlSubtractionEnabled(false);
+        blankSubtraction.setBlankSubtractionFoldChange(2.0);
+        blankSubtraction.setCtrlSubtractionFoldChange(2.0);
+        setFocussedFeatureId(null);
     }
 
     public enum LipidFilter {

@@ -58,6 +58,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     JButton discard, apply, reset;
     final JCheckBox invertFilter, deleteSelection, elementsMatchFormula, elementsMatchPrecursorFormula, hasMs1, hasMsMs;
 
+    final JCheckBox blankFilter, controlFilter;
+    final JSpinner blankSpinner, controlSpinner;
+
     final CompoundFilterModel filterModel;
     final CompoundList compoundList;
 
@@ -168,6 +171,39 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
 
             inputParameters.addVerticalGlue();
+        }
+
+        {
+
+            // fold change / blank subtraction filter
+
+            final TwoColumnPanel foldParameters = new TwoColumnPanel();
+            centerTab.addTab("Fold Change", foldParameters);
+
+            foldParameters.add(Box.createVerticalStrut(6));
+            foldParameters.add(new JXTitledSeparator("Minimum Fold Change"));
+
+            blankSpinner = makeSpinner(filterModel.getBlankSubtraction().getBlankSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
+            controlSpinner = makeSpinner(filterModel.getBlankSubtraction().getCtrlSubtractionFoldChange(), 0.1, Double.POSITIVE_INFINITY, 0.1);
+
+            blankFilter = new JCheckBox("sample/blank");
+            blankFilter.setSelected(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
+            blankFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by blank feature intensity</html>");
+
+            controlFilter = new JCheckBox("sample/control");
+            controlFilter.setSelected(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
+            controlFilter.setToolTipText("<html>Aligned feature must have at least this fold change<br> of sample feature intensity divided by control feature intensity</html>");
+
+            blankSpinner.setEnabled(filterModel.getBlankSubtraction().isBlankSubtractionEnabled());
+            controlSpinner.setEnabled(filterModel.getBlankSubtraction().isCtrlSubtractionEnabled());
+
+            blankFilter.addChangeListener((e) -> blankSpinner.setEnabled(blankFilter.isSelected()));
+            controlFilter.addChangeListener((e) -> controlSpinner.setEnabled(controlFilter.isSelected()));
+
+            foldParameters.add(blankFilter, blankSpinner);
+            foldParameters.add(controlFilter, controlSpinner);
+
+            foldParameters.addVerticalGlue();
         }
 
         {
@@ -405,6 +441,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setDbFilter(new CompoundFilterModel.DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
         saveTextFilter();
+
+        filterModel.getBlankSubtraction().setBlankSubtractionEnabled(blankFilter.isSelected());
+        filterModel.getBlankSubtraction().setCtrlSubtractionEnabled(controlFilter.isSelected());
+        filterModel.getBlankSubtraction().setBlankSubtractionFoldChange((Double) blankSpinner.getValue());
+        filterModel.getBlankSubtraction().setCtrlSubtractionFoldChange((Double) controlSpinner.getValue());
     }
 
     private void saveTextFilter() {
@@ -479,6 +520,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         deleteSelection.setSelected(false);
         hasMs1.setSelected(false);
         hasMsMs.setSelected(false);
+
+        blankFilter.setEnabled(false);
+        controlFilter.setEnabled(false);
     }
 
     private void resetSpinnerValues() {
@@ -489,6 +533,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
         candidateSpinner.setValue(1);
+        blankSpinner.setValue(filterModel.getBlankSubtraction().getBlankSubtractionFoldChange());
+        controlSpinner.setValue(filterModel.getBlankSubtraction().getCtrlSubtractionFoldChange());
     }
 
     public double getMinMz() {

@@ -12,6 +12,7 @@ import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
 import de.unijena.bioinf.ms.gui.update.UpdatePanel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import lombok.SneakyThrows;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +60,12 @@ public class LandingPage extends JPanel {
         //"Login and Account" content
         accountPanel = accountPanel(gui, service);
         center.add(accountPanel, "cell 0 3, gapbottom push");
+        accountPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.LandingPage_AccountInfo);
 
         //"Webservice Connection" content
         connectionCheckPanel = connectionCheckPanel(gui);
         center.add(connectionCheckPanel, "cell 1 3, spany 4, wrap");
+        connectionCheckPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.LandingPage_WebConnectionInfo);
 
         //"Updates" heading
         center.add(h2("Updates"), "cell 0 4, gaptop 20, growx, wrap");
@@ -86,16 +89,38 @@ public class LandingPage extends JPanel {
         center.add(jsep, "cell 1 8, growx, wrap");
 
         //"Get Started" content
-        center.add(quickStartButton(gui), "cell 0 9, gaptop 10, split 3");
-        center.add(docuButton(gui), "gaptop 10, gapx 40");
-        center.add(ytButton(gui), "gaptop 10, gapx 40");
+        JPanel getStatedPanel = createGetStartedPanel(gui);
+        center.add(getStatedPanel, "cell 0 9, gaptop 10, wrap");
+        getStatedPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.LandingPage_GetStartedInfo);
 
         //"Community" content
-        center.add(matrixButton(gui), "cell 1 9, gaptop 10, split 3");
-        center.add(githubButton(gui), "gaptop 10, gapx 40");
-        center.add(bugReportButton(gui), "gaptop 10, gapx 40, wrap");
+        JPanel communityPanel = createCommunityPanel(gui);
+        center.add(communityPanel, "cell 1 9, gaptop 10, wrap");
+        communityPanel.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.LandingPage_CommunityInfo);
 
         add(center, BorderLayout.CENTER);
+    }
+
+    private JPanel createGetStartedPanel(SiriusGui gui) {
+        JPanel panel = new JPanel(new MigLayout("insets 0", "[]40[]40[]", "[]"));
+        panel.setOpaque(false); // Maintain background transparency
+
+        panel.add(quickStartButton(gui));
+        panel.add(docuButton(gui));
+        panel.add(ytButton(gui));
+
+        return panel;
+    }
+
+    private JPanel createCommunityPanel(SiriusGui gui) {
+        JPanel panel = new JPanel(new MigLayout("insets 0", "[]40[]40[]", "[]"));
+        panel.setOpaque(false); // Maintain background transparency
+
+        panel.add(matrixButton(gui));
+        panel.add(githubButton(gui));
+        panel.add(bugReportButton(gui));
+
+        return panel;
     }
 
     private ToolbarButton ytButton(SiriusGui gui) {
@@ -104,7 +129,7 @@ public class LandingPage extends JPanel {
         button.setBorderPainted(false);
         button.setHideActionText(true);
         button.setBackground(Colors.BACKGROUND);
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-tIG8w3hZWJunWZyy-qnIZM")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(gui.getMainFrame(), URI.create("https://www.youtube.com/playlist?list=PL8R4DKiWsw-tIG8w3hZWJunWZyy-qnIZM"), gui));
         return button;
     }
 
@@ -126,17 +151,17 @@ public class LandingPage extends JPanel {
     private ToolbarButton matrixButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.MATRIX);
         button.setToolTipText("Join the SIRIUS Matrix/Gitter community for discussion and support.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(),
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(
                 UriComponentsBuilder.fromUriString("https://matrix.to/#")
                         .fragment("/#sirius-ms:gitter.im")
-                        .build().toUri()));
+                        .build().toUri(), gui));
         return button;
     }
 
     private ToolbarButton githubButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.GITHUB);
         button.setToolTipText("SIRIUS on GitHub. Review source code and download releases.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://github.com/sirius-ms/sirius")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(URI.create("https://github.com/sirius-ms/sirius"), gui));
 
         return button;
     }
@@ -144,7 +169,7 @@ public class LandingPage extends JPanel {
     private ToolbarButton bugReportButton(SiriusGui gui) {
         ToolbarButton button = button(Icons.BUG2);
         button.setToolTipText("Report a bug or request a feature.");
-        button.addActionListener(evt -> GuiUtils.openURLOrError(gui.getMainFrame(), URI.create("https://github.com/sirius-ms/sirius/issues/new/choose")));
+        button.addActionListener(evt -> GuiUtils.openURLInSystemBrowserOrError(URI.create("https://github.com/sirius-ms/sirius/issues/new/choose"), gui));
 
         return button;
     }

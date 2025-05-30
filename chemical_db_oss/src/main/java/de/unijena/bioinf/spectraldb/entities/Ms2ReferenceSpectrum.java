@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.spectraldb.entities;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -31,6 +32,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bionf.fastcosine.SearchPreparedSpectrum;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -39,7 +41,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Ms2ReferenceSpectrum {
+public class Ms2ReferenceSpectrum implements ReferenceSpectrum {
 
     @Id
     private long uuid;
@@ -108,6 +110,7 @@ public class Ms2ReferenceSpectrum {
 
     /**
      * Name of the spectrum.
+     * Usually contains the name of the measured compound
      */
     private String name;
 
@@ -133,7 +136,16 @@ public class Ms2ReferenceSpectrum {
      */
     private String splash;
 
+    /**
+     * Original spectrum
+     */
     private SimpleSpectrum spectrum;
+
+    /**
+     * Processed spectrum for fast cosine calculation
+     */
+    @JsonAlias("querySpectrum") //allows us to read old databases as well (Old name was never released but already used a lot internally).
+    private SearchPreparedSpectrum searchPreparedSpectrum;
 
     private double retentionTime;
 

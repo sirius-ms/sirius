@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.service.databases;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.ms.middleware.model.databases.BioTransformerParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,8 @@ import java.util.List;
 public interface ChemDbService {
     WebWithCustomDatabase db();
 
-    SearchableDatabase importById(@NotNull String databaseId, List<InputResource<?>> inputResources, int bufferSize);
+    SearchableDatabase importById(@NotNull String databaseId, @NotNull List<InputResource<?>> inputResources,
+                                  @Nullable BioTransformerParameters bioTransformerParameters, int bufferSize);
 
     SearchableDatabase findById(@NotNull String databaseId, boolean includeStats);
 

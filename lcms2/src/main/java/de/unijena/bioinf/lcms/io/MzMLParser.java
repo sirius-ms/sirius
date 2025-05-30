@@ -65,6 +65,8 @@ public class MzMLParser implements LCMSParser {
 
     private static final Pattern SUFFIX = Pattern.compile("\\.mzml$", Pattern.CASE_INSENSITIVE);
 
+    private int noScanIDCount = 0;
+
     private File createTempFile(@NotNull Path input) throws IOException {
         if (input.getFileSystem().equals(FileSystems.getDefault())) {
             return input.toFile();
@@ -146,6 +148,8 @@ public class MzMLParser implements LCMSParser {
 
             }
             run.setSourceReference(reference);
+
+            ArrayList<String> surpressEmptySpectrumLog = new ArrayList<>();
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
@@ -249,10 +253,12 @@ public class MzMLParser implements LCMSParser {
                     }
                 }
 
+                /*
                 if (!centroided) {
                     log.error("Spectrum with ID '" + sid  + "' is not centroided. Skipping!");
                     continue;
                 }
+                 */
                 if (!skipList.isEmpty()) {
                     log.error("Spectrum with ID '" + sid  + "' contains parameters that indicate non Mass Spectrometry data (e.g. EMR spectra). Skipping! Parameters: " + skipList.stream().map(CVParam::getAccession).collect(Collectors.joining(", ")) );
                     continue;
@@ -299,11 +305,14 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (mzArray == null || intArray == null || mzArray.length != intArray.length || mzArray.length == 0) {
-                    log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
 
-                final SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
+                SimpleSpectrum peaks = Spectrums.getBaselined(Spectrums.wrap(mzArray, intArray), 0);
                 if (samplePolarity == 0)  {
                     samplePolarity = polarity.charge;
                 } else if (polarity.charge != 0 && (polarity.charge > 0) != (samplePolarity > 0) ) {
@@ -311,7 +320,10 @@ public class MzMLParser implements LCMSParser {
                 }
 
                 if (peaks.isEmpty()) {
-                    log.error("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    if (surpressEmptySpectrumLog.isEmpty()) {
+                        log.debug("No spectrum data found in Spectrum with id: " + spectrum.getId() + " Skipping!");
+                    }
+                    surpressEmptySpectrumLog.add(spectrum.getId());
                     continue;
                 }
                 if (msLevel == 1) {
@@ -321,11 +333,13 @@ public class MzMLParser implements LCMSParser {
                                 .sourceScanId(sid)
                                 .scanTime(rt)
                                 .peaks(peaks)
+                                .centroided(centroided)
                                 .ccs(ccs)
                                 .build();
 
                         scanConsumer.consume(scan);
                         ms1Ids.put(spectrum.getId(), scan.getScanId());
+                        peaks = scan.getPeaks();
                     }
 
                     final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), parseScanNumber(sid, spectrum.getIndex()), sid, polarity.charge, true);
@@ -380,11 +394,14 @@ public class MzMLParser implements LCMSParser {
                                 .peaks(peaks)
                                 .msLevel(msLevel)
                                 .ccs(ccs)
+                                .centroided(centroided)
                                 .collisionEnergy(Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none())
                                 .mzOfInterest(prec.getMass())
                                 .isolationWindow(prec.getIsolationWindow())
                                 .precursorScanId(prec.getScanId());
-                        msmsScanConsumer.consume(scanBuilder.build());
+                        MSMSScan build = scanBuilder.build();
+                        msmsScanConsumer.consume(build);
+                        peaks = build.getPeaks();
                     }
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
@@ -406,6 +423,13 @@ public class MzMLParser implements LCMSParser {
             if (scanids.isEmpty()) {
                 throw new RuntimeException("No spectra imported from " + fileName);
             }
+            if (surpressEmptySpectrumLog.size()>1) {
+                if (surpressEmptySpectrumLog.size()>100) {
+                    log.error("There were " + surpressEmptySpectrumLog.size() + " spectra without any spectral data.");
+                } else {
+                    log.error("The following spectra did not contain any spectral data: " + String.join(", ", surpressEmptySpectrumLog));
+                }
+            }
 
             if (fragmentation != null) {
                 run.setFragmentation(fragmentation);
@@ -418,6 +442,11 @@ public class MzMLParser implements LCMSParser {
             storage.setMapping(mapping);
             ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
             sample.setRun(run);
+
+            if (noScanIDCount>0) {
+                LoggerFactory.getLogger(MzMLParser.class).warn("In total {} spectra have no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.", noScanIDCount);
+            }
+
             return sample;
 
         } catch (Exception e) {
@@ -443,13 +472,16 @@ public class MzMLParser implements LCMSParser {
         if (m.find()) {
             return Integer.parseInt(m.group(1));
         } else {
-            m = ALT_PATTERN.matcher(sid);
-            if (m.find()) {
-                return Integer.parseInt(m.group(1));
-            } else {
-                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+            //m = ALT_PATTERN.matcher(sid);
+            //if (m.find()) {
+                //return Integer.parseInt(m.group(1));
+            //} else {
+                if (noScanIDCount==0) {
+                    LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                }
+                ++noScanIDCount;
                 return index;
-            }
+            //}
         }
     }
 

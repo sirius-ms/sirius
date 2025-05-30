@@ -21,9 +21,14 @@
 
 package de.unijena.bioinf.ms.gui;
 
+import com.jetbrains.cef.JCefAppConfig;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.webView.JCEFLinuxFixer;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sse.DataEventType;
+import lombok.SneakyThrows;
+import org.cef.CefApp;
+import org.cef.CefSettings;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +40,21 @@ import java.util.EnumSet;
 public final class SiriusGuiFactory {
     private volatile SiriusClient siriusClient;
     private volatile ConnectionMonitor connectionMonitor;
+    private volatile CefApp cefApp;
 
     public SiriusGuiFactory(int port) {
-        this(new SiriusClient(port), null);
+        this(new SiriusClient(port), null, null);
     }
 
-    public SiriusGuiFactory(SiriusClient siriusClient, ConnectionMonitor connectionMonitor) {
+    public SiriusGuiFactory(SiriusClient siriusClient, ConnectionMonitor connectionMonitor, CefApp cefApp) {
         this.siriusClient = siriusClient;
         this.connectionMonitor = connectionMonitor;
+        this.cefApp = cefApp;
     }
 
     public SiriusGui newGui(@NotNull String projectId) {
         init();
-        return new SiriusGui(projectId, siriusClient, connectionMonitor);
+        return new SiriusGui(projectId, siriusClient, connectionMonitor, cefApp);
     }
 
     private void init() {
@@ -66,6 +73,33 @@ public final class SiriusGuiFactory {
                     connectionMonitor = new ConnectionMonitor(siriusClient);
             }
         }
+
+        if (cefApp == null) {
+            synchronized (this) {
+                if (cefApp == null)
+                    cefApp = makeCefApp();
+            }
+        }
+    }
+
+
+    @SneakyThrows
+    private static CefApp makeCefApp(){
+        final JCefAppConfig jCefAppConfig = JCefAppConfig.getInstance();
+        final CefSettings cefSettings = jCefAppConfig.getCefSettings();
+
+        // For remote devtools, open localhost:port in chrome
+//        cefSettings.remote_debugging_port = 9222;
+//        jCefAppConfig.getAppArgsAsList().add("--remote-allow-origins=*");
+//        cefSettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
+
+        CefApp.startup(jCefAppConfig.getAppArgs());
+        CefApp instance = CefApp.getInstance(jCefAppConfig.getAppArgs(), cefSettings);
+
+        if (System.getProperty("os.name").toLowerCase().contains("linux"))
+            JCEFLinuxFixer.preloadJCef(instance);
+
+        return instance;
     }
 
     public void shutdowm() {
@@ -74,6 +108,8 @@ public final class SiriusGuiFactory {
                 connectionMonitor.close();
             if (siriusClient != null)
                 siriusClient.close();
+            if (cefApp != null)
+                cefApp.dispose();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }

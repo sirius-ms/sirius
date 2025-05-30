@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.jjobs.Partition;
@@ -61,9 +62,11 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
 
             importCandidates(database.getStorage(), candidates, chunkSize);
 
-            if (spectra != null)
-                importSpectra(database, spectra, chunkSize);
-
+            if (spectra != null) {
+                SpectraLibraryUpdateManager manager = new SpectraLibraryUpdateManager(database, database);
+                importSpectra(manager, spectra, chunkSize);
+                SiriusJobs.getGlobalJobManager().submitJob(manager.finishWriting()).takeResult();
+            }
         } catch (RuntimeException e) {
             throw new ChemicalDatabaseException(e.getCause());
         } catch (IOException e) {

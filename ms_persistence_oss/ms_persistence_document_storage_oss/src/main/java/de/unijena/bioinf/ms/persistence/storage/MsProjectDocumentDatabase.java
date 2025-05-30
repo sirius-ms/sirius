@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -36,6 +34,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
@@ -59,8 +58,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("name"))
-
                 .addRepository(LCMSRun.class,
                         Index.nonUnique("name"))
 
@@ -140,7 +137,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default Stream<AlignedFeatures> getAllAlignedFeatures() throws IOException {
-        return getStorage().findAllStr(AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
+        return getAlignedFeatures(null);
+    }
+
+    default Stream<AlignedFeatures> getAlignedFeatures(Filter filter) throws IOException {
+        return getStorage().findStr(filter, AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
     }
 
     @SneakyThrows
@@ -227,14 +228,16 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     default void importMSData(MSData msData, long parentId) throws IOException {
         msData.setAlignedFeatureId(parentId);
-        // ensure that we do not store arbitrary large spectra (number if peaks) in out database.
-        msData.setMergedMs1Spectrum(Spectrums.extractMostIntensivePeaks(
-                msData.getMergedMs1Spectrum(), 100, 250));
-        msData.setMergedMSnSpectrum(Spectrums.extractMostIntensivePeaks(
-                msData.getMergedMSnSpectrum(), 100, 250));
+        // check that we do not store arbitrary large spectra (number if peaks) in our database.
+        if (msData.getMergedMs1Spectrum() != null && msData.getMergedMs1Spectrum().size()>1000)
+            LoggerFactory.getLogger(this.getClass()).warn("Merged MS1 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
+        if (msData.getMergedMSnSpectrum() != null && msData.getMergedMSnSpectrum().size()>1000)
+            LoggerFactory.getLogger(this.getClass()).warn("Merged MS2 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
         if (msData.getMsnSpectra() != null)
-            msData.getMsnSpectra().forEach(mspec -> mspec.setPeaks(Spectrums.extractMostIntensivePeaks(
-                    mspec.getPeaks(), 100, 250)));
+            msData.getMsnSpectra().forEach(mspec -> {
+                if (mspec.getPeaks().size()>1000)
+                    LoggerFactory.getLogger(this.getClass()).warn("An MS2 spectrum for aligned feature "+msData.getAlignedFeatureId()+" contains an unexpectedly high number of peaks. This may unnecessarily increase storage and decrease performance.");
+            });
 
         getStorage().insert(msData);
     }

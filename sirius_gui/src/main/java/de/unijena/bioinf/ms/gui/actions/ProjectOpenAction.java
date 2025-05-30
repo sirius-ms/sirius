@@ -28,9 +28,9 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ProjectInfo;
 import io.sirius.ms.sdk.model.ProjectInfoOptField;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -128,10 +128,8 @@ public class ProjectOpenAction extends AbstractGuiAction {
             openProjectByID(pid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when opening project!", e);
-            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when opening project!", e));
+            Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), gui.getSiriusClient().unwrapErrorMessage(e), e));
         }
-
-
     }
 
     public synchronized void openProjectByID(String projectId) {

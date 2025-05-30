@@ -39,6 +39,7 @@ import io.sirius.ms.sdk.model.StructureCandidateFormula;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortList;
+import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,8 @@ import static java.util.stream.Collectors.toList;
 
 public class FingerprintCandidateBean implements SiriusPCS, Comparable<FingerprintCandidateBean> {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+    @Getter
+    private final String parentFeatureId;
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -122,6 +125,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.isDatabase = isDatabase;
         this.isDeNovo = isDeNovo;
         this.relevantFps = null;
+        this.parentFeatureId = parent != null ? parent.getFeatureId() : null;
 
 
         if (this.candidate.getDbLinks() == null || this.candidate.getDbLinks().isEmpty()) {
@@ -171,7 +175,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    protected FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingCache spectralMatchingCache, DatabaseLabel[] labels, DatabaseLabel bestRefMatchLabel, EmptyLabel moreRefMatchesLabel) {
+    protected FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingCache spectralMatchingCache, DatabaseLabel[] labels, DatabaseLabel bestRefMatchLabel, EmptyLabel moreRefMatchesLabel, String parentFeatureId) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
         this.isDatabase = isDatabase;
@@ -181,6 +185,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         this.labels = labels;
         this.bestRefMatchLabel = bestRefMatchLabel;
         this.moreRefMatchesLabel = moreRefMatchesLabel;
+        this.parentFeatureId = parentFeatureId;
     }
 
     /**
@@ -190,7 +195,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withNewDatabaseAndDeNovoFlag(boolean isDatabase, boolean isDeNovo) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, labels, bestRefMatchLabel, moreRefMatchesLabel);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, labels, bestRefMatchLabel, moreRefMatchesLabel, parentFeatureId);
     }
 
     /**
@@ -198,7 +203,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withAdditionalLabelAtBeginning(DatabaseLabel[] labels) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel, parentFeatureId);
     }
 
     public void highlightInBackground() {

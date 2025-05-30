@@ -56,7 +56,10 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
         try {
             if (instance != null) {
                 this.instance = instance;
-                BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+                BasicSpectrum query = match.getQuerySpectrumIndex() < 0
+                        ? instance.getMsData().getMergedMs2()
+                        : instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
+
                 this.queryName = SpectraSearchSubtoolJob.getQueryName(
                         query.getMsLevel(),
                         query.getScanNumber(),
@@ -88,9 +91,6 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     @Override
     public int compareTo(@NotNull SpectralMatchBean o) {
-        if (Math.abs(o.getMatch().getSimilarity() - match.getSimilarity()) < 1E-3 && o.getMatch().getSharedPeaks() != null && match.getSharedPeaks() != null) {
-            return Integer.compare(o.getMatch().getSharedPeaks(), match.getSharedPeaks());
-        }
         return Double.compare(o.getMatch().getSimilarity(), match.getSimilarity());
     }
 
@@ -100,10 +100,6 @@ public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBea
 
     public int getRank() {
         return Optional.ofNullable(getMatch().getRank()).orElse(0);
-    }
-
-    public InstanceBean getParentInstance() {
-        return instance;
     }
 
     protected void setMatchesTopStructureHit(boolean matchesTopStructureHit) {

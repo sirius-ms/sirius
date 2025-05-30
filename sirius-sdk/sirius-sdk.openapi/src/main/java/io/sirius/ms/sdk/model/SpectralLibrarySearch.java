@@ -43,9 +43,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   SpectralLibrarySearch.JSON_PROPERTY_ENABLED,
   SpectralLibrarySearch.JSON_PROPERTY_SPECTRA_SEARCH_D_BS,
-  SpectralLibrarySearch.JSON_PROPERTY_PEAK_DEVIATION_PPM,
   SpectralLibrarySearch.JSON_PROPERTY_PRECURSOR_DEVIATION_PPM,
-  SpectralLibrarySearch.JSON_PROPERTY_SCORING
+  SpectralLibrarySearch.JSON_PROPERTY_MIN_SIMILARITY,
+  SpectralLibrarySearch.JSON_PROPERTY_MIN_NUM_OF_PEAKS,
+  SpectralLibrarySearch.JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH,
+  SpectralLibrarySearch.JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE,
+  SpectralLibrarySearch.JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE,
+  SpectralLibrarySearch.JSON_PROPERTY_SCORING,
+  SpectralLibrarySearch.JSON_PROPERTY_PEAK_DEVIATION_PPM
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SpectralLibrarySearch {
@@ -55,14 +60,29 @@ public class SpectralLibrarySearch {
   public static final String JSON_PROPERTY_SPECTRA_SEARCH_D_BS = "spectraSearchDBs";
   private List<String> spectraSearchDBs;
 
-  public static final String JSON_PROPERTY_PEAK_DEVIATION_PPM = "peakDeviationPpm";
-  private Double peakDeviationPpm;
-
   public static final String JSON_PROPERTY_PRECURSOR_DEVIATION_PPM = "precursorDeviationPpm";
   private Double precursorDeviationPpm;
 
+  public static final String JSON_PROPERTY_MIN_SIMILARITY = "minSimilarity";
+  private Float minSimilarity;
+
+  public static final String JSON_PROPERTY_MIN_NUM_OF_PEAKS = "minNumOfPeaks";
+  private Integer minNumOfPeaks;
+
+  public static final String JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH = "enableAnalogueSearch";
+  private Boolean enableAnalogueSearch;
+
+  public static final String JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE = "minSimilarityAnalogue";
+  private Float minSimilarityAnalogue;
+
+  public static final String JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE = "minNumOfPeaksAnalogue";
+  private Integer minNumOfPeaksAnalogue;
+
   public static final String JSON_PROPERTY_SCORING = "scoring";
   private SpectralMatchingType scoring;
+
+  public static final String JSON_PROPERTY_PEAK_DEVIATION_PPM = "peakDeviationPpm";
+  private Double peakDeviationPpm;
 
   public SpectralLibrarySearch() {
   }
@@ -125,31 +145,6 @@ public class SpectralLibrarySearch {
     this.spectraSearchDBs = spectraSearchDBs;
   }
 
-  public SpectralLibrarySearch peakDeviationPpm(Double peakDeviationPpm) {
-    
-    this.peakDeviationPpm = peakDeviationPpm;
-    return this;
-  }
-
-   /**
-   * Maximum allowed mass deviation in ppm for matching peaks.
-   * @return peakDeviationPpm
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getPeakDeviationPpm() {
-    return peakDeviationPpm;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPeakDeviationPpm(Double peakDeviationPpm) {
-    this.peakDeviationPpm = peakDeviationPpm;
-  }
-
   public SpectralLibrarySearch precursorDeviationPpm(Double precursorDeviationPpm) {
     
     this.precursorDeviationPpm = precursorDeviationPpm;
@@ -173,6 +168,131 @@ public class SpectralLibrarySearch {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setPrecursorDeviationPpm(Double precursorDeviationPpm) {
     this.precursorDeviationPpm = precursorDeviationPpm;
+  }
+
+  public SpectralLibrarySearch minSimilarity(Float minSimilarity) {
+    
+    this.minSimilarity = minSimilarity;
+    return this;
+  }
+
+   /**
+   * Minimal spectral similarity of a spectral match to be considered a hit.
+   * @return minSimilarity
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Float getMinSimilarity() {
+    return minSimilarity;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinSimilarity(Float minSimilarity) {
+    this.minSimilarity = minSimilarity;
+  }
+
+  public SpectralLibrarySearch minNumOfPeaks(Integer minNumOfPeaks) {
+    
+    this.minNumOfPeaks = minNumOfPeaks;
+    return this;
+  }
+
+   /**
+   * Minimal number of matching peaks of a spectral match to be considered a hit.
+   * @return minNumOfPeaks
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getMinNumOfPeaks() {
+    return minNumOfPeaks;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinNumOfPeaks(Integer minNumOfPeaks) {
+    this.minNumOfPeaks = minNumOfPeaks;
+  }
+
+  public SpectralLibrarySearch enableAnalogueSearch(Boolean enableAnalogueSearch) {
+    
+    this.enableAnalogueSearch = enableAnalogueSearch;
+    return this;
+  }
+
+   /**
+   * Enable analogue search in addition to the identity spectral library search
+   * @return enableAnalogueSearch
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEnableAnalogueSearch() {
+    return enableAnalogueSearch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ENABLE_ANALOGUE_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEnableAnalogueSearch(Boolean enableAnalogueSearch) {
+    this.enableAnalogueSearch = enableAnalogueSearch;
+  }
+
+  public SpectralLibrarySearch minSimilarityAnalogue(Float minSimilarityAnalogue) {
+    
+    this.minSimilarityAnalogue = minSimilarityAnalogue;
+    return this;
+  }
+
+   /**
+   * Minimal spectral similarity of a spectral match to be considered an analogue hit.
+   * @return minSimilarityAnalogue
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Float getMinSimilarityAnalogue() {
+    return minSimilarityAnalogue;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_SIMILARITY_ANALOGUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinSimilarityAnalogue(Float minSimilarityAnalogue) {
+    this.minSimilarityAnalogue = minSimilarityAnalogue;
+  }
+
+  public SpectralLibrarySearch minNumOfPeaksAnalogue(Integer minNumOfPeaksAnalogue) {
+    
+    this.minNumOfPeaksAnalogue = minNumOfPeaksAnalogue;
+    return this;
+  }
+
+   /**
+   * Minimal number of matching peaks of a spectral match to be considered an analogue hit.
+   * @return minNumOfPeaksAnalogue
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getMinNumOfPeaksAnalogue() {
+    return minNumOfPeaksAnalogue;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_NUM_OF_PEAKS_ANALOGUE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinNumOfPeaksAnalogue(Integer minNumOfPeaksAnalogue) {
+    this.minNumOfPeaksAnalogue = minNumOfPeaksAnalogue;
   }
 
   public SpectralLibrarySearch scoring(SpectralMatchingType scoring) {
@@ -200,6 +320,33 @@ public class SpectralLibrarySearch {
     this.scoring = scoring;
   }
 
+  public SpectralLibrarySearch peakDeviationPpm(Double peakDeviationPpm) {
+    
+    this.peakDeviationPpm = peakDeviationPpm;
+    return this;
+  }
+
+   /**
+   * NO LONGER SUPPORTED (IGNORED)  Maximum allowed mass deviation in ppm for matching peaks.
+   * @return peakDeviationPpm
+   * @deprecated
+  **/
+  @Deprecated
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getPeakDeviationPpm() {
+    return peakDeviationPpm;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PEAK_DEVIATION_PPM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPeakDeviationPpm(Double peakDeviationPpm) {
+    this.peakDeviationPpm = peakDeviationPpm;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -211,14 +358,19 @@ public class SpectralLibrarySearch {
     SpectralLibrarySearch spectralLibrarySearch = (SpectralLibrarySearch) o;
     return Objects.equals(this.enabled, spectralLibrarySearch.enabled) &&
         Objects.equals(this.spectraSearchDBs, spectralLibrarySearch.spectraSearchDBs) &&
-        Objects.equals(this.peakDeviationPpm, spectralLibrarySearch.peakDeviationPpm) &&
         Objects.equals(this.precursorDeviationPpm, spectralLibrarySearch.precursorDeviationPpm) &&
-        Objects.equals(this.scoring, spectralLibrarySearch.scoring);
+        Objects.equals(this.minSimilarity, spectralLibrarySearch.minSimilarity) &&
+        Objects.equals(this.minNumOfPeaks, spectralLibrarySearch.minNumOfPeaks) &&
+        Objects.equals(this.enableAnalogueSearch, spectralLibrarySearch.enableAnalogueSearch) &&
+        Objects.equals(this.minSimilarityAnalogue, spectralLibrarySearch.minSimilarityAnalogue) &&
+        Objects.equals(this.minNumOfPeaksAnalogue, spectralLibrarySearch.minNumOfPeaksAnalogue) &&
+        Objects.equals(this.scoring, spectralLibrarySearch.scoring) &&
+        Objects.equals(this.peakDeviationPpm, spectralLibrarySearch.peakDeviationPpm);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, spectraSearchDBs, peakDeviationPpm, precursorDeviationPpm, scoring);
+    return Objects.hash(enabled, spectraSearchDBs, precursorDeviationPpm, minSimilarity, minNumOfPeaks, enableAnalogueSearch, minSimilarityAnalogue, minNumOfPeaksAnalogue, scoring, peakDeviationPpm);
   }
 
   @Override
@@ -227,9 +379,14 @@ public class SpectralLibrarySearch {
     sb.append("class SpectralLibrarySearch {\n");
     sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
     sb.append("    spectraSearchDBs: ").append(toIndentedString(spectraSearchDBs)).append("\n");
-    sb.append("    peakDeviationPpm: ").append(toIndentedString(peakDeviationPpm)).append("\n");
     sb.append("    precursorDeviationPpm: ").append(toIndentedString(precursorDeviationPpm)).append("\n");
+    sb.append("    minSimilarity: ").append(toIndentedString(minSimilarity)).append("\n");
+    sb.append("    minNumOfPeaks: ").append(toIndentedString(minNumOfPeaks)).append("\n");
+    sb.append("    enableAnalogueSearch: ").append(toIndentedString(enableAnalogueSearch)).append("\n");
+    sb.append("    minSimilarityAnalogue: ").append(toIndentedString(minSimilarityAnalogue)).append("\n");
+    sb.append("    minNumOfPeaksAnalogue: ").append(toIndentedString(minNumOfPeaksAnalogue)).append("\n");
     sb.append("    scoring: ").append(toIndentedString(scoring)).append("\n");
+    sb.append("    peakDeviationPpm: ").append(toIndentedString(peakDeviationPpm)).append("\n");
     sb.append("}");
     return sb.toString();
   }

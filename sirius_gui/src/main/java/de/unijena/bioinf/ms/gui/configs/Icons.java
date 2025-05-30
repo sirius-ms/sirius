@@ -99,6 +99,7 @@ public abstract class Icons {
     public static final FlatSVGIcon FOLDER_CLOSE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-folder-close.svg"));
     public static final FlatSVGIcon FOLDER_FILE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-folder-file.svg"));
 
+    public static final FlatSVGIcon SPEC_SEARCH = new FlatSVGIcon(Icons.class.getResource("/icons/circular-icons-svg/c-spec-match.svg"));
     public static final FlatSVGIcon SIRIUS = new FlatSVGIcon(Icons.class.getResource("/icons/circular-icons-svg/c-sirius.svg"));
     public static final FlatSVGIcon ZODIAC = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-zodiac.svg"));
     public static final FlatSVGIcon FINGER =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-fingerprint.svg"));
@@ -129,10 +130,14 @@ public abstract class Icons {
     public static final FlatSVGIcon FILTER_UP =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-filter-up.svg"));
     public static final FlatSVGIcon FILTER_DOWN =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-filter-down.svg"));
     public static final FlatSVGIcon MOLECULAR_PROPERTY = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-molecularProperty.svg"));
+    public static final FlatSVGIcon SAMPLE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-sample.svg"));
 
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+
+
+    public static final FlatSVGIcon FMET_FILTER_ENABLED = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-fmet.svg"));
 
 
     public static final Icon NO_MATCH_128 = new ImageIcon(MainFrame.class.getResource("/icons/nothing-found.png"));

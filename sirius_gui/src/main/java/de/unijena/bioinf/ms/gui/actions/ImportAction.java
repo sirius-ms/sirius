@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -26,17 +27,16 @@ import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.LCMSRunDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import io.sirius.ms.sdk.jjobs.SseProgressJJob;
-import io.sirius.ms.sdk.model.Job;
-import io.sirius.ms.sdk.model.JobOptField;
-import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import io.sirius.ms.sdk.jjobs.SseProgressJJob;
+import io.sirius.ms.sdk.model.*;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,6 +124,7 @@ public class ImportAction extends AbstractGuiAction {
                 if (hasLCMS) {
                     ParameterBinding binding = dialog.getParamterBinding();
                     binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
+                    binding.getOptBoolean("sensitiveMode").filter(x -> x).ifPresent(x-> parameters.setMinSNR(2d));
                 }
             }
 
@@ -154,6 +155,14 @@ public class ImportAction extends AbstractGuiAction {
                 });
                 task.awaitResult();
             }
+ /* Temporarily disabled
+            if (hasLCMS) {
+                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
+                if (runs != null && runs.size() > 1) {
+                    new LCMSRunDialog(mainFrame, gui, runs, false);
+                }
+            }
+  */
 
         } catch (Exception e) {
             String m = Objects.requireNonNullElse(e.getMessage(), "");

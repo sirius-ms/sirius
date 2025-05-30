@@ -23,13 +23,14 @@ package de.unijena.bioinf.ms.gui.spectral_matching;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
 import io.sirius.ms.sdk.model.BasicSpectrum;
+
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNullElse;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
 
-    private static final int COL_COUNT = 11;
+    private static final int COL_COUNT = 13;
 
     public SpectralMatchTableFormat(Function<SpectralMatchBean, Boolean> bestFunc) {
         super(bestFunc);
@@ -55,12 +56,13 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 4 -> "Precursor m/z";
             case 5 -> "Similarity";
             case 6 -> "Shared Peaks";
-            case 7 -> "Ionization";
-            case 8 -> "Collision Energy";
-//            case 8 -> "Instrument";
-            case 9 -> "Database";
-            case 10 -> "ID";
-            case 11 -> "Best";
+            case 7 -> "Match Type";
+            case 8 -> "Spectrum Type";
+            case 9 -> "Ionization";
+            case 10 -> "Collision Energy";
+            case 11 -> "Database";
+            case 12 -> "ID";
+            case 13 -> "Best";
             default -> throw new IllegalStateException();
         };
     }
@@ -75,14 +77,16 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 4 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).orElse(null);
             case 5 -> baseObject.getMatch().getSimilarity();
             case 6 -> baseObject.getMatch().getSharedPeaks();
-            case 7 -> baseObject.getMatch().getAdduct();
-            case 8 -> baseObject.getReference()
+            case 7 -> baseObject.getMatch().getType();
+            case 8 -> baseObject.getMatch().getReferenceSpectrumType();
+            case 9 -> baseObject.getMatch().getAdduct();
+            case 10 -> baseObject.getReference()
                     .map(BasicSpectrum::getCollisionEnergy)
                     .map(ce -> requireNonNullElse(CollisionEnergy.fromStringOrNull(ce), ce))
                     .orElse(CollisionEnergy.none());
-            case 9 -> baseObject.getMatch().getDbName();
-            case 10 -> baseObject.getDBLink();
-            case 11 -> isBest.apply(baseObject);
+            case 11 -> baseObject.getMatch().getDbName();
+            case 12 -> baseObject.getDBLink();
+            case 13 -> isBest.apply(baseObject);
             default -> throw new IllegalStateException();
         };
     }

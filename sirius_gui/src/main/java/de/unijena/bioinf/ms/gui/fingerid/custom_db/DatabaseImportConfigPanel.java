@@ -14,14 +14,14 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import io.sirius.ms.sdk.model.SearchableDatabase;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -93,6 +93,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private final SiriusGui gui;
 
     private final PropertyChangeListener connectionListener;
+    private JToggleSwitch biotransformerSwitch;
+    private BiotransformerConfigPanel biotransformerConfigPanel;
+
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
         super(CustomDBOptions.class);
         this.gui = gui;
@@ -156,7 +159,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
         Path dbFilePath = db != null && db.getLocation() != null ? Path.of(db.getLocation()) : null;
-        String dbDirectory = dbFilePath != null ? dbFilePath.getParent().toString() : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
+        String dbDirectory = dbFilePath != null ? dbFilePath.getParent().toString() : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_CUSTOM_DB_PATH, null, "");
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
@@ -274,10 +277,25 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 (v) -> String.valueOf(v.getNumber().intValue()));
         smalls.addNamed("Buffer Size", bufferSize);
 
+        JPanel toggleBox = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        biotransformerSwitch = new JToggleSwitch();
+        biotransformerSwitch.setPreferredSize(new Dimension(40, 28));
+        toggleBox.add(biotransformerSwitch);
+        toggleBox.add(Box.createHorizontalGlue());
+
+        smalls.addNamed("BioTransformer 3", toggleBox, GuiUtils.formatToolTip("If enabled BioTransformer 3 will be used to apply configured biotransformations to all input structures. Input structures and their transformation products will be added to the database."), GuiUtils.SMALL_GAP);
+        biotransformerConfigPanel = new BiotransformerConfigPanel();
+        smalls.add(biotransformerConfigPanel);
+        biotransformerSwitch.addEventToggleSelected(evt -> {
+            biotransformerConfigPanel.setVisible(evt);
+            biotransformerConfigPanel.setEnabled(evt);
+        });
+        biotransformerConfigPanel.setVisible(biotransformerSwitch.isSelected());
+        biotransformerConfigPanel.setEnabled(biotransformerSwitch.isSelected());
         return withErrorMessageWrapper;
     }
 
-    private Box createCompoundsBox() {
+    private JComponent createCompoundsBox() {
         final Box box = Box.createVerticalBox();
 
         String inputParameter = "input";
@@ -299,13 +317,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         fileListButtons.add(addFiles);
 
         box.add(fileListButtons);
-
-        Border border = BorderFactory.createCompoundBorder(
-                BorderFactory.createEmptyBorder(10, 0, 0, 0),
-                BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Drop or add compound and/or spectra files")
-        );
-        box.setBorder(border);
-
 
         JFileChooser importFileChooser = new JFileChooser();
         importFileChooser.setMultiSelectionEnabled(true);
@@ -359,7 +370,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), removeFilesActionName);
         fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
 
-        return box;
+        TextHeaderPanel<Box> r =  new TextHeaderPanel<>("Add compound and/or spectra files" , box,0, GuiUtils.MEDIUM_GAP);
+        r.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.MEDIUM_GAP,0,GuiUtils.MEDIUM_GAP));
+        return r;
     }
 
     private JPanel createImportButton() {
@@ -373,6 +386,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private void refreshImportButton() {
         importButton.setEnabled(validDbDirectory && validDbName && !fileListModel.isEmpty() && loggedIn);
+    }
+
+    public String getDbSaveDir() {
+        return dbLocationField.getFilePath();
     }
 
     public String getDbFilePath() {
@@ -390,4 +407,11 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         return Arrays.stream(fileListModel.toArray()).anyMatch(f -> supportedSpectraFiles.accept((File) f));
     }
 
+    @Override
+    public List<String> asParameterList() {
+        List<String> paras = super.asParameterList();
+        if (biotransformerSwitch != null && biotransformerSwitch.isSelected() && biotransformerConfigPanel != null)
+            paras.addAll(biotransformerConfigPanel.asParameterList());
+        return paras;
+    }
 }

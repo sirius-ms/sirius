@@ -6,6 +6,8 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.centroiding.CentroidIndividualSpectraStrategy;
+import de.unijena.bioinf.lcms.centroiding.CentroidingStrategy;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
@@ -65,6 +67,8 @@ public class LCMSProcessing {
      */
     @Getter @Setter private StatisticsCollectionStrategy statisticsCollector = new MedianNoiseCollectionStrategy();
 
+    @Getter @Setter private CentroidingStrategy centroidingStrategy = new CentroidIndividualSpectraStrategy();
+
     /**
      * Determines which peaks to pick from the LCMS
      */
@@ -93,6 +97,7 @@ public class LCMSProcessing {
     @Getter @Setter private NormalizationStrategy normalizationStrategy = new AverageOfTop100TracesNormalization();
 
     @Getter @Setter private AlignmentStrategy alignmentStrategy = new GreedyTwoStageAlignmentStrategy();
+    @Getter @Setter private AlignmentThresholds alignmentThresholds = new AlignmentThresholds();
     @Getter @Setter private AlignmentAlgorithm alignmentAlgorithm = new BeamSearchAlgorithm();
     @Getter @Setter private AlignmentScorer alignmentScorerBackbone  = AlignmentScorer.expectSimilarIntensity();
     @Getter @Setter private AlignmentScorer alignmentScorerFull = AlignmentScorer.intensityMayBeDifferent();
@@ -124,13 +129,13 @@ public class LCMSProcessing {
             new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
-        this(siriusDatabaseAdapter, saveFeatureIds, null);
+        this(siriusDatabaseAdapter, saveFeatureIds, null, false);
     }
 
-    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, @Nullable Path tmpDir) {
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, @Nullable Path tmpDir, boolean inMemoryOnMerged) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
         this.saveFeatureIds = saveFeatureIds;
-        this.storageFactory = LCMSStorage.temporaryStorage(tmpDir == null ? null : tmpDir.toFile());
+        this.storageFactory = LCMSStorage.temporaryStorage(tmpDir == null ? null : tmpDir.toFile(), inMemoryOnMerged);
     }
 
     /**
@@ -152,7 +157,7 @@ public class LCMSProcessing {
             Chromatography chromatography
     ) throws IOException {
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, siriusDatabaseAdapter, saveRawScans, chromatography);
+                file, storageFactory, siriusDatabaseAdapter, centroidingStrategy, saveRawScans, chromatography);
         processSample(sample);
         return sample;
     }
@@ -189,8 +194,8 @@ public class LCMSProcessing {
     }
 
     public AlignmentBackbone align() throws IOException {
-        LCMSStorage mergedStorage = storageFactory.createNewStorage();
-        AlignmentBackbone alignmentBackbone = alignmentStrategy.makeAlignmentBackbone(mergedStorage.getAlignmentStorage(), samples, alignmentAlgorithm, alignmentScorerBackbone);
+        LCMSStorage mergedStorage = storageFactory.createNewMergedStorage();
+        AlignmentBackbone alignmentBackbone = alignmentStrategy.makeAlignmentBackbone(mergedStorage.getAlignmentStorage(), samples, alignmentAlgorithm, alignmentThresholds, alignmentScorerBackbone);
         ProcessedSample merged = new ProcessedSample(
                 alignmentBackbone.getScanPointMapping(),
                 mergedStorage,
@@ -200,7 +205,7 @@ public class LCMSProcessing {
         makeMergeStatistics(merged, alignmentBackbone.getSamples());
         samples.add(merged);
         sampleByIdx.put(merged.getUid(), merged);
-        alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull, tracker);
+        alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentThresholds, alignmentScorerFull, tracker);
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             sample.setScanPointInterpolator(new ScanPointInterpolator(merged.getMapping(), sample.getMapping(), sample.getRtRecalibration()));
             updateRetentionTimeAxis(sample);
@@ -215,6 +220,7 @@ public class LCMSProcessing {
         FloatArrayList ppmsWithinTraces = new FloatArrayList(), ppmsBetweenTraces = new FloatArrayList();
         FloatArrayList absWithinTraces = new FloatArrayList(), absBetweenTraces = new FloatArrayList();
         DoubleArrayList averagePeakWidth = new DoubleArrayList();
+        float mint = Float.POSITIVE_INFINITY;
         for (ProcessedSample sample : samples) {
             SampleStats s = sample.getStorage().getStatistics();
             ms2NoiseLevels.add(s.getMs2NoiseLevel());
@@ -223,9 +229,10 @@ public class LCMSProcessing {
             absWithinTraces.add((float)s.getMs1MassDeviationWithinTraces().getAbsolute());
             absBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
             averagePeakWidth.add(sample.getTraceStats().getAveragePeakWidth());
+            mint = Math.min(mint, s.getMinimumIntensity());
         }
         SampleStats statistics = new SampleStats(
-                new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()),
+                new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()), mint,
                 new Deviation(Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),Statistics.robustAverage(absWithinTraces.toFloatArray())),
                 new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray())),
                 Statistics.robustAverage(averagePeakWidth.toDoubleArray())
@@ -262,7 +269,9 @@ public class LCMSProcessing {
             if (sample!=merged) importer.importRun(siriusDatabaseAdapter, obj, sample);
             else importer.importMergedRun(siriusDatabaseAdapter, obj, sample);
         }
+        System.out.println("Start importing features and peak picking");
         int featureCount = 0;
+        long TIME1 = System.currentTimeMillis();
         List<BasicJJob<long[]>> jobs = new ArrayList<>();
         for (final Rect r : merged.getStorage().getMergeStorage().getRectangleMap()) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<long[]>() {
@@ -287,7 +296,8 @@ public class LCMSProcessing {
             }
             featureCount += ids.length;
         }
-
+        long TIME2 = System.currentTimeMillis();
+        System.out.printf("Peak picking and import took %f seconds\n", (TIME2-TIME1)/1000d);
         if (featureCount > 0) {
             mergedRun.setSampleStats(collectFinalStatistics(merged, backbone));
             siriusDatabaseAdapter.updateMergedRun(mergedRun);
@@ -305,7 +315,8 @@ public class LCMSProcessing {
         DoubleArrayList fwhms = new DoubleArrayList();
         DoubleArrayList heightDividedByfwhms = new DoubleArrayList();
         siriusDatabaseAdapter.getImportedFeatureStream(merged.getRun().getRunId())
-                .filter(x -> x.getMSData().orElseThrow().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
+                .filter(x -> x.getMSData().orElseThrow().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2
+                && x.getSnr()>=5)
                 .forEach(x->{
                     fwhms.add(x.getFwhm().doubleValue());
                     heightDividedByfwhms.add(x.getApexIntensity()/x.getFwhm());
@@ -373,8 +384,10 @@ public class LCMSProcessing {
         sample.setTraceStats(TraceStats.collect(sample));
     }
 
+
     private void extractTraces(ProcessedSample sample) {
         final TracePicker tracePicker = new TracePicker(sample, traceCachingStrategy, segmentationStrategy);
+        SampleStats statistics = sample.getStorage().getStatistics();
         tracePicker.setAllowedMassDeviation(sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
         traceDetectionStrategy.findPeaksForExtraction(sample, (sample1, spectrumIdx, peakIdx, spectrum) -> {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));

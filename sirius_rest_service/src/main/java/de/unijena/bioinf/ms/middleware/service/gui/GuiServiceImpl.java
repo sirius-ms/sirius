@@ -22,7 +22,8 @@ package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -33,6 +34,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -81,8 +83,19 @@ public class GuiServiceImpl implements GuiService {
                     synchronized (siriusGuiInstances) {
                         if (siriusGuiInstances.containsKey(projectId)) {
                             if (siriusGuiInstances.size() == 1) {
-                                closeSirius = new QuestionDialog(gui.getMainFrame(), "You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?").isSuccess();
+
+                                Box closingDialogPanel = Box.createVerticalBox();
+                                closingDialogPanel.add(new JLabel("You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?"));
+                                closingDialogPanel.add(Box.createVerticalStrut(GuiUtils.MEDIUM_GAP));
+                                JCheckBox compactCheckbox = new JCheckBox("Compact project");
+                                compactCheckbox.setToolTipText("Compacting the project tries to reduce the projects file size. May take some time for large projects.");
+                                closingDialogPanel.add(compactCheckbox);
+
+                                closeSirius = JOptionPane.showConfirmDialog(gui.getMainFrame(), closingDialogPanel, null, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
                                 if (closeSirius) { //todo me might want yes, no and cancel instead. cancel closes GUI window but keeps service running
+                                    if (compactCheckbox.isSelected()) {
+                                        Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Compacting...", siriusGuiInstances.get(projectId).getProjectManager()::compact);
+                                    }
                                     siriusGuiInstances.remove(projectId).shutdown();
                                 }
                             } else {
@@ -124,7 +137,24 @@ public class GuiServiceImpl implements GuiService {
         SiriusGui gui = siriusGuiInstances.get(projectId);
         if (gui != null) {
             //todo change gui instance.
-            System.out.println("Modifying gui instance not supported");
+            if (guiParameters.getFid() != null) {
+                if (!gui.getMainFrame().getCompoundList().selectInstanceByFeatureId(guiParameters.getFid())) {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Feature with featureId '" + guiParameters.getFid() + "' not found in the list of GUI instance for project id '" + projectId + "'.");
+                }
+            } else if (guiParameters.getCid() != null) {
+                System.out.println("Selecting compound by ID is not supported");
+            }
+            if (guiParameters.getSelectedTab() != null) {
+                System.out.println("Selecting specific tab is not supported");
+            }
+            if (guiParameters.getStructureCandidateInChIKey() != null) {
+                System.out.println("Selecting specific structure hit is not supported");
+            }
+            if (guiParameters.isBringToFront()) {
+                System.out.println("Bringing GUI to foreground is not supported");
+            }
+
+
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }

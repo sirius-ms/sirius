@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
@@ -63,7 +64,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SearchResult {
+    public static class SearchResult implements Comparable<SearchResult> {
         @Builder.Default
         private int rank = -1;
 
@@ -74,6 +75,15 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String dbName;
 
         private String dbId;
+
+        // match against merged spectrum?
+        @JsonProperty(defaultValue = "SPECTRUM")
+        private SpectrumType spectrumType;
+        private boolean analog; // true if analog query result
+
+        public boolean isIdentity(){
+            return !isAnalog();
+        }
 
         /**
          * This is the uuid of the corresponding reference spectrum
@@ -92,10 +102,22 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private double exactMass;
         private String smiles;
 
+        public SearchResult(LibraryHit hit, int rank) {
+            this(
+                    rank, hit.getSimilarity(), hit.getQueryIndex(), hit.getDbName(), hit.getDbId(), hit.getSpectrumType(), hit.isAnalog(),
+                    hit.getUuid(), hit.getSplash(), hit.getMolecularFormula(), hit.getAdduct(), hit.getExactMass(),
+                    hit.getSmiles(), hit.getCandidateInChiKey()
+            );
+        }
+
         /**
          * This is the inchikey of the corresponding structure candidate
          */
         private String candidateInChiKey;
 
+        @Override
+        public int compareTo(@NotNull SpectralSearchResult.SearchResult o) {
+            return similarity.compareTo(o.similarity);
+        }
     }
 }

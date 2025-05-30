@@ -83,7 +83,7 @@ public class LinkedSiriusTableCellRenderer extends MouseAdapter implements Table
             URI url = linker.makeLink(table.getModel().getValueAt(row, col));
             if (url != null) {
                 try {
-                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(table), url);
+                    GuiUtils.openURLInSystemBrowser(url);
                 } catch (IOException e1) {
                     LoggerFactory.getLogger(getClass()).error("Error opening link: {}", url, e1);
                 }

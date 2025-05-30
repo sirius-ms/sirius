@@ -119,13 +119,12 @@ Insert following snippet into your `build.gradle` to add this package as depende
 }
 
 dependencies {
-    implementation "io.sirius-ms:sirius-sdk:3.1+sirius6.1.1"
+    implementation "io.sirius-ms:sirius-sdk:3.1+sirius6.2.0"
 }
 ```
 
 ### Maven
 Insert following snippet into your project's POM to add this package as dependency:
-
 
 ```xml
 <repositories>
@@ -138,7 +137,7 @@ Insert following snippet into your project's POM to add this package as dependen
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk</artifactId>
-  <version>3.1+sirius6.1.1</version>
+  <version>3.1+sirius6.2.0</version>
   <scope>compile</scope>
 </dependency>
 ```

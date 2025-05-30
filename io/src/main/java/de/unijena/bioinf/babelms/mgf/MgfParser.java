@@ -63,6 +63,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
         private MolecularFormula formula;
         private MsInstrumentation instrumentation = MsInstrumentation.Unknown;
         private SpecType type;
+        private FunctionalMetabolomics fmet = null;
 
         public MgfSpec(MgfSpec s) {
             this.spectrum = new MutableMs2Spectrum(s.spectrum);
@@ -224,6 +225,8 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 spec.spectrum.setMsLevel(level);
                 if (level == 1 && spec.type != SpecType.CORRELATED) spec.type = SpecType.MS1;
                 else if (level > 1) spec.type = SpecType.MSMS;
+            } else if (keyword.equalsIgnoreCase("ONLINE_REACTIVITY")) {
+                spec.fmet = FunctionalMetabolomics.parseOnlineReactivityFromMZMineFormat(value);
             } else {
                 if (NOT_AVAILABLE.matcher(value).matches()) return;
                 if (keyword.equalsIgnoreCase("INCHI")) {
@@ -234,7 +237,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                     if (!value.equalsIgnoreCase("n/a") && !value.equalsIgnoreCase("na")) {
                         spec.smiles = value;
                     }
-                } else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
+                } else if (keyword.equalsIgnoreCase("SCANS")){
+                    if(spec.name==null){ //Only use SCANS field if actual fields dont exist, if they do they overwrite
+                        spec.name=value;
+                    }
+                }
+
+                else if (keyword.equalsIgnoreCase("NAME") || keyword.equalsIgnoreCase("TITLE")) {
                     spec.name = value;
                 } else {
                     spec.fields.put(keyword, value);
@@ -399,6 +408,13 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 exp.setPrecursorIonType(spec.ionType);
                 if (!spec.ionType.isIonizationUnknown())
                     exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, spec.ionType));
+            }
+            if (spec.fmet!=null) {
+                try {
+                    config.changeConfig("FunctionalMetabolomics", spec.fmet.toString());
+                } catch (Throwable e) {
+                    LoggerFactory.getLogger(MgfParser.class).error("Could not parse Config key = FunctionalMetabolomics with value = " + spec.fmet.toString()  + ".");
+                }
             }
             if (spec.inchi != null && spec.inchi.startsWith("InChI=")) {
                 exp.setAnnotation(InChI.class, newInChI(null, spec.inchi));

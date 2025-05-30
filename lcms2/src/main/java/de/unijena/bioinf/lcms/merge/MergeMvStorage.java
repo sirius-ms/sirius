@@ -51,6 +51,7 @@ public class MergeMvStorage implements MergeStorage{
         if (!cursor.hasNext()) return Collections.emptyIterator();
         return new Iterator<ProjectedTrace>() {
             ProjectedTraceKey current = cursor.next();
+            double mz = Double.NaN;
             @Override
             public boolean hasNext() {
                 return current!=null && current.mergedTraceUid==mergedTraceUid;
@@ -71,18 +72,18 @@ public class MergeMvStorage implements MergeStorage{
     }
 
     @Override
-    public void addIsotopeProjectedTrace(int parentTraceUiD, int isotopeId, int sampleId, ProjectedTrace trace) {
-        this.projectedIsotopeTraces.put(new IsotopeProjKey(parentTraceUiD, isotopeId, sampleId), trace);
+    public void addIsotopeProjectedTrace(int parentTraceUiD, int charge, int isotopeId, int sampleId, ProjectedTrace trace) {
+        this.projectedIsotopeTraces.put(new IsotopeProjKey(parentTraceUiD, charge, isotopeId, sampleId), trace);
     }
 
     @Override
-    public ProjectedTrace getIsotopeProjectedTrace(int parentTraceUiD, int isotopeId, int sampleId) {
-        return projectedIsotopeTraces.get(new IsotopeProjKey(parentTraceUiD, isotopeId, sampleId));
+    public ProjectedTrace getIsotopeProjectedTrace(int parentTraceUiD, int charge, int isotopeId, int sampleId) {
+        return projectedIsotopeTraces.get(new IsotopeProjKey(parentTraceUiD, charge, isotopeId, sampleId));
     }
 
     @Override
     public ProjectedTrace[][] getIsotopePatternFor(int parentTraceUiD) {
-        IsotopeProjKey key = new IsotopeProjKey(parentTraceUiD, 0, Integer.MIN_VALUE);
+        IsotopeProjKey key = new IsotopeProjKey(parentTraceUiD, 1,0, Integer.MIN_VALUE);
         final ArrayList<ArrayList<ProjectedTrace>> isotopes = new ArrayList<>();
         Cursor<IsotopeProjKey, ProjectedTrace> cursor = projectedIsotopeTraces.cursor(key);
         int lastIsotopePosition = -1;
@@ -90,12 +91,12 @@ public class MergeMvStorage implements MergeStorage{
             key = cursor.next();
             if (key.parentTraceUiD != parentTraceUiD) break;
             ArrayList<ProjectedTrace> list;
-            if (key.isotopeId==lastIsotopePosition) {
+            if (key.massDelta==lastIsotopePosition) {
                 list = isotopes.get(isotopes.size()-1);
             } else {
                 list = new ArrayList<>();
                 isotopes.add(list);
-                lastIsotopePosition = key.isotopeId;
+                lastIsotopePosition = key.massDelta;
             }
             list.add(cursor.getValue());
         }
@@ -103,11 +104,12 @@ public class MergeMvStorage implements MergeStorage{
     }
 
     private static class IsotopeProjKey implements Comparable<IsotopeProjKey>, Serializable {
-        private final int parentTraceUiD, isotopeId, sampleId;
+        private final int parentTraceUiD, sampleId;
+        private final int massDelta;
 
-        public IsotopeProjKey(int parentTraceUiD, int isotopeId, int sampleId) {
+        public IsotopeProjKey(int parentTraceUiD, int charge, int isotopeId, int sampleId) {
             this.parentTraceUiD = parentTraceUiD;
-            this.isotopeId = isotopeId;
+            this.massDelta = (1000*isotopeId)/charge;
             this.sampleId = sampleId;
         }
 
@@ -115,7 +117,7 @@ public class MergeMvStorage implements MergeStorage{
         public int compareTo(@NotNull MergeMvStorage.IsotopeProjKey o) {
             int c = Integer.compare(parentTraceUiD, o.parentTraceUiD);
             if (c!=0) return c;
-            c = Integer.compare(isotopeId, o.isotopeId);
+            c = Integer.compare(massDelta, o.massDelta);
             if (c!=0) return c;
             return Integer.compare(sampleId, o.sampleId);
         }

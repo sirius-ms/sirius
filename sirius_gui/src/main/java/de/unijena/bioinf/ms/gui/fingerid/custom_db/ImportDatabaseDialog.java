@@ -61,7 +61,7 @@ class ImportDatabaseDialog extends JDialog {
         super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
 
-        setPreferredSize(new Dimension(640, 480));
+        setPreferredSize(new Dimension(600, 720));
 
         configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db);
         add(configPanel);
@@ -100,6 +100,10 @@ class ImportDatabaseDialog extends JDialog {
             }.isCancel()) {
                 throw new CancellationException();
             }
+
+            Jobs.runInBackground(() ->
+                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_CUSTOM_DB_PATH, configPanel.getDbSaveDir())
+            );
 
             LoadingBackroundTask<Boolean> job = Jobs.runInBackgroundAndLoad(
                     databaseDialog.gui.getMainFrame(), "Checking Server Connection...", () -> {

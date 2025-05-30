@@ -1,0 +1,19 @@
+version = siriusVersion
+
+dependencies {
+    implementation 'wishartlab.openscience.biotransformer:biotransformer-sirius-mod-relocated-min-no-envi-path:3.0.0'
+    api project(":chemical_db_oss:chemdb_utils_oss")
+
+    // Dependencies from biotransformer jar
+    implementation 'net.java.dev.jna:jna:5.4.0'
+    implementation 'com.mysql:mysql-connector-j:9.3.0'
+    implementation "org.apache.commons:commons-text:$commons_text_version"
+    implementation 'commons-beanutils:commons-beanutils:1.9.4'
+    implementation group: 'commons-codec', name: 'commons-codec', version:  '1.15'
+    implementation 'org.apache.commons:commons-collections4:4.4'
+}
+
+
+
+
+

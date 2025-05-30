@@ -27,6 +27,7 @@ import ca.odell.glazedlists.swing.DefaultEventListModel;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.ms.FunctionalMetabolomics;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
@@ -35,18 +36,20 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingDialog;
+import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
+import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.model.DBLink;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -65,8 +68,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -75,7 +78,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -89,7 +92,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private final SiriusGui gui;
 
     /**
-     *
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
      */
     public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui, @NotNull Function<InstanceBean, Boolean> wasComputed) {
@@ -110,12 +112,37 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         this.gui = gui;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(this, gui, getSource().getBestFunc()));
+        CandidateCellRenderer cellRenderer = new CandidateCellRenderer(this, gui, getSource().getBestFunc());
+        candidateList.setCellRenderer(cellRenderer);
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        addToCenterCard(ActionList.ViewState.DATA, scrollPane);
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+
+        // Add data panel to JLayeredPane to allow to add software tour info to a layer on top.
+        JLayeredPane layeredPane = new JLayeredPane();
+        scrollPane.setBounds(0, 0, getWidth(), getHeight()); // Make it fill the entire area
+        layeredPane.add(scrollPane, JLayeredPane.DEFAULT_LAYER);
+
+        addToCenterCard(ActionList.ViewState.DATA, layeredPane);
+
+        // Make sure the layered pane resizes properly with the panel
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // Set the size of the layered pane to the size of the container
+                layeredPane.setSize(getSize());
+                scrollPane.setBounds(0, 0, getWidth(), getHeight()); // Update scrollPane size
+            }
+        });
+
+        //add tutorial stuff
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DatabaseSearch_Source);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.databasePanel, SoftwareTourInfoStore.DeNovo_Source);
+        SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.descriptionPanel.ag, SoftwareTourInfoStore.DatabaseSearch_Substructures);
+        searchField.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_TextFilter);
 
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
@@ -126,6 +153,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         ///// add popup menu
         popupMenu = new JPopupMenu();
+        CopySmiles = new JMenuItem("Copy 2D SMILES");
         CopyInchiKey = new JMenuItem("Copy 2D InChIKey");
         CopyInchi = new JMenuItem("Copy 2D InChI");
         OpenInBrowser1 = new JMenuItem("Open in PubChem");
@@ -138,14 +166,35 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
         annotateSpectrum.addActionListener(this);
-        popupMenu.add(CopyInchiKey);
-        popupMenu.add(CopyInchi);
-        popupMenu.add(OpenInBrowser1);
-        popupMenu.add(OpenInBrowser2);
+        CopySmiles.addActionListener(this);
         popupMenu.add(highlight);
         popupMenu.add(annotateSpectrum);
+        popupMenu.addSeparator();
+        popupMenu.add(OpenInBrowser1);
+        popupMenu.add(OpenInBrowser2);
+        popupMenu.addSeparator();
+        popupMenu.add(CopySmiles);
+        popupMenu.add(CopyInchiKey);
+        popupMenu.add(CopyInchi);
+        initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
+
+    private ToolbarToggleButton filterByFmet;
+    private boolean filterByFmetEnabled;
+    protected void initializeFunctionalMetabolomicsFunctionality() {
+        // add a special button to the toolbar
+        getSource().addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> {
+            boolean enableFmet = resultElements.stream().anyMatch(x->Arrays.stream(x.labels).anyMatch(y->y.sourceName.startsWith(FunctionalMetabolomics.PREFIX)));
+            if (enableFmet != filterByFmetEnabled) {
+                filterByFmetEnabled = enableFmet;
+                filterByFmet.setVisible(filterByFmetEnabled);
+                CandidateListDetailView.this.revalidate();
+                CandidateListDetailView.this.repaint();
+            }
+        });
+    }
+
 
 
     @Override
@@ -153,6 +202,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         JToolBar tb = super.getToolBar();
 
         filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MOLECULAR_PROPERTY.derive(24,24), "Filter by selected molecular property (square)");
+        filterByMolecularPropertyButton.putClientProperty(SoftwareTourInfoStore.TOUR_ELEMENT_PROPERTY_KEY, SoftwareTourInfoStore.DatabaseSearch_SubstructureFilter);
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");
@@ -161,7 +211,16 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         smartFilterTextField.setMaximumSize(new Dimension(115, smartFilterTextField.getPreferredSize().height));
 
         tb.add(filterByMolecularPropertyButton, getIndexOfFirstGap(tb));
+
+        {
+            filterByFmet = new ToolbarToggleButton(Icons.FMET_FILTER_ENABLED.derive(24,24), "Filter structure candidate list using functional metabolomics educt patterns.");
+            filterByFmet.setVisible(true);
+            tb.add(filterByFmet);
+            filterByFmetEnabled=true;
+        }
+
         tb.add(smartFilterTextField, getIndexOfFirstGap(tb));
+
 
         return tb;
     }
@@ -173,6 +232,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         molecularPropertyMatcherEditor = new MolecularPropertyMatcherEditor(filterByMolecularPropertyButton);
         list.add(molecularPropertyMatcherEditor);
+
+        list.add(new FMetFilter(filterByFmet));
+
         return list;
     }
 
@@ -181,13 +243,15 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         if (selectedCompoundId < 0) return;
         final FingerprintCandidateBean c = candidateList.getModel().getElementAt(selectedCompoundId);
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        if (e.getSource() == CopyInchiKey) {
+        if (e.getSource() == CopySmiles) {
+            clipboard.setContents(new StringSelection(c.getSmiles()), null);
+        } else if (e.getSource() == CopyInchiKey) {
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == OpenInBrowser1) {
             try {
-                GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"));
+                GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
             } catch (IOException | URISyntaxException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
@@ -199,11 +263,11 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 return;
                             try {
                                 if (s.URI().contains("%s")) {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
-                                            new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))), gui);
                                 } else {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this),
-                                            new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this),
+                                            new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))), gui);
                                 }
                             } catch (IOException | URISyntaxException e1) {
                                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
@@ -293,10 +357,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new SpectralMatchingDialog(
-                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean, gui)
-        ).setVisible(true));
+        Jobs.runEDTLater(() -> new SubstructureMatchingDialog(
+                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, candidateBean)
+                .setVisible(true));
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
@@ -346,22 +409,22 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 if (lmIds != null && !lmIds.isEmpty()) {
                                     lmIds.forEach(lmId -> {
                                         try {
-                                            GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))));
+                                            GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), URI.create(String.format(Locale.US, DataSource.LIPID.URI, URLEncoder.encode(lmId, StandardCharsets.UTF_8))), gui);
                                         } catch (IOException e) {
                                             LoggerFactory.getLogger(getClass()).error("Error when opening lipid maps URL.", e);
                                         }
                                     });
                                 } else {
-                                    GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), LipidClass.makeLipidMapsFuzzySearchLink(id));
+                                    GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), LipidClass.makeLipidMapsFuzzySearchLink(id), gui);
                                 }
                             } catch (Exception ex) {
                                 LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
                             }
                         });
                     } else if (s.URI().contains("%s")) {
-                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))));
+                        GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))), gui);
                     } else {
-                        GuiUtils.openURL(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))));
+                        GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))), gui);
                     }
                 }
             } catch (IOException | URISyntaxException e1) {

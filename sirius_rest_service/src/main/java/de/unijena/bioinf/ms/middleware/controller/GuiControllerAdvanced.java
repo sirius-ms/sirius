@@ -24,28 +24,38 @@ import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Tag(name = "Gui Advanced", description = "Advanced GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
+@Tag(name = "Gui")
 @ConditionalOnExpression("${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
-public class GuiControllerAdvanced extends GuiController{
+public class GuiControllerAdvanced{
+
+    protected final ProjectsProvider projectsProvider;
+
+    protected final GuiService guiService;
+
+    @Autowired
     protected GuiControllerAdvanced(ProjectsProvider<?> projectsProvider, GuiService guiService) {
-        super(projectsProvider, guiService);
+        this.projectsProvider = projectsProvider;
+        this.guiService = guiService;
     }
+
 
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      *
      * @param readOnly  open in read-only mode.
+     * @param guiParameters parameters that to be applied.
      * @param projectId of project-space the GUI instance will connect to.
      */
-    @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/api/projects/{projectId}/gui/advanced", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void openGui(@PathVariable String projectId, @RequestBody(required = false) GuiParameters guiParameters, @RequestParam(defaultValue = "false") boolean readOnly) {
+    public void openGuiAdvanced(@PathVariable String projectId, @RequestBody(required = false) GuiParameters guiParameters, @RequestParam(defaultValue = "false") boolean readOnly) {
         guiService.createGuiInstance(projectId, guiParameters);
     }
 
@@ -54,10 +64,10 @@ public class GuiControllerAdvanced extends GuiController{
      * Apply given changes to the running GUI instance.
      *
      * @param projectId     of project-space the GUI instance is connected to.
-     * @param guiParameters parameters that should be applied.
+     * @param guiParameters parameters that to be applied.
      */
-    @PatchMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void applyToGui(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
+    @PatchMapping(value = "/api/projects/{projectId}/gui/advanced", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void applyToGuiAdvanced(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
         guiService.applyToGuiInstance(projectId, guiParameters);
     }
 

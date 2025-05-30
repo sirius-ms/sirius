@@ -26,6 +26,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**topAnnotationsDeNovo** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |
 |**computing** | **Boolean** | Write lock for this feature. If the feature is locked no write operations are possible.  True if any computation is modifying this feature or its results |  [optional] |
 |**computedTools** | [**ComputedSubtools**](ComputedSubtools.md) |  |  [optional] |
+|**tags** | [**Map&lt;String, Tag&gt;**](Tag.md) | Key: tagName, value: tag |  [optional] |
 
 
 

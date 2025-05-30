@@ -24,10 +24,10 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
+import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,15 +48,15 @@ public class AboutDialog extends JDialog {
     private final JButton close, bibtex, clipboard;
     private JCheckBox dontAsk;
 
-    public AboutDialog(Frame owner, boolean doNotShowAgain) {
-        super(owner, true);
+    public AboutDialog(SiriusGui gui, boolean doNotShowAgain) {
+        super(gui.getMainFrame(), true);
         setTitle(ApplicationCore.VERSION_STRING());
         setLayout(new BorderLayout());
 
         // SIRIUS logo
         add(new JLabel(Icons.SIRIUS_SPLASH), BorderLayout.NORTH);
         String htmlText =  "<html><head></head><body>Data missing!</html>\n";
-        WebViewJPanel htmlPanel =  new WebViewJPanel();
+
         try {
             final StringBuilder buf = new StringBuilder();
             try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(AboutDialog.class.getResourceAsStream("/sirius/about.html")))) {
@@ -66,8 +66,9 @@ public class AboutDialog extends JDialog {
             buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
             htmlText = buf.append("</div></body></html>").toString();
 
+            JCefBrowserPanel htmlPanel =  JCefBrowserPanel.makeHTMLPanel(htmlText, gui);
+
             add(htmlPanel, BorderLayout.CENTER);
-            htmlPanel.load(htmlText);
         } catch (IOException e) {
             log.error("Error when loading about html.", e);
         }

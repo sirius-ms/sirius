@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 public abstract class DoNotShowAgainDialog extends JDialog {
 
     protected JTextPane textPane;
+    protected TwoColumnPanel textContainer;
     protected JCheckBox dontAsk;
     protected String property;
 
@@ -57,10 +58,15 @@ public abstract class DoNotShowAgainDialog extends JDialog {
 
     private void decorate(Supplier<String> messageSupplier, String propertyKey) {
         this.property = propertyKey;
+        if (propertyKey != null) {
+            dontAsk = new JCheckBox();
+            dontAsk.setText("Do not show dialog again.");
+        }
 
         this.setLayout(new BorderLayout());
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
-        northPanel.add(new JLabel(makeDialogIcon()));
+        Icon dialogIcon = makeDialogIcon();
+        if (dialogIcon != null) northPanel.add(new JLabel(dialogIcon));
         {
             textPane = new JTextPane();
             textPane.setCursor(null);
@@ -77,7 +83,7 @@ public abstract class DoNotShowAgainDialog extends JDialog {
                 public void hyperlinkUpdate(HyperlinkEvent e) {
                     if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                         try {
-                            GuiUtils.openURL(DoNotShowAgainDialog.this, e.getURL().toURI());
+                            GuiUtils.openURLInSystemBrowserOrError(e.getURL().toURI());
                         } catch (Exception error) {
                             LoggerFactory.getLogger(this.getClass()).error(error.getMessage(), error);
                         }
@@ -86,7 +92,9 @@ public abstract class DoNotShowAgainDialog extends JDialog {
             });
         }
 
-        northPanel.add(textPane);
+        textContainer = new TwoColumnPanel();
+        textContainer.add(textPane);
+        northPanel.add(textContainer);
         TwoColumnPanel bodyPanel = new TwoColumnPanel();
         bodyPanel.add(northPanel);
         decorateBodyPanel(bodyPanel);
@@ -95,9 +103,7 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
         south.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        if (propertyKey != null) {
-            dontAsk = new JCheckBox();
-            dontAsk.setText("Do not show dialog again.");
+        if (dontAsk != null && dontAsk.getParent() == null) { //if not added elsewhere, add to south panel
             south.add(dontAsk);
         }
 
@@ -117,7 +123,8 @@ public abstract class DoNotShowAgainDialog extends JDialog {
 
     protected abstract String getResult();
 
-    protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){};
+    protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){}
+
     protected abstract void decorateButtonPanel(JPanel boxedButtonPanel);
 
     protected abstract Icon makeDialogIcon();

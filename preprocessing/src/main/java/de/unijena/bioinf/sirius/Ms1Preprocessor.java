@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
 import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
+import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
 import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
@@ -102,11 +103,22 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
     @Provides(FormulaConstraints.class)
     public void elementDetection(ProcessedInput pinput) {
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
-        final FormulaConstraints fc = elementDetection.detect(pinput);
+        checkDetectableElementSettings(settings);
+
+        final DetectedFormulaConstraints fc = elementDetection.detect(pinput);
         if (fc==null) {
-            pinput.setAnnotation(FormulaConstraints.class, settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()));
+            DetectedFormulaConstraints dfc = new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
+            pinput.setAnnotation(FormulaConstraints.class, dfc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
         } else {
-            pinput.setAnnotation(FormulaConstraints.class, fc);
+            pinput.setAnnotation(FormulaConstraints.class, fc); //to ensure backwards compatibility, still use FormulaConstraints.class as key
+        }
+    }
+
+    private void checkDetectableElementSettings(FormulaSettings settings) {
+        Set<Element> supported = getSetOfPredictableElements();
+        Set<Element> unsupported = settings.getAutoDetectionElements().stream().filter(e -> !supported.contains(e)).collect(Collectors.toSet());
+        if (!unsupported.isEmpty()) {
+            LoggerFactory.getLogger(this.getClass()).warn("The following elements were specified as detectables, but detection is not supported: "+unsupported.stream().map(Element::getSymbol).collect(Collectors.joining(",")));
         }
     }
 
@@ -241,7 +253,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * @return
      */
     private boolean warnIfFormulaCandidateWithoutMatchingAdduct(Set<MolecularFormula> candidates, PossibleAdducts possibleAdducts, double precursorMass) {
-        Set<MolecularFormula> issues = candidates.stream().filter(mf -> !possibleAdducts.getAdducts().stream().anyMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.addIonAndAdduct(mf.getMass())-precursorMass)<0.1)).collect(Collectors.toSet());
+        Set<MolecularFormula> issues = candidates.stream().filter(mf -> possibleAdducts.getAdducts().stream().noneMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.neutralMassToPrecursorMass(mf.getMass())-precursorMass)<0.1)).collect(Collectors.toSet());
         if (!issues.isEmpty()) {
             LoggerFactory.getLogger(this.getClass()).warn("Enforced molecular formula has no matching adduct: "+issues.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")) + ". Adducts are: "+possibleAdducts.getAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
             return true;

@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -39,28 +40,43 @@ public class LcmsSubmissionParameters {
     protected boolean alignLCMSRuns = true;
 
     /**
-     * Features must be larger than <value> * detected noise level.
+     * Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level
+     * to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.
+     * If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify
+     * this parameter, as the automated detection is usually sufficient.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "2.0", hidden = true)
-    protected double noise = 2.0;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
+    protected double noiseIntensity = -1;
 
     /**
-     * Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+     * Maximal allowed mass deviation for peaks in ms1 to be considered as belonging to the same trace.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.1", hidden = true)
-    protected double persistence = 0.1;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    protected Deviation traceMaxMassDeviation = null;
 
     /**
-     * Merge neighboring features with valley less than <value> * intensity.
+     * Maximal allowed mass deviation for aligning features. If not specified, this parameter is estimated from data.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.8", hidden = true)
-    protected double merge = 0.8;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "null")
+    protected Deviation alignMaxMassDeviation = null;
+
+    /**
+     * Maximal allowed retention time error in seconds for aligning features. If not specified, this parameter is estimated from data.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "-1")
+    protected double alignMaxRetentionTimeDeviation = -1;
 
     /**
      * Specifies filter algorithm to suppress noise.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", hidden = true)
     protected DataSmoothing filter = DataSmoothing.AUTO;
+
+    /**
+     * Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory
+     */
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3", hidden = false)
+    protected double minSNR = 3;
 
     /**
      * Sigma (kernel width) for gaussian filter algorithm.

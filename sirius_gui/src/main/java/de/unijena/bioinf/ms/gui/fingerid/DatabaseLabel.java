@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.ChemistryBase.ms.FunctionalMetabolomics;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 
 import java.awt.*;
@@ -69,8 +70,8 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
                 .filter(CustomDataSources.Source::noCustomSource)
                 .map(s -> ((CustomDataSources.EnumSource) s).source())
                 .map(ds -> ds.publication).map(pub -> {
-                    String citation = pub.getCitationText();
-                    String doi = pub.getDoi();
+                    String citation = pub.citationText();
+                    String doi = pub.doi();
                     if (citation == null) return null;
                     if (doi == null) return citation;
                     return citation + "\ndoi: " + doi;
@@ -80,5 +81,13 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     public boolean hasLinks() {
         return CustomDataSources.getSourceFromNameOpt(sourceName).map(s ->
                 values != null && values.length > 0 && s.URI() != null).orElse(false);
+    }
+
+    public boolean agreementLabel() {
+        return sourceName.equals(FunctionalMetabolomics.ACCEPT);
+    }
+
+    public boolean rejectionLabel() {
+        return sourceName.equals(FunctionalMetabolomics.REJECT);
     }
 }

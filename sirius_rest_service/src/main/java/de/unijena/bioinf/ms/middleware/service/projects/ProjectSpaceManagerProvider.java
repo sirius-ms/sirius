@@ -118,7 +118,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 .location(psm.getLocation())
                 .type(psm.getType().orElse(null));
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
-            b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countFeatures()).numOfCompounds(psm.countCompounds());
+            b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
             b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
 
@@ -290,5 +290,14 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     @Override
     public void destroy() {
         closeAll();
+    }
+
+    @Override
+    public String validateId(String projectId) {
+        try {
+            return ProjectsProvider.super.validateId(projectId);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
     }
 }

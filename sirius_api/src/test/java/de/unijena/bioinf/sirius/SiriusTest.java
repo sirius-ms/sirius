@@ -1,18 +1,19 @@
 package de.unijena.bioinf.sirius;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSearchSettings;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FasterTreeComputationInstance;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilder;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
+import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.IsotopePatternAnalysis.ExtractedIsotopePattern;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -20,7 +21,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.sirius.annotations.DecompositionList;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -28,10 +29,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -401,4 +399,112 @@ public class SiriusTest {
 
     }
 
+    @Test
+    public void testBottomUpElementFilter() {
+        FormulaConstraints enforced = FormulaConstraints.fromString("CHNOP");
+        FormulaConstraints fallback = FormulaConstraints.fromString("S");
+        ChemicalAlphabet detectable = new ChemicalAlphabet(PeriodicTable.getInstance().getAllByName("S","Br","Cl","B","Se"));
+
+        FormulaSettings settingsOnlyDenovoElementFilter = FormulaSettings.newInstance(enforced, detectable, fallback);
+
+        final MutableMs2Experiment experiment = getStandardExperiment();
+        final MutableMs2Experiment experimentNoMs1Data = getStandardExperiment();
+        experimentNoMs1Data.setMergedMs1Spectrum(SimpleSpectrum.empty());
+
+        FormulaSearchSettings searchSettings;
+        FasterTreeComputationInstance.FinalResult finalResult;
+
+        //1. only filter non-detected elements for bottom up
+        searchSettings = FormulaSearchSettings.bottomUpOnly();
+
+        //1.1. with MS1 data
+        finalResult = compute(experiment, settingsOnlyDenovoElementFilter, searchSettings, true, false);
+        assertRareElements(finalResult, false, false, true);
+
+        //1.2. no MS1 data, no element detection will be performed
+        finalResult = compute(experimentNoMs1Data, settingsOnlyDenovoElementFilter, searchSettings, false, false);
+        assertRareElements(finalResult, true, true, true);
+
+        //2. now with filtering by non-detectable (enforced) elements
+        searchSettings = FormulaSearchSettings.newInstance(0, 0, true, false);
+
+        //2.1. with MS1 data
+        finalResult = compute(experiment, settingsOnlyDenovoElementFilter, searchSettings, true, false);
+        assertRareElements(finalResult, false, false, false);
+
+        //2.2. no MS1 data, no element detection will be performed
+        finalResult = compute(experimentNoMs1Data, settingsOnlyDenovoElementFilter, searchSettings, false, false);
+        assertRareElements(finalResult, true, false, false);
+
+
+
+        //higher +2 isotope peak to detect S
+        experiment.setMergedMs1Spectrum(
+                new SimpleSpectrum(
+                new double[]{368.115, 369.118, 370.114, 371.116},
+                new double[]{78, 15, 6, 1}
+        ));
+
+        //1. only filter non-detected elements for bottom up
+        searchSettings = FormulaSearchSettings.bottomUpOnly();
+        finalResult = compute(experiment, settingsOnlyDenovoElementFilter, searchSettings, true, true);
+        assertRareElements(finalResult, true, false, true);
+
+        //2. now with filtering by non-detectable (enforced) elements
+        searchSettings = FormulaSearchSettings.newInstance(0, 0, true, false);
+        finalResult = compute(experiment, settingsOnlyDenovoElementFilter, searchSettings, true, true);
+
+        assertRareElements(finalResult, true, false, false);
+    }
+
+    private void assertRareElements(FasterTreeComputationInstance.FinalResult finalResult, boolean expectS, boolean expectCl, boolean expectF) {
+        Arrays.stream(new Object[][]{
+                new Object[]{expectS, "S"},
+                new Object[]{expectCl, "Cl"},
+                new Object[]{expectF, "F"},
+        }).forEach((arr) -> {
+            boolean expect = (boolean) arr[0];
+            String elementString = (String) arr[1];
+
+            if (expect) {
+                assertTrue("results don't contain formulas with '"+elementString+"'.", filterByElement(finalResult, PeriodicTable.getInstance().getByName(elementString)).size()>0);
+            } else {
+                assertFalse("results contain formulas with '"+expect+"'.", filterByElement(finalResult, PeriodicTable.getInstance().getByName(elementString)).size()>0);
+            }
+        } );
+    }
+
+    private FasterTreeComputationInstance.FinalResult compute(Ms2Experiment experiment, FormulaSettings formulaSettings, FormulaSearchSettings searchSettings, boolean expectElementDetectionPerformed, boolean expectDetectedElements) {
+        experiment.setAnnotation(FormulaSettings.class, formulaSettings);
+        experiment.setAnnotation(FormulaSearchSettings.class, searchSettings);
+        experiment.setAnnotation(UseHeuristic.class, UseHeuristic.newInstance(0,0)); //just run with heuristic
+        final Ms2Preprocessor preprocessor = new Ms2Preprocessor();
+        final ProcessedInput processedInput = preprocessor.preprocess(experiment);
+
+        DetectedFormulaConstraints dfc = (DetectedFormulaConstraints) processedInput.getAnnotationOrNull(FormulaConstraints.class);
+        if (expectElementDetectionPerformed) {
+            assertTrue("Element detection was not performed", dfc.isDetectionPerformed());
+
+            if (!expectDetectedElements) {
+                ChemicalAlphabet detectable = formulaSettings.getAutoDetectionAlphabet();
+                assertFalse("Elements were unexpectedly detected for this data", detectable.getElements().stream().anyMatch(e -> dfc.getUpperbound(e)>0));
+            }
+        } else {
+            assertFalse("Element detection was not performed", dfc.isDetectionPerformed());
+        }
+
+        sirius.getMs1Analyzer().computeAndScoreIsotopePattern(processedInput);
+        final FragmentationPatternAnalysis analysis = sirius.getMs2Analyzer();
+
+        FasterTreeComputationInstance instance = new FasterTreeComputationInstance(analysis, processedInput);
+        JobManager jobs = SiriusJobs.getGlobalJobManager();
+        jobs.submitJob(instance);
+        FasterTreeComputationInstance.FinalResult finalResult = instance.takeResult();
+
+        return finalResult;
+    }
+
+    private List<FTree> filterByElement(FasterTreeComputationInstance.FinalResult finalResult, Element e) {
+        return finalResult.getResults().stream().filter(ft -> ft.getRoot().getFormula().numberOf(e)>0).toList();
+    }
 }

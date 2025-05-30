@@ -22,8 +22,11 @@ package de.unijena.bioinf.ms.middleware.model.spectra;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -89,6 +92,27 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     protected Integer scanNumber = -1;
 
     /**
+     * True if spectrum is in cosine query normalized format.
+     * Such spectrum is compatible with SpectralLibraryMatch peak assignments to reference spectra.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "false")
+    @Getter @Setter
+    protected boolean cosineQuery;
+
+    /**
+     * A separate precursor peak field to either mark the precursor in the peaklist or
+     * provide the precursor peak separately from the spectrum in case the spectrum is in a preprocessed form where
+     * the precursor peak has been removed for library matching.
+     *
+     * NULL if the spectrum does not contain the precursor peak.
+     *
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Getter @Setter
+    protected SimplePeak precursorPeak;
+
+
+    /**
      * The peaks of this spectrum which might contain additional annotations such as molecular formulas.
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -97,11 +121,48 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
     /**
      * Factor to convert relative intensities to absolute intensities.
      * Might be null or 1 for spectra where absolute intensities are not available (E.g. artificial or merged spectra)
+     * <p>
+     * DEPRECATED: Spectra are always returned with raw intensities.
+     * Use provided normalization factors to normalize on the fly.
+     */
+    @Deprecated
+    @Schema(nullable = true)
+    @Getter
+    @Setter
+    protected Double absIntensityFactor = null;
+
+    /**
+     * Factor to convert absolute intensities to MAX norm.
      */
     @Schema(nullable = true)
     @Getter
     @Setter
-    protected Double absIntensityFactor;
+    protected Double maxNormFactor;
+
+    /**
+     * Factor to convert absolute intensities to SUM norm.
+     */
+    @Schema(nullable = true)
+    @Getter
+    @Setter
+    protected Double sumNormFactor;
+
+    /**
+     * Factor to convert absolute intensities to L2 (Euclidean) norm.
+     */
+    @Schema(nullable = true)
+    @Getter
+    @Setter
+    protected Double l2NormFactor;
+
+    /**
+     * Factor to convert absolute intensities to normalize intensities by first peak intensity.
+     */
+    @Schema(nullable = true)
+    @Getter
+    @Setter
+    protected Double firstPeakNormFactor;
+
 
     List<P> getPeaks() {
         return peaks;
@@ -196,5 +257,12 @@ public abstract class AbstractSpectrum<P extends Peak> implements OrderedSpectru
 
     public void setCollisionEnergy(@Nullable CollisionEnergy collisionEnergy) {
             setCollisionEnergyStr(collisionEnergy == null ? null : collisionEnergy.toString());
+    }
+
+    protected void computeNormalizationFactors() {
+        maxNormFactor = Spectrums.isSpectrumRelativeIntensity(this) ? 1d : Spectrums.computeNormalizationScale(this, Normalization.Max);
+        sumNormFactor = Spectrums.computeNormalizationScale(this, Normalization.Sum);
+        firstPeakNormFactor = Spectrums.computeNormalizationScale(this, Normalization.First);
+        l2NormFactor = Spectrums.computeNormalizationScale(this, Normalization.L2);
     }
 }

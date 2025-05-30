@@ -37,6 +37,7 @@ import io.sirius.ms.sdk.model.PagedModelStructureCandidateFormula;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -50,9 +51,11 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     private InstanceBean instanceBean;
+    @Getter
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
 
+    @Getter
     private final SiriusGui gui;
 
     @Getter
@@ -175,6 +178,9 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                             similarityStats.addValue(bean.getMatch().getSimilarity());
                             sharedPeaksStats.addValue(bean.getMatch().getSharedPeaks() != null ? bean.getMatch().getSharedPeaks() : 0);
                         });
+                        //recompute rank to display continuous ranks without duplicates or gaps
+                        AtomicInteger count = new AtomicInteger(1);
+                        beans.forEach(bean -> bean.getMatch().setRank(count.getAndIncrement()));
                         if (total != totalSize || beans.size() != size) {
                             size = beans.size();
                             totalSize = total;

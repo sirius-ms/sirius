@@ -100,7 +100,9 @@ public class GraphBuilder<C extends Candidate<?>> extends BasicMasterJJob<Graph<
             ArrayList<Scored<Candidate>> scoredCandidates = new ArrayList();
 
             for (C candidate : candidates) {
-                scoredCandidates.add(new Scored(candidate, candidate.getNodeLogProb()));
+                if (candidate.getNodeLogProb() >= -1000) { //don't consider candidates if 0 or almost 0 node probability
+                    scoredCandidates.add(new Scored(candidate, candidate.getNodeLogProb()));
+                }
             }
 
             if(scoredCandidates.size() > 0) {

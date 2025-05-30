@@ -22,7 +22,7 @@ plugins {
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper {
-    gradleVersion = '8.12'
+    gradleVersion = '8.14'
 }
 
 //Global Properties
@@ -50,7 +50,6 @@ ext {
     mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 
     //version for external libraries
-    jre_version = '21.0.5'
     jjobs_version = '0.10.0'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
@@ -89,12 +88,12 @@ ext {
     swagger_version = "2.2.26"
 
     jaxb_version = "2.3.9"
-    picocli_version = '4.7.5'
+    picocli_version = '4.7.7'
     jakarta_version = '3.1.0'
     jakarta_annotation_version = "3.0.0"
 
 
-    spring_boot_version = "3.4.0"
+    spring_boot_version = "3.4.5"
     springdoc_version = "2.6.0"
 
     junit_version = '5.11.4'
@@ -105,8 +104,6 @@ ext {
     ) as String)
 
     System.out.println("----> Following platform detected: " + siriusTargetPlatform)
-
-    javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
 
     //locations of runtime libraries
     //jre path relative tu app home
@@ -139,7 +136,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 21
+    targetCompatibility = 21
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"

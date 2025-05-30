@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import lombok.*;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @Getter
@@ -29,6 +29,10 @@ public class SampleStats {
     private float ms2NoiseLevel;
 
     @With
+    private float minimumIntensity;
+
+    @With
+    @Getter @Setter
     @JsonSerialize(using = ToStringSerializer.class)
     @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     private Deviation ms1MassDeviationWithinTraces;
@@ -54,5 +58,9 @@ public class SampleStats {
 
     public void setExpectedPeakWidth(double expectedPeakWidth) {
         this.expectedPeakWidth = expectedPeakWidth;
+    }
+
+    public void setNoiseLevel(double noiseLevel) {
+        Arrays.fill(noiseLevelPerScan, (float)noiseLevel);
     }
 }
