@@ -21,10 +21,10 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.*;
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.event.ListEventListener;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.filter.FeatureFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
@@ -70,7 +70,7 @@ public class CompoundList {
     @Getter
     final SortedList<InstanceBean> sortedSource;
     @Getter
-    final EventList<InstanceBean> compoundList; // wrapper for filteredList that executes events in swing edt
+    final EventList<InstanceBean> compoundList;
 
     @Getter
     final DefaultEventSelectionModel<InstanceBean> compoundListSelectionModel;
@@ -129,8 +129,11 @@ public class CompoundList {
                 //we only enable listener for first selected because this is the one where results are visible.
                 compoundListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
                 compoundListSelectionModel.getSelected().stream().skip(1).forEach(InstanceBean::disableProjectSpaceListener);
-                if (!compoundListSelectionModel.isSelectionEmpty())
-                    compoundListSelectionModel.getSelected().getFirst().enableProjectSpaceListener();
+                if (!compoundListSelectionModel.isSelectionEmpty()){
+                    InstanceBean selected = compoundListSelectionModel.getSelected().getFirst();
+                    selected.enableProjectSpaceListener();
+                    projectManager.removeTemporaryJumpToFeatureIfNotSelected(selected.getFeatureId());
+                }
                 notifyListenerSelectionChange();
             }
         });
@@ -270,105 +273,34 @@ public class CompoundList {
      * @param featureId The non-null featureId of the InstanceBean to find and select.
      */
     public boolean selectInstanceByFeatureId(@NotNull String featureId) {
-        InstanceBean targetInstance = null;
-
         // 1. Search for the InstanceBean in the complete list (sortedSource).
-        for (InstanceBean bean : sortedSource) {
-            if (bean.getFeatureId().equals(featureId)) {
-                targetInstance = bean;
-                break;
-            }
-        }
+        InstanceBean targetInstance = sortedSource.stream()
+                .filter(bean -> bean.getFeatureId().equals(featureId))
+                .findAny().orElse(null);
 
+        // 2. if not in list assume its filter by lucene search and try loading it from api
+        if (targetInstance == null)
+            targetInstance = projectManager.findAndAddTemporaryJumpToFeature(featureId);
 
+        // 3. If still null feature ID does not exist in project. Ignore feature jump
         if (targetInstance == null) {
             log.warn("Feature with featureId '" + featureId + "' not found in the GUI feature list.");
             return false;
         }
 
+        // 4. jump to feature
+        // Ensure this runs on EDT.
         final InstanceBean finalTargetInstance = targetInstance;
-
-        // 2. Check if the instance is currently visible in the filtered list (compoundList).
-        // The compoundList is a SwingThreadProxyList, so operations like contains() are safe.
-        if (compoundList.contains(finalTargetInstance)) {
-            // Instance is already in the filtered list, select it directly.
-            // Ensure this runs on EDT.
-            SwingUtilities.invokeLater(() -> {
-                int indexInView = compoundList.indexOf(finalTargetInstance);
-                if (indexInView != -1) {
-                    compoundListSelectionModel.setSelectionInterval(indexInView, indexInView);
-                    gui.getMainFrame().ensureCompoundIsVisible(indexInView);
-                } else {
-                    // Should not happen if contains is true.
-                    log.warn("Feature with featureId '" + finalTargetInstance.getFeatureId() + "' exists in the full list but index retrieval failed.");
-                }
-            });
-        } else {
-            // Instance is in the complete list but not in the filtered list.
-            // We need to add the featureId to the filter model and then select it *after* the list updates.
-
-            // Create a one-time listener that will select the item when the list changes.
-            ListEventListener<InstanceBean> oneTimeListener = new ListEventListener<>() {
-                @Override
-                public void listChanged(ListEvent<InstanceBean> listChanges) {
-                    // This method will be called on the EDT because compoundList is a SwingThreadProxyList.
-                    // We are interested in any change, but specifically when our target becomes available.
-
-                    // Check if the target instance is now in the list
-                    // It's possible listChanges is complex (e.g. clear then add all after filter reset)
-                    // So, directly check for containment and index.
-                    if (compoundList.contains(finalTargetInstance)) {
-                        int indexInView = compoundList.indexOf(finalTargetInstance);
-                        if (indexInView != -1) {
-                            compoundListSelectionModel.setSelectionInterval(indexInView, indexInView);
-                            gui.getMainFrame().ensureCompoundIsVisible(indexInView);
-                        } else {
-                            // Should not happen if contains is true.
-                            log.warn("Feature with featureId '" + finalTargetInstance.getFeatureId() + "' exists in the full list but index retrieval failed after filter update.");
-                        }
-                        // IMPORTANT: Remove the listener to avoid it acting on future unrelated list changes.
-                        try {
-                            compoundList.removeListEventListener(this);
-                        } catch (Exception e) {
-                            log.warn("Cannot remove feature selection listener.");
-                        }
-                    } else {
-                        // features still not visible after filter update
-                    }
-                }
-            };
-
-            // Add the listener BEFORE triggering the filter reset.
-            compoundList.addListEventListener(oneTimeListener);
-
-            // Now, update the filter. This will eventually trigger listChanged on compoundList.
-            //todo implement new lucene based filter update
-//            addFocusFeature(featureId);
-
-            // Fallback: If for some reason the list updates very quickly and the listener
-            // misses the event, or if addFocusFeature results in no actual change event
-            // that makes the item appear (e.g., if it was already unfiltered but just not selected),
-            // an immediate invokeLater can try one more time.
-            // This approach and might be redundant if the listener works as expected.
-            SwingUtilities.invokeLater(() -> {
-                if (compoundList.contains(finalTargetInstance) &&
-                        (compoundListSelectionModel.isSelectionEmpty() ||
-                                !compoundListSelectionModel.getSelected().contains(finalTargetInstance))) {
-                    // If it's now available and not selected, and the listener hasn't acted yet or missed it.
-                    int indexInView = compoundList.indexOf(finalTargetInstance);
-                    if (indexInView != -1) {
-                        compoundListSelectionModel.setSelectionInterval(indexInView, indexInView);
-                        gui.getMainFrame().ensureCompoundIsVisible(indexInView);
-                        try {
-                            compoundList.removeListEventListener(oneTimeListener);
-                        } catch (Exception e) {
-                            log.warn("Cannot remove feature selection listener.");
-                        }
-                    }
-                }
-            });
-        }
-
+        Jobs.runEDTLater(() -> {
+            int indexInView = compoundList.indexOf(finalTargetInstance);
+            if (indexInView != -1) {
+                compoundListSelectionModel.setSelectionInterval(indexInView, indexInView);
+                gui.getMainFrame().ensureCompoundIsVisible(indexInView);
+            } else {
+                // Should not happen if contains is true.
+                log.warn("Feature with featureId '" + finalTargetInstance.getFeatureId() + "' exists in the full list but index retrieval failed.");
+            }
+        });
         return true;
     }
 }
