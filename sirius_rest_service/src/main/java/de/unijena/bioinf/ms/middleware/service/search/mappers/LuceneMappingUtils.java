@@ -254,7 +254,7 @@ public class LuceneMappingUtils {
     }
 
     // Regular expression for a valid Lucene field name with sub-documents
-    private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)*$");
+    private static final Pattern FIELD_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_\\-]*(\\.[a-zA-Z][a-zA-Z0-9_\\-]*)*$");
 
     /**
      * Checks if the given field name is valid for a Lucene document.
