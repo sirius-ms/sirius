@@ -131,13 +131,20 @@ public class NitriteDatabase implements Database<Document> {
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
 
         try {
-            FileStore fileStore = Files.getFileStore(file);
-            // Get filesystem identifier (not always unique)
-            String fsName = fileStore.name();
-            // Get file ID (works on most platforms)
-            Object fileKey = Files.readAttributes(file, BasicFileAttributes.class).fileKey();
-            // Create a composite UID
-            systemUID = hashString(fsName + "-" + fileKey, 32);
+            if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+                //todo whe need a solution that is robust against file moves
+                systemUID = hashString(file.toAbsolutePath().toString(), 32);
+                log.warn("Creating project to index link from file ' {}' to search index '{}' on windows. This link is not robust against file renames/moves. Index will be recreated from scratch each time the project file is renamed/moved/",
+                        file.toAbsolutePath(), systemUID);
+            } else {
+                FileStore fileStore = Files.getFileStore(file);
+                // Get filesystem identifier (not always unique)
+                String fsName = fileStore.name();
+                // Get file ID (works on most platforms)
+                Object fileKey = Files.readAttributes(file, BasicFileAttributes.class).fileKey();
+                // Create a composite UID
+                systemUID = hashString(fsName + "-" + fileKey, 32);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
