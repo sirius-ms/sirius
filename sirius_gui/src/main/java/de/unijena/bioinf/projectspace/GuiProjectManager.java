@@ -215,12 +215,15 @@ public class GuiProjectManager implements Closeable {
         System.out.println("Project loaded in: " + w);
     }
 
+    // todo we could add list of project adducts as value here
     public synchronized void reloadProjectData() {
+        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         totalInstances.set(siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION)).getNumOfFeatures());
     }
 
     private InstanceBean jumpToInstanceBean = null;
     public synchronized InstanceBean findAndAddTemporaryJumpToFeature(String alignedFeatureId){
+        System.out.printf("Add JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         AlignedFeature feature = siriusClient.features()
                 .getAlignedFeature(projectId, alignedFeatureId, false, null);
         if (feature == null)
@@ -232,6 +235,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     public synchronized boolean removeTemporaryJumpToFeatureIfNotSelected(String selectedFeatureid){
+        System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         if (jumpToInstanceBean != null && !jumpToInstanceBean.getFeatureId().equals(selectedFeatureid)) {
             INSTANCE_LIST.remove(jumpToInstanceBean);
             jumpToInstanceBean = null;
@@ -249,6 +253,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     private synchronized void reloadFeatures(@Nullable String filteredQuery, @Nullable List<String> sortQuery) {
+        System.out.printf("Reload Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
         FilterableCompoundListPanel loadable = Optional.ofNullable(siriusGui.getMainFrame())
                 .map(MainFrame::getFilterableCompoundListPanel).orElse(null);
 
