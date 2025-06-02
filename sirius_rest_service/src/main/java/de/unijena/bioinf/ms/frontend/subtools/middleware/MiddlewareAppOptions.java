@@ -187,9 +187,6 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                         if (isStartGui())
                             guiService.createGuiInstance(startPs.getProjectId());
 
-                        if (splash != null)
-                            Jobs.runEDTLater(splash::dispose);
-
                         //increase priority of GUI thread.
                         Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                     } else {
@@ -199,6 +196,8 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                     throw new RuntimeException(e);
                 }
             }
+            if (splash != null)
+                Jobs.runEDTLater(splash::dispose);
         }
     }
 }
