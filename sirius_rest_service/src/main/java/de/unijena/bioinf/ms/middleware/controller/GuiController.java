@@ -21,8 +21,10 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
+import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -63,10 +65,15 @@ public class GuiController {
      * Open GUI instance on specified project-space and bring the GUI window to foreground.
      * @param projectId of project-space the GUI instance will connect to.
      */
+    //todo enabled advanced setting here due to compatibility with explorer.
+    // remove after sdk update
     @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public void openGui(@PathVariable String projectId) {
-        guiService.createGuiInstance(projectId, null);
+    public void openGui(@PathVariable String projectId,
+                                @RequestBody(required = false) GuiParameters guiParameters,
+                                @RequestParam(required = false, defaultValue = "false") boolean readOnly
+    ) {
+        guiService.createGuiInstance(projectId, guiParameters);
     }
 
     /**
