@@ -136,7 +136,7 @@ public class ChemDbServiceImpl implements ChemDbService {
                         String location = e.getKey();
                         String name = e.getValue();
                         try {
-                            dbs.add(SearchableDatabases.of(CustomDatabases.open(location, true, version())));
+                            dbs.add(SearchableDatabases.of(CustomDatabases.open(location, true, version(), true)));
                         } catch (Exception ex) {
                             dbs.add(SearchableDatabases.ofInvalid(location, name, ex.getMessage()));
                         }
@@ -168,7 +168,7 @@ public class ChemDbServiceImpl implements ChemDbService {
                                 .orElse(false));
             }
 
-            CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version());
+            CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version(), true);
             CustomDBPropertyUtils.addDB(location.toAbsolutePath().toString(), databaseId);
             return SearchableDatabases.of(newDb);
         } catch (Exception e) {
@@ -212,7 +212,7 @@ public class ChemDbServiceImpl implements ChemDbService {
 
         return pathToDatabases.stream().map(location -> {
             try {
-                CustomDatabase newDb = CustomDatabases.open(location, true, version());
+                CustomDatabase newDb = CustomDatabases.open(location, true, version(), true);
                 CustomDBPropertyUtils.addDB(location, newDb.name());
                 return SearchableDatabases.of(newDb);
             } catch (IOException e) {

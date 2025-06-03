@@ -21,9 +21,7 @@
 package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
@@ -33,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -41,14 +38,6 @@ import java.util.Map;
 import static de.unijena.bioinf.chemdb.SpectralUtils.importSpectra;
 
 public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
-
-    public static AbstractChemicalDatabase getLocalChemDB(Path file) throws IOException {
-        return new ChemicalNitriteDatabase(file);
-    }
-
-    public static AbstractChemicalDatabase getLocalChemDB(Path file, FingerprintVersion version) throws IOException {
-        return new ChemicalNitriteDatabase(file, version);
-    }
 
     public static void importCandidatesAndSpectra(
             @NotNull ChemicalNoSQLDatabase<?> database,
