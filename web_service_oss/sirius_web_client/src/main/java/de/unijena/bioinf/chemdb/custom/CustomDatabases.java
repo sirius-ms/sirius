@@ -75,14 +75,14 @@ public class CustomDatabases {
     }
 
     @NotNull
-    public static CustomDatabase open(String location, boolean up2date, CdkFingerprintVersion version) throws IOException {
-        final CustomDatabase db = open(location, version);
+    public static CustomDatabase open(String location, boolean up2date, CdkFingerprintVersion version, boolean readOnly) throws IOException {
+        final CustomDatabase db = open(location, version, readOnly);
         if (!up2date || !db.needsUpgrade())
             return db;
         throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures.");
     }
 
-    public static CustomDatabase open(String location, CdkFingerprintVersion version) throws IOException {
+    public static CustomDatabase open(String location, CdkFingerprintVersion version, boolean readOnly) throws IOException {
         CustomDatabase cached = CUSTOM_DATABASES.get(location);
         if (cached != null) {
             return cached;
@@ -94,7 +94,7 @@ public class CustomDatabases {
 
         CustomDatabase db;
         if (location.endsWith(CUSTOM_DB_SUFFIX)) {
-            ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version);
+            ChemicalNitriteDatabase nitriteDb = new ChemicalNitriteDatabase(Path.of(location), version, readOnly);
             db = new NoSQLCustomDatabase<>(nitriteDb);
         } else {
             CompressibleBlobStorage<BlobStorage> blobDb = CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location));
@@ -119,7 +119,7 @@ public class CustomDatabases {
         return db;
     }
 
-    public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version) throws IOException {
+    public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version, boolean readOnly) throws IOException {
         //sanitize db name:
         if (!config.getName().equals(sanitizeDbName(config.getName())))
             throw new IllegalArgumentException("Unsupported database name '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
@@ -133,7 +133,7 @@ public class CustomDatabases {
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir);
             }
-            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version);
+            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version, readOnly);
             db = new NoSQLCustomDatabase<>(storage);
             db.writeSettings(config);
             storage.getStorage().flush();
