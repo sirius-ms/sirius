@@ -258,6 +258,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             submitJob(dbjob).awaitResult();
             logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
 
+            logInfo("Reopening database in read-only mode");
+            CustomDatabases.remove(db, false);
+            CustomDatabases.open(location, true, version, true);
+
             return true;
         }
 
@@ -275,7 +279,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     .statistics(new CustomDatabaseSettings.Statistics())
                     .build();
 
-            CustomDatabase db = CustomDatabases.create(location, settings, version);
+            CustomDatabase db = CustomDatabases.create(location, settings, version, false);
             CustomDBPropertyUtils.addDB(location, name);
 
             logInfo("New database added to SIRIUS. Use 'structure --db=\"" + db.name() + "\"' to search in this database.");
@@ -283,7 +287,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         }
 
         private CustomDatabase openExistingDB(String location, CdkFingerprintVersion version) throws IOException {
-            CustomDatabase db = CustomDatabases.open(location, true, version);
+            CustomDatabases.getCustomDatabaseByPath(location).ifPresent(existingDb -> CustomDatabases.remove(existingDb, false));  // Close read-only DB
+            CustomDatabase db = CustomDatabases.open(location, true, version, false);
             if (!CustomDBPropertyUtils.getCustomDBs().containsKey(location)) {
                 CustomDBPropertyUtils.addDB(location, db.name());
             }
@@ -434,7 +439,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
             String location = nameOrLocationToLocation(nameOrLocation);
             try {
-                CustomDatabase db = CustomDatabases.open(location, version);
+                CustomDatabase db = CustomDatabases.open(location, version, true);
                 CustomDatabases.remove(db, mode.removeParas.delete);
             } catch (Exception e) {
                 logWarn("\n==> Error opening database " + nameOrLocation + ":\n" + e.getMessage() + "\nIt will be removed from custom databases.");
@@ -456,7 +461,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 String location = e.getKey();
                 String name = e.getValue();
                 try {
-                    CustomDatabase db = CustomDatabases.open(location, version);
+                    CustomDatabase db = CustomDatabases.open(location, version, true);
                     printDBInfo(db);
                 } catch (Exception ex) {
                     printDBError(location, name, ex.getMessage());
@@ -469,7 +474,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         private boolean showDB(CdkFingerprintVersion version) {
             String location = nameOrLocationToLocation(mode.showParas.db);
             try {
-                CustomDatabase db = CustomDatabases.open(location, version);
+                CustomDatabase db = CustomDatabases.open(location, version, true);
                 printDBInfo(db);
             } catch (Exception ex) {
                 printDBError(location, CustomDBPropertyUtils.getCustomDBs().get(location), ex.getMessage());
