@@ -133,7 +133,7 @@ public class CustomDatabases {
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir);
             }
-            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version, readOnly);
+            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version, false);
             db = new NoSQLCustomDatabase<>(storage);
             db.writeSettings(config);
             storage.getStorage().flush();
@@ -142,6 +142,12 @@ public class CustomDatabases {
             bs.setTags(Map.of(TAG_COMPRESSION, Compressible.Compression.GZIP.name()));
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
             db.writeSettings(config);
+        }
+        if (readOnly) {
+            db.close();
+            ChemicalNitriteDatabase storage = new ChemicalNitriteDatabase(Path.of(location), version, true);
+            db = new NoSQLCustomDatabase<>(storage);
+            db.getSettings();
         }
         CustomDataSources.addCustomSourceIfAbsent(db);
         CUSTOM_DATABASES.put(location, db);

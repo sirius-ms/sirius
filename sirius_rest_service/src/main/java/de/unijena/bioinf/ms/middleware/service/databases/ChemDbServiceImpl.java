@@ -91,13 +91,26 @@ public class ChemDbServiceImpl implements ChemDbService {
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
+        CustomDatabase writeableDB = reopenReadOnly(db, false);
+
         SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(
-                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache,
+                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) writeableDB, webAPI, iFPCache,
                 bufferSize, bioTransformerParameters != null ? bioTransformerParameters.toSettings() : null)
         ).takeResult();
 
+        db = reopenReadOnly(writeableDB, true);
+
         return SearchableDatabases.of(db);
 
+    }
+
+    private CustomDatabase reopenReadOnly(CustomDatabase db, boolean readOnly) {
+        CustomDatabases.remove(db, false);
+        try {
+            return CustomDatabases.open(db.storageLocation(), true, version(), readOnly);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cannot reopen database: " + db.name(), e);
+        }
     }
 
     @Override
