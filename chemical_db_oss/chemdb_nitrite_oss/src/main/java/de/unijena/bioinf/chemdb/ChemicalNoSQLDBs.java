@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ import java.util.Map;
 
 import static de.unijena.bioinf.chemdb.SpectralUtils.importSpectra;
 
-public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
+public class ChemicalNoSQLDBs {
 
     public static void importCandidatesAndSpectra(
             @NotNull ChemicalNoSQLDatabase<?> database,
