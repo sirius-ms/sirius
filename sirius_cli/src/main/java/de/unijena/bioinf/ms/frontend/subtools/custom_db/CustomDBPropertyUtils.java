@@ -114,7 +114,7 @@ public class CustomDBPropertyUtils {
         Set<String> customDbLocations = CustomDBPropertyUtils.getCustomDBs().keySet();
         for (String location : customDbLocations) {
             try {
-                CustomDatabases.open(location, true, version);
+                CustomDatabases.open(location, true, version, true);
             } catch (Exception e) {
                 log.error("Error opening database {}, skipping.", location, e);
             }
