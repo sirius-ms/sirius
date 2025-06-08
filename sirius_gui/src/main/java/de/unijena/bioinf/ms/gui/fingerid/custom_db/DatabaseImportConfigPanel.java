@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.ImportDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -42,7 +42,7 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 
-public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
+public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOptions> {
 
     private PlaceholderTextField dbDisplayNameField;
     private PlaceholderTextField dbFileNameField;
@@ -50,9 +50,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private DefaultListModel<File> fileListModel;
 
 
-    private FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
+    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
 
-    private FileFilter supportedSpectraFiles = new FileFilter() {
+    private final FileFilter supportedSpectraFiles = new FileFilter() {
         @Override
         public boolean accept(File f) {
             String filename = f.getName().toLowerCase();
@@ -67,7 +67,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         }
     };
 
-    private FileFilter supportedFiles = new FileFilter() {
+    private final FileFilter supportedFiles = new FileFilter() {
         @Override
         public boolean accept(File f) {
             return supportedStructureFiles.accept(f) || supportedSpectraFiles.accept(f);
@@ -97,7 +97,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private BiotransformerConfigPanel biotransformerConfigPanel;
 
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
-        super(CustomDBOptions.class);
+        super(ImportDBOptions.class);
         this.gui = gui;
         setLayout(new BorderLayout());
 

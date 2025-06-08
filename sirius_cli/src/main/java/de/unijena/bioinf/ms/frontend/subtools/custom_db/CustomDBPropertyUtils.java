@@ -120,4 +120,14 @@ public class CustomDBPropertyUtils {
             }
         }
     }
+
+    public static Optional<String> nameOrLocationToLocation(String nameOrLocation) {
+        LinkedHashMap<String, String> existingDBs = getCustomDBs();
+        if (existingDBs.containsKey(nameOrLocation)) {
+            return Optional.of(nameOrLocation);
+        } else if (existingDBs.containsValue(nameOrLocation)) {
+            return getLocationByName(existingDBs, nameOrLocation);
+        }
+        return Optional.empty();
+    }
 }

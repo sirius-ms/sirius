@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
@@ -115,6 +117,7 @@ class ImportDatabaseDialog extends JDialog {
             }
 
             CommandSubmission command = new CommandSubmission();
+            command.addCommandItem(PicoUtils.getCommand(CustomDBOptions.class).name());
             command.addCommandItem(configPanel.toolCommand());
             configPanel.asParameterList().forEach(command::addCommandItem);
 
