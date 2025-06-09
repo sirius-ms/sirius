@@ -11,7 +11,7 @@ apply plugin: 'java-library'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-version =  siriusFrontendVersion
+version = siriusFrontendVersion
 
 bootJar {
     enabled = false
@@ -50,4 +50,56 @@ dependencies {
     api "org.apache.commons:commons-text:$commons_text_version"
 
     implementation 'com.miglayout:miglayout:3.7.4'
+
+    // jxbrowser plugin can detect the current platform and adds the corresponding Chromium binaries.
+    // implementation(jxbrowser.currentPlatform)
+    // We use SiriusPlatform instead to allow for cross-platform builds
+    implementation "com.teamdev.jxbrowser:jxbrowser-${siriusTargetPlatform.jxClassifier().orElseThrow()}:${jxbrowser.version.get()}"
+
+    // Adds dependency to the Swing UI toolkit integration.
+    implementation(jxbrowser.swing)
 }
+
+// Define the output directory for the generated resources
+def jxLicenseDirName = "jxLicense";
+def generatedResourcesDir = layout.buildDirectory.dir("generated/resources/$jxLicenseDirName")
+
+// Add the generated resources directory to the main source set
+sourceSets {
+    main {
+        resources {
+            srcDir generatedResourcesDir
+        }
+    }
+}
+
+// Create task to generate the properties file with the license key
+tasks.register('generateJxLicenceProperties') {
+    doLast {
+        // Ensure the output directory exists
+        def outputDir = file(generatedResourcesDir)
+        outputDir.mkdirs()
+
+        // Create the properties file
+        def propertiesFile = file("$outputDir/${jxLicenseDirName}.build.properties")
+
+        // Write the key to the file
+        if (project.hasProperty('jxbrowser.license.key')) {
+            // Read the key from gradle.properties. Provide a default value for safety.
+            propertiesFile.text = "jxbrowser.license.key=${project.property('jxbrowser.license.key')}"
+        } else {
+            logger.lifecycle("\n" +
+                    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
+                    "!! WARNING: 'jxbrowser.license.key' is missing or empty in gradle.properties !!\n" +
+                    "!! The application may not function correctly without it.                    !!\n" +
+                    "!! Please add the key to your user's properties file:                        !!\n" +
+                    "!! Location: ~/.gradle/gradle.properties                                     !!\n" +
+                    "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+            propertiesFile.text = ""
+        }
+    }
+}
+
+// Hook the custom task into the build process
+// This ensures task runs before the resources are processed.
+processResources.dependsOn('generateJxLicenceProperties')
