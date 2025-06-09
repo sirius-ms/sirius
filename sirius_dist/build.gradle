@@ -21,7 +21,9 @@ ext {
 //                     '-XX:+UseG1GC',
 //                     '-XX:+UseZGC',
 //                     '-XX:+ZGenerational',
-                     '-XX:+ExitOnOutOfMemoryError']
+                     '-XX:+ExitOnOutOfMemoryError',
+                     '--add-opens=java.desktop/java.awt=ALL-UNNAMED' // needed to run jxbrowser properly
+    ]
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {

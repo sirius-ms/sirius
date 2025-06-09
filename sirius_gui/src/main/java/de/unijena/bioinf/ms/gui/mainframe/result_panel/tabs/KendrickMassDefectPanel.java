@@ -6,26 +6,29 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URI;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
-public class KendrickMassDefectPanel extends JCefBrowserPanel implements ExperimentListChangeListener, PanelDescription {
+public class KendrickMassDefectPanel extends JPanel implements ExperimentListChangeListener, PanelDescription {
     @NotNull private final CompoundList compoundList;
+    @NotNull private final BrowserPanel browserPanel;
 
     public KendrickMassDefectPanel(@NotNull CompoundList compoundList, SiriusGui siriusGui) {
-        super(makeUrl(siriusGui, compoundList), siriusGui);
+        super(new BorderLayout());
         this.compoundList = compoundList;
+        this.browserPanel = makeBrowserPanel(siriusGui, compoundList);
         compoundList.addChangeListener(this);
+        add(browserPanel, BorderLayout.CENTER);
     }
 
-    private static String makeUrl(SiriusGui siriusGui, @NotNull CompoundList compoundList){
+    private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @NotNull CompoundList compoundList){
         String fid = compoundList.getCompoundListSelectionModel().getSelected().stream().findFirst().map(InstanceBean::getFeatureId).orElse(null);
-        return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
+        return  siriusGui.getBrowserPanelProvider().makeReactPanel("/KMD", siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
     }
 
     @Override
@@ -35,7 +38,7 @@ public class KendrickMassDefectPanel extends JCefBrowserPanel implements Experim
 
     @Override
     public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
-        updateSelectedFeature(selected == null || selected.isEmpty() ? null
+        browserPanel.updateSelectedFeature(selected == null || selected.isEmpty() ? null
                 : selected.getFirst().getFeatureId());
     }
 
