@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.webView;
+package de.unijena.bioinf.ms.gui.webView.jcefbrowser;
 
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import lombok.extern.slf4j.Slf4j;
