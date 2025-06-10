@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.webView.jcefbrowser;
 
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
-import de.unijena.bioinf.ms.gui.webView.JCEFLinuxFixer;
 import de.unijena.bioinf.ms.gui.webView.LinkInterception;
 import de.unijena.bioinf.rest.ProxyManager;
 import lombok.Getter;
