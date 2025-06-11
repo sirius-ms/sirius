@@ -54,10 +54,10 @@ public class ShowWorkflowUtil {
         }
     }
 
-    private static void showDB(String nameOrLocation, CdkFingerprintVersion version, boolean detailed) {
-        Optional<String> maybeLocation = CustomDBPropertyUtils.nameOrLocationToLocation(nameOrLocation);
+    private static void showDB(String dbName, CdkFingerprintVersion version, boolean detailed) {
+        Optional<String> maybeLocation = CustomDBPropertyUtils.getLocationByName(dbName);
         if (maybeLocation.isEmpty()) {
-            log.error("Database {} not found.", nameOrLocation);
+            log.error("Database {} not found.", dbName);
         } else {
             String location = maybeLocation.get();
             try {

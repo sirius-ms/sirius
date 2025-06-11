@@ -10,7 +10,7 @@ import picocli.CommandLine;
 @CommandLine.Command(name = "show", description = "Print information about all or the given custom database.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class ShowDBOptions implements StandaloneTool<Workflow> {
 
-    @CommandLine.Option(names = {"--db"}, description = "Show information only about the given custom database (name or location).", order = 110)
+    @CommandLine.Option(names = {"--db"}, description = "Show information only about the database with this name.", order = 110)
     String db = null;
 
     @CommandLine.Option(names = {"--details"}, description = "Show detailed (technical) information.", order = 120)
