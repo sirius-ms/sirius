@@ -19,8 +19,8 @@ import java.util.Optional;
 @CommandLine.Command(name = "remove", description = "Remove the given custom database.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class RemoveDBOptions implements StandaloneTool<Workflow> {
     @CommandLine.Option(names = "--db", required = true,
-            description = "Name or location of the custom database to remove from SIRIUS.")
-    String nameOrLocation = null;
+            description = "Name of the custom database to remove from SIRIUS.")
+    String name = null;
 
     @CommandLine.Option(names = {"--delete", "-d"}, defaultValue = "false",
             description = "Delete removed custom database from filesystem/server.")
@@ -36,16 +36,16 @@ public class RemoveDBOptions implements StandaloneTool<Workflow> {
                 log.error("Error getting fingerprint version", e);
                 return;
             }
-            Optional<String> maybeLocation = CustomDBPropertyUtils.nameOrLocationToLocation(nameOrLocation);
+            Optional<String> maybeLocation = CustomDBPropertyUtils.getLocationByName(name);
             if (maybeLocation.isEmpty()) {
-                log.error("Database {} not found.", nameOrLocation);
+                log.error("Database {} not found.", name);
             } else {
                 String location = maybeLocation.get();
                 try {
                     CustomDatabase db = CustomDatabases.open(location, version, true);
                     CustomDatabases.remove(db, delete);
                 } catch (Exception e) {
-                    log.error("Error removing database {}", nameOrLocation, e);
+                    log.error("Error removing database {}", name, e);
                 }
                 CustomDBPropertyUtils.removeDBbyLocation(location);
             }

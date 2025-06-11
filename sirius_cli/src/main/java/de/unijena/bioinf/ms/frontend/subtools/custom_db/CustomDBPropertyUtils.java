@@ -65,7 +65,7 @@ public class CustomDBPropertyUtils {
             }
         }
         if (dbs.containsValue(name)) {
-            String previousLocation = getLocationByName(dbs, name).orElseThrow();
+            String previousLocation = findLocationByName(dbs, name).orElseThrow();
             throw new RuntimeException("Custom DB with name " + name + " already exists at " + previousLocation);
         }
         dbs.put(location, name);
@@ -83,7 +83,7 @@ public class CustomDBPropertyUtils {
 
     public static void removeDBbyName(String name) {
         LinkedHashMap<String, String> dbs = getCustomDBs();
-        Optional<String> location = getLocationByName(dbs, name);
+        Optional<String> location = findLocationByName(dbs, name);
         if (location.isPresent()) {
             dbs.remove(location.get());
             saveDBs(dbs);
@@ -100,7 +100,7 @@ public class CustomDBPropertyUtils {
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(PROP_KEY, dbString);
     }
 
-    public static Optional<String> getLocationByName(LinkedHashMap<String, String> dbs, String name) {
+    private static Optional<String> findLocationByName(LinkedHashMap<String, String> dbs, String name) {
         return dbs.entrySet().stream()
                 .filter(e -> e.getValue().equals(name))
                 .map(Map.Entry::getKey)
@@ -121,13 +121,10 @@ public class CustomDBPropertyUtils {
         }
     }
 
-    public static Optional<String> nameOrLocationToLocation(String nameOrLocation) {
-        LinkedHashMap<String, String> existingDBs = getCustomDBs();
-        if (existingDBs.containsKey(nameOrLocation)) {
-            return Optional.of(nameOrLocation);
-        } else if (existingDBs.containsValue(nameOrLocation)) {
-            return getLocationByName(existingDBs, nameOrLocation);
-        }
-        return Optional.empty();
+    /**
+     * Looks for a location of the DB with the given name in the registered DBs.
+     */
+    public static Optional<String> getLocationByName(String nameOrLocation) {
+        return findLocationByName(getCustomDBs(), nameOrLocation);
     }
 }

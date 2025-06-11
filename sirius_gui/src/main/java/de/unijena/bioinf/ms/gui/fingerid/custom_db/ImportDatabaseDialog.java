@@ -54,6 +54,7 @@ class ImportDatabaseDialog extends JDialog {
 
     private final DatabaseDialog databaseDialog;
     protected DatabaseImportConfigPanel configPanel;
+    private SearchableDatabase db;
 
     public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog) {
         this(databaseDialog, null);
@@ -62,6 +63,7 @@ class ImportDatabaseDialog extends JDialog {
     public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable SearchableDatabase db) {
         super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
+        this.db = db;
 
         setPreferredSize(new Dimension(600, 720));
 
@@ -115,6 +117,15 @@ class ImportDatabaseDialog extends JDialog {
             if (!job.getResult()) {
                 throw new ExecutionException(new Exception("Not connected or logged in!"));
             }
+
+            if (db == null) {
+                SearchableDatabaseParameters newDbParameters = new SearchableDatabaseParameters()
+                        .location(configPanel.getDbFilePath())
+                        .displayName(configPanel.getDBDisplayName());
+                String dbId = configPanel.getDBBaseFileName();
+                db = databaseDialog.gui.applySiriusClient((c, pid) -> c.databases().createDatabase(dbId, newDbParameters));
+            }
+            configPanel.getParameterBinding().put("db", () -> db.getDatabaseId());
 
             CommandSubmission command = new CommandSubmission();
             command.addCommandItem(PicoUtils.getCommand(CustomDBOptions.class).name());

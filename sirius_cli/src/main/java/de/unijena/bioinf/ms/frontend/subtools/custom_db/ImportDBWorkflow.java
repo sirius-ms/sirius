@@ -6,7 +6,10 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseImporter;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
+import de.unijena.bioinf.chemdb.custom.NoSQLCustomDatabase;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -16,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -44,52 +46,12 @@ public class ImportDBWorkflow  extends BasicMasterJJob<Boolean> implements Workf
     }
 
     private @NotNull Boolean importIntoDB(CdkFingerprintVersion version) throws InterruptedException, IOException, ExecutionException {
-        String location = importOptions.location;
-        String name = importOptions.name;
-        if ((location == null || location.isBlank()) && (name == null || name.isBlank())) {
-            logWarn("\n==> No location/name given! Exiting.\n");
-            return false;
-        }
-        if (location != null && !Path.of(location).isAbsolute()) {
-            location = Path.of(location).toAbsolutePath().toString();
-        }
-
-        if (location != null && !location.toLowerCase().endsWith(".siriusdb")) {
-            logWarn("\n==> Adding file extension '.siriusdb' to location.\n");
-            location = location + ".siriusdb";
-        }
-
+        final String name = importOptions.name;
         checkForInterruption();
 
-        boolean isNewDb = false;
+        String location = CustomDBPropertyUtils.getLocationByName(name).orElseThrow(() -> new RuntimeException("Database " + name + " not found."));
 
-        LinkedHashMap<String, String> existingDBs = CustomDBPropertyUtils.getCustomDBs();
-        if (existingDBs.containsKey(location)) {
-            name = existingDBs.get(location);
-            if (importOptions.name != null && !importOptions.name.isBlank() && !name.equals(importOptions.name)) {
-                logWarn("\n==> Passed name " + importOptions.name + " does not match the current DB name " + name + " at this location and will be ignored.\n");
-            }
-        } else if (existingDBs.containsValue(name)) {
-            location = CustomDBPropertyUtils.getLocationByName(existingDBs, name).orElseThrow();
-            if (importOptions.location != null && !importOptions.location.isBlank()) {
-                logWarn("\n==> Passed location " + importOptions.location + " does not match the current location of database " + name + " and will be ignored.\n");
-            }
-        } else if (location == null || location.isBlank()) {
-            logWarn("\n==> No location for the new database " + name + " given! Exiting.\n");
-            return false;
-        } else if (!Files.exists(Path.of(location))) {
-            isNewDb = true;
-        } else if (importOptions.name != null && !importOptions.name.isBlank()) {
-            logWarn("\n==> Passed name " + importOptions.name + " will be ignored, the database name will be taken from the file " + location);
-        }
-
-        CustomDatabase db = isNewDb
-                ? createNewDB(location, name, version)
-                : openExistingDB(location, version);
-
-        if (importOptions.input == null || importOptions.input.isEmpty()) {
-            return true;
-        }
+        CustomDatabase db = openExistingDB(location, version);
 
         Map<Boolean, List<Path>> groups = importOptions.input.stream()
                 .flatMap(FileUtils::sneakyWalk)
@@ -122,34 +84,13 @@ public class ImportDBWorkflow  extends BasicMasterJJob<Boolean> implements Workf
         );
         checkForInterruption();
         submitJob(dbjob).awaitResult();
-        logInfo("...New structures imported to custom database '" + importOptions.location + "'. Database ID is: " + db.getSettings().getName());
+        logInfo("...New structures imported to custom database '" + location + "'. Database ID is: " + db.getSettings().getName());
 
         logInfo("Reopening database in read-only mode");
         CustomDatabases.remove(db, false);
         CustomDatabases.open(location, true, version, true);
 
         return true;
-    }
-
-
-    private CustomDatabase createNewDB(String location, String name, CdkFingerprintVersion version) throws IOException {
-        if (name == null || name.isBlank())
-            name = CustomDatabases.sanitizeDbName(CustomDBPropertyUtils.getDBName(location));
-
-        CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
-                .usedFingerprints(List.of(version.getUsedFingerprints()))
-                .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
-                .name(name)
-                .displayName(importOptions.displayName)
-                .matchRtOfReferenceSpectra(false)
-                .statistics(new CustomDatabaseSettings.Statistics())
-                .build();
-
-        CustomDatabase db = CustomDatabases.create(location, settings, version, false);
-        CustomDBPropertyUtils.addDB(location, name);
-
-        logInfo("New database added to SIRIUS. Use 'structure --db=\"" + db.name() + "\"' to search in this database.");
-        return db;
     }
 
     private CustomDatabase openExistingDB(String location, CdkFingerprintVersion version) throws IOException {

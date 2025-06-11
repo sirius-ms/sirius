@@ -31,8 +31,10 @@ import picocli.CommandLine;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Operations with custom searchable structure/spectral databases. See subcommands help for more info. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false,
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Operations with custom searchable structure/spectral databases. See subcommands help for more info.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false,
 subcommands = {
+        AddDBOptions.class,
+        CreateDBOptions.class,
         ShowDBOptions.class,
         ImportDBOptions.class,
         RemoveDBOptions.class})
