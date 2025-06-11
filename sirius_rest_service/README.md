@@ -1,16 +1,22 @@
 # Sirius Nightsky Middleware
 
 REST interface (maybe also sockets) to communicate with the frontend.
-This provides access to projectspace as well as to different computation services.
+This provides access to project as well as to different computation services.
 It should be possible to be local as well as remote
 
 ## Prerequisites
 * gradle
-* java 11
+* java 21
 
 ## Project setup
 
-?
+### JxBrowser (license)
+To start the GUI a JxBrowser license key is needed.
+The key needs to be added to your `gradle.properties` and must never be committed to the code repo.
+
+```properties
+jxbrowser.license.key = <KEY>
+```
 
 ## Project Scripts
 
