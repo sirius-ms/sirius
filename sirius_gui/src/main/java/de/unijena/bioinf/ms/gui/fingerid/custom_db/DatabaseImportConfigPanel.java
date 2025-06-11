@@ -154,7 +154,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
         smalls.addNamed("Name", dbDisplayNameField, GuiUtils.formatToolTip("Displayable name of the custom database. " +
                 "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
                 "If not given the filename will be used."));
-        parameterBindings.put("displayName", dbDisplayNameField::getText);
         dbFileNameField = new PlaceholderTextField("");
         smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
@@ -163,7 +162,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
-        parameterBindings.put("location", this::getDbFilePath);
         validDbDirectory = !dbDirectory.isBlank();
 
         if (db != null) {
@@ -241,6 +239,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
                 String error = null;
                 if (name == null || name.isBlank()) {
                     error = "DB name missing";
+                } else if (!name.endsWith(CUSTOM_DB_SUFFIX)) {
+                    error = "DB filename should end with " + CUSTOM_DB_SUFFIX;
+                } else if (!name.equals(FileUtils.sanitizeFilename(name.replace(CUSTOM_DB_SUFFIX, "")) + CUSTOM_DB_SUFFIX)) {
+                    error = "DB filename should not contain special characters";
                 } else if (checkName(name)) {
                     error = "This name is already in use";
                 }
@@ -394,6 +396,14 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
 
     public String getDbFilePath() {
         return Path.of(dbLocationField.getFilePath(), dbFileNameField.getText()).toString();
+    }
+
+    public String getDBDisplayName() {
+        return dbDisplayNameField.getText();
+    }
+
+    public String getDBBaseFileName() {
+        return dbFileNameField.getText().replace(CUSTOM_DB_SUFFIX, "");
     }
 
     /**
