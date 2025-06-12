@@ -67,7 +67,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
                     "than [--max-decomps] decompositions if there are not more available."})
     Integer maxDecomps;
 
-    @CommandLine.Option(names = {"--mass", "-m"}, split = ",", description = {"Masses that will be decomposed."})
+    @CommandLine.Option(names = {"--mass", "-m"}, arity = "0..*", description = {"Masses that will be decomposed."})
     double[] masses;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = {"File to with output to."})
