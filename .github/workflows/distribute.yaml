@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
+  workflow_dispatch:
 
 jobs:
   distGUI:
@@ -33,10 +34,10 @@ jobs:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
-      - name: Set up Zulu JDK-FX
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
+          distribution: 'liberica'
           java-version: '21' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: 'x64' # (x64 or x86) - defaults to x64
@@ -69,13 +70,18 @@ jobs:
         run: /usr/bin/security find-identity
 
       - name: Gradle Build
-        uses: eskatos/gradle-command-action@v1
-        env:
-          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
-        with:
-          gradle-version: 8.8
-          build-root-directory: sirius_dist/sirius_gui_dist
-          arguments: --stacktrace clean buildJpDists -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
+            -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
+            -P "build.sirius.starter.jdk.include=true" \
+            -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
+            -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" \
+            -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" \
+            -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" \
+            -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
+
       - if: matrix.os == 'windows-latest'
         name: Azure Trusted Signing for Widows MSI
         uses: azure/trusted-signing-action@v0.3.16

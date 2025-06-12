@@ -206,10 +206,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         ));
 
         setLocationRelativeTo(null); //init mainframe
-        setVisible(true);
-        toFront();
-
-        Jobs.runEDTLater(this::checkAndInitSoftwareTour);
     }
 
     // region dragndrop
@@ -272,7 +268,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
     //endregion
 
-    private void checkAndInitSoftwareTour() {
+    public void checkAndInitSoftwareTour() {
         SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.MainFrameTourName, SoftwareTourInfoStore.MainFrameTourKey, gui.getProperties());
     }
 }

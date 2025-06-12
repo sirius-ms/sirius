@@ -19,19 +19,12 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
-import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 
@@ -54,7 +47,7 @@ public class StructEditPanel extends JPanel implements Loadable, PanelDescriptio
         super(new BorderLayout());
         this.structureList = structureList;
 
-        SketcherPanel substructurePanel = new SketcherPanel(structureList.getGui(), structureList.getSelectedElement());
+        SketcherPanel substructurePanel = new SketcherPanel(structureList.getGui(),  structureList.getElementListSelectionModel(), structureList.getSelectedElement());
 
         JPanel content = new JPanel(new BorderLayout());
 
@@ -62,18 +55,10 @@ public class StructEditPanel extends JPanel implements Loadable, PanelDescriptio
         loadablePanel = new LoadablePanel(content);
         add(loadablePanel, BorderLayout.CENTER);
         structureList.addActiveResultChangedListener((elementsParent, selectedElement, resultElements, selections) -> disableLoading());
-        structureList.getElementListSelectionModel().addListSelectionListener(substructurePanel);
     }
 
     @Override
     public boolean setLoading(boolean loading, boolean absolute) {
         return loadablePanel.setLoading(loading, absolute);
     }
-
-
-
-
-
-
-
 }

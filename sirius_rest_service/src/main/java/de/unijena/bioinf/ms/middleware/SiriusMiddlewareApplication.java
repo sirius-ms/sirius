@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -183,7 +184,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                                 log.error("Error when initializing Splash.", e);
                             }
                         }
-                        splashScreen = new Splash(true);
+                        splashScreen = new Splash(true, false);
+                    } else {
+                        splashScreen = new Splash(true, true);
+                        Jobs.runEDTLater(splashScreen::dispose);
                     }
                 }
 

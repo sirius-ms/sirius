@@ -99,6 +99,7 @@ public abstract class Icons {
     public static final FlatSVGIcon FOLDER_CLOSE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-folder-close.svg"));
     public static final FlatSVGIcon FOLDER_FILE = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-folder-file.svg"));
 
+    public static final FlatSVGIcon SPEC_SEARCH = new FlatSVGIcon(Icons.class.getResource("/icons/circular-icons-svg/c-spec-match.svg"));
     public static final FlatSVGIcon SIRIUS = new FlatSVGIcon(Icons.class.getResource("/icons/circular-icons-svg/c-sirius.svg"));
     public static final FlatSVGIcon ZODIAC = new FlatSVGIcon(MainFrame.class.getResource("/icons/circular-icons-svg/c-zodiac.svg"));
     public static final FlatSVGIcon FINGER =  new FlatSVGIcon( Icons.class.getResource("/icons/circular-icons-svg/c-fingerprint.svg"));
