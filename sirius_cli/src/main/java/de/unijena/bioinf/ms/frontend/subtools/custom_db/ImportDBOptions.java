@@ -22,12 +22,12 @@ public class ImportDBOptions implements StandaloneTool<Workflow> {
             description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."})
     public int writeBuffer;
 
-    @CommandLine.Option(names = {"--input", "-i"}, split = ",", description = {
+    @CommandLine.Parameters(arity = "1..*", description = {
             "Files or directories to import into the database.",
             "Supported formats: " + MsExperimentParser.DESCRIPTION,
             "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
             "Directories will be recursively expanded."
-    }, required = true)
+    })
     public List<Path> input;
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold %n Biotransformations: %n|@")
