@@ -70,7 +70,8 @@ public class InputFilesOptions {
         @Getter
         protected List<Path> rawInputFiles;
 
-        @CommandLine.Option(names = {"--input", "-i"}, description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format or " +
+        //todo comma separation is deprecated and should be removed in next major update.
+        @CommandLine.Option(names = {"--input", "-i"}, arity = "1..*", description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format or " +
                 "LC/MS runs in .mzML/.mzXml format but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 321)
         public void setInputPath(List<Path> files) {
             lcmsFiles.clear();

@@ -27,7 +27,7 @@ public class Splash extends JWindow implements JobProgressEventListener {
     private final JProgressBar progressBar;
     protected ProgressJJob<?> source;
 
-    public Splash(boolean indeterminate) {
+    public Splash(boolean indeterminate, boolean fake) {
         UIDefaults overrides = new UIDefaults();
 //        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(155, 166, 219)));
         overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(Colors.SplashScreen.PROGRESS_BAR));
@@ -43,7 +43,11 @@ public class Splash extends JWindow implements JobProgressEventListener {
         this.setContentPane(contentPane);
         contentPane.setLayout(new BorderLayout());
         ImageIcon icon = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash_scribble.gif"));
-        this.setSize(icon.getIconWidth(), icon.getIconHeight());
+        // fake screener is used to init GUI AWT framwork so that JCEF has a canvas to connect to
+        if (fake)
+            this.setSize(1, 1);
+        else
+            this.setSize(icon.getIconWidth(), icon.getIconHeight());
         contentPane.add(new JLabel(icon, JLabel.CENTER), BorderLayout.CENTER);
         contentPane.add(progressBar, BorderLayout.SOUTH);
 
