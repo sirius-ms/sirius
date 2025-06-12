@@ -83,7 +83,11 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
         // set metadata
         // mandatory
         exp.setSource(new SpectrumFileSource(source));
-        fields.getField(ACCESSION.k()).ifPresent(exp::setFeatureId);
+        fields.getField(ACCESSION.k()).ifPresent(acc -> {
+            if (!exp.hasAnnotation(AdditionalFields.class))
+                exp.setAnnotation(AdditionalFields.class, new AdditionalFields());
+            exp.getAnnotationOrThrow(AdditionalFields.class).put(ACCESSION.k(), acc);
+        });
         parseName(fields).ifPresent(exp::setName);
         fields.getField(CH_FORMULA.k()).map(MolecularFormula::parseOrThrow).ifPresent(exp::setMolecularFormula);
         parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);

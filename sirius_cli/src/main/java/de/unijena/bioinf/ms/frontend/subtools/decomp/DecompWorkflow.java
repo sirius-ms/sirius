@@ -21,14 +21,13 @@ package de.unijena.bioinf.ms.frontend.subtools.decomp;
 
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.MassDecomposer.*;
 import de.unijena.bioinf.MassDecomposer.Chemistry.MassToFormulaDecomposer;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import de.unijena.bioinf.babelms.massbank.MassbankFormat;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -105,7 +104,6 @@ public class DecompWorkflow implements Workflow {
             try(final MS2ExpInputIterator it = new MS2ExpInputIterator(inputResources, maxMz, false, false)){
                 while(it.hasNext()){
                     final Ms2Experiment exp = it.next();
-                    final String featureId = Optional.ofNullable(exp.getFeatureId()).orElse(exp.getName());
                     final MolecularFormula parentFormula = exp.getMolecularFormula();
                     final PrecursorIonType ionization = exp.getPrecursorIonType();
                     final List<Ms2Spectrum<Peak>> ms2Spectra = exp.getMs2Spectra();
@@ -120,7 +118,7 @@ public class DecompWorkflow implements Workflow {
                             intensities.add(p.getIntensity());
                         });
 
-                        decompJobs.add(new DecompInstanceJob(featureId, i, parentFormula, ionization, masses, intensities, alphabet, dev, decomposer, validator));
+                        decompJobs.add(new DecompInstanceJob(extractId(exp), i, parentFormula, ionization, masses, intensities, alphabet, dev, decomposer, validator));
                     }
                 }
             }
@@ -172,6 +170,15 @@ public class DecompWorkflow implements Workflow {
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("could not write output! Canceling...", e);
         }
+    }
+
+    private static String extractId(Ms2Experiment exp) {
+        String featureId = exp.getFeatureId();
+        if (Utils.isNullOrBlank(featureId))
+            featureId = exp.getAnnotation(AdditionalFields.class)
+                    .flatMap(af -> af.getField(MassbankFormat.ACCESSION.k()))
+                    .orElse(exp.getName());
+        return featureId;
     }
 
     private void writeDecompResult(Writer ow, DecimalFormat formater, DecompResult result, boolean printErrors, boolean inputFromSpectrumFiles) throws IOException {
