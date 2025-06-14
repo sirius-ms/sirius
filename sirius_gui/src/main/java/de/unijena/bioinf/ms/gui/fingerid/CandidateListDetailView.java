@@ -36,11 +36,13 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.LoadablePanelDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SketcherPanel;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
@@ -254,7 +256,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == sketchStructure) {
-            System.out.println("Now a window magically opens to sketch the new structure"); //todo implement
+            Jobs.runEDTLater(() -> new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
+                    "Structure Sketcher",
+                    () -> new SketcherPanel(gui, c))
+                    .setVisible(true));
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
@@ -363,8 +368,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new SubstructureMatchingDialog(
-                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, candidateBean)
+        Jobs.runEDTLater(() -> new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
+                "Reference spectra",
+                () -> new SubstructurePanel(gui, candidateBean))
                 .setVisible(true));
     }
 
