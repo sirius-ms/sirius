@@ -9,18 +9,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+import static de.unijena.bioinf.ms.gui.webView.BrowserPanel.parseNullable;
 import static de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider.makeParameters;
 
 
 public class SketcherPanel extends JPanel {
 
+    private final BrowserPanel browserPanel;
+
     public SketcherPanel(SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         super(new BorderLayout());
-        BrowserPanel browserPanel = makeBrowserPanel(siriusGui, structureCandidate);
+        browserPanel = makeBrowserPanel(siriusGui, structureCandidate);
         add(browserPanel, BorderLayout.CENTER);
     }
 
-    private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate){
+    private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         String fid = null;
         String smiles=null;
 
@@ -37,5 +40,9 @@ public class SketcherPanel extends JPanel {
                 + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null)
                 + "&smiles=" + smiles;
         return provider.newBrowserPanel(url);
+    }
+
+    public void updateSelectedFeatureSketcher(@Nullable String alignedFeatureId, @Nullable String smiles){
+        browserPanel.submitDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined,undefined, smiles=%s)", parseNullable(alignedFeatureId), parseNullable(smiles)));
     }
 }
