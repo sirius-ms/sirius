@@ -93,6 +93,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private final ResultPanel resultPanel;
     private final SiriusGui gui;
 
+    // Cached panel for faster sketcher dialog opening
+    private LoadablePanelDialog sketcherDialog;
+    private SketcherPanel sketcherPanel;
+
     /**
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
      */
@@ -256,10 +260,22 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
         } else if (e.getSource() == sketchStructure) {
-            Jobs.runEDTLater(() -> new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                    "Structure Sketcher",
-                    () -> new SketcherPanel(gui, c))
-                    .setVisible(true));
+            Jobs.runEDTLater(() -> {
+                if (sketcherDialog == null) {
+                    sketcherDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
+                            "Structure Sketcher",
+                            () -> {
+                                    sketcherPanel = new SketcherPanel(gui, c);
+                                    return sketcherPanel;
+                            });
+                    sketcherDialog.setVisible(true);
+                } else {
+                    sketcherDialog.runInBackgroundAndLoad(() -> {
+                        sketcherPanel.updateSelectedFeatureSketcher(c.getParentFeatureId(), c.getSmiles());
+                    });
+                    sketcherDialog.setVisible(true);
+                }
+            });
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
@@ -368,10 +384,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                "Reference spectra",
-                () -> new SubstructurePanel(gui, candidateBean))
-                .setVisible(true));
+        Jobs.runEDTLater(() -> {
+            JDialog substructureDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
+                    "Reference spectra",
+                    () -> new SubstructurePanel(gui, candidateBean));
+            substructureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            substructureDialog.setVisible(true);
+        });
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
