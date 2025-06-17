@@ -41,7 +41,7 @@ class FeatureFilterTest extends CLITest {
 
         runAssert(expectedInstanceIds("1"), "--quality=NOT_APPLICABLE");
         runAssert(expectedInstanceIds(), "--quality=GOOD");
-        runAssert(expectedInstanceIds("2", "3"), "--quality=BAD,DECENT");
+        runAssert(expectedInstanceIds("2", "3"), "--quality", "BAD", "DECENT");
         runAssert(expectedInstanceIds("2", "3"), "--quality=BAD", "--quality=DECENT");
     }
 

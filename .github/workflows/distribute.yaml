@@ -8,13 +8,13 @@ on:
     paths-ignore:
       - '**/README.md'
       - 'sirius_doc/**/*'
+  workflow_dispatch:
 
 jobs:
   distGUI:
     strategy:
       matrix:
-#        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        os: [ ubuntu-latest, windows-latest]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
         targetArchitecture: [amd64, arm64]
         exclude:
           - os: windows-latest
@@ -34,81 +34,13 @@ jobs:
           lfs: true
       - name: Git LFS Pull
         run: git lfs pull
-
-      - name: Set up JetBrains Runtime with JCEF
-        shell: bash
-        run: |
-          JDK_VERION="21.0.7"
-          JBR_VERSION_TAG="b1020.35"
-
-          OS_TYPE=""
-          ARCH_TYPE=""
-          JBR_DIR_NAME="jbr_jcef_sdk" # Temp directory for extraction
-
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            OS_TYPE="linux"
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            OS_TYPE="windows"
-          elif [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            OS_TYPE="osx" # Or "mac" or "macos" - check JetBrains naming for JBR JCEF
-          else
-            echo "Unsupported OS: ${{ matrix.os }}"
-            exit 1
-          fi
-          # we always build on x64
-          ARCH_TYPE="x64"
-          # if [[ "${{ matrix.targetArchitecture }}" == "amd64" ]]; then
-          #   ARCH_TYPE="x64"
-          # elif [[ "${{ matrix.targetArchitecture }}" == "arm64" ]]; then
-          #   ARCH_TYPE="aarch64"
-          # else
-          #   echo "Unsupported architecture: ${{ matrix.targetArchitecture }}"
-          #   exit 1
-          # fi
-          
-          JBR_FILE_NAME="jbrsdk_jcef-${JDK_VERION}-${OS_TYPE}-${ARCH_TYPE}-${JBR_VERSION_TAG}.tar.gz"
-          JBR_DOWNLOAD_URL_BASE="https://cache-redirector.jetbrains.com/intellij-jbr"
-          JBR_DOWNLOAD_URL="${JBR_DOWNLOAD_URL_BASE}/${JBR_FILE_NAME}"
-
-          echo "Attempting to download JBR JCEF from: ${JBR_DOWNLOAD_URL}"
-          curl -L -o "${JBR_FILE_NAME}" "${JBR_DOWNLOAD_URL}"
-          if [ $? -ne 0 ]; then
-            echo "Failed to download JBR JCEF. Please check URL and version."
-            exit 1
-          fi
-
-          mkdir -p "${JBR_DIR_NAME}"
-
-          echo "Extracting ${JBR_FILE_NAME} to ${JBR_DIR_NAME}"
-
-          tar -xzf "${JBR_FILE_NAME}" -C "${JBR_DIR_NAME}" --strip-components=1
-          
-          JAVA_HOME_PATH="${PWD}/${JBR_DIR_NAME}"
-          # On macOS, the JDK home is often under Contents/Home
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-               JAVA_HOME_PATH="${JAVA_HOME_PATH}/Contents/Home"
-          fi
-
-          echo "Effective JAVA_HOME will be: ${JAVA_HOME_PATH}"
-          
-          # Export for current script execution AND set for subsequent steps
-          export JAVA_HOME="${JAVA_HOME_PATH}"
-          export PATH="${JAVA_HOME_PATH}/bin:${PATH}"
-          
-          echo "JAVA_HOME=${JAVA_HOME_PATH}" >> $GITHUB_ENV
-          echo "${JAVA_HOME_PATH}/bin" >> $GITHUB_PATH
-          
-          echo "--- Verifying Java version from new JBR ---"
-          echo "JAVA_HOME is: $JAVA_HOME"
-          echo "PATH is: $PATH"
-          which java
-          java -version
-          echo "--- Verifying Javac version from new JBR ---"
-          which javac
-          javac -version || echo "javac not found or not in JCEF JBR variant (this might be okay for some JRE-like JBRs)"
-          echo "--- Verification complete ---"
-
-
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'liberica'
+          java-version: '21' # The JDK version to make available on the path.
+          java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: 'x64' # (x64 or x86) - defaults to x64
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
