@@ -118,10 +118,7 @@ public class DatabaseDialog extends JDialog {
                         Jobs.runEDTLater(() -> new StacktraceDialog(DatabaseDialog.this, gui.getSiriusClient().unwrapErrorMessage(ex), ex));
                     } catch (Exception ex2) {
                         LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                        if (getOwner() instanceof Frame)
-                            new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB removal.", ex2);
-                        else
-                            new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                        new StacktraceDialog(getOwner(), "Fatal Error during Custom DB removal.", ex2);
                     }
 
                     loadDatabaseList();
@@ -276,7 +273,7 @@ public class DatabaseDialog extends JDialog {
                 content.setText("<html><p>" + c.getErrorMessage() + "</p></html>");
                 content.setToolTipText(c.getLocation());
             } else {
-                content.setText("Empty custom database.");
+                content.setText("<html><b>" + c.getDisplayName() + "</b><br>Empty custom database.");
                 content.setToolTipText(null);
             }
         }

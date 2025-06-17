@@ -14,6 +14,10 @@ dependencies {
 
 version = siriusFrontendVersion
 
+enum DistJRE {
+    LIBERICA, JBR_JCEF
+}
+
 ext {
     siriusJvmArgs = ['-Xms2G',
                      '-XX:MaxRAMPercentage=60',
@@ -21,7 +25,9 @@ ext {
 //                     '-XX:+UseG1GC',
 //                     '-XX:+UseZGC',
 //                     '-XX:+ZGenerational',
-                     '-XX:+ExitOnOutOfMemoryError']
+                     '-XX:+ExitOnOutOfMemoryError',
+                     '--add-opens=java.desktop/java.awt=ALL-UNNAMED' // needed to run jxbrowser properly
+    ]
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
@@ -39,19 +45,33 @@ ext {
     }
 
     // configure infos for bundled JRE
+    def distJre = DistJRE.LIBERICA;
     jre_version = '21.0.7'
     jre_major = jre_version.split("[.]")[0]
 
-    // liberica config
-    jre_distributor_version = 'b1020.35'
-    jre_mac_prefix = null
-    jre_fname = "jbr_jcef-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
-    jre_download_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
+    switch (distJre) {
+        case DistJRE.LIBERICA:
+            // liberica config
+            jre_distributor_version = "$jre_version+9"
+            jre_mac_prefix = null
+            jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+//            jre_fname = "bellsoft-jre${jre_distributor_version}-${siriusTargetPlatform.bellsoftClassifier().get()}-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+            jre_download_base_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
+            break
+        case DistJRE.JBR_JCEF:
+            //jbr config
+            jre_distributor_version = 'b1020.35'
+            jre_mac_prefix = "Contents/Home"
+            jre_fname = "jbr_jcef-${jre_version}-${siriusTargetPlatform.jbrClassifier().get()}-${jre_distributor_version}.tar.gz"
+            jre_download_base_link = "https://cache-redirector.jetbrains.com/intellij-jbr/"
+            break
+    }
+    jre_download_link = "${jre_download_base_link}${jre_fname}"
 }
 
 tasks.register('downloadRuntimeImage', Download) {
     group = "runtime"
-    src "${jre_download_link}${jre_fname}"
+    src jre_download_link
     dest getBuildDir().toPath().resolve('runtime').resolve("$jre_fname").toFile()
     onlyIfModified true
     overwrite false
@@ -60,7 +80,7 @@ tasks.register('downloadRuntimeImage', Download) {
 tasks.register('extractRuntimeImage', ExtractRuntime) {
     dependsOn downloadRuntimeImage
     inputArchive = downloadRuntimeImage.dest
-    outputDir = file(downloadRuntimeImage.dest.absolutePath.replace('.zip', '').replace('.tar.gz', ''))
+    outputDir = file(downloadRuntimeImage.dest.absolutePath.substring(0, downloadRuntimeImage.dest.absolutePath.lastIndexOf(".")))
 }
 
 subprojects {
@@ -599,15 +619,11 @@ abstract class ExtractRuntime extends DefaultTask {
         Files.createDirectories(outputDir.toPath())
         project.copy {
             includeEmptyDirs = false
-            if (project.siriusTargetPlatform.isWin()) {
-                from(project.tarTree(inputArchive)) {
-                    eachFile { FileCopyDetails fcd ->
-                        fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
-                    }
-                }
-                into outputDir
-            } else if (project.siriusTargetPlatform.isLinux() || (project.siriusTargetPlatform.isMac() && project.jre_mac_prefix == null)) {
-                from(project.tarTree(inputArchive)) {
+            if (project.siriusTargetPlatform.isWin() || project.siriusTargetPlatform.isLinux() || (project.siriusTargetPlatform.isMac() && project.jre_mac_prefix == null)) {
+                from(inputArchive.toString().endsWith('.zip')
+                        ? project.zipTree(inputArchive)
+                        : project.tarTree(inputArchive)
+                ) {
                     eachFile { FileCopyDetails fcd ->
                         fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
                     }

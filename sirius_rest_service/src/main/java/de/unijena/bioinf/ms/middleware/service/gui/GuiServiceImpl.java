@@ -111,6 +111,11 @@ public class GuiServiceImpl implements GuiService {
                 }
             });
         }
+        Jobs.runEDTLater(() -> {
+            gui.getMainFrame().setVisible(true);
+            gui.getMainFrame().toFront();
+            gui.getMainFrame().checkAndInitSoftwareTour();
+        });
     }
 
     @Override

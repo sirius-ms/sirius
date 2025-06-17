@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -217,21 +218,21 @@ public class GuiUtils {
         openURLInSystemBrowser(null, url, null);
     }
 
-    public static void openURL(@NotNull URI url,  @Nullable SiriusGui browserProvider, boolean useSystemBrowser) throws IOException {
-        openURL(null, url, browserProvider, useSystemBrowser);
+    public static void openURL(@NotNull URI url,  @Nullable SiriusGui gui, boolean useSystemBrowser) throws IOException {
+        openURL(null, url, gui, useSystemBrowser);
     }
 
-    public static void openURL(@Nullable Window owner, @NotNull URI url, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
-        openURL(owner, url, null, browserProvider, trySystemBrowserFirst);
+    public static void openURL(@Nullable Window owner, @NotNull URI url, SiriusGui gui, boolean trySystemBrowserFirst) throws IOException {
+        openURL(owner, url, null, gui, trySystemBrowserFirst);
     }
 
-    public static void openURL(@NotNull URI url, @Nullable String title, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
-        openURL(null, url, title, browserProvider, trySystemBrowserFirst);
+    public static void openURL(@NotNull URI url, @Nullable String title, SiriusGui gui, boolean trySystemBrowserFirst) throws IOException {
+        openURL(null, url, title, gui, trySystemBrowserFirst);
     }
 
-    public static void openURL(@Nullable Window owner, @NotNull URI url, @Nullable String title, SiriusGui browserProvider, boolean trySystemBrowserFirst) throws IOException {
-        if (owner == null && browserProvider != null)
-            owner = browserProvider.getMainFrame();
+    public static void openURL(@Nullable Window owner, @NotNull URI url, @Nullable String title, SiriusGui gui, boolean trySystemBrowserFirst) throws IOException {
+        if (owner == null && gui != null)
+            owner = gui.getMainFrame();
 
         if (url == null)
             if (owner instanceof JDialog dialog)
@@ -239,7 +240,7 @@ public class GuiUtils {
             else
                 new ExceptionDialog((Frame) owner, "Cannot open empty URL!");
 
-        if (trySystemBrowserFirst || browserProvider == null) {
+        if (trySystemBrowserFirst || gui == null) {
             try {
                 if (Desktop.isDesktopSupported()) {
                     Desktop.getDesktop().browse(url);
@@ -254,15 +255,18 @@ public class GuiUtils {
             }
         }
 
-        if (browserProvider == null)
+
+        if (gui == null)
            throw new IOException("Could not open URL in System Browser. NO fallback given!", new NullPointerException("Provider for internal browser is null!"));
+
+        @NotNull BrowserPanelProvider<?> browserProvider = gui.getBrowserPanelProvider();
 
         if (owner instanceof JDialog dialog)
             browserProvider.newBrowserPopUp(dialog, title == null ? "SIRIUS WebView" : title, url);
         else if (owner instanceof JFrame frame)
             browserProvider.newBrowserPopUp(frame, title == null ? "SIRIUS WebView" : title, url);
         else
-            browserProvider.newBrowserPopUp(title == null ? "SIRIUS WebView" : title, url);
+            browserProvider.newBrowserPopUp((Frame) null, title == null ? "SIRIUS WebView" : title, url);
 
     }
 

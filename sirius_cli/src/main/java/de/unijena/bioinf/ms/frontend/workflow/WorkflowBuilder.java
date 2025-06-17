@@ -276,9 +276,13 @@ public class WorkflowBuilder {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool)
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool) {
+                    while (parseResult.hasSubcommand()) {
+                        parseResult = parseResult.subcommand();
+                    }
                     return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand())
                             .makeWorkflow(rootOptions, configOptionLoader.config);
+                }
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool) {
                     if (spaceManagerFactory == null)
                         throw new IllegalStateException("Preprocessing tool requires a ProjectSpaceManagerFactory!");
@@ -336,10 +340,9 @@ public class WorkflowBuilder {
 
         private void execute(CommandLine parsed, List<ToolChainJob.Factory<?>> executionResult, List<ToolChainOptions<?, ?>> executionOptions) {
             Object command = parsed.getCommand();
-            if (command instanceof ToolChainOptions) {
+            if (command instanceof ToolChainOptions<?, ?> toolChainOptions) {
                 try {
                     // create a JobFactory (Task) and configures it invalidation behavior based on its subtools.
-                    final ToolChainOptions<?, ?> toolChainOptions = (ToolChainOptions<?, ?>) command;
                     final ToolChainJob.Factory<?> task = toolChainOptions.call();
 
                     // detect tool dependencies and configure invalidators

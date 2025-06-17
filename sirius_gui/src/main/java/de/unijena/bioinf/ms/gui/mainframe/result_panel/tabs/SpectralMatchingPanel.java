@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.net.URI;
 import java.util.List;
 
 
@@ -69,8 +68,10 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
         disableLoading();
     }
 
-    public static class SpectraVisualizationPanel extends JCefBrowserPanel implements ListSelectionListener {
+    public static class SpectraVisualizationPanel extends JPanel implements ListSelectionListener {
         @NotNull private final DefaultEventSelectionModel<SpectralMatchBean> selectionModel;
+        @NotNull private final BrowserPanel browserPanel;
+
         private SpectraVisualizationPanel(SiriusGui siriusGui, @NotNull DefaultEventSelectionModel<SpectralMatchBean> selectionModel) {
           this(siriusGui, selectionModel, selectionModel.getSelected().stream().findFirst().orElse(null));
         }
@@ -79,16 +80,17 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
                                           @NotNull DefaultEventSelectionModel<SpectralMatchBean> selectionModel,
                                           @Nullable SpectralMatchBean initialSelection
         ) {
-            super(makeUrl(siriusGui, initialSelection), siriusGui);
+            super(new BorderLayout());
             this.selectionModel = selectionModel;
+            this.browserPanel = makeBrowserPanel(siriusGui, initialSelection);
             selectionModel.addListSelectionListener(this);
+            add(browserPanel, BorderLayout.CENTER);
         }
 
-        private static String makeUrl(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean){
+        private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @Nullable SpectralMatchBean matchBean){
             String fid = matchBean != null ? matchBean.getInstance().getFeatureId() : null;
             String mid = matchBean != null ? matchBean.getMatch().getSpecMatchId() : null;
-            return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/libmatch")
-                    + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, mid);
+            return siriusGui.getBrowserPanelProvider().makeReactPanel("/libmatch", siriusGui.getProjectManager().getProjectId(), fid, null, null, mid);
         }
 
         @Override
@@ -99,9 +101,9 @@ public class SpectralMatchingPanel extends JPanel implements Loadable, PanelDesc
 
         public void valueChanged(@Nullable SpectralMatchBean matchBean) {
             if (matchBean == null) {
-                updateSelectedSpectralMatch(null, null);
+                browserPanel.updateSelectedSpectralMatch(null, null);
             } else {
-                updateSelectedSpectralMatch(matchBean.getInstance().getFeatureId(), matchBean.getMatch().getSpecMatchId());
+                browserPanel.updateSelectedSpectralMatch(matchBean.getInstance().getFeatureId(), matchBean.getMatch().getSpecMatchId());
             }
         }
 

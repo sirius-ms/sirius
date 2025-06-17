@@ -59,7 +59,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
             description = {"If set, the decompositions have to be subformulas of the given parent formula."})
     String parentFormula;
 
-    @CommandLine.Option(names = {"--ion", "-i"}, description = {"Ionization mode.", "Example: '[M+H]+'."})
+    @CommandLine.Option(names = {"--adduct", "--ion", "-i"}, description = {"Expected adduct to be used.", "Example: '[M+H]+', '[M+H20+H]+', '[M-H20+H]+'."})
     String ionization;
 
     @CommandLine.Option(names = {"--max-decomps","-d"},
@@ -67,7 +67,11 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
                     "than [--max-decomps] decompositions if there are not more available."})
     Integer maxDecomps;
 
-    @CommandLine.Option(names = {"--mass", "-m"}, split = ",", description = {"Masses that will be decomposed."})
+    @CommandLine.Option(names = {"--maxMz",}, description = {"Maximum allowed precursor m/z of a given MS2 spectrum. " +
+            "The input spectra are filtered according to this value."})
+    Double maxMz;
+
+    @CommandLine.Option(names = {"--mass", "-m"}, arity = "0..*", description = {"Masses that will be decomposed."})
     double[] masses;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = {"File to with output to."})

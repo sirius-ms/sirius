@@ -12,6 +12,7 @@ buildscript {
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
+        classpath "com.teamdev.jxbrowser:jxbrowser-gradle-plugin:2.0.0"
     }
 }
 
@@ -135,6 +136,7 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    apply plugin: "com.teamdev.jxbrowser"
 
     targetCompatibility = 21
 
@@ -143,6 +145,10 @@ allprojects {
     javadoc.options.encoding = 'UTF-8'
 
     group = 'io.sirius-ms'
+
+    jxbrowser {
+        version='8.8.0'
+    }
 
     repositories {
 //        mavenLocal()
@@ -165,7 +171,6 @@ allprojects {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
             allowInsecureProtocol = true
         }
-
 
         // This is just needed to load sirius-ms testing dependencies.
         // All artifacts needed to build SIRIUS should be public.

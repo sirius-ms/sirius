@@ -45,7 +45,7 @@ public class Workspace {
 
     static {
         try {
-            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
+            System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties,jxLicense.build.properties");
 
             final String version = PropertyManager.getProperty("de.unijena.bioinf.siriusFrontend.version");
             final String[] versionParts = version.split("[.]");

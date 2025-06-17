@@ -30,7 +30,7 @@ public class AlignedFeaturesFilterOptions {
     @CommandLine.Option(names = "--hasmsms", description = {"Only features with MS/MS."})
     private Boolean hasMsMs;
 
-    @CommandLine.Option(names = "--quality", description = {"Only features with given data quality. Valid values: ${COMPLETION-CANDIDATES}."}, split = ",")
+    @CommandLine.Option(arity = "0..5", names = "--quality", description = {"Only features with given data quality. Valid values: ${COMPLETION-CANDIDATES}."})
     private DataQuality[] quality;
 
     public Filter createFilter() {
@@ -40,7 +40,7 @@ public class AlignedFeaturesFilterOptions {
         if (rtmin != null) filters.add(Filter.where("retentionTime.middle").gte(rtmin));
         if (rtmax != null) filters.add(Filter.where("retentionTime.middle").lte(rtmax));
         if (hasMsMs != null) filters.add(Filter.where("hasMsMs").eq(true));
-        if (quality != null && quality.length > 0) filters.add(Filter.where("dataQuality").in(Arrays.stream(quality).map(Enum::toString).toArray(String[]::new)));
+        if (quality != null && quality.length > 0) filters.add(Filter.where("dataQuality").in(Arrays.stream(quality).distinct().map(Enum::toString).toArray(String[]::new)));
 
         if (filters.size() == 1) {
             return filters.getFirst();
