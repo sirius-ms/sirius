@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -60,7 +59,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     }
 
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
-        super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte));
+        super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte, false));
         this.metadata = metadata;
         updateSerializers();
     }
