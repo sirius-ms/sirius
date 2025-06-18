@@ -65,6 +65,8 @@ jobs:
         run: /usr/bin/security find-identity
 
       - name: Gradle Build
+        env:
+          GRADLE_OPTS: -Xmx4G
         shell: bash
         run: |
           chmod +x ./gradlew
