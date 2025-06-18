@@ -71,7 +71,7 @@ jobs:
           ./gradlew --no-daemon --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
-            -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}"
+            -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}" \
             -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
             -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" \
             -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" \
