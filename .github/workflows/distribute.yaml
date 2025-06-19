@@ -40,7 +40,7 @@ jobs:
           distribution: 'adopt'
           java-version: '21' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: 'x64' # (x64 or x86) - defaults to x64
+          architecture: 'x64' # (x64 or x86N) - defaults to x64
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
@@ -71,7 +71,7 @@ jobs:
 
       - name: Gradle Build
         env:
-          GRADLE_OPTS: -Xmx5G
+          GRADLE_OPTS: -Xmx7G
         shell: bash
         run: |
           chmod +x ./gradlew
