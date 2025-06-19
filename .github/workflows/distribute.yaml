@@ -26,8 +26,11 @@ jobs:
             targetArchitecture: amd64
     runs-on: ${{ matrix.os }}
     env:
+      GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
       MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
       MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
+      MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
+      MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
     steps:
       - uses: actions/checkout@v3
         with:
