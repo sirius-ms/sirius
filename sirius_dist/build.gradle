@@ -533,13 +533,6 @@ subprojects {
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = distInstaller.getOutputFile().getAbsolutePath()
-                    getLogger().lifecycle("Showing available providers")
-                    project.exec {
-                        commandLine(["xcrun", "altool", "--list-providers",
-                                     "-u", "$appleId",
-                                     "-p", "$appleIdPw"])
-                    }
-
                     getLogger().lifecycle("Notarizing $pkg...")
 
                     String uuid = null
