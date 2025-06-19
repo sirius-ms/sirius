@@ -595,6 +595,20 @@ subprojects {
         appendFileNameToChecksum.set(true)
     }
 
+    // For Groovy (build.gradle)
+    tasks.register("printJvmArgs") {
+        doLast {
+            def runtimeMxBean = java.lang.management.ManagementFactory.getRuntimeMXBean()
+            def jvmArgs = runtimeMxBean.getInputArguments()
+            println "****************************************"
+            println "Actual JVM Arguments for this build:"
+            jvmArgs.each { arg ->
+                println arg
+            }
+            println "****************************************"
+        }
+    }
+
     tasks.register('buildJpDists') { group = 'jpDist' }
 }
 
