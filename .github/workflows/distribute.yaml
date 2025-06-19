@@ -14,8 +14,10 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        targetArchitecture: [amd64, arm64]
+        # os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ macos-latest ]
+        # targetArchitecture: [amd64, arm64]
+        targetArchitecture: [arm64]
         exclude:
           - os: windows-latest
             targetArchitecture: arm64
@@ -74,8 +76,9 @@ jobs:
           GRADLE_OPTS: -Xmx7G
         shell: bash
         run: |
+          echo "GRADLE_OPTS is: $GRADLE_OPTS"
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
+          ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
             -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}" \
