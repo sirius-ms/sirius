@@ -14,16 +14,11 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-13 ]
-#        os: [ ubuntu-latest, windows-latest, macos-13, macos-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
         targetArchitecture: [amd64, arm64]
         exclude:
           - os: windows-latest
             targetArchitecture: arm64
-          - os: macos-13
-            targetArchitecture: arm64
-          - os: macos-latest
-            targetArchitecture: amd64
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -31,6 +26,8 @@ jobs:
       MACOS_IDENTITY_ID: ${{ secrets.MACOS_IDENTITY_ID }}
       MACOS_APPLE_ID: ${{ secrets.MACOS_APPLE_ID }}
       MACOS_APPLE_ID_PW: ${{ secrets.MACOS_APPLE_ID_PW }}
+      SIRIUS_USER: ${{ secrets.SIRIUS_USER }}
+      SIRIUS_PW: ${{ secrets.SIRIUS_PW }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -40,7 +37,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'liberica'
+          distribution: 'adopt'
           java-version: '21' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: 'x64' # (x64 or x86) - defaults to x64
