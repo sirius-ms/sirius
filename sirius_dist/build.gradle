@@ -576,7 +576,7 @@ subprojects {
                     execResult = exec {
                         commandLine(["xcrun", "stapler", "staple", "${pkg}"])
                     }
-                    returnCode = execResult.getExitValue()
+
                     if (execResult.getExitValue() != 0 || uuid == null) {
                         getLogger().error("Error ${execResult.getExitValue()} during stapling.")
                         getLogger().error("STDOUT: " + so.toString())
