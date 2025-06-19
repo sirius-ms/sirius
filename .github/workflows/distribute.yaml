@@ -72,11 +72,8 @@ jobs:
         run: /usr/bin/security find-identity
 
       - name: Gradle Build
-        env:
-          GRADLE_OPTS: -Xmx7G
         shell: bash
         run: |
-          echo "GRADLE_OPTS is: $GRADLE_OPTS"
           chmod +x ./gradlew
           ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
