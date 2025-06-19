@@ -14,11 +14,16 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-latest, macos-13 ]
+#        os: [ ubuntu-latest, windows-latest, macos-13, macos-latest ]
         targetArchitecture: [amd64, arm64]
         exclude:
           - os: windows-latest
             targetArchitecture: arm64
+          - os: macos-13
+            targetArchitecture: arm64
+          - os: macos-latest
+            targetArchitecture: amd64
     runs-on: ${{ matrix.os }}
     env:
       MACOS_APP_IDENTITY_ID: ${{ secrets.MACOS_APP_IDENTITY_ID }}
@@ -66,7 +71,7 @@ jobs:
 
       - name: Gradle Build
         env:
-          GRADLE_OPTS: -Xmx8G
+          GRADLE_OPTS: -Xmx5G
         shell: bash
         run: |
           chmod +x ./gradlew
