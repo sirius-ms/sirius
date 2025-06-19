@@ -533,7 +533,8 @@ subprojects {
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
                     def pkg = distInstaller.getOutputFile().getAbsolutePath()
-                    getLogger().lifecycle("Notarizing $pkg...")
+
+                    getLogger().lifecycle("Notarizing $pkg with notarytool...")
 
                     String uuid = null
                     def so = new ByteArrayOutputStream()
@@ -543,14 +544,19 @@ subprojects {
                                      "--password", "${appleIdPw}", "${pkg}"])
                         standardOutput so
                         errorOutput eo
+                        ignoreExitValue = true // Handle exit value manually below
                     }
-                    uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
-                    getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
 
-                    int returnCode = execResult.getExitValue()
-                    if (returnCode != 0) {
-                        throw new GradleException("Error ${returnCode} during notarization.")
+                    // Keep the rest of your logic for checking results, logging, and stapling
+                    uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElse(null)
+
+                    if (execResult.getExitValue() != 0 || uuid == null) {
+                        getLogger().error("Notarization submission failed.")
+                        getLogger().error("STDOUT: " + so.toString())
+                        getLogger().error("STDERR: " + eo.toString())
+                        throw new GradleException("Error ${execResult.getExitValue()} during notarization submission.")
                     }
+
 
                     getLogger().lifecycle("Requesting Log of $uuid...")
                     execResult = exec {
@@ -558,9 +564,11 @@ subprojects {
                                      "--password", "${appleIdPw}", "$uuid"])
                     }
 
-                    returnCode = execResult.getExitValue()
-                    if (returnCode != 0) {
-                        throw new GradleException("Error ${returnCode} during notarization log request.")
+                    if (execResult.getExitValue() != 0 || uuid == null) {
+                        getLogger().error("Error ${execResult.getExitValue()} during notarization log request.")
+                        getLogger().error("STDOUT: " + so.toString())
+                        getLogger().error("STDERR: " + eo.toString())
+                        throw new GradleException("Error ${execResult.getExitValue()} during notarization log request.")
                     }
 
 
@@ -569,8 +577,11 @@ subprojects {
                         commandLine(["xcrun", "stapler", "staple", "${pkg}"])
                     }
                     returnCode = execResult.getExitValue()
-                    if (returnCode != 0) {
-                        throw new GradleException("Error ${returnCode} during stapling.")
+                    if (execResult.getExitValue() != 0 || uuid == null) {
+                        getLogger().error("Error ${execResult.getExitValue()} during stapling.")
+                        getLogger().error("STDOUT: " + so.toString())
+                        getLogger().error("STDERR: " + eo.toString())
+                        throw new GradleException("Error ${execResult.getExitValue()} during stapling.")
                     }
                 } else {
                     getLogger().warn("Could not find apple id for notarization. Skipping notarization step")
