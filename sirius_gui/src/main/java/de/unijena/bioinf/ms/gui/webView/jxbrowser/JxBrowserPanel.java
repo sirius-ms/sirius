@@ -76,13 +76,8 @@ public class JxBrowserPanel extends BrowserPanel {
         });
     }
 
-    /**
-     * Executes JavaScript in the browser.
-     *
-     * @param javascript The JavaScript to execute
-     */
-    public void executeJavaScript(String javascript) {
-        browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(javascript));
+    public <T> T executeJavaScript(String javascript) {
+        return browser.mainFrame().map(frame -> (T) frame.executeJavaScript(javascript)).orElse(null);
     }
 
     // we use replaceable calls to ensure that during fast selection changes,

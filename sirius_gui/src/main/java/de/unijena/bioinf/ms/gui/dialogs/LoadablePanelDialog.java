@@ -9,19 +9,25 @@ import java.util.function.Supplier;
 
 public class LoadablePanelDialog extends JDialog implements Loadable {
 
-    private final LoadablePanel loadablePanel;
+    protected final LoadablePanel loadablePanel;
+    protected final JPanel contentContainer;
 
-    public LoadablePanelDialog(Window owner, String title, Supplier<JPanel> panelSupplier) {
+    public LoadablePanelDialog(Window owner, String title) {
         super(owner, title, DEFAULT_MODALITY_TYPE);
         this.setLayout(new BorderLayout());
 
-        JPanel content = new JPanel(new BorderLayout());
-        loadablePanel = new LoadablePanel(content);
+        contentContainer = new JPanel(new BorderLayout());
+        loadablePanel = new LoadablePanel(contentContainer);
         add(loadablePanel, BorderLayout.CENTER);
+    }
 
+    /**
+     * Starts loading the panel from the given supplier in the background.
+     */
+    public void loadPanel(Supplier<JPanel> panelSupplier) {
         loadablePanel.runInBackgroundAndLoad(() -> {
             JPanel panel = panelSupplier.get();
-            content.add(panel, BorderLayout.CENTER);
+            contentContainer.add(panel, BorderLayout.CENTER);
         });
     }
 
