@@ -41,7 +41,6 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SketcherPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -93,9 +92,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private final ResultPanel resultPanel;
     private final SiriusGui gui;
 
-    // Cached panel for faster sketcher dialog opening
-    private LoadablePanelDialog sketcherDialog;
-    private SketcherPanel sketcherPanel;
+    // Cached dialog for faster opening
+    private SketcherDialog sketcherDialog;
 
     /**
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
@@ -262,17 +260,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         } else if (e.getSource() == sketchStructure) {
             Jobs.runEDTLater(() -> {
                 if (sketcherDialog == null) {
-                    sketcherDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                            "Structure Sketcher",
-                            () -> {
-                                    sketcherPanel = new SketcherPanel(gui, c);
-                                    return sketcherPanel;
-                            });
+                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, c);
                     sketcherDialog.setVisible(true);
                 } else {
-                    sketcherDialog.runInBackgroundAndLoad(() -> {
-                        sketcherPanel.updateSelectedFeatureSketcher(c.getParentFeatureId(), c.getSmiles());
-                    });
+                    sketcherDialog.updateMolecule(c);
                     sketcherDialog.setVisible(true);
                 }
             });
@@ -385,9 +376,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
         Jobs.runEDTLater(() -> {
-            JDialog substructureDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
-                    "Reference spectra",
-                    () -> new SubstructurePanel(gui, candidateBean));
+            LoadablePanelDialog substructureDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), "Reference spectra");
+            substructureDialog.loadPanel(() -> new SubstructurePanel(gui, candidateBean));
             substructureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             substructureDialog.setVisible(true);
         });

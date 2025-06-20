@@ -1,18 +1,23 @@
 package de.unijena.bioinf.ms.gui.webView.jxbrowser;
 
+import com.teamdev.jxbrowser.browser.Browser;
+import com.teamdev.jxbrowser.browser.event.ConsoleMessageReceived;
 import com.teamdev.jxbrowser.engine.Engine;
 import com.teamdev.jxbrowser.engine.EngineOptions;
 import com.teamdev.jxbrowser.engine.Theme;
+import com.teamdev.jxbrowser.js.ConsoleMessage;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.ms.gui.webView.LinkInterception;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 
 import static com.teamdev.jxbrowser.engine.RenderingMode.HARDWARE_ACCELERATED;
 
+@Slf4j
 public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel> {
     private final Engine jxBrowserEngine;
 
@@ -41,7 +46,13 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
     @Override
     public JxBrowserPanel newBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception) {
-        return new JxBrowserPanel(fullUrlWithParameters, jxBrowserEngine.newBrowser(), linkInterception);
+        Browser browser = jxBrowserEngine.newBrowser();
+        browser.on(ConsoleMessageReceived.class, event -> {
+            ConsoleMessage consoleMessage = event.consoleMessage();
+            log.debug("JS Console [{}]: {}", consoleMessage.level(), consoleMessage.message());
+        });
+
+        return new JxBrowserPanel(fullUrlWithParameters, browser, linkInterception);
     }
 
     @Override
