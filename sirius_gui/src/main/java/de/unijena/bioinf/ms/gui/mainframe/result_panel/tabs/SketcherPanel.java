@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
+import com.teamdev.jxbrowser.js.JsPromise;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
@@ -44,5 +45,9 @@ public class SketcherPanel extends JPanel {
 
     public void updateSelectedFeatureSketcher(@Nullable String alignedFeatureId, @Nullable String smiles){
         browserPanel.submitDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s,undefined,undefined,undefined, smiles=%s)", parseNullable(alignedFeatureId), parseNullable(smiles)));
+    }
+
+    public JsPromise tryUploadCurrentStructure() {
+        return browserPanel.executeJavaScript("new Promise((resolve) => { document.dispatchEvent(new CustomEvent('uploadCurrentMoleculeFromEditor', { detail: resolve }))})");
     }
 }
