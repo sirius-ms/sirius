@@ -33,6 +33,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
 import de.unijena.bioinf.chemdb.CompoundJsonMapper;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class StructureSearchClient extends AbstractCsiClient {
 
 
@@ -75,15 +77,20 @@ public class StructureSearchClient extends AbstractCsiClient {
     /**
      * gives you the Fingerprint version used by CSI:FingerID
      */
-    public CdkFingerprintVersion getCDKFingerprintVersion(OkHttpClient client) throws IOException {
+    public CdkFingerprintVersion getCDKFingerprintVersion(OkHttpClient client) {
         if (!cacheFpVersion || fpVersion == null) {
             if (getServerUrl() != null) {
-                fpVersion = new CdkFingerprintVersion(
-                        executeFromJson(client, () -> new Request.Builder()
-                                .url(buildVersionSpecificWebapiURI("/usedfingerprints").build())
-                                .get(), new TypeReference<>() {
-                        })
-                );
+                try {
+                    fpVersion = new CdkFingerprintVersion(
+                            executeFromJson(client, () -> new Request.Builder()
+                                    .url(buildVersionSpecificWebapiURI("/usedfingerprints").build())
+                                    .get(), new TypeReference<>() {
+                            })
+                    );
+                } catch (Exception e) {
+                    log.error("Error getting version", e);
+                    return null;
+                }
             }
         }
         return fpVersion;
