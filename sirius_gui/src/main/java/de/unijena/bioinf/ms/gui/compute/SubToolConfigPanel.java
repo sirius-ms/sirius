@@ -71,6 +71,13 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         return Optional.ofNullable(commandSpec.findOption(name)).map(CommandLine.Model.ArgSpec::description);
     }
 
+    public Optional<String[]> getPositionalParameterDescription(int index) {
+       if (index >= 0 && index < commandSpec.positionalParameters().size()) {
+           return Optional.ofNullable(commandSpec.positionalParameters().get(index).description());
+       }
+       return Optional.empty();
+    }
+
     public Optional<String> getOptionDefaultByName(String name) {
         return Optional.ofNullable(commandSpec.findOption(name)).map(CommandLine.Model.ArgSpec::defaultValue);
     }
