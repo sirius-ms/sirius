@@ -62,6 +62,7 @@ class NoSqlCanopusSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
+            "compoundId",
             "mappingFeatureId",
             "overallFeatureQuality");
 
@@ -85,6 +86,7 @@ class NoSqlCanopusSummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 
