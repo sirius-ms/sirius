@@ -1,69 +1,19 @@
 package de.unijena.bioinf.sirius.elementdetection.transformer;
 
-import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
-import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.sirius.ProcessedInput;
-import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
-import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
-import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
-import org.slf4j.LoggerFactory;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 public class TransformerBasedPredictor {
-
-    public static void main(String[] args) {
-        try {
-            final File out = new File("/home/kaidu/software/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
-            final TransformerBasedPredictor predictor = readFromBinary(out);//readFromTxt(new File("/home/kaidu/data/iso/redone/parameters"));
-
-            final SimpleMutableSpectrum spec = new SimpleMutableSpectrum();
-            /*
-            200.04460261609054  0.700920311689305
-            201.04804547236688  0.04786877088637881
-            202.04193422372143  0.23261093461509075
-            203.0453318162227  0.015810579533340148
-            204.0464506968809  0.0027894032758852263
-             */
-            spec.addPeak(200.04460261609054,  0.700920311689305);
-            spec.addPeak(201.04804547236688,  0.04786877088637881);
-            spec.addPeak(202.04193422372143,  0.23261093461509075);
-            spec.addPeak(203.0453318162227, 0.015810579533340148);
-            spec.addPeak(204.0464506968809,  0.0027894032758852263 );
-            final SimpleSpectrum pattern = new SimpleSpectrum(spec);
-
-            TransformerPrediction[] predict = predictor.predict(pattern);
-            for (TransformerPrediction p : predict) {
-                System.out.println(p);
-            }
-            if (!out.exists()) {
-                try (final FileChannel channel = FileChannel.open(out.toPath(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-                    ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
-                    predictor.write(buffer);
-                    buffer.flip();
-                    channel.write(buffer);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private EmbeddingLayer positionalEmbedding, orderedEmbedding, centeredEmbedding;
     private FourierEncoder fourierMassDefect, fourierPrecursor, fourierIntensity;
     private FullyConnectedLayer projIn1, projIn2;
@@ -139,8 +89,8 @@ public class TransformerBasedPredictor {
                 Activation.RELU
         );
         FullyConnectedLayer projIn2 = new FullyConnectedLayer(
-                readFloatMatrixTxt(dir, "proj_in.2.weight").data,
-                readFloatMatrixTxt(dir, "proj_in.2.bias").data,
+                readFloatMatrixTxt(dir, "proj_in.3.weight").data,
+                readFloatMatrixTxt(dir, "proj_in.3.bias").data,
                 Activation.IDENTITY
         );
         FullyConnectedLayer projOut = new FullyConnectedLayer(
@@ -202,7 +152,7 @@ public class TransformerBasedPredictor {
 
 
             transformers.add(new Transformer(
-                    Q, K, V, PROJ, 6, MLP1, MLP2,NORM1, NORM2
+                    Q, K, V, PROJ, 9, MLP1, MLP2,NORM1, NORM2
             ));
 
             ++t;
@@ -254,8 +204,33 @@ public class TransformerBasedPredictor {
         this.monoisotopicOut = monoisotopicOut;
     }
 
-    public TransformerPrediction[] predict(SimpleSpectrum pattern) {
+    public Optional<TransformerPrediction> predict(SimpleSpectrum pattern, int peak) {
+        final float[][] transformed = transform(pattern, 1);
+        final float mono = monoisotopicOut.compute(transformed[peak])[0];
+        if (mono < MONOISOTOPIC_THRESHOLD) return Optional.empty();
+        float[] prediction = projOut.compute(transformed[peak]);
+        return Optional.of(builtPredictionResult(peak, mono, prediction));
+    }
 
+    public TransformerPrediction[] predict(SimpleSpectrum pattern) {
+        final float[][] transformed = transform(pattern,1);
+
+        // predict monoisotopics
+        float[] mono = new float[pattern.size()];
+        for (int i=0; i < mono.length; ++i) {
+            mono[i] = monoisotopicOut.compute(transformed[i])[0];
+        }
+        // predict elements
+        float[][] elements = new float[pattern.size()][];
+        for (int i=0; i < elements.length; ++i) {
+            if (mono[i] >= MONOISOTOPIC_THRESHOLD) {
+                elements[i] = projOut.compute(transformed[i]);
+            }
+        }
+        return builtPredictionResults(mono, elements, pattern);
+    }
+
+    public float[][] transform(SimpleSpectrum pattern, int polarity) {
         final double[] mz = new double[pattern.size()];
         final double[] intensity = new double[pattern.size()];
         final int[] positions = new int[pattern.size()];
@@ -288,6 +263,8 @@ public class TransformerBasedPredictor {
             for (int i=0; i < order_.length; ++i) order[i] = order_[i];
         }
         final float[][] peaks = new float[mz.length][];
+        double baseInt = 0d;
+        for (int i=0; i < peaks.length; ++i) baseInt = Math.max(baseInt, intensity[i]);
         // encode peaks
         for (int peak = 0; peak < mz.length; ++peak) {
             int pos=0;
@@ -322,8 +299,9 @@ public class TransformerBasedPredictor {
                 System.arraycopy(ps, 0, peakvec, pos, ps.length);
                 pos += ps.length;
             }
-            peakvec[pos++] = (float)intensity[peak];
-            peakvec[pos] = (float)Math.log(intensity[peak]+0.005);
+            peakvec[pos++] = (float)(intensity[peak]/baseInt);
+            peakvec[pos++] = (float)Math.log((intensity[peak]+0.005)/baseInt);
+            peakvec[pos] = polarity*5;
             peaks[peak] = projIn2.compute(projIn1.compute(peakvec));
         }
         // run transformers
@@ -331,26 +309,14 @@ public class TransformerBasedPredictor {
         for (int tr=0; tr < transformers.length; ++tr) {
             transformed = transformers[tr].compute(transformed);
         }
-        // predict monoisotopics
-        float[] mono = new float[peaks.length];
-        for (int i=0; i < mono.length; ++i) {
-            mono[i] = monoisotopicOut.compute(transformed[i])[0];
-        }
-        // predict elements
-        float[][] elements = new float[peaks.length][];
-        for (int i=0; i < elements.length; ++i) {
-            if (mono[i] >= MONOISOTOPIC_THRESHOLD) {
-                elements[i] = projOut.compute(transformed[i]);
-            }
-        }
-        return builtPredictionResult(mono, elements, pattern);
+        return transformed;
     }
 
-    private static String[] labels = new String[]{"S","Cl","Br","B","F","Se","Fe","Zn","Mg", "CHNOPF"};
-    private static Element[] predictableElements = Arrays.asList("S","Cl", "Br", "B", "Se", "Fe", "Zn", "Mg").stream().map(x-> PeriodicTable.getInstance().getByName(x)).toArray(Element[]::new);
+    private static String[] labels = new String[]{"S","Cl","Br","B","F","Se","Fe","Zn","Mg", "Si", "CHNOPF"};
+    private static Element[] predictableElements = Arrays.asList("S","Cl", "Br", "B", "Se", "Fe", "Zn", "Mg", "Si").stream().map(x-> PeriodicTable.getInstance().getByName(x)).toArray(Element[]::new);
     private static Set<Element> predictableElementSet = Set.of(predictableElements);
-    private static int[] labelPos = new int[]{0,1,2,3,5,6,7,8};
-    private static int fluorPos = 4, chnopfPos = 9;
+    private static int[] labelPos = new int[]{0,1,2,3,5,6,7,8,9};
+    private static int fluorPos = 4, chnopfPos = 10;
 
     private static float MONOISOTOPIC_THRESHOLD = 0f;
 
@@ -358,7 +324,21 @@ public class TransformerBasedPredictor {
         return predictableElements;
     }
 
-    private TransformerPrediction[] builtPredictionResult(float[] mono, float[][] elements, SimpleSpectrum originalSpectrum) {
+    private TransformerPrediction builtPredictionResult(int k, float mono, float[] elements) {
+        final float[] probs = new float[labelPos.length];
+        float maxProb = 0f;
+        for (int j=0; j < probs.length; ++j) {
+            probs[j] = elements[labelPos[j]];
+            maxProb = Math.max(probs[j],maxProb);
+        }
+        return new TransformerPrediction(
+                k, mono, predictableElements, probs,
+                (float)(Activation.SIGMOID.apply(elements[chnopfPos])/Activation.SIGMOID.apply(maxProb)),
+                elements[fluorPos]
+        );
+    }
+
+    private TransformerPrediction[] builtPredictionResults(float[] mono, float[][] elements, SimpleSpectrum originalSpectrum) {
         List<TransformerPrediction> predictions = new ArrayList<>();
         int largest = -1;
         for (int k=0; k < mono.length; ++k) {
@@ -371,20 +351,13 @@ public class TransformerBasedPredictor {
 
         for (int k=0; k < mono.length; ++k) {
             if (mono[k]>=MONOISOTOPIC_THRESHOLD) {
-                final float[] probs = new float[labelPos.length];
-                float maxProb = 0f;
-                for (int j=0; j < probs.length; ++j) {
-                    probs[j] = elements[k][labelPos[j]];
-                    maxProb = Math.max(probs[j],maxProb);
-                }
-                predictions.add(new TransformerPrediction(
-                   k, largest==k, predictableElements, probs,
-                        (float)(Activation.SIGMOID.apply(elements[k][chnopfPos])/Activation.SIGMOID.apply(maxProb)),
-                        elements[k][fluorPos]
-                ));
+                predictions.add(builtPredictionResult(k, mono[k], elements[k]));
             }
-        }return predictions.toArray(TransformerPrediction[]::new);
+        }
+        return predictions.toArray(TransformerPrediction[]::new);
     }
+
+
 
     private double[] massDefect(double[] mz) {
         final double[] defects = new double[mz.length];

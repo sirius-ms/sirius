@@ -10,19 +10,19 @@ import java.util.HashMap;
 public class TransformerPrediction {
 
     private final int monoisotopicPeak;
-    private final boolean largest;
     private final Element[] predictableElements;
     private final float[] logits,probabilities;
     private final float chnopfOdd;
     private final float fluorinated;
+    private final float patternLogit, patternProb;
 
     public String toString() {
         StringBuilder buf = new StringBuilder();
+        buf.append(monoisotopicPeak + "-th peak (" + String.format("%.2f %%\t%.4f)\n", patternProb*100, patternLogit));
         for (int i=0; i < predictableElements.length; ++i) {
             buf.append(predictableElements[i]);
             buf.append(": ");
-            buf.append(String.format("%.2f", probabilities[i]*100));
-            buf.append(" %");
+            buf.append(String.format("%.2f %% \t(%.4f)", probabilities[i]*100, logits[i]));
             buf.append("\n");
         }
         buf.append("CHNOPF odds: ").append(chnopfOdd).append("\n");
@@ -30,13 +30,14 @@ public class TransformerPrediction {
         return buf.toString();
     }
 
-    TransformerPrediction(int monoisotopicPeak, boolean largest, Element[] predictableElements, float[] logits, float chnopfOdd, float fluorinated) {
+    TransformerPrediction(int monoisotopicPeak, float patternLogit, Element[] predictableElements, float[] logits, float chnopfOdd, float fluorinated) {
         this.monoisotopicPeak = monoisotopicPeak;
-        this.largest = largest;
         this.predictableElements = predictableElements;
         this.logits = logits;
         this.chnopfOdd = chnopfOdd;
         this.fluorinated = fluorinated;
+        this.patternLogit = patternLogit;
+        this.patternProb = Activation.SIGMOID.apply(patternLogit);
         this.probabilities = new float[logits.length];
         for (int i=0; i < probabilities.length; ++i) probabilities[i] = Activation.SIGMOID.apply(logits[i]);
     }
@@ -66,10 +67,6 @@ public class TransformerPrediction {
         return monoisotopicPeak;
     }
 
-    public boolean isLargest() {
-        return largest;
-    }
-
     private static Element F = PeriodicTable.getInstance().getByName("F");
 
     public FormulaConstraints getConstraints() {
@@ -78,9 +75,9 @@ public class TransformerPrediction {
             elements.put(F, Integer.MAX_VALUE);
         }
         for (int k=0; k < predictableElements.length; ++k) {
-            if (probabilities[k]>0.33) {
-                elements.put(predictableElements[k], (predictableElements[k].getSymbol().equals("Cl") || predictableElements[k].getSymbol().equals("Br") )? 2
-                        : (predictableElements[k].getSymbol().equals("S") ? Integer.MAX_VALUE : 1));
+            if (probabilities[k]>=0.35) {
+                elements.put(predictableElements[k], (predictableElements[k].getSymbol().equals("Cl") ? 4 : (predictableElements[k].getSymbol().equals("Br") )? 2
+                        : (predictableElements[k].getSymbol().equals("S") ? Integer.MAX_VALUE : 1)));
             }
         }
         final ChemicalAlphabet alphabet = new ChemicalAlphabet(elements.keySet().toArray(new Element[elements.size()]));

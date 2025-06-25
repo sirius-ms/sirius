@@ -2,9 +2,12 @@ package de.unijena.bioinf.sirius.elementdetection;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerBasedPredictor;
+import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPrediction;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -12,6 +15,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Optional;
 import java.util.Set;
 
 public class TransformerElementDetector implements ElementDetection{
@@ -44,6 +48,14 @@ public class TransformerElementDetector implements ElementDetection{
     @Override
     public DetectedFormulaConstraints detect(ProcessedInput processedInput) {
         final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
+
+        SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
+
+        // at this stage we are only interested in predictions of the most-left peak
+        Optional<TransformerPrediction> prediction = predictor.predict(ms1, 0);
+        if (prediction.isEmpty()) return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
+
+        //
         return null;
     }
 
