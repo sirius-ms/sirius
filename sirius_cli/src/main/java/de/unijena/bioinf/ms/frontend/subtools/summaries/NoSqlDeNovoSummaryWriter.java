@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 class NoSqlDeNovoSummaryWriter extends SummaryTable {
@@ -53,6 +52,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
+            "compoundId",
             "mappingFeatureId",
             "overallFeatureQuality");
 
@@ -90,6 +90,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
 
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 

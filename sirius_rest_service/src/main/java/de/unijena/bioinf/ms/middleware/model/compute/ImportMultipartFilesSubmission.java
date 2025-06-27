@@ -22,11 +22,11 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.github.f4b6a3.tsid.TsidCreator;
 import com.google.common.jimfs.Jimfs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import io.hypersistence.tsid.TSID;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class ImportMultipartFilesSubmission extends AbstractImportSubmission<Mul
             Files.createDirectories(tmpdir);
             consumedResources = inputSources.stream().map(f -> {
                 try {
-                    Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TsidCreator.getTsid().toString()));
+                    Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TSID.fast().toString()));
                     f.transferTo(nuFile);
                     return nuFile;
                 } catch (IOException e) {

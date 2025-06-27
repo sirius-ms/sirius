@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 
-import static com.teamdev.jxbrowser.engine.RenderingMode.HARDWARE_ACCELERATED;
+import static com.teamdev.jxbrowser.engine.RenderingMode.OFF_SCREEN;
 
 public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel> {
     private final Engine jxBrowserEngine;
@@ -28,7 +28,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
     private static Engine setupEngine(){
         EngineOptions opts = EngineOptions
-                .newBuilder(HARDWARE_ACCELERATED)
+                .newBuilder(OFF_SCREEN)
                 .licenseKey(PropertyManager.getProperty("jxbrowser.license.key"))
                 .disableTouchMenu()
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
