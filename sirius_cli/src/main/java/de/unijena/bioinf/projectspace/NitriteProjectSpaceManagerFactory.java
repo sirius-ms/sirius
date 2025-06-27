@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -29,6 +28,7 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import io.hypersistence.tsid.TSID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
     public NoSQLProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
 
         if (projectLocation == null) {
-            projectLocation = FileUtils.newTempFile("sirius-tmp-project-" + TsidCreator.getTsid(), SIRIUS_PROJECT_SUFFIX);
+            projectLocation = FileUtils.newTempFile("sirius-tmp-project-" + TSID.fast(), SIRIUS_PROJECT_SUFFIX);
             log.warn("No unique output location found. Writing output to Temporary folder: {}", projectLocation.toString());
             if (Files.exists(projectLocation)) {
                 throw new IOException("Could not create new Project '" + projectLocation + "' because it already exists");

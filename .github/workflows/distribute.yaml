@@ -37,10 +37,10 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'liberica'
+          distribution: 'adopt'
           java-version: '21' # The JDK version to make available on the path.
           java-package: 'jdk' # (jre, jdk, or jdk+fx) - defaults to jdk
-          architecture: 'x64' # (x64 or x86) - defaults to x64
+          architecture: 'x64' # (x64 or x86N) - defaults to x64
       - name: Load Build properties
         uses: Reedyuk/read-properties@v1.0.1
         id: sirius_version
@@ -73,9 +73,10 @@ jobs:
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace clean sirius_dist:sirius_gui_dist:buildJpDists \
+          ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:buildJpDists \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
+            -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}" \
             -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" \
             -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" \
             -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" \

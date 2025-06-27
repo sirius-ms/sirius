@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.utils.softwaretour;
 
-import com.jogamp.opengl.awt.GLCanvas;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.SoftwareTourInitialDialog;
@@ -65,7 +64,6 @@ public class SoftwareTourUtils {
 
         if (askToStart.isSuccess()) {
             List<Component> allComponents = collectNestedComponents(windowOwner).stream()
-                    .filter(c -> !(c instanceof GLCanvas))  // Filtering out CEF OSR browser canvas because it gets unresponsive after enabling and disabling
                     .toList();
             Map<Component, Boolean> componentToEnabledState = allComponents.stream().collect(Collectors.toMap(component -> component, Component::isEnabled));
 

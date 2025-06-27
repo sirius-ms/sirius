@@ -57,6 +57,7 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
             "retentionTimeInSeconds",
             "retentionTimeInMinutes",
             "alignedFeatureId",
+            "compoundId",
             "providedFeatureId",
             "overallFeatureQuality");
 
@@ -147,6 +148,7 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
         row.add(String.valueOf(match.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 
