@@ -147,6 +147,7 @@ public interface Instance {
     void deleteCanopusResult();
 
     void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResultsPerFormula);
+    void addMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResultsPerFormula);
     boolean hasMsNovelistResult();
     void deleteMsNovelistResult();
 }
