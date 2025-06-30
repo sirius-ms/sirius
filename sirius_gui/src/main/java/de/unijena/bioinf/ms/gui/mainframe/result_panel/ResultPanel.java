@@ -67,6 +67,8 @@ public class ResultPanel extends JTabbedPane {
     private final EpimetheusPanel structureAnnoTab;
     private final FingerprintPanel fingerprintTab;
     private final CompoundClassPanel canopusTab;
+    private SpectralMatchingPanel spectralMatchingTab;
+    private KendrickMassDefectPanel massDefectTab;
 
     private final String spectralMatchingTabName = "Library Matches";
     private final String massDefectTabName = "Homologue Series";
