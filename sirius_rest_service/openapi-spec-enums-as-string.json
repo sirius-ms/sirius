@@ -100,7 +100,8 @@
                 "enum": [
                   "none",
                   "compatibilityInfo",
-                  "sizeInformation"
+                  "sizeInformation",
+                  "detectedAdducts"
                 ]
               },
               "default": [
@@ -161,7 +162,8 @@
                 "enum": [
                   "none",
                   "compatibilityInfo",
-                  "sizeInformation"
+                  "sizeInformation",
+                  "detectedAdducts"
                 ]
               },
               "default": [
@@ -222,7 +224,8 @@
                 "enum": [
                   "none",
                   "compatibilityInfo",
-                  "sizeInformation"
+                  "sizeInformation",
+                  "detectedAdducts"
                 ]
               },
               "default": [
@@ -556,7 +559,8 @@
                 "enum": [
                   "none",
                   "compatibilityInfo",
-                  "sizeInformation"
+                  "sizeInformation",
+                  "detectedAdducts"
                 ]
               },
               "default": [
@@ -7363,7 +7367,7 @@
             }
           },
           {
-            "name": "msDataAsCosineQuery",
+            "name": "msDataSearchPrepared",
             "in": "query",
             "description": "Returns all fragment spectra in a preprocessed form as used for fast\n                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch\n                            peak assignments and reference spectra.",
             "required": false,
@@ -8269,6 +8273,16 @@
             "description": "Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027).",
             "format": "int64",
             "nullable": true
+          },
+          "detectedAdducts": {
+            "uniqueItems": true,
+            "type": "array",
+            "description": "Set of all detected adducts available in this projects",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
           }
         }
       },
@@ -9292,7 +9306,7 @@
           },
           "affectedAlignedFeatureIds": {
             "type": "array",
-            "description": "List of alignedFeatureIds that have been imported..",
+            "description": "List of alignedFeatureIds that have been imported.",
             "items": {
               "type": "string"
             }

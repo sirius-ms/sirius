@@ -294,7 +294,7 @@ public class FeaturesApi {
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = {
+        final String[] localVarContentTypes = { 
             "application/json"
         };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
@@ -854,12 +854,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesByGroupExperimentalRequestCreation(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -883,7 +883,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -908,14 +908,14 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
-        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields).bodyToMono(localVarReturnType).block();
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -927,14 +927,14 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesByGroupExperimentalWithHttpInfo(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
-        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields).toEntity(localVarReturnType).block();
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -946,13 +946,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields);
+    public ResponseSpec getAlignedFeaturesByGroupExperimentalWithResponseSpec(String projectId, String groupName, Integer page, Integer size, List<String> sort, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesByGroupExperimentalRequestCreation(projectId, groupName, page, size, sort, msDataSearchPrepared, optFields);
     }
     /**
      * [EXPERIMENTAL] Get features (aligned over runs) in the given project-space
@@ -963,12 +963,12 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param searchQuery optional search query in lucene syntax.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesPageExperimentalRequestCreation(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesPageExperimentalRequestCreation(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -988,7 +988,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataAsCosineQuery", msDataAsCosineQuery));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "msDataSearchPrepared", msDataSearchPrepared));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -1013,14 +1013,14 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param searchQuery optional search query in lucene syntax.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PagedModelAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PagedModelAlignedFeature getAlignedFeaturesPageExperimental(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PagedModelAlignedFeature getAlignedFeaturesPageExperimental(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
-        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataAsCosineQuery, optFields).bodyToMono(localVarReturnType).block();
+        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataSearchPrepared, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1032,14 +1032,14 @@ public class FeaturesApi {
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param searchQuery optional search query in lucene syntax.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PagedModelAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesPageExperimentalWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataAsCosineQuery, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PagedModelAlignedFeature> getAlignedFeaturesPageExperimentalWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, Boolean msDataSearchPrepared, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PagedModelAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PagedModelAlignedFeature>() {};
-        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataAsCosineQuery, optFields).toEntity(localVarReturnType).block();
+        return getAlignedFeaturesPageExperimentalRequestCreation(projectId, page, size, sort, searchQuery, msDataSearchPrepared, optFields).toEntity(localVarReturnType).block();
     }
 
     /**

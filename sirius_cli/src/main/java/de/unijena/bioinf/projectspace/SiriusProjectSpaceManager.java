@@ -33,6 +33,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -410,6 +411,11 @@ public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
 
     @Override
     public void compact() {
+        throw new UnsupportedOperationException("Compacting is not supported.");
+    }
+
+    @Override
+    public @NotNull ProjectDetectedAdducts getDetectedAdducts() {
         throw new UnsupportedOperationException("Compacting is not supported.");
     }
 
