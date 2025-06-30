@@ -796,6 +796,11 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
+    public void addMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResultsPerFormula) {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+
+    @Override
     public synchronized void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
         canopusResults.forEach(fc -> {
             FormulaResult fres = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();

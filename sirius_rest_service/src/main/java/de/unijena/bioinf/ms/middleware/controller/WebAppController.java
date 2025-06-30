@@ -18,7 +18,9 @@ public class WebAppController {
             "/formulaTreeView", "/formulaTreeView/**",
             "/epi", "/epi/**",
             "/lcms", "/lcms/**",
-            "/libmatch", "/libmatch/**"
+            "/libmatch", "/libmatch/**",
+            "/structEdit", "/structEdit/**"
+
     })
     public String serveReactViewsApp(Model model, HttpServletRequest request) {
         // Dynamically build the base URL from the request
