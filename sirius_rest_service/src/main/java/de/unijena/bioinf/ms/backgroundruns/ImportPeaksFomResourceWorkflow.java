@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.backgroundruns;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
@@ -27,16 +28,21 @@ import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -97,6 +103,14 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
 
             try {
                 importedInstances = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                @NotNull Set<PrecursorIonType> detectedAdducts = getImportedInstancesStr()
+                        .map(Instance::getDetectedAdducts)
+                        .flatMap(DetectedAdducts::getDetectedAdductsStr)
+                        .map(DetectedAdduct::getAdduct)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+                if (!detectedAdducts.isEmpty())
+                    project.project().addToDetectedAdducts(detectedAdducts);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {
