@@ -140,7 +140,6 @@ public class FeatureFilterModel implements SiriusPCS {
     /**
      * the filter model is initialized with the min / max possible values
      * MAX VALUES SHOULD BE USED FOR DISPLAY ONLY. AND IF SELECTED VALUES EQUAL THE MAXIMUM, INFINITY SHOULD BE ASSUMED, see is[...]Active() methods.
-     *
      */
     private FeatureFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.inverted = false;
@@ -332,17 +331,25 @@ public class FeatureFilterModel implements SiriusPCS {
     }
 
     @Synchronized
-    public void updateAdducts(List<InstanceBean> compoundList) {
+    public void updateAdducts(Collection<PrecursorIonType> detectedAdductsInProject) {
+        Set<PrecursorIonType> oldAdducts = new HashSet<>(this.adducts);
+
         Set<PrecursorIonType> listAdducts = new HashSet<>();
-        for (InstanceBean instanceBean : compoundList) {
-            listAdducts.addAll(instanceBean.getDetectedAdductsIncludingUnknown());
-        }
+        listAdducts.addAll(detectedAdductsInProject);
+
         Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
         newAdducts.removeAll(possibleAdducts);
         possibleAdducts.retainAll(listAdducts);
         adducts.retainAll(listAdducts);
         possibleAdducts.addAll(newAdducts);
         adducts.addAll(newAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet()));
+
+        if (isAdductFilterActive() && !oldAdducts.equals(adducts)) { // if list of adducts in the actual filter changed, we have to refilter.
+            System.out.println("Refiltering due to adducts change!");
+            fireUpdateCompleted();
+        }else {
+            pcs.firePropertyChange("possibleAdductsUpdated", null, this); // just notify gui components that the available adductes have changed.
+        }
     }
 
     @Synchronized
@@ -413,7 +420,7 @@ public class FeatureFilterModel implements SiriusPCS {
         sampleBlankFoldChange.reset();
     }
 
-    private void clearSearchText(){
+    private void clearSearchText() {
         try {
             searchTextDoc.remove(0, searchTextDoc.getLength()); // Clear existing content
         } catch (BadLocationException e) {
@@ -452,8 +459,8 @@ public class FeatureFilterModel implements SiriusPCS {
             return Optional.empty();
 
         BooleanQuery mainQuery = toLuceneQueryBuilder(confidenceMode).build();
-        if (isInverted()){
-            mainQuery =  new BooleanQuery.Builder()
+        if (isInverted()) {
+            mainQuery = new BooleanQuery.Builder()
                     .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
                     .add(mainQuery, BooleanClause.Occur.MUST_NOT)  // Exclude the original query
                     .build();
@@ -477,8 +484,8 @@ public class FeatureFilterModel implements SiriusPCS {
             builder.add(idQuery.build(), BooleanClause.Occur.MUST);
         }
 
-        if (isInverted()){
-            builder =  new BooleanQuery.Builder()
+        if (isInverted()) {
+            builder = new BooleanQuery.Builder()
                     .add(new MatchAllDocsQuery(), BooleanClause.Occur.MUST)  // Include all documents (*:*)
                     .add(builder.build(), BooleanClause.Occur.MUST_NOT);  // Exclude the original query
         }

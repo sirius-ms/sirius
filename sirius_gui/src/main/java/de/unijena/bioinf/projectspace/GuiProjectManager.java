@@ -21,6 +21,7 @@ package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -88,6 +89,8 @@ public class GuiProjectManager implements Closeable {
     final FeatureFilterModel featureFilterModel;
 
     private final AtomicLong totalInstances = new AtomicLong(0);
+    @Getter
+    private @NotNull Set<PrecursorIonType> detectedAdducts;
 
     public long getTotalInstances() {
         return totalInstances.get();
@@ -219,10 +222,12 @@ public class GuiProjectManager implements Closeable {
         System.out.println("Project loaded in: " + w);
     }
 
-    // todo we could add list of project adducts as value here
     private synchronized void reloadProjectData() {
         System.out.printf("Remove JumpTo Feature on thread %s. EDT: %s \n", Thread.currentThread().getName(), SwingUtilities.isEventDispatchThread());
-        totalInstances.set(siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION)).getNumOfFeatures());
+        ProjectInfo info = siriusClient.projects().getProject(projectId, List.of(ProjectInfoOptField.SIZEINFORMATION, ProjectInfoOptField.DETECTEDADDUCTS));
+        totalInstances.set(info.getNumOfFeatures());
+        detectedAdducts = info.getDetectedAdducts().stream().map(PrecursorIonType::fromString).collect(Collectors.toSet());
+        featureFilterModel.updateAdducts(detectedAdducts);
     }
 
     private InstanceBean jumpToInstanceBean = null;

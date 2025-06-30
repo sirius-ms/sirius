@@ -11,5 +11,7 @@
 
 * `SIZEINFORMATION` (value: `"sizeInformation"`)
 
+* `DETECTEDADDUCTS` (value: `"detectedAdducts"`)
+
 
 

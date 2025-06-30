@@ -30,10 +30,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.Deviation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import io.sirius.ms.sdk.model.Deviation;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -76,7 +76,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters sampleTypes(List<String> sampleTypes) {
-
+    
     this.sampleTypes = sampleTypes;
     return this;
   }
@@ -134,7 +134,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters noiseIntensity(Double noiseIntensity) {
-
+    
     this.noiseIntensity = noiseIntensity;
     return this;
   }
@@ -159,7 +159,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters traceMaxMassDeviation(Deviation traceMaxMassDeviation) {
-
+    
     this.traceMaxMassDeviation = traceMaxMassDeviation;
     return this;
   }
@@ -184,7 +184,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters alignMaxMassDeviation(Deviation alignMaxMassDeviation) {
-
+    
     this.alignMaxMassDeviation = alignMaxMassDeviation;
     return this;
   }
@@ -209,7 +209,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters alignMaxRetentionTimeDeviation(Double alignMaxRetentionTimeDeviation) {
-
+    
     this.alignMaxRetentionTimeDeviation = alignMaxRetentionTimeDeviation;
     return this;
   }
@@ -234,7 +234,7 @@ public class LcmsSubmissionParameters {
   }
 
   public LcmsSubmissionParameters minSNR(Double minSNR) {
-
+    
     this.minSNR = minSNR;
     return this;
   }

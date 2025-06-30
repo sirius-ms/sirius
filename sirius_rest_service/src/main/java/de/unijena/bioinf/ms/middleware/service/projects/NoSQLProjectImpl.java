@@ -1535,11 +1535,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<Compound> findCompounds(@Nullable String searchQuery,
                                         Pageable pageable,
-                                        boolean msDataAsCosineQuery,
+                                        boolean msDataSearchPrepared,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         if (searchQuery == null || searchQuery.isBlank())
-            return findCompounds(pageable, msDataAsCosineQuery, optFields, optFeatureFields);
+            return findCompounds(pageable, msDataSearchPrepared, optFields, optFeatureFields);
 
         throw new ResponseStatusException(METHOD_NOT_ALLOWED, "Searching compounds is not yet supported!");
 
@@ -1585,14 +1585,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<Compound> findCompoundsByGroup(@NotNull String groupName,
                                                Pageable pageable,
-                                               boolean msDataAsCosineQuery,
+                                               boolean msDataSearchPrepared,
                                                @NotNull EnumSet<Compound.OptField> optFields,
                                                @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields
     ) {
         Optional<de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup> tagGroup = storage().findStr(Filter.where("groupName").eq(groupName), de.unijena.bioinf.ms.persistence.model.core.tags.TagGroup.class).findFirst();
         if (tagGroup.isEmpty())
             return Page.empty(pageable);
-        return findCompounds(tagGroup.get().getLuceneQuery(), pageable, msDataAsCosineQuery, optFields, optFeatureFields);
+        return findCompounds(tagGroup.get().getLuceneQuery(), pageable, msDataSearchPrepared, optFields, optFeatureFields);
     }
 
     private void setProjectTypeOrThrow(SiriusProjectDocumentDatabase<? extends Database<?>> ps) {

@@ -29,7 +29,10 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.FormulaResultId;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -121,6 +124,8 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countAllFeatures()).numOfCompounds(psm.countAllCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
             b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
+        if (optFields.contains(ProjectInfo.OptField.detectedAdducts))
+            b.detectedAdducts(psm.getDetectedAdducts().getDetectedAdducts());
 
         return b.build();
     }

@@ -464,7 +464,7 @@ No authorization required
 
 ## getAlignedFeature
 
-> AlignedFeature getAlignedFeature(projectId, alignedFeatureId, msDataAsCosineQuery, optFields)
+> AlignedFeature getAlignedFeature(projectId, alignedFeatureId, msDataSearchPrepared, optFields)
 
 Get feature (aligned over runs) with the given identifier from the specified project-space.
 
@@ -488,10 +488,10 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | identifier of feature (aligned over runs) to access.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            AlignedFeature result = apiInstance.getAlignedFeature(projectId, alignedFeatureId, msDataAsCosineQuery, optFields);
+            AlignedFeature result = apiInstance.getAlignedFeature(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeature");
@@ -511,7 +511,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| identifier of feature (aligned over runs) to access. | |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -604,7 +604,7 @@ No authorization required
 
 ## getAlignedFeatures
 
-> List&lt;AlignedFeature&gt; getAlignedFeatures(projectId, msDataAsCosineQuery, optFields)
+> List&lt;AlignedFeature&gt; getAlignedFeatures(projectId, msDataSearchPrepared, optFields)
 
 Get all available features (aligned over runs) in the given project-space.
 
@@ -627,10 +627,10 @@ public class Example {
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            List<AlignedFeature> result = apiInstance.getAlignedFeatures(projectId, msDataAsCosineQuery, optFields);
+            List<AlignedFeature> result = apiInstance.getAlignedFeatures(projectId, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeatures");
@@ -649,7 +649,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -674,7 +674,7 @@ No authorization required
 
 ## getAlignedFeaturesByGroupExperimental
 
-> PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields)
+> PagedModelAlignedFeature getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, msDataSearchPrepared, optFields)
 
 [EXPERIMENTAL] Get features (aligned over runs) by tag group
 
@@ -701,10 +701,10 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, msDataAsCosineQuery, optFields);
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesByGroupExperimental(projectId, groupName, page, size, sort, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesByGroupExperimental");
@@ -727,7 +727,7 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -752,7 +752,7 @@ No authorization required
 
 ## getAlignedFeaturesPageExperimental
 
-> PagedModelAlignedFeature getAlignedFeaturesPageExperimental(projectId, page, size, sort, searchQuery, msDataAsCosineQuery, optFields)
+> PagedModelAlignedFeature getAlignedFeaturesPageExperimental(projectId, page, size, sort, searchQuery, msDataSearchPrepared, optFields)
 
 [EXPERIMENTAL] Get features (aligned over runs) in the given project-space
 
@@ -779,10 +779,10 @@ public class Example {
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         String searchQuery = "searchQuery_example"; // String | optional search query in lucene syntax.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesPageExperimental(projectId, page, size, sort, searchQuery, msDataAsCosineQuery, optFields);
+            PagedModelAlignedFeature result = apiInstance.getAlignedFeaturesPageExperimental(projectId, page, size, sort, searchQuery, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeaturesPageExperimental");
@@ -805,7 +805,7 @@ public class Example {
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
 | **searchQuery** | **String**| optional search query in lucene syntax. | [optional] |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1404,7 +1404,7 @@ No authorization required
 
 ## getFormulaAnnotatedMsMsData
 
-> AnnotatedMsMsData getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId, asCosineQuery)
+> AnnotatedMsMsData getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId, msDataSearchPrepared)
 
 Returns MS/MS Spectrum annotated with fragments and losses for provided formulaId
 
@@ -1429,9 +1429,9 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
-        Boolean asCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
         try {
-            AnnotatedMsMsData result = apiInstance.getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId, asCosineQuery);
+            AnnotatedMsMsData result = apiInstance.getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId, msDataSearchPrepared);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaAnnotatedMsMsData");
@@ -1452,7 +1452,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
-| **asCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
 
 ### Return type
 
@@ -1476,7 +1476,7 @@ No authorization required
 
 ## getFormulaAnnotatedSpectrum
 
-> AnnotatedSpectrum getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex, asCosineQuery)
+> AnnotatedSpectrum getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared)
 
 Returns a fragmentation spectrum (e
 
@@ -1502,9 +1502,9 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
-        Boolean asCosineQuery = false; // Boolean | 
+        Boolean searchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
         try {
-            AnnotatedSpectrum result = apiInstance.getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex, asCosineQuery);
+            AnnotatedSpectrum result = apiInstance.getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex, searchPrepared);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaAnnotatedSpectrum");
@@ -1526,7 +1526,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
 | **spectrumIndex** | **Integer**| index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default) | [optional] [default to -1] |
-| **asCosineQuery** | **Boolean**|  | [optional] [default to false] |
+| **searchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
 
 ### Return type
 
@@ -1550,7 +1550,7 @@ No authorization required
 
 ## getFormulaCandidate
 
-> FormulaCandidate getFormulaCandidate(projectId, alignedFeatureId, formulaId, msDataAsCosineQuery, optFields)
+> FormulaCandidate getFormulaCandidate(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields)
 
 FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
 
@@ -1575,10 +1575,10 @@ public class Example {
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<FormulaCandidateOptField> optFields = Arrays.asList(); // List<FormulaCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            FormulaCandidate result = apiInstance.getFormulaCandidate(projectId, alignedFeatureId, formulaId, msDataAsCosineQuery, optFields);
+            FormulaCandidate result = apiInstance.getFormulaCandidate(projectId, alignedFeatureId, formulaId, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaCandidate");
@@ -1599,7 +1599,7 @@ public class Example {
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;FormulaCandidateOptField&gt;**](FormulaCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1624,7 +1624,7 @@ No authorization required
 
 ## getFormulaCandidates
 
-> List&lt;FormulaCandidate&gt; getFormulaCandidates(projectId, alignedFeatureId, msDataAsCosineQuery, optFields)
+> List&lt;FormulaCandidate&gt; getFormulaCandidates(projectId, alignedFeatureId, msDataSearchPrepared, optFields)
 
 List of FormulaResultContainers available for this feature with minimal information.
 
@@ -1648,10 +1648,10 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<FormulaCandidateOptField> optFields = Arrays.asList(); // List<FormulaCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            List<FormulaCandidate> result = apiInstance.getFormulaCandidates(projectId, alignedFeatureId, msDataAsCosineQuery, optFields);
+            List<FormulaCandidate> result = apiInstance.getFormulaCandidates(projectId, alignedFeatureId, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaCandidates");
@@ -1671,7 +1671,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;FormulaCandidateOptField&gt;**](FormulaCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1696,7 +1696,7 @@ No authorization required
 
 ## getFormulaCandidatesPaged
 
-> PagedModelFormulaCandidate getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, msDataAsCosineQuery, optFields)
+> PagedModelFormulaCandidate getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields)
 
 Page of FormulaResultContainers available for this feature with minimal information.
 
@@ -1723,10 +1723,10 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        Boolean msDataAsCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra.
         List<FormulaCandidateOptField> optFields = Arrays.asList(); // List<FormulaCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PagedModelFormulaCandidate result = apiInstance.getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, msDataAsCosineQuery, optFields);
+            PagedModelFormulaCandidate result = apiInstance.getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, msDataSearchPrepared, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaCandidatesPaged");
@@ -1749,7 +1749,7 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **msDataAsCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                             Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                             peak assignments and reference spectra. | [optional] [default to false] |
 | **optFields** | [**List&lt;FormulaCandidateOptField&gt;**](FormulaCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1984,7 +1984,7 @@ No authorization required
 
 ## getMsData
 
-> MsData getMsData(projectId, alignedFeatureId, asCosineQuery)
+> MsData getMsData(projectId, alignedFeatureId, msDataSearchPrepared)
 
 Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
 
@@ -2008,9 +2008,9 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the Mass Spec data belongs to.
-        Boolean asCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
         try {
-            MsData result = apiInstance.getMsData(projectId, alignedFeatureId, asCosineQuery);
+            MsData result = apiInstance.getMsData(projectId, alignedFeatureId, msDataSearchPrepared);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getMsData");
@@ -2030,7 +2030,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the Mass Spec data belongs to. | |
-| **asCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
 
 ### Return type
 
@@ -2498,7 +2498,7 @@ No authorization required
 
 ## getStructureAnnotatedMsDataExperimental
 
-> AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey, asCosineQuery)
+> AnnotatedMsMsData getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared)
 
 [EXPERIMENTAL] Returns MS/MS Data annotated with fragments and losses for given formulaId and inChIKey
 
@@ -2524,9 +2524,9 @@ public class Example {
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the formula result belongs to.
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
-        Boolean asCosineQuery = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
+        Boolean msDataSearchPrepared = false; // Boolean | Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra.
         try {
-            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey, asCosineQuery);
+            AnnotatedMsMsData result = apiInstance.getStructureAnnotatedMsDataExperimental(projectId, alignedFeatureId, formulaId, inchiKey, msDataSearchPrepared);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedMsDataExperimental");
@@ -2548,7 +2548,7 @@ public class Example {
 | **alignedFeatureId** | **String**| feature (aligned over runs) the formula result belongs to. | |
 | **formulaId** | **String**| identifier of the requested formula result | |
 | **inchiKey** | **String**| 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation | |
-| **asCosineQuery** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
+| **msDataSearchPrepared** | **Boolean**| Returns all fragment spectra in a preprocessed form as used for fast                          Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch                          peak assignments and reference spectra. | [optional] [default to false] |
 
 ### Return type
 
@@ -2642,7 +2642,7 @@ No authorization required
 
 ## getStructureAnnotatedSpectrumExperimental
 
-> AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, asCosineQuery)
+> AnnotatedSpectrum getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared)
 
 [EXPERIMENTAL] Returns a fragmentation spectrum annotated with fragments and losses for the given formulaId and inChIKey  
 
@@ -2669,9 +2669,9 @@ public class Example {
         String formulaId = "formulaId_example"; // String | identifier of the requested formula result
         String inchiKey = "inchiKey_example"; // String | 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation
         Integer spectrumIndex = -1; // Integer | index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex < 0 (default)
-        Boolean asCosineQuery = false; // Boolean | 
+        Boolean searchPrepared = false; // Boolean | 
         try {
-            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, asCosineQuery);
+            AnnotatedSpectrum result = apiInstance.getStructureAnnotatedSpectrumExperimental(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex, searchPrepared);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureAnnotatedSpectrumExperimental");
@@ -2694,7 +2694,7 @@ public class Example {
 | **formulaId** | **String**| identifier of the requested formula result | |
 | **inchiKey** | **String**| 2d InChIKey of the structure candidate to be used to annotate the spectrum annotation | |
 | **spectrumIndex** | **Integer**| index of the spectrum to be annotated. Merged MS/MS will be used if spectrumIndex &lt; 0 (default) | [optional] [default to -1] |
-| **asCosineQuery** | **Boolean**|  | [optional] [default to false] |
+| **searchPrepared** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 

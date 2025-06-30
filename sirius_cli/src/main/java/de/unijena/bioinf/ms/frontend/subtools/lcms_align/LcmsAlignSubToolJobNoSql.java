@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -312,7 +313,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 //        (compound) -> groupFeaturesToCompound(store, compound, importedCids));
                 long TIME2 = System.currentTimeMillis();
                 System.out.printf("Building adduct network took %f seconds\n", (TIME2-TIME1)/1000d);
-                network.assignNetworksAndAdductsToFeatures(
+                Set<PrecursorIonType> detectedAdducts = network.assignNetworksAndAdductsToFeatures(
                         SiriusJobs.getGlobalJobManager(),
                         new OptimalAssignmentViaBeamSearch(),
                         merged.getPolarity(),
@@ -320,6 +321,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         (net)->{ps.getStorage().insert(net); return net.getNetworkId();},
                         (feature)->{Compound c = Compound.singleton(feature); ps.getStorage().insert(c); return c.getCompoundId();}
                 );
+                // add to project wide property that holds all detected adducts in the project
+                ps.addToDetectedAdducts(detectedAdducts);
 
                 long TIME3 = System.currentTimeMillis();
                 System.out.printf("Assigning adducts took %f seconds\n", (TIME3-TIME2)/1000d);

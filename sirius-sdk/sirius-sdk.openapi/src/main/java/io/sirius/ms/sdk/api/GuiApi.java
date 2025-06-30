@@ -2,6 +2,7 @@ package io.sirius.ms.sdk.api;
 
 import io.sirius.ms.sdk.client.ApiClient;
 
+import io.sirius.ms.sdk.model.GuiInfo;
 
 import java.util.HashMap;
 import java.util.List;
@@ -124,6 +125,70 @@ public class GuiApi {
      */
     public ResponseSpec closeGuiWithResponseSpec(String projectId, Boolean closeProject) throws WebClientResponseException {
         return closeGuiRequestCreation(projectId, closeProject);
+    }
+    /**
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * @return List&lt;GuiInfo&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getGuisRequestCreation() throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
+        return apiClient.invokeAPI("/api/guis", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * @return List&lt;GuiInfo&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<GuiInfo> getGuis() throws WebClientResponseException {
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
+        return getGuisRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * @return ResponseEntity&lt;List&lt;GuiInfo&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<GuiInfo>> getGuisWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
+        return getGuisRequestCreation().toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
+     * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getGuisWithResponseSpec() throws WebClientResponseException {
+        return getGuisRequestCreation();
     }
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.

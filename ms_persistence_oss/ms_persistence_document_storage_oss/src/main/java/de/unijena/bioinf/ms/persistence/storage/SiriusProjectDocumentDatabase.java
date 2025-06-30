@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectDetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
@@ -47,8 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends StatsAndTaggingSupport<Storage>, NetworkingProjectDocumentDatabase<Storage>, MsProjectDocumentDatabase<Storage> {
@@ -115,6 +116,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType);
 
+    default Optional<Set<String>> findProjectPropertyAsStringSet(String key) {
+        return findProjectProperty(key, Object.class).map(it -> (Set<String>) it);
+    }
+
+    default Optional<List<String>> findProjectPropertyAsStringList(String key) {
+        return findProjectProperty(key, Object.class).map(it -> (List<String>) it);
+    }
+
     default Optional<String> findProjectPropertyAsString(String key) {
         return findProjectProperty(key, String.class);
     }
@@ -141,6 +150,18 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     default Optional<ProjectType> upsertProjectType(@NotNull ProjectType projectType) {
         return upsertProjectProperty("projectType", projectType);
+    }
+
+    default Optional<ProjectDetectedAdducts> findDetectedAdducts() {
+        return findProjectPropertyAsStringSet("detectedAdducts")
+                .map(it -> ProjectDetectedAdducts.builder().detectedAdducts(it).build());
+    }
+
+    default Optional<ProjectDetectedAdducts> addToDetectedAdducts(@NotNull Collection<PrecursorIonType> detectedAdducts) {
+        Set<String> adducts = findProjectPropertyAsStringSet("detectedAdducts").orElse(new HashSet<>());
+        detectedAdducts.stream().map(PrecursorIonType::toString).forEach(adducts::add);
+        return upsertProjectProperty("detectedAdducts", adducts)
+                .map(it -> ProjectDetectedAdducts.builder().detectedAdducts(it).build());
     }
 
     @SneakyThrows

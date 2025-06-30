@@ -80,14 +80,14 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Page<Compound> findCompounds(@Nullable String searchQuery,
                                  Pageable pageable,
-                                 boolean msDataAsCosineQuery,
+                                 boolean msDataSearchPrepared,
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
     Page<Compound> findCompounds(Pageable pageable,
                                  boolean msDataSearchPrepared,
                                  @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
-    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataAsCosineQuery, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+    Page<Compound> findCompoundsByGroup(@NotNull String groupName, Pageable pageable, boolean msDataSearchPrepared, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
                                 @Nullable InstrumentProfile profile,
