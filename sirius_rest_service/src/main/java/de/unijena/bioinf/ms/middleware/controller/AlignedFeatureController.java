@@ -133,10 +133,10 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String projectId,
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
-            @RequestParam(defaultValue = "false", required = false) boolean msDataAsCosineQuery,
+            @RequestParam(defaultValue = "false", required = false) boolean msDataSearchPrepared,
             @RequestParam(defaultValue = "tags, computedTools, qualities") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataAsCosineQuery, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(searchQuery, pageable, msDataSearchPrepared, removeNone(optFields));
     }
 
     /**
@@ -147,7 +147,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      * @param projectId project-space to delete from.
      * @param groupName tag group name.
      * @param pageable  pageable.
-     * @param msDataAsCosineQuery Returns all fragment spectra in a preprocessed form as used for fast
+     * @param msDataSearchPrepared Returns all fragment spectra in a preprocessed form as used for fast
      *                            Cosine/Modified Cosine computation. Gives you spectra compatible with SpectralLibraryMatch
      *                            peak assignments and reference spectra.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.

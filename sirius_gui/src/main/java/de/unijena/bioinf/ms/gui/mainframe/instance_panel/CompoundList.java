@@ -146,7 +146,8 @@ public class CompoundList {
             colorByActiveFilter();
             updateTogglesByActiveFilter();
         });
-        filterModel.updateAdducts(sortedSource);
+        filterModel.addPropertyChangeListener("possibleAdductsUpdated", evt -> updateTogglesByActiveFilter());
+        filterModel.updateAdducts(projectManager.getDetectedAdducts());
         filterModel.fireUpdateCompleted();
     }
 
@@ -215,16 +216,6 @@ public class CompoundList {
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
         sortedSource.setComparator(comp);
-    }
-
-    /**
-     * Updates the available filter options in the filter model.
-     * Does not cause global re-filtering
-     */
-    public void updateFilter(@NotNull java.util.List<InstanceBean> instances) {
-        //todo re-enabale during import events
-        filterModel.updateAdducts(instances);
-        updateTogglesByActiveFilter();
     }
 
     public void resetFilter() {
