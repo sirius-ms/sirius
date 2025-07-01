@@ -420,6 +420,7 @@ public final class BackgroundRuns {
                 computation.run();
 
                 logInfo("Assign computed affected ids...");
+                updateProgress(-1, "Updating search index...");
                 if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
                     ArrayList<String> affIds = new ArrayList<>();
@@ -443,8 +444,8 @@ public final class BackgroundRuns {
                     logInfo("Collecting imported compounds...");
                     affectedFeatureIds = msImport.getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
                     affectedCompoundIds = msImport.getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
-                    if (affectedFeatureIds != null)
-                        submitJob(() -> ((NoSQLProjectImpl)project).addToSearchIndexLongIds(msImport.getImportedFeatureIds(), msImport.getImportedRunIds()), JobType.CPU).awaitResult();
+                    if (affectedFeatureIds != null) // MS data import is once from scratch anyway. so rebuilding index is straightforward and fast
+                        submitJob(() -> project.createSearchIndex(true), JobType.CPU).awaitResult();
 
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ToolChainWorkflow) {
@@ -452,7 +453,7 @@ public final class BackgroundRuns {
                 }
 
                 logInfo("Background Run DONE!");
-
+                updateProgress(1, 1, "Done!");
                 return true;
             } finally {
                 logInfo("Flushing Results to disk in background...");
