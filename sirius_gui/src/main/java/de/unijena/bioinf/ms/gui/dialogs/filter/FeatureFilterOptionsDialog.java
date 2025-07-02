@@ -338,7 +338,7 @@ public class FeatureFilterOptionsDialog extends JDialog implements ActionListene
 
         add(buttons, BorderLayout.SOUTH);
 
-        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        setMaximumSize(GuiUtils.getEffectiveScreenSize());
         configureActions();
         pack();
         setLocationRelativeTo(getParent());
