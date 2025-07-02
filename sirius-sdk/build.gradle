@@ -63,11 +63,18 @@ allprojects {
                     }
                 } else {
                     url = project.findProperty("io.sirius-ms.build.artifactory.public.url") as String
-                    credentials(PasswordCredentials) {
-                        username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
-                        password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
-                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
-                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                    if (project.findProperty("io.sirius-ms.build.artifactory.public.username") != null
+                            && project.findProperty("io.sirius-ms.build.artifactory.public.token") != null
+                    ) {
+                        credentials(PasswordCredentials) {
+                            username = project.findProperty("io.sirius-ms.build.artifactory.public.username") as String
+                            password = project.findProperty("io.sirius-ms.build.artifactory.public.token") as String
+                        }
+                    }else{
+                        credentials(PasswordCredentials) {
+                            username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                            password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                        }
                     }
                     authentication {
                         basic(BasicAuthentication)
