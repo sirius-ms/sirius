@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.AddExternalStructureJJob;
 import de.unijena.bioinf.fingerid.FingerIdResult;
@@ -40,6 +41,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
 import de.unijena.bioinf.projectspace.FCandidate;
@@ -56,6 +58,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openscience.cdk.exception.CDKException;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -303,13 +306,22 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "none") String smiles
     ) {
-        Instance instance = projectsProvider.getProjectOrThrow(projectId).getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
+        Project<?> project = projectsProvider.getProjectOrThrow(projectId);
+        Instance instance = project.getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + projectId + "."));
+
+        try {
+            if (existingStructureCandidate(project, alignedFeatureId, smiles)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Structure candidate already exists.");
+            }
+        } catch (CDKException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid SMILES.");
+        }
 
         List<FCandidate<?>> inputData = instance.getMsNovelistInput().stream()
                  .filter(c -> c.hasAnnotation(FingerprintResult.class))
                 .filter(c -> c.hasAnnotation(FTree.class))
-                .peek(c -> {c.annotate(c.asFingerIdResult());})
+                .peek(c -> c.annotate(c.asFingerIdResult()))
                 .toList();
         List<FingerIdResult> idResults = inputData.stream().map(d -> d.getAnnotationOrThrow(FingerIdResult.class)).toList();
 
@@ -443,7 +455,7 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
 
         return CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(db -> {
             try {
-                ReferenceFragmentationTree refTree = null;
+                ReferenceFragmentationTree refTree;
                 if (match.getReferenceSpectrumType() == SpectrumType.MERGED_SPECTRUM) {
                     refTree = chemDbService.db().getReferenceTree(db, match.getUuid());
                 } else {
@@ -1161,6 +1173,17 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
             log.error(e.getReason(), e);
             return null;
         }
+    }
+
+    /**
+     * Checks if there is a structure candidate for the given feature corresponding to the given smiles (by comparing inchi key)
+     */
+    private boolean existingStructureCandidate(Project<?> project, String alignedFeatureId, String smiles) throws CDKException {
+        String inchiKey = InChISMILESUtils.getInchiFromSmiles(smiles, false).key.substring(0, 14);
+
+        return project.findStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream()
+                .map(c -> c.getInchiKey().substring(0, 14))
+                .anyMatch(inchiKey::equals);
     }
 
     // endregion
