@@ -367,7 +367,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         add(buttons, BorderLayout.SOUTH);
 
-        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        setMaximumSize(GuiUtils.getEffectiveScreenSize());
         configureActions();
         pack();
         setLocationRelativeTo(getParent());

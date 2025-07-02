@@ -153,9 +153,26 @@ public class GuiUtils {
                 + "</p></html>";
     }
 
-    public static Dimension getEffectiveScreenSize(@NotNull GraphicsConfiguration c) {
-        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-        return new Dimension((int) Math.round(d.width * .8), (int) Math.round(d.height * .8));
+    public static Dimension getEffectiveScreenSize() {
+        return getPreferredSizeLimitedByScreenSize(null);
+    }
+
+    public static Dimension getPreferredSizeLimitedByScreenSize(int preferredWidth, int preferredHeight) {
+        return getPreferredSizeLimitedByScreenSize(new Dimension(preferredWidth, preferredHeight));
+    }
+
+    public static Dimension getPreferredSizeLimitedByScreenSize(@Nullable Dimension preferredSize) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+
+        Rectangle screenBounds = ge.getMaximumWindowBounds();
+
+        int maxScreenWidth = (int) Math.round(screenBounds.width * .9);
+        int maxScreenHeight = (int) Math.round(screenBounds.height * .9);
+
+        if (preferredSize == null)
+            return new Dimension(maxScreenWidth, maxScreenHeight);
+
+        return new Dimension(Math.min(preferredSize.width, maxScreenWidth), Math.min(preferredSize.height, maxScreenHeight));
     }
 
     public static JPanel newNoResultsComputedPanel() {
