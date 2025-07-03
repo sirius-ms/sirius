@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static de.unijena.bioinf.ms.gui.webView.BrowserPanel.parseNullable;
 import static de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider.makeParameters;
@@ -26,7 +28,7 @@ public class SketcherPanel extends JPanel {
 
     private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         String fid = null;
-        String smiles=null;
+        String smiles="";
 
         if (structureCandidate != null) {
             fid = structureCandidate.getParentFeatureId();
@@ -39,7 +41,7 @@ public class SketcherPanel extends JPanel {
         BrowserPanelProvider<?> provider = siriusGui.getBrowserPanelProvider();
         String url = provider.resolveBaseUrl("/structEdit")
                 + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null)
-                + "&smiles=" + smiles;
+                + "&smiles=" + URLEncoder.encode(smiles, StandardCharsets.UTF_8);
         return provider.newBrowserPanel(url);
     }
 
