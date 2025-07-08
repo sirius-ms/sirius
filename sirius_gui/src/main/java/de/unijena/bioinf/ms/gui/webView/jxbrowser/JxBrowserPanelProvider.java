@@ -56,6 +56,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
     @Override
     public JxBrowserPanel newBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception) {
+        log.info("Browser URL: {}", fullUrlWithParameters);
         return new JxBrowserPanel(fullUrlWithParameters, jxBrowserEngine.newBrowser(), linkInterception);
     }
 

@@ -13,6 +13,8 @@ import java.awt.event.WindowEvent;
 public class SketcherDialog extends LoadablePanelDialog {
 
     private SketcherPanel sketcherPanel;
+    private final JButton addButton;
+    private final JButton doneButton;
 
     public SketcherDialog(Window owner, SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         super(owner, "Structure Sketcher");
@@ -20,19 +22,11 @@ public class SketcherDialog extends LoadablePanelDialog {
         JPanel southPanel = new JPanel();
         add(southPanel, BorderLayout.SOUTH);
 
-        JButton addButton = new JButton("Add");
-        addButton.addActionListener(e -> sketcherPanel.tryUploadCurrentStructure());
+        addButton = new JButton("Add");
+        addButton.addActionListener(e -> addCurrentStructure(false));
 
-        JButton doneButton = new JButton("Add and close");
-        doneButton.addActionListener(e -> {
-            JsPromise promise = sketcherPanel.tryUploadCurrentStructure();
-            promise.then(result -> {
-                if (Boolean.TRUE.equals(result[0])) {
-                    dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-                }
-                return promise;
-            });
-        });
+        doneButton = new JButton("Add and close");
+        doneButton.addActionListener(e -> addCurrentStructure(true));
 
         loadPanel(() -> {
             sketcherPanel = new SketcherPanel(siriusGui, structureCandidate);
@@ -44,5 +38,19 @@ public class SketcherDialog extends LoadablePanelDialog {
 
     public void updateMolecule(FingerprintCandidateBean c) {
         runInBackgroundAndLoad(() -> sketcherPanel.updateSelectedFeatureSketcher(c.getParentFeatureId(), c.getSmiles()));
+    }
+
+    private void addCurrentStructure(boolean closeOnSuccess) {
+        addButton.setEnabled(false);
+        doneButton.setEnabled(false);
+        JsPromise promise = sketcherPanel.tryUploadCurrentStructure();
+        promise.then(result -> {
+            addButton.setEnabled(true);
+            doneButton.setEnabled(true);
+            if (closeOnSuccess && Boolean.TRUE.equals(result[0])) {
+                dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            }
+            return promise;
+        });
     }
 }
