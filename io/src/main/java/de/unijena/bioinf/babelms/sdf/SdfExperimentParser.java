@@ -95,7 +95,7 @@ public class SdfExperimentParser implements Parser<Ms2Experiment> {
     }
 
     /**
-     * Temporary copy-paste from InChISMILESUtils. Cannot use it directly because of a circular dependency, todo issue #114
+     * Temporary copy-paste from InChISMILESUtils. Cannot use it directly because of a circular dependency, todo issue #309
      */
     public static InChI getInchi(IAtomContainer atomContainer) throws CDKException {
         // this will create a standard inchi, see: https://egonw.github.io/cdkbook/inchi.html
