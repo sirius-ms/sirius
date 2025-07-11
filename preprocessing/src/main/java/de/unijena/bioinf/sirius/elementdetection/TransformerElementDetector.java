@@ -24,13 +24,14 @@ public class TransformerElementDetector implements ElementDetection{
     private final Set<Element> predictableElements;
 
     public TransformerElementDetector() {
-        this(readFromClassPath());
+        this(DEFAULT_INSTANCE);
     }
 
+    private static final TransformerBasedPredictor DEFAULT_INSTANCE = readFromClassPath();
     private static TransformerBasedPredictor readFromClassPath() {
         try (final InputStream stream = TransformerElementDetector.class.getResourceAsStream("/transformer.bin");
              ReadableByteChannel channel = Channels.newChannel(stream)) {
-            ByteBuffer buffer = ByteBuffer.allocate(1000*300);
+            ByteBuffer buffer = ByteBuffer.allocate(1000*1000);
             channel.read(buffer);
             buffer.flip();
             return TransformerBasedPredictor.read(buffer);
