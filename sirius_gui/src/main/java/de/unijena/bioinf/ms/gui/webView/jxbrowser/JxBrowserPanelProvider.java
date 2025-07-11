@@ -3,16 +3,20 @@ package de.unijena.bioinf.ms.gui.webView.jxbrowser;
 import com.teamdev.jxbrowser.engine.Engine;
 import com.teamdev.jxbrowser.engine.EngineOptions;
 import com.teamdev.jxbrowser.engine.Theme;
+import com.teamdev.jxbrowser.permission.PermissionType;
+import com.teamdev.jxbrowser.permission.callback.RequestPermissionCallback;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.ms.gui.webView.LinkInterception;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
 
-import static com.teamdev.jxbrowser.engine.RenderingMode.HARDWARE_ACCELERATED;
+import static com.teamdev.jxbrowser.engine.RenderingMode.OFF_SCREEN;
 
+@Slf4j
 public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel> {
     private final Engine jxBrowserEngine;
 
@@ -28,7 +32,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
     private static Engine setupEngine(){
         EngineOptions opts = EngineOptions
-                .newBuilder(HARDWARE_ACCELERATED)
+                .newBuilder(OFF_SCREEN)
                 .licenseKey(PropertyManager.getProperty("jxbrowser.license.key"))
                 .disableTouchMenu()
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
@@ -36,11 +40,23 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
 
         Engine engine = Engine.newInstance(opts);
         engine.setTheme(Colors.isDarkTheme() ? Theme.DARK : Theme.LIGHT);
+
+        engine.permissions().set(RequestPermissionCallback.class, (params, tell) -> {
+            PermissionType type = params.permissionType();
+            if (type == PermissionType.CLIPBOARD_READ_WRITE
+                    || type == PermissionType.CLIPBOARD_SANITIZED_WRITE) {
+                tell.grant();
+            } else {
+                tell.deny();
+            }
+        });
+        
         return engine;
     }
 
     @Override
     public JxBrowserPanel newBrowserPanel(@NotNull String fullUrlWithParameters, @NotNull LinkInterception linkInterception) {
+        log.info("Browser URL: {}", fullUrlWithParameters);
         return new JxBrowserPanel(fullUrlWithParameters, jxBrowserEngine.newBrowser(), linkInterception);
     }
 

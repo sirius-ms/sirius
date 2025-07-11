@@ -29,7 +29,6 @@ import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 class NoSqlFormulaSummaryWriter extends SummaryTable {
@@ -59,6 +58,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
+            "compoundId",
             "mappingFeatureId",
             "overallFeatureQuality");
 
@@ -98,6 +98,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(fc.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 
