@@ -95,13 +95,17 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
         if (bestPattern==null) return Result.nothingFound();
 
         if (bestPattern.chargeState==1){
+            int patternPeakIdx = Spectrums.mostIntensivePeakWithin(bestPattern, moi.getMz(), new Deviation(20));
             TransformerPrediction[] predict = transformerElementDetector.getPredictor().predict(bestPattern);
             for (TransformerPrediction pred : predict) {
-                if (pred.getMonoisotopicPeak()==peakIdx) {
-                    if (peakIdx>0) {
-                        bestPattern = bestPattern.sub(peakIdx);
-                    }
-                    return Result.monoisotopicPeak(new IsotopeResult(bestPattern.chargeState, bestTraceIds, bestPattern.floatMzArray(), bestPattern.floatIntensityArray()));
+                if (pred.getMonoisotopicPeak()==patternPeakIdx) {
+                    int[] bestTr;
+                    if (patternPeakIdx>0) {
+                        bestPattern = bestPattern.sub(patternPeakIdx);
+                        bestTr = new int[bestTraceIds.length-patternPeakIdx];
+                        System.arraycopy(bestTraceIds, patternPeakIdx, bestTr, 0, bestTr.length);
+                    } else bestTr = bestTraceIds;
+                    return Result.monoisotopicPeak(new IsotopeResult(bestPattern.chargeState, bestTr, bestPattern.floatMzArray(), bestPattern.floatIntensityArray()));
                 }
             }
             if (predict.length>0) {
@@ -116,7 +120,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
         return Result.isIsotopicPeak();
     }
 
-    private TransformerElementDetector transformerElementDetector = new TransformerElementDetector();
+    private static final TransformerElementDetector transformerElementDetector = new TransformerElementDetector();
 
     public double correlationScore(ProcessedSample sample, MoI moi, ContiguousTrace trace, TraceSegment traceSegment, SimpleSpectrum spectrum,
                                    ContiguousTrace iso) {

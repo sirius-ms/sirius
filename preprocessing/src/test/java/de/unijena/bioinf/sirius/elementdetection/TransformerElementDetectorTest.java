@@ -112,6 +112,7 @@ public class TransformerElementDetectorTest {
     }
 
     public static void testData() throws IOException {
+        final TransformerElementDetector det = new TransformerElementDetector();
         final File out = new File("/home/kaidu/software/sirius-frontend/preprocessing/src/main/resources/transformer.bin");
         final TransformerBasedPredictor predictor = TransformerBasedPredictor.readFromBinary(out);//readFromTxt(new File("/home/kaidu/data/iso/redone/parameters"));
         int correctPredicted = 0, wrongPredicted = 0;
