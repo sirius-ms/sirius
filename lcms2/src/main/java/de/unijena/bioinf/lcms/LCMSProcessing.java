@@ -435,9 +435,10 @@ public class LCMSProcessing {
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
-                if (trace.getSegments().length==1) moi.setSingleApex(true);
+                if (trace.getSegments().length==1 && !trace.isNoisyTrace()) moi.setSingleApex(true);
                 detectIsotopesForMoI(sample, trace, segment, moi);
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
+                if (trace.isNoisyTrace()) moi.setConfidence(Math.min(0f, moi.getConfidence()));
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
