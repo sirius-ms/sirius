@@ -9,6 +9,8 @@ import java.util.HashMap;
 
 public class TransformerPrediction {
 
+    private static final float PROB_THRESHOLD = 0.33f;
+
     private final int monoisotopicPeak;
     private final Element[] predictableElements;
     private final float[] logits,probabilities;
@@ -69,14 +71,21 @@ public class TransformerPrediction {
 
     private static Element F = PeriodicTable.getInstance().getByName("F");
 
+    public boolean hasAnyPredictions() {
+        for (int i=0; i < probabilities.length; ++i) {
+            if (probabilities[i] >= PROB_THRESHOLD) return true;
+        }
+        return false;
+    }
+
     public FormulaConstraints getConstraints() {
         final HashMap<Element, Integer> elements = new HashMap<>(10);
-        if (Activation.SIGMOID.apply(fluorinated)>=0.33) {
+        if (Activation.SIGMOID.apply(fluorinated)>=PROB_THRESHOLD) {
             elements.put(F, Integer.MAX_VALUE);
         }
         for (int k=0; k < predictableElements.length; ++k) {
-            if (probabilities[k]>=0.35) {
-                elements.put(predictableElements[k], (predictableElements[k].getSymbol().equals("Cl") ? 4 : (predictableElements[k].getSymbol().equals("Br") )? 2
+            if (probabilities[k]>=PROB_THRESHOLD) {
+                elements.put(predictableElements[k], (predictableElements[k].getSymbol().equals("Cl") ? 5 : (predictableElements[k].getSymbol().equals("Br") )? 3
                         : (predictableElements[k].getSymbol().equals("S") ? Integer.MAX_VALUE : 1)));
             }
         }

@@ -90,10 +90,7 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--trace-ppm-max"},
             description={
-            "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level.",
-                    "to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.",
-                    "If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify",
-                    "this parameter, as the automated detection is usually sufficient."
+            "Maximal allowed mass deviation for scan points within a trace. Peaks above this deviation are not considered to be part of the same mass trace. You may increase this value if you observe that mass traces are splitted or interrupted."
             }, required = false
     )
     public Double ppmMax;
