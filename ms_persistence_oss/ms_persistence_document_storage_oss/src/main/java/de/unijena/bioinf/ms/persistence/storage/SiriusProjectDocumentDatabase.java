@@ -160,6 +160,11 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
+    default Stream<DenovoStructureMatch> findDeNovoStructureSearchResult(long alignedFeatureId) {
+        return findByFeatureIdStr(alignedFeatureId, DenovoStructureMatch.class);
+    }
+
+    @SneakyThrows
     default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable final AlignedFeatures feature) {
         if (feature == null)
             return Optional.empty();

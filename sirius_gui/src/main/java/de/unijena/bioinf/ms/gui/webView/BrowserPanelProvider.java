@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.gui.webView;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,16 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     protected static String THEME_REST_PARA = "?theme=" + (Colors.isDarkTheme() ? "dark" : "light");
 
     @NotNull
+    @Getter
     private final URI baseUrl;
+
+    public URI resolveBaseUrl(URI uri) {
+        return baseUrl.resolve(uri);
+    }
+
+    public URI resolveBaseUrl(String str) {
+        return baseUrl.resolve(str);
+    }
 
     protected BrowserPanelProvider(@NotNull URI baseUrl) {
         this.baseUrl = baseUrl;
@@ -102,11 +112,11 @@ public abstract class BrowserPanelProvider<BP extends BrowserPanel> {
     public abstract void destroy();
 
 
-    protected static String makeParameters(@NotNull String projectId) {
+    public static String makeParameters(@NotNull String projectId) {
         return THEME_REST_PARA + "&pid=" + projectId;
     }
 
-    protected static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
+    public static String makeParameters(@NotNull String projectId, @Nullable String alignedFeatureId,
                                            @Nullable String formulaId, @Nullable String inchiKey, @Nullable String matchId
     ) {
         StringBuilder params = new StringBuilder(makeParameters(projectId));

@@ -1,6 +1,8 @@
 package de.unijena.bioinf.ms.gui.webView.jxbrowser;
 
 import com.teamdev.jxbrowser.browser.Browser;
+import com.teamdev.jxbrowser.browser.event.ConsoleMessageReceived;
+import com.teamdev.jxbrowser.js.ConsoleMessage;
 import com.teamdev.jxbrowser.navigation.callback.StartNavigationCallback;
 import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
@@ -29,10 +31,22 @@ public class JxBrowserPanel extends BrowserPanel {
     private void initialize(@NotNull String url) {
         setupLinkInterception();
         setupLoadingListener();
+        setupConsoleListener();
         add(BrowserView.newInstance(browser), BorderLayout.CENTER);
         browser.navigation().loadUrlAndWait(url);
     }
 
+    private void setupConsoleListener() {
+        browser.on(ConsoleMessageReceived.class, event -> {
+            ConsoleMessage consoleMessage = event.consoleMessage();
+            switch (consoleMessage.level()) {
+                case DEBUG -> log.debug(consoleMessage.message());
+                case WARNING -> log.warn(consoleMessage.message());
+                case LEVEL_ERROR -> log.error(consoleMessage.message());
+                default -> log.info(consoleMessage.message());
+            }
+        });
+    }
 
     public void setupLoadingListener() {
         browser.navigation().on(FrameLoadFinished.class, event -> {
@@ -76,13 +90,8 @@ public class JxBrowserPanel extends BrowserPanel {
         });
     }
 
-    /**
-     * Executes JavaScript in the browser.
-     *
-     * @param javascript The JavaScript to execute
-     */
-    public void executeJavaScript(String javascript) {
-        browser.mainFrame().ifPresent(frame -> frame.executeJavaScript(javascript));
+    public <T> T executeJavaScript(String javascript) {
+        return browser.mainFrame().map(frame -> (T) frame.executeJavaScript(javascript)).orElse(null);
     }
 
     // we use replaceable calls to ensure that during fast selection changes,

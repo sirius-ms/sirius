@@ -3,8 +3,8 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-#  image: gradle:8.12-jdk21
-  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-gradle-jbr:latest
+  image: gradle:8.14-jdk21
+#  image: registry.gitlab.com/bright-giant/docker-images/ubuntu-gradle-jbr:latest
   tags: [$RUNNER_TAGS]
 
 # Disable the Gradle daemon for Continuous Integration servers as correctness

@@ -36,11 +36,12 @@ import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.LoadablePanelDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
@@ -78,7 +79,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles, sketchStructure;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -90,6 +91,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     private final ResultPanel resultPanel;
     private final SiriusGui gui;
+
+    // Cached dialog for faster opening
+    private SketcherDialog sketcherDialog;
 
     /**
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
@@ -160,8 +164,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser2 = new JMenuItem("Open in all databases");
         highlight = new JMenuItem("Highlight matching substructures");
         annotateSpectrum = new JMenuItem("Show annotated spectrum");
+        sketchStructure = new JMenuItem("Modify structure");
         CopyInchi.addActionListener(this);
         CopyInchiKey.addActionListener(this);
+        sketchStructure.addActionListener(this);
         OpenInBrowser1.addActionListener(this);
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
@@ -176,6 +182,8 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(CopySmiles);
         popupMenu.add(CopyInchiKey);
         popupMenu.add(CopyInchi);
+        popupMenu.addSeparator();
+        popupMenu.add(sketchStructure);
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
@@ -249,6 +257,16 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
+        } else if (e.getSource() == sketchStructure) {
+            Jobs.runEDTLater(() -> {
+                if (sketcherDialog == null) {
+                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, c);
+                    sketcherDialog.setVisible(true);
+                } else {
+                    sketcherDialog.updateMolecule(c);
+                    sketcherDialog.setVisible(true);
+                }
+            });
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
@@ -357,9 +375,12 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new SubstructureMatchingDialog(
-                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, candidateBean)
-                .setVisible(true));
+        Jobs.runEDTLater(() -> {
+            LoadablePanelDialog substructureDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), "Reference spectra");
+            substructureDialog.loadPanel(() -> new SubstructurePanel(gui, candidateBean));
+            substructureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            substructureDialog.setVisible(true);
+        });
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {

@@ -44,6 +44,7 @@ class DataQualitySummaryWriter extends SummaryTable {
             "retentionTimeInSeconds",
             "retentionTimeInMinutes",
             "alignedFeatureId",
+            "compoundId",
             "mappingFeatureId",
             "overallFeatureQuality");
 
@@ -71,6 +72,7 @@ class DataQualitySummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
 
         row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
     }

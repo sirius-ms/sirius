@@ -123,6 +123,19 @@ ext {
     System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
 }
 
+// For Groovy (build.gradle)
+tasks.register("printJvmArgs") {
+    doLast {
+        def runtimeMxBean = java.lang.management.ManagementFactory.getRuntimeMXBean()
+        def jvmArgs = runtimeMxBean.getInputArguments()
+        println "****************************************"
+        println "Actual JVM Arguments for this build:"
+        jvmArgs.each { arg ->
+            println arg
+        }
+        println "****************************************"
+    }
+}
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")

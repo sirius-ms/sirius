@@ -27,9 +27,6 @@ dependencies {
     api project(':default_properties:annotations')
     api project(':graph_utils_oss')
     //useful UUID creators that make sense and are sortable
-    api 'com.github.f4b6a3:uuid-creator:5.3.3'
-    api 'com.github.f4b6a3:ksuid-creator:4.1.0'
-    api 'com.github.f4b6a3:tsid-creator:5.2.5'
     api "io.hypersistence:hypersistence-tsid:2.1.1"
 }
 
