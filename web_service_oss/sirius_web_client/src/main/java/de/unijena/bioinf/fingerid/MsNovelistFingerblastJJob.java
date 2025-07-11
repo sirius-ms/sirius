@@ -122,9 +122,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(fingerIdData.getCdkFingerprintVersion(), cache);
 
         // needed to perceive aromaticity
-        final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
-        final CycleFinder cycles = Cycles.or(Cycles.all(), Cycles.all(6));
-        final Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), cycles);
+        DeNovoStructureUtils deNovoStructureUtils = new DeNovoStructureUtils();
 
         checkForInterruption();
 
@@ -155,8 +153,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
                                     FingerprintCandidate fingerprintCandidate = dbCandidates.get(inchi.key2D());
 
                                     if (fingerprintCandidate == null) {
-                                        IAtomContainer molecule = perceiveAromaticityOnSMILES(
-                                                candidate.getSmiles(), hydrogenAdder, aromaticity);
+                                        IAtomContainer molecule = deNovoStructureUtils.perceiveAromaticityOnSMILES(candidate.getSmiles());
                                         if (Objects.isNull(molecule)) return;
 
                                         fingerprintCandidate = new FingerprintCandidate(

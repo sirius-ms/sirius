@@ -54,7 +54,6 @@ public class BatchComputeDialog extends JDialog {
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), compoundsToProcess.isEmpty() ? "Edit Presets" : "Compute", true);
-        setPreferredSize(new Dimension(1150, 970));
 
         gui.getConnectionMonitor().checkConnectionInBackground();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -114,9 +113,9 @@ public class BatchComputeDialog extends JDialog {
         Jobs.runEDTLater(() -> SoftwareTourUtils.checkAndInitTour(this, SoftwareTourInfoStore.BatchComputeTourName, SoftwareTourInfoStore.BatchComputeTourKey, gui.getProperties()));
 
         //finalize panel build and make the dialog visible
-        setResizable(false);
-        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+        setPreferredSize(GuiUtils.getPreferredSizeLimitedByScreenSize(new Dimension(1150, 1024)));
         pack();
+        setResizable(true);
         setLocationRelativeTo(getParent());
         setVisible(true);
     }

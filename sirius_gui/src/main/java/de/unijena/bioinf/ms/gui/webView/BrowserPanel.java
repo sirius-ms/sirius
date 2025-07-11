@@ -26,7 +26,12 @@ public abstract class BrowserPanel extends JPanel {
         submitDataUpdate(String.format("window.urlUtils.updateSelectedEntity(alignedFeatureID=%s, undefined, undefined, matchid=%s)", parseNullable(alignedFeatureId), parseNullable(matchId)));
     }
 
-    protected static String parseNullable(@Nullable String s) {
+    /**
+     * Synchronously execute javascript in the browser and return its return value.
+     */
+    public abstract <T> T executeJavaScript(String javascript);
+
+    public static String parseNullable(@Nullable String s) {
         return s == null || s.isBlank() ? "null" : ("'" + s + "'");
     }
 
