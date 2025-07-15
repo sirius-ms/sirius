@@ -102,7 +102,7 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
             description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This will increase running time and storage memory.",
             required = false
     )
-    public boolean sensitiveMode;
+    public boolean sensitive;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //hidden options   ///////////////////////////////////////////////////////////////////////
@@ -118,7 +118,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////
 
