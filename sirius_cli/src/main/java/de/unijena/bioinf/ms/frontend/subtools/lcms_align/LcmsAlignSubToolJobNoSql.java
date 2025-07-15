@@ -135,7 +135,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
-        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = false;
         this.alignmentThresholds = new AlignmentThresholds();
         if (options.alignRtMax>=0) {
@@ -151,6 +150,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).warn("--sensitive-mode overrides the settings for --min-snr, so both options should not be used at the same time.");
             }
         }
+
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
     }
 
     public LcmsAlignSubToolJobNoSql(
