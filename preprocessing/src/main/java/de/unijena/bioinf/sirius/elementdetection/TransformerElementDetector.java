@@ -63,7 +63,7 @@ public class TransformerElementDetector implements ElementDetection{
 
         if (ms1.size() > 2) {
             // when the spectrum has three peaks, we just trust the predictor output
-            return new DetectedFormulaConstraints(prediction.getConstraints(), true);
+            return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(prediction.getConstraints()), true);
         } else {
             // when there are two or fewer peaks, we always merge the predicted constraints with the fallback constraints
             return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()).getExtendedConstraints(prediction.getConstraints()), prediction.hasAnyPredictions());
@@ -72,7 +72,7 @@ public class TransformerElementDetector implements ElementDetection{
 
     @Override
     public Set<Element> getPredictableElements() {
-        return Set.of();
+        return Set.of(predictor.getPredictableElements());
     }
 
     private void checkDetectableElements(FormulaSettings settings){
