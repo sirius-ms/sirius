@@ -106,7 +106,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private long progress;
 
-    private double minSNR;
+    private final double minSNR;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -143,15 +143,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (options.alignPpmMax>=0) {
             this.alignmentThresholds.setMaximalAllowedMassError(new Deviation(options.alignPpmMax));
         }
-        this.minSNR = options.minSNR;
-        if (options.sensitive) {
+
+        if (options.snrOptions.sensitive) {
             this.minSNR = 2d;
-            if (options.minSNR!=3) {
-                LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).warn("--sensitive-mode overrides the settings for --min-snr, so both options should not be used at the same time.");
-            }
+        } else {
+            this.minSNR = options.snrOptions.minSNR;
         }
 
-        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, this.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -182,7 +181,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
         this.minSNR = minSNR;
-        this.mergedTraceSegmenter =  new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
