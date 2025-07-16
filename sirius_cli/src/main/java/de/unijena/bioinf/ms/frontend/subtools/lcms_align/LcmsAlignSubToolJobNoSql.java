@@ -106,7 +106,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private long progress;
 
-    private double minSNR;
+    private final double minSNR;
 
     private UserSpecifiedThresholds userSpecifiedThresholds = new UserSpecifiedThresholds();
 
@@ -135,7 +135,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case WAVELET -> new WaveletFilter(options.scaleLevel);
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
-        this.mergedTraceSegmenter = new PersistentHomology(this.filter, options.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = false;
         this.alignmentThresholds = new AlignmentThresholds();
         if (options.alignRtMax>=0) {
@@ -144,7 +143,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (options.alignPpmMax>=0) {
             this.alignmentThresholds.setMaximalAllowedMassError(new Deviation(options.alignPpmMax));
         }
-        this.minSNR = options.minSNR;
+
+        if (options.snrOptions.sensitive) {
+            this.minSNR = 2d;
+        } else {
+            this.minSNR = options.snrOptions.minSNR;
+        }
+
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, this.minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
     }
 
     public LcmsAlignSubToolJobNoSql(
@@ -175,7 +181,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         };
         this.minSNR = minSNR;
-        this.mergedTraceSegmenter =  new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
+        this.mergedTraceSegmenter = new PersistentHomology(this.filter, minSNR, PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT);
         this.saveImportedCompounds = saveImportedCompounds;
         if (alignmentThresholds!=null) this.alignmentThresholds = alignmentThresholds;
         else this.alignmentThresholds = new AlignmentThresholds();
@@ -184,11 +190,15 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, List<Path> files) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-
         setProjectTypeOrThrow(ps);
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, ps.getStorage().location().getParent(), inMemoryOnMerged);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
+        // the segmentationStrategy is used for picking the mass traces and corresponding peaks
+        // the mergedSegmentationStrategy is then used at the final feature detection step
+        // we always want to have the first mass trace detection as sensitive as possible, that's why we use minSNR=2 here
+        // the number of features, in contrast, mainly depends on the settings for mergedSegmentationStrategy
+        //
         processing.setSegmentationStrategy(new PersistentHomology(this.filter, Math.min(2, this.minSNR), PersistentHomology.PERSISTENCE_COEFFICIENT, PersistentHomology.MERGE_COEFFICIENT));
         processing.setAlignmentThresholds(this.alignmentThresholds);
         if (userSpecifiedThresholds.hasUserInput()) {
