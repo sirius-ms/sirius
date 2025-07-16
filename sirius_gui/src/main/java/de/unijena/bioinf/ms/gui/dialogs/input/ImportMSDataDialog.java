@@ -83,7 +83,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
         } else {
             panel.alignCheckBox.setSelected(false);
             panel.alignCheckBox.setVisible(false);
-            panel.sensitiveMode.setVisible(false);
+            panel.sensitiveMode.setVisible(showLCMSOptions);
         }
 
         panel.ignoreFormulas.setVisible(showPeakListOptions);
