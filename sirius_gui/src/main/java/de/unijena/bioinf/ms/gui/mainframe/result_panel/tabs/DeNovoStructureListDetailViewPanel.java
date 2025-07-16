@@ -21,14 +21,10 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import ca.odell.glazedlists.EventList;
-import ca.odell.glazedlists.matchers.MatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
-import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SketchedFilter;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
@@ -64,9 +60,6 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
     }
 
     protected class DeNovoCandidateListDetailView extends CandidateListDetailView {
-
-        private ToolbarToggleButton sketchedFilter;
-
         public DeNovoCandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
             super(resultPanel, sourceList, gui, instanceBean -> instanceBean.getComputedTools().isDeNovoSearch());
         }
@@ -84,17 +77,7 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
             showDatabaseHits.addActionListener(loadDataActionListener);
             loadAll.addActionListener(loadDataActionListener);
 
-            sketchedFilter = new ToolbarToggleButton(null, Icons.LIST_EDIT.derive(24,24), "Only show sketched structures");
-            tb.add(sketchedFilter, getIndexOfFirstGap(tb) - 1);
-
             return tb;
-        }
-
-        @Override
-        protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
-            EventList<MatcherEditor<FingerprintCandidateBean>> matchers = super.getSearchFieldMatchers();
-            matchers.add(new SketchedFilter(sketchedFilter));
-            return matchers;
         }
     }
 
