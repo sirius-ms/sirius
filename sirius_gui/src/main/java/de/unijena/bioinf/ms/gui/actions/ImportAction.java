@@ -116,7 +116,7 @@ public class ImportAction extends AbstractGuiAction {
                 parameters.setAlignLCMSRuns(false);
 
             // show dialog
-            if (hasPeakLists || alignAllowed) {
+            {//if (hasPeakLists || alignAllowed) {
                 ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, alignAllowed, hasPeakLists);
                 if (!dialog.isSuccess())
                     return;
