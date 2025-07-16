@@ -29,7 +29,7 @@ import java.util.Objects;
 
 public class AddExternalStructureJJob extends BasicMasterJJob<Scored<FingerprintCandidate>> {
 
-    public static final String SKETCHED_DB_NAME = "Sketched Structure";
+    public static final String SKETCHED_DB_NAME = "Sketched";
 
     final String smiles;
     final List<FingerIdResult> idResults;

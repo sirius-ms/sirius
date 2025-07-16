@@ -61,6 +61,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.fingerid.AddExternalStructureJJob.SKETCHED_DB_NAME;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -299,6 +300,12 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 .map(s -> s.stream().map(DBLink::getName).collect(toList()))
                 .map(CustomDataSources::getDBFlagsFromNames)
                 .orElse(0L);
+    }
+
+    public boolean isSketched() {
+        return Optional.ofNullable(candidate.getDbLinks())
+                .map(links -> links.stream().anyMatch(link -> SKETCHED_DB_NAME.equals(link.getName())))
+                .orElse(false);
     }
 
     public String getMolecularFormula() {
