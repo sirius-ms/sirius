@@ -18,6 +18,7 @@ public class SketcherDialog extends LoadablePanelDialog {
 
     public SketcherDialog(Window owner, SiriusGui siriusGui, @Nullable FingerprintCandidateBean structureCandidate) {
         super(owner, "Structure Sketcher");
+        setModalityType(ModalityType.MODELESS);
 
         JPanel southPanel = new JPanel();
         add(southPanel, BorderLayout.SOUTH);
