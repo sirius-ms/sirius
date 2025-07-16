@@ -2,6 +2,7 @@ package de.unijena.bioinf.sirius.elementdetection;
 
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
+import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -52,7 +53,7 @@ public class TransformerElementDetector implements ElementDetection{
     @Override
     public DetectedFormulaConstraints detect(ProcessedInput processedInput) {
         final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
-
+        checkDetectableElements(settings);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
 
         // at this stage we are only interested in predictions of the most-left peak
@@ -60,6 +61,7 @@ public class TransformerElementDetector implements ElementDetection{
         if (maybePrediction.isEmpty()) return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
 
         TransformerPrediction prediction = maybePrediction.get();
+        FormulaConstraints detectedElements = prediction.getConstraints().intersection(settings.getAutoDetectionElements().toArray(Element[]::new));
 
         if (ms1.size() > 2) {
             // when the spectrum has three peaks, we just trust the predictor output
