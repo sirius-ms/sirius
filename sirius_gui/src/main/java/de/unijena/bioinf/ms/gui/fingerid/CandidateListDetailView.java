@@ -35,6 +35,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.LoadablePanelDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -110,7 +112,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 showCenterCard(ActionList.ViewState.DATA);
         });
 
-        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
+        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource), gui);
 
         this.resultPanel = resultPanel;
         this.gui = gui;
@@ -139,6 +141,35 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 scrollPane.setBounds(0, 0, getWidth(), getHeight()); // Update scrollPane size
             }
         });
+
+        // The following seemed necessary to use the MouseWheelListener for the popup without breaking the scroll funtion of the list.
+        {
+            // Get existing MouseWheelListeners from the scrollPane
+            // This is crucial because JScrollPane has an internal listener for scrolling
+            final MouseWheelListener[] existingMouseWheelListeners = scrollPane.getMouseWheelListeners();
+
+            // Add custom MouseWheelListener to the JScrollPane
+            scrollPane.addMouseWheelListener(new MouseWheelListener() {
+                @Override
+                public void mouseWheelMoved(MouseWheelEvent e) {
+                    // 1. Perform your custom action: reset popup timer and hide popup window
+                    if (candidateList instanceof CandidateInnerList) {
+                        ((CandidateInnerList) candidateList).popUpTimer.restart(); //reset timer h
+                        ((CandidateInnerList) candidateList).popUpWindow.setVisible(false);
+                    }
+
+                    // 2. Re-dispatch the event to the JScrollPane's original listeners
+                    // This allows the JScrollPane to perform its default scrolling behavior
+                    for (MouseWheelListener listener : existingMouseWheelListeners) {
+                        // Make sure not to re-dispatch to ourselves if we were somehow in the original list
+                        // (though unlikely with this setup)
+                        if (listener != this) {
+                            listener.mouseWheelMoved(e);
+                        }
+                    }
+                }
+            });
+        }
 
         //add tutorial stuff
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
@@ -504,15 +535,33 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         return null;
     }
 
+    private boolean isInRect(Rectangle targetBox, Rectangle relativeRect, Point point) {
+        final int absX = targetBox.x + relativeRect.x;
+        final int absY = targetBox.y + relativeRect.y;
+        final int absX2 = targetBox.width + absX;
+        final int absY2 = targetBox.height + absY;
+        return point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
+    }
+
 
     public class CandidateInnerList extends JList<FingerprintCandidateBean> {
         private final NumberFormat prob = new DecimalFormat("%");
+        Timer popUpTimer;
+        CompoundStructureImage compoundStructureImage;
+        JWindow popUpWindow;
+        JPanel popUpPanel;
 
-        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel) {
+        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel, SiriusGui gui) {
             super(dataModel);
+
+            setupStructurePopUp(gui);
+
             addMouseMotionListener(new MouseAdapter() {
                 @Override
                 public void mouseMoved(MouseEvent e) {
+                    popUpTimer.stop();
+                    popUpWindow.setVisible(false);
+
                     final Point point = e.getPoint();
                     final int index = locationToIndex(point);
                     if (index < 0) {
@@ -556,8 +605,90 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
                     //no clickable component
                     setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+
+                    //check if over molecular structure and init popup timer
+                    if (isInRect(candidate.moleculeImageBounds, relativeRect, point)) {
+                        popUpTimer.start();
+                    }
+                }
+
+            });
+
+            addMouseListener(new MouseAdapter() {
+                public void mouseExited(MouseEvent e) {
+                    popUpTimer.stop();
+                    popUpWindow.setVisible(false);
                 }
             });
+        }
+
+        private void setupStructurePopUp(SiriusGui gui) {
+            // Create the pop-up window (initially hidden)
+            popUpWindow = new JWindow();
+            popUpWindow.setAlwaysOnTop(true); // Ensure it stays above other windows
+
+            compoundStructureImage = CompoundStructureImage.asLargePopUp(gui);
+            popUpPanel = new JPanel();
+            popUpPanel.setBorder(BorderFactory.createLineBorder(Colors.FOREGROUND_INTERFACE));
+
+            popUpPanel.setBackground(Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1);
+            popUpPanel.add(compoundStructureImage);
+            popUpWindow.add(popUpPanel, BorderLayout.CENTER);
+            popUpWindow.pack();
+
+            // Initialize the Swing Timer to show structure popup
+            popUpTimer = new Timer(800, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // This code runs when the timer fires
+
+                    //don't show if SIRIUS window is too small.
+                    if (CandidateListDetailView.this.getHeight() < 1.5 * CompoundStructureImage.PREFERRED_SIZE_CELL.getHeight() ||
+                            CandidateListDetailView.this.getWidth() < 2 * CompoundStructureImage.PREFERRED_SIZE_CELL.getWidth()
+                    ) {
+                        popUpTimer.stop();
+                        return;
+                    }
+
+                    //set current molecule
+                    {
+                        // Get current mouse position on screen
+                        Point screenMousePos = MouseInfo.getPointerInfo().getLocation();
+                        if (screenMousePos == null) { // No mouse detected
+                            return;
+                        }
+
+                        // Convert screen coordinates to coordinates relative to the JList
+                        Point listMousePos = new Point(screenMousePos);
+                        SwingUtilities.convertPointFromScreen(listMousePos, candidateList);
+
+                        final int index = locationToIndex(listMousePos);
+                        final Rectangle relativeRect = getCellBounds(index, index);
+                        final FingerprintCandidateBean candidate = getModel().getElementAt(index);
+
+                        //check if over molecular structure and init popup timer
+                        if (isInRect(candidate.moleculeImageBounds, relativeRect, listMousePos)) {
+                            compoundStructureImage.molecule = candidate;
+                        } else {
+                            popUpTimer.stop();
+                            return;
+                        }
+                    }
+
+                    int x = CandidateCellRenderer.RANK_LABEL_DIMENSION.width + CompoundStructureImage.PREFERRED_SIZE_CELL.width;
+                    compoundStructureImage.updateSize(CandidateListDetailView.this.getSize(), x);
+
+                    Point locationOnScreen = new Point(x, CandidateListDetailView.this.getHeight()/2 - compoundStructureImage.getHeight()/2);
+                    SwingUtilities.convertPointToScreen(locationOnScreen, CandidateListDetailView.this);
+                    popUpWindow.setLocation(locationOnScreen);
+
+                    popUpWindow.pack();
+                    popUpWindow.repaint();
+                    popUpWindow.setVisible(true);
+                    popUpTimer.stop();
+                }
+            });
+            popUpTimer.setRepeats(false); // Make sure the timer only fires once
         }
 
         @Override
