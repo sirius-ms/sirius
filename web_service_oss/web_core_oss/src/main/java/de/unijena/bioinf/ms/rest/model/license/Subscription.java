@@ -73,6 +73,12 @@ public class Subscription {
     @Schema(nullable = true)
     private String pp;
 
+    /**
+     * Specifies the software features that are available via this subscription.
+     * Features not specified here are always active.
+     */
+    private AllowedFeatures allowedFeatures;
+
     @JsonIgnore
     public boolean hasCompoundLimit() {
         Integer l = getCompoundLimit();

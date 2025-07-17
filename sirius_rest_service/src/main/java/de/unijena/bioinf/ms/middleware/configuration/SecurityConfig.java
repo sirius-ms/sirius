@@ -20,41 +20,62 @@
 
 package de.unijena.bioinf.ms.middleware.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.brightgiant.secureapi.ExplorerHandshake;
+import com.brightgiant.secureapi.SiriusGuiHandshake;
+import de.unijena.bioinf.ms.middleware.ErrorResponseHandler;
+import de.unijena.bioinf.ms.middleware.security.ApiAllowedFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.List;
+
 @Configuration
 public class SecurityConfig {
-    @Value("${app.cors.origins:#{null}}")
-    private String corsAllowedOrigins;
-
-    @Value("${app.cors.methods:#{null}}")
-    private String corsAllowedMethods;
-
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                if (corsAllowedOrigins != null)
-                    registry.addMapping("/api/**")
-                            .allowedOrigins(corsAllowedOrigins)
-                            .allowedMethods(corsAllowedMethods.split(","));
-            }
-
-            @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                //assets for react views
+                //assets for React views
                 registry.addResourceHandler("/assets/**")
                         .addResourceLocations("classpath:/templates/sirius_java_integrated/assets/");
 
                 registry.addResourceHandler("/sirius_java_integrated/**")
                         .addResourceLocations("classpath:/templates/sirius_java_integrated/");
+
             }
         };
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(SiriusGuiHandshake siriusGuiHandshake, ExplorerHandshake explorerHandshake, ErrorResponseHandler errorResponseHandler, HttpSecurity http) throws Exception {
+        // disable CSRF
+        http.csrf(AbstractHttpConfigurer::disable);
+
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll());
+
+        http.addFilterAfter(new ApiAllowedFilter(siriusGuiHandshake.or(explorerHandshake), errorResponseHandler,
+                        List.of("/**"),
+                        List.of("/sse", "/actuator/**")),
+                AuthorizationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public SiriusGuiHandshake siriusGuiHandshake() {
+        return new SiriusGuiHandshake();
+    }
+
+    @Bean
+    public ExplorerHandshake explorerHandshake() {
+        return ExplorerHandshake.getInstance();
     }
 }

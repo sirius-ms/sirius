@@ -20,13 +20,17 @@
 
 package de.unijena.bioinf.ms.middleware.service.gui;
 
+import com.brightgiant.secureapi.SiriusGuiHandshake;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import io.sirius.ms.sdk.SiriusClient;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.web.context.WebServerApplicationContext;
@@ -37,6 +41,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,17 +52,15 @@ public class GuiServiceImpl implements GuiService {
 
     protected final EventService<?> eventService;
     private final WebServerApplicationContext applicationContext;
+    private final @Nullable SiriusGuiHandshake siriusGuiHandshake;
 
     private SiriusGuiFactory guiFactory;
 
-    public GuiServiceImpl(EventService<?> eventService, WebServerApplicationContext applicationContext) {
-        this(null, eventService, applicationContext);
-    }
 
-    public GuiServiceImpl(SiriusGuiFactory guiFactory, EventService<?> eventService, WebServerApplicationContext applicationContext) {
+    public GuiServiceImpl(@Nullable SiriusGuiHandshake siriusGuiHandshake, EventService<?> eventService, WebServerApplicationContext applicationContext) {
+        this.siriusGuiHandshake = siriusGuiHandshake;
         this.eventService = eventService;
         this.applicationContext = applicationContext;
-        this.guiFactory = guiFactory;
     }
 
     @Override
@@ -131,8 +134,18 @@ public class GuiServiceImpl implements GuiService {
     }
 
     protected SiriusGui makeGuiInstance(String projectId) {
-        if (guiFactory == null)
-            guiFactory = new SiriusGuiFactory(applicationContext.getWebServer().getPort());
+        if (guiFactory == null) {
+            SiriusClient client = new SiriusClient(applicationContext.getWebServer().getPort());
+            JxBrowserPanelProvider browserProvider = new JxBrowserPanelProvider(URI.create(client.getApiClient().getBasePath()));
+
+            if (siriusGuiHandshake != null) {
+                siriusGuiHandshake.addHandshakeHeader((name, header) -> {
+                    client.getApiClient().addDefaultHeader(name, header);
+                    browserProvider.addDefaultHeaders(Pair.of(name, header));
+                });
+            }
+            guiFactory = new SiriusGuiFactory(client, null, browserProvider);
+        }
 
         return guiFactory.newGui(projectId);
     }
