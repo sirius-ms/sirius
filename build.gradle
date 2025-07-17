@@ -164,7 +164,7 @@ allprojects {
     }
 
     repositories {
-//        mavenLocal()
+        mavenLocal()
         mavenCentral()
 
         maven {

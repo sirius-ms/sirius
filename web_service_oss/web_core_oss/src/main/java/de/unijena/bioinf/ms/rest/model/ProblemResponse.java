@@ -23,6 +23,7 @@ public class ProblemResponse {
     public static final String EMAIL_VERIFICATION_MISSING =  "email_verification_missing";
     public static final String SUB_EXPIRED =  "subscription_expired";
     public static final String LIMIT_REACHED =  "limit_reached";
+    public static final String FORBIDDEN =  "forbidden";
 
 
     private String type;

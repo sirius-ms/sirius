@@ -20,20 +20,20 @@
 
 package de.unijena.bioinf.ms.rest.model;
 
-public class LicenseException extends Exception {
-    public LicenseException() {
+public class LicensingException extends Exception {
+    public LicensingException() {
         super();
     }
 
-    public LicenseException(String s) {
+    public LicensingException(String s) {
         super(s);
     }
 
-    public LicenseException(String message, Throwable cause) {
+    public LicensingException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public LicenseException(Throwable cause) {
+    public LicensingException(Throwable cause) {
         super(cause);
     }
 }
