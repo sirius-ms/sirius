@@ -72,6 +72,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
@@ -589,6 +590,21 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
 
             return null;
+        }
+    }
+
+    /**
+     * Scroll the list to the first list element that fulfills the predicate.
+     */
+    public void scrollToStructure(Predicate<FingerprintCandidateBean> predicate) {
+        ListModel<FingerprintCandidateBean> listModel = candidateList.getModel();
+        for (int i = 0; i < listModel.getSize(); i++) {
+            FingerprintCandidateBean element = listModel.getElementAt(i);
+            if (predicate.test(element)) {
+                System.out.println("MATCH " + element + " " + i);
+                candidateList.ensureIndexIsVisible(i);
+                return;
+            }
         }
     }
 }
