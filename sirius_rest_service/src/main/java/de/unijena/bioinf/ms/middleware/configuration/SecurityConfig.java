@@ -24,6 +24,7 @@ import com.brightgiant.secureapi.ExplorerHandshake;
 import com.brightgiant.secureapi.SiriusGuiHandshake;
 import de.unijena.bioinf.ms.middleware.ErrorResponseHandler;
 import de.unijena.bioinf.ms.middleware.security.ApiAllowedFilter;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -55,16 +56,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(SiriusGuiHandshake siriusGuiHandshake, ExplorerHandshake explorerHandshake, ErrorResponseHandler errorResponseHandler, HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(WebAPI<?> webAPI, SiriusGuiHandshake siriusGuiHandshake, ExplorerHandshake explorerHandshake, ErrorResponseHandler errorResponseHandler, HttpSecurity http) throws Exception {
         // disable CSRF
         http.csrf(AbstractHttpConfigurer::disable);
 
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll());
 
-        http.addFilterAfter(new ApiAllowedFilter(siriusGuiHandshake.or(explorerHandshake), errorResponseHandler,
+        http.addFilterAfter(new ApiAllowedFilter(webAPI, errorResponseHandler, siriusGuiHandshake.or(explorerHandshake),
                         List.of("/**"),
-                        List.of("/sse", "/actuator/**")),
+                        List.of("/sse", "/actuator/**", "/v3/api-docs/**")),
                 AuthorizationFilter.class);
         return http.build();
     }
