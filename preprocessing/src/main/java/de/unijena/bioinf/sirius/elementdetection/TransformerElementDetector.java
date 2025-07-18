@@ -57,7 +57,7 @@ public class TransformerElementDetector implements ElementDetection{
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
 
         // at this stage we are only interested in predictions of the most-left peak
-        Optional<TransformerPrediction> maybePrediction = predictor.predict(ms1, 0);
+        Optional<TransformerPrediction> maybePrediction = ms1.size() > 0 ? predictor.predict(ms1, 0) : Optional.empty();
         if (maybePrediction.isEmpty()) return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()), false);
 
         TransformerPrediction prediction = maybePrediction.get();
@@ -65,10 +65,10 @@ public class TransformerElementDetector implements ElementDetection{
 
         if (ms1.size() > 2) {
             // when the spectrum has three peaks, we just trust the predictor output
-            return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(prediction.getConstraints()), true);
+            return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(detectedElements), true);
         } else {
             // when there are two or fewer peaks, we always merge the predicted constraints with the fallback constraints
-            return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()).getExtendedConstraints(prediction.getConstraints()), prediction.hasAnyPredictions());
+            return new DetectedFormulaConstraints(settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet()).getExtendedConstraints(detectedElements), prediction.hasAnyPredictions());
         }
     }
 
