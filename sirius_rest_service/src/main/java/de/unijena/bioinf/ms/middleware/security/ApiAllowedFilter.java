@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.middleware.security;
 import de.unijena.bioinf.ms.middleware.ErrorResponseHandler;
 import de.unijena.bioinf.ms.rest.model.ProblemResponse;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
-import de.unijena.bioinf.webapi.rest.RestAPI;
+import de.unijena.bioinf.webapi.WebAPI;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,15 +25,16 @@ public class ApiAllowedFilter extends OncePerRequestFilter {
     private final List<String> excludeAntPaths;
     private final AntPathMatcher matcher = new AntPathMatcher();
     private final ErrorResponseHandler errorResponseHandler;
-    RestAPI restService;
+    private final WebAPI<?> restService;
 
     @Nullable Predicate<HttpServletRequest> bypassRule;
 
-    public ApiAllowedFilter(@Nullable Predicate<HttpServletRequest> bypassRule, ErrorResponseHandler errorResponseHandler, List<String> includeAntPaths, List<String> excludeAntPaths) {
+    public ApiAllowedFilter(@NotNull WebAPI<?> restService, ErrorResponseHandler errorResponseHandler, @Nullable Predicate<HttpServletRequest> bypassRule, List<String> includeAntPaths, List<String> excludeAntPaths) {
         this.includeAntPaths = includeAntPaths;
         this.excludeAntPaths = excludeAntPaths;
         this.errorResponseHandler = errorResponseHandler;
         this.bypassRule = bypassRule;
+        this.restService = restService;
     }
 
     @Override
@@ -76,6 +77,7 @@ public class ApiAllowedFilter extends OncePerRequestFilter {
 
             //todo remove. jsut for checking if all bypasses work.
             errorResponseHandler.sendError(req, resp, HttpStatus.FORBIDDEN, "No Bypass!", "This is a DEBUG check failing request where the bypass mechanism does not work! Request: " + req.getRequestURI());
+            return;
         }
 
         chain.doFilter(req, resp);
