@@ -142,34 +142,18 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
         });
 
-        // The following seemed necessary to use the MouseWheelListener for the popup without breaking the scroll funtion of the list.
-        {
-            // Get existing MouseWheelListeners from the scrollPane
-            // This is crucial because JScrollPane has an internal listener for scrolling
-            final MouseWheelListener[] existingMouseWheelListeners = scrollPane.getMouseWheelListeners();
 
-            // Add custom MouseWheelListener to the JScrollPane
-            scrollPane.addMouseWheelListener(new MouseWheelListener() {
-                @Override
-                public void mouseWheelMoved(MouseWheelEvent e) {
-                    // 1. Perform your custom action: reset popup timer and hide popup window
-                    if (candidateList instanceof CandidateInnerList) {
-                        ((CandidateInnerList) candidateList).popUpTimer.restart(); //reset timer h
-                        ((CandidateInnerList) candidateList).popUpWindow.setVisible(false);
-                    }
-
-                    // 2. Re-dispatch the event to the JScrollPane's original listeners
-                    // This allows the JScrollPane to perform its default scrolling behavior
-                    for (MouseWheelListener listener : existingMouseWheelListeners) {
-                        // Make sure not to re-dispatch to ourselves if we were somehow in the original list
-                        // (though unlikely with this setup)
-                        if (listener != this) {
-                            listener.mouseWheelMoved(e);
-                        }
-                    }
+        // Add custom MouseWheelListener to the JScrollPane to prevent structure popup to show up when mouse wheel is moved.
+        scrollPane.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                // reset structure popup timer and hide popup window
+                if (candidateList instanceof CandidateInnerList) {
+                    ((CandidateInnerList) candidateList).popUpTimer.restart(); //reset timer
+                    ((CandidateInnerList) candidateList).popUpWindow.setVisible(false);
                 }
-            });
-        }
+            }
+        });
 
         //add tutorial stuff
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
