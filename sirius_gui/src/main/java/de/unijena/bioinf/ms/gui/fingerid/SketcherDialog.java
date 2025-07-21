@@ -21,6 +21,7 @@ public class SketcherDialog extends LoadablePanelDialog {
     private SketcherPanel sketcherPanel;
     private final JButton addButton;
     private final JButton doneButton;
+    private final JButton reloadButton;
     private final SiriusGui siriusGui;
     private FingerprintCandidateBean originalStructure;
 
@@ -39,10 +40,17 @@ public class SketcherDialog extends LoadablePanelDialog {
         doneButton = new JButton("Add and close");
         doneButton.addActionListener(e -> addCurrentStructure(true));
 
+        reloadButton = new JButton("Reload");
+        reloadButton.addActionListener(e -> {
+            sketcherPanel.updateSelectedFeatureSketcher(originalStructure.getParentFeatureId(), "*");  // Force SMILES change
+            sketcherPanel.updateSelectedFeatureSketcher(originalStructure.getParentFeatureId(), originalStructure.getSmiles());
+        });
+
         loadPanel(() -> {
             sketcherPanel = new SketcherPanel(siriusGui, structureCandidate);
             southPanel.add(addButton);
             southPanel.add(doneButton);
+            southPanel.add(reloadButton);
             return sketcherPanel;
         });
     }
@@ -55,10 +63,12 @@ public class SketcherDialog extends LoadablePanelDialog {
     private void addCurrentStructure(boolean closeOnSuccess) {
         addButton.setEnabled(false);
         doneButton.setEnabled(false);
+        reloadButton.setEnabled(false);
         JsPromise promise = sketcherPanel.tryUploadCurrentStructure();
         promise.then(result -> {
             addButton.setEnabled(true);
             doneButton.setEnabled(true);
+            reloadButton.setEnabled(true);
             String inchiKey = result[0].toString();
             if (!inchiKey.isEmpty()) {
                 inchiKey = inchiKey.substring(0, 14);
