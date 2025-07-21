@@ -601,7 +601,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         for (int i = 0; i < listModel.getSize(); i++) {
             FingerprintCandidateBean element = listModel.getElementAt(i);
             if (predicate.test(element)) {
-                System.out.println("MATCH " + element + " " + i);
                 candidateList.ensureIndexIsVisible(i);
                 return;
             }
