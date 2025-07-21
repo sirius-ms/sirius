@@ -520,6 +520,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private boolean isInRect(Rectangle targetBox, Rectangle relativeRect, Point point) {
+        if (targetBox == null || relativeRect == null) return false;
         final int absX = targetBox.x + relativeRect.x;
         final int absY = targetBox.y + relativeRect.y;
         final int absX2 = targetBox.width + absX;
