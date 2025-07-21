@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.configuration;
 
 import com.brightgiant.secureapi.ExplorerHandshake;
+import com.brightgiant.secureapi.Handshakes;
 import com.brightgiant.secureapi.SiriusGuiHandshake;
 import de.unijena.bioinf.ms.middleware.ErrorResponseHandler;
 import de.unijena.bioinf.ms.middleware.security.ApiAllowedFilter;
@@ -72,11 +73,11 @@ public class SecurityConfig {
 
     @Bean
     public SiriusGuiHandshake siriusGuiHandshake() {
-        return new SiriusGuiHandshake();
+        return Handshakes.newSiriusHandshakeInstance();
     }
 
     @Bean
     public ExplorerHandshake explorerHandshake() {
-        return ExplorerHandshake.getInstance();
+        return Handshakes.getExplorerHandshakeInstance();
     }
 }
