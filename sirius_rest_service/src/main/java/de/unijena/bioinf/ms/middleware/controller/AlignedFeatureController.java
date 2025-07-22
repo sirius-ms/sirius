@@ -71,6 +71,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.isNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
@@ -1181,8 +1182,9 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
     private boolean existingStructureCandidate(Project<?> project, String alignedFeatureId, String smiles) throws CDKException {
         String inchiKey = InChISMILESUtils.getInchiFromSmiles(smiles, false).key.substring(0, 14);
 
-        return project.findStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream()
-                .map(c -> c.getInchiKey().substring(0, 14))
+        return Stream.concat(project.findStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream(),
+                             project.findDeNovoStructureCandidatesByFeatureId(alignedFeatureId, Pageable.unpaged()).stream())
+                .map(StructureCandidate::getInchiKey)
                 .anyMatch(inchiKey::equals);
     }
 
