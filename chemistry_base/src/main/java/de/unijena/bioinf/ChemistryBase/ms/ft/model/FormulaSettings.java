@@ -37,7 +37,7 @@ import java.util.Set;
 public class FormulaSettings implements Ms2ExperimentAnnotation {
 
     public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING = "CHNOPFI";
-    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING = "SBBrClSeSiFeMg";
+    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrClSe_STRING = "SBBrClSeSiFeZnMg";
     public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_FALLBACK_STRING = "S";
 
     /**
