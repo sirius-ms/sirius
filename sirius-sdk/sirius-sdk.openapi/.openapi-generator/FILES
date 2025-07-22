@@ -9,6 +9,7 @@ docs/AggregationType.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
 docs/AlignedFeatureQualityExperimental.md
+docs/AllowedFeatures.md
 docs/AnnotatedMsMsData.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
@@ -178,6 +179,7 @@ src/main/java/io/sirius/ms/sdk/model/AggregationType.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeature.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureOptField.java
 src/main/java/io/sirius/ms/sdk/model/AlignedFeatureQualityExperimental.java
+src/main/java/io/sirius/ms/sdk/model/AllowedFeatures.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedMsMsData.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedPeak.java
 src/main/java/io/sirius/ms/sdk/model/AnnotatedSpectrum.java

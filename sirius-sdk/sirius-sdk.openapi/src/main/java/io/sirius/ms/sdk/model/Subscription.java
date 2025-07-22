@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -52,7 +53,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Subscription.JSON_PROPERTY_DESCRIPTION,
   Subscription.JSON_PROPERTY_NAME,
   Subscription.JSON_PROPERTY_TOS,
-  Subscription.JSON_PROPERTY_PP
+  Subscription.JSON_PROPERTY_PP,
+  Subscription.JSON_PROPERTY_ALLOWED_FEATURES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Subscription {
@@ -100,6 +102,9 @@ public class Subscription {
 
   public static final String JSON_PROPERTY_PP = "pp";
   private String pp;
+
+  public static final String JSON_PROPERTY_ALLOWED_FEATURES = "allowedFeatures";
+  private AllowedFeatures allowedFeatures;
 
   public Subscription() {
   }
@@ -479,6 +484,31 @@ public class Subscription {
     this.pp = pp;
   }
 
+  public Subscription allowedFeatures(AllowedFeatures allowedFeatures) {
+    
+    this.allowedFeatures = allowedFeatures;
+    return this;
+  }
+
+   /**
+   * Get allowedFeatures
+   * @return allowedFeatures
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ALLOWED_FEATURES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public AllowedFeatures getAllowedFeatures() {
+    return allowedFeatures;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ALLOWED_FEATURES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAllowedFeatures(AllowedFeatures allowedFeatures) {
+    this.allowedFeatures = allowedFeatures;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -502,12 +532,13 @@ public class Subscription {
         Objects.equals(this.description, subscription.description) &&
         Objects.equals(this.name, subscription.name) &&
         Objects.equals(this.tos, subscription.tos) &&
-        Objects.equals(this.pp, subscription.pp);
+        Objects.equals(this.pp, subscription.pp) &&
+        Objects.equals(this.allowedFeatures, subscription.allowedFeatures);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sid, subscriberId, subscriberName, expirationDate, startDate, countQueries, instanceLimit, instanceHashRecordingTime, maxQueriesPerInstance, maxUserAccounts, serviceUrl, description, name, tos, pp);
+    return Objects.hash(sid, subscriberId, subscriberName, expirationDate, startDate, countQueries, instanceLimit, instanceHashRecordingTime, maxQueriesPerInstance, maxUserAccounts, serviceUrl, description, name, tos, pp, allowedFeatures);
   }
 
   @Override
@@ -529,6 +560,7 @@ public class Subscription {
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    tos: ").append(toIndentedString(tos)).append("\n");
     sb.append("    pp: ").append(toIndentedString(pp)).append("\n");
+    sb.append("    allowedFeatures: ").append(toIndentedString(allowedFeatures)).append("\n");
     sb.append("}");
     return sb.toString();
   }
