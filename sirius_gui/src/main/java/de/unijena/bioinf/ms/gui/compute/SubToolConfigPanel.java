@@ -28,7 +28,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Function;
 
-public abstract class SubToolConfigPanel<C> extends ConfigPanel {
+public class SubToolConfigPanel<C> extends ConfigPanel {
     protected CommandLine.Model.CommandSpec commandSpec;
 
    public SubToolConfigPanel(Class<C> annotatedObject) {
