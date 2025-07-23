@@ -66,7 +66,9 @@ public class SecurityConfig {
 
         http.addFilterAfter(new ApiAllowedFilter(webAPI, errorResponseHandler, siriusGuiHandshake.or(explorerHandshake),
                         List.of("/**"),
-                        List.of("/sse", "/actuator/**", "/v3/api-docs/**")),
+                        List.of("/sse", "/actuator/**", "/api/account/**",
+                                "/api/info", "/api/connection-status",
+                                "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")),
                 AuthorizationFilter.class);
         return http.build();
     }
