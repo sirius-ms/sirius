@@ -8,6 +8,8 @@ import java.util.Locale;
 
 public class ContiguousTrace implements Trace, Serializable {
 
+    private static byte NOISY_FLAG = 2;
+
     protected final transient ScanPointMapping mapping;
     protected final int uid;
 
@@ -15,6 +17,7 @@ public class ContiguousTrace implements Trace, Serializable {
     protected final double averageMz, minMz, maxMz;
     protected double[] mz;
     protected float[] intensity;
+    protected byte flags = 0;
     protected TraceSegment[] segments;
 
     ContiguousTrace(ScanPointMapping mapping, int uid, int startId, int endId, int apexId, double averageMz, double minMz, double maxMz, double[] mz, float[] intensity, TraceSegment[] segments) {
@@ -181,5 +184,11 @@ public class ContiguousTrace implements Trace, Serializable {
     }
 
 
-
+    public boolean isNoisyTrace() {
+        return (flags&NOISY_FLAG)!=0;
+    }
+    public void setNoisyTrace(boolean value) {
+        if (value) flags = (byte)(flags|NOISY_FLAG);
+        else flags = (byte)(flags&(~NOISY_FLAG));
+    }
 }

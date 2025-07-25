@@ -97,7 +97,7 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         // and a last time for the child segments...
         TraceSegment[][] rawSegments = new TraceSegment[mergedTrace.getTraces().length][];
         for (int k=0; k < rawSegments.length; ++k) {
-            rawSegments[k] = extractSegments(mergedSample, mergedTrace, mergedTrace.getSamples()[k], mergedTraceSegments, mergedTrace.getTraces()[k], stats.getExpectedPeakWidth().orElse(0d), true);
+            rawSegments[k] = extractSegments(mergedSample, mergedTrace, mergedTrace.getSamples()[k], mergedTraceSegments, mergedTrace.getTraces()[k], stats.getExpectedPeakWidth().orElse(0d), true, traceSegmenter);
         }
 
         // finally, merge everything together
@@ -195,10 +195,17 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         ScanPointMapping mapping = merged.getMapping();
         // sampleMappings[i,j]=1 if feature #i is contained in sample #j
         BitSet[] sampleMappings = new BitSet[mergedTraceSegments.length];
+        float[] maxIntensityPerSegment = new float[mergedTraceSegments.length];
+        for (int k=0; k < mergedTraceSegments.length; ++k) {
+            for (int j=0; j < mergedTrace.getSamples().length; ++j) {
+                maxIntensityPerSegment[k] = Math.max(maxIntensityPerSegment[k], rawSegments[j][k]!=null ? mergedTrace.getTraces()[j].projectedIntensity(rawSegments[j][k].apex) : 0f);
+            }
+        }
+        // we say a feature is definitely present in a sample if its intensity there is above 15% of the max intensity of this sample
         for (int k=0; k < mergedTraceSegments.length; ++k) {
             sampleMappings[k] = new BitSet(mergedTrace.getSamples().length);
             for (int j=0; j < mergedTrace.getSamples().length; ++j) {
-                if (rawSegments[j][k]!=null) sampleMappings[k].set(j);
+                if (rawSegments[j][k]!=null && (mergedTrace.getTraces()[j].projectedIntensity(rawSegments[j][k].apex)/maxIntensityPerSegment[k]) > 0.15) sampleMappings[k].set(j);
             }
         }
         for (int k=1; k < mergedTraceSegments.length; ++k) {
@@ -269,7 +276,7 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
     }
 
 
-    public TraceSegment[] extractSegments(ProcessedSample mergedSample, MergedTrace mergedTrace, ProcessedSample sample, TraceSegment[] traceSegments, ProjectedTrace trace, double expectedPeakWidth, boolean enforceFeatures) {
+    public TraceSegment[] extractSegments(ProcessedSample mergedSample, MergedTrace mergedTrace, ProcessedSample sample, TraceSegment[] traceSegments, ProjectedTrace trace, double expectedPeakWidth, boolean enforceFeatures, TraceSegmentationStrategy traceSegmenter) {
         final SampleStats stats = sample.getStorage().getStatistics();
         // we have to remap the raw noise level to the projected noise level....
         final double rawNoiseLevel = stats.noiseLevel(trace.getRawApex());
@@ -288,7 +295,8 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
             features = new int[0];
         }
 
-        TraceSegment[] childSegments = new PersistentHomology(true).detectSegments(trace.projected(mergedSample.getMapping()),
+        TraceSegment[] childSegments = /*new PersistentHomology(new NoFilter()).*/
+                traceSegmenter.detectSegments(trace.projected(mergedSample.getMapping()),
                 projectedNoiseLevel, expectedPeakWidth, pointsOfInterest, features).toArray(TraceSegment[]::new);
         return childSegments;
     }
