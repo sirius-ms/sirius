@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class AddExternalStructureJJob extends BasicMasterJJob<Scored<FingerprintCandidate>> {
+
+    public static final String SKETCHED_DB_NAME = "Sketched";
+
     final String smiles;
     final List<FingerIdResult> idResults;
     final int charge;
@@ -70,7 +73,7 @@ public class AddExternalStructureJJob extends BasicMasterJJob<Scored<Fingerprint
         Scored<FingerprintCandidate> scoredCandidate = scoreNew(predictor, webAPI, molecularFormula, fp, fingerprintCandidate);
 
         scoredCandidate.getCandidate().setTanimoto(Tanimoto.nonProbabilisticTanimoto(scoredCandidate.getCandidate().getFingerprint(), fp));
-        scoredCandidate.getCandidate().setLinks(List.of(new DBLink("Sketched Structure", null))); //are not stored
+        scoredCandidate.getCandidate().setLinks(List.of(new DBLink(SKETCHED_DB_NAME, null))); //are not stored
         scoredCandidate.getCandidate().setName("Sketched Structure");
 
 
@@ -99,7 +102,7 @@ public class AddExternalStructureJJob extends BasicMasterJJob<Scored<Fingerprint
 
         checkForInterruption();
 
-        Scored<FingerprintCandidate> scoredCandidate  = Fingerblast.score(predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), List.of(fingerprintCandidate), fp).get(0);
+        Scored<FingerprintCandidate> scoredCandidate  = Fingerblast.score(predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), List.of(fingerprintCandidate), fp).getFirst();
 
         checkForInterruption();
 
