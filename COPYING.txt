@@ -31,11 +31,13 @@ If you modify this Program, or any covered work, by linking or combining it with
 containing parts covered by the terms of UCSD license <https://github.com/CCMS-UCSD/GNPS_Workflows/blob/master/LICENSE>, the licensors of this Program grant you additional permission
 to convey the resulting work.
 
-Additional permission under GNU AGPL version 3 section 7
-If you modify this Program, or any covered work, by linking or combining it with the JxBrowser libraries
-(or modified versions of that libraries containing parts covered by its proprietary license), the licensors of this
-Program grant you additional permission to convey the resulting work. This permission is granted provided that you meet
-all terms and conditions of the JxBrowser license agreement. The copyleft provisions of the GNU AGPL version 3 will not
-apply to the JxBrowser library when it is linked with this Program. You are not required to provide the source code of
-the JxBrowser library when you convey the combined work.
+Additional Permission Under AGPLv3 Section 7 (JxBrowser Exception):
+Notwithstanding any provision of the AGPLv3, the SIRIUS developers grant you permission to
+link or combine this program with the TeamDev JxBrowser library in unmodified form, and to
+convey the resulting combined work. As a result of this exception, the copyleft requirements of
+the AGPLv3 do not apply to the JxBrowser library – in particular, you are not obligated to provide
+the source code of JxBrowser nor license JxBrowser under the AGPLv3 when you distribute the
+combined work. This exception applies solely to the JxBrowser software licensed from TeamDev.
+It does not grant any rights to the JxBrowser library independently; use of JxBrowser remains
+subject to TeamDev’s own license terms.
 ---------------------------------------------------------------------------

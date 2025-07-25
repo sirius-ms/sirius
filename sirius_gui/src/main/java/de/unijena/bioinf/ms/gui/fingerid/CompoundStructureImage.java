@@ -46,6 +46,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT {
+    public static final Dimension PREFERRED_SIZE_CELL = new Dimension(374, 215);
 
     protected static final Font formulaFont, scoreFont;
     private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
@@ -63,15 +64,18 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
 
     protected JLabel scoreLabel;
 
-    public CompoundStructureImage(SiriusGui gui) {
-        this(StandardGenerator.HighlightStyle.OuterGlow, gui);
+    final boolean renderText;
+
+    private CompoundStructureImage(SiriusGui gui, boolean renderText) {
+        this(StandardGenerator.HighlightStyle.OuterGlow, gui, renderText);
     }
 
-    public CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle, SiriusGui gui) {
+    private CompoundStructureImage(StandardGenerator.HighlightStyle highlightStyle, SiriusGui gui, boolean renderText) {
         gui.getProperties().addPropertyChangeListener("molecularStructuresDisplayColors", this);
 
+        this.renderText = renderText;
         setOpaque(false);
-        setPreferredSize(new Dimension(374, 215));
+        setPreferredSize(PREFERRED_SIZE_CELL);
         // make generators
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
         generators.add(new BasicSceneGenerator());
@@ -89,13 +93,35 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
 
         //add score as separate label to be able to reference it
         setLayout(null); // Disable automatic layout management
-        scoreLabel = new JLabel();
-        scoreLabel.setFont(scoreFont);
-        scoreLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-        scoreLabel.setOpaque(false); // Ensure it blends into the background
-        add(scoreLabel);
-
+        if (renderText) {
+            scoreLabel = new JLabel();
+            scoreLabel.setFont(scoreFont);
+            scoreLabel.setForeground(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            scoreLabel.setOpaque(false); // Ensure it blends into the background
+            add(scoreLabel);
+        }
         setVisible(true);
+    }
+
+    public static CompoundStructureImage asCell(SiriusGui gui) {
+        return new CompoundStructureImage(gui, true);
+    }
+
+    public static CompoundStructureImage asLargePopUp(SiriusGui gui) {
+        return new CompoundStructureImage(gui, false);
+    }
+
+    public void updateSize(Dimension listDimension, int x) {
+        double ratio = 2.0; //ration always between 1-to-2 and 2-to-1
+        double maxHeight = listDimension.height * 0.8;
+        double maxWidth = maxHeight * ratio;
+        if (maxWidth > listDimension.width - x) {
+            //shrink to fit width
+            maxWidth = listDimension.width - x - 40; //somehow I need to adjust so that it does not go over the boundary
+            maxHeight = Math.min(maxWidth * ratio, maxHeight);
+        }
+        setPreferredSize(new Dimension((int) maxWidth, (int) maxHeight));
+        setSize(new Dimension((int) maxWidth, (int) maxHeight));
     }
 
     @Override
@@ -103,7 +129,7 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
         super.paintComponent(g);
         if (molecule.hasAtomContainer()) {
             renderImage((Graphics2D) g);
-            updateScoreLabel();
+            if (renderText) updateScoreLabel();
         }
     }
 
@@ -118,19 +144,23 @@ class CompoundStructureImage extends JPanel implements PropertyChangeListenerEDT
         }
         renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
         synchronized (molecule.getCandidate()) {
-            renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
-                    new Rectangle2D.Double(7, 14, 360, 185), true);
+            renderer.paint(molecule.getMolecule(),
+                    new AWTDrawVisitor(gg),
+                    renderText ? new Rectangle2D.Double(7, 14, 360, 185) : new Rectangle2D.Double(0, 0, getWidth(), getHeight()),
+                    true);
         }
 
-        gg.setFont(formulaFont);
-        gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
-        final String fromulaString = molecule.getMolecularFormula();
-        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
-        {
-            final int x = 3;
-            final int y = 0; // top-left
-            final int h = (int) (y + bound.getHeight());
-            gg.drawString(fromulaString, x, h - 2);
+        if (renderText) {
+            gg.setFont(formulaFont);
+            gg.setColor(Colors.CellsAndRows.ALTERNATING_CELL_ROW_TEXT_COLOR);
+            final String fromulaString = molecule.getMolecularFormula();
+            final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
+            {
+                final int x = 3;
+                final int y = 0; // top-left
+                final int h = (int) (y + bound.getHeight());
+                gg.drawString(fromulaString, x, h - 2);
+            }
         }
     }
 

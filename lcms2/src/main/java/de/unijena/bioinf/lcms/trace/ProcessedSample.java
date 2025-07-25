@@ -59,4 +59,9 @@ public class ProcessedSample {
     public Range<Double> getRtSpan() {
         return Range.of(mapping.getRetentionTimeAt(0),mapping.getRetentionTimeAt(mapping.length()-1));
     }
+
+    @Override
+    public String toString() {
+        return run.getName();
+    }
 }

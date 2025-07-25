@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
+import lombok.Getter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,6 +52,7 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
                 + "</html>";
     }
 
+    @Getter
     protected CandidateListDetailView list;
 
     public DeNovoStructureListDetailViewPanel(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {

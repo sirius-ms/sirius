@@ -76,9 +76,6 @@ public class MergeTracesWithoutGapFilling {
         if (alignment.getStatistics().getAverageNumberOfAlignments() > 0) {
             {
                 final float newNoiseLevel = (float)(summedUpNoiseLevel * Math.max(1,(alignment.getStatistics().getNumberOfAlignments25Quantile())) / ((double)alignment.getSamples().length));
-                final float oldNoiseLevel = (float)(summedUpNoiseLevel / alignment.getStatistics().getAverageNumberOfAlignments());
-                System.out.printf("old noise level = %f,\nnew noise level = %f,\nnow noise level = %f\n25%% number of alignments = %f,\nsum of noise levels = %f\n", oldNoiseLevel, newNoiseLevel, summedUpNoiseLevel/alignment.getSamples().length, alignment.getStatistics().getNumberOfAlignments25Quantile(),
-                        summedUpNoiseLevel);
                 Arrays.fill(mergedNoiseLevelPerScan,newNoiseLevel);
             }
         } else {
