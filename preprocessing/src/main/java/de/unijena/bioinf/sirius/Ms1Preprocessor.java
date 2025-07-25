@@ -31,7 +31,6 @@ import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
-import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
 import de.unijena.bioinf.sirius.elementdetection.DetectedFormulaConstraints;
 import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
 import de.unijena.bioinf.sirius.elementdetection.TransformerElementDetector;
