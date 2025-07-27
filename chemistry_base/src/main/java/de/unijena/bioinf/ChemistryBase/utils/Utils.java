@@ -207,4 +207,29 @@ public class Utils {
     public static <T> Optional<Set<T>> getIfIdentical(Collection<T>... sets) {
         return Optional.ofNullable(getIfIdenticalOrNull(sets));
     }
+
+    /**
+     * Gathers all superclasses and interfaces for a given class into a single set.
+     * todo: maybe move to some reflection utils class?
+     * @param clazz The starting class.
+     * @return A Set containing the initial class, all of its superclasses, and all implemented interfaces.
+     */
+    public static Set<Class<?>> getClassHierarchy(Class<?> clazz) {
+        Set<Class<?>> hierarchy = new HashSet<>();
+        Queue<Class<?>> toVisit = new LinkedList<>();
+        toVisit.add(clazz);
+
+        while (!toVisit.isEmpty()) {
+            Class<?> current = toVisit.poll();
+            if (hierarchy.add(current)) {
+                // Add superclass and interfaces to the queue if they haven't been visited
+                Class<?> superclass = current.getSuperclass();
+                if (superclass != null) {
+                    toVisit.add(superclass);
+                }
+                toVisit.addAll(Arrays.asList(current.getInterfaces()));
+            }
+        }
+        return hierarchy;
+    }
 }
