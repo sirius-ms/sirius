@@ -53,7 +53,7 @@ ext {
     //version for external libraries
     jjobs_version = '0.10.0'
     slf4j_version = '1.7.36'
-    jackson_version = '2.16.1'
+    jackson_version = '2.18.4'
     lombok_version = '1.18.34'
 
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
@@ -96,6 +96,8 @@ ext {
 
     spring_boot_version = "3.4.5"
     springdoc_version = "2.6.0"
+
+    auth0_version = '3.16.0'
 
     junit_version = '5.11.4'
 
