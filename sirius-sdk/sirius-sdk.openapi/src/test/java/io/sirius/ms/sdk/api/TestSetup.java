@@ -72,7 +72,7 @@ public class TestSetup {
                     .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
         }
 
-        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
+        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, bootJar);
     }
 
     public synchronized void destroy(){
