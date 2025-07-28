@@ -71,10 +71,10 @@ public final class SiriusSDK extends SiriusClient {
     }
 
     public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput) throws Exception {
-        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, null);
+        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, false, null);
     }
 
-    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, @Nullable Path executable) throws Exception {
+    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, @Nullable Path executable) throws Exception {
         @Nullable SiriusSDK sdk = findAndConnectLocally(shutDownMode, false);
         if (sdk != null)
             return sdk;
@@ -84,7 +84,7 @@ public final class SiriusSDK extends SiriusClient {
         int retryAttempts = 3;
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
-                process = SiriusSDKUtils.startSirius(null, executable, redirectSiriusOutput);
+                process = SiriusSDKUtils.startSirius(null, executable, redirectSiriusOutput, headless);
                 log.info("Awaiting SIRIUS API to be ready...");
                 long start = System.currentTimeMillis();
                 while (!Files.exists(SIRIUS_PORT_FILE)) {
