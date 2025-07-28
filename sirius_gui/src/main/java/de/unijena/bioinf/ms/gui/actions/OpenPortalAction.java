@@ -23,7 +23,7 @@ import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.webapi.Tokens;
+import io.sirius.ms.utils.jwt.AccessTokens;
 
 import javax.swing.*;
 import java.net.URI;
@@ -40,7 +40,7 @@ public class OpenPortalAction extends AbstractUserPortalAction {
     @Override
     URI path() {
         return Jobs.runInBackgroundAndLoad(mainFrame, () -> ApplicationCore.WEB_API.getAuthService().getToken()
-                .flatMap(Tokens::getUsername)
+                .flatMap(AccessTokens.ACCESS_TOKENS::getUsername)
                 .map(UserPortal::signInURL).orElse(UserPortal.signInURL())).getResult();
     }
 }
