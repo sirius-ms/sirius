@@ -174,7 +174,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
         }).forEach(p -> {
             MutableMs2Experiment exp = new MutableMs2Experiment();
             exp.setIonMass(p.getX().doubleValue());
-            exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p));
+            exp.setPrecursorIonType(PrecursorIonType.fromString("[" + p.getS() + "]" + p.getZ().intValue() + mfe.getMSDetails().p));
             siriusCompounds.add(experimentFromCompound(compound, exp));
         });
 
