@@ -25,7 +25,6 @@ import de.unijena.bioinf.auth.UserPortal;
 import de.unijena.bioinf.ms.middleware.model.login.AccountCredentials;
 import de.unijena.bioinf.ms.middleware.model.login.AccountInfo;
 import de.unijena.bioinf.ms.middleware.model.login.Subscription;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +42,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 
 @RestController
 @RequestMapping(value = "/api/account")
@@ -82,7 +83,7 @@ public class LoginController {
             as.login(credentials.getUsername(), credentials.getPassword());
 
             // enable default subscription
-            webAPI.changeActiveSubscription(Tokens.getActiveSubscription(as.getToken().orElseThrow()));
+            webAPI.changeActiveSubscription(ACCESS_TOKENS.getActiveSubscription(as.getToken().orElseThrow()));
 
             // if there is no sub available accept-terms will fail
             if (acceptTerms && webAPI.getActiveSubscription() != null)
@@ -148,7 +149,7 @@ public class LoginController {
         lock.readLock().lock();
         try {
             return webAPI.getAuthService()
-                    .getToken().map(Tokens::getSubscriptions)
+                    .getToken().map(ACCESS_TOKENS::getSubscriptions)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not Logged in. Please log in to retrieve subscriptions."))
                     .stream().map(Subscription::of).toList();
         } finally {
@@ -165,7 +166,7 @@ public class LoginController {
         lock.readLock().lock();
         try {
             de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getAuthService().getToken()
-                    .map(Tokens::getSubscriptions)
+                    .map(ACCESS_TOKENS::getSubscriptions)
                     .flatMap(l -> l.stream().filter(s -> sid.equals(s.getSid())).findFirst())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                             "The subscription has not been found in your account and cannot be selected as active subscription"));
@@ -204,7 +205,7 @@ public class LoginController {
     @GetMapping(value = "/openPortal")
     public void openPortal() {
         openInBrowser(webAPI.getAuthService().getToken()
-                .flatMap(Tokens::getUsername)
+                .flatMap(ACCESS_TOKENS::getUsername)
                 .map(UserPortal::signInURL).orElse(UserPortal.signInURL()));
     }
 

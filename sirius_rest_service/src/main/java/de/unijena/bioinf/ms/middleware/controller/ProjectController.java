@@ -26,11 +26,13 @@ import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.security.validation.ImportFormatValidationService;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,11 +54,12 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 public class ProjectController {
     private final ComputeService computeService;
     private final ProjectsProvider<?> projectsProvider;
-
+    private final ImportFormatValidationService importFormatValidationService;
     @Autowired
-    public ProjectController(ComputeService computeService, ProjectsProvider<?> projectsProvider) {
+    public ProjectController(ComputeService computeService, ProjectsProvider<?> projectsProvider, ImportFormatValidationService importFormatValidationService) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
+        this.importFormatValidationService = importFormatValidationService;
     }
 
     /**
@@ -106,7 +109,7 @@ public class ProjectController {
     }
 
     /**
-     * Close project-space and remove it from application. Project will NOT be deleted from disk.
+     * Close project-space and remove it from the application. The Project will NOT be deleted from disk.
      * <p>
      * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
      * If there are many jobs, this might take some time.
@@ -138,11 +141,13 @@ public class ProjectController {
      * @return the import job.
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importMsRunDataAsJob(@PathVariable String projectId,
+    public Job importMsRunDataAsJob(HttpServletRequest request,
+                                    @PathVariable String projectId,
                                     @RequestPart MultipartFile[] inputFiles,
                                     @RequestPart LcmsSubmissionParameters parameters,
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
+        importFormatValidationService.validateFiles(request, inputFiles);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
@@ -164,10 +169,12 @@ public class ProjectController {
      * @param parameters   Parameters for feature alignment and feature finding.
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ImportResult importMsRunData(@PathVariable String projectId,
+    public ImportResult importMsRunData(HttpServletRequest request,
+                                        @PathVariable String projectId,
                                         @RequestPart MultipartFile[] inputFiles,
                                         @RequestPart LcmsSubmissionParameters parameters
     ) {
+        importFormatValidationService.validateFiles(request, inputFiles);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
         sub.setLcmsParameters(parameters);
@@ -196,11 +203,13 @@ public class ProjectController {
      */
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/{projectId}/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
+    public Job importMsRunDataAsJobLocally(HttpServletRequest request,
+                                           @PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
                                            LcmsSubmissionParameters parameters,
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
+        importFormatValidationService.validateFiles(request, localFilePaths);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
@@ -231,10 +240,12 @@ public class ProjectController {
      */
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/{projectId}/import/ms-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ImportResult importMsRunDataLocally(@PathVariable String projectId,
+    public ImportResult importMsRunDataLocally(HttpServletRequest request,
+                                               @PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
                                                LcmsSubmissionParameters parameters
     ) {
+        importFormatValidationService.validateFiles(request, localFilePaths);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
         sub.setLcmsParameters(parameters);
@@ -251,13 +262,14 @@ public class ProjectController {
      * @return the import job.
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importPreprocessedDataAsJob(@PathVariable String projectId,
+    public Job importPreprocessedDataAsJob(HttpServletRequest request,
+                                           @PathVariable String projectId,
                                            @RequestPart MultipartFile[] inputFiles,
                                            @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
-
+        importFormatValidationService.validateFiles(request, inputFiles);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
@@ -274,11 +286,13 @@ public class ProjectController {
      * @param inputFiles files to import into project
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ImportResult importPreprocessedData(@PathVariable String projectId,
+    public ImportResult importPreprocessedData(HttpServletRequest request,
+                                               @PathVariable String projectId,
                                                @RequestPart MultipartFile[] inputFiles,
                                                @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
+        importFormatValidationService.validateFiles(request, inputFiles);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
         sub.setIgnoreFormulas(ignoreFormulas);
@@ -305,12 +319,14 @@ public class ProjectController {
      */
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job importPreprocessedDataAsJobLocally(@PathVariable String projectId,
-                                           @RequestBody String[] localPaths,
-                                           @RequestParam(defaultValue = "false") boolean ignoreFormulas,
-                                           @RequestParam(defaultValue = "true") boolean allowMs1Only,
-                                           @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    public Job importPreprocessedDataAsJobLocally(HttpServletRequest request,
+                                                  @PathVariable String projectId,
+                                                  @RequestBody String[] localPaths,
+                                                  @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                                  @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                                  @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
+        importFormatValidationService.validateFiles(request, localPaths);
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localPaths));
@@ -337,11 +353,13 @@ public class ProjectController {
      */
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ImportResult importPreprocessedDataLocally(@PathVariable String projectId,
-                                               @RequestBody String[] localFilePaths,
-                                               @RequestParam(defaultValue = "false") boolean ignoreFormulas,
-                                               @RequestParam(defaultValue = "true") boolean allowMs1Only
+    public ImportResult importPreprocessedDataLocally(HttpServletRequest request,
+                                                      @PathVariable String projectId,
+                                                       @RequestBody String[] localFilePaths,
+                                                       @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                                       @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
+        importFormatValidationService.validateFiles(request, localFilePaths);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
         sub.setIgnoreFormulas(ignoreFormulas);

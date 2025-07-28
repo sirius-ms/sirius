@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -99,7 +100,6 @@ public class MsExperimentParser {
 
     }
 
-
     public static boolean isSupportedFileName(final @NotNull String fileName) {
         int index = fileName.lastIndexOf('.');
         if (index < 0)
@@ -114,12 +114,36 @@ public class MsExperimentParser {
         return isLCMSEnding(fileName.substring(index));
     }
 
+    public static boolean isPeakListFile(final @NotNull String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0)
+            return false;
+        String fileEnding = fileName.substring(index);
+        return isSupportedEnding(fileEnding) && !isLCMSEnding(fileEnding);
+    }
+
+    public static boolean isCefFile(final @NotNull String fileName) {
+        return fileName.toLowerCase().endsWith(".cef");
+    }
+
     public static boolean isSupportedEnding(final @NotNull String fileEnding) {
         return KNOWN_ENDINGS.containsKey(fileEnding.toLowerCase());
     }
 
     public static boolean isLCMSEnding(final @NotNull String fileEnding) {
         return LCMS_ENDINGS.contains(fileEnding.toLowerCase());
+    }
+
+    public static List<String> getPeakListEndings(){
+        return addKnownEndings().keySet().stream().filter(it -> !LCMS_ENDINGS.contains(it)).toList();
+    }
+
+    public static List<String> getLCMSEndings(){
+        return LCMS_ENDINGS.stream().toList();
+    }
+
+    public static List<String> getAllEndings(){
+        return addKnownEndings().keySet().stream().toList();
     }
 
     private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {
