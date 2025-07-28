@@ -153,21 +153,13 @@ public class ImportAction extends AbstractGuiAction {
                 });
                 task.awaitResult();
             }
- /* Temporarily disabled
-            if (hasLCMS) {
-                List<Run> runs = gui.applySiriusClient((client, pid) -> client.runs().getRunPageExperimental(pid, 0, Integer.MAX_VALUE, null, List.of(RunOptField.TAGS)).getContent());
-                if (runs != null && runs.size() > 1) {
-                    new LCMSRunDialog(mainFrame, gui, runs, false);
-                }
-            }
-  */
 
         } catch (Exception e) {
             String m = Objects.requireNonNullElse(e.getMessage(), "");
             Stream.of("ProjectTypeException:", "ProjectStateException:").filter(m::contains).findFirst().ifPresentOrElse(
                     extText -> Jobs.runEDTLater(() -> new WarningDialog(gui.getMainFrame(), extText, GuiUtils.formatAndStripToolTip(m.substring(m.lastIndexOf(extText) + extText.length()).split(" \\| ")[0]), null)),
                     () -> Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(),
-                            GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause()))
+                            GuiUtils.formatAndStripToolTip("Data import failed. This project may be incomplete or corrupted.", "We recommend discontinuing its use.", "", e.getMessage()), e.getCause() != null ? e.getCause() : e))
             );
         }
     }

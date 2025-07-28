@@ -72,6 +72,9 @@ dependencies {
     implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
 
     implementation 'com.brightgiant:secure-api:1.0.1'
 

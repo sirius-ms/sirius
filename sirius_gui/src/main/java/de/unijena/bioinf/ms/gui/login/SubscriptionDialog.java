@@ -29,13 +29,14 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+
+import static de.unijena.bioinf.ms.frontend.core.SiriusProperties.ACTIVE_SUBSCRIPTION_KEY;
 
 
 public class SubscriptionDialog extends JDialog {
@@ -50,7 +51,6 @@ public class SubscriptionDialog extends JDialog {
 
     public SubscriptionDialog(SiriusGui gui, boolean modal, List<Subscription> subs) {
         super(gui.getMainFrame(), TITLE, modal);
-        this.
         setLayout(new BorderLayout());
         comboBox = new JComboBox<>(subs.toArray(Subscription[]::new));
         comboBox.setRenderer(new SubscriptionHTMLRenderer(350));
@@ -76,7 +76,7 @@ public class SubscriptionDialog extends JDialog {
                     try {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             Subscription sub = (Subscription) comboBox.getSelectedItem();
-                            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
+                            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
                             ApplicationCore.WEB_API.changeActiveSubscription(sub);
                             ProxyManager.reconnect();
                         });

@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -37,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 
 
 /**
@@ -105,13 +106,13 @@ public final class ConnectionChecker {
 
             // offline data
             webAPI.getAuthService().getToken().ifPresent(token -> {
-                Tokens.getUserEmail(token).ifPresent(ll::setUserEmail);
-                Tokens.getUserId(token).ifPresent(ll::setUserId);
+                ACCESS_TOKENS.getUserEmail(token).ifPresent(ll::setUserEmail);
+                ACCESS_TOKENS.getUserId(token).ifPresent(ll::setUserId);
             });
 
             @Nullable final de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getActiveSubscription();
             ll.setSubscription(Subscription.of(sub));
-            ll.setTerms(Tokens.getActiveSubscriptionTerms(sub));
+            ll.setTerms(ACCESS_TOKENS.getActiveSubscriptionTerms(sub));
             //online connection check
             checkForInterruption();
             try {
