@@ -184,7 +184,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 return true;
             }
         }).forEach(p -> {
-            PrecursorIonType ionType = PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p);
+            PrecursorIonType ionType = PrecursorIonType.fromString("[" + p.getS() + "]" + p.getZ().intValue() + mfe.getMSDetails().p);
             Feature f = Feature.builder()
                     .averageMass(p.getX().doubleValue())
                     .apexMass(p.getX().doubleValue())
