@@ -55,7 +55,6 @@ docs/FormulaCandidate.md
 docs/FormulaCandidateOptField.md
 docs/FragmentNode.md
 docs/FragmentationTree.md
-docs/GuiAdvancedApi.md
 docs/GuiApi.md
 docs/GuiInfo.md
 docs/ImportResult.md
@@ -153,7 +152,6 @@ src/main/java/io/sirius/ms/sdk/api/CompoundStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/CompoundsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeatureStatisticsApi.java
 src/main/java/io/sirius/ms/sdk/api/FeaturesApi.java
-src/main/java/io/sirius/ms/sdk/api/GuiAdvancedApi.java
 src/main/java/io/sirius/ms/sdk/api/GuiApi.java
 src/main/java/io/sirius/ms/sdk/api/InfoApi.java
 src/main/java/io/sirius/ms/sdk/api/JobsApi.java
