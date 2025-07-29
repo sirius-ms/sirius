@@ -42,7 +42,11 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.SiriusSDK;
+import io.sirius.ms.sdk.model.GuiInfo;
+import io.sirius.ms.sdk.model.ProjectInfo;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
@@ -60,6 +64,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationListener;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import picocli.CommandLine;
 
 import java.awt.*;
@@ -71,6 +76,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static de.unijena.bioinf.ms.middleware.service.projects.ProjectSpaceManagerProvider.makeTempProjectData;
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
 @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
@@ -154,6 +160,30 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         .anyMatch(cmd -> cmd.equalsIgnoreCase(it))
         )) {
             try {
+                final boolean startGui = !headless && Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"));
+
+                //check for existing sirius instances.
+                try (SiriusSDK sdk = SiriusSDK.findAndConnectLocally(SiriusSDK.ShutdownMode.NEVER, true)) {
+                    if (sdk != null) {
+                        if (startGui) {
+                            Pair<String, String> tmpProject = makeTempProjectData();
+                            try {
+                                List<GuiInfo> guis = sdk.gui().getGuis();// just to check for headless mode or other gui issue before creating project.
+                                log.info("SIRIUS ALREADY RUNNING!\nHealthy SIRIUS instance is running at port {}. Starting new gui instance for tmp project '{}' using the running instance,.", sdk.getBasePath(), tmpProject.second());
+                                ProjectInfo pInfo = sdk.projects().createProject(tmpProject.first(), tmpProject.second(), null);
+                                sdk.gui().openGui(pInfo.getProjectId());
+                                System.exit(0);
+                            } catch (WebClientResponseException e) {
+                                log.error("SIRIUS ALREADY RUNNING!\nHealthy SIRIUS instance is running at '{}' with process id '{}' but failed to start GUI. Maybe instance is running in headless mode!. Shutdown existing instance and try again. Details: {}", sdk.getBasePath(), sdk.getPID(), e.getMessage());
+                                System.exit(1);
+                            }
+                        } else {
+                            log.error("SIRIUS ALREADY RUNNING!\nHealthy SIRIUS instance is running at '{}' with process id '{}'. Multiple SIRIUS services are not allowed. Use the running one instead or shut it down before restarting!", sdk.getBasePath(), sdk.getPID());
+                            System.exit(1);
+                        }
+                    }
+                }
+
                 System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
 

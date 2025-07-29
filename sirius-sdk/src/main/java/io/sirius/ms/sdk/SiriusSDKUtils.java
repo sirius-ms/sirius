@@ -27,10 +27,10 @@ public class SiriusSDKUtils {
     }
 
     public static Process startSirius(@Nullable String configDir) throws Exception {
-        return startSirius(configDir, null, true);
+        return startSirius(configDir, null, true, false);
     }
 
-    public static Process startSirius(@Nullable String configDir, @Nullable Path executable, boolean inheritIo) throws Exception {
+    public static Process startSirius(@Nullable String configDir, @Nullable Path executable, boolean inheritIo, boolean headless) throws Exception {
         List<String> command = new ArrayList<>();
         command.add(executable != null ? executable.toAbsolutePath().toString() : findSiriusExecutable());
         if (configDir != null) {
@@ -40,6 +40,9 @@ public class SiriusSDKUtils {
         command.add("--noCite");
         command.add("rest");
         command.add("-s");
+        if (headless)
+            command.add("--headless");
+
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         if (inheritIo) {
             processBuilder.inheritIO();
