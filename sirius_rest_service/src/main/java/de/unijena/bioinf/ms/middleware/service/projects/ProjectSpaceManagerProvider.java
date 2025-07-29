@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,7 @@ import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ChemistryBase.utils.Utils.notNullOrBlank;
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectEventType.PROJECT_OPENED;
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
@@ -299,5 +302,13 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
         }
+    }
+
+    public static Pair<String,String> makeTempProjectData(){
+        Path p = FileUtils.createTmpProjectSpaceLocation(SIRIUS_PROJECT_SUFFIX);
+        String projectId = p.getFileName().toString();
+        projectId = projectId.substring(0, projectId.length() - SIRIUS_PROJECT_SUFFIX.length());
+        projectId = FileUtils.sanitizeFilename(projectId);
+        return Pair.of(projectId, p.toAbsolutePath().toString());
     }
 }
