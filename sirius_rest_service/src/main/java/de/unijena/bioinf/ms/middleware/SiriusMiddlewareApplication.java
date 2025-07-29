@@ -197,26 +197,28 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 Files.deleteIfExists(Workspace.PID_FILE);
 
                 Splash splashScreen = null;
-                if (startGui) {
-                    Path propsFile = Workspace.siriusPropsFile;
-                    //override VM defaults from OS
-                    if (!System.getProperties().containsKey("sun.java2d.uiScale"))
-                        System.setProperty("sun.java2d.uiScale", "1");
-                    //override with stored value if available
-                    if (Files.exists(propsFile)) {
-                        Properties props = new Properties();
-                        try (BufferedReader r = Files.newBufferedReader(propsFile)) {
-                            props.load(r);
-                            if (props.containsKey("sun.java2d.uiScale"))
-                                System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
-                        } catch (IOException e) {
-                            log.error("Error when initializing Splash.", e);
+                if (!headless) { // ignore gui option if headless is enabled
+                    if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
+                        Path propsFile = Workspace.siriusPropsFile;
+                        //override VM defaults from OS
+                        if (!System.getProperties().containsKey("sun.java2d.uiScale"))
+                            System.setProperty("sun.java2d.uiScale", "1");
+                        //override with stored value if available
+                        if (Files.exists(propsFile)) {
+                            Properties props = new Properties();
+                            try (BufferedReader r = Files.newBufferedReader(propsFile)) {
+                                props.load(r);
+                                if (props.containsKey("sun.java2d.uiScale"))
+                                    System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
+                            } catch (IOException e) {
+                                log.error("Error when initializing Splash.", e);
+                            }
                         }
+                        splashScreen = new Splash(true, false);
+                    } else {
+                        splashScreen = new Splash(true, true);
+                        Jobs.runEDTLater(splashScreen::dispose);
                     }
-                    splashScreen = new Splash(true, false);
-                } else {
-                    splashScreen = new Splash(true, true);
-                    Jobs.runEDTLater(splashScreen::dispose);
                 }
 
 
