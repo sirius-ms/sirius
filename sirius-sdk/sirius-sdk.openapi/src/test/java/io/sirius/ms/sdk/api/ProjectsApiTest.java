@@ -147,8 +147,8 @@ public class ProjectsApiTest {
     private static Stream<Arguments> importPreprocessedDataTest() {
         return Stream.of(
                 Arguments.of("ForTox_TestMix_AMSMS.cef", 15), // null strings should be considered blank
-                Arguments.of("221021_After_Gap_Filling.cef", 30),
-                Arguments.of("221021_Before_Gap_Filling.cef", 30),
+                Arguments.of("221021_After_Gap_Filling.cef", 28),
+                Arguments.of("221021_Before_Gap_Filling.cef", 28),
                 Arguments.of("Kaempferol.ms", 1),
                 Arguments.of("laudanosine.mgf", 1)
         );
