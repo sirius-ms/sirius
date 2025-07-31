@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

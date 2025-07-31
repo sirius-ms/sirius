@@ -22,8 +22,8 @@
 package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
-import de.unijena.bioinf.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sse.DataEventType;
 import org.jetbrains.annotations.NotNull;
