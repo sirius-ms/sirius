@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

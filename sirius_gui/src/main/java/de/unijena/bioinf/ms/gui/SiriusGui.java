@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import io.sirius.ms.sdk.SiriusClient;
 import lombok.Getter;

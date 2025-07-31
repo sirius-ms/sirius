@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.webView.jxbrowser;
+package io.sirius.ms.gui.webView.jxbrowser;
 
 import com.teamdev.jxbrowser.engine.Engine;
 import com.teamdev.jxbrowser.engine.EngineOptions;
@@ -6,8 +6,8 @@ import com.teamdev.jxbrowser.engine.Theme;
 import com.teamdev.jxbrowser.permission.PermissionType;
 import com.teamdev.jxbrowser.permission.callback.RequestPermissionCallback;
 import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
-import de.unijena.bioinf.ms.gui.webView.LinkInterception;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.LinkInterception;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
     private static Engine setupEngine(){
         EngineOptions opts = EngineOptions
                 .newBuilder(OFF_SCREEN)
-                .licenseKey(PropertyManager.getProperty("jxbrowser.license.key"))
+                .licenseKey(PropertyManager.getPropertyB64("jxbrowser.license.key"))
                 .disableTouchMenu()
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
                 .build();

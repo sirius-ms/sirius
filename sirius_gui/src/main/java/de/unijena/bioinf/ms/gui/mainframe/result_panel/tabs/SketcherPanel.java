@@ -3,8 +3,8 @@ package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 import com.teamdev.jxbrowser.js.JsPromise;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -12,8 +12,8 @@ import java.awt.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import static de.unijena.bioinf.ms.gui.webView.BrowserPanel.parseNullable;
-import static de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider.makeParameters;
+import static io.sirius.ms.gui.webView.BrowserPanel.parseNullable;
+import static io.sirius.ms.gui.webView.BrowserPanelProvider.makeParameters;
 
 
 public class SketcherPanel extends JPanel {
