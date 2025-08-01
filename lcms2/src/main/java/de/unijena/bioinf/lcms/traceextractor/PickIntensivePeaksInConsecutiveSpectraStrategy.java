@@ -27,7 +27,7 @@ public class PickIntensivePeaksInConsecutiveSpectraStrategy  implements TraceDet
             SimpleSpectrum LEFT = sample.getStorage().getSpectrumStorage().getSpectrum(idx-1);
             SimpleSpectrum RIGHT = sample.getStorage().getSpectrumStorage().getSpectrum(idx);
             float noiseThresholdSingle = stats.noiseLevel(idx);
-            final double noiseThresholdDoubled = (n +stats.noiseLevel(idx-1));
+            final double noiseThresholdDoubled = (noiseThresholdSingle +stats.noiseLevel(idx-1));
             acceptedPeaksRight.clear();
 
             int indexLeft = 0;
