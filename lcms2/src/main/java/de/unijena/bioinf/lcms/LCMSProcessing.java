@@ -74,7 +74,9 @@ public class LCMSProcessing {
      * Determines which peaks to pick from the LCMS
      */
     @Getter @Setter private TraceDetectionStrategy traceDetectionStrategy = new CombinedTraceDetectionStrategy(
-            new PickIntensivePeaksDetectionStrategy(),
+            //new PickIntensivePeaksDetectionStrategy(),
+            new PickIntensivePeaksInConsecutiveSpectraStrategy(),
+
             new PickMsPrecursorPeakDetectionStrategy(),
             new AdductAndIsotopeBasedDetectionStrategy()
     );
