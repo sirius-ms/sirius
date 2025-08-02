@@ -199,4 +199,12 @@ public class IsotopePattern extends SimpleSpectrum {
         }
         return mz;
     }
+
+    public IsotopePattern sub(int peakIdx) {
+        final double[] mz = new double[masses.length-peakIdx];
+        double[] ints = new double[intensities.length-peakIdx];
+        System.arraycopy(masses, peakIdx, mz, 0, mz.length);
+        System.arraycopy(intensities, peakIdx, ints, 0, ints.length);
+        return new IsotopePattern(mz, ints, chargeState);
+    }
 }
