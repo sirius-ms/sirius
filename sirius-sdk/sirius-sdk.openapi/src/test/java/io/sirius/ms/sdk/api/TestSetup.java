@@ -72,14 +72,14 @@ public class TestSetup {
                     .orElseThrow(() -> new IOException("Could not finger boot jar for testing."));
         }
 
-        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
+        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, bootJar);
     }
 
-    public void destroy(){
+    public synchronized void destroy(){
         siriusClient.close();
     }
 
-    private Path getResourceFilePath(String resourcePath) {
+    private synchronized Path getResourceFilePath(String resourcePath) {
         try {
             return Paths.get(getClass().getResource(resourcePath).toURI());
         } catch (Exception e) {
@@ -87,17 +87,17 @@ public class TestSetup {
         }
     }
 
-    public static TestSetup getInstance() {
+    public synchronized static TestSetup getInstance() {
         if (INSTANCE == null)
             INSTANCE = new TestSetup();
         return INSTANCE;
     }
 
-    public ProjectInfo createTestProject(String projectSuffix, Path sourceProject) throws IOException {
+    public synchronized ProjectInfo createTestProject(String projectSuffix, Path sourceProject) throws IOException {
         return createTestProject(projectSuffix, sourceProject, null);
     }
 
-    public ProjectInfo createTestProject(String projectSuffix, Path sourceProject, List<ProjectInfoOptField> optFields) throws IOException {
+    public synchronized ProjectInfo createTestProject(String projectSuffix, Path sourceProject, List<ProjectInfoOptField> optFields) throws IOException {
         String uid = UUID.randomUUID().toString();
         String name = "test-project-" + uid + (projectSuffix != null ? "-" + projectSuffix : "") + ".sirius";
 
@@ -111,7 +111,7 @@ public class TestSetup {
         }
     }
 
-    public void deleteTestProject(ProjectInfo projectSpace) {
+    public synchronized void deleteTestProject(ProjectInfo projectSpace) {
         try {
             siriusClient.projects().closeProject(projectSpace.getProjectId(), false);
             Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
@@ -122,11 +122,11 @@ public class TestSetup {
         }
     }
 
-    public void deleteTestSearchableDatabase(String databaseId, String location) {
+    public synchronized void deleteTestSearchableDatabase(String databaseId, String location) {
         siriusClient.databases().removeDatabase(databaseId, true);
     }
 
-    public void deleteDirectory(File dir) {
+    public synchronized void deleteDirectory(File dir) {
         File[] files = dir.listFiles();
         if (files != null) {
             for (File file : files) {
@@ -140,17 +140,17 @@ public class TestSetup {
         dir.delete();
     }
 
-    public Path copyToTempDirectory(Path sourceDir, Path destinationDir, boolean recursive) throws IOException {
+    public synchronized Path copyToTempDirectory(Path sourceDir, Path destinationDir, boolean recursive) throws IOException {
         Path tempDirectory = tempDir.resolve(UUID.randomUUID().toString());
         copyDirectory(sourceDir, tempDirectory, true);
         return tempDirectory;
     }
 
-    public void copySiriusProject(Path sourcePath, Path destinationPath) throws IOException {
+    public synchronized void copySiriusProject(Path sourcePath, Path destinationPath) throws IOException {
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public void copyDirectory(Path src, Path dest, boolean recursive) throws IOException {
+    public synchronized void copyDirectory(Path src, Path dest, boolean recursive) throws IOException {
                if (!Files.exists(src)) {
             throw new IOException("Source directory not found: " + src);
         }
@@ -171,7 +171,7 @@ public class TestSetup {
         }
     }
 
-    public void loginIfNeeded(){
+    public synchronized void loginIfNeeded(){
         try {
             if (!siriusClient.account().isLoggedIn()) {
                 siriusClient.account().login(
