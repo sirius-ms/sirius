@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.webView;
+package io.sirius.ms.gui.webView;
 
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;

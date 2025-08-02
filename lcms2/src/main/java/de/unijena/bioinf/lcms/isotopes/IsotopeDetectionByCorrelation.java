@@ -1,5 +1,7 @@
 package de.unijena.bioinf.lcms.isotopes;
 
+import de.unijena.bioinf.sirius.elementdetection.TransformerElementDetector;
+import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPrediction;
 import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -91,10 +93,34 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
             bestTraceIds=traceIds;
         }
         if (bestPattern==null) return Result.nothingFound();
+
+        if (bestPattern.chargeState==1){
+            int patternPeakIdx = Spectrums.mostIntensivePeakWithin(bestPattern, moi.getMz(), new Deviation(20));
+            TransformerPrediction[] predict = transformerElementDetector.getPredictor().predict(bestPattern);
+            for (TransformerPrediction pred : predict) {
+                if (pred.getMonoisotopicPeak()==patternPeakIdx) {
+                    int[] bestTr;
+                    if (patternPeakIdx>0) {
+                        bestPattern = bestPattern.sub(patternPeakIdx);
+                        bestTr = new int[bestTraceIds.length-patternPeakIdx];
+                        System.arraycopy(bestTraceIds, patternPeakIdx, bestTr, 0, bestTr.length);
+                    } else bestTr = bestTraceIds;
+                    return Result.monoisotopicPeak(new IsotopeResult(bestPattern.chargeState, bestTr, bestPattern.floatMzArray(), bestPattern.floatIntensityArray()));
+                }
+            }
+            if (predict.length>0) {
+                return Result.isIsotopicPeak();
+            } else {
+                return Result.nothingFound();
+            }
+        }
+
         if (Math.abs(bestPattern.getMzAt(0)-spectrum.getMzAt(peakIdx)) < 1e-3)
             return Result.monoisotopicPeak(new IsotopeResult(bestPattern.chargeState, bestTraceIds, bestPattern.floatMzArray(), bestPattern.floatIntensityArray()));
         return Result.isIsotopicPeak();
     }
+
+    private static final TransformerElementDetector transformerElementDetector = new TransformerElementDetector();
 
     public double correlationScore(ProcessedSample sample, MoI moi, ContiguousTrace trace, TraceSegment traceSegment, SimpleSpectrum spectrum,
                                    ContiguousTrace iso) {

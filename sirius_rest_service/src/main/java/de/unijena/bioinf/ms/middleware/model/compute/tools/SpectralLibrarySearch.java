@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -77,6 +78,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      * Enable analogue search in addition to the identity spectral library search
      */
     @Schema
+    @Builder.Default
     private Boolean enableAnalogueSearch = false;
 
     /**
@@ -106,7 +108,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      */
     @Schema(nullable = true)
     @Deprecated(forRemoval = true)
-    private SpectralMatchingType scoring = null;
+    private SpectralMatchingType scoring;
 
     /**
      * NO LONGER SUPPORTED (IGNORED)
@@ -114,7 +116,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      */
     @Schema(nullable = true)
     @Deprecated(forRemoval = true)
-    private Double peakDeviationPpm = null;
+    private Double peakDeviationPpm;
 
 
     private SpectralLibrarySearch() {

@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;

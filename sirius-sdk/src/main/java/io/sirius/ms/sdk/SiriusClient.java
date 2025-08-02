@@ -60,7 +60,6 @@ public class SiriusClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(SiriusClient.class);
     @Getter
     protected final ApiClient apiClient;
-    protected final String basePath;
 
     protected final CompoundsApi compounds;
 
@@ -98,14 +97,13 @@ public class SiriusClient implements AutoCloseable {
         this(baseUrl + ":" + port, asyncExecutor);
     }
     public SiriusClient(@NotNull String basePath, @Nullable ExecutorService asyncExecutor) {
-        this.basePath = basePath;
         this.asyncExecutor = asyncExecutor;
         apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
                 .codecs(codecs -> codecs
                         .defaultCodecs()
                         .maxInMemorySize(100 * 1024 * 1024))
                 .build());
-        apiClient.setBasePath(this.basePath);
+        apiClient.setBasePath(basePath);
 
         compounds = new CompoundsApi(apiClient);
         compoundStatistics = new CompoundStatisticsApi(apiClient);
@@ -119,6 +117,10 @@ public class SiriusClient implements AutoCloseable {
         databases = new SearchableDatabasesApi(apiClient);
         tags = new TagsApi(apiClient);
         infos = new InfoApi(apiClient);
+    }
+
+    public String getBasePath() {
+        return apiClient.getBasePath();
     }
 
     public Job awaitAndDeleteJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,

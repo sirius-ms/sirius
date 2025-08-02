@@ -42,7 +42,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
     private Window owner;
 
     private static final int maxNumberOfOneElements = 20;
-    private static final String[] additionalElementSymbols = new String[]{"C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "F", "I", "Se"};
+    private static final String[] additionalElementSymbols = new String[]{"C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "F", "I", "Se", "Si", "Fe", "Zn", "Mg"};
 
     public final boolean individualAutoDetect;
     private JButton elementButton;

@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

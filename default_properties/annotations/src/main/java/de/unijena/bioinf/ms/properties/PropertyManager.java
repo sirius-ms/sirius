@@ -227,6 +227,10 @@ public class PropertyManager {
         CHANGED_PROPERTIES.setProperty(key, value);
     }
 
+    public static void setPropertyB64(String key, String value) {
+        CHANGED_PROPERTIES.setProperty(key, Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8)));
+    }
+
     public static void setProperties(Properties properties) {
         properties.forEach((k, v) -> setProperty(String.valueOf(k), v));
     }
@@ -239,6 +243,10 @@ public class PropertyManager {
 
     public static String getProperty(@NotNull String key) {
         return PROPERTIES.getString(key);
+    }
+
+    public static String getPropertyB64(@NotNull String key) {
+        return new String(Base64.getDecoder().decode(PROPERTIES.getString(key)), StandardCharsets.UTF_8);
     }
 
     public static Optional<String> getOptional(@NotNull String key, @Nullable String backupKey) {

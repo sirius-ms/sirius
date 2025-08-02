@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.webView;
+package io.sirius.ms.gui.webView;
 
 import org.jetbrains.annotations.Nullable;
 

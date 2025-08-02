@@ -1,4 +1,4 @@
-package de.unijena.bioinf.ms.gui.webView.jxbrowser;
+package io.sirius.ms.gui.webView.jxbrowser;
 
 import com.teamdev.jxbrowser.browser.Browser;
 import com.teamdev.jxbrowser.browser.event.ConsoleMessageReceived;
@@ -7,8 +7,8 @@ import com.teamdev.jxbrowser.navigation.callback.StartNavigationCallback;
 import com.teamdev.jxbrowser.navigation.event.FrameLoadFinished;
 import com.teamdev.jxbrowser.view.swing.BrowserView;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.webView.BrowserPanel;
-import de.unijena.bioinf.ms.gui.webView.LinkInterception;
+import io.sirius.ms.gui.webView.BrowserPanel;
+import io.sirius.ms.gui.webView.LinkInterception;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
