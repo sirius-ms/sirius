@@ -72,18 +72,6 @@ public class SecurityConfig {
         };
     }
 
-    /**
-     * Neither authorization nor filters are applied to these endpoints.
-     */
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers(HttpMethod.GET, "/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
-                        "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error")
-                .requestMatchers(HttpMethod.HEAD, "/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
-                        "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error");
-    }
-
     @Bean
     SecurityFilterChain securityFilterChain(JwtDecoder jwtDecoder,
                                             SiriusGuiHandshake siriusGuiHandshake, ExplorerHandshake explorerHandshake,
@@ -93,16 +81,20 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                  // This is the line that disables anonymous authentication
                 .anonymous(AbstractHttpConfigurer::disable)
+                // exclude endpoints from security filters and authorities
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/sse", "/actuator/**", "/api/account/**", "/api/info", "/api/connection-status",
+                                "/", "/api", "/api/", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/error").permitAll()
+                        // configure authorities to check for general api access
                         .anyRequest().hasAnyAuthority(
                                 ALLOWED_FEATURE__API.getAuthority(),
                                 BYPASS__EXPLORER.getAuthority(),
                                 BYPASS__GUI.getAuthority()))
-
+                //configure jwt converter
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.decoder(jwtDecoder)
                                 .jwtAuthenticationConverter(new SiriusJwtAuthenticationConverter())))
-
+                // configure security filters, they usually just add authorities for authority-based permission checks
                 .addFilterBefore(new ExceptionHandlerFilter(), BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(new AddFeatureAuthoritiesFilter(), BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(new AddBypassAuthoritiesFilter(
