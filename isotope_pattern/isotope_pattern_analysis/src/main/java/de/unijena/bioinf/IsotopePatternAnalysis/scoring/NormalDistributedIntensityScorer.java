@@ -57,13 +57,13 @@ public class NormalDistributedIntensityScorer implements IsotopePatternScorer{
             final double theoreticalIntensity = theoreticalSpectrum.getIntensityAt(i);
             final double delta = measuredIntensity-theoreticalIntensity;
 
-            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaR);
+            final double peakPropbability = Math.exp(-(delta*delta)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA);
 
             score += Math.log(peakPropbability);
 
             if (LOGODDS) {
                 final double sigma = measuredIntensity*2*sigmaR + 2*sigmaA;
-                score -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaR));
+                score -= Math.log(Math.exp(-(sigma*sigma)/(2*(sigmaA*sigmaA + measuredIntensity*measuredIntensity*sigmaR*sigmaR)))/(2*Math.PI*measuredIntensity*sigmaR*sigmaA));
             }
 
             scores[i] += score;
