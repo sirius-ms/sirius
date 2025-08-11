@@ -1231,12 +1231,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
-        if (clzz != CsiStructureMatch.class || structureSearchResult != null) {
-            StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
 
+        StructureMatch structureMatch = (clzz != CsiStructureMatch.class || structureSearchResult != null)
+                ? project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null)
+                : null;
+
+        if (structureMatch != null) {
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElseThrow();
-
             //set Structure match
             cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
         } else {
