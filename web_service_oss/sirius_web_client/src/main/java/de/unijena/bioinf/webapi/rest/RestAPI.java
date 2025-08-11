@@ -51,6 +51,8 @@ import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
+import de.unijena.bioinf.ms.rest.client.libraries.LibrariesClient;
+import de.unijena.bioinf.ms.rest.client.libraries.LibraryInfo;
 import de.unijena.bioinf.ms.rest.model.*;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
@@ -83,6 +85,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -106,12 +109,13 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     private final StructureSearchClient chemDBClient;
     private final FingerIdClient fingerprintClient;
     private final CanopusClient canopusClient;
+    private final LibrariesClient librariesClient;
 
     private Subscription activeSubscription;
 
     private WebWithCustomDatabase chemDb;
 
-    public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
+    public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient, @NotNull LibrariesClient librariesClient) {
         super(authService);
         this.accountClient = accountClient;
         this.serverInfoClient = infoClient;
@@ -119,6 +123,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient = chemDBClient;
         this.fingerprintClient = fingerIdClient;
         this.canopusClient = canopusClient;
+        this.librariesClient = librariesClient;
     }
 
 
@@ -141,6 +146,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient = new ChemDBClient(null, contextPath, authService, subsDeco);
         this.fingerprintClient = new FingerIdClient(null, contextPath, authService, subsDeco);
         this.canopusClient = new CanopusClient(null, contextPath, authService, subsDeco);
+        this.librariesClient = new LibrariesClient(null, contextPath, authService, subsDeco);
 
         if (activeSubscription != null)
             changeActiveSubscription(activeSubscription);
@@ -168,6 +174,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         this.chemDBClient.setServerUrl(hostSupplier);
         this.fingerprintClient.setServerUrl(hostSupplier);
         this.canopusClient.setServerUrl(hostSupplier);
+        this.librariesClient.setServerUrl(hostSupplier);
     }
 
     @Override
@@ -478,6 +485,19 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
     //endregion
 
+    //region Libraries
+
+    @Override
+    public List<LibraryInfo> listLibraries() throws IOException {
+        return ProxyManager.applyClient(librariesClient::listLibraries);
+    }
+
+    @Override
+    public void downloadLibrary(Path path, String libId) throws IOException {
+        ProxyManager.consumeClient(client -> librariesClient.downloadToFile(libId, path, client));
+    }
+
+    //endregion
 
     /**
      * DO never user NetUtils.tryAndWait inside of batch processing.
@@ -511,6 +531,11 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                 @Override
                 public CanopusClient canopusClient() {
                     return canopusClient;
+                }
+
+                @Override
+                public LibrariesClient librariesClient() {
+                    return librariesClient;
                 }
             }, client);
         });

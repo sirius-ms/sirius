@@ -43,6 +43,8 @@ import de.unijena.bioinf.ms.rest.client.chemdb.StructureSearchClient;
 import de.unijena.bioinf.ms.rest.client.fingerid.FingerIdClient;
 import de.unijena.bioinf.ms.rest.client.info.InfoClient;
 import de.unijena.bioinf.ms.rest.client.jobs.JobsClient;
+import de.unijena.bioinf.ms.rest.client.libraries.LibrariesClient;
+import de.unijena.bioinf.ms.rest.client.libraries.LibraryInfo;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -65,7 +67,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -262,6 +266,24 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     //endregion
 
+    //region Libraries
+
+    /**
+     * @return list of available remote libraries.
+     * @throws IOException if connection error happens
+     */
+    List<LibraryInfo> listLibraries() throws IOException;
+
+    /**
+     *
+     * @param path path to the file for the newly created database.
+     * @param libId remote library id
+     * @throws IOException if connection or file write error happens
+     */
+    void downloadLibrary(Path path, String libId) throws IOException;
+
+    //endregion
+
     void executeBatch(IOFunctions.BiIOConsumer<Clients, OkHttpClient> doWithApi) throws IOException;
     interface Clients {
         InfoClient serverInfoClient();
@@ -269,5 +291,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         StructureSearchClient chemDBClient();
         FingerIdClient fingerprintClient();
         CanopusClient canopusClient();
+        LibrariesClient librariesClient();
     }
 }
