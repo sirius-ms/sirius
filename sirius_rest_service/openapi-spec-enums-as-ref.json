@@ -9591,6 +9591,7 @@
         "enum": [
           "none",
           "msData",
+          "topAnnotationsSummary",
           "topAnnotations",
           "topAnnotationsDeNovo",
           "computedTools",

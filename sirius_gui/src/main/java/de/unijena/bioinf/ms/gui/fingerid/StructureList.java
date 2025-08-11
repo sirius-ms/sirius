@@ -143,6 +143,8 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     checkForInterruption();
 
                     if (ec != null) {
+                        //todo dirty hack, preload formula candidates to gui gets not blocked later when gui is using this information
+                        readDataByFunction(InstanceBean::getFormulaCandidates);
                         final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100, loadDatabaseHits, loadDenovo);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{

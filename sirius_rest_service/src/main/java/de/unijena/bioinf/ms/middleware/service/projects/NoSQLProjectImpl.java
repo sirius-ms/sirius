@@ -1060,6 +1060,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
+        else if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary)) {
+            builder.topAnnotations(extractTopAnnotationsSummary(features.getAlignedFeatureId()));
+        }
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
         if (optFields.contains(AlignedFeature.OptField.computedTools))
@@ -1193,39 +1196,51 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private FeatureAnnotations extractTopDeNovoAnnotations(long longAFIf) {
         return extractTopAnnotations(longAFIf, DenovoStructureMatch.class);
-
     }
 
     @SneakyThrows
-    private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
+    private FeatureAnnotations extractTopAnnotationsSummary(long longAFIf) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
+        storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class).ifPresent(structureSearchResult -> {
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+        });
+
+        return cSum;
+    }
+
+    @SneakyThrows
+    private FeatureAnnotations extractTopAnnotations(long longAFIf, @NotNull Class<? extends StructureMatch> clzz) {
+        final FeatureAnnotations cSum = new FeatureAnnotations();
+
+        @Nullable CsiStructureSearchResult structureSearchResult = null;
+        if (clzz == CsiStructureMatch.class)
+            structureSearchResult = storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
+                    .orElse(null);
+
+        if (structureSearchResult != null) {
+            cSum.setConfidenceExactMatch(structureSearchResult.getConfidenceExact());
+            cSum.setConfidenceApproxMatch(structureSearchResult.getConfidenceApprox());
+            cSum.setExpansiveSearchState(structureSearchResult.getExpansiveSearchConfidenceMode());
+            cSum.setSpecifiedDatabases(structureSearchResult.getSpecifiedDatabases());
+            cSum.setExpandedDatabases(structureSearchResult.getExpandedDatabases());
+        }
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
-        if (structureMatch != null) {
+        if (clzz != CsiStructureMatch.class || structureSearchResult != null) {
+            StructureMatch structureMatch = project().findTopStructureMatchByFeatureId(longAFIf, clzz).orElse(null);
+
             formulaCandidate = storage().getByPrimaryKey(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .orElseThrow();
 
             //set Structure match
             cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
-
-            if (structureMatch instanceof CsiStructureMatch) //csi only but not denovo
-                storage().getByPrimaryKey(longAFIf, CsiStructureSearchResult.class)
-                        .ifPresent(it -> {
-                            cSum.setConfidenceExactMatch(it.getConfidenceExact());
-                            cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
-                            cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                            cSum.setSpecifiedDatabases(it.getSpecifiedDatabases());
-                            cSum.setExpandedDatabases(it.getExpandedDatabases());
-                        });
         } else {
-            formulaCandidate = storage().findStr(
-                            Filter.and(
-                                    Filter.where("alignedFeatureId").eq(longAFIf),
-                                    Filter.where("formulaRank").eq(1)
-                            ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                    .findFirst().orElse(null);
+            formulaCandidate = project().findTopFormulaCandidateByFeatureId(longAFIf).orElse(null);
         }
 
         //get Canopus result. either for
