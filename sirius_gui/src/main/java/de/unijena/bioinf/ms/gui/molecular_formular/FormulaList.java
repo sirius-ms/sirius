@@ -239,8 +239,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     private final Function<FormulaResultBean, Boolean> bestHitFunction =
             sre -> Optional.ofNullable(sre)
                     .map(FormulaResultBean::getParentInstance)
-                    .filter(ib -> ib.getStructureAnnotation().isPresent())
                     .flatMap(InstanceBean::getFormulaAnnotation)
+                    .filter(FormulaResultBean::isTopStructureFormula)
                     .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
                     .orElse(false);
 }

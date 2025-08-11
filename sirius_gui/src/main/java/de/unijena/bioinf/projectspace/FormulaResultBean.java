@@ -30,6 +30,9 @@ import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.function.TriFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +68,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     private Pair<CompoundClasses, CanopusPrediction> canopusResults;
     private Optional<String> ftreeJson;
+
+    @Getter
+    @Setter(AccessLevel.PACKAGE)
+    boolean isTopStructureFormula = false;
 
 
     @Override

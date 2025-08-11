@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.DatabaseLabel;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
@@ -70,8 +71,12 @@ public class InstanceBean implements SiriusPCS {
     @Getter
     private final String featureId;
     private volatile AlignedFeature sourceFeature;
+    private final Set<AlignedFeatureOptField> optFields;
+
     private volatile MsData msData;
     private volatile SpectralMatchingCache spectralMatchingCache;
+    private volatile List<FormulaResultBean> formulaAnnotationCache;
+    private volatile Optional<FormulaResultBean> topFormulaCache;
 
     @Getter
     @NotNull
@@ -95,22 +100,27 @@ public class InstanceBean implements SiriusPCS {
 
     //todo som unregister listener stategy
 
-    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull GuiProjectManager projectManager) {
-        this(sourceFeature.getAlignedFeatureId(), sourceFeature, projectManager);
+    public InstanceBean(@NotNull AlignedFeature sourceFeature, @NotNull Collection<AlignedFeatureOptField> sourceOptFields, @NotNull GuiProjectManager projectManager) {
+        this(sourceFeature.getAlignedFeatureId(), sourceFeature, sourceOptFields, projectManager);
     }
 
     public InstanceBean(@NotNull String featureId, @NotNull GuiProjectManager projectManager) {
-        this(featureId, null, projectManager);
+        this(featureId, null, null, projectManager);
     }
 
-    public InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @NotNull GuiProjectManager projectManager) {
+    private InstanceBean(@NotNull String featureId, @Nullable AlignedFeature sourceFeature, @Nullable Collection<AlignedFeatureOptField> sourceOptFields, @NotNull GuiProjectManager projectManager) {
         this.featureId = featureId;
         this.projectManager = projectManager;
         this.sourceFeature = sourceFeature;
+        this.optFields = new HashSet<>();
+        if (sourceOptFields != null)
+            this.optFields.addAll(sourceOptFields);
 
-        if (this.sourceFeature == null)
-            //preload minimal information for compound list to prevent them from being loaded in EDT.
+        if (this.sourceFeature == null){
+            //preload minimal information for the compound list to prevent them from being loaded in EDT.
             this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+            this.optFields.addAll(DEFAULT_OPT_FEATURE_FIELDS);
+        }
 
         this.listener = new PropertyChangeListener() {
             @Override
@@ -133,13 +143,16 @@ public class InstanceBean implements SiriusPCS {
     private void clearCache(@NotNull Object evt) {
         if (SwingUtilities.isEventDispatchThread())
             log.warn("Cache update happened in GUI thread. Might cause GUI stutters!");
-        synchronized (InstanceBean.this) {
+        synchronized (this) {
+            this.optFields.clear();
             try {
-                InstanceBean.this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.sourceFeature = projectManager.getFeature(getFeatureId(), DEFAULT_OPT_FEATURE_FIELDS);
+                this.optFields.addAll(DEFAULT_OPT_FEATURE_FIELDS);
             } catch (WebClientResponseException.NotFound e) {  // feature has been deleted on server, will be deleted on client with a following event
-                InstanceBean.this.sourceFeature = null;
+                this.sourceFeature = null;
             }
-            InstanceBean.this.spectralMatchingCache = null;
+            clearResultCache();
+
         }
         if (evt instanceof BackgroundComputationsStateEvent pce) {
             if (pcsEnabled.get())
@@ -175,7 +188,16 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public void disableProjectSpaceListener() {
+        clearResultCache();
         pcsEnabled.set(false);
+    }
+
+    private void clearResultCache() {
+        synchronized (this) {
+            this.spectralMatchingCache = null;
+            this.formulaAnnotationCache = null;
+            this.topFormulaCache = null;
+        }
     }
 
     public SiriusClient getClient() {
@@ -193,7 +215,8 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(sourceFeature);
     }
 
-    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.TOPANNOTATIONS, AlignedFeatureOptField.COMPUTEDTOOLS);
+    public static final List<AlignedFeatureOptField> DEFAULT_OPT_FEATURE_FIELDS = List.of(AlignedFeatureOptField.COMPUTEDTOOLS, AlignedFeatureOptField.TOPANNOTATIONSSUMMARY);
+
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
         //we always load top annotations because it contains mandatory information for the SIRIUS GUI
@@ -201,18 +224,23 @@ public class InstanceBean implements SiriusPCS {
                 ? Stream.concat(optFields.stream(), DEFAULT_OPT_FEATURE_FIELDS.stream()).distinct().toList()
                 : DEFAULT_OPT_FEATURE_FIELDS);
 
-        //double checked locking source feature must be volatile
-        if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS)) {
+        //double-checked locking source feature must be volatile
+        if (sourceFeature == null || !this.optFields.containsAll(of)) {
             synchronized (this) {
                 // we update every time here since we do not know which optional fields are already loaded.
-                if (sourceFeature == null || !of.equals(DEFAULT_OPT_FEATURE_FIELDS))
+                if (sourceFeature == null || !this.optFields.containsAll(of)) {
+                    if (SwingUtilities.isEventDispatchThread())
+                        log.warn("Reload Featured '{}' with nu [{}] vs current [{}] in Event Thread. Might cause GUI stutters!", sourceFeature.getAlignedFeatureId(), of.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")), this.optFields.stream().sorted().map(AlignedFeatureOptField::toString).collect(Collectors.joining(", ")));
+
                     sourceFeature = withIds((pid, fid) ->
                             getClient().features().getAlignedFeature(pid, fid, false, of));
+                    this.optFields.clear();
+                    this.optFields.addAll(of);
+                }
                 return sourceFeature;
             }
         }
         return sourceFeature;
-
     }
 
     public String getName() {
@@ -308,20 +336,22 @@ public class InstanceBean implements SiriusPCS {
         return getRT().orElseGet(RetentionTime::NA);
     }
 
-    public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {
-        return getFormulaAnnotation().map(fc -> new FormulaResultBean(fc, this));
-    }
-
-    public Optional<FormulaCandidate> getFormulaAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
-    }
-
-    public Optional<StructureCandidateScored> getStructureAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
-    }
-
-    public Optional<CompoundClasses> getCompoundClassesAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
+    public Optional<FormulaResultBean> getFormulaAnnotation() {
+        if (topFormulaCache == null) {
+            synchronized (this) {
+                if (topFormulaCache == null) {
+                    List<FormulaResultBean> candidates = getFormulaCandidates();
+                    if (Utils.isNullOrEmpty(candidates)){
+                        topFormulaCache = Optional.empty();
+                    }else {
+                        topFormulaCache = candidates.stream().filter(FormulaResultBean::isTopStructureFormula).findFirst();
+                        if (topFormulaCache.isEmpty())
+                            topFormulaCache = Optional.of(candidates.getFirst());
+                    }
+                }
+            }
+        }
+        return topFormulaCache;
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
@@ -331,12 +361,31 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
-        return withIds((pid, fid) -> getClient().features()
-                .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
-                .stream()
-                .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
-                .toList();
+        //double-checked locking, msData must be volatile
+        if (formulaAnnotationCache == null) {
+            synchronized (this) {
+                if (formulaAnnotationCache == null) {
+                    formulaAnnotationCache = withIds((pid, fid) -> getClient().features()
+                            .getFormulaCandidates(pid, fid, false, ensureDefaultOptFields(null)))
+                            .stream()
+                            .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
+                            .toList();
 
+                    if (Boolean.TRUE.equals(getComputedTools().isStructureSearch())){
+                        List<FingerprintCandidateBean> top = getStructureCandidates(1, false);
+                        if (Utils.notNullOrEmpty(top)){
+                            String formulaId = top.getFirst().getCandidate().getFormulaId();
+                            formulaAnnotationCache.stream().filter(fa -> fa.getFormulaId().equals(formulaId))
+                                    .forEach(fa -> fa.setTopStructureFormula(true));
+                        }
+                    }
+
+
+
+                }
+            }
+        }
+        return formulaAnnotationCache;
     }
 
     /**
