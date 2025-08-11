@@ -117,6 +117,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         //may be io intense so run in background and execute ony ui updates from EDT to not block the UI too much
         try {
             backgroundLoaderLock.lock();
+            setData(ec);
             final JJob<Boolean> old = backgroundLoader;
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 LoadMoleculeJob loadMols;
