@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
 import it.unimi.dsi.fastutil.Pair;
+import org.dizitart.no2.exceptions.NitriteIOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -180,11 +181,15 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     protected abstract void validateExistingLocation(Path location) throws IOException;
 
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        PSM psm = projectSpaceManagerFactory.createOrOpen(location);
-        registerEventListeners(projectId, psm);
-        projectSpaces.put(projectId, createProject(projectId, psm));
-        eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
-        return createProjectInfo(projectId, psm, optFields);
+        try {
+            PSM psm = projectSpaceManagerFactory.createOrOpen(location);
+            registerEventListeners(projectId, psm);
+            projectSpaces.put(projectId, createProject(projectId, psm));
+            eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
+            return createProjectInfo(projectId, psm, optFields);
+        } catch (NitriteIOException e) {
+            throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()) , e);
+        }
     }
 
     protected abstract P createProject(String projectId, PSM managerToWrap);
