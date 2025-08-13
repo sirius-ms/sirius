@@ -106,6 +106,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     }
                     checkForInterruption();
                     //fetch data
+                    setDataEDT(ec);
                     final List<FormulaResultBean> candidates = ec != null ? ec.getFormulaCandidates() : null;
                     checkForInterruption();
                     //loading data
