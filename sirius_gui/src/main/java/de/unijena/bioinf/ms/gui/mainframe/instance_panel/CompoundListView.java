@@ -52,6 +52,17 @@ public class CompoundListView extends JScrollPane {
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer(gui));
         expPopMenu = new CompoundContextMenu(gui);
+
+        sourceList.compoundList.addListEventListener(e -> {
+            // ensure selection is visible even if liste sorting and filtering happen.
+            Jobs.runEDTLater(() -> {
+                int selectedIndex = compoundListView.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    compoundListView.ensureIndexIsVisible(selectedIndex);
+                }
+            });
+        });
+
         compoundListView.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {

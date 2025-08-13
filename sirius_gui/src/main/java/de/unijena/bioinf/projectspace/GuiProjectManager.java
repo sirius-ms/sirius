@@ -20,17 +20,19 @@
 package de.unijena.bioinf.projectspace;
 
 import ca.odell.glazedlists.BasicEventList;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.FastPropertyChangeSupport;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
-import io.sirius.ms.sdk.SiriusClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sdk.model.*;
 import io.sirius.ms.sse.DataEventType;
 import io.sirius.ms.sse.DataObjectEvents;
@@ -43,8 +45,10 @@ import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
@@ -163,13 +167,9 @@ public class GuiProjectManager implements Closeable {
                                             .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
                                             .forEach(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())));
                                 } finally {
+                                    // we just repaint since the compute state has no influence on sorting or filtering, result deletion or updates are handled later below.
+                                    Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                                     INSTANCE_LIST.getReadWriteLock().readLock().unlock();
-                                    // we just repaint since the compute state has no influence on sorting or filtering
-                                    DefaultEventSelectionModel<InstanceBean> m = siriusGui.getMainFrame().getCompoundListSelectionModel();
-                                    if (!m.isSelectionEmpty())
-                                        GuiProjectManager.this.pcs.firePropertyChange("project.updateInstance" + m.getSelected().getFirst().getFeatureId(), null, null);
-                                    else
-                                        Jobs.runEDTLater(() -> siriusGui.getMainFrame().getFilterableCompoundListPanel().getCompoundListView().repaint());
                                 }
                             }
                         }

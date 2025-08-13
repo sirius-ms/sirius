@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -58,7 +58,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
 
-        DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
+        AdvancedListSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
             changeData(m.getSelected().get(0));
         } else {
@@ -68,7 +68,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -80,7 +80,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
                 if (!selected.isEmpty())
                     changeData(selected.getFirst());
                 else
@@ -96,22 +96,20 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         try {
             backgroundLoaderLock.lock();
-            setData(ec);
             final JJob<Boolean> old = backgroundLoader;
             backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 @Override
                 protected Boolean compute() throws Exception {
-
                     if (old != null && !old.isFinished()) {
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();
                     //fetch data
-                    final List<FormulaResultBean> candidates = ec != null ? readDataByFunction(InstanceBean::getFormulaCandidates) : null;
+                    final List<FormulaResultBean> candidates = ec != null ? ec.getFormulaCandidates() : null;
                     checkForInterruption();
                     //loading data
-                    intiResultList(candidates);
+                    intiResultListEDT(ec, candidates);
                     checkForInterruption();
 
                     //refreshing selection
@@ -148,9 +146,8 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         }
     }
 
-    private void intiResultList(List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
+    private void intiResultListEDT(InstanceBean ec, List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
         Jobs.runEDTAndWait(() -> {
-            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
             idToOldNormalizedScore.clear();
             if (candidates != null && !candidates.isEmpty()) { //refill case
                 elementListSelectionModel.clearSelection();
@@ -172,7 +169,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 if (Arrays.stream(sscores).allMatch(score -> Double.compare(score, 0d) == 0))
                     computeOldNormalizedScoresAsFallback(candidates, sscores);
 
-                refillElements(candidates);
+                refillElements(ec, candidates);
 
                 this.siriusScoreStats.update(sscores);
                 this.isotopeScoreStats.update(iScores);
@@ -182,10 +179,10 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             } else { //clear case
                 if (!elementList.isEmpty()) {
                     elementListSelectionModel.clearSelection();
-                    refillElements(null);
+                    refillElements(ec, null);
                 } else {
                     // to have notification even if the list is already empty
-                    readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
+                    notifyListenersEDT(null, elementList, elementListSelectionModel);
                 }
                 siriusScoreStats.update(new double[0]);
                 isotopeScoreStats.update(new double[0]);

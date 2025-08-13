@@ -133,9 +133,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null) {
             storage().onInsert(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.addTagDefinition(projectId, tagDef));
             storage().onRemove(de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition.class, tagDef -> searchService.removeTagDefinition(projectId, tagDef.getTagName()));
-
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start();
             searchService.indexProject(projectId, projectSpaceManager.getProject());
         }
     }

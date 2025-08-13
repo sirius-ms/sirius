@@ -20,7 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -56,12 +56,12 @@ public class DeleteExperimentAction extends AbstractGuiAction {
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmpty(selected));
             }
         });
