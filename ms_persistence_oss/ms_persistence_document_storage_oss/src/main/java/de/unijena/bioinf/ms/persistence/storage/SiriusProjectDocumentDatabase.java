@@ -280,6 +280,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 ), clzz).findFirst();
     }
 
+    @SneakyThrows
+    default Optional<FormulaCandidate> findTopFormulaCandidateByFeatureId(long alignedFeatureId) {
+        return getStorage().findStr(
+                        Filter.and(
+                                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                                Filter.where("formulaRank").eq(1)
+                        ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                .findFirst();
+    }
+
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {
         return stream(findByFeatureId(alignedFeatureId, clzz, optFields));
     }
