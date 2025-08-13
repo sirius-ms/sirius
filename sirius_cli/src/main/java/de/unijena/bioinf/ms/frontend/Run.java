@@ -20,11 +20,15 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -52,8 +56,10 @@ public class Run extends ApplicationCore {
     protected CommandLine.ParseResult result;
     protected Workflow flow;
     private final WorkflowBuilder builder;
+    private final boolean checkPermissions;
 
-    public Run(WorkflowBuilder builder) {
+    public Run(WorkflowBuilder builder, boolean checkPermissions) {
+        this.checkPermissions = checkPermissions;
         this.builder = builder;
         this.builder.initRootSpec();
     }
@@ -75,18 +81,68 @@ public class Run extends ApplicationCore {
             args = new String[]{"--help"};
 
         if (!List.of(args).contains("login") && !List.of(args).contains("password") && !List.of(args).contains("pwd"))
-            logger.info("Running with following arguments: " + Arrays.toString(args));
+            logger.info("Running with following arguments: {}", Arrays.toString(args));
         final CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-        result = commandline.parseArgs(args);
+        result = parseResultAndCheckPermission(commandline, commandline.parseArgs(args));
         return result;
     }
 
-    public Workflow makeWorkflow(){
+    private CommandLine.ParseResult parseResultAndCheckPermission(@NotNull final CommandLine commandline, @NotNull final CommandLine.ParseResult result) {
+        if (!checkPermissions)
+            return result;
+        if (result.isUsageHelpRequested() || result.isVersionHelpRequested())
+            return result;
+        if (result.hasSubcommand() && result.hasSubcommand() && result.subcommand().commandSpec().commandLine().getCommand() instanceof LoginOptions)
+            return result;
+
+        String message = null;
+        WebAPI webApi = ApplicationCore.WEB_API;
+        if (!webApi.getAuthService().isLoggedIn()) {
+            message = "Login ERROR: Please Login to use the SIRIUS command line tool!";
+
+            System.err.println();
+            logger.error(message);
+
+            System.out.println();
+            System.out.println(message);
+            return commandline.parseArgs("--noCite", "login", "-h");
+        }
+
+        @Nullable Subscription sub = webApi.getActiveSubscription();
+
+        if (sub == null) {
+            message = "License ERROR: No active subscription found, please request and/or select a valid subscription!";
+        } else if (sub.isNotStarted()) {
+            message = "License ERROR: Your active subscription has not yet started! Please select a different subscription or renew the active one!";
+        } else if (sub.isExpired()) {
+            message = "License ERROR: Your active subscription is expired! Please select a different subscription or renew the active one!";
+        } else if (sub.getAllowedFeatures() == null) {
+            message = "License ERROR: Could not find allowed features in active subscription. This is likely a bug. Please contact Support!";
+        } else if (!sub.getAllowedFeatures().cli()) {
+            message = "License ERROR: Command line tool usage is not permitted by your active subscription. Please select a different subscription or upgrade the active one!";
+        }
+
+        if (message != null) {
+            System.err.println();
+            logger.error(message);
+
+            System.out.println();
+            System.out.println(message);
+
+            String loginCommand = LoginOptions.class.getAnnotation(CommandLine.Command.class).name();
+            return commandline.parseArgs("--noCite", loginCommand, "--show", "--license-info");
+        }
+
+        return result;
+    }
+
+    public Workflow makeWorkflow() {
         return makeWorkflow(new SimpleInstanceBuffer.Factory());
     }
-    public Workflow makeWorkflow(@NotNull InstanceBufferFactory<?> bufferFactory){
+
+    public Workflow makeWorkflow(@NotNull InstanceBufferFactory<?> bufferFactory) {
         flow = builder.makeParseResultHandler(bufferFactory).handleParseResult(result);
         return flow;
     }

@@ -108,6 +108,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     private final FingerIdClient fingerprintClient;
     private final CanopusClient canopusClient;
 
+    @Nullable
     private Subscription activeSubscription;
 
     private WebWithCustomDatabase chemDb;
@@ -157,6 +158,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         changeHost(this.activeSubscription != null ? () -> URI.create(this.activeSubscription.getServiceUrl()) : () -> null);
     }
 
+    @Nullable
     public synchronized Subscription getActiveSubscription() {
         return activeSubscription;
     }
@@ -206,6 +208,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         }
     }
 
+    @NotNull
     @Override
     public synchronized Map<ConnectionError.Klass, Set<ConnectionError>> checkConnection() {
         final Map<ConnectionError.Klass, Set<ConnectionError>> errors = new HashMap<>();

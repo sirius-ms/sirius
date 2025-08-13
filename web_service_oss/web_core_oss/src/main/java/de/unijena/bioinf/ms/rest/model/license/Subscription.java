@@ -91,9 +91,26 @@ public class Subscription {
     }
 
     @JsonIgnore
+    public boolean hasStartTime(){
+        return getStartDate() != null;
+    }
+
+    @JsonIgnore
     public boolean isExpired() {
         if (!hasExpirationTime())
             return false;
         return getExpirationDate().getTime() < System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public boolean isNotStarted() {
+        if (!hasStartTime())
+            return false;
+        return getStartDate().getTime() > System.currentTimeMillis();
+    }
+
+    @JsonIgnore
+    public boolean isNotStartedOrExpired() {
+        return isNotStarted() || isExpired();
     }
 }
