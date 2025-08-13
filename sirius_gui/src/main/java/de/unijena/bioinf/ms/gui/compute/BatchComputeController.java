@@ -279,8 +279,6 @@ public class BatchComputeController {
             @Override
             protected Boolean compute() throws InterruptedException, InvocationTargetException {
                 updateProgress(0, 100, 0, "Configuring Computation...");
-                //prevent many instance updates caused by multi selection
-                Jobs.runEDTLater(() -> gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection());
 
                 checkForInterruption();
 
