@@ -27,16 +27,16 @@ import java.util.Optional;
 
 //@Slf4j
 public enum SiriusPlatform {
-    WIN_x86_64("win", "win32-x86-64", "win-x86-64", "windows-amd64", "windows-x64", "win64"),
-    WIN_x86_32(null, "win32-x86", null, null, null, "win32"),
-    WIN_ARM64(null, null, "win-arm64", "windows-aarch64", "windows-aarch64", "win64-arm"),
-    WIN_ARM32(null, null, null, null, null, null),
-    LINUX_x86_64("linux", "linux-x86-64", "linux-x86-64", "linux-amd64", "linux-x64", "linux64"),
-    LINUX_x86_32(null, "linux-x86", null, null, null, null),
-    LINUX_ARM64("linux-aarch64", "linux-aarch64", "linux-arm64", "linux-aarch64", "linux-aarch64", "linux64-arm"),
-    LINUX_ARM32(null, "linux-arm", null, null, null, null),
-    MAC_x86_64("mac", "darwin-x86-64", "mac-x86-64", "macos-amd64", "osx-x64", "mac"),
-    MAC_ARM64("mac-aarch64", "darwin-aarch64", "mac-arm64", "macos-aarch64", "osx-aarch64", "mac-arm");
+    WIN_x86_64("win", "win32-x86-64", "win-x86-64", "windows-amd64", "windows-x64", "win64", "win_x64", "windows-x64"),
+    WIN_x86_32(null, "win32-x86", null, null, null, "win32", null, null),
+    WIN_ARM64(null, null, "win-arm64", "windows-aarch64", "windows-aarch64", "win64-arm", null, "windows-aarch64"),
+    WIN_ARM32(null, null, null, null, null, null, null, null),
+    LINUX_x86_64("linux", "linux-x86-64", "linux-x86-64", "linux-amd64", "linux-x64", "linux64", "linux_x64", "linux-x64"),
+    LINUX_x86_32(null, "linux-x86", null, null, null, null, null, null),
+    LINUX_ARM64("linux-aarch64", "linux-aarch64", "linux-arm64", "linux-aarch64", "linux-aarch64", "linux64-arm", "linux_aarch64", "linux-aarch64"),
+    LINUX_ARM32(null, "linux-arm", null, null, null, null, null, null),
+    MAC_x86_64("mac", "darwin-x86-64", "mac-x86-64", "macos-amd64", "osx-x64", "mac", "macosx_x64", "macos-x64"),
+    MAC_ARM64("mac-aarch64", "darwin-aarch64", "mac-arm64", "macos-aarch64", "osx-aarch64", "mac-arm", "macosx_aarch64", "macos-aarch64");
 
     private final String jfxClassifier;
     private final String inchiClassifier;
@@ -44,14 +44,18 @@ public enum SiriusPlatform {
     private final String bellClassifier;
     private final String jbrClassifier; // classifier for jbr jdk with jcef browser
     private final String jxClassifier; // classifier for jxbrowser
+    private final String zuluClassifier; // classifier for jxbrowser
+    private final String msClassifier; // classifier for jxbrowser
 
-    SiriusPlatform(String jfxClassifier, String inchiClassifier, String jenaClassifier, String bellClassifier, String jbrClassifier, String jxClassifier) {
+    SiriusPlatform(String jfxClassifier, String inchiClassifier, String jenaClassifier, String bellClassifier, String jbrClassifier, String jxClassifier, String zuluClassifier, String msClassifier) {
         this.jfxClassifier = jfxClassifier;
         this.inchiClassifier = inchiClassifier;
         this.jenaClassifier = jenaClassifier;
         this.bellClassifier = bellClassifier;
         this.jbrClassifier = jbrClassifier;
         this.jxClassifier = jxClassifier;
+        this.zuluClassifier = zuluClassifier;
+        this.msClassifier = msClassifier;
     }
 
     public boolean isMac() {
@@ -89,6 +93,14 @@ public enum SiriusPlatform {
 
     public Optional<String> jxClassifier() {
         return Optional.ofNullable(jxClassifier);
+    }
+
+    public Optional<String> zuluClassifier() {
+        return Optional.ofNullable(zuluClassifier);
+    }
+
+    public Optional<String> msClassifier() {
+        return Optional.ofNullable(msClassifier);
     }
 
 
