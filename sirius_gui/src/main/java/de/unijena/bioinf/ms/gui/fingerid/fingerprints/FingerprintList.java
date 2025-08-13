@@ -97,7 +97,12 @@ public class FingerprintList extends ActionList<FingerIdPropertyBean, FormulaRes
                         old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-                    Jobs.runEDTAndWait(elementList::clear);
+
+                    Jobs.runEDTAndWait(() -> {
+                        setDataEDT(selectedElement);
+                        elementList.clear();
+                    });
+
                     checkForInterruption();
 
                     if (selectedElement != null) {
@@ -121,7 +126,7 @@ public class FingerprintList extends ActionList<FingerIdPropertyBean, FormulaRes
                         }
                     }
                     checkForInterruption();
-                    Jobs.runEDTAndWait(() -> notifyListeners(selectedElement, getSelectedElement(), elementList, elementListSelectionModel));
+                    notifyListenersEDT(getSelectedElement(), elementList, elementListSelectionModel);
                     return true;
                 }
 
