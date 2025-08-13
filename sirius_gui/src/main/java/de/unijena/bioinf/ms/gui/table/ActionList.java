@@ -57,7 +57,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
     // data object shall be read and written only from EDT
-    private D data = null;
+    protected D data = null;
 
     public final DataSelectionStrategy selectionType;
 

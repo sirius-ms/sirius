@@ -50,7 +50,6 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private JJob<Boolean> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
-    private InstanceBean instanceBean;
     @Getter
     private FingerprintCandidateBean fingerprintCandidateBean;
     private boolean loadAll = false;
@@ -95,24 +94,6 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         changeData(!m.isSelectionEmpty() ? m.getSelected().iterator().next() : null, null);
     }
 
-    public SpectralMatchList(final InstanceBean instanceBean, final FingerprintCandidateBean candidateBean, SiriusGui gui) {
-        super(SpectralMatchBean.class);
-        this.similarityStats = new DoubleListStats();
-        this.sharedPeaksStats = new DoubleListStats();
-        this.gui = gui;
-        changeData(instanceBean, candidateBean);
-    }
-
-    public List<SpectralMatchBean> getMatchBeanGroup(long refSpecUUID) {
-        if (fingerprintCandidateBean != null) {
-            return loadAll ? fingerprintCandidateBean.getSpectralMatchGroup(refSpecUUID) : fingerprintCandidateBean.getSpectralMatchGroupFromTop(refSpecUUID);
-        } else if (instanceBean != null) {
-            return loadAll ? instanceBean.getSpectralMatchGroup(refSpecUUID) : instanceBean.getSpectralMatchGroupFromTop(refSpecUUID);
-        } else {
-            return List.of();
-        }
-    }
-
     public void addSizeChangedListener(BiConsumer<Integer, Integer> listener) {
         sizeChangedListeners.add(listener);
     }
@@ -122,7 +103,7 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     }
 
     public void reloadData() {
-        changeData(instanceBean, fingerprintCandidateBean);
+        changeData(data, fingerprintCandidateBean);
     }
 
     private void changeData(InstanceBean instanceBean, FingerprintCandidateBean fingerprintCandidateBean) {
@@ -138,13 +119,12 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                         old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-
                     checkForInterruption();
+
                     Jobs.runEDTAndWait(() -> {
-                        SpectralMatchList.this.instanceBean = instanceBean;
+                        setDataEDT(instanceBean);
                         SpectralMatchList.this.fingerprintCandidateBean = fingerprintCandidateBean;
                     });
-
 
                     checkForInterruption();
 
