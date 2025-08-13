@@ -132,13 +132,13 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     checkForInterruption();
 
                     Jobs.runEDTAndWait(() -> {
+                        setDataEDT(ec);
                         csiScoreStats.reset();
                         logPStats.reset();
                         tanimotoStats.reset();
                         loadAll.set(loadAllCandidates);
                         loadDatabaseHitsAtom.set(loadDatabaseHits);
                         loadDenovoAtom.set(loadDenovo);
-                        setDataEDT(ec);
                     });
 
                     checkForInterruption();
