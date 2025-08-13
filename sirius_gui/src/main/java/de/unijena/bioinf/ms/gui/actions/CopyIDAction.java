@@ -20,8 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -44,10 +43,10 @@ public class CopyIDAction extends AbstractGuiAction {
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {}
+            public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {}
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
+            public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, java.util.List<InstanceBean> selected, java.util.List<InstanceBean> deselected, int fullSize) {
                 setEnabled(!selection.isSelectionEmpty());
             }
         });
