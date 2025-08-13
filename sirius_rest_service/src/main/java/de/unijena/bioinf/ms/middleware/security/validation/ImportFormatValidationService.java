@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.security.exceptions.ExceptionErrorResponseHandler.ERROR_TYPE_BASE_URI;
 import static de.unijena.bioinf.ms.middleware.security.Authorities.*;
@@ -57,7 +58,10 @@ public class ImportFormatValidationService {
         if (!unsupportedFiles.isEmpty() || !forbiddenFiles.isEmpty()) {
             ErrorResponseException ex = new ErrorResponseException(HttpStatus.BAD_REQUEST);
             ex.setTitle("File import validation failed");
-            ex.setDetail("Invalid file formats in input! The following formats are not supported or not permitted by you subscription.");
+            ex.setDetail(String.format("Invalid file formats! Some file formats in your input are either not supported%sor not permitted by your subscription%s.",
+                    unsupportedFiles.isEmpty() ? " " : " (" + unsupportedFiles.stream().map(f -> f.substring(f.lastIndexOf('.'))).distinct().collect(Collectors.joining(", ")) + ") ",
+                    forbiddenFiles.isEmpty() ? " " : " (" + forbiddenFiles.stream().map(f -> f.substring(f.lastIndexOf('.'))).distinct().collect(Collectors.joining(", ")) + ") "
+            ));
             ex.setType(ERROR_TYPE_BASE_URI.resolve("/file-import-validation-failed"));
             ex.setInstance(URI.create(request.getRequestURI()));
 

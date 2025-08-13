@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 
 import javax.swing.*;
@@ -34,19 +35,31 @@ import java.awt.event.KeyListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class StacktraceDialog extends JDialog implements ActionListener, KeyListener {
+public class ErrorWithDetailsDialog extends JDialog implements ActionListener, KeyListener {
 
     private JButton ok, copy, showStacktrace;
     private JScrollPane sc;
     private String fullmsg;
 
-    public StacktraceDialog(Window owner, String message, String stackTrace ) {
-        super(owner, DEFAULT_MODALITY_TYPE);
-        initDialog(message, stackTrace);
+    public ErrorWithDetailsDialog(Window owner, String message, String details ) {
+        this(owner, null, message, details);
     }
 
-    public StacktraceDialog(Window owner, String message, Throwable exception) {
+    public ErrorWithDetailsDialog(Window owner, String title, String message, String details ) {
         super(owner, DEFAULT_MODALITY_TYPE);
+        if (Utils.notNullOrBlank(title))
+            setTitle(title);
+        initDialog(message, details);
+    }
+
+    public ErrorWithDetailsDialog(Window owner, String message, Throwable exception) {
+        this(owner, null, message, exception);
+    }
+
+    public ErrorWithDetailsDialog(Window owner, String title, String message, Throwable exception) {
+        super(owner, DEFAULT_MODALITY_TYPE);
+        if (Utils.notNullOrBlank(title))
+            setTitle(title);
         initDialog(message, getStacktrace(exception));
     }
 
@@ -86,7 +99,7 @@ public class StacktraceDialog extends JDialog implements ActionListener, KeyList
         copy.addActionListener(this);
         copy.setVisible(false);
         south.add(copy);
-        showStacktrace = new JButton("Show stack trace");
+        showStacktrace = new JButton("Show Details");
         showStacktrace.addActionListener(this);
         south.add(showStacktrace);
 
