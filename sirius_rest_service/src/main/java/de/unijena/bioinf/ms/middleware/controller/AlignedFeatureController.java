@@ -827,9 +827,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern", produces = MediaType.APPLICATION_JSON_VALUE)
     public IsotopePatternAnnotation getIsotopePatternAnnotation(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
-        IsotopePatternAnnotation res = projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.isotopePattern)
-                .getIsotopePatternAnnotation();
+        FormulaCandidate fc = projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, false, FormulaCandidate.OptField.isotopePattern);
+
+        IsotopePatternAnnotation res = fc != null ? fc.getIsotopePatternAnnotation() : null;
+
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Isotope Pattern for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
