@@ -165,6 +165,11 @@ public class NoSQLInstance implements Instance {
 
     @SneakyThrows
     public AlignedFeatures getAlignedFeatures() {
+        return getAlignedFeatures(false);
+    }
+
+    @SneakyThrows
+    public AlignedFeatures getAlignedFeatures(boolean withMSData) {
         alignedFeaturesLock.updateLock().lock();
         try {
             if (alignedFeatures == null) {
@@ -175,6 +180,17 @@ public class NoSQLInstance implements Instance {
                                 .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
                 } finally {
                     alignedFeaturesLock.writeLock().unlock();
+                }
+            }
+            if (withMSData) {
+                if (alignedFeatures.getMSData().isEmpty()){
+                    alignedFeaturesLock.writeLock().lock();
+                    try {
+                        if (alignedFeatures.getMSData().isEmpty())
+                            manager.getProject().fetchMsData(alignedFeatures);
+                    } finally {
+                        alignedFeaturesLock.writeLock().unlock();
+                    }
                 }
             }
             return alignedFeatures;
@@ -196,11 +212,6 @@ public class NoSQLInstance implements Instance {
     @Override
     public boolean hasMsMs() {
         return getAlignedFeatures().isHasMsMs();
-    }
-
-    @SneakyThrows
-    private Optional<MSData> getMSData() {
-        return project().getStorage().findStr(Filter.where("alignedFeatureId").eq(id), MSData.class).findFirst();
     }
 
     @SneakyThrows

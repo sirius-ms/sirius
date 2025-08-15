@@ -56,6 +56,29 @@ public class FileUtils {
     }
 
 
+    @Nullable
+    public static String getFileExt(File path){
+        return getFileExt(path.getName());
+    }
+
+    @Nullable
+    public static String getFileExt(Path path){
+        return getFileExt(path.getFileName().toString());
+    }
+
+    @NotNull
+    public static Optional<String> getFileExtOpt(String path){
+        return Optional.ofNullable(getFileExt(path));
+    }
+
+    @Nullable
+    public static String getFileExt(String path){
+        int idx = path.lastIndexOf('.');
+        if (idx < 0 || idx == path.length() -1)
+            return null;
+        return path.substring(idx).toLowerCase();
+    }
+
     public static String getFileName(URI path){
         if (path == null)
             return null;
