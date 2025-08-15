@@ -1,14 +1,17 @@
 package io.sirius.ms.utils.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import io.sirius.ms.utils.jwt.auth.AuthServiceJwtToken;
 import io.sirius.ms.utils.jwt.auth0.Auth0JwtToken;
 import io.sirius.ms.utils.jwt.spring.SpringJwtToken;
+import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JwtTokenFactoryImpl implements JwtTokenFactory {
 
@@ -66,7 +69,11 @@ public class JwtTokenFactoryImpl implements JwtTokenFactory {
         }
 
         // Phase 2: If no direct match, traverse the entire class hierarchy and search again.
-        Set<Class<?>> hierarchy = Utils.getClassHierarchy(clazz);
+        Set<Class<?>> hierarchy = Stream.concat(
+                        ClassUtils.getAllSuperclasses(clazz).stream(),
+                        ClassUtils.getAllInterfaces(clazz).stream())
+                .collect(Collectors.toSet());
+
         for (String typeName : SUPPORTED_TYPES) {
             for (Class<?> classInHierarchy : hierarchy) {
                 if (classInHierarchy.getName().equals(typeName)) {
