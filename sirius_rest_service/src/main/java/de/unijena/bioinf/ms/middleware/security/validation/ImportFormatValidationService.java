@@ -2,9 +2,14 @@ package de.unijena.bioinf.ms.middleware.security.validation;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.tools.*;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import jakarta.servlet.http.HttpServletRequest;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
@@ -70,11 +75,14 @@ public class ImportFormatValidationService {
         }
     }
 
-    public void validateProject(HttpServletRequest request, Project<?> project) {
-        validateProject(request, project, false);
+    public void validateProject(@NotNull HttpServletRequest request, @NotNull Project<?> project, @Nullable AbstractSubmission jobSubmission) {
+        validateProject(request, project, jobSubmission, false);
     }
 
-    public void validateProject(HttpServletRequest request, Project<?> project, boolean allowGuiBypass) {
+    public void validateProject(@NotNull HttpServletRequest request, @NotNull Project<?> project, @Nullable AbstractSubmission submission, boolean allowGuiBypass) {
+       if (isLicenseFree(submission))
+           return;
+
         ProjectSourceFormats sourceFormats = project.getProjectSourceFormats().orElse(null);
 
         if (sourceFormats != null) {
@@ -112,6 +120,18 @@ public class ImportFormatValidationService {
                 }
             }
         }
+    }
+
+    private static boolean isLicenseFree(@Nullable AbstractSubmission submission) {
+        if (submission instanceof JobSubmission jobSubmission)
+            return jobSubmission.getEnabledTools().stream().map(Tool::getClass)
+                .noneMatch(tool ->
+                        tool.equals(FingerprintPrediction.class)
+                        || tool.equals(Canopus.class)
+                        || tool.equals(StructureDbSearch.class)
+                        || tool.equals(MsNovelist.class)
+                );
+        return false;
     }
 
     private static ErrorResponseException makeProjectValidationException(HttpServletRequest request, Project<?> project) {

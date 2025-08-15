@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -134,7 +133,7 @@ public class JobController {
                         HttpServletRequest request
     ) {
         Project<?> project = projectsProvider.getProjectOrThrow(projectId);
-        importFormatValidationService.validateProject(request, project);
+        importFormatValidationService.validateProject(request, project, jobSubmission);
         return computeService.createAndSubmitJob(project, jobSubmission, removeNone(optFields));
     }
 
@@ -157,12 +156,13 @@ public class JobController {
                                   HttpServletRequest request
     ) {
         Project<?> project = projectsProvider.getProjectOrThrow(projectId);
-        importFormatValidationService.validateProject(request, project);
 
         final JobSubmission js = getJobConfig(jobConfigName, false).getJobSubmission();
         js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
+
+        importFormatValidationService.validateProject(request, project, js);
 
         return computeService.createAndSubmitJob(project, js, removeNone(optFields));
     }
@@ -185,7 +185,7 @@ public class JobController {
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         // We allow GUI bypass to that e.g. summaries can be written from projects with forbidden sources.
-        importFormatValidationService.validateProject(request, p, true);
+        importFormatValidationService.validateProject(request, p, commandSubmission, true);
         return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 
