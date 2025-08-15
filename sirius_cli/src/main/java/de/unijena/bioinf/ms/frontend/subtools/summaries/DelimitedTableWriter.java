@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
@@ -48,10 +47,11 @@ public class DelimitedTableWriter implements SummaryTableWriter {
 
     private String getString(Object val) {
         if (val == null || val.equals(Double.NaN)) return "";
-        if (val instanceof String || val instanceof Enum<?>) return formatString(val.toString());
+        if (val instanceof String || val instanceof Boolean || val instanceof Enum<?>) return formatString(val.toString());
         if (val instanceof Double) return String.format(LOCALE, DOUBLE_FORMAT, val);
         if (val instanceof Integer) return String.format(LOCALE, LONG_FORMAT, val);
         if (val instanceof Long) return String.format(LOCALE, LONG_FORMAT, val);
+        log.warn("Delimited writer encountered a value of an unexpected type {} {}", val, val.getClass());
         return String.valueOf(val);
     }
 
