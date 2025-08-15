@@ -395,7 +395,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             } else {
                 errors.entrySet().stream()
                         .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-                        .forEach(e -> System.out.println(e.getValue()));
+                        .forEach(e -> e.getValue().forEach(System.out::println));
             }
         }
     }
