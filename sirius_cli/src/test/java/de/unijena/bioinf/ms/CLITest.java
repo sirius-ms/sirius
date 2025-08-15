@@ -51,7 +51,7 @@ public abstract class CLITest {
             NitriteProjectSpaceManagerFactory spaceManagerFactory = new NitriteProjectSpaceManagerFactory();
             CLIRootOptions rootOptions = new CLIRootOptions(defaultConfigOptions, spaceManagerFactory);
             WorkflowBuilder workflowBuilder = new WorkflowBuilder(rootOptions);
-            run = new Run(workflowBuilder);
+            run = new Run(workflowBuilder, false);
             rootCLISpec = workflowBuilder.getRootSpec();
         }
     }

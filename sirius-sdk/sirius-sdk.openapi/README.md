@@ -146,6 +146,7 @@ Class | Method | HTTP request | Description
 *FeatureStatisticsApi* | [**getAlignedFeatureFoldChangeTableExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *FeatureStatisticsApi* | [**getFoldChangesByAlignedFeatureExperimental**](docs/FeatureStatisticsApi.md#getFoldChangesByAlignedFeatureExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
+*FeaturesApi* | [**addDeNovoStructureCandidate**](docs/FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
 *FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -275,6 +276,7 @@ Class | Method | HTTP request | Description
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
+ - [AllowedFeatures](docs/AllowedFeatures.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)

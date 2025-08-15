@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.frontend.subtools.login;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.auth.LoginException;
@@ -38,8 +39,8 @@ import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.rest.ConnectionError;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
+import io.sirius.ms.utils.jwt.AccessTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -50,8 +51,12 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.frontend.core.SiriusProperties.ACTIVE_SUBSCRIPTION_KEY;
+
 @CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
+    private final AccessTokens accessTokens = AccessTokens.ACCESS_TOKENS;
+
     // DELETE Token
     @CommandLine.Option(names = {"--logout", "--clear"},
             description = {"Logout. Deletes stored refresh and access token (re-login required to use webservices again)."})
@@ -70,7 +75,6 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
     @CommandLine.Option(names = {"--select-license", "--select-subscription"},
             description = {"Specify active subscription (sid) if multiple licenses are available at your account. Available subscriptions can be listed with '--show'"})
-//    protected int sidIndex = -1;
     protected String sid = null;
 
     @CommandLine.Option(names = {"--request-token-only"},
@@ -251,10 +255,10 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 System.out.println("Logged in as: " + decodedId.getClaim("name").asString());
                 System.out.println("User ID: " + decodedId.getClaim("sub").asString());
                 System.out.println("Token expires at: " + decodedId.getExpiresAt().toString());
-                System.out.println("Active subscription: " + Optional.ofNullable(Tokens.getActiveSubscription(token)).map(Subscription::getSid).orElse("NONE"));
+                System.out.println("Active subscription SID: " + Optional.ofNullable(accessTokens.getActiveSubscription(token)).map(Subscription::getSid).orElse("NONE"));
                 System.out.println();
                 System.out.println("---- Available Subscriptions ----");
-                @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
+                @NotNull List<Subscription> subs = accessTokens.getSubscriptions(token);
                 if (subs.isEmpty()) {
                     System.out.println("<NO SUBSCRIPTIONS/LICENSES AVAILABLE>");
                 } else {
@@ -273,29 +277,45 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showLicense() throws IOException {
             WebAPI<?> api = ApplicationCore.WEB_API;
-            @Nullable Subscription sub = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
+            @Nullable Subscription sub = accessTokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
 
             System.out.println();
-            System.out.println("###################### License Info ######################");
+            System.out.println("###################### Active License Info ######################");
             if (sub != null) {
                 final LicenseInfo licenseInfo = new LicenseInfo();
                 licenseInfo.subscription = sub;
+                System.out.println("License: " + sub.getName() + " (" + sub.getSid() + ")");
                 System.out.println("Licensed to: " + sub.getSubscriberName() + " (" + sub.getDescription() + ")");
+                System.out.println("Startes at: " + (sub.getStartDate() != null ? sub.getStartDate().toString() : "N/A"));
                 System.out.println("Expires at: " + (sub.hasExpirationTime() ? sub.getExpirationDate().toString() : "NEVER"));
+
+                Map<ConnectionError.Klass, Set<ConnectionError>> errors = api.checkConnection();
+
                 if (sub.isCountQueries()) {
-                    if (sub.hasCompoundLimit()) {
-                        licenseInfo.consumables = api.getConsumables(false);
-                        System.out.println("Quota utilized (Yearly): '" +
-                                licenseInfo.consumables()
-                                        .map(SubscriptionConsumables::getCountedCompounds)
-                                        .map(String::valueOf).orElse("?") + " of " + sub.getCompoundLimit() + "' features computed");
+                    if (!errors.isEmpty()) {
+                        System.out.println("Quota: Not available. See License issues below.");
                     } else {
-                        licenseInfo.consumables = api.getConsumables(true);
-                        System.out.println("Quota utilized (Monthly): '" +
-                                licenseInfo.consumables()
-                                        .map(SubscriptionConsumables::getCountedCompounds)
-                                        .map(String::valueOf).orElse("?") + "' features computed");
+                        if (sub.hasCompoundLimit()) {
+                            licenseInfo.consumables = api.getConsumables(false);
+                            System.out.println("Quota utilized (Yearly): '" +
+                                    licenseInfo.consumables()
+                                            .map(SubscriptionConsumables::getCountedCompounds)
+                                            .map(String::valueOf).orElse("?") + " of " + sub.getCompoundLimit() + "' features computed");
+                        } else {
+                            licenseInfo.consumables = api.getConsumables(true);
+                            System.out.println("Quota utilized (Monthly): '" +
+                                    licenseInfo.consumables()
+                                            .map(SubscriptionConsumables::getCountedCompounds)
+                                            .map(String::valueOf).orElse("?") + "' features computed");
+                        }
                     }
+                } else {
+                    System.out.println("License has no Quota!");
+                }
+
+                if (!errors.isEmpty()) {
+                    System.out.println("License has the following issues: ");
+                    printLicenseErrors(errors);
                 }
             } else {
                 System.out.println("Not License information found.");
@@ -305,16 +325,17 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
         }
 
         private Map<ConnectionError.Klass, Set<ConnectionError>> determineAndCheckActiveSubscription(AuthService.Token token) throws IOException {
+            @NotNull List<Subscription> subs = accessTokens.getSubscriptions(token);
+            @Nullable Subscription oldSub = accessTokens.getActiveSubscription(subs, accessTokens.getDefaultSubscriptionId(token));
+
             Subscription sub = null;
-            @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
             if (sid != null)
-                sub = Tokens.getActiveSubscription(subs, sid, null, false);
+                sub = accessTokens.getActiveSubscription(subs, sid, null, false);
             if (sub == null) {
                 if (sid != null)
                     LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '{}'. Trying to find fallback", sid);
-                sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
+                sub = accessTokens.getActiveSubscription(subs, accessTokens.getDefaultSubscriptionId(token));
             }
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
             ApplicationCore.WEB_API.changeActiveSubscription(sub);
 
             //check connection
@@ -325,7 +346,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                     .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
             if (errors.containsKey(ConnectionError.Klass.TERMS)) {
-                List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
+                List<Term> terms = accessTokens.getActiveSubscriptionTerms(token);
 
                 System.out.println();
                 System.out.println("###################### Accept Terms ######################");
@@ -348,19 +369,34 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
             }
 
-            if (errors.isEmpty()) {
-                Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
-                System.out.println();
-                if (sid != null && sid.equals(subUsed.getSid())) { //make host change persistent because connection was successful
-                    String old = SiriusProperties.getProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY);
-                    SiriusProperties.setAndStoreInBackground(Tokens.ACTIVE_SUBSCRIPTION_KEY, sid);
-                    System.out.println("Active Subscription changed from '" + old + "' to '" + sid + "'.");
-                } else {
-                    System.out.println("Active Subscription is: '" + subUsed.getSid() + " - " + subUsed.getName() + "'.");
-                }
+            Subscription subUsed = ApplicationCore.WEB_API.getActiveSubscription();
+            System.out.println();
+            if (sid != null && sid.equals(subUsed.getSid())) {
+                //make host change persistent because the connection was successful
+                SiriusProperties.setAndStoreInBackground(ACTIVE_SUBSCRIPTION_KEY, sid);
+                System.out.println("Active Subscription changed from '" + (oldSub != null ? oldSub.getSid() : "NONE") + "' to '" + sid + "'.");
+            } else {
+                System.out.println("Active Subscription is: '" + subUsed.getSid() + " - " + subUsed.getName() + "'.");
+            }
+
+            if (!errors.isEmpty()) {
+                System.out.printf("WARNING: Selected (active) license '%s' has the following issues: " + System.lineSeparator(), (subUsed != null ? subUsed.getSid() : sub.getSid()));
+                printLicenseErrors(errors);
             }
 
             return errors;
+        }
+    }
+
+    private static void printLicenseErrors(@Nullable Map<ConnectionError.Klass, Set<ConnectionError>> errors){
+        if (Utils.notNullOrEmpty(errors)){
+            if (errors.containsKey(ConnectionError.Klass.LICENSE)) {
+                errors.get(ConnectionError.Klass.LICENSE).forEach(System.out::println);
+            } else {
+                errors.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                        .forEach(e -> e.getValue().forEach(System.out::println));
+            }
         }
     }
 

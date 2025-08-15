@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import com.brightgiant.secureapi.SiriusGuiHandshake;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.*;
@@ -69,8 +70,8 @@ public class SiriusContext{
 
     @Bean(destroyMethod = "shutdown")
     @ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false}")
-    public GuiService guiService(EventService<?> eventService, WebServerApplicationContext applicationContext){
-        return new GuiServiceImpl(eventService, applicationContext);
+    public GuiService guiService(SiriusGuiHandshake siriusGuiHandshake, EventService<?> eventService, WebServerApplicationContext applicationContext){
+        return new GuiServiceImpl(siriusGuiHandshake, eventService, applicationContext);
     }
 
     @Bean
