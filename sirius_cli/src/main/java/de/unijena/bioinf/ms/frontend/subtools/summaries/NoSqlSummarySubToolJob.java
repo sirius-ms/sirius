@@ -422,6 +422,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (idSpecMatchesAll != null) idSpecMatchesAll.flush();
                 if (idSpecMatchesTopK != null) idSpecMatchesTopK.flush();
 
+                if (analogSpecMatches != null) analogSpecMatches.flush();
+                if (analogSpecMatchesAll != null) analogSpecMatchesAll.flush();
+                if (analogSpecMatchesTopK != null) analogSpecMatchesTopK.flush();
+
                 if (qualityWriter != null) qualityWriter.flush();
                 if (chemVistaWriter != null) chemVistaWriter.flush();
 
@@ -442,23 +446,23 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                         AlignedFeatures feature, int rank, SpectraMatch match,
                                         MutableMs2Spectrum query, Ms2ReferenceSpectrum reference
     ) throws IOException {
-        boolean analogNothingWritten = true;
+        boolean nothingWritten = true;
 
         if (specMatches != null && rank == 1) {
             specMatches.writeSpectralMatch(feature, match, query, reference);
-            analogNothingWritten = false;
+            nothingWritten = false;
         }
 
         if (specMatchesAll != null) {
             specMatchesAll.writeSpectralMatch(feature, match, query, reference);
-            analogNothingWritten = false;
+            nothingWritten = false;
         }
 
         if (specMatchesTopK != null && rank <= options.getTopK()) {
             specMatchesTopK.writeSpectralMatch(feature, match, query, reference);
-            analogNothingWritten = false;
+            nothingWritten = false;
         }
-        return analogNothingWritten;
+        return nothingWritten;
     }
 
     NoSqlFormulaSummaryWriter initFormulaSummaryWriter(Path location, String filename) throws IOException {
