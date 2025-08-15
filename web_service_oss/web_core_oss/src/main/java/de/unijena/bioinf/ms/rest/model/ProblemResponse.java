@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,10 +19,9 @@ public class ProblemResponse {
     public static final String LIMIT_REACHED =  "limit_reached";
     public static final String FORBIDDEN =  "forbidden";
 
-
     @Getter
     @Setter
-    private String type;
+    private URI type;
     @Getter
     @Setter
     private String title;
@@ -33,7 +33,7 @@ public class ProblemResponse {
     private String detail;
     @Getter
     @Setter
-    private String instance;
+    private URI instance;
     @Getter
     @Setter
     private String errorCode;

@@ -25,18 +25,20 @@ import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.StoredJobSubmission;
+import de.unijena.bioinf.ms.middleware.security.validation.ImportFormatValidationService;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.job.JobConfigService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -55,12 +57,14 @@ public class JobController {
     private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
     private final JobConfigService jobConfigService;
+    private final ImportFormatValidationService importFormatValidationService;
 
-    public JobController(ComputeService computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig, JobConfigService jobConfigService) {
+    public JobController(ComputeService computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig, JobConfigService jobConfigService, ImportFormatValidationService importFormatValidationService) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
         this.globalConfig = globalConfig;
         this.jobConfigService = jobConfigService;
+        this.importFormatValidationService = importFormatValidationService;
     }
 
 
@@ -126,9 +130,12 @@ public class JobController {
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
     public Job startJob(@PathVariable String projectId, @RequestBody JobSubmission jobSubmission,
-                        @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
+                        @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields,
+                        HttpServletRequest request
     ) {
-        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), jobSubmission, removeNone(optFields));
+        Project<?> project = projectsProvider.getProjectOrThrow(projectId);
+        importFormatValidationService.validateProject(request, project);
+        return computeService.createAndSubmitJob(project, jobSubmission, removeNone(optFields));
     }
 
 
@@ -146,14 +153,18 @@ public class JobController {
     public Job startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName,
                                   @RequestBody List<String> alignedFeatureIds,
                                   @RequestParam(required = false) @Nullable Boolean recompute,
-                                  @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
+                                  @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields,
+                                  HttpServletRequest request
     ) {
+        Project<?> project = projectsProvider.getProjectOrThrow(projectId);
+        importFormatValidationService.validateProject(request, project);
+
         final JobSubmission js = getJobConfig(jobConfigName, false).getJobSubmission();
         js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
 
-        return computeService.createAndSubmitJob(projectsProvider.getProjectOrThrow(projectId), js, removeNone(optFields));
+        return computeService.createAndSubmitJob(project, js, removeNone(optFields));
     }
 
     /**
@@ -169,9 +180,12 @@ public class JobController {
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/projects/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
-                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields,
+                            HttpServletRequest request
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
+        // We allow GUI bypass to that e.g. summaries can be written from projects with forbidden sources.
+        importFormatValidationService.validateProject(request, p, true);
         return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 

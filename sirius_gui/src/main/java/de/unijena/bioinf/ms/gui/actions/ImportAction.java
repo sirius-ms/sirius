@@ -36,7 +36,9 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.ProblemResponse;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
-import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +48,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ms.rest.model.ProblemResponses.ERROR_TYPE_IMPORT_VALIDATION;
 
 /**
  * @author Markus Fleischauer
@@ -166,16 +171,16 @@ public class ImportAction extends AbstractGuiAction {
                     ObjectMapper mapper = new ObjectMapper();
                     ProblemResponse problemDetail = mapper.readValue(we.getResponseBodyAsString(), ProblemResponse.class);
 
-                    if (problemDetail.getType().toString().equals("https://v6.docs.sirius-ms.io/file-import-validation-failed")) {
+                    if (ERROR_TYPE_IMPORT_VALIDATION.equals(problemDetail.getType())) {
                         List<String> messages = new ArrayList<>();
                         messages.add(problemDetail.getDetail());
                         messages.add("");
                         messages.add("Allowed formats: " + String.join(", " ,(Collection<? extends String>) problemDetail.getProperties().get("allowedFormats")));
 
-                        new ErrorWithDetailsDialog(gui.getMainFrame(), problemDetail.getTitle(), GuiUtils.formatAndStripToolTip(messages), mapper.writerWithDefaultPrettyPrinter().writeValueAsString(problemDetail));
+                        new ErrorWithDetailsDialog(gui.getMainFrame(), GuiUtils.formatAndStripToolTip(messages), problemDetail);
                         return;
                     } else {
-                        new ErrorWithDetailsDialog(gui.getMainFrame(), problemDetail.getTitle(), GuiUtils.formatAndStripToolTip(problemDetail.getDetail()), e);
+                        new ErrorWithDetailsDialog(gui.getMainFrame(), problemDetail);
                         return;
                     }
                 }
