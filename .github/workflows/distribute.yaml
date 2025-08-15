@@ -99,6 +99,7 @@ jobs:
           files-folder: ./sirius_dist/sirius_gui_dist/build/jpDists/
           files-folder-filter: msi
           file-digest: SHA256
+          description: 'SIRIUS'
 
       - name: Upload Distributions
         uses: actions/upload-artifact@v4
