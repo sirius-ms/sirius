@@ -169,7 +169,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         if (feature == null)
             return Optional.empty();
 
-        fetchMsData(feature);
+        if (feature.getMSData().isEmpty())
+            fetchMsData(feature);
 
         if (feature.getMSData().isEmpty())
             return Optional.empty();

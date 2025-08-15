@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.spectraldb.SpectrumType;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -151,12 +152,19 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
                             ? initCanopusSummaryWriter(location, "canopus_structure_summary") : null;
 
-                    NoSqlSpectrumSummaryWriter refSpectrum = options.topHitSummary
+                    NoSqlSpectrumSummaryWriter idSpecMatches = options.topHitSummary
                             ? initSpectrumSummaryWriter(location, "spectral_matches") : null;
-                    NoSqlSpectrumSummaryWriter refSpectrumAll = options.fullSummary
+                    NoSqlSpectrumSummaryWriter idSpecMatchesAll = options.fullSummary
                             ? initSpectrumSummaryWriter(location, "spectral_matches_all") : null;
-                    NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topK > 0
+                    NoSqlSpectrumSummaryWriter idSpecMatchesTopK = options.topK > 0
                             ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
+
+                    NoSqlSpectrumSummaryWriter analogSpecMatches = options.topHitSummary
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_analog") : null;
+                    NoSqlSpectrumSummaryWriter analogSpecMatchesAll = options.fullSummary
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_analog_all") : null;
+                    NoSqlSpectrumSummaryWriter analogSpecMatchesTopK = options.topK > 0
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_analog_top-" + options.topK) : null;
 
                     DataQualitySummaryWriter qualityWriter = options.qualitySummary
                             ? initQualitySummaryWriter(location, "feature_quality") : null;
@@ -170,7 +178,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 int instanceCounter = 1;
                 for (Instance inst : instances) {
                     updateProgress(maxProgress, instanceCounter++, "Writing Feature '" + inst.getExternalFeatureId().orElseGet(inst::getName) + "'...");
-                    AlignedFeatures feature = ((NoSQLInstance) inst).getAlignedFeatures();
+                    AlignedFeatures feature = ((NoSQLInstance) inst).getAlignedFeatures(true);
 
                     { //formula summary
                         boolean first = true;
@@ -327,7 +335,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     if (options.topK > 0 || options.fullSummary || options.topHitSummary) {
                         MSData msData = feature.getMSData().orElse(null);
 
-                        int rank = 1;
+                        int idRank = 1;
+                        int analogRank = 1;
 
                         Iterable<SpectraMatch> matches = project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING});
                         Set<String> dbs = StreamSupport.stream(matches.spliterator(), false).map(SpectraMatch::getDbName).collect(Collectors.toSet());
@@ -342,6 +351,9 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         });
 
                         for (SpectraMatch match : matches) {
+                            if (match.getSpectrumType() == SpectrumType.MERGED_SPECTRUM)
+                                continue;
+
                             MutableMs2Spectrum query = null;
                             if (msData != null){
                                 int qIdx = match.getQuerySpectrumIndex();
@@ -368,27 +380,18 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                 continue;
                             }
 
-                            boolean nothingWritten = true;
 
-                            if (refSpectrum != null && rank == 1) {
-                                refSpectrum.writeSpectralMatch(feature, match, query, reference);
-                                nothingWritten = false;
+                            boolean idNothingWritten = true;
+                            boolean analogNothingWritten = true;
+                            if (match.isIdentity()) {
+                                idNothingWritten = writeSpectraMatches(idSpecMatches, idSpecMatchesAll, idSpecMatchesTopK, feature, idRank, match, query, reference);
+                                idRank++;
+                            } else {
+                                analogNothingWritten = writeSpectraMatches(analogSpecMatches, analogSpecMatchesAll, analogSpecMatchesTopK, feature, analogRank, match, query, reference);
+                                analogRank ++;
                             }
-
-                            if (refSpectrumAll != null) {
-                                refSpectrumAll.writeSpectralMatch(feature, match, query, reference);
-                                nothingWritten = false;
-                            }
-
-                            if (refSpectrumTopK != null && rank <= options.getTopK()) {
-                                refSpectrumTopK.writeSpectralMatch(feature, match, query, reference);
-                                nothingWritten = false;
-                            }
-
-                            if (nothingWritten)
+                            if (idNothingWritten && analogNothingWritten)
                                 break;
-
-                            rank++;
                         }
                     }
 
@@ -415,9 +418,9 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (canopusFormula != null) canopusFormula.flush();
                 if (canopusStructure != null) canopusStructure.flush();
 
-                if (refSpectrum != null) refSpectrum.flush();
-                if (refSpectrumAll != null) refSpectrumAll.flush();
-                if (refSpectrumTopK != null) refSpectrumTopK.flush();
+                if (idSpecMatches != null) idSpecMatches.flush();
+                if (idSpecMatchesAll != null) idSpecMatchesAll.flush();
+                if (idSpecMatchesTopK != null) idSpecMatchesTopK.flush();
 
                 if (qualityWriter != null) qualityWriter.flush();
                 if (chemVistaWriter != null) chemVistaWriter.flush();
@@ -431,6 +434,31 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             if (!standalone && project != null)
                 project.close(); // close project if this is a postprocessor
         }
+    }
+
+    private boolean writeSpectraMatches(NoSqlSpectrumSummaryWriter specMatches,
+                                        NoSqlSpectrumSummaryWriter specMatchesAll,
+                                        NoSqlSpectrumSummaryWriter specMatchesTopK,
+                                        AlignedFeatures feature, int rank, SpectraMatch match,
+                                        MutableMs2Spectrum query, Ms2ReferenceSpectrum reference
+    ) throws IOException {
+        boolean analogNothingWritten = true;
+
+        if (specMatches != null && rank == 1) {
+            specMatches.writeSpectralMatch(feature, match, query, reference);
+            analogNothingWritten = false;
+        }
+
+        if (specMatchesAll != null) {
+            specMatchesAll.writeSpectralMatch(feature, match, query, reference);
+            analogNothingWritten = false;
+        }
+
+        if (specMatchesTopK != null && rank <= options.getTopK()) {
+            specMatchesTopK.writeSpectralMatch(feature, match, query, reference);
+            analogNothingWritten = false;
+        }
+        return analogNothingWritten;
     }
 
     NoSqlFormulaSummaryWriter initFormulaSummaryWriter(Path location, String filename) throws IOException {
