@@ -227,7 +227,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 middlewareOpts = new MiddlewareAppOptions<>(splashScreen);
                 rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
                 measureTime("init Run");
-                RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)));
+                RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)), false);
                 measureTime("Start Parse args");
                 RUN.parseArgs(args);
                 measureTime("Parse args Done");

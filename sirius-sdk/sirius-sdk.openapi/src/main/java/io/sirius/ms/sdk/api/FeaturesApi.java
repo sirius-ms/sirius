@@ -171,6 +171,95 @@ public class FeaturesApi {
         return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
     /**
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param smiles smiles
+     * @return List&lt;StructureCandidateFormula&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec addDeNovoStructureCandidateRequestCreation(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addDeNovoStructureCandidate", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling addDeNovoStructureCandidate", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "smiles", smiles));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param smiles smiles
+     * @return List&lt;StructureCandidateFormula&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<StructureCandidateFormula> addDeNovoStructureCandidate(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+        ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param smiles smiles
+     * @return ResponseEntity&lt;List&lt;StructureCandidateFormula&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<StructureCandidateFormula>> addDeNovoStructureCandidateWithHttpInfo(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+        ParameterizedTypeReference<StructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<StructureCandidateFormula>() {};
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
+     * [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures. This starts a scoring job to incorporate the structures in the de novo results list.
+     * <p><b>200</b> - StructureCandidate of this feature candidate with specified optional fields.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param smiles smiles
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec addDeNovoStructureCandidateWithResponseSpec(String projectId, String alignedFeatureId, String smiles) throws WebClientResponseException {
+        return addDeNovoStructureCandidateRequestCreation(projectId, alignedFeatureId, smiles);
+    }
+    /**
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
      * [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project. Tags with the same name will be overwritten.  &lt;p&gt;  [EXPERIMENTAL] This endpoint is experimental and not part of the stable API specification. This endpoint can change at any time, even in minor updates.
      * <p><b>200</b> - the tags that have been added

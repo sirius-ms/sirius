@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.model.login;
 
 import de.unijena.bioinf.auth.AuthService;
-import de.unijena.bioinf.webapi.Tokens;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
+import static io.sirius.ms.utils.jwt.IdTokens.ID_TOKENS;
 
 @Getter
 @Setter
@@ -50,15 +52,15 @@ public class AccountInfo {
 
     public static AccountInfo of(AuthService.Token token, @Nullable Subscription activeSubscription, boolean includeSubscription) {
         AccountInfo ai = new AccountInfo();
-        Tokens.getUserEmail(token).ifPresent(ai::setUserEmail);
-        Tokens.getUserId(token).ifPresent(ai::setUserID);
-        Tokens.getUserEmail(token).ifPresent(ai::setUsername);
-        Tokens.getUserImage(token).map(URI::toString).ifPresent(ai::setGravatarURL);
+        ID_TOKENS.getUserEmail(token).ifPresent(ai::setUserEmail);
+        ID_TOKENS.getUserId(token).ifPresent(ai::setUserID);
+        ID_TOKENS.getUsername(token).ifPresent(ai::setUsername);
+        ID_TOKENS.getUserImage(token).map(URI::toString).ifPresent(ai::setGravatarURL);
         if (includeSubscription) {
-            @NotNull List<de.unijena.bioinf.ms.rest.model.license.Subscription> subs = Tokens.getSubscriptions(token);
+            @NotNull List<de.unijena.bioinf.ms.rest.model.license.Subscription> subs = ACCESS_TOKENS.getSubscriptions(token);
             ai.setSubscriptions(subs.stream().map(Subscription::of).toList());
             ai.setActiveSubscriptionId(
-                    Optional.ofNullable(Tokens.getActiveSubscription(subs,
+                    Optional.ofNullable(ACCESS_TOKENS.getActiveSubscription(subs,
                     activeSubscription== null ? null : activeSubscription.getSid()))
                             .map(s -> s.getSid()).orElse(null));
         }

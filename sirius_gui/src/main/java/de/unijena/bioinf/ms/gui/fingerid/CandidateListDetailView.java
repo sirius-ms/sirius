@@ -51,6 +51,7 @@ import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.DBLink;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -200,6 +201,26 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(CopyInchi);
         popupMenu.addSeparator();
         popupMenu.add(sketchStructure);
+
+        // Add a PopupMenuListener to dynamically update menu items before they are shown
+        popupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called right before the popup menu is displayed.
+                sketchStructure.setEnabled(gui.getAllowedFeatures().map(AllowedFeatures::isDeNovo).orElse(false));
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called after the menu is closed. No action needed here.
+            }
+
+            @Override
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+                // This method is called if the user dismisses the menu without selecting an item.
+            }
+        });
+
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
