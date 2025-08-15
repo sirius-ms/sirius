@@ -107,6 +107,7 @@ public class Run extends ApplicationCore {
 
             System.out.println();
             System.out.println(message);
+            //todo retrieve from option classes to make this refactorable
             return commandline.parseArgs("--noCite", "login", "-h");
         }
 
@@ -131,8 +132,8 @@ public class Run extends ApplicationCore {
             System.out.println();
             System.out.println(message);
 
-            String loginCommand = LoginOptions.class.getAnnotation(CommandLine.Command.class).name();
-            return commandline.parseArgs("--noCite", loginCommand, "--show", "--license-info");
+            //todo retrieve from option classes to make this refactorable
+            return commandline.parseArgs("--noCite", "login", "--show", "--license-info");
         }
 
         return result;
