@@ -94,7 +94,7 @@ public class Run extends ApplicationCore {
             return result;
         if (result.isUsageHelpRequested() || result.isVersionHelpRequested())
             return result;
-        if (result.hasSubcommand() && result.hasSubcommand() && result.subcommand().commandSpec().commandLine().getCommand() instanceof LoginOptions)
+        if (result.hasSubcommand() && result.subcommand().commandSpec().commandLine().getCommand() instanceof LoginOptions)
             return result;
 
         String message = null;

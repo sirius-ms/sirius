@@ -293,7 +293,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
                 if (sub.isCountQueries()) {
                     if (!errors.isEmpty()) {
-                        System.out.println("Quota: Not available. See License issus below.");
+                        System.out.println("Quota: Not available. See License issues below.");
                     } else {
                         if (sub.hasCompoundLimit()) {
                             licenseInfo.consumables = api.getConsumables(false);
