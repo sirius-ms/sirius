@@ -31,7 +31,7 @@ public class AddFeatureAuthoritiesFilter extends OncePerRequestFilter {
             if (Utils.notNullOrBlank(subId)) {
                 try {
                     Subscription subscription = AccessTokens.ACCESS_TOKENS.getActiveSubscription(auth.getPrincipal(), subId);
-                    if (subscription !=  null && !subscription.isExpired()){
+                    if (subscription !=  null && !subscription.isNotStartedOrExpired()){
                         List<GrantedAuthority> newAuthorities = new ArrayList<>(auth.getAuthorities());
                         newAuthorities.addAll(Authorities.getFromSubscription(subscription));
                         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken((Jwt) auth.getPrincipal(), newAuthorities));
