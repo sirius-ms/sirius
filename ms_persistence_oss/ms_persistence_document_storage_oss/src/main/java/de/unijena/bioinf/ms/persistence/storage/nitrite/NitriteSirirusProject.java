@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.persistence.storage.nitrite;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -47,6 +49,8 @@ import java.util.function.Function;
 
 
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
+    private final ObjectMapper mapper = new ObjectMapper();
+
     //this is just needed to update json serializers with fingerprint data if it arrives
     private final Metadata metadata;
 
@@ -97,6 +101,36 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     public <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType) {
         return getStorage().findStr(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key))
                 .findFirst().map(d -> d.get("value", valueType));
+    }
+
+    @SneakyThrows
+    @Override
+    public <T> Optional<T> findJsonProjectProperty(@NotNull String key, Class<T> valueType) {
+        return getStorage().findStr(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key))
+                .findFirst().map(d -> d.get("value", String.class))
+                .map(v -> {
+                    try {
+                        return mapper.readValue(v, valueType);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+
+    @Override
+    public <T> Optional<T> upsertJsonProjectProperty(String key, T value) {
+        try {
+            return (Optional<T>) upsertProjectProperty(key, mapper.writeValueAsString(value)).map(v -> {
+                try {
+                    return mapper.readValue(v, value.getClass());
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @SneakyThrows

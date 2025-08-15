@@ -19,11 +19,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.security.Authorities.*;
+import static de.unijena.bioinf.ms.rest.model.ProblemResponses.ERROR_TYPE_BASE_URI;
 
 @Order(-1)
 @RestControllerAdvice
 public class ExceptionErrorResponseHandler {
-    public static final URI ERROR_TYPE_BASE_URI = URI.create("https://v6.docs.sirius-ms.io/errors/");
 
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ProblemDetail handleHandlerMethodValidationException(HandlerMethodValidationException ex, HttpServletRequest request) {

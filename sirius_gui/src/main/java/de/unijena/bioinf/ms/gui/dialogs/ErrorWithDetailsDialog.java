@@ -21,8 +21,12 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.rest.model.ProblemResponse;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,17 +39,29 @@ import java.awt.event.KeyListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@Slf4j
 public class ErrorWithDetailsDialog extends JDialog implements ActionListener, KeyListener {
 
     private JButton ok, copy, showStacktrace;
     private JScrollPane sc;
     private String fullmsg;
 
-    public ErrorWithDetailsDialog(Window owner, String message, String details ) {
+    public ErrorWithDetailsDialog(Window owner, String message, String details) {
         this(owner, null, message, details);
     }
 
-    public ErrorWithDetailsDialog(Window owner, String title, String message, String details ) {
+    public ErrorWithDetailsDialog(Window owner, String message, ProblemResponse problemDetail) {
+        this(owner, problemDetail.getTitle(), message, problemDetail);
+    }
+
+    public ErrorWithDetailsDialog(Window owner, ProblemResponse problemDetail) {
+        this(owner, problemDetail.getTitle(), GuiUtils.formatAndStripToolTip(problemDetail.getDetail()), problemDetail);
+    }
+    public ErrorWithDetailsDialog(Window owner, String title, String message, ProblemResponse problemDetail) {
+        this(owner, title, message, convertProblem(problemDetail));
+    }
+
+    public ErrorWithDetailsDialog(Window owner, String title, String message, String details) {
         super(owner, DEFAULT_MODALITY_TYPE);
         if (Utils.notNullOrBlank(title))
             setTitle(title);
@@ -61,6 +77,15 @@ public class ErrorWithDetailsDialog extends JDialog implements ActionListener, K
         if (Utils.notNullOrBlank(title))
             setTitle(title);
         initDialog(message, getStacktrace(exception));
+    }
+
+    private static String convertProblem(ProblemResponse problemDetail){
+        try {
+            return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(problemDetail);
+        } catch (JsonProcessingException e) {
+            log.error("Error when writing error detail json. Error details might be missing.", e);
+            return null;
+        }
     }
 
     private String getStacktrace(Throwable exception) {
