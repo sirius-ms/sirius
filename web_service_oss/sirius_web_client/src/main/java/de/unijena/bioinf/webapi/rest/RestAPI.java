@@ -73,7 +73,7 @@ import de.unijena.bioinf.rest.HttpErrorResponseException;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.AbstractWebAPI;
-import de.unijena.bioinf.webapi.Tokens;
+import io.sirius.ms.utils.jwt.AccessTokens;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +97,7 @@ import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCa
 public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabase>> {
     private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
 
+    private final AccessTokens accessTokens = AccessTokens.ACCESS_TOKENS;
     private final WebJobWatcher jobWatcher = new WebJobWatcher(this);
 
     private final AccountClient accountClient;
@@ -107,6 +108,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     private final FingerIdClient fingerprintClient;
     private final CanopusClient canopusClient;
 
+    @Nullable
     private Subscription activeSubscription;
 
     private WebWithCustomDatabase chemDb;
@@ -147,7 +149,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
 
     public RestAPI(@NotNull AuthService authService, @NotNull AuthService.Token token) {
-        this(authService, Tokens.getActiveSubscription(token));
+        this(authService, AccessTokens.ACCESS_TOKENS.getActiveSubscription(token));
     }
 
     @Override
@@ -156,6 +158,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         changeHost(this.activeSubscription != null ? () -> URI.create(this.activeSubscription.getServiceUrl()) : () -> null);
     }
 
+    @Nullable
     public synchronized Subscription getActiveSubscription() {
         return activeSubscription;
     }
@@ -205,6 +208,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         }
     }
 
+    @NotNull
     @Override
     public synchronized Map<ConnectionError.Klass, Set<ConnectionError>> checkConnection() {
         final Map<ConnectionError.Klass, Set<ConnectionError>> errors = new HashMap<>();
@@ -239,8 +243,8 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         try {
             AuthService.Token token = authService.refreshIfNeeded();
 
-            if (!Tokens.isUserEmailVerified(token)) {
-                String email = Tokens.getUserEmail(token).orElse("N/A");
+            if (!accessTokens.isUserEmailVerified(token)) {
+                String email = accessTokens.getUserEmail(token).orElse("N/A");
                 return Optional.of(new ConnectionError(51,
                         "Your accounts (primary) email address '" + email + "' has not been verified."
                                 + "Please verify this email address by clicking on the verification " +
@@ -249,7 +253,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                         ConnectionError.Klass.LICENSE));
             }
 
-            @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
+            @NotNull List<Subscription> subs = accessTokens.getSubscriptions(token);
             if (subs.isEmpty())
                 return Optional.of(new ConnectionError(52,
                         "No Subscriptions (Licenses) found for your Account. " +
@@ -259,7 +263,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                                 "your access_token. If the problem persists contact support."
                         , ConnectionError.Klass.LICENSE));
 
-            @Nullable Subscription sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
+            @Nullable Subscription sub = accessTokens.getActiveSubscription(subs, accessTokens.getDefaultSubscriptionId(token));
             if (sub == null)
                 return Optional.of(new ConnectionError(53,
                         "Could not determine an active subscription, but there are'"
@@ -278,7 +282,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                 return Optional.of(new ConnectionError(55,
                         "Subscription not yet active. The given subscription starts at:'" + startDate + "'. Please wait until your subscription starts or contact support.", ConnectionError.Klass.LICENSE));
 
-            @NotNull List<Term> terms = Tokens.getAcceptedTerms(token);
+            @NotNull List<Term> terms = accessTokens.getAcceptedTerms(token);
             String pp = sub.getPp();
             String tos = sub.getTos();
             if (tos != null && terms.stream().filter(t -> t.getLink().toString().equals(tos)).findAny().isEmpty())

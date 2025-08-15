@@ -31,10 +31,14 @@ import de.unijena.bioinf.ms.middleware.model.features.QuantRowType;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +46,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
@@ -126,9 +129,12 @@ public class CompoundController implements TaggableController<Compound, Compound
     public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
                                        @RequestParam(required = false) InstrumentProfile profile,
                                        @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
-                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures
+                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures,
+                                       Authentication authentication
     ) {
-        List<Compound> importedCompounds = projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
+        Project project = projectsProvider.getProjectOrThrow(projectId);
+        String directImportSource = Authorities.hasAuthority(Authorities.BYPASS__EXPLORER, authentication) ? ProjectSourceFormats.EXPLORER_DIRECT_IMPORT : ProjectSourceFormats.GENERIC_DIRECT_IMPORT;
+        List<Compound> importedCompounds = project.addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures), directImportSource);
 
         // Prepare and Send SSE Event
         List<String> fids = importedCompounds.stream().flatMap(c -> c.getFeatures().stream()).map(AlignedFeature::getAlignedFeatureId).toList();

@@ -27,9 +27,13 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.AccountInfo;
+import io.sirius.ms.sdk.model.AllowedFeatures;
+import io.sirius.ms.sdk.model.Subscription;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -92,5 +96,22 @@ public class SiriusGui {
 
     public <R> R applySiriusClient(BiFunction<SiriusClient, String, R> doWithProject) {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
+    }
+
+    public Optional<Subscription> getActiveSubscription() {
+        if (!getSiriusClient().account().isLoggedIn())
+            return Optional.empty();
+
+        AccountInfo info = getSiriusClient().account().getAccountInfo(true);
+
+        return info.getSubscriptions() == null ? Optional.empty() : info.getSubscriptions()
+                .stream()
+                .filter(s -> s.getSid() != null)
+                .filter(s -> s.getSid().equals(info.getActiveSubscriptionId())).findFirst();
+
+    }
+
+    public Optional<AllowedFeatures> getAllowedFeatures() {
+        return getActiveSubscription().map(Subscription::getAllowedFeatures);
     }
 }
