@@ -45,7 +45,7 @@ ext {
     }
 
     // configure infos for bundled JRE
-    def distJre = siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.ZULU_JRE
+    def distJre = siriusTargetPlatform.isWin() ? DistJRE.MICROSOFT : DistJRE.TEMURIN
     jre_version = '21.0.8'
     jre_major = jre_version.split("[.]")[0]
 
@@ -68,6 +68,13 @@ ext {
             jre_fname = "zulu${jre_distributor_version}-ca-jre${jre_version}-${siriusTargetPlatform.zuluClassifier().get()}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
             jre_download_base_link = "https://cdn.azul.com/zulu/bin/"
             break
+        case DistJRE.TEMURIN:
+            //https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jre_x64_mac_hotspot_21.0.8_9.tar.gz
+            jre_mac_prefix = "Contents/Home"
+            jre_distributor_version = "9"
+            jre_fname = "jdk-${jre_version}%2B9/OpenJDK21U-jre_${siriusTargetPlatform.adoptClassifier().get()}_hotspot_${jre_version}_${jre_distributor_version}.${siriusTargetPlatform.isWin() ? "zip" : "tar.gz"}"
+            jre_download_base_link = "https://github.com/adoptium/temurin21-binaries/releases/download/"
+            break;
         case DistJRE.MICROSOFT:
             //https://aka.ms/download-jdk/microsoft-jdk-21.0.8-windows-aarch64.zip
             jre_mac_prefix = null
