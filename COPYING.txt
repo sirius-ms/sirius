@@ -38,7 +38,7 @@ convey the resulting combined work. As a result of this exception, the copyleft 
 the AGPLv3 do not apply to the secure-api library – in particular, you are not obligated to provide
 the source code of secure-api nor license secure-api under the AGPLv3 when you distribute the
 combined work. This exception applies solely to the secure-api library licensed under
-BRIGHT GIANT PERMISSIVE PROPRIETARY LICENSE 1.0 (BGPPLv1).
+BRIGHT GIANT PROPRIETARY LICENSE 1.0 (BGPLv1).
 It does not grant any rights to the secure-api library independently.
 
 Additional Permission Under AGPLv3 Section 7 (JxBrowser Exception):
