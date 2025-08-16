@@ -46,7 +46,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -129,11 +129,12 @@ public class CompoundController implements TaggableController<Compound, Compound
     public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
                                        @RequestParam(required = false) InstrumentProfile profile,
                                        @RequestParam(defaultValue = "none") EnumSet<Compound.OptField> optFields,
-                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures,
-                                       Authentication authentication
+                                       @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
         Project project = projectsProvider.getProjectOrThrow(projectId);
-        String directImportSource = Authorities.hasAuthority(Authorities.BYPASS__EXPLORER, authentication) ? ProjectSourceFormats.EXPLORER_DIRECT_IMPORT : ProjectSourceFormats.GENERIC_DIRECT_IMPORT;
+        String directImportSource = Authorities.hasAuthority(Authorities.BYPASS__EXPLORER,  SecurityContextHolder.getContext().getAuthentication())
+                ? ProjectSourceFormats.EXPLORER_DIRECT_IMPORT : ProjectSourceFormats.GENERIC_DIRECT_IMPORT;
+
         List<Compound> importedCompounds = project.addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures), directImportSource);
 
         // Prepare and Send SSE Event

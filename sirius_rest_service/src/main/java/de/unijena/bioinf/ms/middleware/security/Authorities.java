@@ -59,12 +59,15 @@ public class Authorities {
         ALLOWED_FEATURE__IMPORT_CEF = AUTHORITIES.get(ALLOWED_FEATURE_PREFIX + "importCef");
     }
 
-
     public static boolean hasAuthority(String authority, Authentication authentication) {
+        if (authentication == null)
+            return false;
         return hasAuthority(authority, authentication.getAuthorities());
     }
 
     public static boolean hasAuthority(@NotNull GrantedAuthority authority, Authentication authentication) {
+        if (authentication == null)
+            return false;
         return hasAuthority(authority, authentication.getAuthorities());
     }
 
@@ -79,10 +82,14 @@ public class Authorities {
     }
 
     public static boolean hasAnyAuthority(Authentication authentication, String... authorities) {
+        if (authentication == null)
+            return false;
         return hasAnyAuthority(authentication.getAuthorities(), authorities);
     }
 
     public static boolean hasAnyAuthority(Authentication authentication, GrantedAuthority... authorities) {
+        if (authentication == null)
+            return false;
         return hasAnyAuthority(authentication.getAuthorities(), authorities);
     }
 
