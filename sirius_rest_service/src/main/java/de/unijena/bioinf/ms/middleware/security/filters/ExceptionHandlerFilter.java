@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.middleware.security.filters;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,7 @@ import java.nio.file.AccessDeniedException;
  * Filter to handle exceptions thrown in follow-up filters.
  * To handle AccessDenied Exceptions, properly it has to run before any other filter.
  */
+@Slf4j
 public class ExceptionHandlerFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException {
@@ -33,6 +35,7 @@ public class ExceptionHandlerFilter implements Filter {
                 errorResponse.setTitle("Access Denied");
                 errorResponse.setDetail(ex.getMessage());
             } else {
+                log.error("Unexpected Error during spring security filter chain.", ex);
                 errorResponse = ProblemDetail.forStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 errorResponse.setTitle("Internal Server Error");
                 errorResponse.setDetail(ex.getMessage());

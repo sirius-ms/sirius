@@ -39,11 +39,13 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.security.Authorities;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.persistence.model.core.statistics.QuantMeasure;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.spectraldb.SpectrumType;
@@ -65,6 +67,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -164,7 +167,11 @@ public class AlignedFeatureController implements TaggableController<AlignedFeatu
                                                    @RequestParam(required = false) InstrumentProfile profile,
                                                    @RequestParam(defaultValue = "none") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
+        String directImportSource = Authorities.hasAuthority(Authorities.BYPASS__EXPLORER,  SecurityContextHolder.getContext().getAuthentication())
+                ? ProjectSourceFormats.EXPLORER_DIRECT_IMPORT : ProjectSourceFormats.GENERIC_DIRECT_IMPORT;
+
+        List<AlignedFeature> importedFeatures = projectsProvider.getProjectOrThrow(projectId)
+                .addAlignedFeatures(features, profile, removeNone(optFields), directImportSource);
 
         // Prepare and Send SSE Event
         List<String> fids = importedFeatures.stream().map(AlignedFeature::getAlignedFeatureId).toList();
