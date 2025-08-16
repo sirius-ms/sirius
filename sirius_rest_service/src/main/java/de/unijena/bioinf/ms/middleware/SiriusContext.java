@@ -91,7 +91,7 @@ public class SiriusContext{
     }
 
     @Bean(destroyMethod = "shutdown")
-    @DependsOn({"jobManager"})
+    @DependsOn({"jobManager", "proxyDisconnector"})
     public WebAPI<?> webAPI() {
         return ApplicationCore.WEB_API;
     }
