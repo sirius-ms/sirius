@@ -10,14 +10,15 @@ import com.teamdev.jxbrowser.permission.callback.RequestPermissionCallback;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import io.sirius.ms.gui.webView.LinkInterception;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 import static com.teamdev.jxbrowser.engine.RenderingMode.OFF_SCREEN;
@@ -40,7 +41,7 @@ public class JxBrowserPanelProvider extends BrowserPanelProvider<JxBrowserPanel>
     private static Engine setupEngine() {
         EngineOptions opts = EngineOptions
                 .newBuilder(OFF_SCREEN)
-                .licenseKey(PropertyManager.getPropertyB64("jxbrowser.license.key"))
+                .licenseKey(new String(Base64.getDecoder().decode(System.getProperty("jxbrowser.license.key")), StandardCharsets.UTF_8))
                 .disableTouchMenu()
                 .enableIncognito() // no storage dir, all in memory, fresh state after every start.
                 .build();
