@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware;
 
+import com.brightgiant.jxsupport.JxSupport;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
@@ -41,7 +42,6 @@ import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.rest.ProxyManager;
 import io.sirius.ms.sdk.SiriusSDK;
 import io.sirius.ms.sdk.model.GuiInfo;
 import io.sirius.ms.sdk.model.ProjectInfo;
@@ -117,6 +117,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     Thread.currentThread().getContextClassLoader()
             ));
         } else {
+            JxSupport.activate();
             // SwingJobManager is needed to show loading screens in GUI
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
                     cpuThreads,

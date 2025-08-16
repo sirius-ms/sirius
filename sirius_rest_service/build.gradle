@@ -76,7 +76,7 @@ dependencies {
     implementation 'org.springframework.security:spring-security-oauth2-jose'
 
 
-    implementation 'com.brightgiant:secure-api:1.0.1'
+    implementation 'com.brightgiant:secure-api:1.2.0'
 
 }
 //todo use logback instead of java util logging! => needs support in jjobs
