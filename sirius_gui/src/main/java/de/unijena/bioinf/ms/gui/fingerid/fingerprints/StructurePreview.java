@@ -79,7 +79,6 @@ public class StructurePreview extends JPanel implements Runnable, PropertyChange
         this.backgroundThread = new Thread(this);
         this.queryTool = new SMARTSQueryTool("C=C", SilentChemObjectBuilder.getInstance());
         queryTool.setQueryCacheSize(visualizations.length);
-        backgroundThread.start();
         state = 2;
 
         java.util.List<IGenerator<IAtomContainer>> generators = new ArrayList<IGenerator<IAtomContainer>>();
@@ -130,6 +129,40 @@ public class StructurePreview extends JPanel implements Runnable, PropertyChange
             this.entry = entry;
             state = 0;
             this.notify();
+        }
+    }
+
+    /**
+     * Called when the panel is added to a visible container.
+     * This is the best place to start the background thread.
+     */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (backgroundThread != null && !backgroundThread.isAlive()) {
+            backgroundThread.start();
+        }
+    }
+
+    /**
+     * Called just before the panel is removed from its container.
+     * This is the perfect place to stop the background thread.
+     */
+    @Override
+    public void removeNotify() {
+        stop();
+        super.removeNotify();
+    }
+
+    /**
+     * Stops the background thread.
+     */
+    public void stop() {
+        synchronized (this) {
+            this.shutdown = true;
+            if (backgroundThread != null) {
+                backgroundThread.interrupt(); // Wake up the thread from wait()
+            }
         }
     }
 
@@ -216,7 +249,7 @@ public class StructurePreview extends JPanel implements Runnable, PropertyChange
                         try {
                             this.wait();
                         } catch (InterruptedException e) {
-                            logger.error(e.getMessage(), e);
+                            logger.debug(e.getMessage(), e);
                         }
                     }
                 }
