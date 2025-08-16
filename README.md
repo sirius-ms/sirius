@@ -49,9 +49,8 @@ See the [documentation](https://v6.docs.sirius-ms.io/install) for details.
 
 ### [Creating a user account](https://v6.docs.sirius-ms.io/account-and-license/)
 User accounts can be created directly via the SIRIUS GUI. Please, use your **institutional email address**. SIRIUS
-web services are free for academic/non-commercial use. Usually academic institutions are identified by their
-email domain and access will be granted automatically. In some cases, further validation of your academic/non-commercial
-may be required.
+web services are free for academic use. Usually academic institutions are identified by their
+email domain and access will be granted automatically. In some cases, further validation of your academic may be required.
 [See also SIRIUS Documentation – Account and License](https://v6.docs.sirius-ms.io/account-and-license/).
 
 ### [Sources on GitHub](https://github.com/sirius-ms)
