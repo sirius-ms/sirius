@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static de.unijena.bioinf.ms.gui.utils.loading.ProgressPanel.DEFAULT_PROGRESS_STRING;
@@ -55,10 +56,14 @@ public class LoadablePanel extends JPanel implements Loadable {
                 return Math.max(0, loading ? current + 1 : current - 1);
         }) > 0;
         final String cardName = result ? "load" : "content";
-        Jobs.runEDTLater(() -> {
-            if (!centerCards.isCardActive(cardName))
-                centerCards.show(this, cardName);
-        });
+        try {
+            Jobs.runEDTAndWait(() -> {
+                if (!centerCards.isCardActive(cardName))
+                    centerCards.show(this, cardName);
+            });
+        } catch (InvocationTargetException | InterruptedException e) {
+            //ignore;
+        }
         return result;
     }
 

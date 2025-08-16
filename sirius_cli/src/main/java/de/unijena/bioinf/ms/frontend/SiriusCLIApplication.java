@@ -138,7 +138,7 @@ public class SiriusCLIApplication {
             if (RUN != null)
                 throw new IllegalStateException("Application can only run Once!");
             measureTime("init Run");
-            RUN = new Run(supplier.make());
+            RUN = new Run(supplier.make(), true);
             measureTime("Start Parse args");
             RUN.parseArgs(args);
             successfulParsed = RUN.makeWorkflow() != null;

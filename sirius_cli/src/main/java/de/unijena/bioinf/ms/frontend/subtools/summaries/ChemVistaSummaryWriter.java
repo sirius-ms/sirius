@@ -52,6 +52,7 @@ class ChemVistaSummaryWriter extends SummaryTable {
             "ionMass",
             "formulaId",
             "alignedFeatureId",
+            "compoundId",
             "mappingFeatureId"
     );
 
@@ -85,6 +86,7 @@ class ChemVistaSummaryWriter extends SummaryTable {
         row.add(f.getAverageMass());
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(String.valueOf(f.getCompoundId()));
         row.add(getMappingIdOrFallback(f));
 
         writer.writeRow(row);

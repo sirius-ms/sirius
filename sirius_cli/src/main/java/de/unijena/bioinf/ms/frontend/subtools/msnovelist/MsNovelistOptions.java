@@ -20,15 +20,20 @@
 package de.unijena.bioinf.ms.frontend.subtools.msnovelist;
 
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.rest.model.license.AllowedFeatures;
+import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.webapi.WebAPI;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -53,6 +58,8 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
 
     @Override
     public InstanceJob.Factory<MsNovelistSubToolJob> call() throws Exception {
+        validateLicense();
+
         return new InstanceJob.Factory<>(
                 MsNovelistSubToolJob::new,
                 getInvalidator()
@@ -67,5 +74,17 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
         return List.of();
+    }
+
+    private static void validateLicense(){
+        boolean denovo = Optional.ofNullable(ApplicationCore.WEB_API).map(WebAPI::getActiveSubscription)
+                .map(Subscription::getAllowedFeatures)
+                .map(AllowedFeatures::deNovo).orElse(false);
+
+        if (!denovo){
+            String message = "License ERROR: The active subscription does not contain the MsNovelist feature! Please remove MsNovelist from your toolchain, upgrade your active subscription or choose a different subscription.";
+            System.out.println(message);
+            throw new CommandLine.PicocliException("The active subscription does not contain the MsNovelist feature! Please remove MsNovelist from your toolchain.");
+        }
     }
 }

@@ -11,8 +11,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
-import static io.sirius.ms.sdk.SiriusSDKUtils.SIRIUS_PID_FILE;
-import static io.sirius.ms.sdk.SiriusSDKUtils.SIRIUS_PORT_FILE;
+import static io.sirius.ms.sdk.SiriusSDKUtils.*;
 import static io.sirius.ms.sdk.client.ApiClient.*;
 import static java.lang.Thread.sleep;
 
@@ -36,6 +35,13 @@ public final class SiriusSDK extends SiriusClient {
         if (siriusProcessHandle != null && !siriusProcessHandle.isAlive()) {
             throw new IllegalStateException("Given SIRIUS process has already exited!");
         }
+    }
+
+    public long getPID() {
+        if (siriusProcessHandle != null) {
+           return siriusProcessHandle.pid();
+        }
+        return -1;
     }
 
 
@@ -65,56 +71,20 @@ public final class SiriusSDK extends SiriusClient {
     }
 
     public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput) throws Exception {
-        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, null);
+        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, false, null);
     }
 
-    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, @Nullable Path executable) throws Exception {
-
-        //try to find and connect to running SIRIUS
-        ProcessHandle processHandle = null;
-        if (Files.exists(SIRIUS_PID_FILE)) {
-            try {
-                int pid = Integer.parseInt(Files.readAllLines(SIRIUS_PID_FILE).getFirst());
-                processHandle = ProcessHandle.of(pid).orElse(null);
-                if (processHandle != null && !processHandle.isAlive()) {
-                    processHandle = null;
-                    log.warn("Found SIRIUS process file but process seems to be dead. Ignoring it.");
-                }
-            } catch (NumberFormatException e) {
-                log.warn("Found SIRIUS process file '{}' but could not read process number: '{}'", SIRIUS_PID_FILE.getFileName(), e.getMessage());
-            } catch (IOException e) {
-                log.warn("Could not read SIRIUS process file '{}': '{}'", SIRIUS_PID_FILE.getFileName(), e.getMessage());
-            }
-        }
-
-        if (Files.exists(SIRIUS_PORT_FILE)) {
-            try {
-                int port = Integer.parseInt(Files.readAllLines(SIRIUS_PORT_FILE).getFirst());
-                ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
-                        .codecs(codecs -> codecs
-                                .defaultCodecs()
-                                .maxInMemorySize(100 * 1024 * 1024))
-                        .build());
-                apiClient.setBasePath("http://localhost:" + port + "/");
-
-                if (SiriusSDKUtils.restHealthCheck(apiClient)) {
-                    return new SiriusSDK(apiClient.getBasePath(), processHandle, shutDownMode == ShutdownMode.ALWAYS);
-                } else {
-                    log.warn("Found SIRIUS port file '{}' but cannot connect to corresponding service. Seems to be unresponsive. Ignoring it.", SIRIUS_PID_FILE.getFileName());
-                }
-            } catch (NumberFormatException e) {
-                log.warn("Found SIRIUS port file '{}' but could not read port number: '{}'", SIRIUS_PORT_FILE.getFileName(), e.getMessage());
-            } catch (IOException e) {
-                log.warn("Could not read SIRIUS port file '{}': '{}'", SIRIUS_PORT_FILE.getFileName(), e.getMessage());
-            }
-        }
+    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, boolean headless, @Nullable Path executable) throws Exception {
+        @Nullable SiriusSDK sdk = findAndConnectLocally(shutDownMode, false);
+        if (sdk != null)
+            return sdk;
 
         log.info("Starting SIRIUS process from {}", executable);
         Process process = null;
         int retryAttempts = 3;
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
-                process = SiriusSDKUtils.startSirius(null, executable, redirectSiriusOutput);
+                process = SiriusSDKUtils.startSirius(null, executable, redirectSiriusOutput, headless);
                 log.info("Awaiting SIRIUS API to be ready...");
                 long start = System.currentTimeMillis();
                 while (!Files.exists(SIRIUS_PORT_FILE)) {
@@ -146,6 +116,73 @@ public final class SiriusSDK extends SiriusClient {
         }
         throw new Exception("unreachable");
     }
+
+    @Nullable
+    public synchronized static SiriusSDK findAndConnectLocally(ShutdownMode shutDownMode, boolean killAndCleanIfUnresponsive) {
+        //try to find and connect to running SIRIUS
+        ProcessHandle processHandle = null;
+        if (Files.exists(SIRIUS_PID_FILE)) {
+            try {
+                int pid = Integer.parseInt(Files.readAllLines(SIRIUS_PID_FILE).getFirst());
+                processHandle = ProcessHandle.of(pid).orElse(null);
+                if (processHandle != null && !processHandle.isAlive()) {
+                    processHandle = null;
+                    log.warn("Found SIRIUS process file but process seems to be dead. Ignoring it.");
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Found SIRIUS process file '{}' but could not read process number: '{}'", SIRIUS_PID_FILE.getFileName(), e.getMessage());
+            } catch (IOException e) {
+                log.warn("Could not read SIRIUS process file '{}': '{}'", SIRIUS_PID_FILE.getFileName(), e.getMessage());
+            }
+        }
+
+        if (Files.exists(SIRIUS_PORT_FILE)) {
+            try {
+                int port = Integer.parseInt(Files.readAllLines(SIRIUS_PORT_FILE).getFirst());
+                ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
+                        .codecs(codecs -> codecs
+                                .defaultCodecs()
+                                .maxInMemorySize(100 * 1024 * 1024))
+                        .build());
+                apiClient.setBasePath("http://localhost:" + port + "/");
+
+                if (SiriusSDKUtils.restHealthCheck(apiClient)) {
+                    return new SiriusSDK(apiClient.getBasePath(), processHandle, shutDownMode == ShutdownMode.ALWAYS);
+                } else if (killAndCleanIfUnresponsive) {
+                    log.warn("Found SIRIUS port file '{}' but cannot connect to corresponding service. Seems to be unresponsive. Killing it.", SIRIUS_PID_FILE.getFileName());
+                    restShutdown(apiClient);
+                } else {
+                    log.warn("Found SIRIUS port file '{}' but cannot connect to corresponding service. Seems to be unresponsive. Ignoring it.", SIRIUS_PID_FILE.getFileName());
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Found SIRIUS port file '{}' but could not read port number: '{}'", SIRIUS_PORT_FILE.getFileName(), e.getMessage());
+            } catch (IOException e) {
+                log.warn("Could not read SIRIUS port file '{}': '{}'", SIRIUS_PORT_FILE.getFileName(), e.getMessage());
+            }
+        }
+
+        if (killAndCleanIfUnresponsive) {
+            if (processHandle != null && processHandle.isAlive()) {
+                log.warn("Process is still alive. Killing it forcefully!");
+                processHandle.destroyForcibly();
+            }
+
+            log.debug("Deleting SIRIUS port and pid files from dead SIRIUS process '{},{}'", SIRIUS_PORT_FILE.getFileName(), SIRIUS_PID_FILE);
+            try {
+                Files.deleteIfExists(SIRIUS_PORT_FILE);
+            } catch (IOException e) {
+                log.error("Could not delete SIRIUS PID file: {}", SIRIUS_PORT_FILE.getFileName(), e);
+            }
+            try {
+                Files.deleteIfExists(SIRIUS_PID_FILE);
+            } catch (IOException e) {
+                log.error("Could not delete SIRIUS pid file: {}", SIRIUS_PID_FILE.getFileName(), e);
+            }
+        }
+        return null;
+    }
+
+
 
     public enum ShutdownMode {
         AUTO, // Shuts down SIRIUS if it was started by this SiriusClient instance and not otherwise

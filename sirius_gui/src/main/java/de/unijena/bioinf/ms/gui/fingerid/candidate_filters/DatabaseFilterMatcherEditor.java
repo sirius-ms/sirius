@@ -19,17 +19,29 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
+import ca.odell.glazedlists.impl.matchers.OrMatcher;
+import ca.odell.glazedlists.impl.matchers.TrueMatcher;
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ms.gui.fingerid.DBFilterPanel;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-/**
- * Created by fleisch on 19.05.17.
- */
+
 public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
 
     public DatabaseFilterMatcherEditor(DBFilterPanel panel) {
-        panel.addFilterChangeListener(filterSet -> fireChanged(new DatabaseMatcher(filterSet)));
+        panel.addFilterChangeListener((filterSet, sketched) -> {
+            Matcher<FingerprintCandidateBean> combinedMatcher;
+            if (filterSet > 0 && sketched) {
+                combinedMatcher = new OrMatcher<>(new DatabaseMatcher(filterSet), new SketchedMatcher());
+            } else if (filterSet == 0 && sketched) {
+                combinedMatcher = new SketchedMatcher();
+            } else if (filterSet > 0) {
+                combinedMatcher = new DatabaseMatcher(filterSet);
+            } else {
+                combinedMatcher = TrueMatcher.getInstance();
+            }
+            fireChanged(combinedMatcher);
+        });
     }
 
     public static class DatabaseMatcher implements Matcher<FingerprintCandidateBean> {
@@ -41,7 +53,14 @@ public class DatabaseFilterMatcherEditor extends AbstractMatcherEditor<Fingerpri
 
         @Override
         public boolean matches(FingerprintCandidateBean candidate) {
-            return (filterSet == 0 || (filterSet & candidate.getMergedDBFlags()) != 0);
+            return (filterSet & candidate.getMergedDBFlags()) != 0;
+        }
+    }
+
+    public static class SketchedMatcher implements Matcher<FingerprintCandidateBean> {
+        @Override
+        public boolean matches(FingerprintCandidateBean candidate) {
+            return candidate.isSketched();
         }
     }
 }

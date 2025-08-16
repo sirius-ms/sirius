@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.gui.login.AccountDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionChecks;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import io.sirius.ms.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +38,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URI;
+
+import static io.sirius.ms.utils.jwt.IdTokens.ID_TOKENS;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -60,7 +61,7 @@ public class ShowAccountDialog extends AbstractGuiAction implements PropertyChan
             if (check != null) {
                 if (ConnectionChecks.isLoggedIn(check)) {
                     URI imageURI = ApplicationCore.WEB_API.getAuthService().getToken()
-                            .flatMap(Tokens::getUserImage).orElse(null);
+                            .flatMap(ID_TOKENS::getUserImage).orElse(null);
 
                     if (imageURI == null) {
                         putValue(Action.LARGE_ICON_KEY, Icons.USER.derive(32, 32)); //bad login

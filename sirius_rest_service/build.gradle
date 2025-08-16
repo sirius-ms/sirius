@@ -70,6 +70,14 @@ dependencies {
 
     implementation 'org.apache.lucene:lucene-queryparser:10.0.0'
     implementation 'org.apache.lucene:lucene-analysis-common:10.0.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+
+    implementation 'com.brightgiant:secure-api:1.0.1'
+
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each { Configuration conf ->
@@ -143,6 +151,50 @@ tasks.register("generateOpenApiDocsAdvancedEnumsAsString") {
     }
     finalizedBy "generateOpenApiDocs"
 }
+
+/*################### JAVASCRIPT DEV MANAGEMENT ################### */
+
+// IMPORTANT: Javascript monorepo location:
+// EITHER: declare the location of of the sirius-js-monorepo in a gradle.properties file: siriusJSMonorepo=/path/to/monorepo
+// OR: use the fallback (sirius-js-monorepo has the same parent dir as sirius-frontend)
+def monorepoProp = providers.gradleProperty("siriusJSMonorepo")
+def monorepoLocation = monorepoProp.isPresent() && !monorepoProp.get().isBlank() ? java.nio.file.Path.of(monorepoProp.get()).toAbsolutePath() : project.rootDir.toPath().parent.resolve("sirius-js-monorepo").toAbsolutePath()
+def monorepoJsAppPath = "dist/apps/sirius_java_integrated/"
+def jsAppPath = "src/main/resources/templates/sirius_java_integrated"
+
+tasks.register("copyOpenApiDocsToMonorepo") {
+    description "Copies the openapi docs to the sirius-js-monorepo."
+    group "jsMonoRepo"
+    dependsOn "generateOpenApiDocsAdvancedEnumsAsString"
+
+    doFirst {
+        copy {
+            from "openapi-spec-advanced-enums-as-string.json"
+            into monorepoLocation.resolve("libs/sirius-client/src")
+        }
+    }
+}
+
+tasks.register("copyJSAppToFrontend") {
+    description "Copies the JS app from the sirius-js-monorepo."
+    group "jsMonoRepo"
+
+    doFirst {
+        logger.lifecycle("Removing old sirius JS app from: '${project.projectDir.toPath().resolve(jsAppPath)}'")
+        delete fileTree(project.projectDir.toPath().resolve(jsAppPath))
+    }
+
+    doLast {
+        logger.lifecycle("Copy new sirius JS app from '${monorepoLocation.resolve(monorepoJsAppPath)}' into '${project.projectDir.toPath().resolve(jsAppPath)}'")
+        copy {
+            from fileTree(monorepoLocation.resolve(monorepoJsAppPath))
+            into jsAppPath
+        }
+    }
+}
+
+/*################### END JAVASCRIPT DEV MANAGEMENT ################### */
+
 
 // Javadoc cannot recognize lombok builder
 javadoc {

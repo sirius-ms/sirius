@@ -28,7 +28,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Function;
 
-public abstract class SubToolConfigPanel<C> extends ConfigPanel {
+public class SubToolConfigPanel<C> extends ConfigPanel {
     protected CommandLine.Model.CommandSpec commandSpec;
 
    public SubToolConfigPanel(Class<C> annotatedObject) {
@@ -69,6 +69,13 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
 
     public Optional<String[]> getOptionDescriptionByName(String name) {
         return Optional.ofNullable(commandSpec.findOption(name)).map(CommandLine.Model.ArgSpec::description);
+    }
+
+    public Optional<String[]> getPositionalParameterDescription(int index) {
+       if (index >= 0 && index < commandSpec.positionalParameters().size()) {
+           return Optional.ofNullable(commandSpec.positionalParameters().get(index).description());
+       }
+       return Optional.empty();
     }
 
     public Optional<String> getOptionDefaultByName(String name) {

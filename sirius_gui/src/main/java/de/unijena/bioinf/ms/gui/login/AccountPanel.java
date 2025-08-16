@@ -35,7 +35,7 @@ import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
+import io.sirius.ms.utils.jwt.AccessTokens;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +85,7 @@ public class AccountPanel extends LoadablePanel implements PropertyChangeListene
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             ApplicationCore.WEB_API.changeActiveSubscription(null);
                             AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
-                            ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
+                            ApplicationCore.WEB_API.changeActiveSubscription(AccessTokens.ACCESS_TOKENS.getActiveSubscription(t));
                             ProxyManager.reconnect();
                         });
                     } catch (LoginException ex) {

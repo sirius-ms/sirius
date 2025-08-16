@@ -35,8 +35,8 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
         super(new NitriteDatabase(file, initMetadata(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault())));
     }
 
-    public ChemicalNitriteDatabase(Path file, FingerprintVersion version) throws IOException {
-        super(new NitriteDatabase(file, initMetadata(version)));
+    public ChemicalNitriteDatabase(Path file, FingerprintVersion version, boolean readOnly) throws IOException {
+        super(new NitriteDatabase(file, initMetadata(version), readOnly));
     }
 
     @Override

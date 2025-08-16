@@ -49,7 +49,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>io.sirius-ms</groupId>
   <artifactId>sirius-sdk.openapi</artifactId>
-  <version>3.1+sirius6.2.0</version>
+  <version>3.1+sirius6.3.0</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -66,7 +66,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.2.0"
+     implementation "io.sirius-ms:sirius-sdk.openapi:3.1+sirius6.3.0"
   }
 ```
 
@@ -80,7 +80,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius-sdk.openapi-3.1+sirius6.2.0.jar`
+- `target/sirius-sdk.openapi-3.1+sirius6.3.0.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -146,6 +146,7 @@ Class | Method | HTTP request | Description
 *FeatureStatisticsApi* | [**getAlignedFeatureFoldChangeTableExperimental**](docs/FeatureStatisticsApi.md#getAlignedFeatureFoldChangeTableExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/stats-table | [EXPERIMENTAL] Get table of all fold changes in the project space
 *FeatureStatisticsApi* | [**getFoldChangesByAlignedFeatureExperimental**](docs/FeatureStatisticsApi.md#getFoldChangesByAlignedFeatureExperimental) | **GET** /api/projects/{projectId}/aligned-features/statistics/foldchanges/{objectId} | [EXPERIMENTAL] List all fold changes that are associated with an object
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
+*FeaturesApi* | [**addDeNovoStructureCandidate**](docs/FeaturesApi.md#addDeNovoStructureCandidate) | **PUT** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures | [EXPERIMENTAL] Add molecular structures (as SMILES) to the list of de novo structures.
 *FeaturesApi* | [**addTagsToAlignedFeatureExperimental**](docs/FeaturesApi.md#addTagsToAlignedFeatureExperimental) | **PUT** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId} | [EXPERIMENTAL] Add tags to a feature (aligned over runs) in the project
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -190,8 +191,8 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getTracesExperimental**](docs/FeaturesApi.md#getTracesExperimental) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | [EXPERIMENTAL] Returns the traces of the given feature (alignedFeatureId)
 *FeaturesApi* | [**removeTagFromAlignedFeatureExperimental**](docs/FeaturesApi.md#removeTagFromAlignedFeatureExperimental) | **DELETE** /api/projects/{projectId}/aligned-features/tags/{alignedFeatureId}/{tagName} | [EXPERIMENTAL] Delete tag with the given name from the feature (aligned over runs) with the specified ID in the specified project-space
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
+*GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
-*GuiAdvancedApi* | [**getGuis**](docs/GuiAdvancedApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *InfoApi* | [**getConnectionCheck**](docs/InfoApi.md#getConnectionCheck) | **GET** /api/connection-status |
 *InfoApi* | [**getInfo**](docs/InfoApi.md#getInfo) | **GET** /api/info | 
 *JobsApi* | [**deleteJob**](docs/JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job.
@@ -275,6 +276,7 @@ Class | Method | HTTP request | Description
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
  - [AlignedFeatureQualityExperimental](docs/AlignedFeatureQualityExperimental.md)
+ - [AllowedFeatures](docs/AllowedFeatures.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)

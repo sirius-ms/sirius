@@ -26,6 +26,7 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -38,11 +39,9 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
+@Slf4j
 public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElements<E, D> {
     public enum DataSelectionStrategy {ALL, FIRST_SELECTED, ALL_SELECTED}
 
@@ -51,14 +50,14 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
     private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 
     @Getter
-    protected ObservableElementList<E> elementList;
+    protected final ObservableElementList<E> elementList;
     @Getter
-    protected DefaultEventSelectionModel<E> elementListSelectionModel;
+    protected final DefaultEventSelectionModel<E> elementListSelectionModel;
     private final ArrayList<E> elementData = new ArrayList<>();
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
-    private final ReadWriteLock dataLock = new ReentrantReadWriteLock();
-    private D data = null;
+    // data object shall be read and written only from EDT
+    protected D data = null;
 
     public final DataSelectionStrategy selectionType;
 
@@ -74,20 +73,26 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
 
         elementListSelectionModel.addListSelectionListener(e -> {
+            //runs in edt
+            if (!SwingUtilities.isEventDispatchThread())
+                log.warn("WARNING: Data access not int EDT!!!");
             if (!elementListSelectionModel.getValueIsAdjusting()) {
                 if (elementListSelectionModel.isSelectionEmpty() || elementList == null || elementList.isEmpty())
-                    readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
+                    notifyListenersEDT(null, elementList, elementListSelectionModel);
                 else
-                    readDataByConsumer(data -> notifyListeners(data, elementList.get(elementListSelectionModel.getMinSelectionIndex()), elementList, elementListSelectionModel));
+                    notifyListenersEDT(elementList.get(elementListSelectionModel.getMinSelectionIndex()), elementList, elementListSelectionModel);
             }
         });
 
         elementList.addListEventListener(listChanges -> {
+            //runs in edt
+            if (!SwingUtilities.isEventDispatchThread())
+                log.warn("WARNING: Data access not int EDT!!!");
             if (!elementListSelectionModel.getValueIsAdjusting()) {
                 if (!elementListSelectionModel.isSelectionEmpty() && elementList != null && !elementList.isEmpty()) {
                     while (listChanges.next()) {
                         if (elementListSelectionModel.getMinSelectionIndex() == listChanges.getIndex()) {
-                            readDataByConsumer(data -> notifyListeners(data, elementList.get(listChanges.getIndex()), elementList, elementListSelectionModel));
+                            notifyListenersEDT(elementList.get(listChanges.getIndex()), elementList, elementListSelectionModel);
                             return;
                         }
                     }
@@ -98,9 +103,9 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected boolean refillElementsEDT(D parentDataObject, final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
         AtomicBoolean ret = new AtomicBoolean();
-        Jobs.runEDTAndWait(() -> writeData(oldData -> {
+        Jobs.runEDTAndWait(() -> {
             try {
-                setData(parentDataObject);
+                this.data = parentDataObject;
                 elementListSelectionModel.setValueIsAdjusting(true);
                 elementListSelectionModel.clearSelection();
                 ret.set(SiriusGlazedLists.refill(basicElementList, elementData, toFillIn));
@@ -113,15 +118,18 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
             } finally {
                 elementListSelectionModel.setValueIsAdjusting(false);
                 if (ret.get())
-                    readDataByConsumer(data -> notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel));
+                    notifyListenersEDT(getSelectedElement(), elementList, elementListSelectionModel);
             }
-        }));
+        });
         return ret.get();
     }
 
-    protected boolean refillElements(final Collection<E> toFillIn) {
+    protected boolean refillElements(D parentDataObject, final Collection<E> toFillIn) {
+        if (!SwingUtilities.isEventDispatchThread())
+            log.warn("refillElements() Must be called from EventDispatchThread!");
+        data = parentDataObject;
         if (SiriusGlazedLists.refill(basicElementList, elementData, toFillIn)) {
-            readDataByConsumer(data -> notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel));
+            notifyListenersEDT(getSelectedElement(), elementList, elementListSelectionModel);
             return true;
         }
         return false;
@@ -145,45 +153,19 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         listeners.remove(listener);
     }
 
-    protected void notifyListeners(D data, E element, List<E> sre, ListSelectionModel selections) {
-        for (ActiveElementChangedListener<E, D> listener : listeners) {
-            listener.resultsChanged(data, element, sre, selections);
-        }
+    protected void notifyListenersEDT(E element, List<E> sre, ListSelectionModel selections) {
+        Jobs.runEDTAndWaitLazy(() -> {
+            for (ActiveElementChangedListener<E, D> listener : listeners) {
+                listener.resultsChanged(data, element, sre, selections);
+            }
+        });
     }
 
     public void readDataByConsumer(Consumer<D> readData) {
-        dataLock.readLock().lock();
-        try {
-            readData.accept(data);
-        } finally {
-            dataLock.readLock().unlock();
-        }
+        Jobs.runEDTAndWaitLazy(() -> readData.accept(data));
     }
 
-    public <R> R readDataByFunction(Function<D, R> readData) {
-        dataLock.readLock().lock();
-        try {
-            return readData.apply(data);
-        } finally {
-            dataLock.readLock().unlock();
-        }
-    }
-
-    public void writeData(Consumer<D> writeData) {
-        dataLock.writeLock().lock();
-        try {
-            writeData.accept(data);
-        } finally {
-            dataLock.writeLock().unlock();
-        }
-    }
-
-    protected void setData(D data) {
-        dataLock.writeLock().lock();
-        try {
-            this.data = data;
-        } finally {
-            dataLock.writeLock().unlock();
-        }
+    public void setDataEDT(D data) {
+        Jobs.runEDTAndWaitLazy(() -> this.data = data);
     }
 }

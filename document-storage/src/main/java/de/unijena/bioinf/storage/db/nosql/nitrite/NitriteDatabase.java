@@ -111,20 +111,24 @@ public class NitriteDatabase implements Database<Document> {
 
     // STATE
     public NitriteDatabase(Path file, Metadata meta) throws IOException {
-        this(file, meta, MVStoreCompression.LZF, 64, 8192);
+        this(file, meta, false);
     }
 
-    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
+    public NitriteDatabase(Path file, Metadata meta, boolean readOnly) throws IOException {
+        this(file, meta, MVStoreCompression.LZF, 64, 8192, readOnly);
+    }
+
+    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte, boolean readOnly) throws IOException {
         this.file = file;
         this.meta = meta;
-        this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte);
+        this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte, readOnly);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
     }
 
-    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte) {
+    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte, boolean readOnly) {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
             addSerializer(module, entry.getKey(), entry.getValue());
@@ -137,9 +141,9 @@ public class NitriteDatabase implements Database<Document> {
                 .compressHigh(compress == MVStoreCompression.DEFLATE)
                 .autoCommitBufferSize(commitBufferByte) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
                 .cacheSize(cacheSizeMiB)
+                .readOnly(readOnly)
                 .build();
 //        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();
-
         return Nitrite.builder().loadModule(storeModule)
                 .loadModule(new JacksonMapperModule(module))
                 .schemaVersion(meta.getSchemaVersion())

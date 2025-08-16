@@ -1,41 +1,44 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URI;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
-public class KendrickMassDefectPanel extends JCefBrowserPanel implements ExperimentListChangeListener, PanelDescription {
+public class KendrickMassDefectPanel extends JPanel implements ExperimentListChangeListener, PanelDescription {
     @NotNull private final CompoundList compoundList;
+    @NotNull private final BrowserPanel browserPanel;
 
     public KendrickMassDefectPanel(@NotNull CompoundList compoundList, SiriusGui siriusGui) {
-        super(makeUrl(siriusGui, compoundList), siriusGui);
+        super(new BorderLayout());
         this.compoundList = compoundList;
+        this.browserPanel = makeBrowserPanel(siriusGui, compoundList);
         compoundList.addChangeListener(this);
+        add(browserPanel, BorderLayout.CENTER);
     }
 
-    private static String makeUrl(SiriusGui siriusGui, @NotNull CompoundList compoundList){
+    private static BrowserPanel makeBrowserPanel(SiriusGui siriusGui, @NotNull CompoundList compoundList){
         String fid = compoundList.getCompoundListSelectionModel().getSelected().stream().findFirst().map(InstanceBean::getFeatureId).orElse(null);
-        return URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/KMD")
-                + makeParameters(siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
+        return  siriusGui.getBrowserPanelProvider().makeReactPanel("/KMD", siriusGui.getProjectManager().getProjectId(), fid, null, null, null);
     }
 
     @Override
-    public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+    public void listChanged(ListEvent<InstanceBean> event, AdvancedListSelectionModel<InstanceBean> selection, int fullSize) {
         //selection change will also happen if list change affects selection
     }
 
     @Override
-    public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
-        updateSelectedFeature(selected == null || selected.isEmpty() ? null
+    public void listSelectionChanged(AdvancedListSelectionModel<InstanceBean> selection, List<InstanceBean> selected, List<InstanceBean> deselected, int fullSize) {
+        browserPanel.updateSelectedFeature(selected == null || selected.isEmpty() ? null
                 : selected.getFirst().getFeatureId());
     }
 

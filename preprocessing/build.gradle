@@ -26,5 +26,8 @@ dependencies() {
 
 	api project(':chemistry_base')
 	api project(':mass_decomposition:mass_decomposer')
+
+	testImplementation(project(":io"))
+	testImplementation(project(":isotope_pattern:isotope_pattern_analysis"))
 }
 

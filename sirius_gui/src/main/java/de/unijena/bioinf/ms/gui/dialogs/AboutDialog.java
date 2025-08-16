@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ public class AboutDialog extends JDialog {
             buf.append(ApplicationCore.BIBTEX.getCitationsHTML(true));
             htmlText = buf.append("</div></body></html>").toString();
 
-            JCefBrowserPanel htmlPanel =  JCefBrowserPanel.makeHTMLPanel(htmlText, gui);
+            BrowserPanel htmlPanel =  gui.getBrowserPanelProvider().makeHTMLPanel(htmlText);
 
             add(htmlPanel, BorderLayout.CENTER);
         } catch (IOException e) {

@@ -20,11 +20,11 @@
 
 package de.unijena.bioinf.ChemistryBase.utils;
 
-import com.github.f4b6a3.tsid.TsidCreator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TObjectProcedure;
+import io.hypersistence.tsid.TSID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -55,6 +55,29 @@ public class FileUtils {
         return inputName.replaceAll("[^a-zA-Z0-9-_.]", "_");
     }
 
+
+    @Nullable
+    public static String getFileExt(File path){
+        return getFileExt(path.getName());
+    }
+
+    @Nullable
+    public static String getFileExt(Path path){
+        return getFileExt(path.getFileName().toString());
+    }
+
+    @NotNull
+    public static Optional<String> getFileExtOpt(String path){
+        return Optional.ofNullable(getFileExt(path));
+    }
+
+    @Nullable
+    public static String getFileExt(String path){
+        int idx = path.lastIndexOf('.');
+        if (idx < 0 || idx == path.length() -1)
+            return null;
+        return path.substring(idx).toLowerCase();
+    }
 
     public static String getFileName(URI path){
         if (path == null)
@@ -822,14 +845,14 @@ public class FileUtils {
 
     public static Path createTmpProjectSpaceLocation(@Nullable String ext, @NotNull FileSystem fs) {
         String tmpDir = System.getProperty("java.io.tmpdir");
-        return fs.getPath(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid() + (ext == null || ext.isBlank() ? "": (ext.startsWith(".") ? ext : ("." + ext))));
+        return fs.getPath(tmpDir).resolve("sirius-tmp-project-" + TSID.fast() + (ext == null || ext.isBlank() ? "": (ext.startsWith(".") ? ext : ("." + ext))));
     }
 
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
         return newTempFile(directory, prefix, suffix, FileSystems.getDefault());
     }
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix, @NotNull FileSystem fs) {
-        return fs.getPath(directory, MessageFormat.format("{0}{1}{2}", prefix, TsidCreator.getTsid(), suffix));
+        return fs.getPath(directory, MessageFormat.format("{0}{1}{2}", prefix, TSID.fast(), suffix));
     }
 
     public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {

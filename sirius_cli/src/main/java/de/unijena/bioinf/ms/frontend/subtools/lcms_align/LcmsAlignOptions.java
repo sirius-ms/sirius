@@ -66,12 +66,24 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
     )
     public double noiseIntensity;
 
-    @CommandLine.Option(names={"--min-snr"},
-            description="Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory.",
-            defaultValue = "3"
+    static class SignalToNoiseOptions {
+        @CommandLine.Option(names={"--min-snr"},
+                description="Minimum ratio between peak height and noise intensity for detecting features. By default, this value is 3. Features with good MS/MS are always picked independent of their intensity. For picking very low intensive features we recommend a min-snr of 2, but this will increase runtime and storage memory.",
+                defaultValue = "3"
 
-    )
-    public double minSNR;
+        )
+        public double minSNR;
+
+        @CommandLine.Option(names={"--sensitive-mode"},
+                description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This uses a lower min-snr and will increase running time and storage memory.",
+                required = false
+        )
+        public boolean sensitive;
+    }
+
+    @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1") // only selection of one option allowed and optional (0..1)
+    SignalToNoiseOptions snrOptions = new SignalToNoiseOptions();
+
 
     @CommandLine.Option(names={"--align-rt-max"},
             description="Maximal allowed retention time deviation for aligning features in seconds. If not specified, this parameter is estimated from data. We recommend to not set this parameter except when the automatically detected value is very wrong.",
@@ -90,19 +102,10 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--trace-ppm-max"},
             description={
-            "Noise level under which all peaks are considered to be likely noise. A peak has to be at least 3x noise level.",
-                    "to be picked as feature. Peaks with MS/MS are still picked even though they might be below noise level.",
-                    "If not specified, the noise intensity is detected automatically from data. We recommend to NOT specify",
-                    "this parameter, as the automated detection is usually sufficient."
+            "Maximal allowed mass deviation for scan points within a trace. Peaks above this deviation are not considered to be part of the same mass trace. You may increase this value if you observe that mass traces are splitted or interrupted."
             }, required = false
     )
     public Double ppmMax;
-
-    @CommandLine.Option(names={"--sensitive-mode"},
-            description="In sensitive mode, SIRIUS will detect smaller and low sensitive features even when they have no MS/MS associated. This will increase running time and storage memory.",
-            required = false
-    )
-    public boolean sensitiveMode;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //hidden options   ///////////////////////////////////////////////////////////////////////
@@ -118,7 +121,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////
 

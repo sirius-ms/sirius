@@ -21,17 +21,16 @@
 
 package de.unijena.bioinf.ms.gui;
 
-import com.jetbrains.cef.JCefAppConfig;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.gui.webView.JCEFLinuxFixer;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
+import io.sirius.ms.gui.webView.jxbrowser.JxBrowserPanelProvider;
 import io.sirius.ms.sdk.SiriusClient;
 import io.sirius.ms.sse.DataEventType;
-import lombok.SneakyThrows;
-import org.cef.CefApp;
-import org.cef.CefSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.EnumSet;
 
 /**
@@ -40,21 +39,21 @@ import java.util.EnumSet;
 public final class SiriusGuiFactory {
     private volatile SiriusClient siriusClient;
     private volatile ConnectionMonitor connectionMonitor;
-    private volatile CefApp cefApp;
+    private volatile BrowserPanelProvider<?> browserPanelProvider;
 
-    public SiriusGuiFactory(int port) {
-        this(new SiriusClient(port), null, null);
+    public SiriusGuiFactory(@Nullable SiriusClient client) {
+        this(client, null, null);
     }
 
-    public SiriusGuiFactory(SiriusClient siriusClient, ConnectionMonitor connectionMonitor, CefApp cefApp) {
+    public SiriusGuiFactory(@Nullable SiriusClient siriusClient, @Nullable ConnectionMonitor connectionMonitor, @Nullable BrowserPanelProvider<?> browserPanelProvider) {
         this.siriusClient = siriusClient;
         this.connectionMonitor = connectionMonitor;
-        this.cefApp = cefApp;
+        this.browserPanelProvider = browserPanelProvider;
     }
 
     public SiriusGui newGui(@NotNull String projectId) {
         init();
-        return new SiriusGui(projectId, siriusClient, connectionMonitor, cefApp);
+        return new SiriusGui(projectId, siriusClient, connectionMonitor, browserPanelProvider);
     }
 
     private void init() {
@@ -66,6 +65,12 @@ public final class SiriusGuiFactory {
         }
         siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
 
+        if (browserPanelProvider == null) {
+            synchronized (this) {
+                if (browserPanelProvider == null)
+                    browserPanelProvider = new JxBrowserPanelProvider(URI.create(siriusClient.getApiClient().getBasePath()));
+            }
+        }
 
         if (connectionMonitor == null) {
             synchronized (this) {
@@ -73,33 +78,6 @@ public final class SiriusGuiFactory {
                     connectionMonitor = new ConnectionMonitor(siriusClient);
             }
         }
-
-        if (cefApp == null) {
-            synchronized (this) {
-                if (cefApp == null)
-                    cefApp = makeCefApp();
-            }
-        }
-    }
-
-
-    @SneakyThrows
-    private static CefApp makeCefApp(){
-        final JCefAppConfig jCefAppConfig = JCefAppConfig.getInstance();
-        final CefSettings cefSettings = jCefAppConfig.getCefSettings();
-
-        // For remote devtools, open localhost:port in chrome
-//        cefSettings.remote_debugging_port = 9222;
-//        jCefAppConfig.getAppArgsAsList().add("--remote-allow-origins=*");
-//        cefSettings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_VERBOSE;
-
-        CefApp.startup(jCefAppConfig.getAppArgs());
-        CefApp instance = CefApp.getInstance(jCefAppConfig.getAppArgs(), cefSettings);
-
-        if (System.getProperty("os.name").toLowerCase().contains("linux"))
-            JCEFLinuxFixer.preloadJCef(instance);
-
-        return instance;
     }
 
     public void shutdowm() {
@@ -108,8 +86,8 @@ public final class SiriusGuiFactory {
                 connectionMonitor.close();
             if (siriusClient != null)
                 siriusClient.close();
-            if (cefApp != null)
-                cefApp.dispose();
+            if (browserPanelProvider != null)
+                browserPanelProvider.destroy();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }

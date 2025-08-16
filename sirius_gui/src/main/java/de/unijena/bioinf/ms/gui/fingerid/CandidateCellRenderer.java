@@ -44,6 +44,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     public static final int MIN_CELL_SIZE = 5;
     public final static int CELL_SIZE = 15;
 
+    public final static Dimension RANK_LABEL_DIMENSION = new Dimension(62, 100);
+
     private  final static Color LOW = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_LOW_PROBABILITY, MED = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_MEDIUM_PROBABILITY, HIGH = Colors.StructuresView.SUBSTRUCTURE_BOX_GRADIENT_HIGH_PROBABILITY;
     private final static Color EVEN = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1;
     private final static Color ODD = Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_2;
@@ -90,8 +92,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         rankLabel = new JLabel("");
         rankLabel.setFont(rankFont);
-        rankLabel.setPreferredSize(new Dimension(62, 100)); //border plus width of 2-digit number in font 30
-        rankLabel.setSize(new Dimension(62, 100)); //to make sure also first rendering is correct.
+        rankLabel.setPreferredSize(RANK_LABEL_DIMENSION); //border plus width of 2-digit number in font 30
+        rankLabel.setSize(RANK_LABEL_DIMENSION); //to make sure also first rendering is correct.
         rankLabel.setVerticalAlignment(SwingConstants.CENTER);
         rankLabel.setHorizontalAlignment(SwingConstants.CENTER);
         rankLabel.setBorder(new EmptyBorder(1, 10, 1, 10));
@@ -111,7 +113,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             north.add(nameLabel, BorderLayout.WEST);
 
-            image = new CompoundStructureImage(gui);
+            image = CompoundStructureImage.asCell(gui);
             descriptionPanel = new DescriptionPanel();
             allStructureInfoWithoutRank.add(north, BorderLayout.NORTH);
             allStructureInfoWithoutRank.add(image, BorderLayout.WEST);
@@ -187,6 +189,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 ra.x + descriptionPanel.getX() + descriptionPanel.agpanel.getX() + rankLabel.getWidth(), //todo coloring: someone please check if this is the correct way to fix the offset of fingerprint property squares after adding rank label to front
                 ra.y + descriptionPanel.getY() + descriptionPanel.agpanel.getY());
         currentCandidate.substructures.setBounds(ra.x, ra.y, ra.width, ra.height);
+        currentCandidate.moleculeImageBounds = image.getBounds();
     }
 
     public class FingerprintView extends JPanel {

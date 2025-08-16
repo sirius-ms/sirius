@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.login;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ms.rest.model.license.AllowedFeatures;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -97,6 +98,9 @@ public class Subscription {
     @Schema(nullable = true)
     private String pp;
 
+    private AllowedFeatures allowedFeatures;
+
+
     @JsonIgnore
     public boolean hasInstanceLimit() {
         Integer l = getInstanceLimit();
@@ -134,6 +138,7 @@ public class Subscription {
                 .name(s.getName())
                 .tos(s.getTos())
                 .pp(s.getPp())
+                .allowedFeatures(s.getAllowedFeatures())
                 .build();
     }
 }

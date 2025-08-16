@@ -61,7 +61,8 @@ public class CompoundClassList extends ActionList<CompoundClassBean, FormulaResu
                         old.cancel(false);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
-
+                    checkForInterruption();
+                    setDataEDT(selectedElement);
                     checkForInterruption();
                     List<CompoundClassBean> tmp = List.of();
                     if (selectedElement != null)

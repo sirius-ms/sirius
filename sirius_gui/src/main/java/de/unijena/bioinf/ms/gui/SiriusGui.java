@@ -24,18 +24,16 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserDialog;
+import io.sirius.ms.gui.webView.BrowserPanelProvider;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.AccountInfo;
+import io.sirius.ms.sdk.model.AllowedFeatures;
+import io.sirius.ms.sdk.model.Subscription;
 import lombok.Getter;
-import org.cef.CefApp;
-import org.cef.CefClient;
-import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.net.URI;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -51,7 +49,6 @@ public class SiriusGui {
     }
 
 
-    private final CefApp cefApp;
 
     @Getter
     private final GuiProperties properties;
@@ -59,6 +56,8 @@ public class SiriusGui {
     private final ConnectionMonitor connectionMonitor;
     @Getter
     private final MainFrame mainFrame;
+    @Getter
+    private final @NotNull BrowserPanelProvider browserPanelProvider;
     @Getter
     private GuiProjectManager projectManager;
 
@@ -70,10 +69,10 @@ public class SiriusGui {
         return siriusClient;
     }
 
-    public SiriusGui(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull ConnectionMonitor connectionMonitor, @NotNull CefApp cefApp) {
+    public SiriusGui(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull ConnectionMonitor connectionMonitor, @NotNull BrowserPanelProvider browserPanelProvider) {
+        this.browserPanelProvider = browserPanelProvider;
         this.connectionMonitor = connectionMonitor;
         this.siriusClient = siriusClient;
-        this.cefApp = cefApp;
         properties = new GuiProperties();
         projectManager = new GuiProjectManager(projectId, this.siriusClient, properties, this);
         mainFrame = new MainFrame(this);
@@ -99,29 +98,20 @@ public class SiriusGui {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
     }
 
-    public CefClient newClient(){
-        return cefApp.createClient();
+    public Optional<Subscription> getActiveSubscription() {
+        if (!getSiriusClient().account().isLoggedIn())
+            return Optional.empty();
+
+        AccountInfo info = getSiriusClient().account().getAccountInfo(true);
+
+        return info.getSubscriptions() == null ? Optional.empty() : info.getSubscriptions()
+                .stream()
+                .filter(s -> s.getSid() != null)
+                .filter(s -> s.getSid().equals(info.getActiveSubscriptionId())).findFirst();
+
     }
 
-    public CefBrowser newBrowser(String url){
-        return newBrowser(url, false);
+    public Optional<AllowedFeatures> getAllowedFeatures() {
+        return getActiveSubscription().map(Subscription::getAllowedFeatures);
     }
-
-    public CefBrowser newBrowser(String url, boolean transparent){
-        return cefApp.createClient().createBrowser(url,  false, transparent);
-    }
-
-    public JDialog newBrowserPopUp(Frame owner, String title, URI url) {
-        return new JCefBrowserDialog(owner, title, url, newClient());
-    }
-
-    public JDialog newBrowserPopUp(Dialog owner, String title, URI url) {
-
-        return new JCefBrowserDialog(owner, title, url, newClient());
-    }
-
-    public JDialog newBrowserPopUp(String title, URI url) {
-        return new JCefBrowserDialog(getMainFrame(), title, url, newClient());
-    }
-
 }

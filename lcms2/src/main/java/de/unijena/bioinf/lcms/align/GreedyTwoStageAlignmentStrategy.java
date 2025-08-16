@@ -592,9 +592,12 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             PolynomialFunction medianLinearRecalibration, medianLinearRecalibrationMz;
             if (xs.size() < 500) {
                 medianLinearRecalibration = MzRecalibration.getMedianLinearRecalibration(xs.toDoubleArray(), ys.toDoubleArray());
-                medianLinearRecalibrationMz = MzRecalibration.getMedianLinearRecalibration(xs2.toDoubleArray(), ys2.toDoubleArray());
             } else {
                 medianLinearRecalibration = MzRecalibration.getLinearRecalibration(xs.toDoubleArray(), ys.toDoubleArray());
+            }
+            if (xs2.size() < 500) {
+                medianLinearRecalibrationMz = MzRecalibration.getMedianLinearRecalibration(xs2.toDoubleArray(), ys2.toDoubleArray());
+            } else {
                 medianLinearRecalibrationMz = MzRecalibration.getLinearRecalibration(xs2.toDoubleArray(), ys2.toDoubleArray());
             }
             for (int i=0; i < xs.size(); ++i) {
@@ -606,6 +609,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             sample.setRtRecalibration(RecalibrationFunction.linear(medianLinearRecalibration));
             sample.setMzRecalibration(RecalibrationFunction.linear(medianLinearRecalibrationMz));
         } else if (minimumBuckSize>=25) {
+
             double linearRtError, NoCalRtError, LoessRtError;
             double[] x,y,x2,y2;
             strictMonotonic(xs,ys,0);
@@ -618,11 +622,15 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                 PolynomialFunction linearRecalibration,linearRecalibrationMz;
                 if (x.length < 500) {
                     linearRecalibration = MzRecalibration.getMedianLinearRecalibration(x, y);
-                    linearRecalibrationMz = MzRecalibration.getMedianLinearRecalibration(x2, y2);
                 } else {
                     linearRecalibration = MzRecalibration.getLinearRecalibration(x, y);
+                }
+                if (x2.length < 500) {
+                    linearRecalibrationMz = MzRecalibration.getMedianLinearRecalibration(x2, y2);
+                } else {
                     linearRecalibrationMz = MzRecalibration.getLinearRecalibration(x2, y2);
                 }
+
                 double bandwidth = Math.min(0.3, Math.max(0.1, (200d / x.length)));
 
                 // WE DO NOT USE LOESS ANYMORE AS THE IMPLEMENTATION SEEMS BUGGY

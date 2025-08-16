@@ -21,10 +21,12 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.compute.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ErrorWithDetailsDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import io.sirius.ms.sdk.jjobs.SseProgressJJob;
@@ -52,6 +54,7 @@ class ImportDatabaseDialog extends JDialog {
 
     private final DatabaseDialog databaseDialog;
     protected DatabaseImportConfigPanel configPanel;
+    private SearchableDatabase db;
 
     public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog) {
         this(databaseDialog, null);
@@ -60,6 +63,7 @@ class ImportDatabaseDialog extends JDialog {
     public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable SearchableDatabase db) {
         super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
+        this.db = db;
 
         setPreferredSize(new Dimension(600, 720));
 
@@ -114,7 +118,17 @@ class ImportDatabaseDialog extends JDialog {
                 throw new ExecutionException(new Exception("Not connected or logged in!"));
             }
 
+            if (db == null) {
+                SearchableDatabaseParameters newDbParameters = new SearchableDatabaseParameters()
+                        .location(configPanel.getDbFilePath())
+                        .displayName(configPanel.getDBDisplayName());
+                String dbId = configPanel.getDBBaseFileName();
+                db = databaseDialog.gui.applySiriusClient((c, pid) -> c.databases().createDatabase(dbId, newDbParameters));
+            }
+            configPanel.getParameterBinding().put("db", () -> db.getDatabaseId());
+
             CommandSubmission command = new CommandSubmission();
+            command.addCommandItem(PicoUtils.getCommand(CustomDBOptions.class).name());
             command.addCommandItem(configPanel.toolCommand());
             configPanel.asParameterList().forEach(command::addCommandItem);
 
@@ -128,12 +142,12 @@ class ImportDatabaseDialog extends JDialog {
             if (ex instanceof ExecutionException) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
                 if (ex.getCause() != null)
-                    new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
+                    new ErrorWithDetailsDialog(this, ex.getCause().getMessage(), ex.getCause());
                 else
-                    new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
+                    new ErrorWithDetailsDialog(this, "Unexpected error when importing custom DB!", ex);
             } else if (!(ex instanceof CancellationException) && !(ex.getCause() instanceof CancellationException)) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
-                new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
+                new ErrorWithDetailsDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
             }
 
             if (new QuestionDialog(

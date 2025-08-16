@@ -4,7 +4,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.ImportDBOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -35,14 +35,13 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.chemdb.custom.CustomDatabases.CUSTOM_DB_SUFFIX;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 
-public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
+public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOptions> {
 
     private PlaceholderTextField dbDisplayNameField;
     private PlaceholderTextField dbFileNameField;
@@ -50,9 +49,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private DefaultListModel<File> fileListModel;
 
 
-    private FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
+    private final FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
 
-    private FileFilter supportedSpectraFiles = new FileFilter() {
+    private final FileFilter supportedSpectraFiles = new FileFilter() {
         @Override
         public boolean accept(File f) {
             String filename = f.getName().toLowerCase();
@@ -67,7 +66,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         }
     };
 
-    private FileFilter supportedFiles = new FileFilter() {
+    private final FileFilter supportedFiles = new FileFilter() {
         @Override
         public boolean accept(File f) {
             return supportedStructureFiles.accept(f) || supportedSpectraFiles.accept(f);
@@ -97,7 +96,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private BiotransformerConfigPanel biotransformerConfigPanel;
 
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
-        super(CustomDBOptions.class);
+        super(ImportDBOptions.class);
         this.gui = gui;
         setLayout(new BorderLayout());
 
@@ -154,7 +153,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Name", dbDisplayNameField, GuiUtils.formatToolTip("Displayable name of the custom database. " +
                 "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
                 "If not given the filename will be used."));
-        parameterBindings.put("displayName", dbDisplayNameField::getText);
         dbFileNameField = new PlaceholderTextField("");
         smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
@@ -163,7 +161,6 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
-        parameterBindings.put("location", this::getDbFilePath);
         validDbDirectory = !dbDirectory.isBlank();
 
         if (db != null) {
@@ -241,6 +238,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 String error = null;
                 if (name == null || name.isBlank()) {
                     error = "DB name missing";
+                } else if (!name.endsWith(CUSTOM_DB_SUFFIX)) {
+                    error = "DB filename should end with " + CUSTOM_DB_SUFFIX;
+                } else if (!name.equals(FileUtils.sanitizeFilename(name.replace(CUSTOM_DB_SUFFIX, "")) + CUSTOM_DB_SUFFIX)) {
+                    error = "DB filename should not contain special characters";
                 } else if (checkName(name)) {
                     error = "This name is already in use";
                 }
@@ -298,11 +299,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private JComponent createCompoundsBox() {
         final Box box = Box.createVerticalBox();
 
-        String inputParameter = "input";
         fileListModel = new DefaultListModel<>();
         JList<File> fileList = new JListDropImage<>(fileListModel);
-        getOptionDescriptionByName(inputParameter).ifPresent(description -> box.setToolTipText(GuiUtils.formatToolTip(300, description)));
-        parameterBindings.put(inputParameter, this::getFiles);
 
         final JScrollPane pane = new JScrollPane(fileList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         box.add(pane);
@@ -372,6 +370,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         TextHeaderPanel<Box> r =  new TextHeaderPanel<>("Add compound and/or spectra files" , box,0, GuiUtils.MEDIUM_GAP);
         r.setBorder(BorderFactory.createEmptyBorder(0,GuiUtils.MEDIUM_GAP,0,GuiUtils.MEDIUM_GAP));
+        getPositionalParameterDescription(0).ifPresent(description -> r.setToolTipText(GuiUtils.formatToolTip(300, description)));
         return r;
     }
 
@@ -396,11 +395,19 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         return Path.of(dbLocationField.getFilePath(), dbFileNameField.getText()).toString();
     }
 
+    public String getDBDisplayName() {
+        return dbDisplayNameField.getText();
+    }
+
+    public String getDBBaseFileName() {
+        return dbFileNameField.getText().replace(CUSTOM_DB_SUFFIX, "");
+    }
+
     /**
-     * @return comma-separated list of absolute paths to files to import
+     * @return list of absolute paths to files to import
      */
-    public String getFiles() {
-        return Arrays.stream(fileListModel.toArray()).map(f -> ((File) f).getAbsolutePath()).distinct().collect(Collectors.joining(","));
+    public List<String> getFiles() {
+        return Arrays.stream(fileListModel.toArray()).map(f -> ((File) f).getAbsolutePath()).distinct().toList();
     }
 
     public boolean hasSpectraFiles() {
@@ -412,6 +419,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         List<String> paras = super.asParameterList();
         if (biotransformerSwitch != null && biotransformerSwitch.isSelected() && biotransformerConfigPanel != null)
             paras.addAll(biotransformerConfigPanel.asParameterList());
+        paras.addAll(getFiles());
         return paras;
     }
 }

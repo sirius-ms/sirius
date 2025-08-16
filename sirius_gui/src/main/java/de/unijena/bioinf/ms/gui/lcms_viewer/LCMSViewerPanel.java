@@ -6,14 +6,13 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToggableSidePanel;
 import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import io.sirius.ms.sdk.model.AlignedFeatureQualityExperimental;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -22,15 +21,15 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
     private InstanceBean currentInstance;
 
-    private LCMSCefPanel lcmsWebview;
-    private LCMSCompoundSummaryPanel summaryPanel;
+    private final BrowserPanel lcmsWebview;
+    private final LCMSCompoundSummaryPanel summaryPanel;
 
     private final LoadablePanel loadable;
 
     public LCMSViewerPanel(SiriusGui gui, FormulaList siriusResultElements) {
         // set content
         setLayout(new BorderLayout());
-        this.lcmsWebview = new LCMSCefPanel(gui);
+        this.lcmsWebview = gui.getBrowserPanelProvider().makeReactPanel("/lcms", gui.getProjectManager().getProjectId());
         this.loadable = new LoadablePanel(lcmsWebview);
         this.add(loadable, BorderLayout.CENTER);
 
@@ -99,13 +98,4 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             throw new RuntimeException(e);
         }
     }
-
-    private static class LCMSCefPanel extends JCefBrowserPanel {
-
-        public LCMSCefPanel(SiriusGui siriusGui) {
-            super(URI.create(siriusGui.getSiriusClient().getApiClient().getBasePath()).resolve("/lcms")
-                    + THEME_REST_PARA + "&pid=" + siriusGui.getProjectManager().getProjectId(), siriusGui);
-        }
-    }
-
 }

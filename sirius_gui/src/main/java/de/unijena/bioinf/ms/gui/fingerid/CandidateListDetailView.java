@@ -35,12 +35,14 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.dialogs.LoadablePanelDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.FMetFilter;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
-import de.unijena.bioinf.ms.gui.spectral_matching.SubstructureMatchingDialog;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SubstructurePanel;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
@@ -49,6 +51,7 @@ import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourInfoStore;
 import de.unijena.bioinf.ms.gui.utils.softwaretour.SoftwareTourUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.sirius.ms.sdk.model.AllowedFeatures;
 import io.sirius.ms.sdk.model.DBLink;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -57,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -71,14 +75,15 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     protected JList<FingerprintCandidateBean> candidateList;
-    protected StructureSearcher structureSearcher;
+    protected final StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles;
+    protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles, sketchStructure;
     protected JPopupMenu popupMenu;
 
     protected int highlightAgree = -1;
@@ -90,6 +95,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     private final ResultPanel resultPanel;
     private final SiriusGui gui;
+
+    // Cached dialog for faster opening
+    private SketcherDialog sketcherDialog;
 
     /**
      * @param wasComputed function to validate whether the corresponding subtool that should provide the results was run. If the function returns false NOT_COMPUTED state is shown.
@@ -106,7 +114,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 showCenterCard(ActionList.ViewState.DATA);
         });
 
-        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
+        candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource), gui);
 
         this.resultPanel = resultPanel;
         this.gui = gui;
@@ -136,6 +144,19 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
         });
 
+
+        // Add custom MouseWheelListener to the JScrollPane to prevent structure popup to show up when mouse wheel is moved.
+        scrollPane.addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                // reset structure popup timer and hide popup window
+                if (candidateList instanceof CandidateInnerList) {
+                    ((CandidateInnerList) candidateList).popUpTimer.restart(); //reset timer
+                    ((CandidateInnerList) candidateList).popUpWindow.setVisible(false);
+                }
+            }
+        });
+
         //add tutorial stuff
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.rankLabel, SoftwareTourInfoStore.DatabaseSearch_Rank);
         SoftwareTourUtils.addSoftwareTourGlassPane(layeredPane, candidateList, cellRenderer.image.scoreLabel, SoftwareTourInfoStore.DatabaseSearch_CSIScore);
@@ -147,8 +168,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
         this.structureSearcherThread = new Thread(structureSearcher);
-        structureSearcherThread.start();
-        this.structureSearcher.reloadList(sourceList);
         this.molecularPropertyMatcherEditor.setStructureSearcher(structureSearcher);
 
         ///// add popup menu
@@ -160,8 +179,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         OpenInBrowser2 = new JMenuItem("Open in all databases");
         highlight = new JMenuItem("Highlight matching substructures");
         annotateSpectrum = new JMenuItem("Show annotated spectrum");
+        sketchStructure = new JMenuItem("Modify structure");
         CopyInchi.addActionListener(this);
         CopyInchiKey.addActionListener(this);
+        sketchStructure.addActionListener(this);
         OpenInBrowser1.addActionListener(this);
         OpenInBrowser2.addActionListener(this);
         highlight.addActionListener(this);
@@ -176,6 +197,28 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         popupMenu.add(CopySmiles);
         popupMenu.add(CopyInchiKey);
         popupMenu.add(CopyInchi);
+        popupMenu.addSeparator();
+        popupMenu.add(sketchStructure);
+
+        // Add a PopupMenuListener to dynamically update menu items before they are shown
+        popupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called right before the popup menu is displayed.
+                sketchStructure.setEnabled(gui.getAllowedFeatures().map(AllowedFeatures::isDeNovo).orElse(false));
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                // This method is called after the menu is closed. No action needed here.
+            }
+
+            @Override
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+                // This method is called if the user dismisses the menu without selecting an item.
+            }
+        });
+
         initializeFunctionalMetabolomicsFunctionality();
         setVisible(true);
     }
@@ -249,6 +292,16 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             clipboard.setContents(new StringSelection(c.getInChiKey()), null);
         } else if (e.getSource() == CopyInchi) {
             clipboard.setContents(new StringSelection(c.getInChI().in2D), null);
+        } else if (e.getSource() == sketchStructure) {
+            Jobs.runEDTLater(() -> {
+                if (sketcherDialog == null) {
+                    sketcherDialog = new SketcherDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, c);
+                    sketcherDialog.setVisible(true);
+                } else {
+                    sketcherDialog.updateMolecule(c);
+                    sketcherDialog.setVisible(true);
+                }
+            });
         } else if (e.getSource() == OpenInBrowser1) {
             try {
                 GuiUtils.openURLInSystemBrowser(SwingUtilities.getWindowAncestor(this), new URI("https://www.ncbi.nlm.nih.gov/pccompound?term=%22" + c.getInChiKey() + "%22[InChIKey]"), gui);
@@ -308,8 +361,39 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    public void dispose() {
-        structureSearcher.stop();
+    /**
+     * Called when the panel is added to a visible container.
+     * This is the best place to start the background thread.
+     */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (structureSearcherThread != null && !structureSearcherThread.isAlive()) {
+            structureSearcherThread.start();
+            this.structureSearcher.reloadList(source);
+        }
+    }
+
+    /**
+     * Called just before the panel is removed from its container.
+     * This is the perfect place to stop the background thread.
+     */
+    @Override
+    public void removeNotify() {
+        stop(); // Call your shutdown method
+        super.removeNotify(); // Always call the super method
+    }
+
+    /**
+     * Stops the background thread.
+     */
+    public void stop() {
+        synchronized (structureSearcher) {
+            structureSearcher.stop();
+            if (structureSearcherThread != null) {
+                structureSearcherThread.interrupt(); // Wake up the thread from wait()
+            }
+        }
     }
 
     @Override
@@ -357,9 +441,12 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnMore(final FingerprintCandidateBean candidateBean) {
-        Jobs.runEDTLater(() -> new SubstructureMatchingDialog(
-                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), gui, candidateBean)
-                .setVisible(true));
+        Jobs.runEDTLater(() -> {
+            LoadablePanelDialog substructureDialog = new LoadablePanelDialog(SwingUtilities.getWindowAncestor(CandidateListDetailView.this), "Reference spectra");
+            substructureDialog.loadPanel(() -> new SubstructurePanel(gui, candidateBean));
+            substructureDialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            substructureDialog.setVisible(true);
+        });
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
@@ -483,15 +570,34 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         return null;
     }
 
+    private boolean isInRect(Rectangle targetBox, Rectangle relativeRect, Point point) {
+        if (targetBox == null || relativeRect == null) return false;
+        final int absX = targetBox.x + relativeRect.x;
+        final int absY = targetBox.y + relativeRect.y;
+        final int absX2 = targetBox.width + absX;
+        final int absY2 = targetBox.height + absY;
+        return point.x >= absX && point.y >= absY && point.x < absX2 && point.y < absY2;
+    }
+
 
     public class CandidateInnerList extends JList<FingerprintCandidateBean> {
         private final NumberFormat prob = new DecimalFormat("%");
+        Timer popUpTimer;
+        CompoundStructureImage compoundStructureImage;
+        JWindow popUpWindow;
+        JPanel popUpPanel;
 
-        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel) {
+        public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel, SiriusGui gui) {
             super(dataModel);
+
+            setupStructurePopUp(gui);
+
             addMouseMotionListener(new MouseAdapter() {
                 @Override
                 public void mouseMoved(MouseEvent e) {
+                    popUpTimer.stop();
+                    popUpWindow.setVisible(false);
+
                     final Point point = e.getPoint();
                     final int index = locationToIndex(point);
                     if (index < 0) {
@@ -535,8 +641,90 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
                     //no clickable component
                     setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+
+                    //check if over molecular structure and init popup timer
+                    if (isInRect(candidate.moleculeImageBounds, relativeRect, point)) {
+                        popUpTimer.start();
+                    }
+                }
+
+            });
+
+            addMouseListener(new MouseAdapter() {
+                public void mouseExited(MouseEvent e) {
+                    popUpTimer.stop();
+                    popUpWindow.setVisible(false);
                 }
             });
+        }
+
+        private void setupStructurePopUp(SiriusGui gui) {
+            // Create the pop-up window (initially hidden)
+            popUpWindow = new JWindow();
+            popUpWindow.setAlwaysOnTop(true); // Ensure it stays above other windows
+
+            compoundStructureImage = CompoundStructureImage.asLargePopUp(gui);
+            popUpPanel = new JPanel();
+            popUpPanel.setBorder(BorderFactory.createLineBorder(Colors.FOREGROUND_INTERFACE));
+
+            popUpPanel.setBackground(Colors.CellsAndRows.LargerCells.ALTERNATING_CELL_1);
+            popUpPanel.add(compoundStructureImage);
+            popUpWindow.add(popUpPanel, BorderLayout.CENTER);
+            popUpWindow.pack();
+
+            // Initialize the Swing Timer to show structure popup
+            popUpTimer = new Timer(800, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // This code runs when the timer fires
+
+                    //don't show if SIRIUS window is too small.
+                    if (CandidateListDetailView.this.getHeight() < 1.5 * CompoundStructureImage.PREFERRED_SIZE_CELL.getHeight() ||
+                            CandidateListDetailView.this.getWidth() < 2 * CompoundStructureImage.PREFERRED_SIZE_CELL.getWidth()
+                    ) {
+                        popUpTimer.stop();
+                        return;
+                    }
+
+                    //set current molecule
+                    {
+                        // Get current mouse position on screen
+                        Point screenMousePos = MouseInfo.getPointerInfo().getLocation();
+                        if (screenMousePos == null) { // No mouse detected
+                            return;
+                        }
+
+                        // Convert screen coordinates to coordinates relative to the JList
+                        Point listMousePos = new Point(screenMousePos);
+                        SwingUtilities.convertPointFromScreen(listMousePos, candidateList);
+
+                        final int index = locationToIndex(listMousePos);
+                        final Rectangle relativeRect = getCellBounds(index, index);
+                        final FingerprintCandidateBean candidate = getModel().getElementAt(index);
+
+                        //check if over molecular structure and init popup timer
+                        if (isInRect(candidate.moleculeImageBounds, relativeRect, listMousePos)) {
+                            compoundStructureImage.molecule = candidate;
+                        } else {
+                            popUpTimer.stop();
+                            return;
+                        }
+                    }
+
+                    int x = CandidateCellRenderer.RANK_LABEL_DIMENSION.width + CompoundStructureImage.PREFERRED_SIZE_CELL.width;
+                    compoundStructureImage.updateSize(CandidateListDetailView.this.getSize(), x);
+
+                    Point locationOnScreen = new Point(x, CandidateListDetailView.this.getHeight()/2 - compoundStructureImage.getHeight()/2);
+                    SwingUtilities.convertPointToScreen(locationOnScreen, CandidateListDetailView.this);
+                    popUpWindow.setLocation(locationOnScreen);
+
+                    popUpWindow.pack();
+                    popUpWindow.repaint();
+                    popUpWindow.setVisible(true);
+                    popUpTimer.stop();
+                }
+            });
+            popUpTimer.setRepeats(false); // Make sure the timer only fires once
         }
 
         @Override
@@ -568,6 +756,20 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
 
             return null;
+        }
+    }
+
+    /**
+     * Scroll the list to the first list element that fulfills the predicate.
+     */
+    public void scrollToStructure(Predicate<FingerprintCandidateBean> predicate) {
+        ListModel<FingerprintCandidateBean> listModel = candidateList.getModel();
+        for (int i = 0; i < listModel.getSize(); i++) {
+            FingerprintCandidateBean element = listModel.getElementAt(i);
+            if (predicate.test(element)) {
+                candidateList.ensureIndexIsVisible(i);
+                return;
+            }
         }
     }
 }

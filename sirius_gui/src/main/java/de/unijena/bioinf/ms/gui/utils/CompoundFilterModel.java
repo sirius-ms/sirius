@@ -323,7 +323,7 @@ public class CompoundFilterModel implements SiriusPCS {
         possibleAdducts.retainAll(listAdducts);
         adducts.retainAll(listAdducts);
         possibleAdducts.addAll(newAdducts);
-        adducts.addAll(newAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet()));
+        adducts.addAll(newAdducts.stream().filter(p -> isMultiAdductsAllowed() || (!p.isMultimere() && !p.isMultipleCharged())).collect(Collectors.toSet()));
     }
 
     @Synchronized

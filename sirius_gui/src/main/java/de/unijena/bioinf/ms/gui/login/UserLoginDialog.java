@@ -35,11 +35,10 @@ import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
-import de.unijena.bioinf.ms.gui.webView.JCefBrowserPanel;
+import io.sirius.ms.gui.webView.BrowserPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +48,8 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+
+import static io.sirius.ms.utils.jwt.AccessTokens.ACCESS_TOKENS;
 
 public class UserLoginDialog extends JDialog {
     private final JTextField username = new JTextField();
@@ -92,7 +93,7 @@ public class UserLoginDialog extends JDialog {
                         ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             service.login(username.getText(), new String(password.getPassword()));
                             AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                            ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(service.getToken().orElse(null)));
+                            ApplicationCore.WEB_API.changeActiveSubscription(ACCESS_TOKENS.getActiveSubscription(service.getToken().orElse(null)));
                             ProxyManager.reconnect();
                         });
                         performedLogin = true;
@@ -168,14 +169,14 @@ public class UserLoginDialog extends JDialog {
 
     public void addTermsPanel(@NotNull TwoColumnPanel center) {
         List<Term> terms = ApplicationCore.WEB_API.getAuthService().getToken()
-                .map(Tokens::getActiveSubscriptionTerms).orElse(List.of());
+                .map(ACCESS_TOKENS::getActiveSubscriptionTerms).orElse(List.of());
 
         if (!terms.isEmpty()) {
             boxAcceptTerms.setSelected(false);
             signInAction.setEnabled(false);
             boxAcceptTerms.addActionListener(evt -> signInAction.setEnabled(((JCheckBox) evt.getSource()).isSelected()));
 
-            JCefBrowserPanel htmlPanel = JCefBrowserPanel.makeHTMLTextPanel("I accept " + Term.toLinks(terms) + ".", gui);
+            BrowserPanel htmlPanel = gui.getBrowserPanelProvider().makeHTMLTextPanel("I accept " + Term.toLinks(terms) + ".");
             htmlPanel.setPreferredSize(new Dimension(getPreferredSize().width, 40));
             center.add(boxAcceptTerms, htmlPanel, GuiUtils.MEDIUM_GAP, false);
         }

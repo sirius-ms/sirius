@@ -26,10 +26,12 @@ import ca.odell.glazedlists.matchers.AbstractMatcherEditorListenerSupport;
 import ca.odell.glazedlists.matchers.CompositeMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
 import ca.odell.glazedlists.matchers.MatcherEditor;
+import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
@@ -75,7 +77,7 @@ public class CompoundList {
     @Getter
     final EventList<InstanceBean> compoundList; // wrapper for filteredList that executes events in swing edt
 
-    final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
+    final AdvancedListSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
     final private MatcherEditor<InstanceBean> mainCompoundListMatchEditor;
@@ -121,15 +123,10 @@ public class CompoundList {
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters2 = new BasicEventList<>();
         listOfFilters2.add(compositeMatcherEditor);
-        listOfFilters2.add(new AbstractMatcherEditorListenerSupport<InstanceBean>() {
+        listOfFilters2.add(new AbstractMatcherEditorListenerSupport<>() {
             @Override
             public Matcher<InstanceBean> getMatcher() {
-                return new Matcher<InstanceBean>() {
-                    @Override
-                    public boolean matches(InstanceBean item) {
-                        return item.getFeatureId().equals(compoundFilterModel.getFocussedFeatureId());
-                    }
-                };
+                return item -> item.getFeatureId().equals(compoundFilterModel.getFocussedFeatureId());
             }
         });
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor2 = new CompositeMatcherEditor<>(listOfFilters2);
@@ -308,7 +305,7 @@ public class CompoundList {
         listeners.remove(l);
     }
 
-    public DefaultEventSelectionModel<InstanceBean> getCompoundListSelectionModel() {
+    public AdvancedListSelectionModel<InstanceBean> getCompoundListSelectionModel() {
         return compountListSelectionModel;
     }
 
@@ -348,7 +345,7 @@ public class CompoundList {
         if (compoundList.contains(finalTargetInstance)) {
             // Instance is already in the filtered list, select it directly.
             // Ensure this runs on EDT.
-            SwingUtilities.invokeLater(() -> {
+            Jobs.runEDTLater(() -> {
                 int indexInView = compoundList.indexOf(finalTargetInstance);
                 if (indexInView != -1) {
                     compountListSelectionModel.setSelectionInterval(indexInView, indexInView);
@@ -404,7 +401,7 @@ public class CompoundList {
             // that makes the item appear (e.g., if it was already unfiltered but just not selected),
             // an immediate invokeLater can try one more time.
             // This approach and might be redundant if the listener works as expected.
-            SwingUtilities.invokeLater(() -> {
+            Jobs.runEDTLater(() -> {
                 if (compoundList.contains(finalTargetInstance) &&
                         (compountListSelectionModel.isSelectionEmpty() ||
                                 !compountListSelectionModel.getSelected().contains(finalTargetInstance))) {

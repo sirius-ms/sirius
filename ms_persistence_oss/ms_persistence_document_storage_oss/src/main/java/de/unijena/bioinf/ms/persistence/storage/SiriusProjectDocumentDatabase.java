@@ -29,6 +29,7 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.properties.ProjectSourceFormats;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectType;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
@@ -113,6 +114,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
 
+    <T> Optional<T> findJsonProjectProperty(@NotNull String key, Class<T> valueType);
+
     <T> Optional<T> findProjectProperty(@NotNull String key, Class<T> valueType);
 
     default Optional<String> findProjectPropertyAsString(String key) {
@@ -143,6 +146,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return upsertProjectProperty("projectType", projectType);
     }
 
+    default Optional<ProjectSourceFormats> findProjectSourceFormats() {
+        return findJsonProjectProperty("projectSourceFormats", ProjectSourceFormats.class);
+    }
+
+    default Optional<ProjectSourceFormats> upsertProjectSourceFormats(@NotNull ProjectSourceFormats projectSourceFormats) {
+        return upsertJsonProjectProperty("projectSourceFormats", projectSourceFormats);
+    }
+
     @SneakyThrows
     default boolean removeProjectProperty(@NotNull String key) {
         return getStorage().removeAll(PROJECT_PROPERTIES_COLLECTION, Filter.where("key").eq(key)) > 0;
@@ -150,6 +161,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
 
     <T> Optional<T> upsertProjectProperty(String key, T value);
+
+    <T> Optional<T> upsertJsonProjectProperty(String key, T value);
 
     @SneakyThrows
     default Optional<CsiStructureSearchResult> findCsiStructureSearchResult(long alignedFeatureId, boolean includeStructureMatches) {
@@ -160,11 +173,17 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
+    default Stream<DenovoStructureMatch> findDeNovoStructureSearchResult(long alignedFeatureId) {
+        return findByFeatureIdStr(alignedFeatureId, DenovoStructureMatch.class);
+    }
+
+    @SneakyThrows
     default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable final AlignedFeatures feature) {
         if (feature == null)
             return Optional.empty();
 
-        fetchMsData(feature);
+        if (feature.getMSData().isEmpty())
+            fetchMsData(feature);
 
         if (feature.getMSData().isEmpty())
             return Optional.empty();
@@ -273,6 +292,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                         Filter.where("alignedFeatureId").eq(alignedFeatureId),
                         Filter.where("structureRank").eq(1)
                 ), clzz).findFirst();
+    }
+
+    @SneakyThrows
+    default Optional<FormulaCandidate> findTopFormulaCandidateByFeatureId(long alignedFeatureId) {
+        return getStorage().findStr(
+                        Filter.and(
+                                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                                Filter.where("formulaRank").eq(1)
+                        ), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                .findFirst();
     }
 
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {

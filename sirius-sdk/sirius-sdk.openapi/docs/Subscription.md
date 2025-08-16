@@ -22,6 +22,7 @@
 |**name** | **String** |  |  [optional] |
 |**tos** | **String** |  |  [optional] |
 |**pp** | **String** |  |  [optional] |
+|**allowedFeatures** | [**AllowedFeatures**](AllowedFeatures.md) |  |  [optional] |
 
 
 
