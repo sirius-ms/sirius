@@ -298,8 +298,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
         } catch (IOException e) {
             log.error("Error in clean up", e);
-        } finally {
-            ProxyManager.disconnect();
         }
 
         ApplicationCore.DEFAULT_LOGGER.info("CLI shut down hook: SIRIUS is cleaning up threads and shuts down...");

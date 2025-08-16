@@ -175,7 +175,7 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
 
     @Override
     public void shutdown() throws IOException {
-        jobWatcher.shutdown();
+        jobWatcher.awaitShutdown();
         super.shutdown();
     }
 

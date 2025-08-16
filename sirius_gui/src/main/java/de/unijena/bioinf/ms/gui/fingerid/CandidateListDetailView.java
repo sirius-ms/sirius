@@ -80,7 +80,7 @@ import java.util.stream.Collectors;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     protected JList<FingerprintCandidateBean> candidateList;
-    protected StructureSearcher structureSearcher;
+    protected final StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum, CopySmiles, sketchStructure;
@@ -168,8 +168,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         candidateList.addMouseListener(this);
         this.structureSearcher = new StructureSearcher(sourceList.getElementList().size());
         this.structureSearcherThread = new Thread(structureSearcher);
-        structureSearcherThread.start();
-        this.structureSearcher.reloadList(sourceList);
         this.molecularPropertyMatcherEditor.setStructureSearcher(structureSearcher);
 
         ///// add popup menu
@@ -363,8 +361,39 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    public void dispose() {
-        structureSearcher.stop();
+    /**
+     * Called when the panel is added to a visible container.
+     * This is the best place to start the background thread.
+     */
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        if (structureSearcherThread != null && !structureSearcherThread.isAlive()) {
+            structureSearcherThread.start();
+            this.structureSearcher.reloadList(source);
+        }
+    }
+
+    /**
+     * Called just before the panel is removed from its container.
+     * This is the perfect place to stop the background thread.
+     */
+    @Override
+    public void removeNotify() {
+        stop(); // Call your shutdown method
+        super.removeNotify(); // Always call the super method
+    }
+
+    /**
+     * Stops the background thread.
+     */
+    public void stop() {
+        synchronized (structureSearcher) {
+            structureSearcher.stop();
+            if (structureSearcherThread != null) {
+                structureSearcherThread.interrupt(); // Wake up the thread from wait()
+            }
+        }
     }
 
     @Override
